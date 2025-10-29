@@ -19,18 +19,18 @@ const AcMyAccountModal = ({
   const modalRef = useRef(null);
 
   const [formData, setFormData] = useState({
-    displayName: '',
     email: '',
     firstName: '',
     middleName: '',
     lastName: '',
+    functie: '',
   });
   const [touched, setTouched] = useState({
-    displayName: false,
     email: false,
     firstName: false,
     middleName: false,
     lastName: false,
+    functie: false,
   });
   const [saving, setSaving] = useState(false);
   const [alert, setAlert] = useState(null);
@@ -71,9 +71,6 @@ const AcMyAccountModal = ({
 
   const validateForm = () => {
     const errors = {};
-    if (!formData.displayName?.trim()) {
-      errors.displayName = 'Weergavenaam is verplicht';
-    }
     if (!formData.email?.trim()) {
       errors.email = 'E-mailadres is verplicht';
     } else if (!validateEmail(formData.email)) {
@@ -95,11 +92,11 @@ const AcMyAccountModal = ({
     setAlert(null);
     try {
       const updateData = {
-        displayName: formData.displayName.trim(),
         email: formData.email.trim(),
-        firstName: formData.firstName?.trim() || null,
-        middleName: formData.middleName?.trim() || null,
-        lastName: formData.lastName?.trim() || null,
+        firstName: formData.firstName.trim() || null,
+        middleName: formData.middleName.trim() || null,
+        lastName: formData.lastName.trim() || null,
+        functie: formData.functie.trim() || null,
       };
       await user.updateUser(updateData);
       setAlert({
@@ -157,25 +154,6 @@ const AcMyAccountModal = ({
           <div className='ac-register-form-grid'>
             <div>
               <AcFormField
-                label='Weergavenaam'
-                required={true}
-                placeholder='Uw weergavenaam'
-                value={formData.displayName}
-                type='text'
-                onBlur={(value) => handleFieldChange('displayName', value)}
-                hasError={touched.displayName && !formData.displayName?.trim()}
-                id='display-name-field'
-                disabled={saving}
-              />
-              <span className='ac-register-form-field-error'>
-                {touched.displayName &&
-                  !formData.displayName?.trim() &&
-                  'Dit veld is verplicht'}
-              </span>
-            </div>
-
-            <div>
-              <AcFormField
                 label='E-mailadres'
                 required={true}
                 placeholder='uw.email@example.com'
@@ -230,6 +208,18 @@ const AcMyAccountModal = ({
                 type='text'
                 onBlur={(value) => handleFieldChange('lastName', value)}
                 id='last-name-field'
+                disabled={saving}
+              />
+            </div>
+
+            <div>
+              <AcFormField
+                label='Functie'
+                placeholder='Uw functie'
+                value={formData.functie}
+                type='text'
+                onBlur={(value) => handleFieldChange('email', value)}
+                id='functie-field'
                 disabled={saving}
               />
             </div>

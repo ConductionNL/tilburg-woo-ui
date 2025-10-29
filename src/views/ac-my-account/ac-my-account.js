@@ -17,6 +17,7 @@ import {
   Separator,
   Link,
 } from '@utrecht/component-library-react/dist/css-module';
+import { Link as RouterLink } from 'react-router-dom';
 import AcBeheerError from '@views/ac-beheer/core/components/ac-standard-pages/ac-beheer-error';
 import AcColumn from '@atoms/ac-column/ac-column';
 import AcButton from '@molecules/ac-button/ac-button';
@@ -533,7 +534,7 @@ const AcMyAccount = ({ store }) => {
                   </div>
                   <div className='ac-register-review__section'>
                     <div className='ac-account-review__header'>
-                      <div style={{flex: 2}}>
+                      <div style={{ flex: 2 }}>
                         <Heading level={4}>
                           <div className='con-beheer-details--header-container'>
                             {fullActiveOrganisation?.['@self']?.image && (
@@ -615,14 +616,11 @@ const AcMyAccount = ({ store }) => {
                           <div>
                             Type:
                             <div>{fullActiveOrganisation?.type || '-'}</div>
-
                           </div>
                           {fullActiveOrganisation?.type === 'Leverancier' && (
                             <div>
                               KVK-nummer:
-                              <div>
-                                {fullActiveOrganisation?.kvkNummer || '-'}
-                              </div>
+                              <div>{fullActiveOrganisation?.kvkNummer || '-'}</div>
                             </div>
                           )}
                         </div>
@@ -756,19 +754,11 @@ const AcMyAccount = ({ store }) => {
                     Bewerken
                   </AcButton>
                 </div>
-                <Separator className='ac-register-review-header__separator' />
+                <Separator className='ac-my-account__separator' />
 
-                <div className='ac-register-review__field'>
-                  <strong>Weergavenaam:</strong>
-                  <span>{userData.displayName || '-'}</span>
-                </div>
                 <div className='ac-register-review__field'>
                   <strong>E-mailadres:</strong>
                   <span>{userData.email || '-'}</span>
-                </div>
-                <div className='ac-register-review__field'>
-                  <strong>E-mail geverifieerd:</strong>
-                  <span>{userData.emailVerified ? 'Ja' : 'Nee'}</span>
                 </div>
                 <div className='ac-register-review__field'>
                   <strong>Voornaam:</strong>
@@ -781,6 +771,15 @@ const AcMyAccount = ({ store }) => {
                 <div className='ac-register-review__field'>
                   <strong>Achternaam:</strong>
                   <span>{userData.lastName || '-'}</span>
+                </div>
+                <div className='ac-register-review__field'>
+                  <strong>Organisatie:</strong>
+                  <RouterLink // Link from react-router combined with Utrecht styling since that works better
+                    to='/beheer/my-organisation'
+                    className='utrecht-link utrecht-link--html-a'
+                  >
+                    <span>{userData.organisations.active.name || '-'}</span>
+                  </RouterLink>
                 </div>
               </div>
             )}
