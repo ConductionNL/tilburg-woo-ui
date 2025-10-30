@@ -418,7 +418,9 @@ const ConFormKoppelingenStage = memo(
                   </TableCell>
                   <TableCell>
                     <ReactSelect
-                      options={modulesOptions}
+                      options={(modulesOptions || []).filter(
+                        (o) => String(o.value) !== String(selectedAppAByRow[rowId])
+                      )}
                       value={(() => {
                         const selected = selectedAppBByRow[rowId];
                         if (selected == null) return null;
