@@ -1701,6 +1701,7 @@ const AcFormsProductInner = ({
           <ConFormProductInformatieStage
             product={product}
             setProductData={setProductData}
+            formType={formType}
             loading={loading || (isEditMode && prefillLoading)}
             touched={touched}
             schemas={schemas}
