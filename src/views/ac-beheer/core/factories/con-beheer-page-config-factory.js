@@ -634,6 +634,7 @@ const BeheerPageConfigFactory = {
                         style={{
                           width: '30px',
                           height: '30px',
+                          // color: row.enabled ? 'var(--tilburg-interaction-active-color)' : 'var(--tilburg-color-orange-300)',
                           color: 'var(--tilburg-interaction-active-color)',
                         }}
                       />
@@ -671,6 +672,20 @@ const BeheerPageConfigFactory = {
               icon: <VISUALS.USER_PLUS />,
               condition: (row) => row.username === null,
               action: 'addAccount',
+            },  
+            {
+              key: 'enableAccount',
+              label: 'Account inschakelen',
+              icon: <VISUALS.USER_CHECK />,
+              condition: (row) => row?.enabled === false,
+              action: 'enableAccount',
+            },
+            {
+              key: 'disableAccount',
+              label: 'Account uitschakelen',
+              icon: <VISUALS.USER_XMARK />,
+              condition: (row) => row?.enabled === true,
+              action: 'disableAccount',
             },
           ],
           modals: [...baseConfig.modals, 'addAccount'],
