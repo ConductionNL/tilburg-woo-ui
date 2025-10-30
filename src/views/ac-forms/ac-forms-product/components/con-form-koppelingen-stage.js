@@ -67,10 +67,6 @@ const ConFormKoppelingenStage = memo(
       isExisting: !!module.isExisting,
     }));
 
-    React.useEffect(() => {
-      getAllModulesForStages();
-    }, []);
-
     const directionOptions = [
       { value: 'AnaarB', label: 'A → B' },
       { value: 'BnaarA', label: 'B → A' },
@@ -113,33 +109,65 @@ const ConFormKoppelingenStage = memo(
 
       const prevModuleIndex = moduleIndexByRow[rowId];
 
+      // Resolve indices using allModules (stable mapping produced by parent)
+      const resolveUsingAllModules = (identifier) => {
+        if (identifier == null) return null;
+        const asNumber = Number(identifier);
+        if (!Number.isNaN(asNumber) && Number.isInteger(asNumber)) return asNumber;
+        const found = allModules.find((m) => {
+          if (!m) return false;
+          if (m.id && String(m.id) === String(identifier)) return true;
+          if (m.moduleIndex != null && String(m.moduleIndex) === String(identifier))
+            return true;
+          // fallback to value label pair
+          if (m.value != null && String(m.value) === String(identifier)) return true;
+          return false;
+        });
+        return found ? found.moduleIndex : null;
+      };
+
+      const curIndexResolved = resolveUsingAllModules(appAId);
+      const prevIndexResolved = resolveUsingAllModules(prevModuleIndex);
+
       setProduct((prev) => {
         const modules = [...(prev.modules || [])];
 
+        const curIndex = curIndexResolved;
+        const prevIndex = prevIndexResolved;
+
         // If koppeling moved from another module, remove it there first
-        if (prevModuleIndex != null && prevModuleIndex !== appAId) {
-          const prevModule = modules[prevModuleIndex];
+        if (prevIndex != null && curIndex !== prevIndex) {
+          const prevModule = modules[prevIndex];
           if (typeof prevModule === 'object') {
             const prevList = Array.isArray(prevModule.koppelingen)
               ? prevModule.koppelingen
               : [];
-            modules[prevModuleIndex] = {
+            modules[prevIndex] = {
               ...prevModule,
               koppelingen: prevList.filter((k) => k._localId !== localId),
             };
           }
         }
 
-        const sourceModule = modules[appAId];
-
-        // Only modify if it's an object (new module), not string (existing module)
-        if (typeof sourceModule !== 'object') {
-          console.warn(
-            'Cannot modify existing module koppelingen:',
-            appAId,
-            sourceModule
-          );
+        if (curIndex == null) {
+          console.warn('Could not resolve target module for koppeling:', appAId);
           return prev;
+        }
+
+        let sourceModule = modules[curIndex];
+
+        // If the module at curIndex is not an object, we need to create/lookup it
+        if (typeof sourceModule !== 'object') {
+          const modId = String(sourceModule || appAId);
+          const lookup =
+            allModules.find(
+              (m) => String(m.id) === String(modId) || m.moduleIndex === curIndex
+            ) || {};
+          const existingKoppelingen = Array.isArray(lookup.koppelingen)
+            ? lookup.koppelingen
+            : [];
+          sourceModule = { ...lookup, id: modId, koppelingen: existingKoppelingen };
+          modules[curIndex] = sourceModule;
         }
 
         const list = Array.isArray(sourceModule.koppelingen)
@@ -147,7 +175,9 @@ const ConFormKoppelingenStage = memo(
           : [];
         const idx = list.findIndex((k) => k?._localId === localId);
 
-        const moduleALabel = appOptions.find((o) => o.value === appAId)?.label;
+        const moduleALabel = appOptions.find(
+          (o) => String(o.value) === String(appAId)
+        )?.label;
         // Persist moduleB as its identifier so edit-mode can preselect by id
         const moduleBId = appBId;
 
@@ -164,20 +194,20 @@ const ConFormKoppelingenStage = memo(
           soortKoppeling: soort,
         };
 
-        if (idx >= 0) {
-          list[idx] = fields;
-        } else {
-          list.push(fields);
-        }
+        if (idx >= 0) list[idx] = fields;
+        else list.push(fields);
 
-        modules[appAId] = { ...sourceModule, koppelingen: list };
+        modules[curIndex] = { ...sourceModule, koppelingen: list };
         return { ...prev, modules };
       });
 
       // Track last persisted module index for this row
       setKoppelingenFormState((prev) => ({
         ...prev,
-        moduleIndexByRow: { ...(prev.moduleIndexByRow || {}), [rowId]: appAId },
+        moduleIndexByRow: {
+          ...(prev.moduleIndexByRow || {}),
+          [rowId]: curIndexResolved,
+        },
       }));
     };
 
@@ -189,6 +219,27 @@ const ConFormKoppelingenStage = memo(
       if (localId != null) {
         setProduct((prev) => {
           const modules = [...(prev.modules || [])];
+
+          const resolveIndex = (identifier) => {
+            if (identifier == null) return null;
+            const asNumber = Number(identifier);
+            if (
+              !Number.isNaN(asNumber) &&
+              Number.isInteger(asNumber) &&
+              asNumber >= 0 &&
+              asNumber < modules.length
+            )
+              return asNumber;
+            const idx = modules.findIndex((m) => {
+              if (typeof m === 'string') return String(m) === String(identifier);
+              if (typeof m === 'object' && m !== null)
+                return (
+                  String(m.id || m.value || m['@self']?.id) === String(identifier)
+                );
+              return false;
+            });
+            return idx !== -1 ? idx : null;
+          };
 
           const removeFrom = (idx) => {
             if (idx == null) return;
@@ -202,8 +253,11 @@ const ConFormKoppelingenStage = memo(
             }
           };
 
-          removeFrom(prevModuleIdx);
-          if (curModuleIdx !== prevModuleIdx) removeFrom(curModuleIdx);
+          const resolvedPrev = resolveIndex(prevModuleIdx);
+          const resolvedCur = resolveIndex(curModuleIdx);
+
+          removeFrom(resolvedPrev);
+          if (resolvedCur !== resolvedPrev) removeFrom(resolvedCur);
 
           return { ...prev, modules };
         });

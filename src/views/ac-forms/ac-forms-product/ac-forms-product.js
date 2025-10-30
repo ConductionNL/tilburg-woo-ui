@@ -810,7 +810,9 @@ const AcFormsProductInner = ({
 
   // Get all new modules (objects in modules array)
   const getNewModules = useCallback(() => {
-    return (product.modules || []).filter((module) => typeof module === 'object');
+    return (product.modules || []).filter(
+      (module) => typeof module === 'object' && !module?.id
+    );
   }, [product.modules]);
 
   // Get all existing module IDs (strings in modules array)
@@ -842,11 +844,12 @@ const AcFormsProductInner = ({
   const getAllModulesForStages = useCallback(() => {
     const allModulesFromProduct = product.modules || [];
     return allModulesFromProduct.map((module, realIndex) => {
-      if (typeof module === 'string') {
+      if (typeof module === 'string' || module?.id) {
         // Existing module
-        const lookupData = existingModulesLookup[module];
+        const modId = typeof module === 'string' ? module : module.id;
+        const lookupData = existingModulesLookup[modId];
         return {
-          id: module,
+          id: modId,
           isExisting: true,
           moduleIndex: realIndex, // Real index in product.modules array
           ...lookupData,

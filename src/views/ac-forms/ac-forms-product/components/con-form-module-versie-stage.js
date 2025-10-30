@@ -136,7 +136,7 @@ const ConFormModuleVersieStage = memo(
       setProduct((prev) => {
         const modules = [...(prev.modules || [])];
         const module = modules[moduleIndex];
-        if (typeof module === 'object') {
+        if (typeof module === 'object' && !module?.id) {
           const versions = Array.isArray(module.moduleVersies)
             ? [...module.moduleVersies]
             : [];
@@ -155,7 +155,7 @@ const ConFormModuleVersieStage = memo(
       setProduct((prev) => {
         const modules = [...(prev.modules || [])];
         const module = modules[moduleIndex];
-        if (typeof module === 'object') {
+        if (typeof module === 'object' && !module?.id) {
           const versions = Array.isArray(module.moduleVersies)
             ? [...module.moduleVersies]
             : [];
@@ -171,7 +171,7 @@ const ConFormModuleVersieStage = memo(
       setProduct((prev) => {
         const modules = [...(prev.modules || [])];
         const module = modules[moduleIndex];
-        if (typeof module === 'object') {
+        if (typeof module === 'object' && !module?.id) {
           const versions = Array.isArray(module.moduleVersies)
             ? [...module.moduleVersies]
             : [];
@@ -201,7 +201,7 @@ const ConFormModuleVersieStage = memo(
         const modules = [...(prev.modules || [])];
         applicatieIndices.forEach((realIdx) => {
           const mod = modules[realIdx];
-          if (typeof mod !== 'object') return;
+          if (typeof mod !== 'object' && !mod?.id) return;
           const prevVersions = Array.isArray(mod.moduleVersies)
             ? [...mod.moduleVersies]
             : [];
@@ -227,7 +227,7 @@ const ConFormModuleVersieStage = memo(
         const modules = [...(prev.modules || [])];
         applicatieIndices.forEach((realIdx) => {
           const mod = modules[realIdx];
-          if (typeof mod !== 'object') return;
+          if (typeof mod !== 'object' && !mod?.id) return;
           const prevVersions = Array.isArray(mod.moduleVersies)
             ? [...mod.moduleVersies]
             : [];
@@ -247,7 +247,7 @@ const ConFormModuleVersieStage = memo(
         const modules = [...(prev.modules || [])];
         applicatieIndices.forEach((realIdx) => {
           const mod = modules[realIdx];
-          if (typeof mod !== 'object') return;
+          if (typeof mod !== 'object' && !mod?.id) return;
           const prevVersions = Array.isArray(mod.moduleVersies)
             ? [...mod.moduleVersies]
             : [];

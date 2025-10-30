@@ -82,7 +82,7 @@ const ConFormLicentieStage = memo(
     // ✅ CRITICAL FIX: Get the actual indices in product.modules where new modules are located
     const applicatieIndices = [];
     (product.modules || []).forEach((module, index) => {
-      if (typeof module === 'object') {
+      if (typeof module === 'object' && !module?.id) {
         applicatieIndices.push(index);
       }
     });
@@ -419,11 +419,11 @@ const ConFormLicentieStage = memo(
                   const realIndex = applicatieIndices[index];
                   const licenseTypeValue =
                     app.licentietype || app.licentieType || '';
-                  const selectedLicentie =
-                    licentieOptions.find((o) => o.value === app.licentie) || null;
                   const isOpenSourceSelected = licenseTypeValue === 'Open source';
-                  const isLicenseRequired =
-                    isOpenSourceSelected && !selectedLicentie;
+                  // const selectedLicentie =
+                  //   licentieOptions.find((o) => o.value === app.licentie) || null;
+                  // const isLicenseRequired =
+                  //   isOpenSourceSelected && !selectedLicentie;
                   return (
                     <TableRow key={index}>
                       <TableCell>

@@ -249,10 +249,15 @@ const ConFormApplicatieStage = memo(
           },
         }));
 
+        // compress schema as its not needed in this data
+        if (typeof applicationData['@self'].schema === 'object') {
+          applicationData['@self'].schema = applicationData['@self'].schema.id;
+        }
+
         return {
           ...prev,
           // Add module ID string to modules array (for backend submission)
-          modules: [...(prev.modules || []), moduleId],
+          modules: [...(prev.modules || []), applicationData],
         };
       });
 
@@ -348,15 +353,24 @@ const ConFormApplicatieStage = memo(
       const items = [];
 
       (product.modules || []).forEach((module, index) => {
-        if (typeof module === 'string') {
+        if (module?.id) {
           // Existing module (string ID)
-          const lookupData = existingModulesLookup[module];
+          const lookupData = existingModulesLookup[module.id];
+
+          const naam =
+            module['@self']?.name ||
+            module?.title ||
+            module?.titel ||
+            module?.name ||
+            module?.naam ||
+            module?.id;
+
           items.push({
             type: 'existing',
             key: `existing-${module}`,
             moduleId: module,
             moduleIndex: index,
-            data: lookupData || { id: module, naam: `Applicatie ${module}` },
+            data: lookupData || { id: module.id, naam: `Applicatie ${naam}` },
           });
         } else {
           // New module (object with data)
@@ -649,7 +663,18 @@ const ConFormApplicatieStage = memo(
                             selectedOption?.value || null
                           )
                         }
-                        options={modulesOptions}
+                        options={modulesOptions.filter(
+                          (opt) =>
+                            // Exclude already selected modules
+                            !(product.modules || []).some((mod) => {
+                              if (typeof mod === 'string') {
+                                return mod === opt.value;
+                              } else if (mod?.id) {
+                                return mod.id === opt.value;
+                              }
+                              return false; // should not exclude
+                            })
+                        )}
                         placeholder={
                           modulesOptions.length === 0 && !modulesLoading
                             ? 'Begin met typen om te zoeken...'

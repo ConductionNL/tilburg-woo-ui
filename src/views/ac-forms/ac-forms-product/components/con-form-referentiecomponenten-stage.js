@@ -127,7 +127,10 @@ const ConFormReferentiecomponentenStage = memo(
           const modules = [...(prev.modules || [])];
 
           savedPerModuleState.forEach(({ moduleIndex, referentieComponenten }) => {
-            if (typeof modules[moduleIndex] === 'object') {
+            if (
+              typeof modules[moduleIndex] === 'object' &&
+              !modules[moduleIndex]?.id
+            ) {
               modules[moduleIndex] = {
                 ...modules[moduleIndex],
                 referentieComponenten: [...referentieComponenten],
@@ -157,7 +160,7 @@ const ConFormReferentiecomponentenStage = memo(
     const updateModuleField = (moduleIndex, key, value) => {
       setProduct((prev) => {
         const modules = [...(prev.modules || [])];
-        if (typeof modules[moduleIndex] === 'object') {
+        if (typeof modules[moduleIndex] === 'object' && !modules[moduleIndex]?.id) {
           modules[moduleIndex] = { ...modules[moduleIndex], [key]: value };
         }
         return { ...prev, modules };
@@ -169,7 +172,11 @@ const ConFormReferentiecomponentenStage = memo(
         const modules = [...(prev.modules || [])];
         // Only apply to NEW modules (objects, not strings)
         modules.forEach((module, index) => {
-          if (typeof module === 'object' && applicatieIndices.includes(index)) {
+          if (
+            typeof module === 'object' &&
+            applicatieIndices.includes(index) &&
+            !module?.id
+          ) {
             modules[index] = { ...modules[index], ...fields };
           }
         });
