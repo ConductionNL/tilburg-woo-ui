@@ -5,13 +5,10 @@ import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-behe
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AcContainer, AcFlex } from '@atoms';
-import { AcLoader, ConDetailsActionsMenu } from '@components';
+import { AcLoader } from '@components';
 import { withStore } from '@stores';
-import { VISUALS } from '@constants';
 import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
-import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
-import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 
 // Markdown Editor
 import remarkDefinitionList, { defListHastHandlers } from 'remark-definition-list';
@@ -31,56 +28,7 @@ const AcPublication = ({ store: { publications, object, user } }) => {
 
   const navigate = useNavigate();
 
-  // Use the same related actions hook as beheer pages
-  const openDynamicCreate = useCallback(
-    (targetType, preSelected, metadata = {}) => {
-      // For publication pages, we'll navigate to the beheer page with modal open
-      // TODO: Handle outgoing relationship metadata in beheer page URL params
-      if (metadata.isOutgoing) {
-        // handle outgoing relationship metadata
-      }
-      navigate(`/beheer/${targetType}?showCreateModal=true&voorzieningId=${id}`);
-    },
-    [navigate, id]
-  );
-
-  const { makeActionsForContext } = useRelatedCreateActions({
-    object,
-    user,
-    schemaRef: get_single?.['@self']?.schema?.slug,
-    currentType: get_single?.['@self']?.schema?.slug, // Use schema slug as current type
-    openDynamicCreate,
-    currentObject: get_single, // Pass current object for organization permission checks
-    currentObjectRegister: 'voorzieningen', // Pass current object register (for publication pages)
-    currentObjectSchema: get_single?.['@self']?.schema?.slug, // Pass current object schema
-  });
-
-  // Generate action menu items
-  const [actionMenuItems, setActionMenuItems] = useState([]);
-
-  // Delete modal state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-
-  // Open delete modal from actions menu
-  const handleDelete = useCallback(() => {
-    setShowDeleteModal(true);
-  }, []);
-
-  useEffect(() => {
-    if (!get_single?.['@self']?.schema?.slug || !id) return;
-
-    const items = makeActionsForContext(id).map(
-      ({ key, label, onClick, schema, icon }) => ({
-        key,
-        label,
-        onClick,
-        schema,
-        icon,
-      })
-    );
-
-    setActionMenuItems(items);
-  }, [get_single?.['@self']?.schema?.slug, id, makeActionsForContext]);
 
   // Tabs
   const [uses, setUses] = useState([]);
@@ -169,12 +117,13 @@ const AcPublication = ({ store: { publications, object, user } }) => {
           <AcFlex spacing='sm' justifyContent='between' alignItems='center'>
             <Heading level={4} className='con-product-publication--header-container'>
               <div className='con-beheer-details--header-container'>
-                {get_single?.['@self']?.image || get_single?.logo && (
-                  <ConLogoPreview
-                    className='con-beheer-details--logo-container'
-                    logoUrl={get_single?.['@self']?.image || get_single?.logo}
-                  />
-                )}
+                {get_single?.['@self']?.image ||
+                  (get_single?.logo && (
+                    <ConLogoPreview
+                      className='con-beheer-details--logo-container'
+                      logoUrl={get_single?.['@self']?.image || get_single?.logo}
+                    />
+                  ))}
 
                 <Heading className='con-beheer-details--title'>
                   {get_single?.['@self']?.name ||
@@ -198,47 +147,6 @@ const AcPublication = ({ store: { publications, object, user } }) => {
                 })()}
                 {getTabHeaderName(get_single?.['@self'].schema.slug, true)}
               </Heading>
-
-              <ConDetailsActionsMenu
-                user={user}
-                id={id}
-                schemaSlug={get_single?.['@self']?.schema?.slug}
-                title={get_single?.['@self']?.name || get_single?.id}
-                published={get_single?.['@self']?.published}
-                object={get_single}
-                showViewAction={false}
-                showEditAction={true}
-                showPublishActions={true}
-                onDelete={handleDelete}
-                onEdit={() => {
-                  const schemaSlug = get_single?.['@self']?.schema?.slug;
-                  if (schemaSlug) {
-                    const wizards = Object.values(DASHBOARD_WIZARDS);
-                    const wizard = wizards.find((w) => w.schema === schemaSlug);
-
-                    if (wizard) {
-                      const baseUrl = getWizardUrl(wizard);
-                      const url = new URL(baseUrl, window.location.origin);
-                      url.searchParams.set('id', id);
-                      navigate(url.pathname + url.search);
-                      return;
-                    }
-                  }
-                  // Fallback to beheer legacy edit page in new tab
-                  const beheerUrl = `/beheer/${schemaSlug}/${id}`;
-                  window.open(beheerUrl, '_blank');
-                }}
-                uniqueActions={[
-                  {
-                    key: 'delete',
-                    label: 'Verwijderen',
-                    icon: VISUALS.TRASHCAN,
-                    onClick: handleDelete,
-                  },
-                ]}
-                triggerStyle='button'
-                relatedActions={actionMenuItems}
-              />
             </AcFlex>
           </AcFlex>
           <AcFlex spacing='sm' justifyContent='between'>
