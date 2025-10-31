@@ -609,7 +609,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
       // Only include if not explicitly disabled in config
       const dynamicCreateActions = config.disableRelatedCreateActions
         ? []
-        : makeActionsForContext(row.id);
+        : makeActionsForContext(row.id, config.dynamicActionFilter);
 
       const deleteAction = {
         key: 'delete',

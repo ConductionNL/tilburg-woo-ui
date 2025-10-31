@@ -336,7 +336,7 @@ const ConFormStandaardenStage = ({
 
       // Apply to all new modules (objects, not strings)
       modules.forEach((module, index) => {
-        if (typeof module === 'object') {
+        if (typeof module === 'object' && !module?.id) {
           let compliancy = Array.isArray(module.compliancy)
             ? [...module.compliancy]
             : [];
@@ -474,7 +474,7 @@ const ConFormStandaardenStage = ({
         const moduleIndex = currentEntry.moduleId;
         const app = modules[moduleIndex];
 
-        if (typeof app !== 'object') {
+        if (typeof app !== 'object' || !!app?.id) {
           console.warn(
             'Cannot update compliancy on existing applicatie:',
             moduleIndex,
@@ -621,7 +621,7 @@ const ConFormStandaardenStage = ({
             : c
         );
 
-        if (typeof app === 'object') {
+        if (typeof app === 'object' && !app?.id) {
           modules[moduleIndex] = {
             ...app,
             compliancy: updatedCompliancy,
@@ -688,7 +688,7 @@ const ConFormStandaardenStage = ({
             : c
         );
 
-        if (typeof app === 'object') {
+        if (typeof app === 'object' && !app?.id) {
           modules[moduleIndex] = {
             ...app,
             compliancy: updatedCompliancy,
@@ -750,7 +750,7 @@ const ConFormStandaardenStage = ({
             : c
         );
 
-        if (typeof app === 'object') {
+        if (typeof app === 'object' && !app?.id) {
           modules[moduleIndex] = {
             ...app,
             compliancy: updatedCompliancy,
@@ -814,7 +814,7 @@ const ConFormStandaardenStage = ({
             : c
         );
 
-        if (typeof app === 'object') {
+        if (typeof app === 'object' && !app?.id) {
           modules[moduleIndex] = {
             ...app,
             compliancy: updatedCompliancy,
@@ -871,7 +871,7 @@ const ConFormStandaardenStage = ({
             const moduleIndex = entry.moduleId;
             const app = modules[moduleIndex];
 
-            if (typeof app !== 'object') {
+            if (typeof app !== 'object' || !!app?.id) {
               console.warn(
                 'Cannot update compliancy on existing applicatie:',
                 moduleIndex,
@@ -947,7 +947,7 @@ const ConFormStandaardenStage = ({
       let hasChanges = false;
 
       modules.forEach((module, moduleIndex) => {
-        if (typeof module !== 'object') return;
+        if (typeof module !== 'object' || !!module?.id) return;
 
         const compliancy = Array.isArray(module.compliancy)
           ? [...module.compliancy]

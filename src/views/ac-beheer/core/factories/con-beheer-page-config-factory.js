@@ -33,6 +33,9 @@ const BeheerPageConfigFactory = {
       uniqueActions: [],
       statusIcon: null,
       routeType: null,
+      // function to filter out actions, receives all properties of a Schema (so filtering on slug is possible)
+      // example: `dynamicActionFilter: ({ slug }) => !['module'].includes(slug)` - this filters out the Applicatie dynamic action
+      dynamicActionFilter: null,
     };
 
     switch (type) {
@@ -50,7 +53,6 @@ const BeheerPageConfigFactory = {
         };
 
       // removed plural alias 'views'
-
       case 'extendview':
         return {
           ...baseConfig,
@@ -216,6 +218,7 @@ const BeheerPageConfigFactory = {
           routeType: 'applicatiesversie',
           defaultHeaders: ['naam', 'versie', 'status', 'releaseDatum'],
           customHeaders: {},
+          dynamicActionFilter: ({ slug }) => !['module'].includes(slug),
           modals: [...baseConfig.modals],
         };
 

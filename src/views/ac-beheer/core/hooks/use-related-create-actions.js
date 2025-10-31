@@ -254,8 +254,17 @@ export const useRelatedCreateActions = ({
   );
 
   const makeActionsForContext = useCallback(
-    (ctxId) => {
-      const actions = (creatableRelated || [])
+    /**
+     * @param {string} ctxId - REQUIRED - used with building actions to know what object to reference
+     * @param {({ slug: string, title: string }: Schema) => boolean} filter - configurable filter function to be able to filter out unwanted actions, filtered content is a Schema object (runs on .filter())
+     */
+    (ctxId, filter = null) => {
+      const filteredCreatableRelated =
+        typeof filter === 'function' && Array.isArray(creatableRelated)
+          ? creatableRelated.filter(filter)
+          : creatableRelated;
+
+      const actions = (filteredCreatableRelated || [])
         .map((rs) => {
           const slug = rs?.slug;
           if (!slug) return null;
