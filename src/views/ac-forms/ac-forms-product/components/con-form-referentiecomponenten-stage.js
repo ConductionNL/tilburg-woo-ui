@@ -329,8 +329,8 @@ const ConFormReferentiecomponentenStage = memo(
         {applicatieIndices.length > 0 && (!isMultiNewApplicatie || sameForAll) ? (
           <div>
             {/* Single application or "same for all" mode */}
-            <div className='ac-register-form-grid'>
-              <div style={{ width: '100%', maxWidth: '400px' }}>
+            <div >
+              <div>
                 <ReactSelect
                   value={(() => {
                     const currentModule = newModules[0] || {};
@@ -384,7 +384,6 @@ const ConFormReferentiecomponentenStage = memo(
                   styles={{
                     control: (provided) => ({
                       ...provided,
-                      minHeight: '120px', // Much larger to accommodate multiple selections
                       border: '1px solid #ccc',
                       borderRadius: '4px',
                     }),
@@ -394,7 +393,6 @@ const ConFormReferentiecomponentenStage = memo(
                     }),
                     valueContainer: (provided) => ({
                       ...provided,
-                      minHeight: '116px', // Allow container to expand
                       padding: '8px 12px', // More padding for larger area
                       display: 'flex',
                       flexWrap: 'wrap',
@@ -487,8 +485,6 @@ const ConFormReferentiecomponentenStage = memo(
                           styles={{
                             control: (provided) => ({
                               ...provided,
-                              minHeight: '48px', // Match the height of original field
-                              height: '48px',
                               border: '1px solid #ccc',
                               borderRadius: '4px',
                             }),
@@ -498,8 +494,17 @@ const ConFormReferentiecomponentenStage = memo(
                             }),
                             valueContainer: (provided) => ({
                               ...provided,
-                              height: '46px',
-                              padding: '0 12px',
+                              padding: '8px 12px', // More padding for larger area
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              alignItems: 'flex-start',
+                              alignContent: 'flex-start',
+                            }),
+                            multiValue: (provided) => ({
+                              ...provided,
+                              margin: '2px',
+                              backgroundColor: '#e3f2fd',
+                              border: '1px solid #bbdefb',
                             }),
                             input: (provided) => ({
                               ...provided,

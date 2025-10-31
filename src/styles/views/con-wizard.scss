@@ -76,3 +76,15 @@
 .w-md-editor-text-input {
   resize: unset !important;
 }
+
+// Koppeling wizard
+.con-koppeling-beschrijving {
+  min-width: -webkit-fill-available !important;
+}
+
+.con-koppeling-standaarden-field {
+  margin-block-start: 1rem;
+}
+.con-koppeling-standaarden-select > div {
+  min-width: -webkit-fill-available !important;
+}

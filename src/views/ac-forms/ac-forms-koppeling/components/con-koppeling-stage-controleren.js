@@ -32,6 +32,8 @@ const ConKoppelingStageControleren = ({
   isEditMode,
   onRetryForm,
   onResetForm,
+  standaardenByRow,
+  standaardenOptions,
 }) => {
   const navigate = useNavigate();
 
@@ -224,6 +226,7 @@ const ConKoppelingStageControleren = ({
                         <div style={{ color: '#666', fontSize: '0.9rem' }}>
                           {statusLabel && <div>Status: {statusLabel}</div>}
                           {beschrijving && <div>Beschrijving: {beschrijving}</div>}
+                          {standaardenByRow && <div>Standaarden: {standaardenByRow[rowId].map((s) => standaardenOptions.find((o) => o.value === s)?.label).join(', ')}</div>}
                         </div>
                       </UnorderedListItem>
                     );

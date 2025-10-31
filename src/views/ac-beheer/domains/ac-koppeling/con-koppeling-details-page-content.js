@@ -276,6 +276,16 @@ const ConKoppelingDetailsPageContent = ({
               {data.status}
             </div>
           )}
+          {data?.standaardversies && (
+            <div style={{ marginBottom: '8px' }}>
+              <strong>Standaarden: </strong>
+              {data.standaardversies.map((s) => (
+                <div key={s}>
+                  <ConUuidResolver>{String(s)}</ConUuidResolver>
+                </div>
+              ))}
+            </div>
+          )}
           {data?.dienst && (
             <div style={{ marginBottom: '8px' }}>
               <strong>Dienst: </strong>

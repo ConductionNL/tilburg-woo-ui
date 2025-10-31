@@ -16,7 +16,15 @@ import { validateWebsite } from '@views/ac-forms/validation/form-validations';
  * @param {Object} schemas - Available schemas for field configuration
  */
 const ConFormProductInformatieStage = memo(
-  ({ product, setProductData, loading, touched, schemas, isMultiApplicatie }) => {
+  ({
+    product,
+    setProductData,
+    loading,
+    touched,
+    schemas,
+    isMultiApplicatie,
+    formType,
+  }) => {
     return (
       <div
         className='ac-register-form-section'
@@ -168,7 +176,7 @@ const ConFormProductInformatieStage = memo(
               schemaProperty='contactpersoon'
               value={product.contactpersoon || ''}
               onChange={(value) => setProductData('contactpersoon', value)}
-              isDisabled={loading}
+              isDisabled={loading || formType === 'ontbrekend'}
               width='half'
               schemas={schemas}
               customProps={{
