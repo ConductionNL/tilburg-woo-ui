@@ -9,6 +9,7 @@ import {
   TableBody,
   TableCell,
   TableRow,
+  Link,
 } from '@utrecht/component-library-react/dist/css-module';
 
 /**
@@ -126,7 +127,10 @@ const ConFormReferentiecomponentenStage = memo(
           const modules = [...(prev.modules || [])];
 
           savedPerModuleState.forEach(({ moduleIndex, referentieComponenten }) => {
-            if (typeof modules[moduleIndex] === 'object') {
+            if (
+              typeof modules[moduleIndex] === 'object' &&
+              !modules[moduleIndex]?.id
+            ) {
               modules[moduleIndex] = {
                 ...modules[moduleIndex],
                 referentieComponenten: [...referentieComponenten],
@@ -156,7 +160,7 @@ const ConFormReferentiecomponentenStage = memo(
     const updateModuleField = (moduleIndex, key, value) => {
       setProduct((prev) => {
         const modules = [...(prev.modules || [])];
-        if (typeof modules[moduleIndex] === 'object') {
+        if (typeof modules[moduleIndex] === 'object' && !modules[moduleIndex]?.id) {
           modules[moduleIndex] = { ...modules[moduleIndex], [key]: value };
         }
         return { ...prev, modules };
@@ -168,7 +172,11 @@ const ConFormReferentiecomponentenStage = memo(
         const modules = [...(prev.modules || [])];
         // Only apply to NEW modules (objects, not strings)
         modules.forEach((module, index) => {
-          if (typeof module === 'object' && applicatieIndices.includes(index)) {
+          if (
+            typeof module === 'object' &&
+            applicatieIndices.includes(index) &&
+            !module?.id
+          ) {
             modules[index] = { ...modules[index], ...fields };
           }
         });
@@ -272,8 +280,20 @@ const ConFormReferentiecomponentenStage = memo(
           gemeentelijke functies weergeven die uw software ondersteunt. Dit helpt
           gemeenten te zien hoe uw software past in hun architectuur en
           vergemakkelijkt integraties. Voor een overzicht van alle
-          referentiecomponenten(https://www.gemmaonline.nl/wiki/Overzicht_alle_referentiecomponenten)
-          kunt u terecht op GEMMA Online.
+          referentiecomponenten(
+          <Link
+            href={
+              'https://www.gemmaonline.nl/wiki/Overzicht_alle_referentiecomponenten'
+            }
+            target='_blank'
+            rel='noopener noreferrer'
+            style={{
+              display: 'inline-block',
+            }}
+          >
+            https://www.gemmaonline.nl/wiki/Overzicht_alle_referentiecomponenten
+          </Link>
+          ) kunt u terecht op GEMMA Online.
         </Paragraph>
 
         {newModules.length === 0 && (
@@ -309,8 +329,8 @@ const ConFormReferentiecomponentenStage = memo(
         {applicatieIndices.length > 0 && (!isMultiNewApplicatie || sameForAll) ? (
           <div>
             {/* Single application or "same for all" mode */}
-            <div className='ac-register-form-grid'>
-              <div style={{ width: '100%', maxWidth: '400px' }}>
+            <div >
+              <div>
                 <ReactSelect
                   value={(() => {
                     const currentModule = newModules[0] || {};
@@ -364,7 +384,6 @@ const ConFormReferentiecomponentenStage = memo(
                   styles={{
                     control: (provided) => ({
                       ...provided,
-                      minHeight: '120px', // Much larger to accommodate multiple selections
                       border: '1px solid #ccc',
                       borderRadius: '4px',
                     }),
@@ -374,7 +393,6 @@ const ConFormReferentiecomponentenStage = memo(
                     }),
                     valueContainer: (provided) => ({
                       ...provided,
-                      minHeight: '116px', // Allow container to expand
                       padding: '8px 12px', // More padding for larger area
                       display: 'flex',
                       flexWrap: 'wrap',
@@ -467,8 +485,6 @@ const ConFormReferentiecomponentenStage = memo(
                           styles={{
                             control: (provided) => ({
                               ...provided,
-                              minHeight: '48px', // Match the height of original field
-                              height: '48px',
                               border: '1px solid #ccc',
                               borderRadius: '4px',
                             }),
@@ -478,8 +494,17 @@ const ConFormReferentiecomponentenStage = memo(
                             }),
                             valueContainer: (provided) => ({
                               ...provided,
-                              height: '46px',
-                              padding: '0 12px',
+                              padding: '8px 12px', // More padding for larger area
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              alignItems: 'flex-start',
+                              alignContent: 'flex-start',
+                            }),
+                            multiValue: (provided) => ({
+                              ...provided,
+                              margin: '2px',
+                              backgroundColor: '#e3f2fd',
+                              border: '1px solid #bbdefb',
                             }),
                             input: (provided) => ({
                               ...provided,

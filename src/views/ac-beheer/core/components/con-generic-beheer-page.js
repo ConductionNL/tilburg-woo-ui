@@ -21,7 +21,7 @@ import FilterDrawerFactory from '@views/ac-beheer/core/factories/con-filter-draw
 import BeheerPageConfigFactory from '@views/ac-beheer/core/factories/con-beheer-page-config-factory';
 import _ from 'lodash';
 import { CanceledError } from 'axios';
-import { AcButton } from '@molecules';
+import { AcButton, AcFormField } from '@molecules';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { canReadField } from '@utils/field-authorization';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
@@ -37,6 +37,8 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
   const navigate = useNavigate();
   const [beoordelingFilter, setBeoordelingFilter] = useState(null);
   const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState(''); // Simple search query state
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(''); // Debounced search value
   const [enhancedConfig, setEnhancedConfig] = useState(null);
 
   // Get base configuration for this type
@@ -157,7 +159,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
   let makeActionsForContext; // will be assigned below
 
   const fetchData = useCallback(
-    async (searchParams = {}) => {
+    async () => {
       if (!objectType || !config) {
         return;
       }
@@ -166,15 +168,30 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
         // Build the extend parameters exactly as before
         const extend = [...config.extend];
 
+        // LEGACY: Old field-specific search implementation
         // Convert extend array and searchParams to object format for object store
+        // const storeParams = {
+        //   _page: pagination.page,
+        //   _limit: pagination.limit,
+        //   _extend: extend,
+        //   _related: true, // Request related object data
+        //   _relatedNames: true, // Request ID to name mappings
+        //   ...searchParams,
+        // };
+
+        // New simple search implementation using _search parameter
         const storeParams = {
           _page: pagination.page,
           _limit: pagination.limit,
           _extend: extend,
           _related: true, // Request related object data
           _relatedNames: true, // Request ID to name mappings
-          ...searchParams,
         };
+
+        // Add simple search from debounced search query
+        if (debouncedSearchQuery && debouncedSearchQuery.trim() !== '') {
+          storeParams._search = debouncedSearchQuery.trim();
+        }
 
         if (beoordelingFilter) storeParams['beoordeling'] = beoordelingFilter;
 
@@ -224,6 +241,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
       pagination.page,
       pagination.limit,
       beoordelingFilter,
+      debouncedSearchQuery,
       object,
     ]
   );
@@ -275,6 +293,14 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [objectType, pagination.limit, pagination.page, !config]);
 
+  // Refetch when debounced search query changes
+  useEffect(() => {
+    if (!!config && objectType) {
+      fetchData();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearchQuery]);
+
   // Open create modal when query param is present, but only after the 'add' modal has actually mounted
   const openAddModal = useCallback(() => {
     const params = new URLSearchParams(window.location.search);
@@ -310,6 +336,15 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
   const [selectedRows, setSelectedRows] = useState([]);
   const [singleSelectedRow, setSingleSelectedRow] = useState(null);
   const [openModal, setOpenModal] = useState(null);
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500); // 500ms delay like the ConTableSearch component
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Handle create action → open corresponding wizard when available
   const handleCreateClick = useCallback(() => {
@@ -553,8 +588,20 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
             label: action.label,
             icon: action.icon,
             onClick: () => {
-              setSingleSelectedRow(row);
-              setOpenModal(action.action);
+              // Check if this is a wizard action
+              if (action.action === 'wizard' && action.wizardPath) {
+                // Navigate to wizard with params if provided
+                const params = action.wizardParams ? action.wizardParams(row) : {};
+                const searchParams = new URLSearchParams(params);
+                const queryString = searchParams.toString();
+                navigate(
+                  `${action.wizardPath}${queryString ? '?' + queryString : ''}`
+                );
+              } else {
+                // Open modal for regular actions
+                setSingleSelectedRow(row);
+                setOpenModal(action.action);
+              }
             },
           })) || [];
 
@@ -562,7 +609,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
       // Only include if not explicitly disabled in config
       const dynamicCreateActions = config.disableRelatedCreateActions
         ? []
-        : makeActionsForContext(row.id);
+        : makeActionsForContext(row.id, config.dynamicActionFilter);
 
       const deleteAction = {
         key: 'delete',
@@ -778,6 +825,35 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
             </AcFlex>
           </AcFlex>
 
+          {/* Simple search input - styled like ConTableSearch but without field selector */}
+          {showSearch && (
+            <div className='con-table-search' style={{ marginBottom: '1rem' }}>
+              <AcFlex spacing='sm' alignItems='center'>
+                {/* Optional explanatory text in place of the dropdown */}
+                <div className='con-table-search__label-text'>
+                  Zoeken in alle velden
+                </div>
+
+                {/* Search input taking remaining space */}
+                <div className='con-table-search__input-container con-table-search__input-container--full-width'>
+                  <AcFormField
+                    id='table-search-input'
+                    label=''
+                    type='text'
+                    inputType='text'
+                    value={searchQuery}
+                    onChange={(e) => {
+                      // Handle both event object and direct value
+                      const value = e?.target?.value ?? e;
+                      setSearchQuery(value);
+                    }}
+                    placeholder='Zoeken...'
+                  />
+                </div>
+              </AcFlex>
+            </div>
+          )}
+
           <ConTable
             data={data}
             tableHeaders={[
@@ -816,10 +892,11 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
             ref={tableRef}
             truncateLines={3}
             showSortButtons
-            onHeaderSearch={fetchData}
-            dataProperties={dataProperties}
+            // LEGACY: Old field-specific search (commented out)
+            // onHeaderSearch={fetchData}
+            // dataProperties={dataProperties}
+            // showSearch={showSearch}
             loading={loading || schemaLoading}
-            showSearch={showSearch}
             // Names resolution props
             objectStore={object}
             schema={schemaData}

@@ -177,7 +177,9 @@ const mergeAndDeduplicateItems = (uses = [], used = []) => {
 
   // Remove duplicates based on item ID and filter out elements
   return _.uniqBy(allItems, 'id').filter(
-    (item) => item['@self']?.schema?.slug !== 'element'
+    (item) =>
+      item['@self']?.schema?.slug !== 'element' &&
+      item['@self']?.schema?.slug !== 'compliancy'
   );
 };
 

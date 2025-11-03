@@ -16,6 +16,7 @@ import ConContactpersoonDetailsPage from '../../domains/ac-contactpersoon/con-co
 import ConDienstDetailsPage from '../../domains/ac-dienst/con-dienst-details-page';
 import ConKoppelingDetailsPage from '../../domains/ac-koppeling/con-koppeling-details-page';
 import ConGebruikDetailsPage from '../../domains/ac-gebruiken/con-gebruik-details-page';
+import ConModuleVersieDetailsPage from '../../domains/con-module-version/con-module-version-detail-page';
 
 const AcBeheer = ({ store }) => {
   const navigate = useNavigate();
@@ -61,7 +62,7 @@ const AcBeheer = ({ store }) => {
   }
 
   // Early return for organisatie routes to prevent any data loading
-  if (type === 'organisatie' || type === 'organisaties') {
+  if (type === 'organisatie' || type === 'organisaties' || type === 'element') {
     return null; // Will redirect via useEffect above
   }
 
@@ -82,8 +83,11 @@ const AcBeheer = ({ store }) => {
   if (type === 'product') {
     return <ConProductDetailsPage />;
   }
-  if (type === 'module') {
+  if (type === 'module' || type === 'applicaties') {
     return <ConModuleDetailsPage />;
+  }
+  if (type === 'moduleversie' || type === 'applicatieversie') {
+    return <ConModuleVersieDetailsPage />;
   }
   if (type === 'dienst') {
     return <ConDienstDetailsPage />;

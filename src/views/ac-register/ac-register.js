@@ -26,6 +26,7 @@ import { useDebouncedInput } from '@src/hooks/index';
 import { ConMarkdown } from '@src/components';
 import LogoUploadField from '@views/ac-beheer/shared/components/con-logo-upload-field';
 import { uploadFileToObject } from '@src/utilities';
+import { validateWebsite as centralValidateWebsite } from '@views/ac-forms/validation/form-validations';
 
 const organizationTypes = [
   { value: 'Leverancier', label: 'Leverancier' },
@@ -127,10 +128,7 @@ const AcRegister = () => {
   }, []);
 
   const validateWebsite = useCallback((website) => {
-    return (
-      website &&
-      website.match(/^(?:https:\/\/|www\.)[^\s]+\.[a-z]{2,}(?:\/[^\s]*)?$/i)
-    );
+    return centralValidateWebsite(website);
   }, []);
 
   const validatePhone = useCallback((phone) => {

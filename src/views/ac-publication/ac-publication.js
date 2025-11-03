@@ -16,6 +16,7 @@ import AcPublicationKoppeling from './ac-publication-koppeling';
 import AcPublicationGebruik from './ac-publication-gebruik';
 import AcPublicationDienst from './ac-publication-dienst';
 import AcPublicationContactperson from './ac-publication-contactperson';
+import AcPublicationModuleVersie from './ac-publication-moduleversie';
 import { AcContainer, AcFlex } from '@src/atoms';
 import { AcButton } from '@molecules';
 import { VISUALS } from '@constants';
@@ -175,6 +176,9 @@ const AcPublication = observer(({ store: { publications } }) => {
         }
         if (get_single?.['@self']?.schema?.slug === 'module') {
           return <AcPublicationModule />;
+        }
+        if (get_single?.['@self']?.schema?.slug === 'moduleversie') {
+          return <AcPublicationModuleVersie />;
         }
         if (get_single?.['@self']?.schema?.slug === 'koppeling') {
           return <AcPublicationKoppeling />;

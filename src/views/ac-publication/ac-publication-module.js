@@ -364,10 +364,10 @@ const AcPublicationProduct = ({
         <AcFlex spacing='sm' justifyContent='between' alignItems='center'>
           <Heading level={4} className='con-module-publication--header-container'>
             <div className='con-beheer-details--header-container'>
-              {get_single?.['@self']?.image && (
+              {(get_single?.['@self']?.image || get_single?.logo) && (
                 <ConLogoPreview
                   className='con-beheer-details--logo-container'
-                  logoUrl={get_single?.['@self']?.image}
+                  logoUrl={get_single?.['@self']?.image || get_single?.logo}
                 />
               )}
 
@@ -418,6 +418,15 @@ const AcPublicationProduct = ({
                     url.searchParams.set('id', id);
                     navigate(url.pathname + url.search);
                     return;
+                  }
+
+                  if (schemaSlug === 'module') {
+                    const beheerUrl = `/beheer/applicaties/${id}`;
+                    window.open(beheerUrl, '_blank');
+                  }
+                  if (schemaSlug === 'moduleversie') {
+                    const beheerUrl = `/beheer/applicatieversie/${id}`;
+                    window.open(beheerUrl, '_blank');
                   }
                 }
                 // Fallback to beheer legacy edit page in new tab

@@ -25,7 +25,7 @@ import ReactSelect from 'react-select';
  */
 const ConFormDienstenStage = memo(
   ({
-    product,
+    // product,
     dienstOptions,
     setProduct,
     dienstenFormState,
@@ -78,45 +78,76 @@ const ConFormDienstenStage = memo(
 
       const prevModuleIndex = moduleIndexByRow?.[rowId];
 
+      // Resolve indices using getAllModulesForStages mapping
+      const allModules = getAllModulesForStages ? getAllModulesForStages() : [];
+      const resolveUsingAllModules = (identifier) => {
+        if (identifier == null) return null;
+        const asNumber = Number(identifier);
+        if (!Number.isNaN(asNumber) && Number.isInteger(asNumber)) return asNumber;
+        const found = allModules.find((m) => {
+          if (!m) return false;
+          if (m.id && String(m.id) === String(identifier)) return true;
+          if (m.moduleIndex != null && String(m.moduleIndex) === String(identifier))
+            return true;
+          if (m.value != null && String(m.value) === String(identifier)) return true;
+          return false;
+        });
+        return found ? found.moduleIndex : null;
+      };
+
+      const curIndexResolved = resolveUsingAllModules(appId);
+      const prevIndexResolved = resolveUsingAllModules(prevModuleIndex);
+
       setProduct((prev) => {
         const modules = [...(prev.modules || [])];
 
+        const curIndex = curIndexResolved;
+        const prevIndex = prevIndexResolved;
+
         // If dienst moved from another module, remove it there first
-        if (prevModuleIndex != null && prevModuleIndex !== appId) {
-          const prevModule = modules[prevModuleIndex];
+        if (prevIndex != null && prevIndex !== curIndex) {
+          const prevModule = modules[prevIndex];
           if (typeof prevModule === 'object') {
             const prevList = Array.isArray(prevModule.diensten)
               ? prevModule.diensten
               : [];
-            modules[prevModuleIndex] = {
+            modules[prevIndex] = {
               ...prevModule,
               diensten: prevList.filter((d) => d._localId !== localId),
             };
           }
         }
 
-        const targetModule = modules[appId];
-
         // Only modify if it's an object (new module), not string (existing module)
-        if (typeof targetModule !== 'object') {
-          console.warn(
-            'Cannot modify existing module diensten:',
-            appId,
-            targetModule
-          );
+        if (curIndex == null) {
+          console.warn('Could not resolve target module for dienst:', appId);
           return prev;
+        }
+
+        let targetModule = modules[curIndex];
+
+        // If target is a string id (existing module), convert to editable object using lookup
+        if (typeof targetModule !== 'object') {
+          const modId = String(targetModule || appId);
+          const lookup =
+            allModules.find(
+              (m) => String(m.id) === String(modId) || m.moduleIndex === curIndex
+            ) || {};
+          const existingDiensten = Array.isArray(lookup.diensten)
+            ? lookup.diensten
+            : [];
+          targetModule = { ...lookup, id: modId, diensten: existingDiensten };
+          modules[curIndex] = targetModule;
         }
 
         // Create or update dienst object with proper structure
         const dienstOption = dienstOptions.find((opt) => opt.value === dienstVal);
 
-        // ✅ FIXED: Find existing dienst to preserve all its properties
         const existingDienst = Array.isArray(targetModule.diensten)
           ? targetModule.diensten.find((d) => d._localId === localId)
           : null;
 
         const dienstObject = {
-          // ✅ FIXED: Preserve existing properties, then override with new values
           ...(existingDienst || {}),
           _localId: localId, // Add local ID for tracking
           type: dienstVal, // The service type (e.g., "Functioneel beheer")
@@ -141,15 +172,18 @@ const ConFormDienstenStage = memo(
           nextDiensten = [...prevDiensten, dienstObject];
         }
 
-        modules[appId] = { ...targetModule, diensten: nextDiensten };
-
-        // Track which module this row belongs to
-        setDienstValue(rowId, (prev) => ({
-          moduleIndexByRow: { ...(prev.moduleIndexByRow || {}), [rowId]: appId },
-        }));
+        modules[curIndex] = { ...targetModule, diensten: nextDiensten };
 
         return { ...prev, modules };
       });
+
+      // Track which module this row belongs to (numeric resolved index)
+      setDienstValue(rowId, (prev) => ({
+        moduleIndexByRow: {
+          ...(prev.moduleIndexByRow || {}),
+          [rowId]: curIndexResolved,
+        },
+      }));
     };
 
     const removeRow = (rowId) => {
@@ -159,14 +193,19 @@ const ConFormDienstenStage = memo(
       if (appId != null && localId != null) {
         setProduct((prev) => {
           const modules = [...(prev.modules || [])];
-          const targetModule = modules[appId];
 
-          if (typeof targetModule === 'object') {
-            const prevDiensten = Array.isArray(targetModule.diensten)
-              ? targetModule.diensten
-              : [];
-            const nextDiensten = prevDiensten.filter((d) => d._localId !== localId);
-            modules[appId] = { ...targetModule, diensten: nextDiensten };
+          const resolved = resolveModuleIndex(appId);
+          if (resolved != null) {
+            const targetModule = modules[resolved];
+            if (typeof targetModule === 'object') {
+              const prevDiensten = Array.isArray(targetModule.diensten)
+                ? targetModule.diensten
+                : [];
+              const nextDiensten = prevDiensten.filter(
+                (d) => d._localId !== localId
+              );
+              modules[resolved] = { ...targetModule, diensten: nextDiensten };
+            }
           }
 
           return { ...prev, modules };
@@ -197,6 +236,93 @@ const ConFormDienstenStage = memo(
           )
         ),
       }));
+    };
+
+    // Handle application selection change for a row: move or remove dienst as needed
+    const handleApplicationChange = (rowId, selectedOption) => {
+      // Preserve current dienst selection so we can move it between modules
+      const currentDienst = selectedDienstByRow[rowId];
+
+      // Update selected application in UI state
+      setDienstenFormState((prev) => ({
+        ...prev,
+        selectedApplication: {
+          ...prev.selectedApplication,
+          [rowId]: selectedOption?.value,
+        },
+      }));
+
+      // If user cleared the application, remove the dienst from its previous module
+      if (!selectedOption) {
+        // If there's a persisted localId, remove it from product.modules
+        const localId = dienstIdByRow?.[rowId];
+        if (localId != null) {
+          // remove by resolving previous index
+          setProduct((prev) => {
+            const modules = [...(prev.modules || [])];
+            // try numeric prev index first
+            const prevIdx = moduleIndexByRow?.[rowId];
+            const resolve = (identifier) => {
+              if (identifier == null) return null;
+              const asNumber = Number(identifier);
+              if (!Number.isNaN(asNumber) && Number.isInteger(asNumber))
+                return asNumber;
+              const allModules = getAllModulesForStages
+                ? getAllModulesForStages()
+                : [];
+              const found = allModules.find((m) => {
+                if (!m) return false;
+                if (m.id && String(m.id) === String(identifier)) return true;
+                if (
+                  m.moduleIndex != null &&
+                  String(m.moduleIndex) === String(identifier)
+                )
+                  return true;
+                return false;
+              });
+              return found ? found.moduleIndex : null;
+            };
+            const resolvedPrev = resolve(prevIdx);
+            if (resolvedPrev != null) {
+              const mod = modules[resolvedPrev];
+              if (typeof mod === 'object') {
+                const list = Array.isArray(mod.diensten) ? mod.diensten : [];
+                modules[resolvedPrev] = {
+                  ...mod,
+                  diensten: list.filter((d) => d._localId !== localId),
+                };
+              }
+            }
+            return { ...prev, modules };
+          });
+        }
+        return;
+      }
+
+      // If there is a selected dienst, persist (move) it to the newly selected module
+      if (currentDienst != null) {
+        persistRowIntoProduct(rowId, {
+          appId: selectedOption?.value,
+          dienstVal: currentDienst,
+        });
+      }
+    };
+
+    // Resolve a module identifier (index or id) to a numeric index in product.modules
+    const resolveModuleIndex = (identifier) => {
+      if (identifier == null) return null;
+      const asNumber = Number(identifier);
+      if (!Number.isNaN(asNumber) && Number.isInteger(asNumber)) return asNumber;
+      const allModules = getAllModulesForStages ? getAllModulesForStages() : [];
+      const found = allModules.find((m) => {
+        if (!m) return false;
+        if (m.id && String(m.id) === String(identifier)) return true;
+        if (m.moduleIndex != null && String(m.moduleIndex) === String(identifier))
+          return true;
+        if (m.value != null && String(m.value) === String(identifier)) return true;
+        return false;
+      });
+      return found ? found.moduleIndex : null;
     };
 
     // ✅ SIMPLIFIED: Use helper method to get all modules (new + existing) for diensten
@@ -278,20 +404,9 @@ const ConFormDienstenStage = memo(
                             )
                           : null
                       }
-                      onChange={(selectedOption) => {
-                        // Clear dienst selection when app changes
-                        setDienstenFormState((prev) => ({
-                          ...prev,
-                          selectedApplication: {
-                            ...prev.selectedApplication,
-                            [rowId]: selectedOption?.value,
-                          },
-                          selectedDienstByRow: {
-                            ...(prev.selectedDienstByRow || {}),
-                            [rowId]: undefined,
-                          },
-                        }));
-                      }}
+                      onChange={(selectedOption) =>
+                        handleApplicationChange(rowId, selectedOption)
+                      }
                     />
                   </TableCell>
                   <TableCell>
@@ -308,29 +423,6 @@ const ConFormDienstenStage = memo(
                           : null
                       }
                       isDisabled={selectedApplication[rowId] == null}
-                      isOptionDisabled={(opt) => {
-                        const appId = selectedApplication[rowId];
-                        if (appId == null) return true;
-
-                        // Check if this dienst is already selected for this module (excluding current row)
-                        const targetModule = (product.modules || [])[appId];
-                        if (
-                          typeof targetModule === 'object' &&
-                          Array.isArray(targetModule.diensten)
-                        ) {
-                          const optVal = String(opt.value);
-                          const currentLocalId = dienstIdByRow?.[rowId];
-                          return targetModule.diensten.some((d) => {
-                            if (typeof d === 'object') {
-                              return (
-                                d.type === optVal && d._localId !== currentLocalId
-                              );
-                            }
-                            return d === optVal;
-                          });
-                        }
-                        return false;
-                      }}
                       onChange={(selectedOption) => {
                         const appId = selectedApplication[rowId];
                         if (appId == null) return;

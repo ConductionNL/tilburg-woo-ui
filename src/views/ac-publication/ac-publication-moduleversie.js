@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import RelatedTabs from './con-related-tabs';
 import ConLogoPreview from '../ac-register/con-logo-preview';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
@@ -8,10 +8,9 @@ import { AcContainer, AcFlex } from '@atoms';
 import { AcLoader, ConDetailsActionsMenu, ConUuidResolver } from '@components';
 import { withStore } from '@stores';
 import { VISUALS } from '@constants';
-import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
+import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
-import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 
 // Markdown Editor
 import remarkDefinitionList, { defListHastHandlers } from 'remark-definition-list';
@@ -26,16 +25,12 @@ import rehypeSanitize from 'rehype-sanitize';
 import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
 
 /**
- * Product Details Page (simplified for fixed type)
- * - Fixed config for producten; no dynamic type switching
- * - Fetches object, schema and related data (uses/used/files)
- * - Renders Files tab and dynamic Uses/Used tabs
+ * Module Version (Applicatie Versie) Publication Page
+ * - Fetches object, schema and related data (uses/used)
+ * - Renders version information and related tabs
  * - Supports unique action menu items and edit/delete via external modals
  */
-const AcPublicationProduct = ({
-  store: { publications, user, object },
-  //   schema,
-}) => {
+const AcPublicationModuleVersie = ({ store: { publications, user, object } }) => {
   const { id } = useParams();
   const { get_single, loading } = publications;
   const navigate = useNavigate();
@@ -43,11 +38,10 @@ const AcPublicationProduct = ({
   const openDynamicCreate = useCallback(
     (targetType, preSelected, metadata = {}) => {
       // For publication pages, we'll navigate to the beheer page with modal open
-      // TODO: Handle outgoing relationship metadata in beheer page URL params
       if (metadata.isOutgoing) {
         // handle outgoing relationship metadata
       }
-      navigate(`/beheer/${targetType}?showCreateModal=true&voorzieningId=${id}`);
+      navigate(`/beheer/${targetType}?showCreateModal=true&moduleVersieId=${id}`);
     },
     [navigate, id]
   );
@@ -56,11 +50,11 @@ const AcPublicationProduct = ({
     object,
     user,
     schemaRef: get_single?.['@self']?.schema?.slug,
-    currentType: get_single?.['@self']?.schema?.slug, // Use schema slug as current type
+    currentType: get_single?.['@self']?.schema?.slug,
     openDynamicCreate,
-    currentObject: get_single, // Pass current object for organization permission checks
-    currentObjectRegister: 'voorzieningen', // Pass current object register (for publication pages)
-    currentObjectSchema: get_single?.['@self']?.schema?.slug, // Pass current object schema
+    currentObject: get_single,
+    currentObjectRegister: 'voorzieningen',
+    currentObjectSchema: get_single?.['@self']?.schema?.slug,
   });
 
   // Delete modal state
@@ -99,21 +93,6 @@ const AcPublicationProduct = ({
   // Track which IDs we've already fetched to prevent duplicate calls
   const fetchedIds = useRef(new Set());
 
-  // Extract contactpersoon from uses data instead of get_single
-  const contact = useMemo(() => {
-    if (!uses?.length) return null;
-
-    // Find the first contactpersoon object in the uses array
-    // (if multiple contactpersonen exist, we take the first one)
-    const contactpersoonObject = uses.find(
-      (use) => use?.['@self']?.schema?.slug === 'contactpersoon'
-    );
-
-    if (!contactpersoonObject) return null;
-
-    return contactpersoonObject;
-  }, [uses]);
-
   const fetchUses = useCallback(async () => {
     if (!id) return;
     setUsesLoading(true);
@@ -138,7 +117,7 @@ const AcPublicationProduct = ({
     } finally {
       setUsesLoading(false);
     }
-  }, []);
+  }, [id]);
 
   const fetchUsed = useCallback(async () => {
     if (!id) return;
@@ -164,7 +143,7 @@ const AcPublicationProduct = ({
     } finally {
       setUsedLoading(false);
     }
-  }, []);
+  }, [id]);
 
   useEffect(() => {
     // Only fetch when the ID in the URL changes and we haven't fetched for this ID before
@@ -184,6 +163,25 @@ const AcPublicationProduct = ({
     return <AcLoader />;
   }
 
+  // Get status date
+  const getStatusDate = () => {
+    const statusDateMap = {
+      'in ontwikkeling': get_single.datumInOntwikkeling,
+      ontwikkeling: get_single.datumInOntwikkeling,
+      actief: get_single.datumInGebruik,
+      'in gebruik': get_single.datumInGebruik,
+      teruggetrokken: get_single.datumTeruggetrokken,
+      'einde ondersteuning': get_single.datumEindeOndersteuning,
+    };
+
+    const statusDate = statusDateMap[get_single?.status?.toLowerCase()] || null;
+
+    if (statusDate && !isNaN(new Date(statusDate).getTime())) {
+      return new Date(statusDate).toLocaleDateString('nl-NL');
+    }
+    return null;
+  };
+
   return (
     <AcContainer margin='xl'>
       <AcFlex column spacing='sm'>
@@ -199,12 +197,10 @@ const AcPublicationProduct = ({
 
               <Heading className='con-beheer-details--title'>
                 {get_single?.['@self']?.name ||
+                  get_single?.naam ||
+                  get_single?.versie ||
                   get_single?.id ||
-                  get_single?.name ||
-                  'Product'}{' '}
-                {'('}
-                <ConUuidResolver>{get_single.aanbieder}</ConUuidResolver>
-                {')'}
+                  'Applicatie versie'}
               </Heading>
             </div>
           </Heading>
@@ -233,20 +229,8 @@ const AcPublicationProduct = ({
               showPublishActions={true}
               onDelete={handleDelete}
               onEdit={() => {
+                // Navigate to beheer edit page in new tab
                 const schemaSlug = get_single?.['@self']?.schema?.slug;
-                if (schemaSlug) {
-                  const wizards = Object.values(DASHBOARD_WIZARDS);
-                  const wizard = wizards.find((w) => w.schema === schemaSlug);
-
-                  if (wizard) {
-                    const baseUrl = getWizardUrl(wizard);
-                    const url = new URL(baseUrl, window.location.origin);
-                    url.searchParams.set('id', id);
-                    navigate(url.pathname + url.search);
-                    return;
-                  }
-                }
-                // Fallback to beheer legacy edit page in new tab
                 const beheerUrl = `/beheer/${schemaSlug}/${id}`;
                 window.open(beheerUrl, '_blank');
               }}
@@ -265,8 +249,8 @@ const AcPublicationProduct = ({
         </AcFlex>
         <AcFlex spacing='sm' justifyContent='between'>
           <AcFlex column spacing='md' style={{ flex: 3 }}>
-            {!!get_single?.['@self']?.summary && (
-              <div>{get_single?.['@self']?.summary}</div>
+            {!!get_single?.beschrijvingKort && (
+              <div>{get_single?.beschrijvingKort}</div>
             )}
 
             {!!get_single?.beschrijvingLang && (
@@ -291,118 +275,62 @@ const AcPublicationProduct = ({
             )}
           </AcFlex>
           <AcFlex column spacing='sm' style={{ flex: 1 }}>
-            {(usesLoading ||
-              (contact && typeof contact === 'object') ||
-              get_single?.website) && (
+            {/* Version Information */}
+            {(get_single?.versie ||
+              get_single?.status ||
+              get_single?.releaseDatum) && (
               <AcFlex
                 column
                 spacing='sm'
                 className='con-product-details--contact-info'
               >
-                {get_single?.website && (
+                {get_single?.versie && (
                   <div>
-                    <b>Website:</b>
-                    <Link
-                      href={`${
-                        get_single?.website.startsWith('http')
-                          ? get_single?.website
-                          : `https://${get_single?.website}`
-                      }`}
-                    >
-                      {get_single?.website}
-                    </Link>
+                    <b>Versienummer:</b>
+                    <p>{get_single?.versie}</p>
                   </div>
                 )}
-                {/* Show loading state while fetching uses data */}
-                {usesLoading && (
-                  <AcFlex column spacing='xs'>
-                    <b>Contactpersoon:</b>
-                    <p>Laden...</p>
-                  </AcFlex>
-                )}
-                {/* Show contact info when available and not loading */}
-                {!usesLoading && contact && typeof contact === 'object' && (
-                  <AcFlex column spacing='xs'>
-                    <b>Contactpersoon:</b>
+                {get_single?.status && (
+                  <div>
+                    <b>Status:</b>
                     <p>
-                      {[contact.voornaam, contact.tussenvoegsel, contact.achternaam]
-                        .filter(Boolean)
-                        .join(' ')}
+                      {get_single?.status}
+                      {getStatusDate() && (
+                        <span style={{ color: '#666', marginLeft: '4px' }}>
+                          (sinds {getStatusDate()})
+                        </span>
+                      )}
                     </p>
-                    <div>
-                      {contact['e-mailadres'] && (
-                        <Link href={`mailto:${contact['e-mailadres']}`}>
-                          {contact['e-mailadres']}
-                        </Link>
-                      )}
-                    </div>
-                    <div>
-                      {contact.telefoonnummer && (
-                        <Link
-                          href={`tel:${String(contact.telefoonnummer)
-                            .split('')
-                            .filter((i) => i !== ' ')
-                            .join('')}`}
-                        >
-                          {contact.telefoonnummer}
-                        </Link>
-                      )}
-                    </div>
-                  </AcFlex>
+                  </div>
                 )}
-                {/* Show message when no contact found after loading */}
-                {!usesLoading && !contact && (
-                  <AcFlex column spacing='xs'>
-                    <b>Contactpersoon:</b>
-                    <p>Geen contactpersoon gevonden</p>
-                  </AcFlex>
+                {get_single?.releaseDatum && (
+                  <div>
+                    <b>Release datum:</b>
+                    <p>
+                      {!isNaN(new Date(get_single.releaseDatum).getTime())
+                        ? new Date(get_single.releaseDatum).toLocaleDateString(
+                            'nl-NL'
+                          )
+                        : get_single.releaseDatum}
+                    </p>
+                  </div>
                 )}
               </AcFlex>
             )}
 
-            {(get_single?.status ||
-              get_single?.hostingLocatie ||
-              get_single?.hostingJurisdictie ||
-              (get_single?.cloudDienstverleningsmodel &&
-                ((Array.isArray(get_single?.cloudDienstverleningsmodel) &&
-                  get_single?.cloudDienstverleningsmodel.length > 0) ||
-                  (typeof get_single?.cloudDienstverleningsmodel === 'string' &&
-                    get_single?.cloudDienstverleningsmodel.length > 0)))) && (
+            {/* Module/Application Information */}
+            {get_single?.module && (
               <AcFlex
                 column
                 spacing='sm'
                 className='con-product-details--contact-info'
               >
-                {get_single?.status && (
-                  <div>
-                    <b>Status:</b>
-                    <p>{get_single?.status}</p>
-                  </div>
-                )}
-                {get_single?.hostingLocatie && (
-                  <div>
-                    <b>De applicatie wordt gehost in:</b>
-                    <p>{get_single?.hostingLocatie}</p>
-                  </div>
-                )}
-                {get_single?.hostingJurisdictie && (
-                  <div>
-                    <b>De data wordt opgeslagen in:</b>
-                    <p>{get_single?.hostingJurisdictie}</p>
-                  </div>
-                )}
-                {get_single?.cloudDienstverleningsmodel &&
-                  ((Array.isArray(get_single?.cloudDienstverleningsmodel) &&
-                    get_single?.cloudDienstverleningsmodel.length > 0) ||
-                    (typeof get_single?.cloudDienstverleningsmodel === 'string' &&
-                      get_single?.cloudDienstverleningsmodel.length > 0)) && (
-                    <div style={{ marginBottom: '8px' }}>
-                      <strong>Hosting type: </strong>
-                      {Array.isArray(get_single?.cloudDienstverleningsmodel)
-                        ? get_single?.cloudDienstverleningsmodel.join(', ')
-                        : get_single?.cloudDienstverleningsmodel}
-                    </div>
-                  )}
+                <div>
+                  <b>Applicatie:</b>
+                  <p>
+                    <ConUuidResolver>{get_single.module}</ConUuidResolver>
+                  </p>
+                </div>
               </AcFlex>
             )}
           </AcFlex>
@@ -432,4 +360,4 @@ const AcPublicationProduct = ({
   );
 };
 
-export default withStore(observer(AcPublicationProduct));
+export default withStore(observer(AcPublicationModuleVersie));

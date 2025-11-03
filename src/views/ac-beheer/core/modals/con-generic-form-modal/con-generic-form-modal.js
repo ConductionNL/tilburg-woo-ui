@@ -94,6 +94,9 @@ const ConGenericFormModal = ({
   const [options, setOptions] = useState({});
   const [optionsLoading, setOptionsLoading] = useState({});
 
+  // Full organization data (fetched for context)
+  const [fullOrganization, setFullOrganization] = useState(null);
+
   // Get current register from beheer config
   const currentRegister = config?.beheerConfig?.registerSlug;
 
@@ -402,9 +405,32 @@ const ConGenericFormModal = ({
     schema?.properties,
   ]);
 
+  // Fetch full organization data when modal opens
+  useEffect(() => {
+    const fetchFullOrg = async () => {
+      const orgId = user?.activeOrganization?.uuid;
+      if (showModal && orgId) {
+        try {
+          await object.fetchObject('voorzieningen', 'organisatie', orgId);
+          const fullOrg = object.getObject('voorzieningen_organisatie', orgId);
+          if (fullOrg) {
+            setFullOrganization(fullOrg);
+          }
+        } catch (error) {
+          console.error('Failed to fetch full organization:', error);
+        }
+      }
+    };
+
+    fetchFullOrg();
+  }, [showModal, user?.activeOrganization?.uuid, object]);
+
   // Reset the guard when closing or changing type
   useEffect(() => {
-    if (!showModal) hasInitializedRef.current = false;
+    if (!showModal) {
+      hasInitializedRef.current = false;
+      setFullOrganization(null); // Clear org data when closing
+    }
   }, [showModal]);
 
   // Handle additional effects when form data changes
@@ -444,12 +470,23 @@ const ConGenericFormModal = ({
 
     // Priority 1: Manual options from config
     Object.keys(config?.optionsProviders || {}).forEach((fieldName) => {
-      providers[fieldName] = options[fieldName] || [];
+      const configValue = config.optionsProviders[fieldName];
+
+      // Check if it's an enumFilter configuration - if so, pass it through as-is
+      if (configValue?.enumFilter) {
+        providers[fieldName] = configValue;
+      } else {
+        // Otherwise, use the loaded options from state
+        providers[fieldName] = options[fieldName] || [];
+      }
     });
 
-    // Priority 2: Schema-based enum options
+    // Priority 2: Schema-based enum options (only if not already set)
+    // Skip if field already has an enumFilter config or other provider
     if (schema?.properties) {
       Object.entries(schema.properties).forEach(([fieldName, fieldSchema]) => {
+        // Only add schema enum if no provider exists yet
+        // Note: enumFilter configs are already set in Priority 1
         if (fieldSchema.enum && !providers[fieldName]) {
           providers[fieldName] = fieldSchema.enum.map((value) => ({
             value,
@@ -907,9 +944,21 @@ const ConGenericFormModal = ({
     }
   }, [modalRef.current]);
 
+  // Create enhanced user object with full organization for enum filtering (must be before early returns)
+  const enhancedUser = useMemo(() => {
+    if (!fullOrganization) return user;
+
+    return {
+      ...user,
+      activeOrganization: {
+        ...user.activeOrganization,
+        ...fullOrganization, // Merge full org data
+      },
+    };
+  }, [user, fullOrganization]);
+
   // Don't render if no configuration
   if (!config) {
-    console.error(`No configuration found for form type: ${type}`);
     return null;
   }
 
@@ -977,7 +1026,7 @@ const ConGenericFormModal = ({
               getIsValid={handleFormValidCheck}
               honorImmutable={isEdit}
               userIsAuthenticated={user.isAuthenticated}
-              user={user}
+              user={enhancedUser}
               isCreateMode={!isEdit}
               onSearchHandlers={{ handleSearch }}
             />

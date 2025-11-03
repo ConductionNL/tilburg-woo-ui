@@ -1,6 +1,7 @@
 /**
  * stripLocalIds
  * Recursively removes UI-only fields (like _localId, standaardnaam) from a value
+ * Recursively removes UI-only fields (like _localId, standaardnaam, bewijsFilename, aanbieder*) from a value
  * before sending to the API. Preserves existing IDs by converting them back to the 'id' field.
  *
  * NOTE: bewijsFilename is NOT removed here because it's needed during the upload process.
@@ -29,6 +30,23 @@ export const stripLocalIds = (value) => {
       if (k === 'standaardnaam') return;
       // NOTE: bewijsFilename is NOT stripped here - it's needed for file uploads
       // It will be removed in uploadCompliancyEvidence after files are uploaded
+      // ✅ NEW: Remove filename field before saving
+      if (k === 'bewijsFilename') return;
+      // ✅ NEW: Remove aanbieder* fields (only used for creating new organization)
+      if (
+        [
+          'aanbiederNaam',
+          'aanbiederType',
+          'aanbiederWebsite',
+          'aanbiederBeschrijvingKort',
+          'aanbiederBeschrijvingLang',
+          'aanbiederEmail',
+          'aanbiederTelefoonnummer',
+          'aanbiederKvkNummer',
+          'aanbiederLogo',
+        ].includes(k)
+      )
+        return;
       out[k] = stripLocalIds(value[k]);
     });
     return out;

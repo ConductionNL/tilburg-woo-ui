@@ -1,4 +1,4 @@
-import { useState, useEffect, memo, useRef } from 'react';
+import { useState, useEffect, memo, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
@@ -19,6 +19,7 @@ import { useDebounce } from '@src/hooks/use-debounce.hook';
 import ConKoppelingStageZoeken from './components/con-koppeling-stage-zoeken';
 import ConKoppelingStageToevoegen from './components/con-koppeling-stage-toevoegen';
 import ConKoppelingStageControleren from './components/con-koppeling-stage-controleren';
+import { commongroundApiUrl } from '@src/config';
 
 /**
  * Koppeling Wizard (AcFormsKoppeling)
@@ -42,6 +43,7 @@ const AcFormsKoppeling = ({ store }) => {
   const [searchParams] = useSearchParams();
   const koppelingId = searchParams.get('id') || '';
   const typeFromUrl = searchParams.get('type') || '';
+  const applicatieFromUrl = searchParams.get('applicatie') || ''; // Read applicatie parameter from URL
   const isEditMode = !!koppelingId;
 
   // Validate type from URL and use it if valid
@@ -109,6 +111,10 @@ const AcFormsKoppeling = ({ store }) => {
   const [ownAppInput, setOwnAppInput] = useState('');
   const debouncedOwnAppInput = useDebounce(ownAppInput, 500);
 
+  // Standaarden options (fetched similarly to referentiecomponenten)
+  const [standaardenOptions, setStandaardenOptions] = useState([]);
+  const [standaardenOptionsLoading, setStandaardenOptionsLoading] = useState(false);
+
   // Toevoegen state (rows-based like product KoppelingenForm), but using modules for A and B
   const [rows, setRows] = useState([0]);
   const [nextRowId, setNextRowId] = useState(1);
@@ -118,6 +124,7 @@ const AcFormsKoppeling = ({ store }) => {
   const [typeByRow, setTypeByRow] = useState({});
   const [beschrijvingByRow, setBeschrijvingByRow] = useState({});
   const [statusByRow, setStatusByRow] = useState({});
+  const [standaardenByRow, setStandaardenByRow] = useState([]);
   const [nameByRow, setNameByRow] = useState({});
   const [selectedModuleLabels, setSelectedModuleLabels] = useState({}); // id -> label
   const [koppelingIdByRow, setKoppelingIdByRow] = useState({}); // rowId -> koppeling id (for edit)
@@ -218,6 +225,54 @@ const AcFormsKoppeling = ({ store }) => {
     };
   }, []);
 
+  // Pre-select applicatie from URL parameter
+  useEffect(() => {
+    if (!applicatieFromUrl || isEditMode) return; // Skip if editing or no applicatie in URL
+
+    const preSelectApplicatie = async () => {
+      try {
+        // Wait for modules to be loaded first
+        if (modulesOptions.length === 0) return;
+
+        // Check if the applicatie exists in options
+        const applicatieOption = modulesOptions.find(
+          (opt) => String(opt.value) === String(applicatieFromUrl)
+        );
+
+        if (applicatieOption) {
+          // Pre-select the applicatie as "own app" (needs to be an object with value and label)
+          setOwnApp({
+            value: applicatieOption.value,
+            label: applicatieOption.label,
+          });
+          setSelectedAppAByRow((prev) => ({ ...prev, [0]: applicatieOption.value }));
+          setSelectedModuleLabels((prev) => ({
+            ...prev,
+            [applicatieOption.value]: applicatieOption.label,
+          }));
+        } else {
+          // If applicatie not in initial list, fetch it directly
+          const label = await ensureModuleOptionAndGetLabel(applicatieFromUrl);
+          if (label) {
+            setOwnApp({
+              value: String(applicatieFromUrl),
+              label: String(label),
+            });
+            setSelectedAppAByRow((prev) => ({ ...prev, [0]: applicatieFromUrl }));
+            setSelectedModuleLabels((prev) => ({
+              ...prev,
+              [applicatieFromUrl]: label,
+            }));
+          }
+        }
+      } catch (error) {
+        console.error('Error pre-selecting applicatie from URL:', error);
+      }
+    };
+
+    preSelectApplicatie();
+  }, [applicatieFromUrl, modulesOptions, isEditMode]);
+
   // Helper to ensure a module option exists and return its label
   const ensureModuleOptionAndGetLabel = async (id) => {
     if (!id) return '';
@@ -283,7 +338,7 @@ const AcFormsKoppeling = ({ store }) => {
         const beschrijving = data?.beschrijvingKort || '';
         const status = data?.status || '';
         const naam = data?.naam || '';
-
+        const standaarden = data?.standaardversies || [];
         // Resolve labels and ensure options exist
         const [labelA, labelB] = await Promise.all([
           ensureModuleOptionAndGetLabel(moduleAId),
@@ -312,6 +367,7 @@ const AcFormsKoppeling = ({ store }) => {
         setTypeByRow({ 0: soort });
         setBeschrijvingByRow({ 0: beschrijving });
         setStatusByRow({ 0: status });
+        setStandaardenByRow({ 0: standaarden });
         setNameByRow({ 0: naam });
         setKoppelingIdByRow({ 0: String(koppelingId) });
 
@@ -446,7 +502,7 @@ const AcFormsKoppeling = ({ store }) => {
         if (missingIds.length) {
           try {
             const params = new URLSearchParams({ _limit: '100', _page: '1' });
-            for (const id of missingIds) params.append('_search[]', id);
+            for (const id of missingIds) params.append('_search', id);
             const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module?${params}`;
             const res = await fetch(endpoint, {
               headers: { Accept: 'application/json' },
@@ -598,6 +654,17 @@ const AcFormsKoppeling = ({ store }) => {
     };
   }, [ownApp?.value]);
 
+  useEffect(() => {
+    const shouldLoadStandards =
+      standaardenOptions.length === 0 && !standaardenOptionsLoading;
+
+    if (shouldLoadStandards) {
+      const tasks = [];
+      if (shouldLoadStandards) tasks.push(loadStandaarden());
+      Promise.all(tasks).catch(() => {});
+    }
+  }, []);
+
   const getStatus = (active, step) => {
     if (active === step) return 'current';
     if (active < step) return 'not-checked';
@@ -683,6 +750,9 @@ const AcFormsKoppeling = ({ store }) => {
     setStatusByRow((prev) =>
       Object.fromEntries(Object.entries(prev).filter(([k]) => Number(k) !== rowId))
     );
+    setStandaardenByRow((prev) =>
+      Object.fromEntries(Object.entries(prev).filter(([k]) => Number(k) !== rowId))
+    );
     setNameByRow((prev) =>
       Object.fromEntries(Object.entries(prev).filter(([k]) => Number(k) !== rowId))
     );
@@ -699,7 +769,7 @@ const AcFormsKoppeling = ({ store }) => {
         const soort = typeByRow[rowId] || '';
         const beschrijving = beschrijvingByRow[rowId] || '';
         const status = statusByRow[rowId] || '';
-
+        const standaarden = standaardenByRow[rowId] || [];
         const payload = {
           naam,
           moduleA: appAId,
@@ -708,6 +778,7 @@ const AcFormsKoppeling = ({ store }) => {
           type: soort,
           beschrijvingKort: beschrijving,
           status,
+          standaardversies: standaarden,
         };
 
         // For 'aanbieden-koppeling' type, automatically set the user's organization as aanbieder
@@ -722,6 +793,77 @@ const AcFormsKoppeling = ({ store }) => {
       })
       .filter(Boolean);
   };
+
+  const getStandaardenQueryParams = useCallback(() => {
+    const baseParams = {
+      _limit: '500', // Load 500 standaarden upfront
+      _page: '1',
+      _source: 'index',
+    };
+
+    // Force the correct type for standaarden, regardless of schema-provided params
+    baseParams.gemmaType = 'Standaard';
+
+    // Ensure we do not send schema-provided _extend for standards requests
+    if (baseParams._extend) {
+      delete baseParams._extend;
+    }
+    if (baseParams['_extend[]']) {
+      delete baseParams['_extend[]'];
+    }
+
+    return baseParams;
+  }, []);
+
+  const loadStandaarden = useCallback(async () => {
+    console.info('📋 Loading standaarden via object store cache...');
+    setStandaardenOptionsLoading(true);
+
+    try {
+      const queryParams = new URLSearchParams({
+        _limit: '500',
+        _page: '1',
+        gemmaType: 'Standaard',
+        '_extend[]': '@self.schema',
+      });
+
+      console.info('📋 Fetching standards from openconnector endpoint...');
+
+      // Fetch standards from openconnector endpoint using normal fetch
+      const response = await fetch(
+        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      const list = await response.json();
+
+      const options = list.results
+        .map((item, index) => {
+          const label =
+            item?.xml?.name?._value ||
+            item?.naam ||
+            item?.name ||
+            item?.title ||
+            item?.label ||
+            `Standaard ${index + 1}`;
+          const value = item?.value || item?.id || item?.slug || label;
+          return { value: String(value), label: String(label), data: item };
+        })
+        .filter((o) => o.label && o.value);
+
+      setStandaardenOptions(options);
+      console.info(`✅ Loaded ${options.length} standaarden (cache-first)`);
+    } catch (e) {
+      console.error('Failed to load standaarden:', e);
+      setStandaardenOptions([]);
+    } finally {
+      setStandaardenOptionsLoading(false);
+    }
+  }, [getStandaardenQueryParams, store]);
 
   // Reset functions for form state
   const handleRetryForm = () => {
@@ -747,6 +889,7 @@ const AcFormsKoppeling = ({ store }) => {
     setTypeByRow({});
     setBeschrijvingByRow({});
     setStatusByRow({});
+    setStandaardenByRow([]);
     setNameByRow({});
     setSelectedModuleLabels({});
     setKoppelingIdByRow({});
@@ -862,6 +1005,9 @@ const AcFormsKoppeling = ({ store }) => {
             modulesOptions={modulesOptions}
             setModulesOptions={setModulesOptions}
             setSelectedModuleLabels={setSelectedModuleLabels}
+            standaardenOptions={standaardenOptions}
+            standaardenOptionsLoading={standaardenOptionsLoading}
+            setStandaardenLoading={setStandaardenOptionsLoading}
             loading={loading}
             selectedAppAByRow={selectedAppAByRow}
             setSelectedAppAByRow={setSelectedAppAByRow}
@@ -879,6 +1025,8 @@ const AcFormsKoppeling = ({ store }) => {
             statusOptions={statusOptions}
             statusByRow={statusByRow}
             setStatusByRow={setStatusByRow}
+            standaardenByRow={standaardenByRow}
+            setStandaardenByRow={setStandaardenByRow}
             nameByRow={nameByRow}
             setNameByRow={setNameByRow}
             isEditMode={isEditMode}
@@ -900,6 +1048,9 @@ const AcFormsKoppeling = ({ store }) => {
             beschrijvingByRow={beschrijvingByRow}
             statusByRow={statusByRow}
             statusOptions={statusOptions}
+            standaardenByRow={standaardenByRow}
+            standaardenOptions={standaardenOptions}
+            setStandaardenByRow={setStandaardenByRow}
             nameByRow={nameByRow}
             getArrowForDirection={getArrowForDirection}
             saveResult={saveResult}

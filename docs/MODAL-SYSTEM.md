@@ -105,6 +105,125 @@ flowchart TD
 - Field validation
 - Success countdown
 - Loading states voor submit
+- Enum filtering and custom options
+
+**Enum Filtering:**
+
+The form modal system supports flexible enum filtering through the `FormModalConfigFactory`.
+
+**Priority Order:**
+1. **Schema enum is ALWAYS used** if it exists (highest priority)
+2. **enumFilter** can be applied to filter the schema enum
+3. **Custom optionsProviders** only apply when NO schema enum exists
+
+#### 1. Include Mode (Whitelist) - Static
+
+Only show specific enum values from the schema:
+
+```javascript
+// Schema has: enum: ['active', 'pending', 'inactive', 'archived']
+// enumFilter will reduce it to: ['active', 'pending']
+
+case 'your-type':
+  return {
+    ...baseConfig,
+    optionsProviders: {
+      status: { 
+        enumFilter: 'include', 
+        values: ['active', 'pending'] 
+      },
+    },
+  };
+```
+
+#### 1b. Include Mode (Whitelist) - Dynamic
+
+Filter enum values based on context (e.g., user role or organization type):
+
+```javascript
+// Schema has: enum: ['aanbod-beheerder', 'gebruik-beheerder', ...]
+// For Leverancier org: shows only ['aanbod-beheerder']
+// For other orgs: shows all enum values
+
+case 'contactpersonen':
+  return {
+    ...baseConfig,
+    optionsProviders: {
+      rollen: { 
+        enumFilter: 'include',
+        values: (formData, context) => {
+          // Access user context for dynamic filtering
+          const orgType = context?.user?.activeOrganization?.type;
+          
+          if (orgType === 'Leverancier') {
+            return ['aanbod-beheerder'];
+          }
+          
+          // Return all enum values for other organization types
+          return [
+            'aanbod-beheerder',
+            'gebruik-beheerder',
+            'gebruik-raadpleger',
+            'functioneel beheerder',
+            'VNG-raadpleger',
+            'Bezoeker',
+          ];
+        }
+      },
+    },
+  };
+```
+
+#### 2. Exclude Mode (Blacklist)
+Hide specific enum values from the schema:
+
+```javascript
+// Schema has: enum: ['option1', 'option2', 'option3', 'option4']
+// enumFilter will reduce it to: ['option1', 'option3', 'option4']
+
+case 'your-type':
+  return {
+    ...baseConfig,
+    optionsProviders: {
+      someField: { 
+        enumFilter: 'exclude', 
+        values: ['option2'] 
+      },
+    },
+  };
+```
+
+#### 3. Custom Options (Only When NO Schema Enum)
+Provide custom options for fields that don't have an enum in the schema:
+
+```javascript
+// Only works if the field has NO enum in schema
+case 'your-type':
+  return {
+    ...baseConfig,
+    optionsProviders: {
+      customField: () => [
+        { value: 'hoog', label: 'Hoog' },
+        { value: 'normaal', label: 'Normaal' },
+        { value: 'laag', label: 'Laag' },
+      ],
+    },
+  };
+```
+
+**Important Notes:**
+- **enumFilter only works when the schema has an enum** - It filters the existing enum values
+- **Custom optionsProviders (arrays/functions) only work when there's NO schema enum**
+- **enumFilter values can be static arrays OR dynamic functions** - Functions receive `(formData, context)` parameters
+- **Context includes user object** - Access `context.user` for dynamic filtering based on user role, organization, etc.
+- This ensures schema enums are always the source of truth
+- Filtering is useful for hiding deprecated values or showing context-specific options
+
+**Use Cases:**
+- **Static include mode**: Show only relevant status values for a specific workflow (e.g., only "draft" and "published" for editors)
+- **Dynamic include mode**: Filter options based on user context (e.g., show only "Aanbod-beheerder" role for Leverancier organizations)
+- **Exclude mode**: Hide deprecated, internal-only, or legacy enum values from the UI
+- **Custom options**: Provide options for non-enum fields (like dynamic dropdowns, API-based selects)
 
 ## Factory Pattern
 

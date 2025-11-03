@@ -84,6 +84,11 @@ export const useFacetNameResolution = (facets, objectStore) => {
                       bucket.label = nameMap[bucketValue];
                       bucket.originalLabel = bucket.label !== nameMap[bucketValue] ? bucket.label : bucketValue;
                     }
+                    
+                    // Change "Module" label to "Applicatie" for _schema facets
+                    if (subKey === 'schema' && bucket.label === 'Module') {
+                      bucket.label = 'Applicatie';
+                    }
                   });
                 }
               });

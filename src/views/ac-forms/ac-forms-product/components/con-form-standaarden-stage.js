@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { AcCheckbox } from '@src/molecules';
+import { AcCheckbox, AcFormField } from '@src/molecules';
 import { LogoUploadField } from '@views/ac-beheer/shared/components/con-logo-upload-field';
 import { ConExistingModulesInfoBox } from '@components';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
@@ -10,7 +10,9 @@ import {
   TableCell,
   TableContainer,
   TableRow,
+  Separator,
 } from '@utrecht/component-library-react/dist/css-module';
+import { validateWebsite } from '../../validation/form-validations';
 
 /**
  * Standaarden Form - Simple Table View
@@ -312,6 +314,7 @@ const ConFormStandaardenStage = ({
             bewijs: existingCompliancy?.bewijs || null,
             // ✅ NEW: Track filename for internal use (not displayed in UI)
             bewijsFilename: existingCompliancy?.bewijsFilename || null,
+            url: existingCompliancy?.url || null,
           };
         }
       });
@@ -450,7 +453,8 @@ const ConFormStandaardenStage = ({
     standardId,
     isCompliant,
     bewijs = null,
-    bewijsFilename = null
+    bewijsFilename = null,
+    url = null
   ) => {
     setProduct((prev) => {
       const modules = [...(prev.modules || [])];
@@ -461,7 +465,7 @@ const ConFormStandaardenStage = ({
 
       // Apply to all new modules (objects, not strings)
       modules.forEach((module, index) => {
-        if (typeof module === 'object') {
+        if (typeof module === 'object' && !module?.id) {
           let compliancy = Array.isArray(module.compliancy)
             ? [...module.compliancy]
             : [];
@@ -481,6 +485,7 @@ const ConFormStandaardenStage = ({
               standaardnaam: standardName,
               bewijs: bewijs || null,
               bewijsFilename: bewijsFilename || null,
+              url: url || null,
             };
 
             if (existingIndex >= 0) {
@@ -558,11 +563,12 @@ const ConFormStandaardenStage = ({
             updated[entryKey] = {
               ...updated[entryKey],
               isCompliant,
-              // Clear bewijs and filename if not compliant
+              // Clear bewijs, filename, and url if not compliant
               bewijs: isCompliant ? updated[entryKey]?.bewijs || null : null,
               bewijsFilename: isCompliant
                 ? updated[entryKey]?.bewijsFilename || null
                 : null,
+              url: isCompliant ? updated[entryKey]?.url || null : null,
             };
           }
         });
@@ -574,7 +580,8 @@ const ConFormStandaardenStage = ({
         currentEntry.standardId,
         isCompliant,
         isCompliant ? currentEntry.bewijs : null,
-        isCompliant ? currentEntry.bewijsFilename : null
+        isCompliant ? currentEntry.bewijsFilename : null,
+        isCompliant ? currentEntry.url : null
       );
     } else {
       // Update tableState for single entry
@@ -583,9 +590,10 @@ const ConFormStandaardenStage = ({
         [key]: {
           ...prev[key],
           isCompliant,
-          // Clear bewijs and filename if not compliant
+          // Clear bewijs, filename, and url if not compliant
           bewijs: isCompliant ? prev[key]?.bewijs || null : null,
           bewijsFilename: isCompliant ? prev[key]?.bewijsFilename || null : null,
+          url: isCompliant ? prev[key]?.url || null : null,
         },
       }));
 
@@ -595,7 +603,7 @@ const ConFormStandaardenStage = ({
         const moduleIndex = currentEntry.moduleId;
         const app = modules[moduleIndex];
 
-        if (typeof app !== 'object') {
+        if (typeof app !== 'object' || !!app?.id) {
           console.warn(
             'Cannot update compliancy on existing applicatie:',
             moduleIndex,
@@ -697,6 +705,7 @@ const ConFormStandaardenStage = ({
             updated[entryKey] = {
               ...updated[entryKey],
               bewijs,
+              url: null, // Clear URL when file is uploaded (mutually exclusive)
             };
           }
         });
@@ -706,9 +715,8 @@ const ConFormStandaardenStage = ({
       // Get the LATEST filename from tableState
       const currentEntry = tableState[key];
       const currentFilename = currentEntry?.bewijsFilename || entry.bewijsFilename;
-
       // Apply to all modules - use the latest filename
-      applyComplianceToAll(entry.standardId, true, bewijs, currentFilename);
+      applyComplianceToAll(entry.standardId, true, bewijs, currentFilename, null);
     } else {
       // Update single entry
       setTableState((prev) => ({
@@ -716,6 +724,7 @@ const ConFormStandaardenStage = ({
         [key]: {
           ...prev[key],
           bewijs,
+          url: null, // Clear URL when file is uploaded (mutually exclusive)
         },
       }));
 
@@ -737,11 +746,79 @@ const ConFormStandaardenStage = ({
                 standaardnaam: entry.standardName,
                 bewijs,
                 bewijsFilename: currentFilename || c.bewijsFilename || null,
+                url: null, // Clear URL when file is uploaded (mutually exclusive)
               }
             : c
         );
 
-        if (typeof app === 'object') {
+        if (typeof app === 'object' && !app?.id) {
+          modules[moduleIndex] = {
+            ...app,
+            compliancy: updatedCompliancy,
+          };
+          return { ...prev, modules };
+        }
+        return prev;
+      });
+    }
+  };
+
+  // ✅ NEW: Update URL for a specific module-standard combination
+  const updateUrl = (key, url) => {
+    const entry = tableState[key];
+    if (!entry) return;
+
+    if (sameForAll && isMultiNewApplicatie) {
+      // Update all entries for this standard in tableState
+      setTableState((prev) => {
+        const updated = { ...prev };
+        Object.keys(updated).forEach((entryKey) => {
+          if (updated[entryKey].standardId === entry.standardId) {
+            updated[entryKey] = {
+              ...updated[entryKey],
+              url,
+              bewijs: null, // Clear file when URL is set (mutually exclusive)
+              bewijsFilename: null,
+            };
+          }
+        });
+        return updated;
+      });
+
+      // Apply to all modules
+      applyComplianceToAll(entry.standardId, true, null, null, url);
+    } else {
+      // Update single entry
+      setTableState((prev) => ({
+        ...prev,
+        [key]: {
+          ...prev[key],
+          url,
+          bewijs: null, // Clear file when URL is set (mutually exclusive)
+          bewijsFilename: null,
+        },
+      }));
+
+      // Update product data
+      setProduct((prev) => {
+        const modules = [...(prev.modules || [])];
+        const moduleIndex = entry.moduleId;
+        const app = modules[moduleIndex];
+        const compliancy = Array.isArray(app.compliancy) ? [...app.compliancy] : [];
+
+        const updatedCompliancy = compliancy.map((c) =>
+          c.standaardversie === entry.standardId
+            ? {
+                ...c,
+                standaardnaam: entry.standardName,
+                url,
+                bewijs: null, // Clear file when URL is set (mutually exclusive)
+                bewijsFilename: null,
+              }
+            : c
+        );
+
+        if (typeof app === 'object' && !app?.id) {
           modules[moduleIndex] = {
             ...app,
             compliancy: updatedCompliancy,
@@ -803,7 +880,7 @@ const ConFormStandaardenStage = ({
             : c
         );
 
-        if (typeof app === 'object') {
+        if (typeof app === 'object' && !app?.id) {
           modules[moduleIndex] = {
             ...app,
             compliancy: updatedCompliancy,
@@ -867,7 +944,7 @@ const ConFormStandaardenStage = ({
             : c
         );
 
-        if (typeof app === 'object') {
+        if (typeof app === 'object' && !app?.id) {
           modules[moduleIndex] = {
             ...app,
             compliancy: updatedCompliancy,
@@ -924,7 +1001,7 @@ const ConFormStandaardenStage = ({
             const moduleIndex = entry.moduleId;
             const app = modules[moduleIndex];
 
-            if (typeof app !== 'object') {
+            if (typeof app !== 'object' || !!app?.id) {
               console.warn(
                 'Cannot update compliancy on existing applicatie:',
                 moduleIndex,
@@ -1000,7 +1077,7 @@ const ConFormStandaardenStage = ({
       let hasChanges = false;
 
       modules.forEach((module, moduleIndex) => {
-        if (typeof module !== 'object') return;
+        if (typeof module !== 'object' || !!module?.id) return;
 
         const compliancy = Array.isArray(module.compliancy)
           ? [...module.compliancy]
@@ -1316,34 +1393,59 @@ const ConFormStandaardenStage = ({
             />
           </TableCell>
 
-          {/* Bewijs column */}
+          {/* Bewijs column (file upload and URL) */}
           <TableCell
             style={{
               verticalAlign: 'top',
-              minWidth: '200px',
+              minWidth: '250px',
               padding: '12px',
             }}
           >
             {representativeEntry.isCompliant && (
-              <LogoUploadField
-                fieldConfig={{
-                  label: '',
-                  filename: representativeEntry.bewijs ? 'Bestand geüpload' : '',
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
                 }}
-                _value={representativeEntry.bewijs || ''}
-                onChange={(dataUrl) =>
-                  updateBewijs(representativeEntry.key, dataUrl)
-                }
-                onChangeFileName={(filename) =>
-                  updateBewijsFilename(representativeEntry.key, filename)
-                }
-                onClear={() => clearBewijs(representativeEntry.key)}
-                accept={['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx']}
-                showPreview={false}
-                validation={{ required: false }}
-                propertyName={`bewijs-${representativeEntry.key}`}
-                size='small'
-              />
+              >
+                <LogoUploadField
+                  fieldConfig={{
+                    label: '',
+                    filename: representativeEntry.bewijs ? 'Bestand geüpload' : '',
+                  }}
+                  _value={representativeEntry.bewijs || ''}
+                  onChange={(dataUrl) =>
+                    updateBewijs(representativeEntry.key, dataUrl)
+                  }
+                  onChangeFileName={(filename) =>
+                    updateBewijsFilename(representativeEntry.key, filename)
+                  }
+                  onClear={() => clearBewijs(representativeEntry.key)}
+                  accept={['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx']}
+                  showPreview={false}
+                  validation={{ required: false }}
+                  propertyName={`bewijs-${representativeEntry.key}`}
+                  size='small'
+                  isDisabled={!!representativeEntry.url}
+                />
+                <Separator />
+                <input
+                  type='url'
+                  className='utrecht-textbox utrecht-textbox--html-input'
+                  value={representativeEntry.url || ''}
+                  onChange={(e) =>
+                    updateUrl(representativeEntry.key, e.target.value)
+                  }
+                  placeholder='https://...'
+                  disabled={!!representativeEntry.bewijs}
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    fontSize: '14px',
+                  }}
+                />
+              </div>
             )}
           </TableCell>
         </TableRow>
@@ -1485,32 +1587,60 @@ const ConFormStandaardenStage = ({
               />
             </TableCell>
 
-            {/* Bewijs column */}
+            {/* Bewijs column (file upload and URL) */}
             <TableCell
               style={{
                 verticalAlign: 'top',
-                minWidth: '200px',
+                minWidth: '250px',
                 padding: '12px',
               }}
             >
               {entry.isCompliant && (
-                <LogoUploadField
-                  fieldConfig={{
-                    label: '',
-                    filename: entry.bewijsFilename || '',
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
                   }}
-                  _value={entry.bewijs || ''}
-                  onChange={(dataUrl) => updateBewijs(entry.key, dataUrl)}
-                  onChangeFileName={(filename) =>
-                    updateBewijsFilename(entry.key, filename)
-                  }
-                  onClear={() => clearBewijs(entry.key)}
-                  accept={['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx']}
-                  showPreview={false}
-                  validation={{ required: false }}
-                  propertyName={`bewijs-${entry.key}`}
-                  size='small'
-                />
+                >
+                  <LogoUploadField
+                    fieldConfig={{
+                      label: '',
+                      filename: entry.bewijsFilename ? 'Bestand geüpload' : '',
+                    }}
+                    _value={entry.bewijs || ''}
+                    onChange={(dataUrl) => updateBewijs(entry.key, dataUrl)}
+                    onChangeFileName={(filename) =>
+                      updateBewijsFilename(entry.key, filename)
+                    }
+                    onClear={() => clearBewijs(entry.key)}
+                    accept={['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx']}
+                    showPreview={false}
+                    validation={{ required: false }}
+                    propertyName={`bewijs-${entry.key}`}
+                    size='small'
+                    isDisabled={!!entry.url}
+                  />
+                  <Separator />
+                  <div>
+                    <AcFormField
+                      placeholder='https://...'
+                      value={entry.url || ''}
+                      type='url'
+                      onChange={(e) => updateUrl(entry.key, e)}
+                      disabled={!!entry.bewijs}
+                      className='ac-register-form-field__no-width-limit'
+                      hasError={validateWebsite(entry.url)}
+                    />
+                    {entry.url && (!entry.url || !validateWebsite(entry.url)) && (
+                      <span className='ac-register-form-field-error'>
+                        {entry.url &&
+                          !validateWebsite(entry.url) &&
+                          'URL heeft een ongeldig formaat'}
+                      </span>
+                    )}
+                  </div>
+                </div>
               )}
             </TableCell>
           </TableRow>
@@ -1546,7 +1676,7 @@ const ConFormStandaardenStage = ({
                   textAlign: 'center',
                 }}
               >
-                Compliant
+                Ondersteund
               </TableCell>
               <TableCell style={{ fontWeight: 'bold', backgroundColor: '#f8f9fa' }}>
                 Bewijs

@@ -11,5 +11,5 @@ export const BEHEER_RENAMES = {
   kwetsbaarheid: 'kwetsbaarheden',
   contactpersoon: 'contactpersonen',
   voorzieningmodule: 'voorzieningmodule',
-  moduleversie: 'moduleversie',
+  moduleversie: 'applicatieversie',
 };

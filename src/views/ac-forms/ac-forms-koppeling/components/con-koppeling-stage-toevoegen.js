@@ -38,6 +38,10 @@ const ConKoppelingStageToevoegen = ({
   nameByRow,
   setNameByRow,
   isEditMode,
+  standaardenOptions,
+  standaardenOptionsLoading,
+  standaardenByRow,
+  setStandaardenByRow,
 }) => {
   const [appAOptionsByRow, setAppAOptionsByRow] = useState({});
   const [appBOptionsByRow, setAppBOptionsByRow] = useState({});
@@ -451,6 +455,49 @@ const ConKoppelingStageToevoegen = ({
                 </div>
               </div>
 
+              <div className='con-koppeling-standaarden-field'>
+                <label
+                  className='utrecht-form-label'
+                  htmlFor={statusId}
+                  style={{ display: 'block' }}
+                >
+                  Standaarden
+                </label>
+                <ReactSelect
+                  className={clsx(
+                    'ac-beheer-select',
+                    'con-koppeling-standaarden-select',
+                    loading && 'ac-beheer-select--disabled'
+                  )}
+                  isClearable
+                  value={
+                    standaardenByRow[rowId]
+                      ? standaardenOptions.filter((o) =>
+                          standaardenByRow[rowId].includes(o.value)
+                        )
+                      : null
+                  }
+                  onChange={(opt) => {
+
+                    const standaarden = opt ? opt.map((o) => o.value) : [];
+                    setStandaardenByRow((prev) => {
+                      const updated = { ...prev };
+                      updated[rowId] = standaarden;
+                      return updated;
+                    });
+                  }}
+                  options={standaardenOptions}
+                  placeholder={
+                    standaardenOptionsLoading ? 'Laden...' : 'Selecteer standaarden'
+                  }
+                  isMulti={true}
+                  isSearchable={true}
+                  isLoading={standaardenOptionsLoading}
+                  closeMenuOnSelect={false}
+                  isDisabled={loading}
+                />
+              </div>
+
               {/* Korte beschrijving (full width) */}
               <div style={{ marginTop: '1rem' }}>
                 <label
@@ -462,6 +509,7 @@ const ConKoppelingStageToevoegen = ({
                 </label>
                 <Textarea
                   id={`koppeling-beschrijving-${rowId}`}
+                  className='con-koppeling-beschrijving'
                   value={beschrijving}
                   maxLength={maxLen}
                   onChange={(e) =>
@@ -481,25 +529,25 @@ const ConKoppelingStageToevoegen = ({
                 >
                   {charsLeft} tekens resterend
                 </Paragraph>
-              </div>
 
-              {!isEditMode && (
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'flex-end',
-                    marginTop: '0.75rem',
-                  }}
-                >
-                  <AcButton
-                    style='button'
-                    buttonType='secondary'
-                    onClick={() => removeRow(rowId)}
-                    disabled={rows.length === 1}
-                    icon={<VISUALS.TRASHCAN />}
-                  />
-                </div>
-              )}
+                {!isEditMode && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                      marginTop: '0.75rem',
+                    }}
+                  >
+                    <AcButton
+                      style='button'
+                      buttonType='secondary'
+                      onClick={() => removeRow(rowId)}
+                      disabled={rows.length === 1}
+                      icon={<VISUALS.TRASHCAN />}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           );
         })}

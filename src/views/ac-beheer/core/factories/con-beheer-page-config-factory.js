@@ -7,6 +7,7 @@ import { TOOLTIP_ID } from '@src/index.web';
 import { VISUALS } from '@constants';
 import _ from 'lodash';
 import { byNested } from '../utils/sorters';
+import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
 
 /**
  * Beheer Page Configuration Factory
@@ -20,6 +21,7 @@ const BeheerPageConfigFactory = {
    */
   createConfig: (type) => {
     // Removed extend: ['all'] for performance reasons - use specific extends when needed
+
     const baseConfig = {
       registerSlug: 'voorzieningen',
       extend: [],
@@ -31,6 +33,9 @@ const BeheerPageConfigFactory = {
       uniqueActions: [],
       statusIcon: null,
       routeType: null,
+      // function to filter out actions, receives all properties of a Schema (so filtering on slug is possible)
+      // example: `dynamicActionFilter: ({ slug }) => !['module'].includes(slug)` - this filters out the Applicatie dynamic action
+      dynamicActionFilter: null,
     };
 
     switch (type) {
@@ -48,7 +53,6 @@ const BeheerPageConfigFactory = {
         };
 
       // removed plural alias 'views'
-
       case 'extendview':
         return {
           ...baseConfig,
@@ -64,14 +68,15 @@ const BeheerPageConfigFactory = {
 
       // removed plural alias 'extendviews'
       case 'applicaties':
+      case 'modules':
         return {
           ...baseConfig,
-          schemaSlug: 'voorziening',
+          schemaSlug: 'module',
           paginationKey: 'applicaties',
-          title: 'Beheer Applicaties',
+          title: 'Applicaties',
           routeType: 'applicaties',
-          disableRelatedCreateActions: true, // Only show basic actions for applicaties
-          disableDeleteAction: true, // No delete action for applicaties
+          disableRelatedCreateActions: true, // Enable koppeling toevoegen for applicaties
+          disableDeleteAction: false, // Enable delete action for applicaties
           defaultHeaders: [
             'naam',
             'referentieComponenten',
@@ -96,16 +101,28 @@ const BeheerPageConfigFactory = {
               },
             },
           },
-          // Commented out: Versie toevoegen action (not reliable yet)
-          // uniqueActions: [
-          //   {
-          //     key: 'addVersion',
-          //     label: 'Versie toevoegen',
-          //     icon: <VISUALS.PLUS />,
-          //     condition: (row) => true,
-          //     action: 'addModuleVersion',
-          //   },
-          // ],
+          uniqueActions: [
+            // Commented out: Versie toevoegen action (not reliable yet)
+            //   {
+            //     key: 'addVersion',
+            //     label: 'Versie toevoegen',
+            //     icon: <VISUALS.PLUS />,
+            //     condition: (row) => true,
+            //     action: 'addModuleVersion',
+            //   },
+            {
+              key: 'addKoppeling',
+              label: 'Koppeling toevoegen',
+              icon: <VISUALS.WAND_SPARKLES_SOLID />,
+              condition: (row) => row?.id,
+              action: 'wizard', // Special action type to indicate wizard navigation
+              wizardPath: '/forms/koppeling',
+              wizardParams: (row) => ({
+                type: 'aanbieden-koppeling',
+                applicatie: row.id,
+              }),
+            },
+          ],
           modals: [...baseConfig.modals],
         };
 
@@ -187,6 +204,21 @@ const BeheerPageConfigFactory = {
               sortComparator: byNested((r) => r?.voorziening?.naam),
             },
           },
+          modals: [...baseConfig.modals],
+        };
+
+      case 'moduleversie':
+      case 'applicatieversie':
+      case 'applicatiesversie':
+        return {
+          ...baseConfig,
+          schemaSlug: 'moduleversie',
+          paginationKey: 'applicatiesversie',
+          title: 'Applicatie Versies',
+          routeType: 'applicatiesversie',
+          defaultHeaders: ['naam', 'versie', 'status', 'releaseDatum'],
+          customHeaders: {},
+          dynamicActionFilter: ({ slug }) => !['module'].includes(slug),
           modals: [...baseConfig.modals],
         };
 
@@ -521,6 +553,54 @@ const BeheerPageConfigFactory = {
           modals: [...baseConfig.modals],
         };
 
+      case 'koppeling':
+      case 'koppelingen':
+        return {
+          ...baseConfig,
+          schemaSlug: 'koppeling',
+          paginationKey: 'koppeling',
+          title: 'Koppelingen',
+          routeType: 'koppeling',
+          // Ensure relations are present to compensate for backend bug (moduleA/moduleB null)
+          extend: ['@self.relations'],
+          defaultHeaders: [
+            'naam',
+            'moduleA',
+            'moduleB',
+            'gegevensuitwisselingRichting',
+            'type',
+          ],
+          customHeaders: {
+            moduleA: {
+              id: 'moduleA',
+              label: 'Applicatie A',
+              key: 'moduleA',
+              customContent: (row) => {
+                // Use @self.relations.moduleA instead of direct moduleA property
+                const moduleAId = row?.['@self']?.relations?.moduleA || null;
+                if (!moduleAId) return '-';
+                // Use ConUuidResolver to display the application name
+                return <ConUuidResolver>{String(moduleAId)}</ConUuidResolver>;
+              },
+              sortComparator: byNested((r) => r?.['@self']?.relations?.moduleA),
+            },
+            moduleB: {
+              id: 'moduleB',
+              label: 'Applicatie B',
+              key: 'moduleB',
+              customContent: (row) => {
+                // Use @self.relations.moduleB instead of direct moduleB property
+                const moduleBId = row?.['@self']?.relations?.moduleB || null;
+                if (!moduleBId) return '-';
+                // Use ConUuidResolver to display the application name
+                return <ConUuidResolver>{String(moduleBId)}</ConUuidResolver>;
+              },
+              sortComparator: byNested((r) => r?.['@self']?.relations?.moduleA),
+            },
+          },
+          modals: [...baseConfig.modals],
+        };
+
       case 'contactpersoon':
       case 'contactpersonen':
         return {
@@ -557,6 +637,7 @@ const BeheerPageConfigFactory = {
                         style={{
                           width: '30px',
                           height: '30px',
+                          // color: row.enabled ? 'var(--tilburg-interaction-active-color)' : 'var(--tilburg-color-orange-300)',
                           color: 'var(--tilburg-interaction-active-color)',
                         }}
                       />
@@ -589,21 +670,28 @@ const BeheerPageConfigFactory = {
           },
           uniqueActions: [
             {
-              key: 'depublish',
-              label: 'Depubliceren',
-              icon: <VISUALS.PUBLISH_OFF />,
-              condition: (row) => row['@self'].published,
-              action: 'depublish',
-            },
-            {
               key: 'addAccount',
               label: 'Account toevoegen',
               icon: <VISUALS.USER_PLUS />,
               condition: (row) => row.username === null,
               action: 'addAccount',
+            },  
+            {
+              key: 'enableAccount',
+              label: 'Account inschakelen',
+              icon: <VISUALS.USER_CHECK />,
+              condition: (row) => row?.enabled === false,
+              action: 'enableAccount',
+            },
+            {
+              key: 'disableAccount',
+              label: 'Account uitschakelen',
+              icon: <VISUALS.USER_XMARK />,
+              condition: (row) => row?.enabled === true,
+              action: 'disableAccount',
             },
           ],
-          modals: [...baseConfig.modals, 'addAccount', 'depublish'],
+          modals: [...baseConfig.modals, 'addAccount'],
         };
 
       default:

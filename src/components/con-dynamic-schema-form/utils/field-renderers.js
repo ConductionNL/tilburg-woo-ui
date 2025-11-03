@@ -165,7 +165,10 @@ export const renderField = ({
   }
 
   // Get field state
-  const options = getFieldOptions(path, propertySchema, optionsProviders, formData);
+  const options = getFieldOptions(path, propertySchema, optionsProviders, formData, {
+    user,
+    ...context,
+  });
   const isLoading = loadingStates[path] || false;
   const isDisabled = getFieldDisabled(
     path,
