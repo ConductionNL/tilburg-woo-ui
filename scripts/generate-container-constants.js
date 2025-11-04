@@ -2,70 +2,322 @@
 /**
  * Container Constants Generator
  *
- * This script generates container.constants.js from environment variables
- * to replace hostname-based configuration logic with environment-based configuration.
+ * This script generates container.constants.js from values.yaml and environment variables.
+ * Priority order:
+ * 1. values.yaml (env and extraEnvVars sections)
+ * 2. Environment variables
+ * 3. Default values
  */
 const fs = require('fs');
 const path = require('path');
-// Get all environment variables with defaults
+
+/**
+ * Simple YAML parser for our specific use case
+ * Parses key: value pairs and handles nested objects like env: and extraEnvVars:
+ */
+const parseYaml = (content) => {
+  const lines = content.split('\n');
+  const result = {};
+  let currentSection = null;
+  let sectionIndent = 0;
+  let inEnvSection = false;
+  let inExtraEnvVarsSection = false;
+
+  let inObjectBraces = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    // Skip empty lines
+    if (!trimmed) continue;
+
+    // Detect indentation
+    const indent = line.search(/\S/);
+
+    // Check for section headers (env: or extraEnvVars:)
+    if (trimmed === 'env:') {
+      inEnvSection = true;
+      inExtraEnvVarsSection = false;
+      inObjectBraces = false;
+      sectionIndent = indent;
+      continue;
+    } else if (trimmed === 'extraEnvVars:' || trimmed.startsWith('extraEnvVars:')) {
+      inExtraEnvVarsSection = true;
+      inEnvSection = false;
+      sectionIndent = indent;
+
+      // Check if it starts with an opening brace (inline or multiline object)
+      if (trimmed.includes('{')) {
+        inObjectBraces = true;
+      }
+      continue;
+    }
+
+    // Handle opening brace on its own line
+    if (inExtraEnvVarsSection && trimmed === '{') {
+      inObjectBraces = true;
+      continue;
+    }
+
+    // Handle closing brace
+    if (inObjectBraces && (trimmed === '}' || trimmed.endsWith('}'))) {
+      inObjectBraces = false;
+      inExtraEnvVarsSection = false;
+      continue;
+    }
+
+    // Reset section if we've outdented (and not in braces)
+    if (
+      !inObjectBraces &&
+      indent <= sectionIndent &&
+      (inEnvSection || inExtraEnvVarsSection)
+    ) {
+      inEnvSection = false;
+      inExtraEnvVarsSection = false;
+    }
+
+    // Skip comments unless they're inline
+    if (trimmed.startsWith('#')) continue;
+
+    // Check if this is a key-value pair
+    const match = trimmed.match(/^([A-Z_][A-Z0-9_]*)\s*:\s*(.*)$/);
+    if (match && (inEnvSection || inExtraEnvVarsSection)) {
+      const [, key, value] = match;
+
+      // Parse the value and remove inline comments
+      let parsedValue = value.trim();
+
+      // Remove trailing comma (from object syntax)
+      if (parsedValue.endsWith(',')) {
+        parsedValue = parsedValue.slice(0, -1).trim();
+      }
+
+      // Remove inline comments (anything after # that's not in quotes)
+      const commentMatch = parsedValue.match(/^([^#]*?)(\s*#.*)?$/);
+      if (commentMatch) {
+        parsedValue = commentMatch[1].trim();
+      }
+
+      // Remove quotes if present
+      if (
+        (parsedValue.startsWith('"') && parsedValue.endsWith('"')) ||
+        (parsedValue.startsWith("'") && parsedValue.endsWith("'"))
+      ) {
+        parsedValue = parsedValue.slice(1, -1);
+      }
+
+      // Handle empty values
+      if (parsedValue === '""' || parsedValue === "''") {
+        parsedValue = '';
+      }
+
+      // Store the value
+      result[key] = parsedValue;
+    }
+  }
+
+  return result;
+};
+
+/**
+ * Load configuration from values.yaml
+ */
+const loadValuesYaml = () => {
+  try {
+    const valuesPath = path.join(
+      __dirname,
+      '..',
+      'helm',
+      'tilburg-woo-ui',
+      'values.yaml'
+    );
+
+    if (!fs.existsSync(valuesPath)) {
+      console.log('⚠️  values.yaml not found, skipping');
+      return {};
+    }
+
+    const content = fs.readFileSync(valuesPath, 'utf8');
+    const parsed = parseYaml(content);
+
+    const count = Object.keys(parsed).length;
+    if (count > 0) {
+      console.log(`📄 Loaded ${count} variable(s) from values.yaml`);
+    }
+    return parsed;
+  } catch (error) {
+    console.warn('⚠️  Error reading values.yaml:', error.message);
+    return {};
+  }
+};
+/**
+ * Get configuration value with priority:
+ * 1. values.yaml
+ * 2. Environment variable
+ * 3. Default value
+ */
+const getConfigValue = (yamlConfig, key, defaultValue) => {
+  // First check values.yaml
+  if (yamlConfig[key] !== undefined && yamlConfig[key] !== '') {
+    return yamlConfig[key];
+  }
+
+  // Then check environment variable
+  if (process.env[key] !== undefined && process.env[key] !== '') {
+    return process.env[key];
+  }
+
+  // Finally use default
+  return defaultValue;
+};
+
+/**
+ * Get boolean configuration value with priority
+ */
+const getBooleanConfig = (yamlConfig, key, defaultValue) => {
+  const value = getConfigValue(yamlConfig, key, null);
+
+  if (value === null) return defaultValue;
+  if (typeof value === 'boolean') return value;
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+
+  return defaultValue;
+};
+
+/**
+ * Get integer configuration value with priority
+ */
+const getIntegerConfig = (yamlConfig, key, defaultValue) => {
+  const value = getConfigValue(yamlConfig, key, null);
+
+  if (value === null) return defaultValue;
+
+  const parsed = parseInt(value);
+  return isNaN(parsed) ? defaultValue : parsed;
+};
+
+// Get all configuration with values.yaml taking priority
 const getEnvConfig = () => {
-  return {
+  // Load values from values.yaml
+  const yamlConfig = loadValuesYaml();
+
+  const baseConfig = {
     // Site Configuration
-    SITE_TITLE: process.env.SITE_TITLE || 'Development Catalogus',
-    SITE_DESCRIPTION:
-      process.env.SITE_DESCRIPTION ||
-      'Local development instance of the softwarecatalogus',
-    SITE: process.env.SITE || 'localhost',
-    MODE: process.env.MODE || 'development',
-    THEME_VARIANT: process.env.THEME_VARIANT || 'development',
-    ENVIRONMENT_NAME: process.env.ENVIRONMENT_NAME || 'development',
+    SITE_TITLE: getConfigValue(yamlConfig, 'SITE_TITLE', 'Development Catalogus'),
+    SITE_DESCRIPTION: getConfigValue(
+      yamlConfig,
+      'SITE_DESCRIPTION',
+      'Local development instance of the softwarecatalogus'
+    ),
+    SITE: getConfigValue(yamlConfig, 'SITE', 'localhost'),
+    MODE: getConfigValue(yamlConfig, 'MODE', 'development'),
+    THEME_VARIANT: getConfigValue(yamlConfig, 'THEME_VARIANT', 'development'),
+    ENVIRONMENT_NAME: getConfigValue(yamlConfig, 'ENVIRONMENT_NAME', 'development'),
+
     // API Configuration (simplified to single BASE_URL)
-    BASE_URL: process.env.BASE_URL || '/api/apps',
+    BASE_URL: getConfigValue(yamlConfig, 'BASE_URL', '/api/apps'),
 
     // Authentication Configuration
-    GRANT_TYPE: process.env.GRANT_TYPE || 'authorization_code',
-    CLIENT_ID: process.env.CLIENT_ID || '',
-    CLIENT_SECRET: process.env.CLIENT_SECRET || '',
-    PROVIDER: process.env.PROVIDER || 'nextcloud',
-    REGISTER_URL: process.env.REGISTER_URL || '',
+    GRANT_TYPE: getConfigValue(yamlConfig, 'GRANT_TYPE', 'authorization_code'),
+    CLIENT_ID: getConfigValue(yamlConfig, 'CLIENT_ID', ''),
+    CLIENT_SECRET: getConfigValue(yamlConfig, 'CLIENT_SECRET', ''),
+    PROVIDER: getConfigValue(yamlConfig, 'PROVIDER', 'nextcloud'),
+    REGISTER_URL: getConfigValue(yamlConfig, 'REGISTER_URL', ''),
+
     // Session Configuration
-    AUTO_LOGOUT: process.env.AUTO_LOGOUT === 'true' || false,
-    AUTO_LOGOUT_TIME: parseInt(process.env.AUTO_LOGOUT_TIME) || 3600,
-    SESSION_TIMEOUT: parseInt(process.env.SESSION_TIMEOUT) || 3600,
-    ACTIVITY_PING: process.env.ACTIVITY_PING === 'true' || false,
+    AUTO_LOGOUT: getBooleanConfig(yamlConfig, 'AUTO_LOGOUT', false),
+    AUTO_LOGOUT_TIME: getIntegerConfig(yamlConfig, 'AUTO_LOGOUT_TIME', 3600),
+    SESSION_TIMEOUT: getIntegerConfig(yamlConfig, 'SESSION_TIMEOUT', 3600),
+    ACTIVITY_PING: getBooleanConfig(yamlConfig, 'ACTIVITY_PING', false),
+
     // Monitoring Configuration
-    ROLLBAR_KEY: process.env.ROLLBAR_KEY || '',
-    ROLLBAR_ENVIRONMENT: process.env.ROLLBAR_ENVIRONMENT || 'development',
+    ROLLBAR_KEY: getConfigValue(yamlConfig, 'ROLLBAR_KEY', ''),
+    ROLLBAR_ENVIRONMENT: getConfigValue(
+      yamlConfig,
+      'ROLLBAR_ENVIRONMENT',
+      'development'
+    ),
+
     // Feature Flags
-    ENABLE_AUTHENTICATION: process.env.ENABLE_AUTHENTICATION === 'true' || false,
-    ENABLE_GEMMA: process.env.ENABLE_GEMMA !== 'false', // Default true
-    ENABLE_DIRECTORY: process.env.ENABLE_DIRECTORY !== 'false', // Default true
-    ENABLE_ROLLBAR: process.env.ENABLE_ROLLBAR === 'true' || false,
-    ENABLE_MOCK_THEMES: process.env.ENABLE_MOCK_THEMES === 'true' || false,
-    ENABLE_BREADCRUMBS: process.env.ENABLE_BREADCRUMBS === 'true' || false,
+    ENABLE_AUTHENTICATION: getBooleanConfig(
+      yamlConfig,
+      'ENABLE_AUTHENTICATION',
+      false
+    ),
+    ENABLE_GEMMA: getBooleanConfig(yamlConfig, 'ENABLE_GEMMA', true),
+    ENABLE_DIRECTORY: getBooleanConfig(yamlConfig, 'ENABLE_DIRECTORY', true),
+    ENABLE_ROLLBAR: getBooleanConfig(yamlConfig, 'ENABLE_ROLLBAR', false),
+    ENABLE_MOCK_THEMES: getBooleanConfig(yamlConfig, 'ENABLE_MOCK_THEMES', false),
+    ENABLE_BREADCRUMBS: getBooleanConfig(yamlConfig, 'ENABLE_BREADCRUMBS', false),
+
     // External URLs (for different environments)
-    EXTERNAL_WEBSITE_URL:
-      process.env.EXTERNAL_WEBSITE_URL || 'https://www.tilburg.nl/',
-    EXTERNAL_PRIVACY_URL:
-      process.env.EXTERNAL_PRIVACY_URL || 'https://www.tilburg.nl/privacystatement/',
-    EXTERNAL_COOKIES_URL:
-      process.env.EXTERNAL_COOKIES_URL || 'https://www.tilburg.nl/cookies/',
-    EXTERNAL_PROCLAIMER_URL:
-      process.env.EXTERNAL_PROCLAIMER_URL || 'https://www.tilburg.nl/proclaimer/',
+    EXTERNAL_WEBSITE_URL: getConfigValue(
+      yamlConfig,
+      'EXTERNAL_WEBSITE_URL',
+      'https://www.tilburg.nl/'
+    ),
+    EXTERNAL_PRIVACY_URL: getConfigValue(
+      yamlConfig,
+      'EXTERNAL_PRIVACY_URL',
+      'https://www.tilburg.nl/privacystatement/'
+    ),
+    EXTERNAL_COOKIES_URL: getConfigValue(
+      yamlConfig,
+      'EXTERNAL_COOKIES_URL',
+      'https://www.tilburg.nl/cookies/'
+    ),
+    EXTERNAL_PROCLAIMER_URL: getConfigValue(
+      yamlConfig,
+      'EXTERNAL_PROCLAIMER_URL',
+      'https://www.tilburg.nl/proclaimer/'
+    ),
+
     // Visual Configuration
-    HERO_IMAGE_URL: process.env.HERO_IMAGE_URL || '/home-hero-background.png',
+    HERO_IMAGE_URL: getConfigValue(
+      yamlConfig,
+      'HERO_IMAGE_URL',
+      '/home-hero-background.png'
+    ),
+
     // Menu Configuration
-    FOOTER_STYLE: process.env.FOOTER_STYLE || 'vng', // vng, dimpact, etc.
+    FOOTER_STYLE: getConfigValue(yamlConfig, 'FOOTER_STYLE', 'vng'),
+
     // Footer Text Configuration
-    FOOTER_LOGO_TITLE: process.env.FOOTER_LOGO_TITLE || 'Open Tilburg',
-    FOOTER_LOGO_SUBTITLE:
-      process.env.FOOTER_LOGO_SUBTITLE ||
-      'Één plek voor alle publicaties van Gemeente Tilburg',
+    FOOTER_LOGO_TITLE: getConfigValue(
+      yamlConfig,
+      'FOOTER_LOGO_TITLE',
+      'Open Tilburg'
+    ),
+    FOOTER_LOGO_SUBTITLE: getConfigValue(
+      yamlConfig,
+      'FOOTER_LOGO_SUBTITLE',
+      'Één plek voor alle publicaties van Gemeente Tilburg'
+    ),
+
     // Support Configuration
-    SUPPORT_EMAIL_ADDRESS: process.env.SUPPORT_EMAIL_ADDRESS || 'info@conduction.nl',
+    SUPPORT_EMAIL_ADDRESS: getConfigValue(
+      yamlConfig,
+      'SUPPORT_EMAIL_ADDRESS',
+      'info@conduction.nl'
+    ),
+
     // Search Configuration
-    DEFAULT_SEARCH_SCHEMA: process.env.DEFAULT_SEARCH_SCHEMA || '',
+    DEFAULT_SEARCH_SCHEMA: getConfigValue(yamlConfig, 'DEFAULT_SEARCH_SCHEMA', ''),
   };
+
+  // Add any extra variables from values.yaml that aren't in the base config
+  // This allows extraEnvVars to be dynamically added
+  const extraVars = {};
+  for (const key in yamlConfig) {
+    if (!baseConfig.hasOwnProperty(key)) {
+      extraVars[key] = yamlConfig[key];
+    }
+  }
+
+  // Merge base config with extra variables
+  return { ...baseConfig, ...extraVars };
 };
 // Generate the constants file content
 const generateConstantsFile = (config) => {
@@ -83,7 +335,8 @@ const generateConstantsFile = (config) => {
     })
     .join('\n');
   return `// Auto-generated container constants
-// This file is generated from environment variables during container startup
+// This file is generated from values.yaml and environment variables during container startup
+// Priority: 1. values.yaml (env/extraEnvVars) -> 2. Environment variables -> 3. Defaults
 // DO NOT EDIT MANUALLY - changes will be overwritten
 import { AcLockObject } from '@utils/ac-lock-object';
 // Container configuration
@@ -156,17 +409,23 @@ const main = () => {
     const outputPath = path.join(constantsDir, 'container.constants.js');
     fs.writeFileSync(outputPath, fileContent, 'utf8');
     // Success feedback with configuration summary
-    console.log('✅ Container constants generated successfully!');
+    console.log('\n✅ Container constants generated successfully!');
     console.log(`📁 Output: ${outputPath}`);
-    console.log(`🏷️  Site Title: ${config.SITE_TITLE}`);
-    console.log(`�� Base URL: ${config.BASE_URL}`);
-    console.log(`🎨 Theme: ${config.THEME_VARIANT}`);
-    console.log(`📦 Environment: ${config.ENVIRONMENT_NAME}`);
+    console.log('\n📋 Configuration Summary:');
+    console.log(`   🏷️  Site Title: ${config.SITE_TITLE}`);
+    console.log(`   🌐 Base URL: ${config.BASE_URL}`);
+    console.log(`   🎨 Theme: ${config.THEME_VARIANT}`);
+    console.log(`   📦 Environment: ${config.ENVIRONMENT_NAME}`);
     console.log(
-      `🔐 Authentication: ${config.ENABLE_AUTHENTICATION ? 'Enabled' : 'Disabled'}`
+      `   🔐 Authentication: ${
+        config.ENABLE_AUTHENTICATION ? 'Enabled' : 'Disabled'
+      }`
     );
-    console.log(`📊 GEMMA: ${config.ENABLE_GEMMA ? 'Enabled' : 'Disabled'}`);
-    console.log(`📋 Directory: ${config.ENABLE_DIRECTORY ? 'Enabled' : 'Disabled'}`);
+    console.log(`   📊 GEMMA: ${config.ENABLE_GEMMA ? 'Enabled' : 'Disabled'}`);
+    console.log(
+      `   📋 Directory: ${config.ENABLE_DIRECTORY ? 'Enabled' : 'Disabled'}`
+    );
+    console.log('\n💡 Priority: values.yaml → environment variables → defaults');
   } catch (error) {
     console.error('❌ Error generating container constants:', error.message);
     process.exit(1);
