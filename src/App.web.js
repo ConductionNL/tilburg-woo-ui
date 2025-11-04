@@ -100,6 +100,11 @@ const App = ({ store }) => {
     // Use container config if available
     if (containerConfig && containerConfig.getThemeVariant) {
       const themeVariant = containerConfig.getThemeVariant();
+
+      console.log({ containerConfig });
+
+      console.log({ themeVariant });
+
       // Map theme variants to CSS theme classes
       switch (themeVariant) {
         case 'vng':
@@ -162,6 +167,8 @@ const App = ({ store }) => {
   };
 
   const setIcon = () => {
+    console.log({ hostname });
+
     switch (hostname) {
       case 'softwarecatalogus.accept.opencatalogi.nl':
       case 'acceptatie.softwarecatalogus.nl':
