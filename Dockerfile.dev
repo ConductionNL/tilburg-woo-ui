@@ -45,8 +45,8 @@ RUN echo '#!/bin/sh' > /start-dev.sh && \
     echo '# Start nginx' >> /start-dev.sh && \
     echo 'nginx &' >> /start-dev.sh && \
     echo '' >> /start-dev.sh && \
-    echo '# Generate container constants from environment variables' >> /start-dev.sh && \
-    echo 'node scripts/generate-container-constants.js' >> /start-dev.sh && \
+    echo '# Generate runtime configuration (NOT bundled by webpack)' >> /start-dev.sh && \
+    echo 'node scripts/generate-runtime-config.js /app/public_html/runtime-config.js' >> /start-dev.sh && \
     echo '' >> /start-dev.sh && \
     echo '# Run linting check on startup' >> /start-dev.sh && \
     echo 'echo "Running linting checks..."' >> /start-dev.sh && \
@@ -88,8 +88,9 @@ RUN echo '#!/bin/sh' > /start-hot.sh && \
     echo 'echo "Starting hot reload development server..."' >> /start-hot.sh && \
     echo 'echo "Generating container constants..."' >> /start-hot.sh && \
     echo '' >> /start-hot.sh && \
-    echo '# Generate container constants from environment variables' >> /start-hot.sh && \
-    echo 'node scripts/generate-container-constants.js' >> /start-hot.sh && \
+    echo '# Generate runtime configuration (NOT bundled by webpack)' >> /start-hot.sh && \
+    echo 'mkdir -p /app/public' >> /start-hot.sh && \
+    echo 'node scripts/generate-runtime-config.js /app/public/runtime-config.js' >> /start-hot.sh && \
     echo '' >> /start-hot.sh && \
     echo '# Run linting check on startup' >> /start-hot.sh && \
     echo 'echo "Running linting checks..."' >> /start-hot.sh && \

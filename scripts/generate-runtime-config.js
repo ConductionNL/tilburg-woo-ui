@@ -1,8 +1,13 @@
 #!/usr/bin/env node
 /**
- * Container Constants Generator
+ * Runtime Configuration Generator
  *
- * This script generates container.constants.js from values.yaml and environment variables.
+ * This script generates a runtime-config.js file that is NOT bundled by webpack.
+ * It creates a window.RUNTIME_CONFIG object that can be accessed by the application.
+ *
+ * This file is generated at container startup and placed in the public_html directory
+ * so it can be loaded directly by the browser BEFORE the React bundle loads.
+ *
  * Priority order:
  * 1. values.yaml (env and extraEnvVars sections)
  * 2. Environment variables
@@ -121,8 +126,7 @@ const parseYaml = (content) => {
 };
 
 /**
- * Load configuration from values.yaml (local development only)
- * In production/container, this file won't exist and we rely on environment variables
+ * Load configuration from values.yaml
  */
 const loadValuesYaml = () => {
   try {
@@ -135,10 +139,7 @@ const loadValuesYaml = () => {
     );
 
     if (!fs.existsSync(valuesPath)) {
-      // This is normal in container environments - values come from env vars
-      console.log(
-        '📦 Running in container mode (no values.yaml) - using environment variables'
-      );
+      console.log('⚠️  values.yaml not found, skipping');
       return {};
     }
 
@@ -147,9 +148,7 @@ const loadValuesYaml = () => {
 
     const count = Object.keys(parsed).length;
     if (count > 0) {
-      console.log(
-        `📄 Local development mode - loaded ${count} variable(s) from values.yaml`
-      );
+      console.log(`📄 Loaded ${count} variable(s) from values.yaml`);
     }
     return parsed;
   } catch (error) {
@@ -157,6 +156,7 @@ const loadValuesYaml = () => {
     return {};
   }
 };
+
 /**
  * Get configuration value with priority:
  * 1. values.yaml
@@ -204,8 +204,10 @@ const getIntegerConfig = (yamlConfig, key, defaultValue) => {
   return isNaN(parsed) ? defaultValue : parsed;
 };
 
-// Get all configuration with values.yaml taking priority
-const getEnvConfig = () => {
+/**
+ * Get runtime configuration
+ */
+const getRuntimeConfig = () => {
   // Load values from values.yaml
   const yamlConfig = loadValuesYaml();
 
@@ -325,97 +327,60 @@ const getEnvConfig = () => {
   // Merge base config with extra variables
   return { ...baseConfig, ...extraVars };
 };
-// Generate the constants file content
-const generateConstantsFile = (config) => {
-  const configEntries = Object.entries(config)
-    .map(([key, value]) => {
-      if (typeof value === 'string') {
-        return `  ${key}: '${value}',`;
-      } else if (typeof value === 'number') {
-        return `  ${key}: ${value},`;
-      } else if (typeof value === 'boolean') {
-        return `  ${key}: ${value},`;
-      } else {
-        return `  ${key}: '${String(value)}',`;
-      }
-    })
-    .join('\n');
-  return `// Auto-generated container constants
-// This file is generated from values.yaml and environment variables during container startup
+
+/**
+ * Generate the runtime config file content
+ */
+const generateRuntimeConfigFile = (config) => {
+  // Convert config to JSON with proper formatting
+  const configJson = JSON.stringify(config, null, 2);
+
+  return `// Auto-generated runtime configuration
+// This file is generated at container startup and loaded BEFORE the React bundle
+// It provides runtime environment configuration that is NOT bundled by webpack
 // Priority: 1. values.yaml (env/extraEnvVars) -> 2. Environment variables -> 3. Defaults
 // DO NOT EDIT MANUALLY - changes will be overwritten
-import { AcLockObject } from '@utils/ac-lock-object';
-// Container configuration
-export const CONTAINER_CONFIG = AcLockObject({
-${configEntries}
+
+// Make configuration available globally
+window.RUNTIME_CONFIG = ${configJson};
+
+// Log configuration load (helpful for debugging)
+console.log('✅ Runtime configuration loaded:', {
+  SITE_TITLE: window.RUNTIME_CONFIG.SITE_TITLE,
+  ENVIRONMENT_NAME: window.RUNTIME_CONFIG.ENVIRONMENT_NAME,
+  THEME_VARIANT: window.RUNTIME_CONFIG.THEME_VARIANT,
+  BASE_URL: window.RUNTIME_CONFIG.BASE_URL,
 });
-// Helper functions to replace hostname-based logic
-export const getTitle = () => CONTAINER_CONFIG.SITE_TITLE;
-export const getSiteDescription = () => CONTAINER_CONFIG.SITE_DESCRIPTION;
-export const getSite = () => CONTAINER_CONFIG.SITE;
-export const getMode = () => CONTAINER_CONFIG.MODE;
-export const getThemeVariant = () => CONTAINER_CONFIG.THEME_VARIANT;
-export const getEnvironmentName = () => CONTAINER_CONFIG.ENVIRONMENT_NAME;
-// All API URLs are now unified under BASE_URL
-export const getApiUrl = () => CONTAINER_CONFIG.BASE_URL || '/api/apps';
-export const getCommongroundApiUrl = () => CONTAINER_CONFIG.BASE_URL || '/api/apps';
-export const getGemmaEndpoint = () => CONTAINER_CONFIG.BASE_URL || '/api/apps';
-export const getOpenconnectorApiUrl = () => '/api/openconnector';
-// Legacy aliases for backward compatibility
-export const getApiConfig = getApiUrl;
-export const getAuthConfig = () => ({
-  grantType: CONTAINER_CONFIG.GRANT_TYPE,
-  clientId: CONTAINER_CONFIG.CLIENT_ID,
-  clientSecret: CONTAINER_CONFIG.CLIENT_SECRET,
-  provider: CONTAINER_CONFIG.PROVIDER,
-  registerUrl: CONTAINER_CONFIG.REGISTER_URL,
-});
-export const getSessionConfig = () => ({
-  autoLogout: CONTAINER_CONFIG.AUTO_LOGOUT,
-  sessionTimeout: CONTAINER_CONFIG.SESSION_TIMEOUT,
-  activityPing: CONTAINER_CONFIG.ACTIVITY_PING,
-});
-export const getFeatureFlags = () => ({
-  enableBreadcrumbs: CONTAINER_CONFIG.ENABLE_BREADCRUMBS,
-  enableDirectory: CONTAINER_CONFIG.ENABLE_DIRECTORY,
-  enableRollbar: CONTAINER_CONFIG.ENABLE_ROLLBAR,
-  enableMockThemes: CONTAINER_CONFIG.ENABLE_MOCK_THEMES,
-});
-export const getExternalUrls = () => ({
-  website: CONTAINER_CONFIG.EXTERNAL_WEBSITE_URL,
-  privacy: CONTAINER_CONFIG.EXTERNAL_PRIVACY_URL,
-  cookies: CONTAINER_CONFIG.EXTERNAL_COOKIES_URL,
-  proclaimer: CONTAINER_CONFIG.EXTERNAL_PROCLAIMER_URL,
-});
-export const getVisualConfig = () => ({
-  heroImageUrl: CONTAINER_CONFIG.HERO_IMAGE_URL,
-  menuPosition: CONTAINER_CONFIG.MENU_POSITION,
-  footerStyle: CONTAINER_CONFIG.FOOTER_STYLE,
-});
-// Footer text helper functions
-export const getFooterLogoTitle = () => CONTAINER_CONFIG.FOOTER_LOGO_TITLE;
-export const getFooterLogoSubtitle = () => CONTAINER_CONFIG.FOOTER_LOGO_SUBTITLE;
-export const getSupportEmailAddress = () => CONTAINER_CONFIG.SUPPORT_EMAIL_ADDRESS;
-// Search helper functions
-export const getDefaultSearchSchema = () => CONTAINER_CONFIG.DEFAULT_SEARCH_SCHEMA;
-export const getDefaultConfig = () => CONTAINER_CONFIG;
 `;
 };
-// Main execution
+
+/**
+ * Main execution
+ */
 const main = () => {
   try {
-    const config = getEnvConfig();
-    const fileContent = generateConstantsFile(config);
-    // Ensure the constants directory exists
-    const constantsDir = path.join(__dirname, '..', 'src', 'constants');
-    if (!fs.existsSync(constantsDir)) {
-      fs.mkdirSync(constantsDir, { recursive: true });
+    // Get output path from command line argument or use default
+    const outputPath =
+      process.argv[2] ||
+      path.join(__dirname, '..', 'public_html', 'runtime-config.js');
+
+    // Ensure the output directory exists
+    const outputDir = path.dirname(outputPath);
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
     }
+
+    // Get runtime configuration
+    const config = getRuntimeConfig();
+
+    // Generate the file content
+    const fileContent = generateRuntimeConfigFile(config);
+
     // Write the file
-    const outputPath = path.join(constantsDir, 'container.constants.js');
     fs.writeFileSync(outputPath, fileContent, 'utf8');
+
     // Success feedback with configuration summary
-    console.log('\n✅ Container constants generated successfully!');
+    console.log('\n✅ Runtime configuration generated successfully!');
     console.log(`📁 Output: ${outputPath}`);
     console.log('\n📋 Configuration Summary:');
     console.log(`   🏷️  Site Title: ${config.SITE_TITLE}`);
@@ -431,16 +396,20 @@ const main = () => {
     console.log(
       `   📋 Directory: ${config.ENABLE_DIRECTORY ? 'Enabled' : 'Disabled'}`
     );
-    console.log(
-      `   🔍 Search Schema: ${config.DEFAULT_SEARCH_SCHEMA || '(not set)'}`
-    );
-    console.log('\n💡 Priority: values.yaml → environment variables → defaults');
+    console.log('\n💡 This file will be loaded by the browser at runtime');
+    console.log('💡 Priority: values.yaml → environment variables → defaults\n');
+
+    process.exit(0);
   } catch (error) {
-    console.error('❌ Error generating container constants:', error.message);
+    console.error('\n❌ Error generating runtime configuration:', error.message);
+    console.error(error.stack);
     process.exit(1);
   }
 };
+
+// Run if called directly
 if (require.main === module) {
   main();
 }
-module.exports = { getEnvConfig, generateConstantsFile };
+
+module.exports = { getRuntimeConfig, generateRuntimeConfigFile };
