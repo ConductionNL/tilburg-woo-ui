@@ -158,93 +158,90 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
   // to avoid its initial fetch being aborted on type changes)
   let makeActionsForContext; // will be assigned below
 
-  const fetchData = useCallback(
-    async () => {
-      if (!objectType || !config) {
+  const fetchData = useCallback(async () => {
+    if (!objectType || !config) {
+      return;
+    }
+
+    try {
+      // Build the extend parameters exactly as before
+      const extend = [...config.extend];
+
+      // LEGACY: Old field-specific search implementation
+      // Convert extend array and searchParams to object format for object store
+      // const storeParams = {
+      //   _page: pagination.page,
+      //   _limit: pagination.limit,
+      //   _extend: extend,
+      //   _related: true, // Request related object data
+      //   _relatedNames: true, // Request ID to name mappings
+      //   ...searchParams,
+      // };
+
+      // New simple search implementation using _search parameter
+      const storeParams = {
+        _page: pagination.page,
+        _limit: pagination.limit,
+        _extend: extend,
+        _related: true, // Request related object data
+        _relatedNames: true, // Request ID to name mappings
+      };
+
+      // Add simple search from debounced search query
+      if (debouncedSearchQuery && debouncedSearchQuery.trim() !== '') {
+        storeParams._search = debouncedSearchQuery.trim();
+      }
+
+      if (beoordelingFilter) storeParams['beoordeling'] = beoordelingFilter;
+
+      console.info(
+        `🔗 Fetching collection for ${config.registerSlug}/${config.schemaSlug} with related names`
+      );
+
+      // Use object store for collection data - this handles loading/error states automatically
+      await object.fetchCollection(
+        config.registerSlug,
+        config.schemaSlug,
+        storeParams
+      );
+
+      // Fetch schema using object store
+      await object.fetchSchema(config.schemaSlug);
+
+      // Additional fallback: manually resolve any remaining reference IDs
+      // (for cases where backend doesn't support _relatedNames yet)
+      const collection = object.getCollection(objectType);
+      const schema = object.getSchema(schemaType);
+
+      if (collection.results?.length && schema) {
+        const referenceIds = extractReferenceIdsFromCollection(
+          collection.results,
+          schema
+        );
+        if (referenceIds.length > 0) {
+          console.info(
+            `📋 Found ${referenceIds.length} additional reference IDs to resolve`
+          );
+          // This will fetch any missing names and cache them
+          await object.getNamesForMultipleIds(referenceIds);
+        }
+      }
+    } catch (err) {
+      // Don't set error if request was cancelled - object store handles collection errors
+      if (err.code === 'ERR_CANCELED' || err instanceof CanceledError) {
         return;
       }
-
-      try {
-        // Build the extend parameters exactly as before
-        const extend = [...config.extend];
-
-        // LEGACY: Old field-specific search implementation
-        // Convert extend array and searchParams to object format for object store
-        // const storeParams = {
-        //   _page: pagination.page,
-        //   _limit: pagination.limit,
-        //   _extend: extend,
-        //   _related: true, // Request related object data
-        //   _relatedNames: true, // Request ID to name mappings
-        //   ...searchParams,
-        // };
-
-        // New simple search implementation using _search parameter
-        const storeParams = {
-          _page: pagination.page,
-          _limit: pagination.limit,
-          _extend: extend,
-          _related: true, // Request related object data
-          _relatedNames: true, // Request ID to name mappings
-        };
-
-        // Add simple search from debounced search query
-        if (debouncedSearchQuery && debouncedSearchQuery.trim() !== '') {
-          storeParams._search = debouncedSearchQuery.trim();
-        }
-
-        if (beoordelingFilter) storeParams['beoordeling'] = beoordelingFilter;
-
-        console.info(
-          `🔗 Fetching collection for ${config.registerSlug}/${config.schemaSlug} with related names`
-        );
-
-        // Use object store for collection data - this handles loading/error states automatically
-        await object.fetchCollection(
-          config.registerSlug,
-          config.schemaSlug,
-          storeParams
-        );
-
-        // Fetch schema using object store
-        await object.fetchSchema(config.schemaSlug);
-
-        // Additional fallback: manually resolve any remaining reference IDs
-        // (for cases where backend doesn't support _relatedNames yet)
-        const collection = object.getCollection(objectType);
-        const schema = object.getSchema(schemaType);
-
-        if (collection.results?.length && schema) {
-          const referenceIds = extractReferenceIdsFromCollection(
-            collection.results,
-            schema
-          );
-          if (referenceIds.length > 0) {
-            console.info(
-              `📋 Found ${referenceIds.length} additional reference IDs to resolve`
-            );
-            // This will fetch any missing names and cache them
-            await object.getNamesForMultipleIds(referenceIds);
-          }
-        }
-      } catch (err) {
-        // Don't set error if request was cancelled - object store handles collection errors
-        if (err.code === 'ERR_CANCELED' || err instanceof CanceledError) {
-          return;
-        }
-        console.error('Error fetching data:', err);
-      }
-    },
-    [
-      objectType,
-      config,
-      pagination.page,
-      pagination.limit,
-      beoordelingFilter,
-      debouncedSearchQuery,
-      object,
-    ]
-  );
+      console.error('Error fetching data:', err);
+    }
+  }, [
+    objectType,
+    config,
+    pagination.page,
+    pagination.limit,
+    beoordelingFilter,
+    debouncedSearchQuery,
+    object,
+  ]);
 
   const downloadData = useCallback(
     async (type = 'csv') => {
@@ -609,7 +606,13 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
       // Only include if not explicitly disabled in config
       const dynamicCreateActions = config.disableRelatedCreateActions
         ? []
-        : makeActionsForContext(row.id, config.dynamicActionFilter);
+        : makeActionsForContext(
+            row.id,
+            config.dynamicActionFilter,
+            row,
+            config.registerSlug,
+            config.schemaSlug
+          );
 
       const deleteAction = {
         key: 'delete',

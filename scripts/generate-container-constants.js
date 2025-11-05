@@ -353,7 +353,6 @@ export const getSite = () => CONTAINER_CONFIG.SITE;
 export const getMode = () => CONTAINER_CONFIG.MODE;
 export const getThemeVariant = () => CONTAINER_CONFIG.THEME_VARIANT;
 export const getEnvironmentName = () => CONTAINER_CONFIG.ENVIRONMENT_NAME;
-export const getFaviconUrl = () => CONTAINER_CONFIG.FAVICON_URL;
 // All API URLs are now unified under BASE_URL
 export const getApiUrl = () => CONTAINER_CONFIG.BASE_URL || '/api/apps';
 export const getCommongroundApiUrl = () => CONTAINER_CONFIG.BASE_URL || '/api/apps';
@@ -395,7 +394,6 @@ export const getVisualConfig = () => ({
 // Image helper functions
 export const getHeroImageUrl = () => CONTAINER_CONFIG.HERO_IMAGE_URL;
 export const getFaviconUrl = () => CONTAINER_CONFIG.FAVICON_URL;
-
 
 // Footer text helper functions
 export const getFooterLogoTitle = () => CONTAINER_CONFIG.FOOTER_LOGO_TITLE;
