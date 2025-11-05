@@ -22,12 +22,10 @@ COPY . .
 # Install curl for health checks and script execution in builder stage
 RUN apk add --no-cache curl
 
-# Generate build-time defaults for container constants
-# Note: Runtime config will be generated at container startup
-RUN if [ -f scripts/generate-container-constants.js ]; then \
-      echo "🔧 Generating build-time container constants (fallback defaults)..." && \
-      node scripts/generate-container-constants.js || echo "⚠️  Container constants generation failed, using hardcoded defaults"; \
-    fi
+# Note: We no longer generate container.constants.js at build time
+# The file now reads from window.RUNTIME_CONFIG which is generated at container startup
+# This allows runtime configuration without rebuilding the Docker image
+RUN echo "ℹ️  Skipping build-time container constants generation (using runtime config instead)"
 
 # Build the application
 RUN yarn build:web
