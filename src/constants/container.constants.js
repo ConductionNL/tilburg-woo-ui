@@ -5,58 +5,73 @@
 import { AcLockObject } from '@utils/ac-lock-object';
 
 /**
- * Get runtime configuration from window object or use build-time defaults
- * The runtime-config.js file is loaded in index.html BEFORE the React bundle
+ * Build-time default configuration
+ * Used as fallback if runtime config is not available
  */
-const getRuntimeConfig = () => {
+const DEFAULT_CONFIG = {
+  SITE_TITLE: 'Hot Reload Development 🔥',
+  SITE_DESCRIPTION: 'Hot reload development instance',
+  SITE: 'localhost',
+  MODE: 'development',
+  THEME_VARIANT: 'opencatalogi',
+  ENVIRONMENT_NAME: 'development',
+  BASE_URL: '/api/apps',
+  GRANT_TYPE: 'authorization_code',
+  CLIENT_ID: '',
+  CLIENT_SECRET: '',
+  PROVIDER: 'nextcloud',
+  REGISTER_URL: '',
+  AUTO_LOGOUT: false,
+  AUTO_LOGOUT_TIME: 3600,
+  SESSION_TIMEOUT: 3600,
+  ACTIVITY_PING: false,
+  ROLLBAR_KEY: '',
+  ROLLBAR_ENVIRONMENT: 'development',
+  ENABLE_AUTHENTICATION: false,
+  ENABLE_GEMMA: true,
+  ENABLE_DIRECTORY: true,
+  ENABLE_ROLLBAR: false,
+  ENABLE_MOCK_THEMES: true,
+  ENABLE_BREADCRUMBS: false,
+  EXTERNAL_WEBSITE_URL: 'https://www.tilburg.nl/',
+  EXTERNAL_PRIVACY_URL: 'https://www.tilburg.nl/privacystatement/',
+  EXTERNAL_COOKIES_URL: 'https://www.tilburg.nl/cookies/',
+  EXTERNAL_PROCLAIMER_URL: 'https://www.tilburg.nl/proclaimer/',
+  HERO_IMAGE_URL: '/home-hero-background.png',
+  FOOTER_STYLE: 'vng',
+  FOOTER_LOGO_TITLE: 'Open Tilburg',
+  FOOTER_LOGO_SUBTITLE: 'Één plek voor alle publicaties van Gemeente Tilburg',
+  SUPPORT_EMAIL_ADDRESS: 'info@conduction.nl',
+  DEFAULT_SEARCH_SCHEMA: '18',
+};
+
+/**
+ * Initialize configuration at module load time
+ * Since runtime-config.js is loaded in <head> before React bundle, window.RUNTIME_CONFIG is available
+ */
+const initializeConfig = () => {
   // Check if we're in a browser environment and runtime config is available
   if (typeof window !== 'undefined' && window.RUNTIME_CONFIG) {
-    console.log('✅ Using runtime configuration from window.RUNTIME_CONFIG');
-    return window.RUNTIME_CONFIG;
+    console.log(
+      '✅ Using runtime configuration from window.RUNTIME_CONFIG',
+      window.RUNTIME_CONFIG
+    );
+    // Merge runtime config with defaults (runtime config takes priority)
+    return { ...DEFAULT_CONFIG, ...window.RUNTIME_CONFIG };
   }
 
   // Fallback to build-time defaults (for SSR, tests, or if runtime config fails to load)
   console.warn('⚠️  Runtime config not found, using build-time defaults');
-  return {
-    SITE_TITLE: 'Hot Reload Development 🔥',
-    SITE_DESCRIPTION: 'Hot reload development instance',
-    SITE: 'localhost',
-    MODE: 'development',
-    THEME_VARIANT: 'vng',
-    ENVIRONMENT_NAME: 'development',
-    BASE_URL: '/api/apps',
-    GRANT_TYPE: 'authorization_code',
-    CLIENT_ID: '',
-    CLIENT_SECRET: '',
-    PROVIDER: 'nextcloud',
-    REGISTER_URL: '',
-    AUTO_LOGOUT: false,
-    AUTO_LOGOUT_TIME: 3600,
-    SESSION_TIMEOUT: 3600,
-    ACTIVITY_PING: false,
-    ROLLBAR_KEY: '',
-    ROLLBAR_ENVIRONMENT: 'development',
-    ENABLE_AUTHENTICATION: false,
-    ENABLE_GEMMA: true,
-    ENABLE_DIRECTORY: true,
-    ENABLE_ROLLBAR: false,
-    ENABLE_MOCK_THEMES: true,
-    ENABLE_BREADCRUMBS: false,
-    EXTERNAL_WEBSITE_URL: 'https://www.tilburg.nl/',
-    EXTERNAL_PRIVACY_URL: 'https://www.tilburg.nl/privacystatement/',
-    EXTERNAL_COOKIES_URL: 'https://www.tilburg.nl/cookies/',
-    EXTERNAL_PROCLAIMER_URL: 'https://www.tilburg.nl/proclaimer/',
-    HERO_IMAGE_URL: '/home-hero-background.png',
-    FOOTER_STYLE: 'vng',
-    FOOTER_LOGO_TITLE: 'Open Tilburg',
-    FOOTER_LOGO_SUBTITLE: 'Één plek voor alle publicaties van Gemeente Tilburg',
-    SUPPORT_EMAIL_ADDRESS: 'info@conduction.nl',
-    DEFAULT_SEARCH_SCHEMA: '18',
-  };
+  return DEFAULT_CONFIG;
 };
 
-// Container configuration - reads from runtime config or falls back to defaults
-export const CONTAINER_CONFIG = AcLockObject(getRuntimeConfig());
+// Initialize configuration once at module load time
+// This is safe because runtime-config.js is loaded in <head> before this bundle
+const configData = initializeConfig();
+
+// Container configuration - frozen to prevent accidental modifications
+// Note: We don't use AcLockObject here because we want the merged runtime config, not frozen at build time
+export const CONTAINER_CONFIG = AcLockObject(configData);
 // Helper functions to replace hostname-based logic
 export const getTitle = () => CONTAINER_CONFIG.SITE_TITLE;
 export const getSiteDescription = () => CONTAINER_CONFIG.SITE_DESCRIPTION;
