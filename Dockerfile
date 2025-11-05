@@ -22,10 +22,11 @@ COPY . .
 # Install curl for health checks and script execution in builder stage
 RUN apk add --no-cache curl
 
-# Generate container constants from environment variables (if available)
+# Generate build-time defaults for container constants
+# Note: Runtime config will be generated at container startup
 RUN if [ -f scripts/generate-container-constants.js ]; then \
-      echo "🔧 Generating container constants..." && \
-      node scripts/generate-container-constants.js || echo "⚠️  Container constants generation failed, using defaults"; \
+      echo "🔧 Generating build-time container constants (fallback defaults)..." && \
+      node scripts/generate-container-constants.js || echo "⚠️  Container constants generation failed, using hardcoded defaults"; \
     fi
 
 # Build the application
@@ -62,21 +63,13 @@ RUN echo '#!/bin/sh' > /usr/local/bin/start-with-env.sh && \
     echo '# Substitute environment variables in nginx config' >> /usr/local/bin/start-with-env.sh && \
     echo 'envsubst '"'"'$NGINX_OPENCONNECTOR_UPSTREAM $NGINX_NEXTCLOUD_UPSTREAM $NGINX_NEXTCLOUD_DOMAIN $NGINX_TARGET_HOST $NGINX_ROOT_DIR'"'"' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf' >> /usr/local/bin/start-with-env.sh && \
     echo '' >> /usr/local/bin/start-with-env.sh && \
-    echo '# Create src directory structure if it doesnt exist' >> /usr/local/bin/start-with-env.sh && \
-    echo 'mkdir -p /usr/share/nginx/html/src/constants' >> /usr/local/bin/start-with-env.sh && \
-    echo '' >> /usr/local/bin/start-with-env.sh && \
-    echo '# Generate container constants from environment variables' >> /usr/local/bin/start-with-env.sh && \
-    echo 'if [ -f /usr/local/scripts/generate-container-constants.js ]; then' >> /usr/local/bin/start-with-env.sh && \
-    echo '  echo "🔧 Generating production container constants..."' >> /usr/local/bin/start-with-env.sh && \
-    echo '  cd /usr/local' >> /usr/local/bin/start-with-env.sh && \
-    echo '  node scripts/generate-container-constants.js' >> /usr/local/bin/start-with-env.sh && \
-    echo '  # Copy generated constants to the served directory' >> /usr/local/bin/start-with-env.sh && \
-    echo '  if [ -f /usr/local/src/constants/container.constants.js ]; then' >> /usr/local/bin/start-with-env.sh && \
-    echo '    cp /usr/local/src/constants/container.constants.js /usr/share/nginx/html/src/constants/' >> /usr/local/bin/start-with-env.sh && \
-    echo '    echo "✅ Container constants deployed to production build"' >> /usr/local/bin/start-with-env.sh && \
-    echo '  fi' >> /usr/local/bin/start-with-env.sh && \
+    echo '# Generate runtime configuration (NOT bundled by webpack)' >> /usr/local/bin/start-with-env.sh && \
+    echo 'if [ -f /usr/local/scripts/generate-runtime-config.js ]; then' >> /usr/local/bin/start-with-env.sh && \
+    echo '  echo "🔧 Generating runtime configuration..."' >> /usr/local/bin/start-with-env.sh && \
+    echo '  node /usr/local/scripts/generate-runtime-config.js /usr/share/nginx/html/runtime-config.js' >> /usr/local/bin/start-with-env.sh && \
+    echo '  echo "✅ Runtime configuration generated at /usr/share/nginx/html/runtime-config.js"' >> /usr/local/bin/start-with-env.sh && \
     echo 'else' >> /usr/local/bin/start-with-env.sh && \
-    echo '  echo "⚠️  No container constants script found, using build-time configuration"' >> /usr/local/bin/start-with-env.sh && \
+    echo '  echo "⚠️  No runtime config script found, using build-time defaults"' >> /usr/local/bin/start-with-env.sh && \
     echo 'fi' >> /usr/local/bin/start-with-env.sh && \
     echo '' >> /usr/local/bin/start-with-env.sh && \
     echo '# Start nginx' >> /usr/local/bin/start-with-env.sh && \

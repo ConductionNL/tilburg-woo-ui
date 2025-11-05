@@ -1,44 +1,62 @@
-// Auto-generated container constants
-// This file is generated from environment variables during container startup
-// DO NOT EDIT MANUALLY - changes will be overwritten
+// Container constants - Runtime Configuration
+// This file reads from window.RUNTIME_CONFIG which is loaded at runtime
+// The runtime-config.js file is generated at container startup with environment-specific values
+// Priority: 1. Runtime config (window.RUNTIME_CONFIG) -> 2. Build-time defaults
 import { AcLockObject } from '@utils/ac-lock-object';
-// Container configuration
-export const CONTAINER_CONFIG = AcLockObject({
-  SITE_TITLE: 'Hot Reload Development 🔥',
-  SITE_DESCRIPTION: 'Hot reload development instance',
-  SITE: 'localhost',
-  MODE: 'development',
-  THEME_VARIANT: 'vng',
-  ENVIRONMENT_NAME: 'development',
-  BASE_URL: '/api/apps',
-  GRANT_TYPE: 'authorization_code',
-  CLIENT_ID: '',
-  CLIENT_SECRET: '',
-  PROVIDER: 'nextcloud',
-  REGISTER_URL: '',
-  AUTO_LOGOUT: false,
-  AUTO_LOGOUT_TIME: 3600,
-  SESSION_TIMEOUT: 3600,
-  ACTIVITY_PING: false,
-  ROLLBAR_KEY: '',
-  ROLLBAR_ENVIRONMENT: 'development',
-  ENABLE_AUTHENTICATION: false,
-  ENABLE_GEMMA: true,
-  ENABLE_DIRECTORY: true,
-  ENABLE_ROLLBAR: false,
-  ENABLE_MOCK_THEMES: true,
-  ENABLE_BREADCRUMBS: false,
-  EXTERNAL_WEBSITE_URL: 'https://www.tilburg.nl/',
-  EXTERNAL_PRIVACY_URL: 'https://www.tilburg.nl/privacystatement/',
-  EXTERNAL_COOKIES_URL: 'https://www.tilburg.nl/cookies/',
-  EXTERNAL_PROCLAIMER_URL: 'https://www.tilburg.nl/proclaimer/',
-  HERO_IMAGE_URL: '/home-hero-background.png',
-  FOOTER_STYLE: 'vng',
-  FOOTER_LOGO_TITLE: 'Open Tilburg',
-  FOOTER_LOGO_SUBTITLE: 'Één plek voor alle publicaties van Gemeente Tilburg',
-  SUPPORT_EMAIL_ADDRESS: 'info@conduction.nl',
-  DEFAULT_SEARCH_SCHEMA: '18',
-});
+
+/**
+ * Get runtime configuration from window object or use build-time defaults
+ * The runtime-config.js file is loaded in index.html BEFORE the React bundle
+ */
+const getRuntimeConfig = () => {
+  // Check if we're in a browser environment and runtime config is available
+  if (typeof window !== 'undefined' && window.RUNTIME_CONFIG) {
+    console.log('✅ Using runtime configuration from window.RUNTIME_CONFIG');
+    return window.RUNTIME_CONFIG;
+  }
+
+  // Fallback to build-time defaults (for SSR, tests, or if runtime config fails to load)
+  console.warn('⚠️  Runtime config not found, using build-time defaults');
+  return {
+    SITE_TITLE: 'Hot Reload Development 🔥',
+    SITE_DESCRIPTION: 'Hot reload development instance',
+    SITE: 'localhost',
+    MODE: 'development',
+    THEME_VARIANT: 'vng',
+    ENVIRONMENT_NAME: 'development',
+    BASE_URL: '/api/apps',
+    GRANT_TYPE: 'authorization_code',
+    CLIENT_ID: '',
+    CLIENT_SECRET: '',
+    PROVIDER: 'nextcloud',
+    REGISTER_URL: '',
+    AUTO_LOGOUT: false,
+    AUTO_LOGOUT_TIME: 3600,
+    SESSION_TIMEOUT: 3600,
+    ACTIVITY_PING: false,
+    ROLLBAR_KEY: '',
+    ROLLBAR_ENVIRONMENT: 'development',
+    ENABLE_AUTHENTICATION: false,
+    ENABLE_GEMMA: true,
+    ENABLE_DIRECTORY: true,
+    ENABLE_ROLLBAR: false,
+    ENABLE_MOCK_THEMES: true,
+    ENABLE_BREADCRUMBS: false,
+    EXTERNAL_WEBSITE_URL: 'https://www.tilburg.nl/',
+    EXTERNAL_PRIVACY_URL: 'https://www.tilburg.nl/privacystatement/',
+    EXTERNAL_COOKIES_URL: 'https://www.tilburg.nl/cookies/',
+    EXTERNAL_PROCLAIMER_URL: 'https://www.tilburg.nl/proclaimer/',
+    HERO_IMAGE_URL: '/home-hero-background.png',
+    FOOTER_STYLE: 'vng',
+    FOOTER_LOGO_TITLE: 'Open Tilburg',
+    FOOTER_LOGO_SUBTITLE: 'Één plek voor alle publicaties van Gemeente Tilburg',
+    SUPPORT_EMAIL_ADDRESS: 'info@conduction.nl',
+    DEFAULT_SEARCH_SCHEMA: '18',
+  };
+};
+
+// Container configuration - reads from runtime config or falls back to defaults
+export const CONTAINER_CONFIG = AcLockObject(getRuntimeConfig());
 // Helper functions to replace hostname-based logic
 export const getTitle = () => CONTAINER_CONFIG.SITE_TITLE;
 export const getSiteDescription = () => CONTAINER_CONFIG.SITE_DESCRIPTION;
