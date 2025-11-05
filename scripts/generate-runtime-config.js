@@ -285,12 +285,8 @@ const getRuntimeConfig = () => {
     ),
 
     // Visual Configuration
-    HERO_IMAGE_URL: getConfigValue(
-      yamlConfig,
-      'HERO_IMAGE_URL',
-      '/home-hero-background.png'
-    ),
-    FAVICON_URL: getConfigValue(yamlConfig, 'FAVICON_URL', '/favicon.svg'),
+    HERO_IMAGE_URL: getConfigValue(yamlConfig, 'HERO_IMAGE_URL', null),
+    FAVICON_URL: getConfigValue(yamlConfig, 'FAVICON_URL', null),
 
     // Menu Configuration
     FOOTER_STYLE: getConfigValue(yamlConfig, 'FOOTER_STYLE', 'vng'),

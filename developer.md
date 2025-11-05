@@ -297,8 +297,8 @@ All changes maintain **backward compatibility** - the application works in produ
 #### Visual Configuration
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `HERO_IMAGE_URL` | `/home-hero-background.png` | Hero section background image (URL or base64) |
-| `FAVICON_URL` | `/favicon.svg` | Browser favicon (URL or base64, falls back to hostname-based logic if not set) |
+| `HERO_IMAGE_URL` | `null` | Hero section background image (URL or base64) |
+| `FAVICON_URL` | `null` | Browser favicon (URL or base64, falls back to hostname-based logic if not set) |
 | `FOOTER_LOGO_TITLE` | `VNG Softwarecatalogus` | Footer logo main text |
 | `FOOTER_LOGO_SUBTITLE` | `Één plek voor alle software...` | Footer logo subtitle |
 | `SUPPORT_EMAIL_ADDRESS` | `info@conduction.nl` | Support contact email |

@@ -282,11 +282,7 @@ const getEnvConfig = () => {
     ),
 
     // Visual Configuration
-    HERO_IMAGE_URL: getConfigValue(
-      yamlConfig,
-      'HERO_IMAGE_URL',
-      '/home-hero-background.png'
-    ),
+    HERO_IMAGE_URL: getConfigValue(yamlConfig, 'HERO_IMAGE_URL', null),
 
     // Menu Configuration
     FOOTER_STYLE: getConfigValue(yamlConfig, 'FOOTER_STYLE', 'vng'),
