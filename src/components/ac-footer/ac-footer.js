@@ -25,6 +25,19 @@ const AcFooter = ({ store: { menu, user } }) => {
   // Get footer menus from positions 3, 4, 5 with authentication filtering
   const footerItems = menu.getFooterMenus(user.isAuthenticated);
 
+  const getFooterStaticContent = () => {
+    console.log(getFooterLogoTitle(), getFooterLogoSubtitle());
+    return (
+      <span>
+        <span>{getFooterLogoTitle() || 'VNG Softwarecatalogus'}</span>
+        <span>
+          {getFooterLogoSubtitle() ||
+            'Één plek voor alle software voor en door Gemeenten'}
+        </span>
+      </span>
+    );
+  };
+
   return (
     <footer className='ac-footer'>
       <h2 className='sr-only'>Footer</h2>
@@ -105,10 +118,7 @@ const AcFooter = ({ store: { menu, user } }) => {
                 <span>Éen plek voor alle publicaties van Gemeente Tilburg</span>
               </span>
               )} */}
-            <span>
-              <span>VNG Softwarecatalogus</span>
-              <span>Één plek voor alle software voor en door Gemeenten</span>
-            </span>
+            {getFooterStaticContent()}
           </div>
         </AcContainer>
       </section>

@@ -146,14 +146,6 @@ const loadValuesYaml = () => {
     const content = fs.readFileSync(valuesPath, 'utf8');
     const parsed = parseYaml(content);
 
-    const count = Object.keys(parsed).length;
-    if (count > 0) {
-      console.info(`📄 Loaded ${count} variable(s) from values.yaml`);
-      console.info('📋 Values from values.yaml:');
-      Object.keys(parsed).forEach((key) => {
-        console.info(`   ${key}: ${parsed[key]}`);
-      });
-    }
     return parsed;
   } catch (error) {
     console.warn('⚠️  Error reading values.yaml:', error.message);
@@ -166,46 +158,52 @@ const loadValuesYaml = () => {
  * 1. values.yaml
  * 2. Environment variable
  * 3. Default value
+ *
+ * Returns an object with { value, source } to track where the value came from
  */
 const getConfigValue = (yamlConfig, key, defaultValue) => {
   // First check values.yaml
   if (yamlConfig[key] !== undefined && yamlConfig[key] !== '') {
-    return yamlConfig[key];
+    return { value: yamlConfig[key], source: 'values.yaml' };
   }
 
   // Then check environment variable
   if (process.env[key] !== undefined && process.env[key] !== '') {
-    return process.env[key];
+    return { value: process.env[key], source: 'environment' };
   }
 
   // Finally use default
-  return defaultValue;
+  return { value: defaultValue, source: 'default' };
 };
 
 /**
  * Get boolean configuration value with priority
  */
 const getBooleanConfig = (yamlConfig, key, defaultValue) => {
-  const value = getConfigValue(yamlConfig, key, null);
+  const result = getConfigValue(yamlConfig, key, null);
+  const value = result.value;
 
-  if (value === null) return defaultValue;
-  if (typeof value === 'boolean') return value;
-  if (value === 'true') return true;
-  if (value === 'false') return false;
+  if (value === null) return { value: defaultValue, source: 'default' };
+  if (typeof value === 'boolean') return result;
+  if (value === 'true') return { value: true, source: result.source };
+  if (value === 'false') return { value: false, source: result.source };
 
-  return defaultValue;
+  return { value: defaultValue, source: 'default' };
 };
 
 /**
  * Get integer configuration value with priority
  */
 const getIntegerConfig = (yamlConfig, key, defaultValue) => {
-  const value = getConfigValue(yamlConfig, key, null);
+  const result = getConfigValue(yamlConfig, key, null);
+  const value = result.value;
 
-  if (value === null) return defaultValue;
+  if (value === null) return { value: defaultValue, source: 'default' };
 
   const parsed = parseInt(value);
-  return isNaN(parsed) ? defaultValue : parsed;
+  return isNaN(parsed)
+    ? { value: defaultValue, source: 'default' }
+    : { value: parsed, source: result.source };
 };
 
 /**
@@ -325,12 +323,24 @@ const getRuntimeConfig = () => {
   const extraVars = {};
   for (const key in yamlConfig) {
     if (!baseConfig.hasOwnProperty(key)) {
-      extraVars[key] = yamlConfig[key];
+      extraVars[key] = { value: yamlConfig[key], source: 'values.yaml' };
     }
   }
 
   // Merge base config with extra variables
-  return { ...baseConfig, ...extraVars };
+  const fullConfig = { ...baseConfig, ...extraVars };
+
+  // Separate values from metadata for the final config
+  const config = {};
+  const sources = {};
+
+  for (const key in fullConfig) {
+    const item = fullConfig[key];
+    config[key] = item.value;
+    sources[key] = item.source;
+  }
+
+  return { config, sources };
 };
 
 /**
@@ -348,14 +358,6 @@ const generateRuntimeConfigFile = (config) => {
 
 // Make configuration available globally
 window.RUNTIME_CONFIG = ${configJson};
-
-// Log configuration load (helpful for debugging)
-console.log('✅ Runtime configuration loaded:', {
-  SITE_TITLE: window.RUNTIME_CONFIG.SITE_TITLE,
-  ENVIRONMENT_NAME: window.RUNTIME_CONFIG.ENVIRONMENT_NAME,
-  THEME_VARIANT: window.RUNTIME_CONFIG.THEME_VARIANT,
-  BASE_URL: window.RUNTIME_CONFIG.BASE_URL,
-});
 `;
 };
 
@@ -376,7 +378,7 @@ const main = () => {
     }
 
     // Get runtime configuration
-    const config = getRuntimeConfig();
+    const { config, sources } = getRuntimeConfig();
 
     // Generate the file content
     const fileContent = generateRuntimeConfigFile(config);
@@ -387,19 +389,46 @@ const main = () => {
     // Success feedback with full configuration display
     console.info('\n✅ Runtime configuration generated successfully!');
     console.info(`📁 Output: ${outputPath}`);
-    console.info('\n📋 Final Configuration (all values):');
 
-    // Display all configuration values in a structured way
+    // Group configuration by source
+    const bySource = {
+      'values.yaml': [],
+      environment: [],
+      default: [],
+    };
+
     Object.keys(config)
       .sort()
       .forEach((key) => {
         const value = config[key];
+        const source = sources[key];
         const displayValue =
           typeof value === 'string' && value.length > 100
             ? value.substring(0, 100) + '...'
             : value;
-        console.info(`   ${key}: ${displayValue}`);
+        bySource[source].push({ key, value: displayValue });
       });
+
+    // Display values from values.yaml
+    if (bySource['values.yaml'].length > 0) {
+      console.info('\n📋 Configuration from values.yaml:');
+      bySource['values.yaml'].forEach(({ key, value }) => {
+        console.info(`   ${key}: ${value}`);
+      });
+    }
+
+    // Display values from environment variables
+    if (bySource['environment'].length > 0) {
+      console.info('\n🌍 Configuration from environment variables:');
+      bySource['environment'].forEach(({ key, value }) => {
+        console.info(`   ${key}: ${value}`);
+      });
+    }
+
+    // Display default values (optional, can be commented out if too verbose)
+    if (bySource['default'].length > 0) {
+      console.info(`\n⚙️  Using ${bySource['default'].length} default value(s)`);
+    }
 
     console.info('\n💡 This file will be loaded by the browser at runtime');
     console.info('💡 Priority: values.yaml → environment variables → defaults\n');

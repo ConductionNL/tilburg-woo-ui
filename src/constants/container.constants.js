@@ -53,10 +53,10 @@ const DEFAULT_CONFIG = {
 const initializeConfig = () => {
   // Check if we're in a browser environment and runtime config is available
   if (typeof window !== 'undefined' && window.RUNTIME_CONFIG) {
-    console.log(
-      '✅ [container.constants.js] Using runtime configuration from window.RUNTIME_CONFIG',
-      window.RUNTIME_CONFIG
-    );
+    // console.log(
+    //   '✅ [container.constants.js] Using runtime configuration from window.RUNTIME_CONFIG',
+    //   window.RUNTIME_CONFIG
+    // );
     // Merge runtime config with defaults (runtime config takes priority)
     return { ...DEFAULT_CONFIG, ...window.RUNTIME_CONFIG };
   }
