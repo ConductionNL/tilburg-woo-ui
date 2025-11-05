@@ -220,6 +220,7 @@ const getEnvConfig = () => {
     SITE: getConfigValue(yamlConfig, 'SITE', 'localhost'),
     MODE: getConfigValue(yamlConfig, 'MODE', 'development'),
     THEME_VARIANT: getConfigValue(yamlConfig, 'THEME_VARIANT', 'development'),
+    FAVICON_URL: getConfigValue(yamlConfig, 'FAVICON_URL', '/favicon.svg'),
     ENVIRONMENT_NAME: getConfigValue(yamlConfig, 'ENVIRONMENT_NAME', 'development'),
 
     // API Configuration (simplified to single BASE_URL)
@@ -356,6 +357,7 @@ export const getSite = () => CONTAINER_CONFIG.SITE;
 export const getMode = () => CONTAINER_CONFIG.MODE;
 export const getThemeVariant = () => CONTAINER_CONFIG.THEME_VARIANT;
 export const getEnvironmentName = () => CONTAINER_CONFIG.ENVIRONMENT_NAME;
+export const getFaviconUrl = () => CONTAINER_CONFIG.FAVICON_URL;
 // All API URLs are now unified under BASE_URL
 export const getApiUrl = () => CONTAINER_CONFIG.BASE_URL || '/api/apps';
 export const getCommongroundApiUrl = () => CONTAINER_CONFIG.BASE_URL || '/api/apps';
@@ -389,9 +391,16 @@ export const getExternalUrls = () => ({
 });
 export const getVisualConfig = () => ({
   heroImageUrl: CONTAINER_CONFIG.HERO_IMAGE_URL,
+  faviconUrl: CONTAINER_CONFIG.FAVICON_URL,
   menuPosition: CONTAINER_CONFIG.MENU_POSITION,
   footerStyle: CONTAINER_CONFIG.FOOTER_STYLE,
 });
+
+// Image helper functions
+export const getHeroImageUrl = () => CONTAINER_CONFIG.HERO_IMAGE_URL;
+export const getFaviconUrl = () => CONTAINER_CONFIG.FAVICON_URL;
+
+
 // Footer text helper functions
 export const getFooterLogoTitle = () => CONTAINER_CONFIG.FOOTER_LOGO_TITLE;
 export const getFooterLogoSubtitle = () => CONTAINER_CONFIG.FOOTER_LOGO_SUBTITLE;

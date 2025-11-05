@@ -195,16 +195,27 @@ proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 proxy_set_header X-Forwarded-Proto $scheme;
 ```
 
-## Environment Configuration System ✨
+## Runtime Configuration System ✨
 
-The application now uses a modern environment-based configuration system that replaces the old hostname-based logic. This system allows you to configure the application behavior using environment variables.
+The application uses a **runtime configuration system** that allows you to change environment-specific settings without rebuilding the Docker image. Configuration values are applied when the container starts, making it perfect for multi-environment deployments.
 
 ### How It Works
 
-1. **Environment Variables**: Set configuration via Docker Compose environment variables
-2. **Runtime Generation**: A Node.js script generates `src/constants/container.constants.js` at startup
-3. **Application Integration**: Components import and use the generated configuration
-4. **Fallback Support**: Falls back to hostname-based logic if container constants aren't available
+```
+Helm values.yaml → ConfigMap → Pod Environment Variables → runtime-config.js → Application
+```
+
+1. **Set values** in `helm/tilburg-woo-ui/values.yaml` (or via Helm parameters)
+2. **Deploy** with `helm upgrade`
+3. **Container starts** and generates `runtime-config.js` from environment variables
+4. **Browser loads** `runtime-config.js` which sets `window.RUNTIME_CONFIG`
+5. **Application reads** from `window.RUNTIME_CONFIG` at startup
+
+**Key Benefits:**
+- ✅ No Docker rebuild needed - just restart pods
+- ✅ Same image for all environments (dev, staging, production)
+- ✅ Easy debugging via `window.RUNTIME_CONFIG` in browser console
+- ✅ Works seamlessly with Kubernetes/Helm
 
 ### 🚀 Migration Status
 
@@ -286,7 +297,11 @@ All changes maintain **backward compatibility** - the application works in produ
 #### Visual Configuration
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `HERO_IMAGE_URL` | `/home-hero-background.png` | Hero section background image |
+| `HERO_IMAGE_URL` | `/home-hero-background.png` | Hero section background image (URL or base64) |
+| `FAVICON_URL` | `/favicon.svg` | Browser favicon (URL or base64, falls back to hostname-based logic if not set) |
+| `FOOTER_LOGO_TITLE` | `VNG Softwarecatalogus` | Footer logo main text |
+| `FOOTER_LOGO_SUBTITLE` | `Één plek voor alle software...` | Footer logo subtitle |
+| `SUPPORT_EMAIL_ADDRESS` | `info@conduction.nl` | Support contact email |
 
 #### Menu Configuration
 | Variable | Default | Description |
@@ -299,19 +314,94 @@ All changes maintain **backward compatibility** - the application works in produ
 |----------|---------|-------------|
 | `DEFAULT_SEARCH_SCHEMA` | `` | Default schema ID for search queries from home page (e.g., `18` for producten) |
 
+### Using Images in Configuration
+
+You can configure images using either **URLs** or **base64-encoded** data.
+
+#### URL-based Images (Recommended for large images)
+```yaml
+extraEnvVars:
+  HERO_IMAGE_URL: "/custom-hero.png"  # Relative to public directory
+  FAVICON_URL: "https://example.com/favicon.ico"  # External URL
+```
+
+#### Base64-encoded Images (Good for small favicons)
+```yaml
+extraEnvVars:
+  FAVICON_URL: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."
+```
+
+**Base64 Image Guidelines:**
+- ✅ **Good for:** Small logos, icons, favicons (< 50KB)
+- ✅ **Pros:** No external file needed, works immediately
+- ❌ **Not recommended for:** Large images like hero backgrounds (> 100KB)
+- ❌ **Cons:** Makes Helm values file large, harder to read
+
+**Converting images to base64:**
+```bash
+# Linux/Mac
+base64 -i logo.svg
+
+# Or use online tools
+# https://www.base64-image.de/
+```
+
+**Size recommendations:**
+- **Favicon:** < 10KB (base64 OK)
+- **Hero Image:** Use URL (typically 100KB-1MB)
+
 ### Using Environment Configuration
+
+#### Local Development
+
+Edit `docker-compose.yml`:
+```yaml
+environment:
+  - SITE_TITLE=Conduction Catalogus
+  - THEME_VARIANT=opencatalogi
+  - HERO_IMAGE_URL=/custom-hero.png
+  - FAVICON_URL=data:image/png;base64,iVBORw0KG...
+```
+
+Then restart:
+```bash
+docker-compose restart tilburg-woo-ui-hot
+```
+
+#### Kubernetes/Production
+
+Edit `helm/tilburg-woo-ui/values-production.yaml`:
+```yaml
+extraEnvVars:
+  SITE_TITLE: "Conduction Softwarecatalogus"
+  THEME_VARIANT: "conduction"
+  HERO_IMAGE_URL: "/conduction-hero.jpg"
+  FAVICON_URL: "https://conduction.nl/favicon.ico"
+```
+
+Deploy:
+```bash
+helm upgrade tilburg-woo-ui ./helm/tilburg-woo-ui \
+  -f helm/tilburg-woo-ui/values-production.yaml
+```
 
 #### Testing Your Configuration
 
 After updating environment variables, verify they're working:
 
 ```bash
-# 1. Recreate containers to pick up new env vars
-docker-compose -f docker-compose.dev.yml down
-docker-compose -f docker-compose.dev.yml up -d
+# 1. Check browser console
+window.RUNTIME_CONFIG
 
-# 2. Check if variables are loaded in the container
-docker exec tilburg-woo-ui-dev grep "HERO_IMAGE_URL\|MENU_POSITION\|FOOTER_STYLE" /app/src/constants/container.constants.js
+# 2. Check specific values
+window.RUNTIME_CONFIG.HERO_IMAGE_URL
+window.RUNTIME_CONFIG.FAVICON_URL
+
+# 3. Check pod logs (Kubernetes)
+kubectl logs -f deployment/tilburg-woo-ui | grep "Runtime configuration"
+
+# 4. Check runtime config file in pod
+kubectl exec -it deployment/tilburg-woo-ui -- cat /usr/share/nginx/html/runtime-config.js
 
 # 3. Verify container logs show the new configuration
 docker logs tilburg-woo-ui-dev --tail 10

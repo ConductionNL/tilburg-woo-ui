@@ -148,7 +148,11 @@ const loadValuesYaml = () => {
 
     const count = Object.keys(parsed).length;
     if (count > 0) {
-      console.log(`📄 Loaded ${count} variable(s) from values.yaml`);
+      console.info(`📄 Loaded ${count} variable(s) from values.yaml`);
+      console.info('📋 Values from values.yaml:');
+      Object.keys(parsed).forEach((key) => {
+        console.info(`   ${key}: ${parsed[key]}`);
+      });
     }
     return parsed;
   } catch (error) {
@@ -288,6 +292,7 @@ const getRuntimeConfig = () => {
       'HERO_IMAGE_URL',
       '/home-hero-background.png'
     ),
+    FAVICON_URL: getConfigValue(yamlConfig, 'FAVICON_URL', '/favicon.svg'),
 
     // Menu Configuration
     FOOTER_STYLE: getConfigValue(yamlConfig, 'FOOTER_STYLE', 'vng'),
@@ -379,25 +384,25 @@ const main = () => {
     // Write the file
     fs.writeFileSync(outputPath, fileContent, 'utf8');
 
-    // Success feedback with configuration summary
-    console.log('\n✅ Runtime configuration generated successfully!');
-    console.log(`📁 Output: ${outputPath}`);
-    console.log('\n📋 Configuration Summary:');
-    console.log(`   🏷️  Site Title: ${config.SITE_TITLE}`);
-    console.log(`   🌐 Base URL: ${config.BASE_URL}`);
-    console.log(`   🎨 Theme: ${config.THEME_VARIANT}`);
-    console.log(`   📦 Environment: ${config.ENVIRONMENT_NAME}`);
-    console.log(
-      `   🔐 Authentication: ${
-        config.ENABLE_AUTHENTICATION ? 'Enabled' : 'Disabled'
-      }`
-    );
-    console.log(`   📊 GEMMA: ${config.ENABLE_GEMMA ? 'Enabled' : 'Disabled'}`);
-    console.log(
-      `   📋 Directory: ${config.ENABLE_DIRECTORY ? 'Enabled' : 'Disabled'}`
-    );
-    console.log('\n💡 This file will be loaded by the browser at runtime');
-    console.log('💡 Priority: values.yaml → environment variables → defaults\n');
+    // Success feedback with full configuration display
+    console.info('\n✅ Runtime configuration generated successfully!');
+    console.info(`📁 Output: ${outputPath}`);
+    console.info('\n📋 Final Configuration (all values):');
+
+    // Display all configuration values in a structured way
+    Object.keys(config)
+      .sort()
+      .forEach((key) => {
+        const value = config[key];
+        const displayValue =
+          typeof value === 'string' && value.length > 100
+            ? value.substring(0, 100) + '...'
+            : value;
+        console.info(`   ${key}: ${displayValue}`);
+      });
+
+    console.info('\n💡 This file will be loaded by the browser at runtime');
+    console.info('💡 Priority: values.yaml → environment variables → defaults\n');
 
     process.exit(0);
   } catch (error) {

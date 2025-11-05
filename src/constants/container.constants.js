@@ -38,6 +38,7 @@ const DEFAULT_CONFIG = {
   EXTERNAL_COOKIES_URL: 'https://www.tilburg.nl/cookies/',
   EXTERNAL_PROCLAIMER_URL: 'https://www.tilburg.nl/proclaimer/',
   HERO_IMAGE_URL: '/home-hero-background.png',
+  FAVICON_URL: '/favicon.svg',
   FOOTER_STYLE: 'vng',
   FOOTER_LOGO_TITLE: 'VNG Softwarecatalogus',
   FOOTER_LOGO_SUBTITLE: 'Één plek voor alle software voor en door Gemeenten',
@@ -121,9 +122,14 @@ export const getExternalUrls = () => ({
 
 export const getVisualConfig = () => ({
   heroImageUrl: CONTAINER_CONFIG.HERO_IMAGE_URL,
+  faviconUrl: CONTAINER_CONFIG.FAVICON_URL,
   menuPosition: CONTAINER_CONFIG.MENU_POSITION,
   footerStyle: CONTAINER_CONFIG.FOOTER_STYLE,
 });
+
+// Image helper functions
+export const getHeroImageUrl = () => CONTAINER_CONFIG.HERO_IMAGE_URL;
+export const getFaviconUrl = () => CONTAINER_CONFIG.FAVICON_URL;
 
 // Footer text helper functions
 export const getFooterLogoTitle = () => CONTAINER_CONFIG.FOOTER_LOGO_TITLE;
