@@ -518,7 +518,7 @@ const AcPublicationProduct = ({
               ) : (
                 <div>
                   <b>Contactpersoon:</b>
-                  <p>{get_single?.contactpersoon}</p>
+                  <ConUuidResolver>{get_single?.contactpersoon}</ConUuidResolver>
                 </div>
               )}
             </AcFlex>
