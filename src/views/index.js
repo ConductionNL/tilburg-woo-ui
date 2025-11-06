@@ -29,6 +29,9 @@ const AcFormsGebruik = loadable(() =>
 const AcFormsProduct = loadable(() =>
   import('@views/ac-forms/ac-forms-product/ac-forms-product')
 );
+const AcFormsApplicatie = loadable(() =>
+  import('@views/ac-forms/ac-forms-applicatie/ac-forms-applicatie')
+);
 const AcFormsKoppeling = loadable(() =>
   import('@views/ac-forms/ac-forms-koppeling/ac-forms-koppeling')
 );
@@ -64,6 +67,7 @@ export {
   AcObjects,
   AcFormsGebruik,
   AcFormsProduct,
+  AcFormsApplicatie,
   AcFormsKoppeling,
   ConFormsDienst,
   ConFormsIndex,
