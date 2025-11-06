@@ -17,7 +17,6 @@ const ConGebruikStepReview = ({
   koppelingOptions,
   dienstOptions,
   organisatieOptions,
-  productOptions,
   moduleOptions,
 }) => {
   // Helper function to get the correct afnemer display name
@@ -185,13 +184,6 @@ const ConGebruikStepReview = ({
             </div>
           </div>
 
-          <div className='ac-register-review__field'>
-            <strong>Product:</strong>
-            <div>
-              {productOptions.find((o) => o.value === gebruik?.product)?.label ||
-                '-'}
-            </div>
-          </div>
           <div className='ac-register-review__field'>
             <strong>Applicatie:</strong>
             <div>
