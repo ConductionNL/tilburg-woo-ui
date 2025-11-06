@@ -377,7 +377,7 @@ const AcPublicationProduct = ({
                   get_single?.name ||
                   'Applicatie'}{' '}
                 {'('}
-                <ConUuidResolver>{get_single['@self'].organisation}</ConUuidResolver>
+                <ConUuidResolver>{get_single?.aanbieder}</ConUuidResolver>
                 {')'}
               </Heading>
             </div>
@@ -479,6 +479,36 @@ const AcPublicationProduct = ({
               spacing='sm'
               className='con-product-details--contact-info'
             >
+              {get_single?.website && (
+                <div>
+                  <b>Website:</b>
+                  <p>{get_single?.website}</p>
+                </div>
+              )}
+              {get_single?.contactpersoon &&
+              typeof get_single?.contactpersoon === 'object' ? (
+                <div>
+                  <b>Contactpersoon:</b>
+                  <p>
+                    {get_single?.contactpersoon?.voornaam}{' '}
+                    {get_single?.contactpersoon?.tussenvoegsel}{' '}
+                    {get_single?.contactpersoon?.achternaam}
+                  </p>
+                  <p>{get_single?.contactpersoon?.['e-mailadres']}</p>
+                  <p>{get_single?.contactpersoon?.telefoonnummer}</p>
+                </div>
+              ) : (
+                <div>
+                  <b>Contactpersoon:</b>
+                  <p>{get_single?.contactpersoon}</p>
+                </div>
+              )}
+            </AcFlex>
+            <AcFlex
+              column
+              spacing='sm'
+              className='con-product-details--contact-info'
+            >
               {get_single?.licentietype && (
                 <div>
                   <b>Licentietype:</b>
@@ -499,18 +529,6 @@ const AcPublicationProduct = ({
                       (versie) => versie.status === 'in gebruik'
                     )?.versie || 'Geen versie in gebruik'}
                   </p>
-                </div>
-              )}
-              {get_single?.website && (
-                <div>
-                  <b>Website:</b>
-                  <p>{get_single?.website}</p>
-                </div>
-              )}
-              {get_single?.website && (
-                <div>
-                  <b>Website:</b>
-                  <p>{get_single?.website}</p>
                 </div>
               )}
             </AcFlex>
@@ -546,10 +564,10 @@ const AcPublicationProduct = ({
         object={object}
         navigateTo='publication'
         user={user}
-        tabNameOverride={{
-          schemaName: 'product',
-          newTabName: 'Onderdeel van product(en)',
-        }}
+        // tabNameOverride={{
+        //   schemaName: 'product',
+        //   newTabName: 'Onderdeel van product(en)',
+        // }}
         customTabsBefore={[
           {
             id: 'standaarden',
