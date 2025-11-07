@@ -133,6 +133,12 @@ const FormModalConfigFactory = {
               { value: 'Service', label: 'Service' },
               { value: 'Anders', label: 'Anders' },
             ],
+            cloudDienstverleningsmodel: () => [
+              { value: 'SaaS', label: 'SaaS' },
+              { value: 'PaaS', label: 'PaaS' },
+              { value: 'IaaS', label: 'IaaS' },
+              { value: 'Anders', label: 'Anders' },
+            ],
             licentie: () =>
               licenses.map((license) => ({
                 label: license.name,

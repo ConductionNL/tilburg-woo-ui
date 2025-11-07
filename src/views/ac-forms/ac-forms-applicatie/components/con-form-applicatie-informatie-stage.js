@@ -31,6 +31,7 @@ const ConFormApplicatieInformatieStage = memo(
               schemaType='module'
               schemaProperty='naam'
               value={applicatie.naam || ''}
+              touched={touched}
               onChange={(value) => setApplicatieData('naam', value)}
               isDisabled={loading}
               width='full'
@@ -38,6 +39,19 @@ const ConFormApplicatieInformatieStage = memo(
                 required: true,
                 placeholder: 'Naam van de applicatie',
               }}
+              schemas={schemas}
+            />
+
+            {/* Cloud Service Model */}
+            <ConSchemaEnhancedField
+              schemaType='product'
+              schemaProperty='cloudDienstverleningsmodel'
+              value={applicatie.cloudDienstverleningsmodel || ''}
+              onChange={(value) =>
+                setApplicatieData('cloudDienstverleningsmodel', value)
+              }
+              isDisabled={loading}
+              width='half'
               schemas={schemas}
             />
           </div>
