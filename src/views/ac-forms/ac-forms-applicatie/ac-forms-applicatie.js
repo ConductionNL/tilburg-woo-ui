@@ -21,6 +21,7 @@ import {
 import ConFormApplicatieTypeSelectStage from './con-form-applicatie-type-select-stage';
 import ConFormApplicatieInformatieStage from './components/con-form-applicatie-informatie-stage';
 import ConFormApplicatieLicentieStage from './components/con-form-applicatie-licentie-stage';
+import ConFormApplicatieVersieStage from './components/con-form-applicatie-versie-stage';
 import ConFormApplicatieControlerenStage from './components/con-form-applicatie-controleren-stage';
 
 // Utils
@@ -175,6 +176,7 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
   const [schemas, setSchemas] = useState({
     module: null,
     product: null,
+    moduleversie: null,
   });
   const [schemasLoading, setSchemasLoading] = useState(true);
 
@@ -206,7 +208,7 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
   useEffect(() => {
     const fetchSchemas = async () => {
       setSchemasLoading(true);
-      const schemaTypes = ['module', 'product'];
+      const schemaTypes = ['module', 'product', 'moduleversie'];
       const fetchedSchemas = {};
 
       try {
@@ -400,9 +402,15 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
     // For ontbrekend-applicatie: physical steps 0-7/8 map to logical steps 0-7/8
     let logicalStep = formType === 'eigen' ? step + 1 : step;
 
-    // If Versies step is not shown and we're past it, adjust logical step
-    if (!shouldShowVersiesStep() && logicalStep > 3) {
-      logicalStep += 1;
+    // If Versies step is not shown, adjust logical step
+    // For ontbrekend: physical step 3 maps to logical step 3, adjust to 4
+    // For eigen: physical step 3 already maps to logical step 4, no adjustment needed
+    if (!shouldShowVersiesStep()) {
+      if (logicalStep === 3) {
+        logicalStep = 4;
+      } else if (logicalStep > 3 && formType !== 'eigen') {
+        logicalStep += 1;
+      }
     }
 
     switch (logicalStep) {
@@ -437,11 +445,18 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
         );
       case 3:
         // Versies - only shown for On-premises
-        return shouldShowVersiesStep() ? (
-          <div>Versies</div>
-        ) : (
+        if (!shouldShowVersiesStep()) {
           // If versions step is hidden, render next step (Referentiecomponenten)
-          renderStep(step)
+          // The adjustment logic above will have already mapped this to logical step 4
+          return <div>Referentiecomponenten</div>;
+        }
+        return (
+          <ConFormApplicatieVersieStage
+            applicatie={applicatie}
+            setApplicatieData={setApplicatieData}
+            loading={loading}
+            schemas={schemas}
+          />
         );
       case 4:
         return <div>Referentiecomponenten</div>;
@@ -461,9 +476,15 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
     // For ontbrekend-applicatie: physical steps 0-7/8 map to logical steps 0-7/8
     let logicalStep = formType === 'eigen' ? step + 1 : step;
 
-    // If Versies step is not shown and we're past it, adjust logical step
-    if (!shouldShowVersiesStep() && logicalStep > 3) {
-      logicalStep += 1;
+    // If Versies step is not shown, adjust logical step
+    // For ontbrekend: physical step 3 maps to logical step 3, adjust to 4
+    // For eigen: physical step 3 already maps to logical step 4, no adjustment needed
+    if (!shouldShowVersiesStep()) {
+      if (logicalStep === 3) {
+        logicalStep = 4;
+      } else if (logicalStep > 3 && formType !== 'eigen') {
+        logicalStep += 1;
+      }
     }
 
     switch (logicalStep) {
@@ -493,9 +514,15 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
     // For ontbrekend-applicatie: physical steps 0-7/8 map to logical steps 0-7/8
     let logicalStep = formType === 'eigen' ? step + 1 : step;
 
-    // If Versies step is not shown and we're past it, adjust logical step
-    if (!shouldShowVersiesStep() && logicalStep > 3) {
-      logicalStep += 1;
+    // If Versies step is not shown, adjust logical step
+    // For ontbrekend: physical step 3 maps to logical step 3, adjust to 4
+    // For eigen: physical step 3 already maps to logical step 4, no adjustment needed
+    if (!shouldShowVersiesStep()) {
+      if (logicalStep === 3) {
+        logicalStep = 4;
+      } else if (logicalStep > 3 && formType !== 'eigen') {
+        logicalStep += 1;
+      }
     }
 
     if (logicalStep === 1) {
@@ -510,9 +537,15 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
     // For ontbrekend-applicatie: physical steps 0-7/8 map to logical steps 0-7/8
     let logicalStep = formType === 'eigen' ? step + 1 : step;
 
-    // If Versies step is not shown and we're past it, adjust logical step
-    if (!shouldShowVersiesStep() && logicalStep > 3) {
-      logicalStep += 1;
+    // If Versies step is not shown, adjust logical step
+    // For ontbrekend: physical step 3 maps to logical step 3, adjust to 4
+    // For eigen: physical step 3 already maps to logical step 4, no adjustment needed
+    if (!shouldShowVersiesStep()) {
+      if (logicalStep === 3) {
+        logicalStep = 4;
+      } else if (logicalStep > 3 && formType !== 'eigen') {
+        logicalStep += 1;
+      }
     }
 
     if (logicalStep === 1) {
