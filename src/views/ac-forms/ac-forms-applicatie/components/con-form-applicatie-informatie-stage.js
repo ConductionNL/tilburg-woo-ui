@@ -1,5 +1,7 @@
 import React, { memo } from 'react';
 import ConSchemaEnhancedField from '@components/con-schema-enhanced-field/con-schema-enhanced-field';
+import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
+import { validateWebsite } from '@views/ac-forms/validation/form-validations';
 
 /**
  * Applicatie Informatie Form Component
@@ -8,6 +10,11 @@ import ConSchemaEnhancedField from '@components/con-schema-enhanced-field/con-sc
  *
  * Features:
  * - Application name (required)
+ * - Website
+ * - Short description (beschrijvingKort)
+ * - Long description (beschrijvingLang)
+ * - Contact person (contactpersoon)
+ * - Logo
  *
  * @param {Object} applicatie - The applicatie object containing form data
  * @param {Function} setApplicatieData - Function to update applicatie data
@@ -20,13 +27,19 @@ const ConFormApplicatieInformatieStage = memo(
     return (
       <div role='group' aria-labelledby='applicatie-info-section-title'>
         <h2 id='applicatie-info-section-title' className='sr-only'>
-          Applicatie informatie
+          Informatie over uw applicatie
         </h2>
+        <Paragraph className='con-form-wizard-paragraph'>
+          De opgevoerde gegevens zorgen ervoor dat gemeenten uw applicatie kunnen
+          vinden, herkennen en beoordelen. Vul de velden zo volledig mogelijk in,
+          zodat uw applicatie goed zichtbaar is in de softwarecatalogus. Na het
+          opslaan kunt u de gegevens later altijd weer aanpassen of aanvullen.
+        </Paragraph>
 
         {/* Use the same container class as ConDynamicSchemaForm for consistency */}
         <div className='con-dynamic-form-container'>
           <div className='con-form-fields-container'>
-            {/* Application Name - Required */}
+            {/* Application Name and Website on same row */}
             <ConSchemaEnhancedField
               schemaType='module'
               schemaProperty='naam'
@@ -34,25 +47,117 @@ const ConFormApplicatieInformatieStage = memo(
               touched={touched}
               onChange={(value) => setApplicatieData('naam', value)}
               isDisabled={loading}
-              width='full'
+              width='half'
               customProps={{
                 required: true,
                 placeholder: 'Naam van de applicatie',
+                description: 'Naam van uw applicatie',
               }}
               schemas={schemas}
             />
 
-            {/* Cloud Service Model */}
             <ConSchemaEnhancedField
-              schemaType='product'
-              schemaProperty='cloudDienstverleningsmodel'
-              value={applicatie.cloudDienstverleningsmodel || ''}
-              onChange={(value) =>
-                setApplicatieData('cloudDienstverleningsmodel', value)
-              }
+              schemaType='module'
+              schemaProperty='website'
+              value={applicatie.website || ''}
+              onChange={(value) => setApplicatieData('website', value)}
+              isDisabled={loading}
+              width='half'
+              touched={touched}
+              schemas={schemas}
+              customProps={{
+                inputType: 'text',
+                validation: {
+                  custom: (value) => {
+                    if (!value || String(value).trim() === '') return true;
+                    const website = String(value).trim();
+                    return validateWebsite(website);
+                  },
+                  customErrorMessage:
+                    'Website heeft een ongeldig formaat (bijv. conduction.nl, www.conduction.nl of https://conduction.nl)',
+                },
+                description: 'Een URL naar uw applicatie of organisatie',
+              }}
+            />
+
+            {/* Short Description (korteOmschrijving) */}
+            <ConSchemaEnhancedField
+              schemaType='module'
+              schemaProperty='beschrijvingKort'
+              value={applicatie.beschrijvingKort || ''}
+              onChange={(value) => setApplicatieData('beschrijvingKort', value)}
+              isDisabled={loading}
+              width='full'
+              schemas={schemas}
+              customProps={{
+                description:
+                  'Een korte beschrijving van de applicatie voor o.a. in de zoekresultaten.',
+              }}
+            />
+
+            {/* Long Description (uitgebreideOmschrijving) */}
+            <ConSchemaEnhancedField
+              schemaType='module'
+              schemaProperty='beschrijvingLang'
+              value={applicatie.beschrijvingLang || ''}
+              onChange={(value) => setApplicatieData('beschrijvingLang', value)}
+              isDisabled={loading}
+              width='full'
+              schemas={schemas}
+              customProps={{
+                description:
+                  'Een uitgebreide omschrijving van uw applicatie. Dit kan met mark down opgemaakt worden.',
+              }}
+            />
+
+            {/* Logo and Contact Person on same row */}
+            <ConSchemaEnhancedField
+              schemaType='module'
+              schemaProperty='logo'
+              value={applicatie.logo}
+              onChange={(value) => setApplicatieData('logo', value)}
               isDisabled={loading}
               width='half'
               schemas={schemas}
+              customProps={{
+                inputType: 'file',
+                format: 'base64',
+                description: 'Het logo van de applicatie of de organisatie.',
+              }}
+            />
+
+            <ConSchemaEnhancedField
+              schemaType='module'
+              schemaProperty='contactpersoon'
+              value={applicatie.contactpersoon || ''}
+              onChange={(value) => setApplicatieData('contactpersoon', value)}
+              isDisabled={loading}
+              width='half'
+              schemas={schemas}
+              customProps={{
+                getOptionLabel: (opt) => {
+                  const c = opt?.data ?? opt;
+                  const fullName = [c?.voornaam, c?.tussenvoegsel, c?.achternaam]
+                    .filter(Boolean)
+                    .join(' ');
+
+                  if (fullName.trim()) {
+                    return fullName;
+                  }
+
+                  return (
+                    c?.['@self']?.name ||
+                    c?.naam ||
+                    c?.name ||
+                    c?.displayName ||
+                    c?.label ||
+                    c?.id ||
+                    'Onbekende contactpersoon'
+                  );
+                },
+                isClearable: true,
+                description: 'Selecteer de contactpersoon voor deze applicatie',
+              }}
             />
           </div>
         </div>

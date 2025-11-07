@@ -59,6 +59,11 @@
     box-sizing: border-box !important;
   }
 
+  // Set minimum block size for dropdown selects
+  .con-form-field-wrapper .ac-beheer-select > div {
+    min-block-size: 46px;
+  }
+
   // Additional safety: force all field-size-full to be actually full width
   .con-form-field-wrapper.field-size-full {
     flex: 0 0 100% !important;

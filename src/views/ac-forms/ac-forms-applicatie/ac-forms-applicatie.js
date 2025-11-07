@@ -20,6 +20,7 @@ import {
 // Stage Components
 import ConFormApplicatieTypeSelectStage from './con-form-applicatie-type-select-stage';
 import ConFormApplicatieInformatieStage from './components/con-form-applicatie-informatie-stage';
+import ConFormApplicatieLicentieStage from './components/con-form-applicatie-licentie-stage';
 import ConFormApplicatieControlerenStage from './components/con-form-applicatie-controleren-stage';
 
 // Utils
@@ -50,7 +51,7 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
   const [registerCallBack, setRegisterCallBack] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState({ message: null, errors: null });
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(1);
 
   /**
    * Applicatie State Object
@@ -61,6 +62,11 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
     naam: '',
     aanbieder: null,
     cloudDienstverleningsmodel: '',
+    licentietype: '',
+    licentieType: '',
+    licentie: '',
+    hostingLocatie: '',
+    hostingJurisdictie: '',
   });
 
   // Ref for ProcessSteps container
@@ -419,7 +425,16 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
           />
         );
       case 2:
-        return <div>Licentie</div>;
+        // Licentie & Hosting
+        return (
+          <ConFormApplicatieLicentieStage
+            applicatie={applicatie}
+            setApplicatieData={setApplicatieData}
+            loading={loading}
+            touched={touched}
+            schemas={schemas}
+          />
+        );
       case 3:
         // Versies - only shown for On-premises
         return shouldShowVersiesStep() ? (
@@ -455,7 +470,7 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
       case 0:
         return 'Aanbieder';
       case 1:
-        return 'Applicatie informatie';
+        return 'Informatie over uw applicatie';
       case 2:
         return 'Licentie';
       case 3:
@@ -511,7 +526,7 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
   const getPageTitle = (formType) => {
     switch (formType) {
       case 'eigen':
-        return 'Applicatie aanbieden';
+        return 'Uw applicatie registreren';
       case 'ontbrekend-applicatie':
         return 'Applicatie melden en registreren';
       default:
@@ -522,7 +537,7 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
   const getPageDescription = (formType) => {
     switch (formType) {
       case 'eigen':
-        return 'Voeg een applicatie van uw eigen organisatie toe aan de softwarecatalogus.';
+        return 'Vul dit formulier in om uw applicatie te registreren in de softwarecatalogus.';
       case 'ontbrekend-applicatie':
         return 'Meld een applicatie die nog niet in de catalogus staat en registreer deze.';
       default:
@@ -628,7 +643,7 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
                                   currentStep,
                                   getAdjustedStepIndex(2)
                                 ),
-                                title: 'Licentie',
+                                title: 'Licentie / Hosting',
                               },
                               // Conditionally include Versies step for On-premises
                               ...(shouldShowVersiesStep()
