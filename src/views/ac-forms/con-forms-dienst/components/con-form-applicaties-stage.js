@@ -1,15 +1,15 @@
-import React, { memo, useMemo } from 'react';
-import { ConUuidResolver } from '@components';
+import React, { memo } from 'react';
+import { ConSchemaEnhancedField } from '@components';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
 
 /**
  * Applicaties Selectie Stage
- * - Checkboxlijst van alle applicaties (modules)
+ * - Multi-select dropdown with search functionality for selecting applicaties (modules)
  */
 const ConFormApplicatiesStage = memo(
   ({
-    productToModulesLookup,
     // Product-related props commented out
+    // productToModulesLookup,
     // selectedProductIds,
     // selectedProductOptions,
     // productOptions,
@@ -17,20 +17,18 @@ const ConFormApplicatiesStage = memo(
     selectedModuleIds,
     setSelectedModuleIds,
     loadingModules,
+    searchLoading,
+    moduleOptions,
+    searchModules,
+    schemas,
   }) => {
-    // Get all modules from the lookup (stored as { all: [...] })
-    const allModules = useMemo(() => {
-      if (productToModulesLookup?.all && Array.isArray(productToModulesLookup.all)) {
-        return productToModulesLookup.all;
+    const handleChange = (value) => {
+      // ConSchemaEnhancedField with array schema returns an array of IDs for multi-select
+      if (Array.isArray(value)) {
+        setSelectedModuleIds(value);
+      } else {
+        setSelectedModuleIds([]);
       }
-      return [];
-    }, [productToModulesLookup]);
-
-    const toggle = (id) => {
-      setSelectedModuleIds((prev) => {
-        if (prev.includes(id)) return prev.filter((v) => v !== id);
-        return [...prev, id];
-      });
     };
 
     return (
@@ -46,35 +44,26 @@ const ConFormApplicatiesStage = memo(
           Selecteer de applicaties die onderdeel zijn van deze dienst.
         </Paragraph>
 
-        {loadingModules ? (
-          <Paragraph>Bezig met laden van applicaties…</Paragraph>
-        ) : allModules.length === 0 ? (
-          <Paragraph>Geen applicaties beschikbaar.</Paragraph>
-        ) : (
-          <div className='con-form-checkbox-list'>
-            {allModules.map((opt) => (
-              <label
-                key={opt.value}
-                className='ac-checkbox-label'
-                style={{
-                  display: 'flex',
-                  gap: '0.5rem',
-                  alignItems: 'center',
-                  marginBottom: '0.5rem',
-                }}
-              >
-                <input
-                  type='checkbox'
-                  checked={selectedModuleIds.includes(opt.value)}
-                  onChange={() => toggle(opt.value)}
-                />
-                <span>
-                  <ConUuidResolver>{opt.label}</ConUuidResolver>
-                </span>
-              </label>
-            ))}
+        <div className='ac-register-form-grid'>
+          <div style={{ gridColumn: 'span 2', maxWidth: '640px' }}>
+            <ConSchemaEnhancedField
+              schemaType='dienst'
+              schemaProperty='modules'
+              value={selectedModuleIds}
+              onChange={handleChange}
+              isDisabled={loadingModules}
+              isLoading={loadingModules || searchLoading}
+              width='full'
+              schemas={schemas}
+              optionsProvider={moduleOptions}
+              onSearch={(_path, _refSlug, q) => searchModules && searchModules(q)}
+              customProps={{
+                label: 'Applicaties',
+                placeholder: 'Selecteer applicaties',
+              }}
+            />
           </div>
-        )}
+        </div>
       </div>
     );
   }

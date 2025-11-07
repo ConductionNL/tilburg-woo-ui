@@ -1,4 +1,4 @@
-import { useState, useEffect, memo, useRef } from 'react';
+import { useState, useEffect, memo, useRef, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { withStore } from '@stores';
@@ -9,6 +9,7 @@ import { VISUALS } from '@src/constants';
 import { ProcessSteps } from '@gemeente-denhaag/components-react';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 import { validateWebsite } from '@views/ac-forms/validation/form-validations';
+import { useDebouncedInput } from '@src/hooks';
 import {
   Heading1,
   Paragraph,
@@ -25,6 +26,18 @@ import ConFormControlerenStage from './components/con-form-controleren-stage';
 // Legacy stages
 // import ConFormSoortDienstStage from './components/con-form-soort-dienst-stage';
 // import ConFormKoppelingenStage from './components/con-form-koppelingen-stage';
+
+const mapToOption = (item, index) => {
+  const label =
+    item?.['@self']?.name ||
+    item?.naam ||
+    item?.name ||
+    item?.title ||
+    item?.label ||
+    `Applicatie ${index + 1}`;
+  const value = item?.['@self']?.id || item?.id || item?.slug || label;
+  return { value: String(value), label: String(label), data: item };
+};
 
 const ConFormsDienst = ({ store, userStore }) => {
   const [searchParams] = useSearchParams();
@@ -85,6 +98,8 @@ const ConFormsDienst = ({ store, userStore }) => {
   const [productToModulesLookup, setProductToModulesLookup] = useState({});
   const [selectedModuleIds, setSelectedModuleIds] = useState([]);
   const [modulesLoading, setModulesLoading] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [moduleOptions, setModuleOptions] = useState([]);
 
   const [koppelingOptions, setKoppelingOptions] = useState([]);
   const [selectedKoppelingIds, setSelectedKoppelingIds] = useState([]);
@@ -353,42 +368,93 @@ const ConFormsDienst = ({ store, userStore }) => {
   const loadAllModules = async () => {
     setModulesLoading(true);
     try {
-      const params = new URLSearchParams({ _limit: '100', _page: '1' });
-      const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module?${params}`;
-      const res = await fetch(endpoint, { headers: { Accept: 'application/json' } });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      const list = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.results)
-        ? data.results
-        : [];
-
-      const allModules = list
-        .map((item, index) => {
-          const id = String(
-            item?.id ||
-              item?.['@self']?.id ||
-              item?.value ||
-              item?.uuid ||
-              item?.slug ||
-              index
-          );
-          const label = String(
-            item?.naam || item?.name || item?.title || `Applicatie ${index + 1}`
-          );
-          return { value: id, label, data: item };
-        })
-        .filter((o) => o.value && o.label);
-
-      // Store as a flat list for the applicaties stage
-      setProductToModulesLookup({ all: allModules });
+      await store.object.fetchCollection(
+        'voorzieningen',
+        'module',
+        {
+          _limit: '50',
+          _page: '1',
+        },
+        null,
+        'dienst_form'
+      );
+      const collection = store.object.getCollection(
+        'voorzieningen_module_dienst_form'
+      );
+      const list = collection?.results || collection || [];
+      const options = list.map(mapToOption);
+      setModuleOptions(options);
+      // Store as a flat list for backward compatibility
+      setProductToModulesLookup({ all: options });
     } catch {
+      setModuleOptions([]);
       setProductToModulesLookup({ all: [] });
     } finally {
       setModulesLoading(false);
     }
   };
+
+  // Server-side search for modules (searches all modules)
+  const searchModules = useCallback(
+    async (query) => {
+      try {
+        setSearchLoading(true);
+        const q = String(query || '').trim();
+
+        const queryParams = {
+          _limit: '50',
+          _page: '1',
+        };
+
+        // Add search parameter if provided
+        if (q) {
+          queryParams._search = q;
+        }
+
+        await store.object.fetchCollection(
+          'voorzieningen',
+          'module',
+          queryParams,
+          null,
+          'dienst_form_search'
+        );
+        const collection = store.object.getCollection(
+          'voorzieningen_module_dienst_form_search'
+        );
+        const list = collection?.results || collection || [];
+        const options = list.map(mapToOption);
+
+        // Merge with existing options to preserve selected items
+        setModuleOptions((prevOptions) => {
+          const newOptionsMap = new Map(options.map((opt) => [opt.value, opt]));
+
+          // Combine existing and new options, preferring new data for existing items
+          const mergedOptions = [...newOptionsMap.values()];
+
+          // Add any existing options that aren't in the new results
+          // This preserves previously selected items that might not match the current search
+          prevOptions.forEach((opt) => {
+            if (!newOptionsMap.has(opt.value)) {
+              mergedOptions.push(opt);
+            }
+          });
+
+          return mergedOptions;
+        });
+      } catch (e) {
+        // Don't clear options on error to preserve existing selections
+        console.error('Module search failed:', e);
+      } finally {
+        setSearchLoading(false);
+      }
+    },
+    [store]
+  );
+
+  // Debounced search function
+  const debouncedSearchModules = useDebouncedInput(searchModules, 250, {
+    disableInstantValidation: true,
+  });
 
   // Legacy: Fetch helpers that can be invoked when transitioning to the next step (commented out)
   // const loadModulesForProducts = async () => {
@@ -649,8 +715,8 @@ const ConFormsDienst = ({ store, userStore }) => {
       case 1:
         return (
           <ConFormApplicatiesStage
-            productToModulesLookup={productToModulesLookup}
             // Product-related props commented out
+            // productToModulesLookup={productToModulesLookup}
             // selectedProductIds={selectedProductIds}
             // selectedProductOptions={selectedProductOptions}
             // productOptions={productOptions}
@@ -658,6 +724,10 @@ const ConFormsDienst = ({ store, userStore }) => {
             selectedModuleIds={selectedModuleIds}
             setSelectedModuleIds={setSelectedModuleIds}
             loadingModules={modulesLoading}
+            searchLoading={searchLoading}
+            moduleOptions={moduleOptions}
+            searchModules={debouncedSearchModules}
+            schemas={schemas}
             dienstType={dienstType}
           />
         );
