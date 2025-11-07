@@ -44,7 +44,7 @@ export const DASHBOARD_WIZARDS = {
   // },
   EIGEN_APPLICATIE: {
     id: 'eigen-applicatie',
-    name: 'Applicatie aanbieden',
+    name: 'Applicatie registreren',
     description: 'Voeg een applicatie van uw eigen organisatie toe aan de catalogus',
     icon: VISUALS.CUBES,
     path: PATHS.FORMS_APPLICATIE,
@@ -57,7 +57,7 @@ export const DASHBOARD_WIZARDS = {
   },
   ONTBREKEND_APPLICATIE: {
     id: 'ontbrekend-applicatie',
-    name: 'Applicatie melden en registreren',
+    name: 'Applicatie melden',
     description: 'Meld een applicatie dat nog niet in de catalogus staat',
     icon: VISUALS.PLUS,
     path: PATHS.FORMS_APPLICATIE,
