@@ -516,7 +516,8 @@ const AcPublicationProduct = ({
                     </a>
                   </div>
                 ) : (
-                  typeof get_single?.contactpersoon === 'string' && (
+                  typeof get_single?.contactpersoon === 'string' &&
+                  get_single?.contactpersoon?.trim?.() && (
                     <div>
                       <b>Contactpersoon:</b>
                       <ConUuidResolver>{get_single?.contactpersoon}</ConUuidResolver>
