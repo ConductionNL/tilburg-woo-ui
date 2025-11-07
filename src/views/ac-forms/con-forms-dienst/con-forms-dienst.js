@@ -1035,7 +1035,7 @@ const ConFormsDienst = ({ store, userStore }) => {
                               : currentStep < 1
                               ? 'not-checked'
                               : 'checked',
-                          title: 'Producten en applicaties',
+                          title: 'Applicaties',
                           steps: [
                             // {
                             //   id: 'p3r4o5d6-u7c8-t9e0-n1s2-t3a4g5e6f7g8',

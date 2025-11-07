@@ -474,54 +474,57 @@ const AcPublicationProduct = ({
             )}
           </AcFlex>
           <AcFlex column spacing='sm' style={{ flex: 1 }}>
-            <AcFlex
-              column
-              spacing='sm'
-              className='con-product-details--contact-info'
-            >
-              {get_single?.website && (
-                <div>
-                  <b>Website:</b>
-                  <a
-                    href={get_single?.website}
-                    target='_blank'
-                    rel='noopener noreferrer'
-                  >
-                    <p>{get_single?.website}</p>
-                  </a>
-                </div>
-              )}
-              {get_single?.contactpersoon &&
-              typeof get_single?.contactpersoon === 'object' ? (
-                <div>
-                  <b>Contactpersoon:</b>
-                  <p>
-                    {get_single?.contactpersoon?.voornaam}{' '}
-                    {get_single?.contactpersoon?.tussenvoegsel}{' '}
-                    {get_single?.contactpersoon?.achternaam}
-                  </p>
-                  <a
-                    href={`mailto:${get_single?.contactpersoon?.['e-mailadres']}`}
-                    target='_blank'
-                    rel='noopener noreferrer'
-                  >
-                    <p>{get_single?.contactpersoon?.['e-mailadres']}</p>
-                  </a>
-                  <a
-                    href={`tel:${get_single?.contactpersoon?.telefoonnummer}`}
-                    target='_blank'
-                    rel='noopener noreferrer'
-                  >
-                    <p>{get_single?.contactpersoon?.telefoonnummer}</p>
-                  </a>
-                </div>
-              ) : (
-                <div>
-                  <b>Contactpersoon:</b>
-                  <ConUuidResolver>{get_single?.contactpersoon}</ConUuidResolver>
-                </div>
-              )}
-            </AcFlex>
+            {(get_single?.website || get_single?.contactpersoon) && (
+              <AcFlex
+                column
+                spacing='sm'
+                className='con-product-details--contact-info'
+              >
+                {get_single?.website && (
+                  <div>
+                    <b>Website:</b>
+                    <a
+                      href={get_single?.website}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                    >
+                      <p>{get_single?.website}</p>
+                    </a>
+                  </div>
+                )}
+                {typeof get_single?.contactpersoon === 'object' ? (
+                  <div>
+                    <b>Contactpersoon:</b>
+                    <p>
+                      {get_single?.contactpersoon?.voornaam}{' '}
+                      {get_single?.contactpersoon?.tussenvoegsel}{' '}
+                      {get_single?.contactpersoon?.achternaam}
+                    </p>
+                    <a
+                      href={`mailto:${get_single?.contactpersoon?.['e-mailadres']}`}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                    >
+                      <p>{get_single?.contactpersoon?.['e-mailadres']}</p>
+                    </a>
+                    <a
+                      href={`tel:${get_single?.contactpersoon?.telefoonnummer}`}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                    >
+                      <p>{get_single?.contactpersoon?.telefoonnummer}</p>
+                    </a>
+                  </div>
+                ) : (
+                  typeof get_single?.contactpersoon === 'string' && (
+                    <div>
+                      <b>Contactpersoon:</b>
+                      <ConUuidResolver>{get_single?.contactpersoon}</ConUuidResolver>
+                    </div>
+                  )
+                )}
+              </AcFlex>
+            )}
             <AcFlex
               column
               spacing='sm'
