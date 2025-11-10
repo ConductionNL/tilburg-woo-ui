@@ -22,6 +22,7 @@ import ConFormApplicatieTypeSelectStage from './con-form-applicatie-type-select-
 import ConFormApplicatieInformatieStage from './components/con-form-applicatie-informatie-stage';
 import ConFormApplicatieLicentieStage from './components/con-form-applicatie-licentie-stage';
 import ConFormApplicatieVersieStage from './components/con-form-applicatie-versie-stage';
+import ConFormApplicatieReferentiecomponentenStage from './components/con-form-applicatie-referentiecomponenten-stage';
 import ConFormApplicatieControlerenStage from './components/con-form-applicatie-controleren-stage';
 import ConFormApplicatieOrganisatieStage from './components/con-form-applicatie-organisatie-stage';
 
@@ -70,6 +71,7 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
     licentie: '',
     hostingLocatie: '',
     hostingJurisdictie: '',
+    referentieComponenten: [],
   });
 
   /**
@@ -127,6 +129,35 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
       }
 
       return index;
+    },
+    [formType, shouldShowVersiesStep]
+  );
+
+  /**
+   * Convert physical step index to logical step number
+   * Accounts for optional steps (Aanbieder and Versies)
+   * @param {number} physicalStep - The physical step index
+   * @returns {number} The logical step number
+   */
+  const getLogicalStepFromPhysical = useCallback(
+    (physicalStep) => {
+      // Start with physical step
+      let logicalStep = physicalStep;
+
+      // For eigen type, add 1 to account for skipped Aanbieder step
+      if (formType === 'eigen') {
+        logicalStep += 1;
+      }
+
+      // If Versies step is not shown, skip logical step 3
+      if (!shouldShowVersiesStep()) {
+        // If we're at or past where Versies would be (logical step 3), add 1 to skip it
+        if (logicalStep >= 3) {
+          logicalStep += 1;
+        }
+      }
+
+      return logicalStep;
     },
     [formType, shouldShowVersiesStep]
   );
@@ -199,6 +230,18 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
     moduleversie: null,
   });
   const [schemasLoading, setSchemasLoading] = useState(true);
+
+  // Referentiecomponenten options with search functionality
+  const [referentieComponentenOptions, setReferentieComponentenOptions] = useState(
+    []
+  );
+  const [referentieComponentenLoading, setReferentieComponentenLoading] =
+    useState(false);
+
+  // Separate array to track chosen referentieComponenten with their standards
+  // Structure: [{ id, naam, aanbevolenStandaarden: [], verplichteStandaarden: [], applicatieId }]
+  const [referentieComponentenWithStandards, setReferentieComponentenWithStandards] =
+    useState([]);
 
   /**
    * Generate a default/empty applicatie object based on the applicatie schema using ObjectStore
@@ -334,6 +377,76 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
 
     fetchUserOrganization();
   }, [formType, schemasLoading, isEditMode]);
+
+  // Function to load referentiecomponenten
+  const loadReferentieComponenten = useCallback(async () => {
+    if (!schemas?.module) return; // Wait for schemas to load
+
+    console.info('📋 Loading referentiecomponenten...');
+    setReferentieComponentenLoading(true);
+
+    try {
+      const queryParams = new URLSearchParams({
+        _limit: '500',
+        _page: '1',
+        gemmaType: 'Referentiecomponent',
+        '_extend[]': '@self.schema',
+      });
+
+      // Fetch referentiecomponenten from openconnector endpoint
+      const response = await fetch(
+        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      const list = await response.json();
+
+      const mapToOption = (item, index) => {
+        const label =
+          item?.xml?.name?._value ||
+          item?.naam ||
+          item?.name ||
+          item?.title ||
+          item?.label ||
+          `Component ${index + 1}`;
+        const value = item?.value || item?.id || item?.slug || label;
+        return {
+          value: String(value),
+          label: String(label),
+          data: item, // Store the full API data for access to aanbevolenStandaarden, verplichteStandaarden
+        };
+      };
+
+      const options = list.results
+        .map(mapToOption)
+        .filter((o) => o.label && o.value);
+
+      setReferentieComponentenOptions(options);
+      console.info(`✅ Loaded ${options.length} referentiecomponenten`);
+    } catch (e) {
+      console.error('Failed to load referentie componenten:', e);
+      setReferentieComponentenOptions([]);
+    } finally {
+      setReferentieComponentenLoading(false);
+    }
+  }, [schemas?.module]);
+
+  // ✅ Load referentiecomponenten when schemas are available
+  useEffect(() => {
+    if (!schemas?.module) return;
+
+    // Only load if we haven't loaded yet and we're not currently loading
+    const shouldLoadRefs =
+      referentieComponentenOptions.length === 0 && !referentieComponentenLoading;
+
+    if (shouldLoadRefs) {
+      loadReferentieComponenten();
+    }
+  }, [schemas?.module]);
 
   // Add click handlers to ProcessSteps after each render
   useEffect(() => {
@@ -490,20 +603,8 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
       );
     }
 
-    // For eigen type: physical steps 0-6/7 map to logical steps 1-7/8
-    // For ontbrekend-applicatie: physical steps 0-7/8 map to logical steps 0-7/8
-    let logicalStep = formType === 'eigen' ? step + 1 : step;
-
-    // If Versies step is not shown, adjust logical step
-    // For ontbrekend: physical step 3 maps to logical step 3, adjust to 4
-    // For eigen: physical step 3 already maps to logical step 4, no adjustment needed
-    if (!shouldShowVersiesStep()) {
-      if (logicalStep === 3) {
-        logicalStep = 4;
-      } else if (logicalStep > 3 && formType !== 'eigen') {
-        logicalStep += 1;
-      }
-    }
+    // Convert physical step to logical step using helper function
+    const logicalStep = getLogicalStepFromPhysical(step);
 
     switch (logicalStep) {
       case 0:
@@ -537,11 +638,6 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
         );
       case 3:
         // Versies - only shown for On-premises
-        if (!shouldShowVersiesStep()) {
-          // If versions step is hidden, render next step (Referentiecomponenten)
-          // The adjustment logic above will have already mapped this to logical step 4
-          return <div>Referentiecomponenten</div>;
-        }
         return (
           <ConFormApplicatieVersieStage
             applicatie={applicatie}
@@ -551,7 +647,20 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
           />
         );
       case 4:
-        return <div>Referentiecomponenten</div>;
+        return (
+          <ConFormApplicatieReferentiecomponentenStage
+            applicatie={applicatie}
+            setApplicatieData={setApplicatieData}
+            referentieComponentenOptions={referentieComponentenOptions}
+            referentieComponentenWithStandards={referentieComponentenWithStandards}
+            setReferentieComponentenWithStandards={
+              setReferentieComponentenWithStandards
+            }
+            schemas={schemas}
+            loading={loading}
+            referentieComponentenLoading={referentieComponentenLoading}
+          />
+        );
       case 5:
         return <div>Standaarden</div>;
       case 6:
@@ -569,20 +678,8 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
       return 'Nieuwe organisatie aanmaken';
     }
 
-    // For eigen type: physical steps 0-6/7 map to logical steps 1-7/8
-    // For ontbrekend-applicatie: physical steps 0-7/8 map to logical steps 0-7/8
-    let logicalStep = formType === 'eigen' ? step + 1 : step;
-
-    // If Versies step is not shown, adjust logical step
-    // For ontbrekend: physical step 3 maps to logical step 3, adjust to 4
-    // For eigen: physical step 3 already maps to logical step 4, no adjustment needed
-    if (!shouldShowVersiesStep()) {
-      if (logicalStep === 3) {
-        logicalStep = 4;
-      } else if (logicalStep > 3 && formType !== 'eigen') {
-        logicalStep += 1;
-      }
-    }
+    // Convert physical step to logical step using helper function
+    const logicalStep = getLogicalStepFromPhysical(step);
 
     switch (logicalStep) {
       case 0:
@@ -594,7 +691,7 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
       case 3:
         return 'Versies';
       case 4:
-        return 'Referentiecomponenten';
+        return 'Koppel uw applicatie aan de GEMMA';
       case 5:
         return 'Standaarden';
       case 6:
@@ -607,20 +704,8 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
   };
 
   const getDisabledStatus = (step) => {
-    // For eigen type: physical steps 0-6/7 map to logical steps 1-7/8
-    // For ontbrekend-applicatie: physical steps 0-7/8 map to logical steps 0-7/8
-    let logicalStep = formType === 'eigen' ? step + 1 : step;
-
-    // If Versies step is not shown, adjust logical step
-    // For ontbrekend: physical step 3 maps to logical step 3, adjust to 4
-    // For eigen: physical step 3 already maps to logical step 4, no adjustment needed
-    if (!shouldShowVersiesStep()) {
-      if (logicalStep === 3) {
-        logicalStep = 4;
-      } else if (logicalStep > 3 && formType !== 'eigen') {
-        logicalStep += 1;
-      }
-    }
+    // Convert physical step to logical step using helper function
+    const logicalStep = getLogicalStepFromPhysical(step);
 
     if (logicalStep === 1) {
       // Applicatie informatie: naam is required
@@ -630,20 +715,8 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
   };
 
   const getDisabledTooltip = (step) => {
-    // For eigen type: physical steps 0-6/7 map to logical steps 1-7/8
-    // For ontbrekend-applicatie: physical steps 0-7/8 map to logical steps 0-7/8
-    let logicalStep = formType === 'eigen' ? step + 1 : step;
-
-    // If Versies step is not shown, adjust logical step
-    // For ontbrekend: physical step 3 maps to logical step 3, adjust to 4
-    // For eigen: physical step 3 already maps to logical step 4, no adjustment needed
-    if (!shouldShowVersiesStep()) {
-      if (logicalStep === 3) {
-        logicalStep = 4;
-      } else if (logicalStep > 3 && formType !== 'eigen') {
-        logicalStep += 1;
-      }
-    }
+    // Convert physical step to logical step using helper function
+    const logicalStep = getLogicalStepFromPhysical(step);
 
     if (logicalStep === 1) {
       if (!applicatie.naam || applicatie.naam.trim() === '') {
@@ -659,21 +732,8 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
    * @returns {boolean} True if current step is the Versies step
    */
   const isVersieStep = (step) => {
-    // For eigen type: physical steps 0-6/7 map to logical steps 1-7/8
-    // For ontbrekend-applicatie: physical steps 0-7/8 map to logical steps 0-7/8
-    let logicalStep = formType === 'eigen' ? step + 1 : step;
-
-    // If Versies step is not shown, adjust logical step
-    // For ontbrekend: physical step 3 maps to logical step 3, adjust to 4
-    // For eigen: physical step 3 already maps to logical step 4, no adjustment needed
-    if (!shouldShowVersiesStep()) {
-      if (logicalStep === 3) {
-        logicalStep = 4;
-      } else if (logicalStep > 3 && formType !== 'eigen') {
-        logicalStep += 1;
-      }
-    }
-
+    // Convert physical step to logical step using helper function
+    const logicalStep = getLogicalStepFromPhysical(step);
     return logicalStep === 3;
   };
 
@@ -895,6 +955,8 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
                               {JSON.stringify(applicatie, null, 2)}
                             </pre>
                           </details>
+
+                          <pre>Step {currentStep}</pre>
                         </div>
                       )}
 
@@ -925,7 +987,7 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
                             Vorige
                           </AcButton>
                         )}
-                        {currentStep !== 7 && (
+                        {getLogicalStepFromPhysical(currentStep) !== 7 && (
                           <div className='ac-register-button-wrapper'>
                             {isVersieStep(currentStep) && !showOrganisatieForm && (
                               <AcButton
@@ -969,7 +1031,7 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
                           </div>
                         )}
 
-                        {currentStep === 7 && (
+                        {getLogicalStepFromPhysical(currentStep) === 7 && (
                           <AcButton
                             style='button'
                             icon={
