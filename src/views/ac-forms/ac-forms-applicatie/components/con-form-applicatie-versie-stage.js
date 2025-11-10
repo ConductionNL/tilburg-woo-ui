@@ -145,7 +145,7 @@ const ConFormApplicatieVersieStage = memo(
                   applicatie. Voor gehoste applicaties wordt een default versie
                   aangemaakt. Na het opslaan kunt u op de detailpagina van elke
                   versie extra informatie toevoegen. Deze vindt u onder het tabblad
-                  "Versies" van uw applicatie.
+                  &quot;Versies&quot; van uw applicatie.
                 </span>
               </div>
             </div>

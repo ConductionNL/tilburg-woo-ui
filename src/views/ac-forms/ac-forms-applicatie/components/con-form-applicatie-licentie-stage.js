@@ -1,9 +1,7 @@
 import React, { memo, useMemo } from 'react';
 import ConSchemaEnhancedField from '@components/con-schema-enhanced-field/con-schema-enhanced-field';
 import AcFlex from '@atoms/ac-flex/ac-flex';
-import {
-  Paragraph,
-} from '@utrecht/component-library-react/dist/css-module';
+import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
 import licenses from '@assets/licenses/licenses.json';
 
 /**
@@ -108,55 +106,25 @@ const ConFormApplicatieLicentieStage = memo(
             />
 
             {/* Hosting fields in flex layout */}
-            <AcFlex spacing='snail' style={{ flexBasis: '100%' }}>
-              {/* Hosting - left side */}
+            <AcFlex spacing='snail'>
               <ConSchemaEnhancedField
                 schemaType='module'
-                schemaProperty='cloudDienstverleningsmodel'
-                value={applicatie?.cloudDienstverleningsmodel || ''}
-                onChange={(value) =>
-                  setApplicatieData('cloudDienstverleningsmodel', value)
-                }
+                schemaProperty='hostingLocatie'
+                value={applicatie?.hostingLocatie || ''}
+                onChange={(value) => setApplicatieData('hostingLocatie', value)}
                 isDisabled={loading}
                 width='half'
                 touched={touched}
                 schemas={schemas}
                 customProps={{
                   description:
-                    'Kies één of meerdere hosting typen waarmee de applicatie wordt aangeboden.',
-                  placeholder: 'Selecteer hosting type(s)',
+                    'Kies het land of continent waar de applicatie wordt gehost.',
+                  placeholder: 'Selecteer hosting locatie',
                 }}
               />
 
               {/* Hosting locatie and Jurisdictie - right side */}
-              <AcFlex
-                column
-                spacing='snail'
-                style={{
-                  flexBasis:
-                    'calc(50% - calc(var(--tilburg-space-block-snail) / 2))',
-                  flexShrink: 0,
-                  flexGrow: 0,
-                }}
-              >
-                {/* Hosting locatie */}
-                <ConSchemaEnhancedField
-                  schemaType='module'
-                  schemaProperty='hostingLocatie'
-                  value={applicatie?.hostingLocatie || ''}
-                  onChange={(value) => setApplicatieData('hostingLocatie', value)}
-                  isDisabled={loading}
-                  width='half'
-                  touched={touched}
-                  schemas={schemas}
-                  customProps={{
-                    description:
-                      'Kies het land of continent waar de applicatie wordt gehost.',
-                    placeholder: 'Selecteer hosting locatie',
-                  }}
-                />
-
-                {/* Jurisdictie */}
+              <AcFlex column spacing='snail'>
                 <ConSchemaEnhancedField
                   schemaType='module'
                   schemaProperty='hostingJurisdictie'
@@ -165,13 +133,31 @@ const ConFormApplicatieLicentieStage = memo(
                     setApplicatieData('hostingJurisdictie', value)
                   }
                   isDisabled={loading}
-                  width='half'
+                  width='full'
                   touched={touched}
                   schemas={schemas}
                   customProps={{
                     description:
                       'Kies de wetgeving die geldt voor de opgeslagen gegevens.',
                     placeholder: 'Selecteer jurisdictie',
+                  }}
+                />
+
+                <ConSchemaEnhancedField
+                  schemaType='module'
+                  schemaProperty='cloudDienstverleningsmodel'
+                  value={applicatie?.cloudDienstverleningsmodel || ''}
+                  onChange={(value) =>
+                    setApplicatieData('cloudDienstverleningsmodel', value)
+                  }
+                  isDisabled={loading}
+                  width='full'
+                  touched={touched}
+                  schemas={schemas}
+                  customProps={{
+                    description:
+                      'Kies één of meerdere hosting typen waarmee de applicatie wordt aangeboden.',
+                    placeholder: 'Selecteer hosting type(s)',
                   }}
                 />
               </AcFlex>
