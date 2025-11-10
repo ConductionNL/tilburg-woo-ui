@@ -23,6 +23,7 @@ import ConFormApplicatieInformatieStage from './components/con-form-applicatie-i
 import ConFormApplicatieLicentieStage from './components/con-form-applicatie-licentie-stage';
 import ConFormApplicatieVersieStage from './components/con-form-applicatie-versie-stage';
 import ConFormApplicatieControlerenStage from './components/con-form-applicatie-controleren-stage';
+import ConFormApplicatieOrganisatieStage from './components/con-form-applicatie-organisatie-stage';
 
 // Utils
 import { getStatusMultiStep } from './utils/steps.utils';
@@ -53,6 +54,7 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState({ message: null, errors: null });
   const [currentStep, setCurrentStep] = useState(0);
+  const [showOrganisatieForm, setShowOrganisatieForm] = useState(false);
 
   /**
    * Applicatie State Object
@@ -68,6 +70,24 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
     licentie: '',
     hostingLocatie: '',
     hostingJurisdictie: '',
+  });
+
+  /**
+   * Organisatie State Object
+   *
+   * This object holds organization data that will be created before the applicatie.
+   * Only used when user clicks "Ik kan de gewenste leverancier niet vinden" button.
+   */
+  const [organisatie, setOrganisatie] = useState({
+    naam: '',
+    type: '',
+    website: '',
+    beschrijvingKort: '',
+    beschrijvingLang: '',
+    'e-mailadres': '',
+    telefoonnummer: '',
+    kvkNummer: '',
+    logo: '',
   });
 
   // Ref for ProcessSteps container
@@ -204,11 +224,26 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
     }));
   }, []);
 
+  const setOrganisatieData = useCallback((key, value) => {
+    setOrganisatie((prev) => ({ ...prev, [key]: value }));
+  }, []);
+
+  /**
+   * Check if organization data has been filled in
+   * @returns {boolean} True if organization has any data
+   */
+  const hasOrganisatieData = useCallback(() => {
+    if (!organisatie.naam || !organisatie.type || !organisatie.website) {
+      return false;
+    }
+    return true;
+  }, [organisatie]);
+
   // Fetch schema definitions on component mount
   useEffect(() => {
     const fetchSchemas = async () => {
       setSchemasLoading(true);
-      const schemaTypes = ['module', 'product', 'moduleversie'];
+      const schemaTypes = ['module', 'product', 'moduleversie', 'organisatie'];
       const fetchedSchemas = {};
 
       try {
@@ -347,9 +382,54 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
   const handleRegister = async () => {
     setLoading(true);
     try {
+      let finalAanbieder = applicatie.aanbieder;
+
+      // If organization data exists, create the organization first
+      if (hasOrganisatieData()) {
+        try {
+          const newOrganizationData = {
+            naam: organisatie.naam,
+            type: organisatie.type,
+            website: organisatie.website,
+            beschrijvingKort: organisatie.beschrijvingKort,
+            beschrijvingLang: organisatie.beschrijvingLang,
+            'e-mailadres': organisatie['e-mailadres'],
+            telefoonnummer: organisatie.telefoonnummer,
+            kvkNummer: organisatie.kvkNummer,
+            logo: organisatie.logo,
+          };
+
+          // Create the organization and get its ID
+          const createdOrganization = await store.object.createObject(
+            'voorzieningen',
+            'organisatie',
+            newOrganizationData
+          );
+
+          // Use the newly created organization ID as aanbieder
+          finalAanbieder =
+            createdOrganization?.id || createdOrganization?.['@self']?.id;
+
+          if (!finalAanbieder) {
+            throw new Error('Organisatie aangemaakt maar geen ID ontvangen');
+          }
+        } catch (orgError) {
+          console.error('Failed to create organization:', orgError);
+          setRegisterCallBack('error');
+          setError({
+            message:
+              'Er is een fout opgetreden bij het aanmaken van de organisatie. Probeer het opnieuw.',
+            errors: null,
+          });
+          setLoading(false);
+          return;
+        }
+      }
+
       // Submit the complete applicatie object to the voorzieningen register
       const applicatieData = {
         ...applicatie,
+        aanbieder: finalAanbieder,
       };
 
       if (applicatieId) {
@@ -398,6 +478,18 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
   };
 
   const renderStep = (step) => {
+    // If organization form is showing, render it instead of the normal step
+    if (showOrganisatieForm) {
+      return (
+        <ConFormApplicatieOrganisatieStage
+          organisatie={organisatie}
+          setOrganisatieData={setOrganisatieData}
+          loading={loading}
+          schemas={schemas}
+        />
+      );
+    }
+
     // For eigen type: physical steps 0-6/7 map to logical steps 1-7/8
     // For ontbrekend-applicatie: physical steps 0-7/8 map to logical steps 0-7/8
     let logicalStep = formType === 'eigen' ? step + 1 : step;
@@ -472,6 +564,11 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
   };
 
   const currentStepName = (step) => {
+    // If organization form is showing, return its title
+    if (showOrganisatieForm) {
+      return 'Nieuwe organisatie aanmaken';
+    }
+
     // For eigen type: physical steps 0-6/7 map to logical steps 1-7/8
     // For ontbrekend-applicatie: physical steps 0-7/8 map to logical steps 0-7/8
     let logicalStep = formType === 'eigen' ? step + 1 : step;
@@ -554,6 +651,30 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
       }
     }
     return '';
+  };
+
+  /**
+   * Check if current step is the Versies step (logical step 3)
+   * @param {number} step - The physical step number
+   * @returns {boolean} True if current step is the Versies step
+   */
+  const isVersieStep = (step) => {
+    // For eigen type: physical steps 0-6/7 map to logical steps 1-7/8
+    // For ontbrekend-applicatie: physical steps 0-7/8 map to logical steps 0-7/8
+    let logicalStep = formType === 'eigen' ? step + 1 : step;
+
+    // If Versies step is not shown, adjust logical step
+    // For ontbrekend: physical step 3 maps to logical step 3, adjust to 4
+    // For eigen: physical step 3 already maps to logical step 4, no adjustment needed
+    if (!shouldShowVersiesStep()) {
+      if (logicalStep === 3) {
+        logicalStep = 4;
+      } else if (logicalStep > 3 && formType !== 'eigen') {
+        logicalStep += 1;
+      }
+    }
+
+    return logicalStep === 3;
   };
 
   const getPageTitle = (formType) => {
@@ -791,7 +912,14 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
                             style='button'
                             buttonType='secondary'
                             icon={<VISUALS.ARROW_LEFT />}
-                            onClick={() => setCurrentStep(currentStep - 1)}
+                            onClick={() => {
+                              if (showOrganisatieForm) {
+                                // Close organization form and return to versie step
+                                setShowOrganisatieForm(false);
+                              } else {
+                                setCurrentStep(currentStep - 1);
+                              }
+                            }}
                             disabled={loading}
                           >
                             Vorige
@@ -799,6 +927,20 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
                         )}
                         {currentStep !== 7 && (
                           <div className='ac-register-button-wrapper'>
+                            {isVersieStep(currentStep) && !showOrganisatieForm && (
+                              <AcButton
+                                style='button'
+                                buttonType='secondary'
+                                icon={<VISUALS.ARROW_RIGHT />}
+                                onClick={() => {
+                                  // Toggle organization form visibility
+                                  setShowOrganisatieForm((prev) => !prev);
+                                }}
+                                disabled={loading}
+                              >
+                                Ik kan de gewenste leverancier niet vinden
+                              </AcButton>
+                            )}
                             <AcButton
                               style='button'
                               className={clsx(
@@ -807,8 +949,13 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
                               icon={<VISUALS.ARROW_RIGHT />}
                               disabled={getDisabledStatus(currentStep) || loading}
                               onClick={() => {
-                                focusForm();
-                                setCurrentStep(currentStep + 1);
+                                if (showOrganisatieForm) {
+                                  // Close organization form and return to versie step
+                                  setShowOrganisatieForm(false);
+                                } else {
+                                  focusForm();
+                                  setCurrentStep(currentStep + 1);
+                                }
                               }}
                               title={
                                 getDisabledStatus(currentStep)
