@@ -483,13 +483,13 @@ const AcPublicationProduct = ({
                 {get_single?.website && (
                   <div>
                     <b>Website:</b>
-                    <a
+                    <Link
                       href={get_single?.website}
                       target='_blank'
                       rel='noopener noreferrer'
                     >
                       <p>{get_single?.website}</p>
-                    </a>
+                    </Link>
                   </div>
                 )}
                 {typeof get_single?.contactpersoon === 'object' ? (
@@ -500,20 +500,20 @@ const AcPublicationProduct = ({
                       {get_single?.contactpersoon?.tussenvoegsel}{' '}
                       {get_single?.contactpersoon?.achternaam}
                     </p>
-                    <a
+                    <Link
                       href={`mailto:${get_single?.contactpersoon?.['e-mailadres']}`}
                       target='_blank'
                       rel='noopener noreferrer'
                     >
                       <p>{get_single?.contactpersoon?.['e-mailadres']}</p>
-                    </a>
-                    <a
+                    </Link>
+                    <Link
                       href={`tel:${get_single?.contactpersoon?.telefoonnummer}`}
                       target='_blank'
                       rel='noopener noreferrer'
                     >
                       <p>{get_single?.contactpersoon?.telefoonnummer}</p>
-                    </a>
+                    </Link>
                   </div>
                 ) : (
                   typeof get_single?.contactpersoon === 'string' &&
