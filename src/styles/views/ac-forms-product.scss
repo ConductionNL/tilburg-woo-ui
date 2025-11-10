@@ -23,8 +23,9 @@
 
         // Force proper flexbox behavior with maximum specificity
         &.field-size-full {
-          flex: 0 0 100% !important;
-          flex-basis: 100% !important;
+        // commented out because it caused issues regarding height
+        //   flex: 0 0 100% !important;
+        //   flex-basis: 100% !important;
           width: 100% !important;
           max-width: 100% !important;
         }
@@ -66,8 +67,9 @@
 
   // Additional safety: force all field-size-full to be actually full width
   .con-form-field-wrapper.field-size-full {
-    flex: 0 0 100% !important;
-    flex-basis: 100% !important;
+    // commented out because it caused issues regarding height
+    // flex: 0 0 100% !important;
+    // flex-basis: 100% !important;
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;

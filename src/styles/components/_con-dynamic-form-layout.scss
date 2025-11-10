@@ -53,7 +53,8 @@
 }
 
 .con-form-field-wrapper.field-size-full {
-  flex-basis: 100%;
+// commented out because it caused issues regarding height
+//   flex-basis: 100%;
 }
 .con-form-field-wrapper {
   &.field-size-full,
