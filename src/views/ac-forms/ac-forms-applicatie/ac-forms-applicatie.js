@@ -931,6 +931,7 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
                               <AcButton
                                 style='button'
                                 buttonType='secondary'
+                                className='con-forms-applicatie--leverancier-not-found'
                                 icon={<VISUALS.ARROW_RIGHT />}
                                 onClick={() => {
                                   // Toggle organization form visibility
