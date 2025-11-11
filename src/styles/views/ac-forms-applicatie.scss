@@ -1,14 +1,9 @@
-// Merged CSS for ac-forms-product - prioritizing ac-forms-product-fix.scss styles
-// This ensures perfect alignment between the new con-form-fields-container system
-// and the existing form styles
-
 // More specific selectors to override any conflicting styles
-.ac-register-container.ac-forms-product {
+.ac-register-container.ac-forms-applicatie {
   .con-dynamic-form-container {
     width: 100%;
 
     .con-form-fields-container {
-      // No !important needed - no conflicts!
       display: flex;
       flex-direction: row;
       flex-wrap: wrap;
@@ -65,6 +60,11 @@
     box-sizing: border-box !important;
   }
 
+  // Set minimum block size for dropdown selects
+  .con-form-field-wrapper .ac-beheer-select > div {
+    min-block-size: 46px;
+  }
+
   // Additional safety: force all field-size-full to be actually full width
   .con-form-field-wrapper.field-size-full {
     // commented out because it caused issues regarding height
@@ -86,18 +86,18 @@
 }
 
 // Main container
-.ac-forms-product-container {
+.ac-forms-applicatie-container {
   width: 100%;
   padding: 0;
 }
 
-// Step sections (replacement for ac-register-form-section)
-.ac-forms-product-step-section {
+// Step sections
+.ac-forms-applicatie-step-section {
   margin-bottom: var(--tilburg-space-block-xl);
 }
 
-// Basic grid layout for other form sections (replacement for ac-register-form-grid)
-.ac-forms-product-basic-grid {
+// Basic grid layout for form sections
+.ac-forms-applicatie-basic-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--tilburg-space-block-rat);
@@ -105,12 +105,6 @@
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
   }
-}
-
-// Full width button style for application blocks
-.ac-forms-full-width-button {
-  width: 100% !important;
-  display: block !important;
 }
 
 // Simple CSS for clickable steps - minimal styling to avoid layout disruption
@@ -123,16 +117,6 @@
   opacity: 0.8;
 }
 
-// Error styling for required license fields
-.ac-beheer-select--error .react-select__control {
-  border-color: #dc3545 !important;
-  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
-}
-
-.ac-beheer-select--error .react-select__control:hover {
-  border-color: #dc3545 !important;
-}
-
 // Font consistency for Alert components
 .MuiAlert-root {
   font-family: 'Avenir', sans-serif !important;
@@ -140,55 +124,4 @@
   * {
     font-family: 'Avenir', sans-serif !important;
   }
-}
-
-// Info alert styles for diensten and koppelingen stages
-.ac-forms-product-info-alert {
-  margin-bottom: 1.5rem;
-  background-color: #e3f2fd !important;
-  border: 1px solid #bbdefb;
-  border-radius: 8px !important;
-  position: relative;
-}
-
-.ac-forms-product-info-alert__close-button {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: none;
-  border: none;
-  font-size: 1.25rem;
-  cursor: pointer;
-  line-height: 1;
-  color: #666;
-  padding: 4px;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  &:hover {
-    background-color: rgba(0, 0, 0, 0.05);
-  }
-
-  &:focus {
-    outline: 2px solid var(--tilburg-color-blue-400);
-    outline-offset: 2px;
-  }
-}
-
-.ac-forms-product-info-alert__content {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-  padding-right: 2rem;
-}
-
-.ac-forms-product-info-alert__icon {
-  margin-top: 2px;
-  flex-shrink: 0;
-}
-
-.ac-forms-product-info-alert__text {
-  font-size: 0.875rem;
 }
