@@ -135,6 +135,11 @@ const AcFormsKoppeling = ({ store }) => {
   const [redirectCountdown, setRedirectCountdown] = useState(0);
   const [prefillLoading, setPrefillLoading] = useState(false);
 
+  // Add state for external facilities options
+  const [buitengemeentelijkeOptions, setBuitengemeentelijkeOptions] = useState([]);
+  const [buitengemeentelijkeOptionsLoading, setBuitengemeentelijkeOptionsLoading] =
+    useState(false);
+
   const directionOptions = [
     { value: 'AnaarB', label: 'A → B' },
     { value: 'BnaarA', label: 'B → A' },
@@ -655,6 +660,10 @@ const AcFormsKoppeling = ({ store }) => {
   }, [ownApp?.value]);
 
   useEffect(() => {
+    loadBuitengemeentelijkeVoorzieningen();
+  }, []);
+
+  useEffect(() => {
     const shouldLoadStandards =
       standaardenOptions.length === 0 && !standaardenOptionsLoading;
 
@@ -865,6 +874,57 @@ const AcFormsKoppeling = ({ store }) => {
     }
   }, [getStandaardenQueryParams, store]);
 
+  // Add fetch function for buitengemeentelijke voorzieningen
+
+  const loadBuitengemeentelijkeVoorzieningen = async () => {
+    console.info('📋 Loading external facilities via object store cache...');
+    setBuitengemeentelijkeOptionsLoading(true);
+
+    try {
+      const queryParams = new URLSearchParams({
+        _limit: '500',
+        _page: '1',
+        gemmaType: 'Buitengemeentelijke voorziening',
+        '_extend[]': '@self.schema',
+      });
+
+      console.info('📋 Fetching external facilities from openconnector endpoint...');
+
+      const response = await fetch(
+        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      const list = await response.json();
+
+      const options = list.results
+        .map((item, index) => {
+          const label =
+            item?.xml?.name?._value ||
+            item?.naam ||
+            item?.name ||
+            item?.title ||
+            item?.label ||
+            `Facility ${index + 1}`;
+          const value = item?.value || item?.id || item?.slug || label;
+          return { value: String(value), label: String(label), data: item };
+        })
+        .filter((o) => o.label && o.value);
+
+      setBuitengemeentelijkeOptions(options);
+      console.info(`✅ Loaded ${options.length} external facilities (cache-first)`);
+    } catch (e) {
+      console.error('Failed to load external facilities:', e);
+      setBuitengemeentelijkeOptions([]);
+    } finally {
+      setBuitengemeentelijkeOptionsLoading(false);
+    }
+  };
+
   // Reset functions for form state
   const handleRetryForm = () => {
     setSaveResult(null);
@@ -968,7 +1028,7 @@ const AcFormsKoppeling = ({ store }) => {
 
   const renderStep = (step) => {
     switch (step) {
-      // LEGACY: Step 0 (Soort koppeling) - Type selection removed, now comes from URL parameter
+      // LEGACY: Step 0 (Soort koppeling) - Type selection removed, now comes from URL
       // case 0:
       //   return (
       //     <ConKoppelingStepSoort
@@ -1004,6 +1064,12 @@ const AcFormsKoppeling = ({ store }) => {
             removeRow={removeRow}
             modulesOptions={modulesOptions}
             setModulesOptions={setModulesOptions}
+            buitengemeentelijkeOptions={buitengemeentelijkeOptions}
+            setBuitengemeentelijkeOptions={setBuitengemeentelijkeOptions}
+            buitengemeentelijkeOptionsLoading={buitengemeentelijkeOptionsLoading}
+            setBuitengemeentelijkeOptionsLoading={
+              setBuitengemeentelijkeOptionsLoading
+            }
             setSelectedModuleLabels={setSelectedModuleLabels}
             standaardenOptions={standaardenOptions}
             standaardenOptionsLoading={standaardenOptionsLoading}
