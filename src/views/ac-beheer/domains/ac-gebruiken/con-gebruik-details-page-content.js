@@ -11,6 +11,8 @@ import {
   getDisabledActionTooltip,
 } from '@utils/organization-permissions';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
+import { useNavigate } from 'react-router-dom';
+import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 
 /**
  * Content for the gebruik details page
@@ -18,13 +20,14 @@ import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver
 const ConGebruikDetailsPageContent = ({
   loading,
   data,
-
+  config,
   userStore: user,
   objectStore: object,
   id,
   canEdit = false,
   actionMenuProps,
 }) => {
+  const navigate = useNavigate();
   const [uses, setUses] = useState([]);
   const [used, setUsed] = useState([]);
   const [usesLoading, setUsesLoading] = useState(false);
@@ -150,7 +153,26 @@ const ConGebruikDetailsPageContent = ({
               <ConActionMenu.Menu position='right'>
                 <ConActionMenu.Button
                   icon={<VISUALS.PENCIL />}
-                  onClick={() => actionMenuProps?.setOpenModal?.('edit')}
+                  onClick={() => {
+                    // Prefer wizard editing when available; fallback to legacy modal
+                    if (config?.schemaSlug) {
+                      const wizards = Object.values(DASHBOARD_WIZARDS);
+                      const wizard = wizards.find(
+                        (w) => w.schema === config.schemaSlug
+                      );
+
+                      if (wizard) {
+                        const baseUrl = getWizardUrl(wizard);
+                        const url = new URL(baseUrl, window.location.origin);
+                        url.searchParams.set('id', id);
+                        navigate(url.pathname + url.search);
+                        return;
+                      }
+                    }
+
+                    // Fallback to modal
+                    actionMenuProps?.setOpenModal?.('edit');
+                  }}
                   disabled={!actualCanEdit}
                   data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
                   data-tooltip-content={
