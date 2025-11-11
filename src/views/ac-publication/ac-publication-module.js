@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import RelatedTabs from './con-related-tabs';
 import ConLogoPreview from '../ac-register/con-logo-preview';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
@@ -243,6 +243,21 @@ const AcPublicationProduct = ({
   const [usesLoading, setUsesLoading] = useState(false);
   const [usedLoading, setUsedLoading] = useState(false);
   const [tabIndex, setTabIndex] = useState(0);
+
+  // Extract contactpersoon from uses data instead of get_single
+  const contact = useMemo(() => {
+    if (!uses?.length) return null;
+
+    // Find the first contactpersoon object in the uses array
+    // (if multiple contactpersonen exist, we take the first one)
+    const contactpersoonObject = uses.find(
+      (use) => use?.['@self']?.schema?.slug === 'contactpersoon'
+    );
+
+    if (!contactpersoonObject) return null;
+
+    return contactpersoonObject;
+  }, [uses]);
 
   // Resolved referentieComponenten names for custom tab rendering
   const [resolvedReferentieComponenten, setResolvedReferentieComponenten] = useState(
@@ -492,27 +507,26 @@ const AcPublicationProduct = ({
                     </Link>
                   </AcFlex>
                 )}
-                {typeof get_single?.contactpersoon === 'object' ? (
+                {typeof contact === 'object' && contact !== null ? (
                   <AcFlex column>
                     <b>Contactpersoon:</b>
                     <p>
-                      {get_single?.contactpersoon?.voornaam}{' '}
-                      {get_single?.contactpersoon?.tussenvoegsel}{' '}
-                      {get_single?.contactpersoon?.achternaam}
+                      {contact?.voornaam} {contact?.tussenvoegsel}{' '}
+                      {contact?.achternaam}
                     </p>
                     <Link
-                      href={`mailto:${get_single?.contactpersoon?.['e-mailadres']}`}
+                      href={`mailto:${contact?.['e-mailadres']}`}
                       target='_blank'
                       rel='noopener noreferrer'
                     >
-                      <p>{get_single?.contactpersoon?.['e-mailadres']}</p>
+                      <p>{contact?.['e-mailadres']}</p>
                     </Link>
                     <Link
-                      href={`tel:${get_single?.contactpersoon?.telefoonnummer}`}
+                      href={`tel:${contact?.telefoonnummer}`}
                       target='_blank'
                       rel='noopener noreferrer'
                     >
-                      <p>{get_single?.contactpersoon?.telefoonnummer}</p>
+                      <p>{contact?.telefoonnummer}</p>
                     </Link>
                   </AcFlex>
                 ) : (
