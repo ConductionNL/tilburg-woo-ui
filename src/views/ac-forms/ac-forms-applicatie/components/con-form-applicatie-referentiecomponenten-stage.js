@@ -113,8 +113,7 @@ const ConFormApplicatieReferentiecomponentenStage = memo(
           <br />
           Koppel uw applicatie aan de GEMMA-referentiecomponenten die de
           gemeentelijke functionaliteit weergeven. Dit helpt gemeenten te zien hoe uw
-          applicatie past in hun architectuur. Een overzicht van alle
-          referentiecomponenten(
+          applicatie past in hun architectuur. Een{' '}
           <Link
             href={
               'https://www.gemmaonline.nl/wiki/Overzicht_alle_referentiecomponenten'
@@ -125,9 +124,9 @@ const ConFormApplicatieReferentiecomponentenStage = memo(
               display: 'inline-block',
             }}
           >
-            https://www.gemmaonline.nl/wiki/Overzicht_alle_referentiecomponenten
-          </Link>
-          ) vindt u op GEMMA Online.
+            overzicht van alle referentiecomponenten
+          </Link>{' '}
+          vindt u op GEMMA Online.
         </Paragraph>
 
         <div>

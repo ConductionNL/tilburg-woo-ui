@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 import { observer } from 'mobx-react-lite';
@@ -8,6 +8,7 @@ import { VISUALS } from '@src/constants';
 import { AcButton } from '@src/molecules';
 import { ProcessSteps } from '@gemeente-denhaag/components-react';
 import { commongroundApiUrl } from '@config';
+import { useDebouncedInput } from '@src/hooks';
 
 import {
   Heading1,
@@ -23,6 +24,9 @@ import ConFormApplicatieInformatieStage from './components/con-form-applicatie-i
 import ConFormApplicatieLicentieStage from './components/con-form-applicatie-licentie-stage';
 import ConFormApplicatieVersieStage from './components/con-form-applicatie-versie-stage';
 import ConFormApplicatieReferentiecomponentenStage from './components/con-form-applicatie-referentiecomponenten-stage';
+import ConFormApplicatieStandaardenStage from './components/con-form-applicatie-standaarden-stage';
+import ConFormApplicatieKoppelingenStage from './components/con-form-applicatie-koppelingen-stage';
+import ConFormApplicatieDienstenStage from './components/con-form-applicatie-diensten-stage';
 import ConFormApplicatieControlerenStage from './components/con-form-applicatie-controleren-stage';
 import ConFormApplicatieOrganisatieStage from './components/con-form-applicatie-organisatie-stage';
 
@@ -72,6 +76,8 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
     hostingLocatie: '',
     hostingJurisdictie: '',
     referentieComponenten: [],
+    koppelingen: [],
+    diensten: [],
   });
 
   /**
@@ -111,7 +117,7 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
    * and the optional Versies step (only shown for On-premises)
    * @param {number} logicalStep - The logical step number
    * Logical steps: 0=Aanbieder, 1=Applicatie info, 2=Licentie, 3=Versies, 4=Referentiecomponenten,
-   *                5=Standaarden, 6=Koppelingen, 7=Controleren
+   *                5=Standaarden, 6=Koppelingen, 7=Diensten, 8=Controleren
    * @returns {number} The adjusted physical step index
    */
   const getAdjustedStepIndex = useCallback(
@@ -195,9 +201,10 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
     mapping.push(getAdjustedStepIndex(4)); // Referentiecomponenten
     mapping.push(getAdjustedStepIndex(5)); // Standaarden
     mapping.push(getAdjustedStepIndex(6)); // Koppelingen
+    mapping.push(getAdjustedStepIndex(7)); // Diensten
 
     // Main step 3: Controleren
-    mapping.push(getAdjustedStepIndex(7));
+    mapping.push(getAdjustedStepIndex(8));
 
     return mapping;
   }, [formType, getAdjustedStepIndex, shouldShowVersiesStep]);
@@ -228,6 +235,7 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
     module: null,
     product: null,
     moduleversie: null,
+    dienst: null,
   });
   const [schemasLoading, setSchemasLoading] = useState(true);
 
@@ -242,6 +250,57 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
   // Structure: [{ id, naam, aanbevolenStandaarden: [], verplichteStandaarden: [], applicatieId }]
   const [referentieComponentenWithStandards, setReferentieComponentenWithStandards] =
     useState([]);
+
+  // Standaarden options with search functionality
+  const [standaardenOptions, setStandaardenOptions] = useState([]);
+  const [standaardenOptionsLoading, setStandaardenOptionsLoading] = useState(false);
+
+  // Modules options with search functionality for koppelingen
+  const [modulesOptions, setModulesOptions] = useState([]);
+  const [modulesLoading, setModulesLoading] = useState(false);
+
+  // Koppelingen form state
+  const [koppelingenFormState, setKoppelingenFormState] = useState({
+    rows: [0],
+    nextRowId: 1,
+    selectedAppAByRow: {},
+    selectedAppBByRow: {},
+    directionByRow: {},
+    typeByRow: {},
+    koppelingIdByRow: {},
+  });
+
+  // Diensten form state
+  const [dienstenFormState, setDienstenFormState] = useState({
+    rows: [0],
+    nextRowId: 1,
+    selectedDienstByRow: {},
+    dienstNaamByRow: {},
+    dienstIdByRow: {},
+  });
+
+  // Diensten options from schema enum
+  const dienstOptions = useMemo(() => {
+    const dienstSchema = schemas?.dienst;
+    const typeProperty = dienstSchema?.properties?.type;
+
+    if (typeProperty?.enum && Array.isArray(typeProperty.enum)) {
+      return typeProperty.enum.map((value) => {
+        // Try to get description from schema first, then fall back to the enum value itself
+        const schemaDescription =
+          typeProperty.enumDescriptions?.[typeProperty.enum.indexOf(value)];
+
+        // Use schema description if available, otherwise use the enum value as the label
+        const label = schemaDescription || value;
+
+        return {
+          value,
+          label,
+        };
+      });
+    }
+    return [];
+  }, [schemas?.dienst]);
 
   /**
    * Generate a default/empty applicatie object based on the applicatie schema using ObjectStore
@@ -260,7 +319,13 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
   );
 
   const setApplicatieData = useCallback((key, value) => {
-    setApplicatie((prev) => ({ ...prev, [key]: value }));
+    setApplicatie((prev) => {
+      // Handle function updates (for koppelingen array updates)
+      if (typeof value === 'function') {
+        return { ...prev, [key]: value(prev[key]) };
+      }
+      return { ...prev, [key]: value };
+    });
     setTouched((prev) => ({
       ...prev,
       [key]: true,
@@ -286,7 +351,13 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
   useEffect(() => {
     const fetchSchemas = async () => {
       setSchemasLoading(true);
-      const schemaTypes = ['module', 'product', 'moduleversie', 'organisatie'];
+      const schemaTypes = [
+        'module',
+        'product',
+        'moduleversie',
+        'organisatie',
+        'dienst',
+      ];
       const fetchedSchemas = {};
 
       try {
@@ -447,6 +518,284 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
       loadReferentieComponenten();
     }
   }, [schemas?.module]);
+
+  // Function to load standaarden
+  const loadStandaarden = useCallback(async () => {
+    if (!schemas?.module) return;
+
+    console.info('📋 Loading standaarden...');
+    setStandaardenOptionsLoading(true);
+
+    try {
+      const queryParams = new URLSearchParams({
+        _limit: '500',
+        _page: '1',
+        gemmaType: 'Standaard',
+        '_extend[]': '@self.schema',
+      });
+
+      // Fetch standards from openconnector endpoint
+      const response = await fetch(
+        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      const list = await response.json();
+
+      const options = list.results
+        .map((item, index) => {
+          const label =
+            item?.xml?.name?._value ||
+            item?.naam ||
+            item?.name ||
+            item?.title ||
+            item?.label ||
+            `Standaard ${index + 1}`;
+          const value = item?.value || item?.id || item?.slug || label;
+          return { value: String(value), label: String(label), data: item };
+        })
+        .filter((o) => o.label && o.value);
+
+      setStandaardenOptions(options);
+      console.info(`✅ Loaded ${options.length} standaarden`);
+    } catch (e) {
+      console.error('Failed to load standaarden:', e);
+      setStandaardenOptions([]);
+    } finally {
+      setStandaardenOptionsLoading(false);
+    }
+  }, [schemas?.module]);
+
+  // ✅ Load standaarden when schemas are available
+  useEffect(() => {
+    if (!schemas?.module) return;
+
+    // Only load if we haven't loaded yet and we're not currently loading
+    const shouldLoadStandards =
+      standaardenOptions.length === 0 && !standaardenOptionsLoading;
+
+    if (shouldLoadStandards) {
+      loadStandaarden();
+    }
+  }, [schemas?.module]);
+
+  // Function to search modules with debouncing using object store cache
+  const performModulesSearch = useCallback(
+    async (searchTerm = '') => {
+      setModulesLoading(true);
+
+      try {
+        const queryParams = {
+          _limit: '20',
+          _page: '1',
+        };
+
+        // Add search parameter if provided
+        if (searchTerm && searchTerm.trim()) {
+          queryParams._search = searchTerm.trim();
+        }
+
+        console.info(
+          `📋 Searching modules via object store cache (term: "${searchTerm}")...`
+        );
+
+        // Use object store cache-first method for immediate response
+        const list = await store.object.fetchModulesCacheFirst(queryParams);
+
+        const mapToOption = (item, index) => {
+          const label =
+            item?.naam ||
+            item?.['@self']?.name ||
+            item?.name ||
+            item?.title ||
+            item?.label ||
+            (item?.id ? String(item.id) : `Applicatie ${index + 1}`);
+          const value = item?.value || item?.id || item?.slug || label;
+          return {
+            value: String(value),
+            label: String(label),
+            data: item, // Store the full API data for later access
+          };
+        };
+
+        const options = list.map(mapToOption).filter((o) => o.label && o.value);
+        setModulesOptions(options);
+        console.info(`✅ Loaded ${options.length} modules (cache-first)`);
+      } catch (e) {
+        console.error('Failed to fetch modules:', e);
+        setModulesOptions([]);
+      } finally {
+        setModulesLoading(false);
+      }
+    },
+    [store]
+  );
+
+  // ✅ Debounced search function for modules
+  const debouncedModulesSearch = useDebouncedInput(performModulesSearch, 500);
+
+  // ✅ Public search function that always debounces by 500ms (only on real typing)
+  const searchModules = useCallback(
+    (searchTerm = '') => {
+      // Only trigger debounced fetch; component will ensure it's only called on typing
+      setModulesLoading(true);
+      debouncedModulesSearch(searchTerm || '');
+    },
+    [performModulesSearch, debouncedModulesSearch]
+  );
+
+  // Pre-load modules once so Applicatie B has initial options
+  useEffect(() => {
+    performModulesSearch('');
+  }, [performModulesSearch]);
+
+  // Initialize koppelingen form state from applicatie.koppelingen (for edit mode)
+  useEffect(() => {
+    const koppelingen = Array.isArray(applicatie?.koppelingen)
+      ? applicatie.koppelingen
+      : [];
+
+    // Only initialize if we have koppelingen and form state only has the default row
+    if (
+      koppelingen.length > 0 &&
+      koppelingenFormState.rows.length === 1 &&
+      koppelingenFormState.rows[0] === 0 &&
+      Object.keys(koppelingenFormState.koppelingIdByRow || {}).length === 0
+    ) {
+      let rowCounter = 0;
+      const nextRows = [];
+      const nextSelectedAppBByRow = {};
+      const nextDirectionByRow = {};
+      const nextTypeByRow = {};
+      const nextKoppelingIdByRow = {};
+
+      koppelingen.forEach((kpl) => {
+        const rowId = rowCounter++;
+        nextRows.push(rowId);
+
+        // Try to prefill Applicatie B by id when present in API data
+        const moduleBId = (() => {
+          if (!kpl) return null;
+          // Check @self.relations first, then fall back to direct properties
+          const relationsModuleB = kpl?.['@self']?.relations?.moduleB;
+          if (relationsModuleB != null) return String(relationsModuleB);
+          if (kpl.moduleBId != null) return String(kpl.moduleBId);
+          if (kpl.moduleB != null) {
+            // Accept both object reference and primitive id
+            return String(
+              typeof kpl.moduleB === 'object' ? kpl.moduleB?.id : kpl.moduleB
+            );
+          }
+          return null;
+        })();
+
+        if (moduleBId != null) {
+          nextSelectedAppBByRow[rowId] = moduleBId;
+        }
+
+        if (kpl && kpl.richtingDataUitwisseling) {
+          nextDirectionByRow[rowId] = kpl.richtingDataUitwisseling;
+        }
+
+        if (kpl && kpl.soortKoppeling) {
+          nextTypeByRow[rowId] = kpl.soortKoppeling;
+        }
+
+        // Use existing _localId if present, otherwise generate one
+        const localId =
+          kpl && kpl._localId
+            ? kpl._localId
+            : kpl?.id
+            ? `existing_${kpl.id}`
+            : `kpl_${Date.now().toString(36)}_${Math.random()
+                .toString(36)
+                .slice(2, 8)}`;
+        nextKoppelingIdByRow[rowId] = localId;
+      });
+
+      if (nextRows.length > 0) {
+        setKoppelingenFormState((prev) => ({
+          ...prev,
+          rows: nextRows,
+          nextRowId: nextRows.length,
+          selectedAppBByRow: { ...prev.selectedAppBByRow, ...nextSelectedAppBByRow },
+          directionByRow: { ...prev.directionByRow, ...nextDirectionByRow },
+          typeByRow: { ...prev.typeByRow, ...nextTypeByRow },
+          koppelingIdByRow: {
+            ...prev.koppelingIdByRow,
+            ...nextKoppelingIdByRow,
+          },
+        }));
+      }
+    }
+  }, [applicatie?.koppelingen, koppelingenFormState.rows.length]);
+
+  // Initialize diensten form state from applicatie.diensten (for edit mode)
+  useEffect(() => {
+    const diensten = Array.isArray(applicatie?.diensten) ? applicatie.diensten : [];
+
+    // Only initialize if we have diensten and form state only has the default row
+    if (
+      diensten.length > 0 &&
+      dienstenFormState.rows.length === 1 &&
+      dienstenFormState.rows[0] === 0 &&
+      Object.keys(dienstenFormState.dienstIdByRow || {}).length === 0
+    ) {
+      let rowCounter = 0;
+      const nextRows = [];
+      const nextSelectedDienstByRow = {};
+      const nextDienstNaamByRow = {};
+      const nextDienstIdByRow = {};
+
+      diensten.forEach((dienst) => {
+        const rowId = rowCounter++;
+        nextRows.push(rowId);
+
+        if (dienst && dienst.type) {
+          nextSelectedDienstByRow[rowId] = String(dienst.type);
+        }
+
+        if (dienst && dienst.naam) {
+          nextDienstNaamByRow[rowId] = dienst.naam;
+        }
+
+        // Use existing _localId if present, otherwise generate one
+        const localId =
+          dienst && dienst._localId
+            ? dienst._localId
+            : dienst?.id
+            ? `existing_${dienst.id}`
+            : `dienst_${Date.now().toString(36)}_${Math.random()
+                .toString(36)
+                .slice(2, 8)}`;
+        nextDienstIdByRow[rowId] = localId;
+      });
+
+      if (nextRows.length > 0) {
+        setDienstenFormState((prev) => ({
+          ...prev,
+          rows: nextRows,
+          nextRowId: nextRows.length,
+          selectedDienstByRow: {
+            ...prev.selectedDienstByRow,
+            ...nextSelectedDienstByRow,
+          },
+          dienstNaamByRow: {
+            ...prev.dienstNaamByRow,
+            ...nextDienstNaamByRow,
+          },
+          dienstIdByRow: {
+            ...prev.dienstIdByRow,
+            ...nextDienstIdByRow,
+          },
+        }));
+      }
+    }
+  }, [applicatie?.diensten, dienstenFormState.rows.length]);
 
   // Add click handlers to ProcessSteps after each render
   useEffect(() => {
@@ -662,10 +1011,38 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
           />
         );
       case 5:
-        return <div>Standaarden</div>;
+        return (
+          <ConFormApplicatieStandaardenStage
+            applicatie={applicatie}
+            setApplicatieData={setApplicatieData}
+            referentieComponentenWithStandards={referentieComponentenWithStandards}
+            standaardenOptions={standaardenOptions}
+            standaardenOptionsLoading={standaardenOptionsLoading}
+          />
+        );
       case 6:
-        return <div>Koppelingen</div>;
+        return (
+          <ConFormApplicatieKoppelingenStage
+            applicatie={applicatie}
+            setApplicatieData={setApplicatieData}
+            modulesOptions={modulesOptions}
+            modulesLoading={modulesLoading}
+            koppelingenFormState={koppelingenFormState}
+            setKoppelingenFormState={setKoppelingenFormState}
+            searchModules={searchModules}
+          />
+        );
       case 7:
+        return (
+          <ConFormApplicatieDienstenStage
+            applicatie={applicatie}
+            dienstOptions={dienstOptions}
+            setApplicatieData={setApplicatieData}
+            dienstenFormState={dienstenFormState}
+            setDienstenFormState={setDienstenFormState}
+          />
+        );
+      case 8:
         return <ConFormApplicatieControlerenStage applicatie={applicatie} />;
       default:
         return null;
@@ -697,6 +1074,8 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
       case 6:
         return 'Koppelingen';
       case 7:
+        return 'Diensten';
+      case 8:
         return 'Controleren';
       default:
         return '';
@@ -847,7 +1226,7 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
                               currentStep,
                               getAdjustedStepIndex(2),
                               getAdjustedStepIndex(2),
-                              getAdjustedStepIndex(7)
+                              getAdjustedStepIndex(8)
                             ),
                             title: 'Applicatie configuratie',
                             steps: [
@@ -896,12 +1275,20 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
                                 ),
                                 title: 'Koppelingen',
                               },
+                              {
+                                id: 'diensten-substep',
+                                status: getStatus(
+                                  currentStep,
+                                  getAdjustedStepIndex(7)
+                                ),
+                                title: 'Diensten',
+                              },
                             ],
                           },
                           {
                             id: 'applicatie-controleren-step',
                             marker: 3,
-                            status: getStatus(currentStep, getAdjustedStepIndex(7)),
+                            status: getStatus(currentStep, getAdjustedStepIndex(8)),
                             title: 'Controleren',
                           },
                         ]}
@@ -987,7 +1374,7 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
                             Vorige
                           </AcButton>
                         )}
-                        {getLogicalStepFromPhysical(currentStep) !== 7 && (
+                        {getLogicalStepFromPhysical(currentStep) !== 8 && (
                           <div className='ac-register-button-wrapper'>
                             {isVersieStep(currentStep) && !showOrganisatieForm && (
                               <AcButton
@@ -1031,7 +1418,7 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
                           </div>
                         )}
 
-                        {getLogicalStepFromPhysical(currentStep) === 7 && (
+                        {getLogicalStepFromPhysical(currentStep) === 8 && (
                           <AcButton
                             style='button'
                             icon={
