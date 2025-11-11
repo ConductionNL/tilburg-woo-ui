@@ -481,7 +481,7 @@ const AcPublicationProduct = ({
                 className='con-product-details--contact-info'
               >
                 {get_single?.website && (
-                  <div>
+                  <AcFlex column>
                     <b>Website:</b>
                     <Link
                       href={get_single?.website}
@@ -490,10 +490,10 @@ const AcPublicationProduct = ({
                     >
                       <p>{get_single?.website}</p>
                     </Link>
-                  </div>
+                  </AcFlex>
                 )}
                 {typeof get_single?.contactpersoon === 'object' ? (
-                  <div>
+                  <AcFlex column>
                     <b>Contactpersoon:</b>
                     <p>
                       {get_single?.contactpersoon?.voornaam}{' '}
@@ -514,14 +514,14 @@ const AcPublicationProduct = ({
                     >
                       <p>{get_single?.contactpersoon?.telefoonnummer}</p>
                     </Link>
-                  </div>
+                  </AcFlex>
                 ) : (
                   typeof get_single?.contactpersoon === 'string' &&
                   get_single?.contactpersoon?.trim?.() && (
-                    <div>
+                    <AcFlex column>
                       <b>Contactpersoon:</b>
                       <ConUuidResolver>{get_single?.contactpersoon}</ConUuidResolver>
-                    </div>
+                    </AcFlex>
                   )
                 )}
               </AcFlex>
@@ -553,6 +553,29 @@ const AcPublicationProduct = ({
                   </p>
                 </div>
               )}
+              {get_single?.hostingLocatie && (
+                <div>
+                  <b>De applicatie wordt gehost in:</b>
+                  <p>{get_single.hostingLocatie}</p>
+                </div>
+              )}
+              {get_single?.hostingJurisdictie && (
+                <div>
+                  <b>De data wordt opgeslagen in:</b>
+                  <p>{get_single.hostingJurisdictie}</p>
+                </div>
+              )}
+              {Array.isArray(get_single?.cloudDienstverleningsmodel) &&
+                get_single.cloudDienstverleningsmodel.length > 0 && (
+                  <div>
+                    <b>Hosting type:</b>
+                    <ul style={{ margin: 0, paddingLeft: '1.25em' }}>
+                      {get_single.cloudDienstverleningsmodel.map((model, idx) => (
+                        <li key={idx}>{model}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
             </AcFlex>
 
             {/* <TabList

@@ -413,12 +413,17 @@ const ConModuleDetailsPageContent = ({
                   </p>
                 </div>
               )}
-              {data?.cloudDienstVerleeningsmodel && (
-                <div>
-                  <b>Cloud dienst verleeningsmodel:</b>
-                  <p>{data.cloudDienstVerleeningsmodel}</p>
-                </div>
-              )}
+              {Array.isArray(data?.cloudDienstverleningsmodel) &&
+                data.cloudDienstverleningsmodel.length > 0 && (
+                  <div>
+                    <b>Hosting type:</b>
+                    <ul style={{ margin: 0, paddingLeft: '1.25em' }}>
+                      {data.cloudDienstverleningsmodel.map((model, idx) => (
+                        <li key={idx}>{model}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               {data?.hostingJurisdictie && (
                 <div>
                   <b>Hosting jurisdictie:</b>

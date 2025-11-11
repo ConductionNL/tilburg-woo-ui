@@ -395,7 +395,6 @@ export const getVisualConfig = () => ({
 export const getHeroImageUrl = () => CONTAINER_CONFIG.HERO_IMAGE_URL;
 export const getFaviconUrl = () => CONTAINER_CONFIG.FAVICON_URL;
 
-
 // Footer text helper functions
 export const getFooterLogoTitle = () => CONTAINER_CONFIG.FOOTER_LOGO_TITLE;
 export const getFooterLogoSubtitle = () => CONTAINER_CONFIG.FOOTER_LOGO_SUBTITLE;
