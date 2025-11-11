@@ -307,8 +307,6 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
         )}
 
         {(get_single?.aanbieder ||
-          (Array.isArray(get_single?.producten) &&
-            get_single.producten.length > 0) ||
           (Array.isArray(get_single?.koppelingen) &&
             get_single.koppelingen.length > 0) ||
           (Array.isArray(get_single?.modules) && get_single.modules.length > 0)) && (
@@ -339,7 +337,7 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
                     </div>
                   )}
 
-                {Array.isArray(get_single?.modules) &&
+                {/* {Array.isArray(get_single?.modules) &&
                   get_single.modules.length > 0 && (
                     <div style={{ marginBottom: '8px' }}>
                       <strong>Modules: </strong>
@@ -354,7 +352,7 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
                         })}
                       </div>
                     </div>
-                  )}
+                  )} */}
               </div>
             </div>
           </>

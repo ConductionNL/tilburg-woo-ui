@@ -22,34 +22,36 @@ import rehypeSanitize from 'rehype-sanitize';
 const ConFormControlerenStage = memo(
   ({
     dienst,
-    selectedProductIds,
-    productOptions,
+    // Product-related props commented out
+    // selectedProductIds,
+    // productOptions,
     selectedModuleIds,
     moduleOptionsByProduct,
-    productLabels,
+    // productLabels,
     // Legacy koppelingen props (commented out)
     // selectedKoppelingIds,
     // koppelingOptions,
   }) => {
-    // Helper to get product information with additional details
-    const getProductsWithDetails = () => {
-      return (selectedProductIds || []).map((id) => {
-        const option = (productOptions || []).find((o) => o.value === id);
-        const label = productLabels?.[id] || option?.label || id;
-        return {
-          id,
-          label,
-          data: option?.data || null,
-        };
-      });
-    };
+    // Product helper commented out
+    // // Helper to get product information with additional details
+    // const getProductsWithDetails = () => {
+    //   return (selectedProductIds || []).map((id) => {
+    //     const option = (productOptions || []).find((o) => o.value === id);
+    //     const label = productLabels?.[id] || option?.label || id;
+    //     return {
+    //       id,
+    //       label,
+    //       data: option?.data || null,
+    //     };
+    //   });
+    // };
 
     // Helper to get module information with additional details
     const getModulesWithDetails = () => {
       return (selectedModuleIds || []).map((id) => {
-        // moduleOptionsByProduct is a lookup per product, flatten for label lookup
-        const all = Object.values(moduleOptionsByProduct || {}).flat();
-        const option = all.find((o) => o.value === id);
+        // moduleOptionsByProduct now contains { all: [...] } structure
+        const allModules = moduleOptionsByProduct?.all || [];
+        const option = allModules.find((o) => o.value === id);
         return {
           id,
           label: option?.label || id,
@@ -58,7 +60,7 @@ const ConFormControlerenStage = memo(
       });
     };
 
-    const productsWithDetails = getProductsWithDetails();
+    // const productsWithDetails = getProductsWithDetails();
     const modulesWithDetails = getModulesWithDetails();
 
     // Legacy koppelingen logic (commented out)
@@ -213,6 +215,8 @@ const ConFormControlerenStage = memo(
           </div>
         </div>
 
+        {/* Producten section commented out */}
+        {/* 
         <h3 className='con-form-wizard-review-heading-header'>Producten</h3>
         <div className='ac-register-review'>
           <div className='ac-register-review__section'>
@@ -268,6 +272,7 @@ const ConFormControlerenStage = memo(
             )}
           </div>
         </div>
+        */}
 
         <h3 className='con-form-wizard-review-heading-header'>Applicaties</h3>
         <div className='ac-register-review'>

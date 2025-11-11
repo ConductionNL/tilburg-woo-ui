@@ -17,7 +17,6 @@ import {
   getDisabledActionTooltip,
 } from '@utils/organization-permissions';
 import { TOOLTIP_ID } from '@src/index.web';
-import { useNavigate } from 'react-router-dom';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
 
 /**
@@ -33,7 +32,6 @@ const ConDienstDetailsPageContent = ({
   canEdit = false,
   actionMenuProps,
 }) => {
-  const navigate = useNavigate();
   const [uses, setUses] = useState([]);
   const [used, setUsed] = useState([]);
   const [usesLoading, setUsesLoading] = useState(false);
@@ -333,9 +331,7 @@ const ConDienstDetailsPageContent = ({
       )}
 
       {(data?.aanbieder ||
-        (Array.isArray(data?.producten) && data.producten.length > 0) ||
-        (Array.isArray(data?.koppelingen) && data.koppelingen.length > 0) ||
-        (Array.isArray(data?.modules) && data.modules.length > 0)) && (
+        (Array.isArray(data?.koppelingen) && data.koppelingen.length > 0)) && (
         <>
           <Heading level={3} style={{ marginBlockStart: '1rem' }}>
             Relaties
@@ -358,22 +354,6 @@ const ConDienstDetailsPageContent = ({
                         <ConUuidResolver>{String(kid)}</ConUuidResolver>
                       </div>
                     ))}
-                  </div>
-                </div>
-              )}
-
-              {Array.isArray(data?.modules) && data.modules.length > 0 && (
-                <div style={{ marginBottom: '8px' }}>
-                  <strong>Modules: </strong>
-                  <div>
-                    {data.modules.map((mid, idx) => {
-                      const moduleId = typeof mid === 'object' ? mid.id : mid;
-                      return (
-                        <div key={`${moduleId}-${idx}`}>
-                          <ConUuidResolver>{String(moduleId)}</ConUuidResolver>
-                        </div>
-                      );
-                    })}
                   </div>
                 </div>
               )}
@@ -414,8 +394,8 @@ const UnpublishedWarning = ({ data }) => {
       <Heading level={4}>{title} is nog niet gepubliceerd</Heading>
       <Paragraph>
         {objectName} is momenteel niet zichtbaar in de zoekfunctie van{' '}
-        {schemaName || 'de catalogus'}. Gebruik de "Publiceren" actie om deze
-        gegevens beschikbaar te maken voor bezoekers.
+        {schemaName || 'de catalogus'}. Gebruik de &quot;Publiceren&quot; actie om
+        deze gegevens beschikbaar te maken voor bezoekers.
       </Paragraph>
     </Alert>
   );

@@ -32,12 +32,12 @@ const ConGebruikStepSoort = ({
         <br />
         Een gebruik kan bestaan uit:
         <br />
-        <strong>Voor eigen organisatie:</strong> Selecteer een bestaand product uit
-        de softwarecatalogus en registreer het gebruik door uw organisatie.
+        <strong>Voor eigen organisatie:</strong> Selecteer een applicatie uit de
+        softwarecatalogus en registreer het gebruik door uw organisatie.
         <br />
-        <strong>Voor andere organisatie:</strong> Registreer het gebruik van uw
-        product door een klant. De klant wordt geïnformeerd en moet het gebruik
-        goedkeuren.
+        <strong>Voor andere organisatie:</strong> Registreer het gebruik van een
+        applicatie door een klantorganisatie. De klant wordt geïnformeerd en moet het
+        gebruik goedkeuren.
         <br />
         <i>
           Deze keuze helpt organisaties om te begrijpen hoe uw registratie is
@@ -50,8 +50,8 @@ const ConGebruikStepSoort = ({
           <Alert type='info'>
             <Paragraph>
               {gebruikType === 'eigen-organisatie'
-                ? 'U heeft gekozen voor gebruik door eigen organisatie. In de volgende stappen selecteert u een product uit de catalogus dat uw organisatie gebruikt.'
-                : 'U heeft gekozen voor gebruik door andere organisatie. In de volgende stappen selecteert u een klantorganisatie en een product van uw organisatie.'}
+                ? 'U heeft gekozen voor gebruik door eigen organisatie. In de volgende stappen selecteert u een applicatie uit de catalogus die uw organisatie gebruikt.'
+                : 'U heeft gekozen voor gebruik door andere organisatie. In de volgende stappen selecteert u een klantorganisatie en een applicatie.'}
             </Paragraph>
           </Alert>
         </div>

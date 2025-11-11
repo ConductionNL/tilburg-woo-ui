@@ -105,8 +105,8 @@ const ConGebruikStepInformatie = ({
                     marginTop: '0.25rem',
                   }}
                 >
-                  Selecteer de organisatie die uw product gebruikt. Deze organisatie
-                  wordt geïnformeerd en moet het gebruik goedkeuren.
+                  Selecteer de organisatie die de applicatie gebruikt. Deze
+                  organisatie wordt geïnformeerd en moet het gebruik goedkeuren.
                 </div>
               </>
             ) : (

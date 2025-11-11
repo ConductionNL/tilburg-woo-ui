@@ -2,29 +2,22 @@ import {
   Heading,
   Paragraph,
   Link,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableRow,
 } from '@utrecht/component-library-react/dist/css-module';
 import { AcColumn, AcFlex } from '@src/atoms';
-import { AcCheckbox, AcButton } from '@src/molecules';
 import { VISUALS } from '@src/constants';
 import ConLogoPreview from '@src/views/ac-register/con-logo-preview';
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import { commongroundApiUrl } from '@src/config';
 import ConEditableDescription from '../../shared/components/con-editable-description/con-editable-description';
-import { LogoUploadField } from '@views/ac-beheer/shared/components/con-logo-upload-field';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
 import ConEditableStandards from '../../shared/components/con-editable-standards/con-editable-standards';
 import RelatedTabs from '@views/ac-publication/con-related-tabs';
-import { ConStandardsTable } from '@components';
 import {
   checkOrganizationPermissions,
   getDisabledActionTooltip,
 } from '@utils/organization-permissions';
 import { TOOLTIP_ID } from '@src/index.web';
+import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
 
 /**
  * Content for the module details page
@@ -118,39 +111,6 @@ const ConModuleDetailsPageContent = ({
     }
   }, [id]);
 
-  // Custom fetch function (matching con-my-organisation pattern)
-  const fetchFullModuleData = useCallback(
-    async (moduleId) => {
-      if (!moduleId || !config) return;
-
-      try {
-        // Fetch the full module data using the object store
-        await object.fetchObject(config.registerSlug, config.schemaSlug, moduleId, {
-          _extend: config.extend,
-          _related: true,
-          _relatedNames: true,
-        });
-        // Ensure active object is set so related data selectors work
-        object.setActiveObject(config.registerSlug, config.schemaSlug, {
-          id: moduleId,
-        });
-        // Also fetch schema if not yet loaded
-        object.fetchSchema(config.schemaSlug);
-      } catch (error) {
-        console.error('Error fetching full module data:', error);
-      }
-    },
-    [object, config]
-  );
-
-  // Helper function to update field data and refresh (matching con-my-organisation pattern exactly)
-  const setNewFieldDataAndFetch = (v, field) => {
-    if (data) {
-      data[field] = v;
-      fetchFullModuleData(data?.['@self']?.id);
-    }
-  };
-
   // Check organization permissions for actions
   const { canEdit: hasEditPermission, reason } = data
     ? checkOrganizationPermissions(user, data)
@@ -160,6 +120,12 @@ const ConModuleDetailsPageContent = ({
       };
 
   const actualCanEdit = canEdit && hasEditPermission;
+
+  const contactId = Array.isArray(data?.contactpersoon)
+    ? data.contactpersoon[0]?.id ?? data.contactpersoon[0]
+    : typeof data?.contactpersoon === 'object' && data?.contactpersoon !== null
+    ? data.contactpersoon.id
+    : data?.contactpersoon;
 
   useEffect(() => {
     fetchUses();
@@ -379,10 +345,47 @@ const ConModuleDetailsPageContent = ({
       </div>
 
       {/* Contact Information Section */}
+      {(contactId || data?.website) && (
+        <>
+          <Heading level={3} style={{ marginBlockStart: '1rem' }}>
+            Contact Informatie
+          </Heading>
+          <div className='ac-register-review__section'>
+            <div style={{ marginTop: '12px' }}>
+              {data?.website && (
+                <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
+                  <strong>Website: </strong>
+                  <Link
+                    href={
+                      data?.website.startsWith('http')
+                        ? data?.website
+                        : `https://${data?.website}`
+                    }
+                    target='_blank'
+                    rel='noopener noreferrer'
+                  >
+                    {data?.website}
+                  </Link>
+                </div>
+              )}
+              {contactId && (
+                <div style={{ marginBottom: '8px' }}>
+                  <strong>Contactpersoon: </strong>
+                  <ConUuidResolver>{String(contactId)}</ConUuidResolver>
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Extra Information Section */}
       {(data?.licentietype ||
         data?.licentie ||
         data?.moduleVersies ||
-        data?.website) && (
+        data?.cloudDienstVerleeningsmodel ||
+        data?.hostingJurisdictie ||
+        data?.hostingLocatie) && (
         <>
           <Heading level={3} style={{ marginBlockStart: '1rem' }}>
             Extra informatie
@@ -408,6 +411,29 @@ const ConModuleDetailsPageContent = ({
                     {data.moduleVersies.find((v) => v.status === 'in gebruik')
                       ?.versie || 'Geen versie in gebruik'}
                   </p>
+                </div>
+              )}
+              {Array.isArray(data?.cloudDienstverleningsmodel) &&
+                data.cloudDienstverleningsmodel.length > 0 && (
+                  <div>
+                    <b>Hosting type:</b>
+                    <ul style={{ margin: 0, paddingLeft: '1.25em' }}>
+                      {data.cloudDienstverleningsmodel.map((model, idx) => (
+                        <li key={idx}>{model}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              {data?.hostingJurisdictie && (
+                <div>
+                  <b>Hosting jurisdictie:</b>
+                  <p>{data.hostingJurisdictie}</p>
+                </div>
+              )}
+              {data?.hostingLocatie && (
+                <div>
+                  <b>Hosting locatie:</b>
+                  <p>{data.hostingLocatie}</p>
                 </div>
               )}
             </AcFlex>
@@ -439,7 +465,7 @@ const ConModuleDetailsPageContent = ({
           onStandardsCountChange={setStandardsCount}
           onReferentieComponentenChange={setReferentieComponentenWithStandards}
           isEditingCustomTrigger={editingStandards}
-          onSuccess={(newCompliancy) => {
+          onSuccess={() => {
             // Only exit editing mode - don't update data.compliancy to prevent unnecessary re-renders
             setEditingStandards(false);
             // The ConEditableStandards component already sent the PATCH request

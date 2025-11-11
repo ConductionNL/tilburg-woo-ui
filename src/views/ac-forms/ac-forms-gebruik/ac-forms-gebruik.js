@@ -278,9 +278,9 @@ const AcFormsGebruik = ({ store }) => {
   }, [gebruikType, isEditMode, isInitialLoad]);
 
   // Options state (UI-only)
-  const [productOptions, setProductOptions] = useState([]);
   const [modulesOptions, setModulesOptions] = useState([]);
   const [modulesLoading, setModulesLoading] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
   // Version dropdown loading not used anymore (derived locally from module data)
   const [koppelingOptions, setKoppelingOptions] = useState([]);
   const [dienstOptions, setDienstOptions] = useState([]);
@@ -290,8 +290,6 @@ const AcFormsGebruik = ({ store }) => {
 
   // Debug organisatieOptions changes
   const [organisatieLoading, setOrganisatieLoading] = useState(false);
-  // Producten
-  const [productLoading, setProductLoading] = useState(false);
   // Versies
   const [versionOptions, setVersionOptions] = useState([]);
   const [versionsLoading, setVersionsLoading] = useState(false);
@@ -379,26 +377,6 @@ const AcFormsGebruik = ({ store }) => {
   useEffect(() => {
     let isMounted = true;
 
-    const fetchProducts = async () => {
-      try {
-        // Use authenticated API client instead of raw fetch
-        await store.object.fetchCollection('voorzieningen', 'product', {
-          _limit: '50',
-          _page: '1',
-          '_extend[]': '@self.schema',
-          _source: 'index',
-        });
-        const collection = store.object.getCollection('voorzieningen_product');
-        const list = collection?.results || collection || [];
-        const options = list.map(mapToOption);
-        if (isMounted) setProductOptions(options);
-      } catch (e) {
-        if (isMounted) setProductOptions([]);
-      }
-    };
-
-    // Do not preload all modules globally; modules are fetched per selected product
-
     const fetchOrganisaties = async () => {
       try {
         // For andere organisatie usage, we don't preload organizations
@@ -441,7 +419,6 @@ const AcFormsGebruik = ({ store }) => {
     };
 
     // Preload all APIs in parallel for better performance
-    fetchProducts();
     fetchOrganisaties();
     fetchRefComps();
 
@@ -450,125 +427,34 @@ const AcFormsGebruik = ({ store }) => {
     };
   }, []);
 
-  // When product changes, load only its modules by ID (restrict module selection to selected product)
+  // Load all modules on component mount
   useEffect(() => {
     let cancelled = false;
     const run = async () => {
-      const p = gebruik?.product;
-      if (p === null || p === undefined || (typeof p === 'string' && p === '')) {
-        if (!cancelled) {
-          setModulesOptions([]);
-          // Don't clear module in edit mode during initial load
-          if (gebruik?.module != null && !(isEditMode && isInitialLoad)) {
-            setGebruikData('module', null);
-          }
-        }
-        return;
-      }
-
-      // Product changed to a valid value: clear dependent selections and options immediately
-      // But don't clear in edit mode during initial load to preserve existing selections
-      if (!cancelled && !(isEditMode && isInitialLoad)) {
-        setGebruikData('module', null);
-        setGebruikData('moduleVersie', null);
-        setModulesOptions([]);
-      }
-
-      // Resolve product object when value might be an id; fetch if needed
-      let productData = null;
-      if (typeof p === 'object') {
-        productData = p;
-      } else {
-        const fromOptions = productOptions.find(
-          (opt) => String(opt.value) === String(p)
-        )?.data;
-        if (fromOptions) {
-          productData = fromOptions;
-        } else {
-          try {
-            await store.object.fetchObject('voorzieningen', 'product', String(p), {
-              '_extend[]': '@self.schema',
-            });
-            productData = store.object.getObject('voorzieningen_product', String(p));
-          } catch (_) {
-            productData = null;
-          }
-        }
-      }
-
-      // Ensure modules are available; if missing, fetch with relations
-      if (!Array.isArray(productData?.modules) || productData.modules.length === 0) {
-        try {
-          await store.object.fetchObject(
-            'voorzieningen',
-            'product',
-            String(getIdString(productData?.id || p)),
-            {
-              '_extend[]': '@self.schema,@self.relations',
-            }
-          );
-          productData = store.object.getObject(
-            'voorzieningen_product',
-            String(getIdString(productData?.id || p))
-          );
-        } catch (_) {
-          // keep existing productData
-        }
-      }
-
-      const moduleIds = Array.isArray(productData?.modules)
-        ? productData.modules
-        : [];
-
-      if (moduleIds.length === 0) {
-        if (!cancelled) {
-          setModulesOptions([]);
-          // Don't clear module in edit mode during initial load
-          if (gebruik?.module != null && !(isEditMode && isInitialLoad)) {
-            setGebruikData('module', null);
-          }
-        }
-        return;
-      }
-
       setModulesLoading(true);
       try {
-        await Promise.all(
-          moduleIds.map((id) =>
-            store.object.fetchObject('voorzieningen', 'module', String(id), {
-              '_extend[]': '@self.schema,@self.relations',
-            })
-          )
+        await store.object.fetchCollection(
+          'voorzieningen',
+          'module',
+          {
+            _limit: '50',
+            _page: '1',
+            '_extend[]': '@self.schema',
+          },
+          null,
+          'gebruik_form'
         );
         if (cancelled) return;
 
-        const modules = moduleIds
-          .map((id) => store.object.getObject('voorzieningen_module', String(id)))
-          .filter(Boolean);
-        const options = modules.map(mapToOption);
+        const collection = store.object.getCollection(
+          'voorzieningen_module_gebruik_form'
+        );
+        const list = collection?.results || collection || [];
+        const options = list.map(mapToOption);
         setModulesOptions(options);
-
-        const currentModule = String(gebruik?.module || '');
-        if (!options.some((o) => String(o.value) === currentModule)) {
-          // Don't clear module in edit mode during initial load
-          if (!(isEditMode && isInitialLoad)) {
-            setGebruikData('module', null);
-          }
-        }
-
-        if (options.length === 1) {
-          const nextId = String(options[0].value);
-          if (currentModule !== nextId) {
-            setGebruikData('module', nextId);
-          }
-        }
       } catch (_) {
         if (!cancelled) {
           setModulesOptions([]);
-          // Don't clear module in edit mode during initial load
-          if (gebruik?.module != null && !(isEditMode && isInitialLoad)) {
-            setGebruikData('module', null);
-          }
         }
       } finally {
         if (!cancelled) setModulesLoading(false);
@@ -578,99 +464,19 @@ const AcFormsGebruik = ({ store }) => {
     return () => {
       cancelled = true;
     };
-  }, [gebruik?.product]);
+  }, []);
 
-  // Server-side search for modules
-  const searchModules = async (query) => {
-    try {
-      setModulesLoading(true);
-      const q = String(query || '').trim();
-
-      // Only allow searching within the currently selected product's modules
-      const selectedProduct = gebruik?.product;
-      const productId = getIdString(selectedProduct);
-
-      if (!productId) {
-        // No product selected: no modules available
-        if (!q) return; // preserve current options
-        setModulesOptions([]);
-        return;
-      }
-
-      // Resolve the selected product object to get its module IDs
-      let productData = null;
-      if (typeof selectedProduct === 'object') {
-        productData = selectedProduct;
-      } else {
-        productData =
-          productOptions.find((opt) => String(opt.value) === String(productId))
-            ?.data || null;
-        if (!productData) {
-          try {
-            await store.object.fetchObject(
-              'voorzieningen',
-              'product',
-              String(productId),
-              {
-                '_extend[]': '@self.schema',
-              }
-            );
-            productData = store.object.getObject(
-              'voorzieningen_product',
-              String(productId)
-            );
-          } catch (_) {
-            productData = null;
-          }
-        }
-      }
-
-      const allowedModuleIds = Array.isArray(productData?.modules)
-        ? productData.modules.map((id) => String(id))
-        : [];
-
-      if (allowedModuleIds.length === 0) {
-        setModulesOptions([]);
-        return;
-      }
-
-      if (!q) {
-        // No query: keep current options populated by product-change effect
-        return;
-      }
-
-      // Fetch modules by search, then filter to those belonging to the selected product
-      await store.object.fetchCollection('voorzieningen', 'module', {
-        _limit: '50',
-        _page: '1',
-        _search: q,
-      });
-      const collection = store.object.getCollection('voorzieningen_module');
-      const list = collection?.results || collection || [];
-      const filtered = list.filter((m) => {
-        const id = String(m?.id || m?.value || '');
-        return allowedModuleIds.includes(id);
-      });
-      const options = filtered.map(mapToOption);
-      setModulesOptions(options);
-    } catch (e) {
-      setModulesOptions([]);
-    } finally {
-      setModulesLoading(false);
-    }
-  };
-
-  // Server-side search for producten with cache-first strategy
-  const searchProducts = useCallback(
+  // Server-side search for modules (searches all modules)
+  const searchModules = useCallback(
     async (query) => {
       try {
-        setProductLoading(true);
+        setSearchLoading(true);
         const q = String(query || '').trim();
 
         const queryParams = {
           _limit: '50',
           _page: '1',
-          _source: 'index',
+          '_extend[]': '@self.schema',
         };
 
         // Add search parameter if provided
@@ -678,13 +484,21 @@ const AcFormsGebruik = ({ store }) => {
           queryParams._search = q;
         }
 
-        await store.object.fetchCollection('voorzieningen', 'product', queryParams);
-        const collection = store.object.getCollection('voorzieningen_product');
+        await store.object.fetchCollection(
+          'voorzieningen',
+          'module',
+          queryParams,
+          null,
+          'gebruik_form_search'
+        );
+        const collection = store.object.getCollection(
+          'voorzieningen_module_gebruik_form_search'
+        );
         const list = collection?.results || collection || [];
         const options = list.map(mapToOption);
 
         // Merge with existing options to preserve selected items
-        setProductOptions((prevOptions) => {
+        setModulesOptions((prevOptions) => {
           const newOptionsMap = new Map(options.map((opt) => [opt.value, opt]));
 
           // Combine existing and new options, preferring new data for existing items
@@ -702,18 +516,13 @@ const AcFormsGebruik = ({ store }) => {
         });
       } catch (e) {
         // Don't clear options on error to preserve existing selections
-        console.error('Product search failed:', e);
+        console.error('Module search failed:', e);
       } finally {
-        setProductLoading(false);
+        setSearchLoading(false);
       }
     },
     [store]
   );
-
-  // Trigger initial product search to populate dropdown
-  useEffect(() => {
-    searchProducts('');
-  }, [searchProducts]);
 
   // Server-side search for organisaties
   const searchOrganisaties = useCallback(
@@ -826,7 +635,7 @@ const AcFormsGebruik = ({ store }) => {
   );
 
   // Debounced search functions (500ms)
-  const debouncedSearchProducts = useDebouncedInput(searchProducts, 500, {
+  const debouncedSearchModules = useDebouncedInput(searchModules, 250, {
     disableInstantValidation: true,
   });
   const debouncedSearchOrganisaties = useDebouncedInput(searchOrganisaties, 500, {
@@ -965,14 +774,14 @@ const AcFormsGebruik = ({ store }) => {
     };
   }, [gebruik?.module, store]);
 
-  // When product changes, fetch diensten filtered by product id and map options to dienst IDs
+  // When module changes, fetch diensten filtered by module id and map options to dienst IDs
   useEffect(() => {
     let cancelled = false;
     const run = async () => {
-      const p = gebruik?.product;
-      const productId = getIdString(p);
+      const m = gebruik?.module;
+      const moduleId = getIdString(m);
 
-      if (!productId) {
+      if (!moduleId) {
         if (!cancelled) {
           setDienstOptions([]);
           // Don't clear diensten during initial load in edit mode
@@ -989,7 +798,7 @@ const AcFormsGebruik = ({ store }) => {
 
       try {
         await store.object.fetchCollection('voorzieningen', 'dienst', {
-          producten: String(productId),
+          modules: String(moduleId),
           _limit: '100',
           _page: '1',
         });
@@ -1013,7 +822,7 @@ const AcFormsGebruik = ({ store }) => {
 
         setDienstOptions(options);
 
-        // Prune selected diensten to those still available for current product
+        // Prune selected diensten to those still available for current module
         // But don't prune during initial load in edit mode to preserve existing selections
         // IMPORTANT: For "andere-organisatie" types, don't prune diensten as the user may not have
         // permission to see all available diensten, but should preserve existing ones
@@ -1043,8 +852,8 @@ const AcFormsGebruik = ({ store }) => {
     return () => {
       cancelled = true;
     };
-    // React to product changes and edit mode state
-  }, [gebruik?.product, isEditMode, isInitialLoad, gebruikType]);
+    // React to module changes and edit mode state
+  }, [gebruik?.module, isEditMode, isInitialLoad, gebruikType]);
 
   // Helper function to create koppeling option with proper labels
   const createKoppelingOption = async (item, index) => {
@@ -1249,7 +1058,6 @@ const AcFormsGebruik = ({ store }) => {
           // If it's an object (from ConSchemaEnhancedField), try to extract UUID
           return afnemer.uuid || afnemer.id || afnemer.value || afnemer;
         })(),
-        product: gebruik?.product,
         module: gebruik?.module,
         moduleVersie: gebruik?.moduleVersie,
         status: gebruik?.status || 'Verwerving',
@@ -1284,7 +1092,7 @@ const AcFormsGebruik = ({ store }) => {
     const base = [
       'Soort gebruik',
       'Gebruik informatie',
-      'Product en applicatie',
+      'Applicatie',
       'Applicatie versie',
       'Koppelingen',
       'Diensten',
@@ -1309,7 +1117,7 @@ const AcFormsGebruik = ({ store }) => {
       }
     }
     if (currentStep === 2) {
-      return !!gebruik?.product; // Product en applicatie step
+      return !!gebruik?.module; // Applicatie step
     }
     if (currentStep === 3) {
       return true; // Versie step
@@ -1361,15 +1169,11 @@ const AcFormsGebruik = ({ store }) => {
           <ConGebruikStepProductApplicatie
             gebruik={gebruik}
             setGebruikData={setGebruikData}
-            productOptions={productOptions}
-            productLoading={productLoading}
             moduleOptions={modulesOptions}
             modulesLoading={modulesLoading}
-            searchModules={searchModules}
-            searchProducts={debouncedSearchProducts}
-            loading={loading}
+            searchLoading={searchLoading}
+            searchModules={debouncedSearchModules}
             schemas={schemas}
-            gebruikType={gebruikType}
           />
         );
       case 3:
@@ -1421,7 +1225,6 @@ const AcFormsGebruik = ({ store }) => {
             koppelingOptions={koppelingOptions}
             dienstOptions={dienstOptions}
             organisatieOptions={organisatieOptions}
-            productOptions={productOptions}
             moduleOptions={modulesOptions}
             contactpersoonOptions={contactpersoonOptions}
           />
@@ -1645,9 +1448,7 @@ const AcFormsGebruik = ({ store }) => {
                 </Paragraph>
                 <Paragraph>
                   Het gebruik van{' '}
-                  {gebruik?.product?.naam ||
-                    gebruik?.module?.naam ||
-                    'het geselecteerde product'}
+                  {gebruik?.module?.naam || 'de geselecteerde applicatie'}
                   {gebruikType === 'eigen-organisatie'
                     ? ` door uw organisatie`
                     : ` door ${
@@ -1672,7 +1473,7 @@ const AcFormsGebruik = ({ store }) => {
                     <>
                       <li>Het gebruik wordt zichtbaar in de softwarecatalogus</li>
                       <li>
-                        Andere organisaties kunnen zien welke producten u gebruikt
+                        Andere organisaties kunnen zien welke applicaties u gebruikt
                       </li>
                       <li>
                         Dit helpt bij het delen van ervaringen en best practices
