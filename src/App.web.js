@@ -100,6 +100,7 @@ const App = ({ store }) => {
     // Use container config if available
     if (containerConfig && containerConfig.getThemeVariant) {
       const themeVariant = containerConfig.getThemeVariant();
+
       // Map theme variants to CSS theme classes
       switch (themeVariant) {
         case 'vng':
@@ -161,81 +162,52 @@ const App = ({ store }) => {
     document.getElementById('body').classList.add(getTheme());
   };
 
-  const setIcon = () => {
+  const getFaviconUrl = () => {
+    // Use container config if available
+    if (containerConfig && containerConfig.getFaviconUrl) {
+      const faviconUrl = containerConfig.getFaviconUrl();
+      if (faviconUrl) {
+        return faviconUrl;
+      }
+    }
+
+    // Fallback to hostname-based logic
     switch (hostname) {
       case 'softwarecatalogus.accept.opencatalogi.nl':
       case 'acceptatie.softwarecatalogus.nl':
       case 'softwarecatalogus.test.opencatalogi.nl':
-        return (
-          (document.getElementById('favicon').href =
-            'https://vng.nl/themes/custom/vng/favicon.ico'),
-          (document.getElementById('faviconMeta').href =
-            'https://vng.nl/themes/custom/vng/favicon.ico')
-        );
+        return 'https://vng.nl/themes/custom/vng/favicon.ico';
       case 'open-migrato.accept.commonground.nu':
-        return (
-          (document.getElementById('favicon').href =
-            'https://www.migrato.nl/wp-content/uploads/2023/01/favicon-32x32-1.png'),
-          (document.getElementById('faviconMeta').href =
-            'https://www.migrato.nl/wp-content/uploads/2023/01/favicon-32x32-1.png')
-        );
-      case 'open-tilburg.accept.commonground.nu':
-        return;
+        return 'https://www.migrato.nl/wp-content/uploads/2023/01/favicon-32x32-1.png';
       case 'opencatalogi.open-regels.nl':
-        return (
-          (document.getElementById('favicon').href =
-            'https://nextcloud.open-regels.nl/index.php/s/oCsbkE4FLiyPfnz/download/openregels-favicon.ico'),
-          (document.getElementById('faviconMeta').href =
-            'https://nextcloud.open-regels.nl/index.php/s/oCsbkE4FLiyPfnz/download/openregels-favicon.ico')
-        );
+        return 'https://nextcloud.open-regels.nl/index.php/s/oCsbkE4FLiyPfnz/download/openregels-favicon.ico';
       case 'open-dimpact.accept.commonground.nu':
       case 'dimpact.opencatalogi.nl':
-        return (
-          (document.getElementById('favicon').href =
-            'https://dimpact.commonground.nu/apps/files_sharing/publicpreview/S53C7EbWtya4Kpp?file=/&fileId=938&x=3440&y=1440&a=true&etag=96ffdec8c8354f7dffe8e032f1a326b8'),
-          (document.getElementById('faviconMeta').href =
-            'https://dimpact.commonground.nu/apps/files_sharing/publicpreview/S53C7EbWtya4Kpp?file=/&fileId=938&x=3440&y=1440&a=true&etag=96ffdec8c8354f7dffe8e032f1a326b8')
-        );
+        return 'https://dimpact.commonground.nu/apps/files_sharing/publicpreview/S53C7EbWtya4Kpp?file=/&fileId=938&x=3440&y=1440&a=true&etag=96ffdec8c8354f7dffe8e032f1a326b8';
       case 'open-rotterdam.accept.commonground.nu':
-        return (
-          (document.getElementById('favicon').href =
-            'https://www.rotterdam.nl/favicon.ico?v=2'),
-          (document.getElementById('faviconMeta').href =
-            'https://www.rotterdam.nl/favicon.ico?v=2')
-        );
+        return 'https://www.rotterdam.nl/favicon.ico?v=2';
       case 'opencatalogi.nl':
       case 'developer.opencatalogi.nl':
       case 'test.opencatalogi.nl':
-        return (
-          (document.getElementById('favicon').href =
-            'https://directory.opencatalogi.nl/core/preview?fileId=309&x=2048&y=1280&a=true&etag=bab799ba75481f8107c967e49e50c008'),
-          (document.getElementById('faviconMeta').href =
-            'https://directory.opencatalogi.nl/core/preview?fileId=309&x=2048&y=1280&a=true&etag=bab799ba75481f8107c967e49e50c008')
-        );
       case 'localhost':
-        return (
-          (document.getElementById('favicon').href =
-            'https://directory.opencatalogi.nl/core/preview?fileId=309&x=2048&y=1280&a=true&etag=bab799ba75481f8107c967e49e50c008'),
-          (document.getElementById('faviconMeta').href =
-            'https://directory.opencatalogi.nl/core/preview?fileId=309&x=2048&y=1280&a=true&etag=bab799ba75481f8107c967e49e50c008')
-        );
+        return 'https://directory.opencatalogi.nl/core/preview?fileId=309&x=2048&y=1280&a=true&etag=bab799ba75481f8107c967e49e50c008';
       case 'horstadmaas.accept.opencatalogi.nl':
       case 'verwerkingsregister.horstaandemaas.nl':
-        return (
-          (document.getElementById('favicon').href =
-            'https://horstadmaas.accept.commonground.nu/s/r6KETEADerdekdK/download'),
-          (document.getElementById('faviconMeta').href =
-            'https://horstadmaas.accept.commonground.nu/s/r6KETEADerdekdK/download')
-        );
+        return 'https://horstadmaas.accept.commonground.nu/s/r6KETEADerdekdK/download';
       case 'verwerkingsregister.venray.nl':
-        return (
-          (document.getElementById('favicon').href =
-            'https://www.venray.nl/images/favicon7bb51a2860262bb4.ico'),
-          (document.getElementById('faviconMeta').href =
-            'https://www.venray.nl/images/favicon7bb51a2860262bb4.ico')
-        );
+        return 'https://www.venray.nl/images/favicon7bb51a2860262bb4.ico';
+      case 'open-tilburg.accept.commonground.nu':
       default:
-        return;
+        return null; // Use default favicon from public directory
+    }
+  };
+
+  const setIcon = () => {
+    const faviconUrl = getFaviconUrl();
+
+    if (faviconUrl) {
+      document.getElementById('favicon').href = faviconUrl;
+      document.getElementById('faviconMeta').href = faviconUrl;
     }
   };
 

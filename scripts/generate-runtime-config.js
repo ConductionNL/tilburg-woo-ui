@@ -1,8 +1,13 @@
 #!/usr/bin/env node
 /**
- * Container Constants Generator
+ * Runtime Configuration Generator
  *
- * This script generates container.constants.js from values.yaml and environment variables.
+ * This script generates a runtime-config.js file that is NOT bundled by webpack.
+ * It creates a window.RUNTIME_CONFIG object that can be accessed by the application.
+ *
+ * This file is generated at container startup and placed in the public_html directory
+ * so it can be loaded directly by the browser BEFORE the React bundle loads.
+ *
  * Priority order:
  * 1. values.yaml (env and extraEnvVars sections)
  * 2. Environment variables
@@ -121,8 +126,7 @@ const parseYaml = (content) => {
 };
 
 /**
- * Load configuration from values.yaml (local development only)
- * In production/container, this file won't exist and we rely on environment variables
+ * Load configuration from values.yaml
  */
 const loadValuesYaml = () => {
   try {
@@ -135,77 +139,77 @@ const loadValuesYaml = () => {
     );
 
     if (!fs.existsSync(valuesPath)) {
-      // This is normal in container environments - values come from env vars
-      console.log(
-        '📦 Running in container mode (no values.yaml) - using environment variables'
-      );
+      console.log('⚠️  values.yaml not found, skipping');
       return {};
     }
 
     const content = fs.readFileSync(valuesPath, 'utf8');
     const parsed = parseYaml(content);
 
-    const count = Object.keys(parsed).length;
-    if (count > 0) {
-      console.log(
-        `📄 Local development mode - loaded ${count} variable(s) from values.yaml`
-      );
-    }
     return parsed;
   } catch (error) {
     console.warn('⚠️  Error reading values.yaml:', error.message);
     return {};
   }
 };
+
 /**
  * Get configuration value with priority:
  * 1. values.yaml
  * 2. Environment variable
  * 3. Default value
+ *
+ * Returns an object with { value, source } to track where the value came from
  */
 const getConfigValue = (yamlConfig, key, defaultValue) => {
   // First check values.yaml
   if (yamlConfig[key] !== undefined && yamlConfig[key] !== '') {
-    return yamlConfig[key];
+    return { value: yamlConfig[key], source: 'values.yaml' };
   }
 
   // Then check environment variable
   if (process.env[key] !== undefined && process.env[key] !== '') {
-    return process.env[key];
+    return { value: process.env[key], source: 'environment' };
   }
 
   // Finally use default
-  return defaultValue;
+  return { value: defaultValue, source: 'default' };
 };
 
 /**
  * Get boolean configuration value with priority
  */
 const getBooleanConfig = (yamlConfig, key, defaultValue) => {
-  const value = getConfigValue(yamlConfig, key, null);
+  const result = getConfigValue(yamlConfig, key, null);
+  const value = result.value;
 
-  if (value === null) return defaultValue;
-  if (typeof value === 'boolean') return value;
-  if (value === 'true') return true;
-  if (value === 'false') return false;
+  if (value === null) return { value: defaultValue, source: 'default' };
+  if (typeof value === 'boolean') return result;
+  if (value === 'true') return { value: true, source: result.source };
+  if (value === 'false') return { value: false, source: result.source };
 
-  return defaultValue;
+  return { value: defaultValue, source: 'default' };
 };
 
 /**
  * Get integer configuration value with priority
  */
 const getIntegerConfig = (yamlConfig, key, defaultValue) => {
-  const value = getConfigValue(yamlConfig, key, null);
+  const result = getConfigValue(yamlConfig, key, null);
+  const value = result.value;
 
-  if (value === null) return defaultValue;
+  if (value === null) return { value: defaultValue, source: 'default' };
 
   const parsed = parseInt(value);
-  return isNaN(parsed) ? defaultValue : parsed;
+  return isNaN(parsed)
+    ? { value: defaultValue, source: 'default' }
+    : { value: parsed, source: result.source };
 };
 
-// Get all configuration with values.yaml taking priority
-const getEnvConfig = () => {
+/**
+ * Get runtime configuration
+ */
+const getRuntimeConfig = () => {
   // Load values from values.yaml
   const yamlConfig = loadValuesYaml();
 
@@ -220,7 +224,6 @@ const getEnvConfig = () => {
     SITE: getConfigValue(yamlConfig, 'SITE', 'localhost'),
     MODE: getConfigValue(yamlConfig, 'MODE', 'development'),
     THEME_VARIANT: getConfigValue(yamlConfig, 'THEME_VARIANT', 'development'),
-    FAVICON_URL: getConfigValue(yamlConfig, 'FAVICON_URL', '/favicon.svg'),
     ENVIRONMENT_NAME: getConfigValue(yamlConfig, 'ENVIRONMENT_NAME', 'development'),
 
     // API Configuration (simplified to single BASE_URL)
@@ -283,6 +286,7 @@ const getEnvConfig = () => {
 
     // Visual Configuration
     HERO_IMAGE_URL: getConfigValue(yamlConfig, 'HERO_IMAGE_URL', null),
+    FAVICON_URL: getConfigValue(yamlConfig, 'FAVICON_URL', null),
 
     // Menu Configuration
     FOOTER_STYLE: getConfigValue(yamlConfig, 'FOOTER_STYLE', 'vng'),
@@ -315,137 +319,127 @@ const getEnvConfig = () => {
   const extraVars = {};
   for (const key in yamlConfig) {
     if (!baseConfig.hasOwnProperty(key)) {
-      extraVars[key] = yamlConfig[key];
+      extraVars[key] = { value: yamlConfig[key], source: 'values.yaml' };
     }
   }
 
   // Merge base config with extra variables
-  return { ...baseConfig, ...extraVars };
+  const fullConfig = { ...baseConfig, ...extraVars };
+
+  // Separate values from metadata for the final config
+  const config = {};
+  const sources = {};
+
+  for (const key in fullConfig) {
+    const item = fullConfig[key];
+    config[key] = item.value;
+    sources[key] = item.source;
+  }
+
+  return { config, sources };
 };
-// Generate the constants file content
-const generateConstantsFile = (config) => {
-  const configEntries = Object.entries(config)
-    .map(([key, value]) => {
-      if (typeof value === 'string') {
-        return `  ${key}: '${value}',`;
-      } else if (typeof value === 'number') {
-        return `  ${key}: ${value},`;
-      } else if (typeof value === 'boolean') {
-        return `  ${key}: ${value},`;
-      } else {
-        return `  ${key}: '${String(value)}',`;
-      }
-    })
-    .join('\n');
-  return `// Auto-generated container constants
-// This file is generated from values.yaml and environment variables during container startup
+
+/**
+ * Generate the runtime config file content
+ */
+const generateRuntimeConfigFile = (config) => {
+  // Convert config to JSON with proper formatting
+  const configJson = JSON.stringify(config, null, 2);
+
+  return `// Auto-generated runtime configuration
+// This file is generated at container startup and loaded BEFORE the React bundle
+// It provides runtime environment configuration that is NOT bundled by webpack
 // Priority: 1. values.yaml (env/extraEnvVars) -> 2. Environment variables -> 3. Defaults
 // DO NOT EDIT MANUALLY - changes will be overwritten
-import { AcLockObject } from '@utils/ac-lock-object';
-// Container configuration
-export const CONTAINER_CONFIG = AcLockObject({
-${configEntries}
-});
-// Helper functions to replace hostname-based logic
-export const getTitle = () => CONTAINER_CONFIG.SITE_TITLE;
-export const getSiteDescription = () => CONTAINER_CONFIG.SITE_DESCRIPTION;
-export const getSite = () => CONTAINER_CONFIG.SITE;
-export const getMode = () => CONTAINER_CONFIG.MODE;
-export const getThemeVariant = () => CONTAINER_CONFIG.THEME_VARIANT;
-export const getEnvironmentName = () => CONTAINER_CONFIG.ENVIRONMENT_NAME;
-export const getFaviconUrl = () => CONTAINER_CONFIG.FAVICON_URL;
-// All API URLs are now unified under BASE_URL
-export const getApiUrl = () => CONTAINER_CONFIG.BASE_URL || '/api/apps';
-export const getCommongroundApiUrl = () => CONTAINER_CONFIG.BASE_URL || '/api/apps';
-export const getGemmaEndpoint = () => CONTAINER_CONFIG.BASE_URL || '/api/apps';
-export const getOpenconnectorApiUrl = () => '/api/openconnector';
-// Legacy aliases for backward compatibility
-export const getApiConfig = getApiUrl;
-export const getAuthConfig = () => ({
-  grantType: CONTAINER_CONFIG.GRANT_TYPE,
-  clientId: CONTAINER_CONFIG.CLIENT_ID,
-  clientSecret: CONTAINER_CONFIG.CLIENT_SECRET,
-  provider: CONTAINER_CONFIG.PROVIDER,
-  registerUrl: CONTAINER_CONFIG.REGISTER_URL,
-});
-export const getSessionConfig = () => ({
-  autoLogout: CONTAINER_CONFIG.AUTO_LOGOUT,
-  sessionTimeout: CONTAINER_CONFIG.SESSION_TIMEOUT,
-  activityPing: CONTAINER_CONFIG.ACTIVITY_PING,
-});
-export const getFeatureFlags = () => ({
-  enableBreadcrumbs: CONTAINER_CONFIG.ENABLE_BREADCRUMBS,
-  enableDirectory: CONTAINER_CONFIG.ENABLE_DIRECTORY,
-  enableRollbar: CONTAINER_CONFIG.ENABLE_ROLLBAR,
-  enableMockThemes: CONTAINER_CONFIG.ENABLE_MOCK_THEMES,
-});
-export const getExternalUrls = () => ({
-  website: CONTAINER_CONFIG.EXTERNAL_WEBSITE_URL,
-  privacy: CONTAINER_CONFIG.EXTERNAL_PRIVACY_URL,
-  cookies: CONTAINER_CONFIG.EXTERNAL_COOKIES_URL,
-  proclaimer: CONTAINER_CONFIG.EXTERNAL_PROCLAIMER_URL,
-});
-export const getVisualConfig = () => ({
-  heroImageUrl: CONTAINER_CONFIG.HERO_IMAGE_URL,
-  faviconUrl: CONTAINER_CONFIG.FAVICON_URL,
-  menuPosition: CONTAINER_CONFIG.MENU_POSITION,
-  footerStyle: CONTAINER_CONFIG.FOOTER_STYLE,
-});
 
-// Image helper functions
-export const getHeroImageUrl = () => CONTAINER_CONFIG.HERO_IMAGE_URL;
-export const getFaviconUrl = () => CONTAINER_CONFIG.FAVICON_URL;
-
-
-// Footer text helper functions
-export const getFooterLogoTitle = () => CONTAINER_CONFIG.FOOTER_LOGO_TITLE;
-export const getFooterLogoSubtitle = () => CONTAINER_CONFIG.FOOTER_LOGO_SUBTITLE;
-export const getSupportEmailAddress = () => CONTAINER_CONFIG.SUPPORT_EMAIL_ADDRESS;
-// Search helper functions
-export const getDefaultSearchSchema = () => CONTAINER_CONFIG.DEFAULT_SEARCH_SCHEMA;
-export const getDefaultConfig = () => CONTAINER_CONFIG;
+// Make configuration available globally
+window.RUNTIME_CONFIG = ${configJson};
 `;
 };
-// Main execution
+
+/**
+ * Main execution
+ */
 const main = () => {
   try {
-    const config = getEnvConfig();
-    const fileContent = generateConstantsFile(config);
-    // Ensure the constants directory exists
-    const constantsDir = path.join(__dirname, '..', 'src', 'constants');
-    if (!fs.existsSync(constantsDir)) {
-      fs.mkdirSync(constantsDir, { recursive: true });
+    // Get output path from command line argument or use default
+    const outputPath =
+      process.argv[2] ||
+      path.join(__dirname, '..', 'public_html', 'runtime-config.js');
+
+    // Ensure the output directory exists
+    const outputDir = path.dirname(outputPath);
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
     }
+
+    // Get runtime configuration
+    const { config, sources } = getRuntimeConfig();
+
+    // Generate the file content
+    const fileContent = generateRuntimeConfigFile(config);
+
     // Write the file
-    const outputPath = path.join(constantsDir, 'container.constants.js');
     fs.writeFileSync(outputPath, fileContent, 'utf8');
-    // Success feedback with configuration summary
-    console.log('\n✅ Container constants generated successfully!');
-    console.log(`📁 Output: ${outputPath}`);
-    console.log('\n📋 Configuration Summary:');
-    console.log(`   🏷️  Site Title: ${config.SITE_TITLE}`);
-    console.log(`   🌐 Base URL: ${config.BASE_URL}`);
-    console.log(`   🎨 Theme: ${config.THEME_VARIANT}`);
-    console.log(`   📦 Environment: ${config.ENVIRONMENT_NAME}`);
-    console.log(
-      `   🔐 Authentication: ${
-        config.ENABLE_AUTHENTICATION ? 'Enabled' : 'Disabled'
-      }`
-    );
-    console.log(`   📊 GEMMA: ${config.ENABLE_GEMMA ? 'Enabled' : 'Disabled'}`);
-    console.log(
-      `   📋 Directory: ${config.ENABLE_DIRECTORY ? 'Enabled' : 'Disabled'}`
-    );
-    console.log(
-      `   🔍 Search Schema: ${config.DEFAULT_SEARCH_SCHEMA || '(not set)'}`
-    );
-    console.log('\n💡 Priority: values.yaml → environment variables → defaults');
+
+    // Success feedback with full configuration display
+    console.info('\n✅ Runtime configuration generated successfully!');
+    console.info(`📁 Output: ${outputPath}`);
+
+    // Group configuration by source
+    const bySource = {
+      'values.yaml': [],
+      environment: [],
+      default: [],
+    };
+
+    Object.keys(config)
+      .sort()
+      .forEach((key) => {
+        const value = config[key];
+        const source = sources[key];
+        const displayValue =
+          typeof value === 'string' && value.length > 100
+            ? value.substring(0, 100) + '...'
+            : value;
+        bySource[source].push({ key, value: displayValue });
+      });
+
+    // Display values from values.yaml
+    if (bySource['values.yaml'].length > 0) {
+      console.info('\n📋 Configuration from values.yaml:');
+      bySource['values.yaml'].forEach(({ key, value }) => {
+        console.info(`   ${key}: ${value}`);
+      });
+    }
+
+    // Display values from environment variables
+    if (bySource['environment'].length > 0) {
+      console.info('\n🌍 Configuration from environment variables:');
+      bySource['environment'].forEach(({ key, value }) => {
+        console.info(`   ${key}: ${value}`);
+      });
+    }
+
+    // Display default values (optional, can be commented out if too verbose)
+    if (bySource['default'].length > 0) {
+      console.info(`\n⚙️  Using ${bySource['default'].length} default value(s)`);
+    }
+
+    console.info('\n💡 This file will be loaded by the browser at runtime');
+    console.info('💡 Priority: values.yaml → environment variables → defaults\n');
+
+    process.exit(0);
   } catch (error) {
-    console.error('❌ Error generating container constants:', error.message);
+    console.error('\n❌ Error generating runtime configuration:', error.message);
+    console.error(error.stack);
     process.exit(1);
   }
 };
+
+// Run if called directly
 if (require.main === module) {
   main();
 }
-module.exports = { getEnvConfig, generateConstantsFile };
+
+module.exports = { getRuntimeConfig, generateRuntimeConfigFile };

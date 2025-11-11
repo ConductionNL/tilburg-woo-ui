@@ -212,11 +212,11 @@ const ConFormControlerenStage = memo(
         <div className='ac-register-review'>
           {/* Show new modules */}
           {(product.modules || [])
-            .filter((m) => typeof m === 'object')
+            .filter((m) => typeof m === 'object' && !m?.id)
             .map((module, idx) => (
               <div
                 className='ac-register-form-section'
-                key={module.id || module.naam || idx}
+                key={idx}
               >
                 <div className='ac-register-review'>
                   <div className='ac-register-review__section'>
@@ -569,7 +569,7 @@ const ConFormControlerenStage = memo(
                       </div>
                     </div>
 
-                    {moduleData.beschrijvingLang && (
+                    {moduleData.fullData.beschrijvingLang && (
                       <div className='ac-register-review__description'>
                         <strong>Lange beschrijving:</strong>
                         <div
@@ -584,7 +584,7 @@ const ConFormControlerenStage = memo(
                               'data-color-mode': 'light',
                             }}
                             className='con-my-account-description'
-                            source={moduleData.beschrijvingLang}
+                            source={moduleData.fullData.beschrijvingLang}
                             remarkPlugins={[
                               [remarkGfm, { singleTilde: false }],
                               remarkDefinitionList,
@@ -608,27 +608,27 @@ const ConFormControlerenStage = memo(
                     <div className='ac-register-review__field'>
                       <strong>Licentietype:</strong>
                       <div>
-                        <div>{moduleData.licentietype || 'Niet opgegeven'}</div>
+                        <div>{moduleData.fullData.licentietype || 'Niet opgegeven'}</div>
                       </div>
                     </div>
 
-                    {moduleData.licentietype !== 'Closed Source' &&
-                      moduleData.licentie && (
+                    {moduleData.fullData.licentietype !== 'Closed Source' &&
+                      moduleData.fullData.licentie && (
                         <div className='ac-register-review__field'>
                           <strong>Licentie:</strong>
                           <div>
-                            <div>{moduleData.licentie}</div>
+                            <div>{moduleData.fullData.licentie}</div>
                           </div>
                         </div>
                       )}
 
-                    {Array.isArray(moduleData.referentieComponenten) &&
-                      moduleData.referentieComponenten.length > 0 && (
+                    {Array.isArray(moduleData.fullData.referentieComponenten) &&
+                      moduleData.fullData.referentieComponenten.length > 0 && (
                         <div className='ac-register-review__field'>
                           <strong>Referentiecomponenten:</strong>
                           <div>
                             <UnorderedList>
-                              {moduleData.referentieComponenten.map((rc, i) => {
+                              {moduleData.fullData.referentieComponenten.map((rc, i) => {
                                 const value =
                                   typeof rc === 'string' ? rc : rc?.naam || rc?.id;
                                 const opt = referentieComponentenOptions?.find(
@@ -646,13 +646,13 @@ const ConFormControlerenStage = memo(
                         </div>
                       )}
 
-                    {Array.isArray(moduleData.diensten) &&
-                      moduleData.diensten.length > 0 && (
+                    {Array.isArray(moduleData.fullData.diensten) &&
+                      moduleData.fullData.diensten.length > 0 && (
                         <div className='ac-register-review__field'>
                           <strong>Diensten:</strong>
                           <div>
                             <UnorderedList>
-                              {moduleData.diensten.map((dienst, i) => {
+                              {moduleData.fullData.diensten.map((dienst, i) => {
                                 const dienstType =
                                   typeof dienst === 'object' ? dienst.type : dienst;
                                 const dienstNaam =
