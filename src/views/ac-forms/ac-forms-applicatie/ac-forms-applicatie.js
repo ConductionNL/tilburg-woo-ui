@@ -9,6 +9,7 @@ import { AcButton } from '@src/molecules';
 import { ProcessSteps } from '@gemeente-denhaag/components-react';
 import { commongroundApiUrl } from '@config';
 import { useDebouncedInput } from '@src/hooks';
+import { validateWebsite } from '@views/ac-forms/validation/form-validations';
 
 import {
   Heading1,
@@ -28,7 +29,7 @@ import ConFormApplicatieStandaardenStage from './components/con-form-applicatie-
 import ConFormApplicatieKoppelingenStage from './components/con-form-applicatie-koppelingen-stage';
 import ConFormApplicatieDienstenStage from './components/con-form-applicatie-diensten-stage';
 import ConFormApplicatieControlerenStage from './components/con-form-applicatie-controleren-stage';
-import ConFormApplicatieOrganisatieStage from './components/con-form-applicatie-organisatie-stage';
+import ConFormApplicatieAanbiederInformatieStage from './components/con-form-applicatie-aanbieder-informatie-stage';
 
 // Utils
 import { getStatusMultiStep } from './utils/steps.utils';
@@ -59,7 +60,27 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState({ message: null, errors: null });
   const [currentStep, setCurrentStep] = useState(0);
-  const [showOrganisatieForm, setShowOrganisatieForm] = useState(false);
+
+  // State for aanbieder selection (only for ontbrekend-applicatie)
+  const [aanbiederkeuze, setAanbiederKeuze] = useState('bestaand'); // 'bestaand' or 'nieuw'
+
+  /**
+   * Aanbieder Organization State Object
+   *
+   * This object holds organization data for creating a new organization.
+   * Only used when aanbiederkeuze === 'nieuw' and formType === 'ontbrekend-applicatie'
+   */
+  const [aanbiederOrganisatie, setAanbiederOrganisatie] = useState({
+    naam: '',
+    type: '',
+    website: '',
+    beschrijvingKort: '',
+    beschrijvingLang: '',
+    'e-mailadres': '',
+    telefoonnummer: '',
+    kvkNummer: '',
+    logo: '',
+  });
 
   /**
    * Applicatie State Object
@@ -78,24 +99,6 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
     referentieComponenten: [],
     koppelingen: [],
     diensten: [],
-  });
-
-  /**
-   * Organisatie State Object
-   *
-   * This object holds organization data that will be created before the applicatie.
-   * Only used when user clicks "Ik kan de gewenste leverancier niet vinden" button.
-   */
-  const [organisatie, setOrganisatie] = useState({
-    naam: '',
-    type: '',
-    website: '',
-    beschrijvingKort: '',
-    beschrijvingLang: '',
-    'e-mailadres': '',
-    telefoonnummer: '',
-    kvkNummer: '',
-    logo: '',
   });
 
   // Ref for ProcessSteps container
@@ -332,20 +335,9 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
     }));
   }, []);
 
-  const setOrganisatieData = useCallback((key, value) => {
-    setOrganisatie((prev) => ({ ...prev, [key]: value }));
+  const setAanbiederOrganisatieData = useCallback((key, value) => {
+    setAanbiederOrganisatie((prev) => ({ ...prev, [key]: value }));
   }, []);
-
-  /**
-   * Check if organization data has been filled in
-   * @returns {boolean} True if organization has any data
-   */
-  const hasOrganisatieData = useCallback(() => {
-    if (!organisatie.naam || !organisatie.type || !organisatie.website) {
-      return false;
-    }
-    return true;
-  }, [organisatie]);
 
   // Fetch schema definitions on component mount
   useEffect(() => {
@@ -846,19 +838,19 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
     try {
       let finalAanbieder = applicatie.aanbieder;
 
-      // If organization data exists, create the organization first
-      if (hasOrganisatieData()) {
+      // ✅ For type=ontbrekend-applicatie with new organization, create the organization first
+      if (formType === 'ontbrekend-applicatie' && aanbiederkeuze === 'nieuw') {
         try {
           const newOrganizationData = {
-            naam: organisatie.naam,
-            type: organisatie.type,
-            website: organisatie.website,
-            beschrijvingKort: organisatie.beschrijvingKort,
-            beschrijvingLang: organisatie.beschrijvingLang,
-            'e-mailadres': organisatie['e-mailadres'],
-            telefoonnummer: organisatie.telefoonnummer,
-            kvkNummer: organisatie.kvkNummer,
-            logo: organisatie.logo,
+            naam: aanbiederOrganisatie.naam,
+            type: aanbiederOrganisatie.type,
+            website: aanbiederOrganisatie.website,
+            beschrijvingKort: aanbiederOrganisatie.beschrijvingKort,
+            beschrijvingLang: aanbiederOrganisatie.beschrijvingLang,
+            'e-mailadres': aanbiederOrganisatie['e-mailadres'],
+            telefoonnummer: aanbiederOrganisatie.telefoonnummer,
+            kvkNummer: aanbiederOrganisatie.kvkNummer,
+            logo: aanbiederOrganisatie.logo,
           };
 
           // Create the organization and get its ID
@@ -940,18 +932,6 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
   };
 
   const renderStep = (step) => {
-    // If organization form is showing, render it instead of the normal step
-    if (showOrganisatieForm) {
-      return (
-        <ConFormApplicatieOrganisatieStage
-          organisatie={organisatie}
-          setOrganisatieData={setOrganisatieData}
-          loading={loading}
-          schemas={schemas}
-        />
-      );
-    }
-
     // Convert physical step to logical step using helper function
     const logicalStep = getLogicalStepFromPhysical(step);
 
@@ -959,9 +939,16 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
       case 0:
         // Aanbieder - only for ontbrekend-applicatie
         return (
-          <div>
-            <Heading1>Aanbieder</Heading1>
-          </div>
+          <ConFormApplicatieAanbiederInformatieStage
+            applicatie={applicatie}
+            setApplicatieData={setApplicatieData}
+            aanbiederOrganisatie={aanbiederOrganisatie}
+            setAanbiederOrganisatieData={setAanbiederOrganisatieData}
+            loading={loading}
+            schemas={schemas}
+            aanbiederkeuze={aanbiederkeuze}
+            setAanbiederKeuze={setAanbiederKeuze}
+          />
         );
       case 1:
         // Applicatie informatie
@@ -1060,11 +1047,6 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
   };
 
   const currentStepName = (step) => {
-    // If organization form is showing, return its title
-    if (showOrganisatieForm) {
-      return 'Nieuwe organisatie aanmaken';
-    }
-
     // Convert physical step to logical step using helper function
     const logicalStep = getLogicalStepFromPhysical(step);
 
@@ -1096,10 +1078,45 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
     // Convert physical step to logical step using helper function
     const logicalStep = getLogicalStepFromPhysical(step);
 
+    // Aanbieder step (logical step 0) - only for 'ontbrekend-applicatie' type
+    if (logicalStep === 0 && formType === 'ontbrekend-applicatie') {
+      // If user selected "bestaand", check if aanbieder is selected
+      if (aanbiederkeuze === 'bestaand') {
+        return !applicatie.aanbieder || !String(applicatie.aanbieder).trim();
+      }
+
+      // If user selected "nieuw", check if all required fields are filled
+      const requiredNewOrgFields = ['naam', 'type', 'website'];
+      const missingNewOrgFields = requiredNewOrgFields.filter(
+        (field) =>
+          !aanbiederOrganisatie[field] || !String(aanbiederOrganisatie[field]).trim()
+      );
+
+      // Validate website format if provided
+      if (
+        aanbiederOrganisatie.website &&
+        String(aanbiederOrganisatie.website).trim()
+      ) {
+        const website = String(aanbiederOrganisatie.website).trim();
+        if (!validateWebsite(website)) {
+          return true;
+        }
+      }
+
+      return missingNewOrgFields.length > 0;
+    }
+
+    // Applicatie informatie: naam is required
     if (logicalStep === 1) {
-      // Applicatie informatie: naam is required
       return !applicatie.naam || applicatie.naam.trim() === '';
     }
+    // licentie: licentie is required when open source is selected
+    if (logicalStep === 2) {
+      if (applicatie.licentietype === 'Open source') {
+        return !applicatie.licentie || applicatie.licentie.trim() === '';
+      }
+    }
+
     return false;
   };
 
@@ -1107,23 +1124,37 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
     // Convert physical step to logical step using helper function
     const logicalStep = getLogicalStepFromPhysical(step);
 
+    // Aanbieder step validation messages
+    if (logicalStep === 0 && formType === 'ontbrekend-applicatie') {
+      if (aanbiederkeuze === 'bestaand') {
+        if (!applicatie.aanbieder || !String(applicatie.aanbieder).trim()) {
+          return 'Selecteer een aanbieder';
+        }
+      } else {
+        if (!aanbiederOrganisatie.naam || !aanbiederOrganisatie.naam.trim()) {
+          return 'Vul de naam van de organisatie in';
+        }
+        if (!aanbiederOrganisatie.type || !aanbiederOrganisatie.type.trim()) {
+          return 'Selecteer het type organisatie';
+        }
+        if (!aanbiederOrganisatie.website || !aanbiederOrganisatie.website.trim()) {
+          return 'Vul de website van de organisatie in';
+        }
+        if (
+          aanbiederOrganisatie.website &&
+          !validateWebsite(String(aanbiederOrganisatie.website).trim())
+        ) {
+          return 'Website heeft een ongeldig formaat';
+        }
+      }
+    }
+
     if (logicalStep === 1) {
       if (!applicatie.naam || applicatie.naam.trim() === '') {
         return 'Vul de naam van de applicatie in';
       }
     }
     return '';
-  };
-
-  /**
-   * Check if current step is the Versies step (logical step 3)
-   * @param {number} step - The physical step number
-   * @returns {boolean} True if current step is the Versies step
-   */
-  const isVersieStep = (step) => {
-    // Convert physical step to logical step using helper function
-    const logicalStep = getLogicalStepFromPhysical(step);
-    return logicalStep === 3;
   };
 
   const getPageTitle = (formType) => {
@@ -1372,12 +1403,7 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
                             buttonType='secondary'
                             icon={<VISUALS.ARROW_LEFT />}
                             onClick={() => {
-                              if (showOrganisatieForm) {
-                                // Close organization form and return to versie step
-                                setShowOrganisatieForm(false);
-                              } else {
-                                setCurrentStep(currentStep - 1);
-                              }
+                              setCurrentStep(currentStep - 1);
                             }}
                             disabled={loading}
                           >
@@ -1385,47 +1411,25 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
                           </AcButton>
                         )}
                         {getLogicalStepFromPhysical(currentStep) !== 8 && (
-                          <div className='ac-register-button-wrapper'>
-                            {isVersieStep(currentStep) && !showOrganisatieForm && (
-                              <AcButton
-                                style='button'
-                                buttonType='secondary'
-                                className='con-forms-applicatie--leverancier-not-found'
-                                icon={<VISUALS.ARROW_RIGHT />}
-                                onClick={() => {
-                                  // Toggle organization form visibility
-                                  setShowOrganisatieForm((prev) => !prev);
-                                }}
-                                disabled={loading}
-                              >
-                                Ik kan de gewenste leverancier niet vinden
-                              </AcButton>
+                          <AcButton
+                            style='button'
+                            className={clsx(
+                              currentStep === 0 && 'ac-register-form-next-button'
                             )}
-                            <AcButton
-                              style='button'
-                              className={clsx(
-                                currentStep === 0 && 'ac-register-form-next-button'
-                              )}
-                              icon={<VISUALS.ARROW_RIGHT />}
-                              disabled={getDisabledStatus(currentStep) || loading}
-                              onClick={() => {
-                                if (showOrganisatieForm) {
-                                  // Close organization form and return to versie step
-                                  setShowOrganisatieForm(false);
-                                } else {
-                                  focusForm();
-                                  setCurrentStep(currentStep + 1);
-                                }
-                              }}
-                              title={
-                                getDisabledStatus(currentStep)
-                                  ? getDisabledTooltip(currentStep)
-                                  : ''
-                              }
-                            >
-                              Volgende
-                            </AcButton>
-                          </div>
+                            icon={<VISUALS.ARROW_RIGHT />}
+                            disabled={getDisabledStatus(currentStep) || loading}
+                            onClick={() => {
+                              focusForm();
+                              setCurrentStep(currentStep + 1);
+                            }}
+                            title={
+                              getDisabledStatus(currentStep)
+                                ? getDisabledTooltip(currentStep)
+                                : ''
+                            }
+                          >
+                            Volgende
+                          </AcButton>
                         )}
 
                         {getLogicalStepFromPhysical(currentStep) === 8 && (

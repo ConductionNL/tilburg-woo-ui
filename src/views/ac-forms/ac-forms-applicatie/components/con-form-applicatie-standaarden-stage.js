@@ -877,7 +877,7 @@ const ConFormApplicatieStandaardenStage = ({
                   placeholder='https://...'
                   value={entry.url || ''}
                   type='url'
-                  onChange={(e) => updateUrl(entryKey, e.target.value)}
+                  onChange={(value) => updateUrl(entryKey, value)}
                   disabled={!!entry.bewijs}
                   className='ac-register-form-field__no-width-limit'
                   hasError={validateWebsite(entry.url)}
