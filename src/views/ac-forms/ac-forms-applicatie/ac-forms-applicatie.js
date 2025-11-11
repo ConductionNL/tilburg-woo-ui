@@ -1043,7 +1043,17 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
           />
         );
       case 8:
-        return <ConFormApplicatieControlerenStage applicatie={applicatie} />;
+        return (
+          <ConFormApplicatieControlerenStage
+            applicatie={applicatie}
+            referentieComponentenOptions={referentieComponentenOptions}
+            referentieComponentenWithStandards={referentieComponentenWithStandards}
+            standaardenOptions={standaardenOptions}
+            modulesOptions={modulesOptions}
+            dienstOptions={dienstOptions}
+            store={store}
+          />
+        );
       default:
         return null;
     }

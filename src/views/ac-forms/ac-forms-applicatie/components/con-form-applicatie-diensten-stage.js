@@ -220,7 +220,8 @@ const ConFormApplicatieDienstenStage = memo(
                         selectedDienstByRow[rowId] != null
                           ? (dienstOptions || [])?.find(
                               (o) =>
-                                String(o.value) === String(selectedDienstByRow[rowId])
+                                String(o.value) ===
+                                String(selectedDienstByRow[rowId])
                             )
                           : null
                       }
@@ -303,4 +304,3 @@ const ConFormApplicatieDienstenStage = memo(
 ConFormApplicatieDienstenStage.displayName = 'ConFormApplicatieDienstenStage';
 
 export default ConFormApplicatieDienstenStage;
-
