@@ -12,7 +12,6 @@ import {
   Paragraph,
   Alert,
 } from '@utrecht/component-library-react/dist/css-module';
-import ConGebruikStepSoort from './components/con-gebruik-step-soort';
 import ConGebruikStepInformatie from './components/con-gebruik-step-informatie';
 import ConGebruikStepProductApplicatie from './components/con-gebruik-step-product-applicatie';
 import ConGebruikStepVersie from './components/con-gebruik-step-versie';
@@ -23,6 +22,8 @@ import ConGebruikStepDeelnemers from './components/con-gebruik-step-deelnemers';
 import { VISUALS } from '@src/constants';
 import { useDebouncedInput } from '@src/hooks';
 import { isUUID } from '@src/utilities/con-resolve-uuids-in-text';
+import { getActiveWizard } from '@src/constants/wizards.constants';
+import _ from 'lodash';
 
 const mapToOption = (item, index) => {
   const label =
@@ -40,6 +41,7 @@ const AcFormsGebruik = ({ store }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const gebruikId = searchParams.get('id') || '';
+  const typeFromUrl = searchParams.get('type') || '';
   const isEditMode = !!gebruikId;
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -245,8 +247,18 @@ const AcFormsGebruik = ({ store }) => {
   const setGebruikData = (key, value) =>
     setGebruik((prev) => ({ ...prev, [key]: value }));
 
-  // Usage type selection state
-  const [gebruikType, setGebruikType] = useState(null); // 'eigen-organisatie' or 'andere-organisatie'
+  // Determine gebruikType from URL type parameter
+  // When type=ontbrekend-organisatie, it means the user doesn't have an organization, so it's andere-organisatie
+  const getGebruikTypeFromUrl = useCallback(() => {
+    if (typeFromUrl === 'ontbrekend-organisatie') {
+      return 'andere-organisatie';
+    }
+    // If no type specified, default to null (will be determined from afnemer in edit mode or set by user selection)
+    return null;
+  }, [typeFromUrl]);
+
+  // Usage type selection state - determined from URL or from API data in edit mode
+  const [gebruikType, setGebruikType] = useState(getGebruikTypeFromUrl()); // 'eigen-organisatie' or 'andere-organisatie'
 
   // Clear certain fields when gebruikType changes to 'andere-organisatie'
   useEffect(() => {
@@ -327,12 +339,12 @@ const AcFormsGebruik = ({ store }) => {
     fetchSchemaAndInit();
   }, [store, isEditMode]);
 
-  // Prefill for edit mode: fetch existing gebruik and map to local state; jump to step 1
+  // Prefill for edit mode: fetch existing gebruik and map to local state; start at step 0
   useEffect(() => {
     let cancelled = false;
     const run = async () => {
       if (!isEditMode) return;
-      setCurrentStep(1);
+      setCurrentStep(0);
       setPrefillLoading(true);
       setPrefillError(null);
       try {
@@ -372,6 +384,43 @@ const AcFormsGebruik = ({ store }) => {
       cancelled = true;
     };
   }, [isEditMode, gebruikId, mapFetchedGebruikToLocalState, store]);
+
+  // Update gebruikType when URL type parameter changes (for non-edit mode)
+  useEffect(() => {
+    if (!isEditMode) {
+      const typeFromUrl = getGebruikTypeFromUrl();
+      if (typeFromUrl) {
+        setGebruikType(typeFromUrl);
+      }
+    }
+  }, [isEditMode, getGebruikTypeFromUrl]);
+
+  // Determine gebruikType from afnemer when it's not set from URL
+  useEffect(() => {
+    if (gebruikType !== null || isEditMode) return; // Skip if already set or in edit mode
+
+    const afnemer = gebruik?.afnemer;
+    if (afnemer) {
+      const determinedType = determineGebruikType(
+        afnemer,
+        store?.user?.activeOrganization
+      );
+      if (determinedType) {
+        setGebruikType(determinedType);
+      }
+    } else {
+      // If no afnemer and user has an organization, default to eigen-organisatie
+      if (store?.user?.activeOrganization) {
+        setGebruikType('eigen-organisatie');
+      }
+    }
+  }, [
+    gebruik?.afnemer,
+    store?.user?.activeOrganization,
+    isEditMode,
+    gebruikType,
+    determineGebruikType,
+  ]);
 
   // Preload all slow API calls at component mount (hotloading like in product form)
   useEffect(() => {
@@ -1090,7 +1139,6 @@ const AcFormsGebruik = ({ store }) => {
 
   const stepsList = (() => {
     const base = [
-      'Soort gebruik',
       'Gebruik informatie',
       'Applicatie',
       'Applicatie versie',
@@ -1104,9 +1152,6 @@ const AcFormsGebruik = ({ store }) => {
 
   const canGoNext = () => {
     if (currentStep === 0) {
-      return !!gebruikType; // Must select usage type
-    }
-    if (currentStep === 1) {
       // Gebruik informatie step - contactpersoon required for eigen organisatie only
       if (gebruikType === 'andere-organisatie') {
         // For andere organisatie: only afnemer and status required
@@ -1116,19 +1161,19 @@ const AcFormsGebruik = ({ store }) => {
         return !!gebruik?.afnemer && !!gebruik?.status;
       }
     }
-    if (currentStep === 2) {
+    if (currentStep === 1) {
       return !!gebruik?.module; // Applicatie step
     }
-    if (currentStep === 3) {
+    if (currentStep === 2) {
       return true; // Versie step
     }
-    if (currentStep === 4) {
+    if (currentStep === 3) {
       return true; // koppelingen optional
     }
-    if (currentStep === 5) {
+    if (currentStep === 4) {
       return true; // diensten optional
     }
-    if (currentStep === 6 && isAfnemerSamenwerking()) {
+    if (currentStep === 5 && isAfnemerSamenwerking()) {
       return true; // deelnemers optional
     }
     return false;
@@ -1137,16 +1182,6 @@ const AcFormsGebruik = ({ store }) => {
   const renderStep = (step) => {
     switch (step) {
       case 0:
-        return (
-          <ConGebruikStepSoort
-            gebruikType={gebruikType}
-            setGebruikType={setGebruikType}
-            loading={loading}
-            gebruik={gebruik}
-            isEditMode={isEditMode}
-          />
-        );
-      case 1:
         return (
           <ConGebruikStepInformatie
             gebruik={gebruik}
@@ -1164,7 +1199,7 @@ const AcFormsGebruik = ({ store }) => {
             gebruikType={gebruikType}
           />
         );
-      case 2:
+      case 1:
         return (
           <ConGebruikStepProductApplicatie
             gebruik={gebruik}
@@ -1176,7 +1211,7 @@ const AcFormsGebruik = ({ store }) => {
             schemas={schemas}
           />
         );
-      case 3:
+      case 2:
         return (
           <ConGebruikStepVersie
             gebruik={gebruik}
@@ -1186,7 +1221,7 @@ const AcFormsGebruik = ({ store }) => {
             schemas={schemas}
           />
         );
-      case 4:
+      case 3:
         return (
           <ConGebruikStepKoppelingen
             gebruik={gebruik}
@@ -1195,7 +1230,7 @@ const AcFormsGebruik = ({ store }) => {
             schemas={schemas}
           />
         );
-      case 5:
+      case 4:
         return (
           <ConGebruikStepDiensten
             gebruik={gebruik}
@@ -1204,7 +1239,7 @@ const AcFormsGebruik = ({ store }) => {
             schemas={schemas}
           />
         );
-      case 6:
+      case 5:
         if (isAfnemerSamenwerking()) {
           return (
             <ConGebruikStepDeelnemers
@@ -1233,18 +1268,7 @@ const AcFormsGebruik = ({ store }) => {
   };
 
   const currentStepName = (step) => stepsList[step] || '';
-
-  // Determine page title based on gebruik type
-  const getPageTitle = () => {
-    if (isEditMode) return 'Gebruik bewerken';
-    if (gebruikType === 'eigen-organisatie') {
-      return 'Gebruik Aanmelden voor eigen organisatie';
-    }
-    if (gebruikType === 'andere-organisatie') {
-      return 'Gebruik Aanmelden voor andere organisatie';
-    }
-    return 'Gebruik Aanmelden';
-  };
+  const { icon: Icon, schema } = getActiveWizard();
 
   return (
     <AcSection spacing>
@@ -1254,7 +1278,17 @@ const AcFormsGebruik = ({ store }) => {
           {!registerCallBack && (
             <>
               <div>
-                <Heading1>{getPageTitle()}</Heading1>
+                <Heading1
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                >
+                  <Icon style={{ width: '1em', height: '1em' }} />
+                  {_.capitalize(schema)}
+                  {isEditMode
+                    ? ' updaten'
+                    : gebruikType === 'andere-organisatie'
+                    ? ' melden'
+                    : ' registreren'}
+                </Heading1>
                 <Paragraph>
                   Selecteer een applicatie, vul aanvullende informatie aan en
                   controleer uw invoer.
@@ -1533,7 +1567,7 @@ const AcFormsGebruik = ({ store }) => {
                       startDatumUitTeFaseren: '',
                       startDatumUitGefaseerd: '',
                     });
-                    setGebruikType(null);
+                    setGebruikType(getGebruikTypeFromUrl());
                     setError({ message: null, errors: null });
                   }}
                 >

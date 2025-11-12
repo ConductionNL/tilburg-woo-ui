@@ -10,6 +10,7 @@ import { ProcessSteps } from '@gemeente-denhaag/components-react';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 import { validateWebsite } from '@views/ac-forms/validation/form-validations';
 import { useDebouncedInput } from '@src/hooks';
+import _ from 'lodash';
 import {
   Heading1,
   Paragraph,
@@ -23,6 +24,7 @@ import ConFormDienstInformatieStage from './components/con-form-dienst-informati
 // import ConFormProductenStage from './components/con-form-producten-stage';
 import ConFormApplicatiesStage from './components/con-form-applicaties-stage';
 import ConFormControlerenStage from './components/con-form-controleren-stage';
+import { getActiveWizard } from '@src/constants/wizards.constants';
 // Legacy stages
 // import ConFormSoortDienstStage from './components/con-form-soort-dienst-stage';
 // import ConFormKoppelingenStage from './components/con-form-koppelingen-stage';
@@ -875,17 +877,6 @@ const ConFormsDienst = ({ store, userStore }) => {
     return '';
   };
 
-  // Determine page title based on dienst type
-  const getPageTitle = () => {
-    if (dienstType === 'eigen-organisatie') {
-      return 'Dienst Aanmelden voor eigen organisatie';
-    }
-    if (dienstType === 'andere-organisatie') {
-      return 'Dienst Aanmelden voor andere organisatie';
-    }
-    return 'Dienst Aanmelden';
-  };
-
   const handleSaveDienst = async () => {
     setSaving(true);
     setSaveResult(null);
@@ -916,12 +907,24 @@ const ConFormsDienst = ({ store, userStore }) => {
     }
   };
 
+  const { icon: Icon, schema } = getActiveWizard();
+
   return (
     <AcSection spacing>
       <AcContainer>
         <AcColumn gap='tiger'>
           <div>
-            <Heading1>{isEditMode ? 'Dienst updaten' : getPageTitle()}</Heading1>
+            <Heading1
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+            >
+              <Icon style={{ width: '1em', height: '1em' }} />
+              {_.capitalize(schema)}
+              {isEditMode
+                ? ' updaten'
+                : dienstType === 'andere-organisatie'
+                ? ' melden'
+                : ' registreren'}
+            </Heading1>
             <Paragraph>
               {isEditMode
                 ? 'Werk uw dienstgegevens bij in onze catalogus.'

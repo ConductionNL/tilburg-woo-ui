@@ -7,7 +7,8 @@ import { AcContainer, AcSection, AcColumn } from '@src/atoms';
 import { VISUALS } from '@src/constants';
 import { AcButton } from '@src/molecules';
 import { ProcessSteps } from '@gemeente-denhaag/components-react';
-import { useDebouncedInput } from '@src/hooks/index'
+import { useDebouncedInput } from '@src/hooks/index';
+import _ from 'lodash';
 
 import {
   Heading1,
@@ -36,10 +37,7 @@ import {
   getDisabledStatus as utilGetDisabledStatus,
   getDisabledTooltip as utilGetDisabledTooltip,
 } from './utils/validation.utils';
-import {
-  getPageTitle as utilGetPageTitle,
-  getPageDescription as utilGetPageDescription,
-} from './utils/texts.utils';
+import { getPageDescription as utilGetPageDescription } from './utils/texts.utils';
 import { commongroundApiUrl } from '@config';
 
 // Stage Components
@@ -54,6 +52,7 @@ import ConFormReferentiecomponentenStage from './components/con-form-referentiec
 import ConFormKoppelingenStage from './components/con-form-koppelingen-stage';
 import ConFormDienstenStage from './components/con-form-diensten-stage';
 import ConFormControlerenStage from './components/con-form-controleren-stage';
+import { getActiveWizard } from '@src/constants/wizards.constants';
 
 /**
  * Product Aanmelden Wizard (AcFormsProduct)
@@ -1871,6 +1870,8 @@ const AcFormsProductInner = ({
       aanbiederkeuze
     );
 
+  const { icon: Icon, schema } = getActiveWizard();
+
   return (
     <AcSection spacing>
       <AcContainer>
@@ -1878,8 +1879,16 @@ const AcFormsProductInner = ({
           {!registerCallBack && (
             <>
               <div>
-                <Heading1>
-                  {isEditMode ? 'Product updaten' : utilGetPageTitle(formType)}
+                <Heading1
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                >
+                  <Icon style={{ width: '1em', height: '1em' }} />
+                  {_.capitalize(schema)}
+                  {isEditMode
+                    ? ' updaten'
+                    : formType === 'ontbrekend'
+                    ? ' melden'
+                    : ' registreren'}
                 </Heading1>
                 <Paragraph>
                   {isEditMode

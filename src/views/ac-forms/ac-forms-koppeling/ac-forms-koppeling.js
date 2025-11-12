@@ -13,6 +13,7 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@src/constants';
 import { useDebounce } from '@src/hooks/use-debounce.hook';
+import _ from 'lodash';
 // LEGACY: ConKoppelingStepSoort component no longer used - type selection removed
 // Type is now determined via URL parameter (?type=eigen-organisatie or ?type=aanbieden-koppeling)
 // import ConKoppelingStepSoort from './components/con-koppeling-step-soort';
@@ -20,6 +21,7 @@ import ConKoppelingStageZoeken from './components/con-koppeling-stage-zoeken';
 import ConKoppelingStageToevoegen from './components/con-koppeling-stage-toevoegen';
 import ConKoppelingStageControleren from './components/con-koppeling-stage-controleren';
 import { commongroundApiUrl } from '@src/config';
+import { getActiveWizard } from '@src/constants/wizards.constants';
 
 /**
  * Koppeling Wizard (AcFormsKoppeling)
@@ -1094,27 +1096,24 @@ const AcFormsKoppeling = ({ store }) => {
     return true;
   };
 
-  // Determine page title based on koppelings type (from URL parameter)
-  const getPageTitle = () => {
-    if (isEditMode) {
-      return 'Koppeling bewerken';
-    }
-    // koppelingsType is now set from URL parameter or defaults to 'eigen-organisatie'
-    if (koppelingsType === 'eigen-organisatie') {
-      return 'Koppeling registreren voor eigen organisatie';
-    }
-    if (koppelingsType === 'aanbieden-koppeling') {
-      return 'Koppeling aanbieden';
-    }
-    return 'Koppeling registreren';
-  };
+  const { icon: Icon, schema } = getActiveWizard();
 
   return (
     <AcSection spacing>
       <AcContainer>
         <AcColumn gap='tiger'>
           <div>
-            <Heading1>{getPageTitle()}</Heading1>
+            <Heading1
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+            >
+              <Icon style={{ width: '1em', height: '1em' }} />
+              {_.capitalize(schema)}
+              {isEditMode
+                ? ' updaten'
+                : koppelingsType === 'aanbieden-koppeling'
+                ? ' melden'
+                : ' registreren'}
+            </Heading1>
             <Paragraph>
               Zoek naar bestaande koppelingen, voeg nieuwe koppelingen toe en
               controleer uw invoer.

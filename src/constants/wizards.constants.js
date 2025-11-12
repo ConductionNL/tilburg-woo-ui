@@ -46,7 +46,7 @@ export const DASHBOARD_WIZARDS = {
     id: 'eigen-applicatie',
     name: 'Applicatie registreren',
     description: 'Voeg een applicatie van uw eigen organisatie toe aan de catalogus',
-    icon: VISUALS.CUBES,
+    icon: VISUALS.CUBE,
     path: PATHS.FORMS_APPLICATIE,
     requiresAuth: true,
     requiresOrganization: true,
@@ -59,7 +59,7 @@ export const DASHBOARD_WIZARDS = {
     id: 'ontbrekend-applicatie',
     name: 'Applicatie melden',
     description: 'Meld een applicatie dat nog niet in de catalogus staat',
-    icon: VISUALS.PLUS,
+    icon: VISUALS.CUBE,
     path: PATHS.FORMS_APPLICATIE,
     requiresAuth: true,
     requiresOrganization: false,
@@ -81,6 +81,19 @@ export const DASHBOARD_WIZARDS = {
     color: 'blue',
     schema: 'dienst',
   },
+  DIENST_MELDEN: {
+    id: 'dienst-ontbrekend',
+    name: 'Dienst melden',
+    description: 'Meld een dienst dat nog niet in de catalogus staat',
+    icon: VISUALS.HAND_SHAKE,
+    path: PATHS.FORMS_DIENST,
+    requiresAuth: true,
+    requiresOrganization: false,
+    groupTypes: ['leverancier', 'gemeente', 'samenwerking', 'community'],
+    params: { type: 'ontbrekend-dienst' },
+    color: 'blue',
+    schema: 'dienst',
+  },
   GEBRUIK: {
     id: 'gebruik',
     name: 'Gebruik registreren',
@@ -94,14 +107,40 @@ export const DASHBOARD_WIZARDS = {
     color: 'blue',
     schema: 'gebruik',
   },
-  KOPPELING_AANBIEDEN: {
-    id: 'koppeling-aanbieden',
-    name: 'Koppeling Aanbieden',
+  GEBRUIK_MELDEN: {
+    id: 'gebruik-ontbrekend',
+    name: 'Gebruik melden',
+    description: 'Meld een gebruik dat nog niet in de catalogus staat',
+    icon: VISUALS.CLIPBOARD_CHECK,
+    path: PATHS.FORMS_GEBRUIK,
+    requiresAuth: true,
+    requiresOrganization: false,
+    groupTypes: ['gemeente', 'samenwerking', 'community'],
+    params: { type: 'ontbrekend-organisatie' },
+    color: 'blue',
+    schema: 'gebruik',
+  },
+  KOPPELING_REGISTREREN: {
+    id: 'koppeling-registreren',
+    name: 'Koppeling registreren',
     description: 'Registreer een koppeling tussen een product en een dienst',
     icon: VISUALS.LINK,
     path: PATHS.FORMS_KOPPELING,
     requiresAuth: true,
     requiresOrganization: true,
+    groupTypes: ['gemeente', 'samenwerking', 'community'],
+    params: { type: 'aanbieden-koppeling' },
+    color: 'blue',
+    schema: 'koppeling',
+  },
+  KOPPELING_MELDEN: {
+    id: 'koppeling-melden',
+    name: 'Koppeling melden',
+    description: 'Meld een koppeling dat nog niet in de catalogus staat',
+    icon: VISUALS.LINK,
+    path: PATHS.FORMS_KOPPELING,
+    requiresAuth: true,
+    requiresOrganization: false,
     groupTypes: ['gemeente', 'samenwerking', 'community'],
     params: { type: 'aanbieden-koppeling' },
     color: 'blue',
@@ -166,6 +205,32 @@ export const getWizardUrl = (wizard, useParams = true) => {
   }
 
   return url;
+};
+
+/**
+ * gets the active wizard based on the current path
+ * @returns {{
+ *   icon: LoadableComponent<any>,
+ *   name: string,
+ *   description: string,
+ *   path: string,
+ *   requiresAuth: boolean,
+ *   requiresOrganization: boolean,
+ *   groupTypes: string[],
+ *   params: Record<string, any>,
+ *   color: string,
+ *   schema: string
+ * } | null} the active wizard or null if no wizard is found
+ */
+export const getActiveWizard = () => {
+  const path = window.location.pathname;
+  const wizard = Object.values(DASHBOARD_WIZARDS).find(
+    (wizard) => wizard.path === path
+  );
+  if (wizard) {
+    return wizard;
+  }
+  return null;
 };
 
 /**

@@ -1,5 +1,4 @@
-import React, { memo } from 'react';
-import { AcCheckbox } from '@src/molecules';
+import React, { memo, useEffect } from 'react';
 import ConSchemaEnhancedField from '@components/con-schema-enhanced-field/con-schema-enhanced-field';
 import { validateWebsite } from '@views/ac-forms/validation/form-validations';
 
@@ -22,7 +21,7 @@ import { validateWebsite } from '@views/ac-forms/validation/form-validations';
  * @param {Function} setAanbiederOrganisatieData - Function to update organization data
  * @param {boolean} loading - Loading state indicator
  * @param {Object} schemas - Available schemas for field configuration (organisatie schema)
- * @param {string} aanbiederkeuze - Choice between 'bestaand' or 'nieuw'
+ * @param {string} aanbiederKeuze - Choice between 'bestaand' or 'nieuw'
  * @param {Function} setAanbiederKeuze - Function to update choice
  */
 const ConFormApplicatieAanbiederInformatieStage = memo(
@@ -33,13 +32,11 @@ const ConFormApplicatieAanbiederInformatieStage = memo(
     setAanbiederOrganisatieData,
     loading,
     schemas,
-    aanbiederkeuze,
-    setAanbiederKeuze,
+    aanbiederKeuze,
   }) => {
     // Handle choice change between existing and new
-    const handleChoiceChange = (choice) => {
-      setAanbiederKeuze(choice);
-      if (choice === 'bestaand') {
+    const handleChoiceChange = () => {
+      if (aanbiederKeuze === 'bestaand') {
         // Clear new organization fields
         setAanbiederOrganisatieData('naam', '');
         setAanbiederOrganisatieData('type', '');
@@ -58,6 +55,8 @@ const ConFormApplicatieAanbiederInformatieStage = memo(
       }
     };
 
+    useEffect(handleChoiceChange, [aanbiederKeuze]);
+
     return (
       <div role='group' aria-labelledby='aanbieder-section-title'>
         <h2 id='aanbieder-section-title' className='sr-only'>
@@ -69,38 +68,11 @@ const ConFormApplicatieAanbiederInformatieStage = memo(
           <div className='con-form-fields-container'>
             {/* Choice between existing and new organization - using same styling as ProductOpbouw */}
             <div className='con-form-field-wrapper field-size-full'>
-              <div style={{ marginBottom: '1rem' }}>
-                <h3
-                  style={{
-                    marginBottom: '1rem',
-                    fontSize: '1.1rem',
-                    fontWeight: '600',
-                  }}
-                >
-                  Aanbieder selecteren
-                </h3>
-
-                <div className='ac-register-form-checkbox-wrapper'>
-                  <AcCheckbox
-                    label='Bestaande organisatie selecteren'
-                    value='bestaand'
-                    checked={aanbiederkeuze === 'bestaand'}
-                    onChange={() => handleChoiceChange('bestaand')}
-                    disabled={loading}
-                  />
-                  <AcCheckbox
-                    label='Nieuwe organisatie aanmaken'
-                    value='nieuw'
-                    checked={aanbiederkeuze === 'nieuw'}
-                    onChange={() => handleChoiceChange('nieuw')}
-                    disabled={loading}
-                  />
-                </div>
-              </div>
+              <h3>Aanbieder selecteren</h3>
             </div>
 
             {/* Existing organization dropdown - using ConSchemaEnhancedField */}
-            {aanbiederkeuze === 'bestaand' && (
+            {aanbiederKeuze === 'bestaand' && (
               <ConSchemaEnhancedField
                 schemaType='module'
                 schemaProperty='aanbieder'
@@ -117,7 +89,7 @@ const ConFormApplicatieAanbiederInformatieStage = memo(
             )}
 
             {/* New organization form fields */}
-            {aanbiederkeuze === 'nieuw' && (
+            {aanbiederKeuze === 'nieuw' && (
               <>
                 {/* Organization Name - Required */}
                 <ConSchemaEnhancedField
