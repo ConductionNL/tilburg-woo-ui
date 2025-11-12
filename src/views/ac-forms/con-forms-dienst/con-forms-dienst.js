@@ -117,7 +117,7 @@ const ConFormsDienst = ({ store, userStore }) => {
       setPrefillLoading(true);
       setPrefillError(null);
       try {
-        // Skip to step 0 in edit mode (Dienst informatie)
+        // Skip to step 0 in edit mode (Applicaties)
         setCurrentStep(0);
         await store.object.fetchObject('voorzieningen', 'dienst', String(dienstId), {
           _extend: ['@self.schema'],
@@ -396,6 +396,12 @@ const ConFormsDienst = ({ store, userStore }) => {
     }
   };
 
+  // Load modules on mount (step 0 is now Applicaties)
+  useEffect(() => {
+    loadAllModules();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Server-side search for modules (searches all modules)
   const searchModules = useCallback(
     async (query) => {
@@ -653,22 +659,6 @@ const ConFormsDienst = ({ store, userStore }) => {
   const handleNextStep = async () => {
     const next = currentStep + 1;
     setCurrentStep(next);
-    // Producten step is commented out, so step 1 is now Applicaties
-    if (next === 1) {
-      // Load all modules when moving to Applicaties step
-      await loadAllModules();
-    }
-    // Legacy loading logic (commented out)
-    // if (next === 2) {
-    //   // Load modules when moving to Applicaties step
-    //   await loadModulesForProducts();
-    // }
-    // if (next === 3) {
-    //   await loadModulesForProducts();
-    // }
-    // if (next === 4) {
-    //   await loadKoppelingenForModules();
-    // }
   };
 
   const getStatus = (active, step) => {
@@ -691,31 +681,6 @@ const ConFormsDienst = ({ store, userStore }) => {
       //   );
       case 0:
         return (
-          <ConFormDienstInformatieStage
-            dienst={dienst}
-            setDienstData={setDienstData}
-            loading={schemasLoading}
-            touched={touched}
-            schemas={schemas}
-            userStore={userStore}
-            dienstType={dienstType}
-          />
-        );
-      // Producten stage commented out (step 1)
-      // case 1:
-      //   return (
-      //     <ConFormProductenStage
-      //       selectedProductIds={selectedProductIds}
-      //       setSelectedProductIds={setSelectedProductIds}
-      //       setSelectedProductOptions={setSelectedProductOptions}
-      //       productOptions={productOptions}
-      //       productsLoading={productsLoading}
-      //       searchProducts={performProductsSearch}
-      //       dienstType={dienstType}
-      //     />
-      //   );
-      case 1:
-        return (
           <ConFormApplicatiesStage
             // Product-related props commented out
             // productToModulesLookup={productToModulesLookup}
@@ -730,6 +695,31 @@ const ConFormsDienst = ({ store, userStore }) => {
             moduleOptions={moduleOptions}
             searchModules={debouncedSearchModules}
             schemas={schemas}
+            dienstType={dienstType}
+          />
+        );
+      // Producten stage commented out
+      // case 1:
+      //   return (
+      //     <ConFormProductenStage
+      //       selectedProductIds={selectedProductIds}
+      //       setSelectedProductIds={setSelectedProductIds}
+      //       setSelectedProductOptions={setSelectedProductOptions}
+      //       productOptions={productOptions}
+      //       productsLoading={productsLoading}
+      //       searchProducts={performProductsSearch}
+      //       dienstType={dienstType}
+      //     />
+      //   );
+      case 1:
+        return (
+          <ConFormDienstInformatieStage
+            dienst={dienst}
+            setDienstData={setDienstData}
+            loading={schemasLoading}
+            touched={touched}
+            schemas={schemas}
+            userStore={userStore}
             dienstType={dienstType}
           />
         );
@@ -768,12 +758,12 @@ const ConFormsDienst = ({ store, userStore }) => {
   const currentStepName = (step) => {
     switch (step) {
       case 0:
-        return 'Dienst informatie';
+        return 'Applicaties';
       // Producten step commented out
       // case 1:
       //   return 'Producten';
       case 1:
-        return 'Applicaties';
+        return 'Dienst informatie';
       case 2:
         return 'Controleer uw gegevens';
       // Legacy step names (commented out)
@@ -801,6 +791,15 @@ const ConFormsDienst = ({ store, userStore }) => {
   // Validation mirroring product form style
   const getDisabledStatus = (step) => {
     if (step === 0) {
+      // Applicaties: at least one applicatie selected
+      return selectedModuleIds.length === 0;
+    }
+    // Producten step validation commented out
+    // if (step === 1) {
+    //   // Producten: at least one product selected
+    //   return selectedProductIds.length === 0;
+    // }
+    if (step === 1) {
       // Dienst informatie: Respect schema requiredness
       const naamRequired = isSchemaFieldRequired('dienst', 'naam');
       const websiteRequired = isSchemaFieldRequired('dienst', 'website');
@@ -819,15 +818,6 @@ const ConFormsDienst = ({ store, userStore }) => {
       }
       return false;
     }
-    // Producten step validation commented out (step 1)
-    // if (step === 1) {
-    //   // Producten: at least one product selected
-    //   return selectedProductIds.length === 0;
-    // }
-    if (step === 1) {
-      // Applicaties: at least one applicatie selected
-      return selectedModuleIds.length === 0;
-    }
     // Legacy validation (commented out)
 
     // if (step === 4) {
@@ -840,6 +830,15 @@ const ConFormsDienst = ({ store, userStore }) => {
 
   const getDisabledTooltip = (step) => {
     if (step === 0) {
+      return selectedModuleIds.length === 0
+        ? 'Selecteer minimaal één applicatie'
+        : '';
+    }
+    // Producten step tooltip commented out
+    // if (step === 1) {
+    //   return selectedProductIds.length === 0 ? 'Selecteer minimaal één product' : '';
+    // }
+    if (step === 1) {
       // Dienst informatie validation messages
       const messages = [];
       const naamRequired = isSchemaFieldRequired('dienst', 'naam');
@@ -863,15 +862,6 @@ const ConFormsDienst = ({ store, userStore }) => {
         }
       }
       return messages.join('\n');
-    }
-    // Producten step tooltip commented out (step 1)
-    // if (step === 1) {
-    //   return selectedProductIds.length === 0 ? 'Selecteer minimaal één product' : '';
-    // }
-    if (step === 1) {
-      return selectedModuleIds.length === 0
-        ? 'Selecteer minimaal één applicatie'
-        : '';
     }
     // Legacy tooltips (commented out)
     return '';
@@ -1024,33 +1014,16 @@ const ConFormsDienst = ({ store, userStore }) => {
                     steps={(() => {
                       const baseSteps = [
                         {
-                          id: 'd1e2n3s4-t5i6-n7f8-o9r0-m1a2t3i4e5f6',
+                          id: 'a9p0p1l2-i3c4-a5t6-i7e8-s9t0a1g2e3f4',
                           marker: 1,
                           status: getStatus(currentStep, 0),
-                          title: 'Dienst informatie',
+                          title: 'Applicaties',
                         },
                         {
-                          id: 'p7r8o9d0-u1c2-t3e4-n5a6-p7p8l9i0c1a2',
+                          id: 'd1e2n3s4-t5i6-n7f8-o9r0-m1a2t3i4e5f6',
                           marker: 2,
-                          status:
-                            currentStep === 1
-                              ? 'current'
-                              : currentStep < 1
-                              ? 'not-checked'
-                              : 'checked',
-                          title: 'Applicaties',
-                          steps: [
-                            // {
-                            //   id: 'p3r4o5d6-u7c8-t9e0-n1s2-t3a4g5e6f7g8',
-                            //   status: getStatus(currentStep, 1),
-                            //   title: 'Producten',
-                            // },
-                            {
-                              id: 'a9p0p1l2-i3c4-a5t6-i7e8-s9t0a1g2e3f4',
-                              status: getStatus(currentStep, 1),
-                              title: 'Applicaties',
-                            },
-                          ],
+                          status: getStatus(currentStep, 1),
+                          title: 'Dienst informatie',
                         },
                         {
                           id: 'c5o6n7t8-r9o0-l1e2-r3e4-n5s6t7a8g9e0',

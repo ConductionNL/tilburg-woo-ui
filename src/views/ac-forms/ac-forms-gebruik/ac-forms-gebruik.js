@@ -1139,9 +1139,9 @@ const AcFormsGebruik = ({ store }) => {
 
   const stepsList = (() => {
     const base = [
-      'Gebruik informatie',
       'Applicatie',
       'Applicatie versie',
+      'Gebruik informatie',
       'Koppelingen',
       'Diensten',
     ];
@@ -1152,6 +1152,12 @@ const AcFormsGebruik = ({ store }) => {
 
   const canGoNext = () => {
     if (currentStep === 0) {
+      return !!gebruik?.module; // Applicatie step
+    }
+    if (currentStep === 1) {
+      return true; // Versie step
+    }
+    if (currentStep === 2) {
       // Gebruik informatie step - contactpersoon required for eigen organisatie only
       if (gebruikType === 'andere-organisatie') {
         // For andere organisatie: only afnemer and status required
@@ -1160,12 +1166,6 @@ const AcFormsGebruik = ({ store }) => {
         // For eigen organisatie: contactpersoon, afnemer and status required
         return !!gebruik?.afnemer && !!gebruik?.status;
       }
-    }
-    if (currentStep === 1) {
-      return !!gebruik?.module; // Applicatie step
-    }
-    if (currentStep === 2) {
-      return true; // Versie step
     }
     if (currentStep === 3) {
       return true; // koppelingen optional
@@ -1183,6 +1183,28 @@ const AcFormsGebruik = ({ store }) => {
     switch (step) {
       case 0:
         return (
+          <ConGebruikStepProductApplicatie
+            gebruik={gebruik}
+            setGebruikData={setGebruikData}
+            moduleOptions={modulesOptions}
+            modulesLoading={modulesLoading}
+            searchLoading={searchLoading}
+            searchModules={debouncedSearchModules}
+            schemas={schemas}
+          />
+        );
+      case 1:
+        return (
+          <ConGebruikStepVersie
+            gebruik={gebruik}
+            setGebruikData={setGebruikData}
+            versionOptions={versionOptions}
+            versionsLoading={versionsLoading}
+            schemas={schemas}
+          />
+        );
+      case 2:
+        return (
           <ConGebruikStepInformatie
             gebruik={gebruik}
             setGebruikData={setGebruikData}
@@ -1197,28 +1219,6 @@ const AcFormsGebruik = ({ store }) => {
             schemas={schemas}
             schemasLoading={schemasLoading}
             gebruikType={gebruikType}
-          />
-        );
-      case 1:
-        return (
-          <ConGebruikStepProductApplicatie
-            gebruik={gebruik}
-            setGebruikData={setGebruikData}
-            moduleOptions={modulesOptions}
-            modulesLoading={modulesLoading}
-            searchLoading={searchLoading}
-            searchModules={debouncedSearchModules}
-            schemas={schemas}
-          />
-        );
-      case 2:
-        return (
-          <ConGebruikStepVersie
-            gebruik={gebruik}
-            setGebruikData={setGebruikData}
-            versionOptions={versionOptions}
-            versionsLoading={versionsLoading}
-            schemas={schemas}
           />
         );
       case 3:
