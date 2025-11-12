@@ -20,7 +20,6 @@ const ConKoppelingStageToevoegen = ({
   setSelectedModuleLabels,
   loading,
   selectedAppAByRow,
-  setSelectedAppAByRow,
   ownApp,
   typeOptions,
   typeByRow,
@@ -43,9 +42,7 @@ const ConKoppelingStageToevoegen = ({
   standaardenByRow,
   setStandaardenByRow,
 }) => {
-  const [appAOptionsByRow, setAppAOptionsByRow] = useState({});
   const [appBOptionsByRow, setAppBOptionsByRow] = useState({});
-  const [appALoadingByRow, setAppALoadingByRow] = useState({});
   const [appBLoadingByRow, setAppBLoadingByRow] = useState({});
   const debounceTimersRef = useRef({});
   const abortControllersRef = useRef({});
@@ -120,18 +117,13 @@ const ConKoppelingStageToevoegen = ({
       }
       const controller = new AbortController();
       abortControllersRef.current[key] = controller;
-      if (which === 'A') setAppALoadingByRow((p) => ({ ...p, [rowId]: true }));
       if (which === 'B') setAppBLoadingByRow((p) => ({ ...p, [rowId]: true }));
       const opts = q
         ? await fetchModuleOptions(q, controller.signal)
         : modulesOptions;
       // If another fetch started after this one, skip applying results
       if (abortControllersRef.current[key] !== controller) return;
-      if (which === 'A') {
-        if (Array.isArray(opts))
-          setAppAOptionsByRow((p) => ({ ...p, [rowId]: opts }));
-        setAppALoadingByRow((p) => ({ ...p, [rowId]: false }));
-      } else {
+      if (which === 'B') {
         if (Array.isArray(opts))
           setAppBOptionsByRow((p) => ({ ...p, [rowId]: opts }));
         setAppBLoadingByRow((p) => ({ ...p, [rowId]: false }));
@@ -207,55 +199,15 @@ const ConKoppelingStageToevoegen = ({
                     <span className='sr-only'>(verplicht)</span>
                   </label>
                   <ReactSelect
-                    isClearable
+                    isDisabled
                     className={clsx(
                       'ac-beheer-select',
-                      loading && 'ac-beheer-select--disabled'
+                      'ac-beheer-select--disabled'
                     )}
-                    options={appAOptionsByRow[rowId] || modulesOptions}
-                    value={(() => {
-                      const options = appAOptionsByRow[rowId] || modulesOptions;
-                      const selectedValue =
-                        selectedAppAByRow[rowId] != null
-                          ? String(selectedAppAByRow[rowId])
-                          : ownApp?.value != null
-                          ? String(ownApp.value)
-                          : null;
-                      const found = selectedValue
-                        ? options.find((o) => String(o.value) === selectedValue)
-                        : null;
-                      if (found) return found;
-                      if (selectedAppAByRow[rowId] == null && ownApp)
-                        return { value: String(ownApp.value), label: ownApp.label };
-                      return null;
-                    })()}
-                    onChange={(opt) => {
-                      setSelectedAppAByRow((prev) => ({
-                        ...prev,
-                        [rowId]: opt?.value,
-                      }));
-                      if (opt) upsertModuleOption(opt);
-                    }}
+                    value={ownApp || null}
                     placeholder='Selecteer applicatie A'
                     inputId={appAId}
                     aria-required='true'
-                    isOptionDisabled={(opt) =>
-                      String(opt?.value) === String(selectedAppBByRow[rowId] || '')
-                    }
-                    onInputChange={(input, { action }) => {
-                      if (action === 'input-change')
-                        debounceFetchForRow(rowId, 'A', input || '');
-                      return input;
-                    }}
-                    isLoading={!!appALoadingByRow[rowId]}
-                    loadingMessage={() => 'Bezig met laden…'}
-                    getOptionLabel={(opt) => {
-                      const base = opt?.label ?? '';
-                      return String(opt?.value) ===
-                        String(selectedAppBByRow[rowId] || '')
-                        ? `${base} (al gekozen bij B)`
-                        : base;
-                    }}
                   />
                 </div>
                 <div>
@@ -478,7 +430,6 @@ const ConKoppelingStageToevoegen = ({
                       : null
                   }
                   onChange={(opt) => {
-
                     const standaarden = opt ? opt.map((o) => o.value) : [];
                     setStandaardenByRow((prev) => {
                       const updated = { ...prev };

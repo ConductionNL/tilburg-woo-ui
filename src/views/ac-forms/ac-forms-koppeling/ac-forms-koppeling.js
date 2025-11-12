@@ -1012,7 +1012,6 @@ const AcFormsKoppeling = ({ store }) => {
             setStandaardenLoading={setStandaardenOptionsLoading}
             loading={loading}
             selectedAppAByRow={selectedAppAByRow}
-            setSelectedAppAByRow={setSelectedAppAByRow}
             ownApp={ownApp}
             typeOptions={typeOptions}
             typeByRow={typeByRow}
