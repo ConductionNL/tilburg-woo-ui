@@ -23,6 +23,7 @@ import { VISUALS } from '@src/constants';
 import { useDebouncedInput } from '@src/hooks';
 import { isUUID } from '@src/utilities/con-resolve-uuids-in-text';
 import { getActiveWizard } from '@src/constants/wizards.constants';
+import { getStatusMultiStep } from '@views/ac-forms/ac-forms-applicatie/utils/steps.utils';
 import _ from 'lodash';
 
 const mapToOption = (item, index) => {
@@ -55,35 +56,6 @@ const AcFormsGebruik = ({ store }) => {
 
   // Ref for ProcessSteps to add click handlers
   const processStepsRef = useRef(null);
-
-  // Add click handlers to steps
-  useEffect(() => {
-    if (!processStepsRef.current) return;
-    if (prefillLoading || prefillError) return;
-
-    const addClickHandlers = () => {
-      const stepElements = processStepsRef.current.querySelectorAll(
-        '.denhaag-process-steps .denhaag-process-steps__step'
-      );
-
-      stepElements.forEach((stepEl, index) => {
-        stepEl.style.cursor = '';
-        stepEl.onclick = null;
-        stepEl.classList.remove('ac-step-clickable');
-
-        if (index < currentStep) {
-          stepEl.classList.add('ac-step-clickable');
-          stepEl.onclick = (e) => {
-            e.preventDefault();
-            setCurrentStep(index);
-          };
-        }
-      });
-    };
-
-    const timeoutId = setTimeout(addClickHandlers, 100);
-    return () => clearTimeout(timeoutId);
-  }, [currentStep, prefillLoading, prefillError]);
 
   // Helper to extract id string from various API reference shapes
   const getIdString = useCallback((ref) => {
@@ -246,6 +218,158 @@ const AcFormsGebruik = ({ store }) => {
   // Single source of truth updater
   const setGebruikData = (key, value) =>
     setGebruik((prev) => ({ ...prev, [key]: value }));
+
+  // Helper function to check if afnemer is samenwerking
+  const isAfnemerSamenwerking = useCallback(() => {
+    const type = gebruik?.afnemer?.organisatieType || gebruik?.afnemer?.type || '';
+    return String(type).toLowerCase() === 'samenwerking';
+  }, [gebruik?.afnemer]);
+
+  /**
+   * Helper function to get the correct step index accounting for optional steps
+   * Accounts for the optional Deelnemers step (only shown for samenwerking)
+   * @param {number} logicalStep - The logical step number
+   * Logical steps: 0=Applicatie, 1=Versie, 2=Informatie, 3=Koppelingen, 4=Diensten, 5=Deelnemers, 6=Controleren
+   * @returns {number} The adjusted physical step index
+   */
+  const getAdjustedStepIndex = useCallback(
+    (logicalStep) => {
+      let index = logicalStep;
+
+      // If Deelnemers step is not shown and we're past it, adjust the index
+      if (!isAfnemerSamenwerking() && logicalStep > 5) {
+        index -= 1;
+      }
+
+      return index;
+    },
+    [isAfnemerSamenwerking]
+  );
+
+  /**
+   * Convert physical step index to logical step number
+   * Accounts for optional steps (Deelnemers)
+   * @param {number} physicalStep - The physical step index
+   * @returns {number} The logical step number
+   */
+  const getLogicalStepFromPhysical = useCallback(
+    (physicalStep) => {
+      // Start with physical step
+      let logicalStep = physicalStep;
+
+      // If Deelnemers step is not shown, skip logical step 5
+      if (!isAfnemerSamenwerking()) {
+        // If we're at or past where Deelnemers would be (logical step 5), add 1 to skip it
+        if (logicalStep >= 5) {
+          logicalStep += 1;
+        }
+      }
+
+      return logicalStep;
+    },
+    [isAfnemerSamenwerking]
+  );
+
+  /**
+   * Generate a mapping of visual step indices to actual step indices
+   * This must match the order in which ProcessSteps renders clickable elements
+   * @returns {number[]} Array where index is visual position, value is actual step index
+   */
+  const generateStepIndexMapping = useCallback(() => {
+    const mapping = [];
+
+    // Main step 1 header (Applicatie selectie)
+    mapping.push(getAdjustedStepIndex(0));
+    // Sub-step: Applicatie
+    mapping.push(getAdjustedStepIndex(0));
+    // Sub-step: Applicatie versie
+    mapping.push(getAdjustedStepIndex(1));
+
+    // Main step 2 header (Gebruik configuratie)
+    mapping.push(getAdjustedStepIndex(2));
+    // Sub-steps under Gebruik configuratie
+    mapping.push(getAdjustedStepIndex(2)); // Gebruik informatie
+    mapping.push(getAdjustedStepIndex(3)); // Koppelingen
+    mapping.push(getAdjustedStepIndex(4)); // Diensten
+
+    // Conditionally include Deelnemers step
+    if (isAfnemerSamenwerking()) {
+      mapping.push(getAdjustedStepIndex(5)); // Deelnemers
+    }
+
+    // Main step 3: Controleren
+    mapping.push(getAdjustedStepIndex(6));
+
+    return mapping;
+  }, [getAdjustedStepIndex, isAfnemerSamenwerking]);
+
+  /**
+   * Handle step navigation from clickable process steps
+   * Maps visual step indices to actual step numbers
+   * @param {number} visualStepIndex - The index from the visual step representation
+   */
+  const handleStepNavigation = useCallback(
+    (visualStepIndex) => {
+      const mapping = generateStepIndexMapping();
+      const targetStep = mapping[visualStepIndex];
+
+      if (targetStep !== undefined) {
+        setCurrentStep(targetStep);
+      }
+    },
+    [generateStepIndexMapping]
+  );
+
+  // Add click handlers to steps
+  useEffect(() => {
+    if (!processStepsRef.current) return;
+    if (prefillLoading || prefillError) return;
+
+    const addClickHandlers = () => {
+      // Find all step elements in the DOM (headers and sub-steps)
+      const stepElements = processStepsRef.current.querySelectorAll(
+        '.denhaag-process-steps .denhaag-process-steps__step .denhaag-process-steps__step-header, .denhaag-process-steps .denhaag-process-steps__step .denhaag-process-steps__sub-step'
+      );
+
+      // Generate the current mapping to know which visual steps are valid
+      const mapping = generateStepIndexMapping();
+
+      stepElements.forEach((stepEl, index) => {
+        // Remove any existing click handlers first
+        stepEl.style.cursor = '';
+        stepEl.onclick = null;
+        stepEl.classList.remove('ac-step-clickable');
+
+        // Only make completed steps clickable if they have a valid mapping
+        const targetStep = mapping[index];
+        if (targetStep !== undefined && targetStep < currentStep) {
+          stepEl.classList.add('ac-step-clickable');
+
+          stepEl.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleStepNavigation(index);
+          };
+        }
+      });
+    };
+
+    // Add handlers immediately
+    addClickHandlers();
+
+    // Also add handlers after a slight delay to handle async rendering
+    const timeoutId = setTimeout(addClickHandlers, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [
+    currentStep,
+    prefillLoading,
+    prefillError,
+    generateStepIndexMapping,
+    handleStepNavigation,
+  ]);
 
   // Determine gebruikType from URL type parameter
   // When type=ontbrekend-organisatie, it means the user doesn't have an organization, so it's andere-organisatie
@@ -1084,11 +1208,6 @@ const AcFormsGebruik = ({ store }) => {
     return 'checked';
   };
 
-  const isAfnemerSamenwerking = () => {
-    const type = gebruik?.afnemer?.organisatieType || gebruik?.afnemer?.type || '';
-    return String(type).toLowerCase() === 'samenwerking';
-  };
-
   // Submission handler (following product wizard pattern)
   const handleRegister = async () => {
     setLoading(true);
@@ -1149,6 +1268,30 @@ const AcFormsGebruik = ({ store }) => {
     base.push('Controleren');
     return base;
   })();
+
+  const currentStepName = (step) => {
+    // Convert physical step to logical step using helper function
+    const logicalStep = getLogicalStepFromPhysical(step);
+
+    switch (logicalStep) {
+      case 0:
+        return 'Applicatie';
+      case 1:
+        return 'Applicatie versie';
+      case 2:
+        return 'Gebruik informatie';
+      case 3:
+        return 'Koppelingen';
+      case 4:
+        return 'Diensten';
+      case 5:
+        return 'Deelnemers';
+      case 6:
+        return 'Controleren';
+      default:
+        return stepsList[step] || '';
+    }
+  };
 
   const canGoNext = () => {
     if (currentStep === 0) {
@@ -1267,7 +1410,6 @@ const AcFormsGebruik = ({ store }) => {
     }
   };
 
-  const currentStepName = (step) => stepsList[step] || '';
   const { icon: Icon, schema } = getActiveWizard();
 
   return (
@@ -1305,12 +1447,93 @@ const AcFormsGebruik = ({ store }) => {
                 <div className='ac-register-container ac-forms-product'>
                   <div ref={processStepsRef} className='ac-register-process-steps'>
                     <ProcessSteps
-                      steps={stepsList.map((title, index) => ({
-                        id: `step-${index}`,
-                        marker: index + 1,
-                        status: getStatus(currentStep, index),
-                        title,
-                      }))}
+                      steps={[
+                        {
+                          id: 'applicatie-selectie-step',
+                          marker: 1,
+                          status: getStatusMultiStep(
+                            currentStep,
+                            getAdjustedStepIndex(0),
+                            getAdjustedStepIndex(0),
+                            getAdjustedStepIndex(1)
+                          ),
+                          title: 'Applicatie selectie',
+                          steps: [
+                            {
+                              id: 'applicatie-substep',
+                              status: getStatus(
+                                currentStep,
+                                getAdjustedStepIndex(0)
+                              ),
+                              title: 'Applicatie',
+                            },
+                            {
+                              id: 'versie-substep',
+                              status: getStatus(
+                                currentStep,
+                                getAdjustedStepIndex(1)
+                              ),
+                              title: 'Applicatie versie',
+                            },
+                          ],
+                        },
+                        {
+                          id: 'gebruik-configuratie-step',
+                          marker: 2,
+                          status: getStatusMultiStep(
+                            currentStep,
+                            getAdjustedStepIndex(2),
+                            getAdjustedStepIndex(2),
+                            getAdjustedStepIndex(isAfnemerSamenwerking() ? 5 : 4)
+                          ),
+                          title: 'Gebruik configuratie',
+                          steps: [
+                            {
+                              id: 'informatie-substep',
+                              status: getStatus(
+                                currentStep,
+                                getAdjustedStepIndex(2)
+                              ),
+                              title: 'Gebruik informatie',
+                            },
+                            {
+                              id: 'koppelingen-substep',
+                              status: getStatus(
+                                currentStep,
+                                getAdjustedStepIndex(3)
+                              ),
+                              title: 'Koppelingen',
+                            },
+                            {
+                              id: 'diensten-substep',
+                              status: getStatus(
+                                currentStep,
+                                getAdjustedStepIndex(4)
+                              ),
+                              title: 'Diensten',
+                            },
+                            // Conditionally include Deelnemers step
+                            ...(isAfnemerSamenwerking()
+                              ? [
+                                  {
+                                    id: 'deelnemers-substep',
+                                    status: getStatus(
+                                      currentStep,
+                                      getAdjustedStepIndex(5)
+                                    ),
+                                    title: 'Deelnemers',
+                                  },
+                                ]
+                              : []),
+                          ],
+                        },
+                        {
+                          id: 'controleren-step',
+                          marker: 3,
+                          status: getStatus(currentStep, getAdjustedStepIndex(6)),
+                          title: 'Controleren',
+                        },
+                      ]}
                     />
                   </div>
 
@@ -1384,7 +1607,7 @@ const AcFormsGebruik = ({ store }) => {
                         </AcButton>
                       )}
 
-                      {currentStep !== stepsList.length - 1 && (
+                      {getLogicalStepFromPhysical(currentStep) !== 6 && (
                         <div className='ac-register-button-wrapper'>
                           <AcButton
                             style='button'
@@ -1405,7 +1628,7 @@ const AcFormsGebruik = ({ store }) => {
                         </div>
                       )}
 
-                      {currentStep === stepsList.length - 1 && (
+                      {getLogicalStepFromPhysical(currentStep) === 6 && (
                         <AcButton
                           style='button'
                           buttonType='primary'
