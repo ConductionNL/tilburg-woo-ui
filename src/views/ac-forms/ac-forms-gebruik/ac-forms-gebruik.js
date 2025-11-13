@@ -15,6 +15,7 @@ import {
 import ConGebruikStepInformatie from './components/con-gebruik-step-informatie';
 import ConGebruikStepProductApplicatie from './components/con-gebruik-step-product-applicatie';
 import ConGebruikStepVersie from './components/con-gebruik-step-versie';
+import ConGebruikStepOrganisatie from './components/con-gebruik-step-organisatie';
 import ConGebruikStepKoppelingen from './components/con-gebruik-step-koppelingen';
 import ConGebruikStepDiensten from './components/con-gebruik-step-diensten';
 import ConGebruikStepReview from './components/con-gebruik-step-review';
@@ -235,30 +236,49 @@ const AcFormsGebruik = ({ store }) => {
     return String(type).toLowerCase() === 'samenwerking';
   }, [gebruik?.afnemer]);
 
+  // Determine gebruikType from URL type parameter
+  // When type=ontbrekend-organisatie, it means the user doesn't have an organization, so it's andere-organisatie
+  const getGebruikTypeFromUrl = useCallback(() => {
+    if (typeFromUrl === 'ontbrekend-organisatie') {
+      return 'andere-organisatie';
+    }
+    // If no type specified, default to null (will be determined from afnemer in edit mode or set by user selection)
+    return null;
+  }, [typeFromUrl]);
+
+  // Usage type selection state - determined from URL or from API data in edit mode
+  const [gebruikType, setGebruikType] = useState(getGebruikTypeFromUrl()); // 'eigen-organisatie' or 'andere-organisatie'
+
   /**
    * Helper function to get the correct step index accounting for optional steps
-   * Accounts for the optional Deelnemers step (only shown for samenwerking)
+   * Accounts for the optional Organisatie step (only shown for andere-organisatie)
+   * and the optional Deelnemers step (only shown for samenwerking)
    * @param {number} logicalStep - The logical step number
-   * Logical steps: 0=Applicatie, 1=Versie, 2=Informatie, 3=Koppelingen, 4=Diensten, 5=Deelnemers, 6=Controleren
+   * Logical steps: 0=Applicatie, 1=Versie, 2=Organisatie, 3=Informatie, 4=Koppelingen, 5=Diensten, 6=Deelnemers, 7=Controleren
    * @returns {number} The adjusted physical step index
    */
   const getAdjustedStepIndex = useCallback(
     (logicalStep) => {
       let index = logicalStep;
 
+      // If Organisatie step is not shown (not andere-organisatie), adjust steps after it
+      if (gebruikType !== 'andere-organisatie' && logicalStep > 2) {
+        index -= 1;
+      }
+
       // If Deelnemers step is not shown and we're past it, adjust the index
-      if (!isAfnemerSamenwerking() && logicalStep > 5) {
+      if (!isAfnemerSamenwerking() && logicalStep > 6) {
         index -= 1;
       }
 
       return index;
     },
-    [isAfnemerSamenwerking]
+    [isAfnemerSamenwerking, gebruikType]
   );
 
   /**
    * Convert physical step index to logical step number
-   * Accounts for optional steps (Deelnemers)
+   * Accounts for optional steps (Organisatie and Deelnemers)
    * @param {number} physicalStep - The physical step index
    * @returns {number} The logical step number
    */
@@ -267,17 +287,25 @@ const AcFormsGebruik = ({ store }) => {
       // Start with physical step
       let logicalStep = physicalStep;
 
-      // If Deelnemers step is not shown, skip logical step 5
+      // If Organisatie step is not shown (not andere-organisatie), skip logical step 2
+      if (gebruikType !== 'andere-organisatie') {
+        // If we're at or past where Organisatie would be (logical step 2), add 1 to skip it
+        if (logicalStep >= 2) {
+          logicalStep += 1;
+        }
+      }
+
+      // If Deelnemers step is not shown, skip logical step 6
       if (!isAfnemerSamenwerking()) {
-        // If we're at or past where Deelnemers would be (logical step 5), add 1 to skip it
-        if (logicalStep >= 5) {
+        // If we're at or past where Deelnemers would be (logical step 6), add 1 to skip it
+        if (logicalStep >= 6) {
           logicalStep += 1;
         }
       }
 
       return logicalStep;
     },
-    [isAfnemerSamenwerking]
+    [isAfnemerSamenwerking, gebruikType]
   );
 
   /**
@@ -295,23 +323,28 @@ const AcFormsGebruik = ({ store }) => {
     // Sub-step: Applicatie versie
     mapping.push(getAdjustedStepIndex(1));
 
+    // Conditionally include Organisatie step (only for andere-organisatie)
+    if (gebruikType === 'andere-organisatie') {
+      mapping.push(getAdjustedStepIndex(2)); // Organisatie
+    }
+
     // Main step 2 header (Gebruik configuratie)
-    mapping.push(getAdjustedStepIndex(2));
+    mapping.push(getAdjustedStepIndex(3));
     // Sub-steps under Gebruik configuratie
-    mapping.push(getAdjustedStepIndex(2)); // Gebruik informatie
-    mapping.push(getAdjustedStepIndex(3)); // Koppelingen
-    mapping.push(getAdjustedStepIndex(4)); // Diensten
+    mapping.push(getAdjustedStepIndex(3)); // Gebruik informatie
+    mapping.push(getAdjustedStepIndex(4)); // Koppelingen
+    mapping.push(getAdjustedStepIndex(5)); // Diensten
 
     // Conditionally include Deelnemers step
     if (isAfnemerSamenwerking()) {
-      mapping.push(getAdjustedStepIndex(5)); // Deelnemers
+      mapping.push(getAdjustedStepIndex(6)); // Deelnemers
     }
 
     // Main step 3: Controleren
-    mapping.push(getAdjustedStepIndex(6));
+    mapping.push(getAdjustedStepIndex(7));
 
     return mapping;
-  }, [getAdjustedStepIndex, isAfnemerSamenwerking]);
+  }, [getAdjustedStepIndex, isAfnemerSamenwerking, gebruikType]);
 
   /**
    * Handle step navigation from clickable process steps
@@ -379,20 +412,8 @@ const AcFormsGebruik = ({ store }) => {
     prefillError,
     generateStepIndexMapping,
     handleStepNavigation,
+    gebruikType,
   ]);
-
-  // Determine gebruikType from URL type parameter
-  // When type=ontbrekend-organisatie, it means the user doesn't have an organization, so it's andere-organisatie
-  const getGebruikTypeFromUrl = useCallback(() => {
-    if (typeFromUrl === 'ontbrekend-organisatie') {
-      return 'andere-organisatie';
-    }
-    // If no type specified, default to null (will be determined from afnemer in edit mode or set by user selection)
-    return null;
-  }, [typeFromUrl]);
-
-  // Usage type selection state - determined from URL or from API data in edit mode
-  const [gebruikType, setGebruikType] = useState(getGebruikTypeFromUrl()); // 'eigen-organisatie' or 'andere-organisatie'
 
   // State for afnemer selection (only for andere-organisatie)
   const [afnemerKeuze, setAfnemerKeuze] = useState('bestaand'); // 'bestaand' or 'nieuw'
@@ -1381,14 +1402,16 @@ const AcFormsGebruik = ({ store }) => {
       case 1:
         return 'Applicatie versie';
       case 2:
-        return 'Gebruik informatie';
+        return 'Afnemer';
       case 3:
-        return 'Koppelingen';
+        return 'Gebruik informatie';
       case 4:
-        return 'Diensten';
+        return 'Koppelingen';
       case 5:
-        return 'Deelnemers';
+        return 'Diensten';
       case 6:
+        return 'Deelnemers';
+      case 7:
         return 'Controleren';
       default:
         return stepsList[step] || '';
@@ -1396,19 +1419,21 @@ const AcFormsGebruik = ({ store }) => {
   };
 
   const canGoNext = () => {
-    if (currentStep === 0) {
+    const logicalStep = getLogicalStepFromPhysical(currentStep);
+
+    if (logicalStep === 0) {
       return !!gebruik?.module; // Applicatie step
     }
-    if (currentStep === 1) {
+    if (logicalStep === 1) {
       return true; // Versie step
     }
-    if (currentStep === 2) {
-      // Gebruik informatie step - contactpersoon required for eigen organisatie only
+    if (logicalStep === 2) {
+      // Organisatie step (only for andere-organisatie)
       if (gebruikType === 'andere-organisatie') {
-        // For andere organisatie: validate based on afnemerKeuze
+        // Validate based on afnemerKeuze
         if (afnemerKeuze === 'bestaand') {
-          // If selecting existing organization: only afnemer and status required
-          return !!gebruik?.afnemer && !!gebruik?.status;
+          // If selecting existing organization: only afnemer required
+          return !!gebruik?.afnemer;
         } else {
           // If creating new organization: validate required fields
           const requiredNewOrgFields = ['naam', 'type', 'website'];
@@ -1428,28 +1453,33 @@ const AcFormsGebruik = ({ store }) => {
             }
           }
 
-          // All required fields must be filled and status must be set
-          return missingNewOrgFields.length === 0 && !!gebruik?.status;
+          // All required fields must be filled
+          return missingNewOrgFields.length === 0;
         }
-      } else {
-        // For eigen organisatie: contactpersoon, afnemer and status required
-        return !!gebruik?.afnemer && !!gebruik?.status;
       }
+      // This shouldn't happen, but if somehow we're on step 2 without andere-organisatie, allow progression
+      return true;
     }
-    if (currentStep === 3) {
+    if (logicalStep === 3) {
+      // Gebruik informatie step - status required
+      return !!gebruik?.status;
+    }
+    if (logicalStep === 4) {
       return true; // koppelingen optional
     }
-    if (currentStep === 4) {
+    if (logicalStep === 5) {
       return true; // diensten optional
     }
-    if (currentStep === 5 && isAfnemerSamenwerking()) {
+    if (logicalStep === 6 && isAfnemerSamenwerking()) {
       return true; // deelnemers optional
     }
     return false;
   };
 
   const renderStep = (step) => {
-    switch (step) {
+    const logicalStep = getLogicalStepFromPhysical(step);
+
+    switch (logicalStep) {
       case 0:
         return (
           <ConGebruikStepProductApplicatie
@@ -1473,20 +1503,16 @@ const AcFormsGebruik = ({ store }) => {
           />
         );
       case 2:
+        // Organisatie step (only for andere-organisatie)
         return (
-          <ConGebruikStepInformatie
+          <ConGebruikStepOrganisatie
             gebruik={gebruik}
             setGebruikData={setGebruikData}
             loading={loading}
-            refCompOptions={refCompOptions}
             organisatieOptions={organisatieOptions}
             organisatieLoading={organisatieLoading}
             searchOrganisaties={debouncedSearchOrganisaties}
-            contactpersoonOptions={contactpersoonOptions}
-            contactpersoonLoading={contactpersoonLoading}
-            searchContactpersonen={debouncedSearchContactpersonen}
             schemas={schemas}
-            schemasLoading={schemasLoading}
             gebruikType={gebruikType}
             afnemerKeuze={afnemerKeuze}
             setAfnemerKeuze={setAfnemerKeuze}
@@ -1496,6 +1522,21 @@ const AcFormsGebruik = ({ store }) => {
         );
       case 3:
         return (
+          <ConGebruikStepInformatie
+            gebruik={gebruik}
+            setGebruikData={setGebruikData}
+            loading={loading}
+            refCompOptions={refCompOptions}
+            contactpersoonOptions={contactpersoonOptions}
+            contactpersoonLoading={contactpersoonLoading}
+            searchContactpersonen={debouncedSearchContactpersonen}
+            schemas={schemas}
+            schemasLoading={schemasLoading}
+            gebruikType={gebruikType}
+          />
+        );
+      case 4:
+        return (
           <ConGebruikStepKoppelingen
             gebruik={gebruik}
             setGebruikData={setGebruikData}
@@ -1503,7 +1544,7 @@ const AcFormsGebruik = ({ store }) => {
             schemas={schemas}
           />
         );
-      case 4:
+      case 5:
         return (
           <ConGebruikStepDiensten
             gebruik={gebruik}
@@ -1512,7 +1553,7 @@ const AcFormsGebruik = ({ store }) => {
             schemas={schemas}
           />
         );
-      case 5:
+      case 6:
         if (isAfnemerSamenwerking()) {
           return (
             <ConGebruikStepDeelnemers
@@ -1524,6 +1565,7 @@ const AcFormsGebruik = ({ store }) => {
           );
         }
       // fall through to review if not samenwerking
+      case 7:
       default:
         return (
           <ConGebruikStepReview
@@ -1607,14 +1649,28 @@ const AcFormsGebruik = ({ store }) => {
                             },
                           ],
                         },
+                        // Conditionally include Organisatie step (only for andere-organisatie)
+                        ...(gebruikType === 'andere-organisatie'
+                          ? [
+                              {
+                                id: 'afnemer-step',
+                                marker: 2,
+                                status: getStatus(
+                                  currentStep,
+                                  getAdjustedStepIndex(2)
+                                ),
+                                title: 'Afnemer',
+                              },
+                            ]
+                          : []),
                         {
                           id: 'gebruik-configuratie-step',
-                          marker: 2,
+                          marker: gebruikType === 'andere-organisatie' ? 3 : 2,
                           status: getStatusMultiStep(
                             currentStep,
-                            getAdjustedStepIndex(2),
-                            getAdjustedStepIndex(2),
-                            getAdjustedStepIndex(isAfnemerSamenwerking() ? 5 : 4)
+                            getAdjustedStepIndex(3),
+                            getAdjustedStepIndex(3),
+                            getAdjustedStepIndex(isAfnemerSamenwerking() ? 6 : 5)
                           ),
                           title: 'Gebruik configuratie',
                           steps: [
@@ -1622,7 +1678,7 @@ const AcFormsGebruik = ({ store }) => {
                               id: 'informatie-substep',
                               status: getStatus(
                                 currentStep,
-                                getAdjustedStepIndex(2)
+                                getAdjustedStepIndex(3)
                               ),
                               title: 'Gebruik informatie',
                             },
@@ -1630,7 +1686,7 @@ const AcFormsGebruik = ({ store }) => {
                               id: 'koppelingen-substep',
                               status: getStatus(
                                 currentStep,
-                                getAdjustedStepIndex(3)
+                                getAdjustedStepIndex(4)
                               ),
                               title: 'Koppelingen',
                             },
@@ -1638,7 +1694,7 @@ const AcFormsGebruik = ({ store }) => {
                               id: 'diensten-substep',
                               status: getStatus(
                                 currentStep,
-                                getAdjustedStepIndex(4)
+                                getAdjustedStepIndex(5)
                               ),
                               title: 'Diensten',
                             },
@@ -1649,7 +1705,7 @@ const AcFormsGebruik = ({ store }) => {
                                     id: 'deelnemers-substep',
                                     status: getStatus(
                                       currentStep,
-                                      getAdjustedStepIndex(5)
+                                      getAdjustedStepIndex(6)
                                     ),
                                     title: 'Deelnemers',
                                   },
@@ -1659,8 +1715,8 @@ const AcFormsGebruik = ({ store }) => {
                         },
                         {
                           id: 'controleren-step',
-                          marker: 3,
-                          status: getStatus(currentStep, getAdjustedStepIndex(6)),
+                          marker: gebruikType === 'andere-organisatie' ? 4 : 3,
+                          status: getStatus(currentStep, getAdjustedStepIndex(7)),
                           title: 'Controleren',
                         },
                       ]}
@@ -1744,7 +1800,7 @@ const AcFormsGebruik = ({ store }) => {
                           currentStep === 0 && 'ac-register-form-next-button'
                         )}
                       >
-                        {currentStep === 2 &&
+                        {getLogicalStepFromPhysical(currentStep) === 2 &&
                           gebruikType === 'andere-organisatie' && (
                             <AcButton
                               style='button'
@@ -1779,7 +1835,7 @@ const AcFormsGebruik = ({ store }) => {
                           </AcButton>
                         )}
 
-                        {getLogicalStepFromPhysical(currentStep) !== 6 && (
+                        {getLogicalStepFromPhysical(currentStep) !== 7 && (
                           <div className='ac-register-button-wrapper'>
                             <AcButton
                               style='button'
@@ -1798,7 +1854,7 @@ const AcFormsGebruik = ({ store }) => {
                         )}
                       </AcFlex>
 
-                      {getLogicalStepFromPhysical(currentStep) === 6 && (
+                      {getLogicalStepFromPhysical(currentStep) === 7 && (
                         <AcButton
                           style='button'
                           buttonType='primary'

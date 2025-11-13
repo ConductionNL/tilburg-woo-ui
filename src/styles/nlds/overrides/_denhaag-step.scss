@@ -1,0 +1,4 @@
+.denhaag-step-marker__connector {
+  // fix line not connecting to the next step
+  height: calc(100% + 12px) !important;
+}
