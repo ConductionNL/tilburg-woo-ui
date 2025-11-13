@@ -1,14 +1,162 @@
-import React, { memo } from 'react';
+import React, { memo, useEffect } from 'react';
 import ReactSelect from 'react-select';
-import { Textbox } from '@utrecht/component-library-react/dist/css-module';
+import {
+  Separator,
+  Textbox,
+} from '@utrecht/component-library-react/dist/css-module';
 import { ConSchemaEnhancedField } from '@src/components';
+import { validateWebsite } from '@views/ac-forms/validation/form-validations';
+
+/**
+ * ConAfnemerOrganisatieForm
+ * Renders the form fields for creating a new organization when afnemerKeuze === 'nieuw'
+ */
+const ConAfnemerOrganisatieForm = memo(
+  ({ afnemerOrganisatie, setAfnemerOrganisatieData, loading, schemas }) => {
+    return (
+      <div className='con-dynamic-form-container'>
+        <div className='con-form-fields-container'>
+          {/* Organization Name - Required */}
+          <ConSchemaEnhancedField
+            schemaType='organisatie'
+            schemaProperty='naam'
+            value={afnemerOrganisatie.naam || ''}
+            onChange={(value) => setAfnemerOrganisatieData('naam', value)}
+            isDisabled={loading}
+            width='full'
+            schemas={schemas}
+          />
+
+          {/* Organization Type - Required */}
+          <ConSchemaEnhancedField
+            schemaType='organisatie'
+            schemaProperty='type'
+            value={afnemerOrganisatie.type || ''}
+            onChange={(value) => setAfnemerOrganisatieData('type', value)}
+            isDisabled={loading}
+            width='half'
+            schemas={schemas}
+          />
+
+          {/* Organization Website - Required */}
+          <ConSchemaEnhancedField
+            schemaType='organisatie'
+            schemaProperty='website'
+            value={afnemerOrganisatie.website || ''}
+            onChange={(value) => setAfnemerOrganisatieData('website', value)}
+            isDisabled={loading}
+            width='half'
+            customProps={{
+              inputType: 'text',
+              required: true,
+              validation: {
+                custom: (value) => {
+                  if (!value || value.trim() === '') return true;
+                  const website = value.trim();
+                  return validateWebsite(website);
+                },
+                customErrorMessage:
+                  'Website heeft een ongeldig formaat (bijv. conduction.nl, www.conduction.nl of https://conduction.nl)',
+              },
+            }}
+            schemas={schemas}
+          />
+
+          {/* Short Description */}
+          <ConSchemaEnhancedField
+            schemaType='organisatie'
+            schemaProperty='beschrijvingKort'
+            value={afnemerOrganisatie.beschrijvingKort || ''}
+            onChange={(value) =>
+              setAfnemerOrganisatieData('beschrijvingKort', value)
+            }
+            isDisabled={loading}
+            width='full'
+            customProps={{
+              maxLength: 255,
+            }}
+            schemas={schemas}
+          />
+
+          {/* Long Description */}
+          <ConSchemaEnhancedField
+            schemaType='organisatie'
+            schemaProperty='beschrijvingLang'
+            value={afnemerOrganisatie.beschrijvingLang || ''}
+            onChange={(value) =>
+              setAfnemerOrganisatieData('beschrijvingLang', value)
+            }
+            isDisabled={loading}
+            width='full'
+            customProps={{
+              component: 'AcTextarea',
+              rows: 4,
+              maxLength: 5000,
+            }}
+            schemas={schemas}
+          />
+
+          {/* Email Address */}
+          <ConSchemaEnhancedField
+            schemaType='organisatie'
+            schemaProperty='e-mailadres'
+            value={afnemerOrganisatie['e-mailadres'] || ''}
+            onChange={(value) => setAfnemerOrganisatieData('e-mailadres', value)}
+            isDisabled={loading}
+            width='half'
+            schemas={schemas}
+          />
+
+          {/* Phone Number */}
+          <ConSchemaEnhancedField
+            schemaType='organisatie'
+            schemaProperty='telefoonnummer'
+            value={afnemerOrganisatie.telefoonnummer || ''}
+            onChange={(value) => setAfnemerOrganisatieData('telefoonnummer', value)}
+            isDisabled={loading}
+            width='half'
+            schemas={schemas}
+          />
+
+          {/* KvK Number */}
+          <ConSchemaEnhancedField
+            schemaType='organisatie'
+            schemaProperty='kvkNummer'
+            value={afnemerOrganisatie.kvkNummer || ''}
+            onChange={(value) => setAfnemerOrganisatieData('kvkNummer', value)}
+            isDisabled={loading}
+            width='half'
+            schemas={schemas}
+          />
+
+          {/* Logo URL */}
+          <ConSchemaEnhancedField
+            schemaType='organisatie'
+            schemaProperty='logo'
+            value={afnemerOrganisatie.logo || ''}
+            onChange={(value) => setAfnemerOrganisatieData('logo', value)}
+            isDisabled={loading}
+            width='half'
+            schemas={schemas}
+          />
+        </div>
+        <Separator
+          className='ac-register-review-header__separator'
+          style={{ marginBlockStart: '24px' }}
+        />
+      </div>
+    );
+  }
+);
+
+ConAfnemerOrganisatieForm.displayName = 'ConAfnemerOrganisatieForm';
 
 /**
  * ConGebruikStepInformatie
  * Renders the "Gebruik informatie" step of the Gebruik wizard.
  * Behavior changes based on gebruikType:
  * - eigen-organisatie: afnemer is locked to current user's organization
- * - andere-organisatie: afnemer can be selected from available organizations
+ * - andere-organisatie: afnemer can be selected from available organizations or created new
  */
 const ConGebruikStepInformatie = ({
   gebruik,
@@ -24,7 +172,29 @@ const ConGebruikStepInformatie = ({
   schemas,
   // schemasLoading,
   gebruikType,
+  afnemerKeuze,
+  afnemerOrganisatie,
+  setAfnemerOrganisatieData,
 }) => {
+  // Handle choice change between existing and new organization
+  useEffect(() => {
+    if (gebruikType !== 'andere-organisatie') return;
+
+    if (afnemerKeuze === 'bestaand') {
+      // Clear new organization fields
+      setAfnemerOrganisatieData('naam', '');
+      setAfnemerOrganisatieData('type', '');
+      setAfnemerOrganisatieData('website', '');
+      setAfnemerOrganisatieData('beschrijvingKort', '');
+      setAfnemerOrganisatieData('beschrijvingLang', '');
+      setAfnemerOrganisatieData('e-mailadres', '');
+      setAfnemerOrganisatieData('telefoonnummer', '');
+      setAfnemerOrganisatieData('kvkNummer', '');
+      setAfnemerOrganisatieData('logo', '');
+    }
+    // Note: We don't clear afnemer here to avoid infinite loops
+    // The user will explicitly select or create the organization
+  }, [afnemerKeuze, gebruikType]);
   return (
     <div
       className='ac-register-form-section'
@@ -77,37 +247,53 @@ const ConGebruikStepInformatie = ({
           <div style={{ gridColumn: 'span 2' }}>
             {gebruikType === 'andere-organisatie' ? (
               <>
-                <ConSchemaEnhancedField
-                  schemaType='gebruik'
-                  schemaProperty='afnemer'
-                  value={
-                    typeof gebruik?.afnemer === 'object' && gebruik.afnemer !== null
-                      ? gebruik.afnemer.id ||
-                        gebruik.afnemer['@self']?.id ||
-                        gebruik.afnemer.value
-                      : gebruik?.afnemer || null
-                  }
-                  onChange={(value) => {
-                    setGebruikData('afnemer', value);
-                  }}
-                  isDisabled={loading}
-                  width='full'
-                  schemas={schemas}
-                  optionsProvider={organisatieOptions}
-                  isLoading={organisatieLoading}
-                  onSearch={(_path, _refSlug, q) => searchOrganisaties(q)}
-                  placeholder='Selecteer de klantorganisatie...'
-                />
-                <div
-                  style={{
-                    fontSize: '0.875rem',
-                    color: '#666',
-                    marginTop: '0.25rem',
-                  }}
-                >
-                  Selecteer de organisatie die de applicatie gebruikt. Deze
-                  organisatie wordt geïnformeerd en moet het gebruik goedkeuren.
-                </div>
+                {/* Existing organization dropdown */}
+                {afnemerKeuze === 'bestaand' && (
+                  <>
+                    <ConSchemaEnhancedField
+                      schemaType='gebruik'
+                      schemaProperty='afnemer'
+                      value={
+                        typeof gebruik?.afnemer === 'object' &&
+                        gebruik.afnemer !== null
+                          ? gebruik.afnemer.id ||
+                            gebruik.afnemer['@self']?.id ||
+                            gebruik.afnemer.value
+                          : gebruik?.afnemer || null
+                      }
+                      onChange={(value) => {
+                        setGebruikData('afnemer', value);
+                      }}
+                      isDisabled={loading}
+                      width='full'
+                      schemas={schemas}
+                      optionsProvider={organisatieOptions}
+                      isLoading={organisatieLoading}
+                      onSearch={(_path, _refSlug, q) => searchOrganisaties(q)}
+                      placeholder='Selecteer de klantorganisatie...'
+                    />
+                    <div
+                      style={{
+                        fontSize: '0.875rem',
+                        color: '#666',
+                        marginTop: '0.25rem',
+                      }}
+                    >
+                      Selecteer de organisatie die de applicatie gebruikt. Deze
+                      organisatie wordt geïnformeerd en moet het gebruik goedkeuren.
+                    </div>
+                  </>
+                )}
+
+                {/* New organization form fields */}
+                {afnemerKeuze === 'nieuw' && (
+                  <ConAfnemerOrganisatieForm
+                    afnemerOrganisatie={afnemerOrganisatie}
+                    setAfnemerOrganisatieData={setAfnemerOrganisatieData}
+                    loading={loading}
+                    schemas={schemas}
+                  />
+                )}
               </>
             ) : (
               <>

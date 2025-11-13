@@ -45,7 +45,6 @@ const ConFormApplicatieAanbiederInformatieStage = memo(
         setAanbiederOrganisatieData('beschrijvingLang', '');
         setAanbiederOrganisatieData('e-mailadres', '');
         setAanbiederOrganisatieData('telefoonnummer', '');
-        setAanbiederOrganisatieData('kvkNummer', '');
         setAanbiederOrganisatieData('logo', '');
         // Don't auto-set aanbieder - let user explicitly select from dropdown
         setApplicatieData('aanbieder', null);
@@ -149,7 +148,7 @@ const ConFormApplicatieAanbiederInformatieStage = memo(
                   isDisabled={loading}
                   width='full'
                   customProps={{
-                    // placeholder will come from schema example
+                    label: 'Korte beschrijving',
                     maxLength: 255,
                   }}
                   schemas={schemas}
@@ -166,9 +165,8 @@ const ConFormApplicatieAanbiederInformatieStage = memo(
                   isDisabled={loading}
                   width='full'
                   customProps={{
-                    // placeholder will come from schema example
-                    component: 'AcTextarea',
-                    rows: 4,
+                    label: 'Lange beschrijving',
+                    component: 'WysiwygMarkdown',
                     maxLength: 5000,
                   }}
                   schemas={schemas}
@@ -202,21 +200,7 @@ const ConFormApplicatieAanbiederInformatieStage = memo(
                   schemas={schemas}
                 />
 
-                {/* KvK Number */}
-                <ConSchemaEnhancedField
-                  schemaType='organisatie'
-                  schemaProperty='kvkNummer'
-                  value={aanbiederOrganisatie.kvkNummer || ''}
-                  onChange={(value) =>
-                    setAanbiederOrganisatieData('kvkNummer', value)
-                  }
-                  isDisabled={loading}
-                  width='half'
-                  // placeholder will come from schema example
-                  schemas={schemas}
-                />
-
-                {/* Logo URL */}
+                {/* Logo */}
                 <ConSchemaEnhancedField
                   schemaType='organisatie'
                   schemaProperty='logo'
@@ -224,6 +208,10 @@ const ConFormApplicatieAanbiederInformatieStage = memo(
                   onChange={(value) => setAanbiederOrganisatieData('logo', value)}
                   isDisabled={loading}
                   width='half'
+                  customProps={{
+                    inputType: 'file',
+                    format: 'base64',
+                  }}
                   schemas={schemas}
                 />
               </>

@@ -259,6 +259,8 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
   // Standaarden options with search functionality
   const [standaardenOptions, setStandaardenOptions] = useState([]);
   const [standaardenOptionsLoading, setStandaardenOptionsLoading] = useState(false);
+  // Extra standards selected via multi-select (not from referentieComponenten)
+  const [selectedExtraStandards, setSelectedExtraStandards] = useState([]);
 
   // Modules options with search functionality for koppelingen
   const [modulesOptions, setModulesOptions] = useState([]);
@@ -576,6 +578,80 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
       loadStandaarden();
     }
   }, [schemas?.module]);
+
+  // Initialize selectedExtraStandards from existing compliancy data
+  useEffect(() => {
+    if (standaardenOptions.length === 0) return;
+    if (selectedExtraStandards.length > 0) return; // Already initialized
+
+    const existingCompliancy = applicatie.compliancy || [];
+    if (existingCompliancy.length === 0) return;
+
+    // Get all standard IDs from referentieComponentenWithStandards
+    const getAllStandardsFromRefs = () => {
+      const standardsSet = new Set();
+      referentieComponentenWithStandards.forEach((refComp) => {
+        if (
+          refComp.aanbevolenStandaarden &&
+          Array.isArray(refComp.aanbevolenStandaarden)
+        ) {
+          refComp.aanbevolenStandaarden.forEach((standard) => {
+            const id =
+              standard?.id ||
+              standard?.identifier ||
+              standard?.value ||
+              standard?.slug ||
+              standard?.naam ||
+              standard?.name;
+            if (id) standardsSet.add(String(id));
+          });
+        }
+        if (
+          refComp.verplichteStandaarden &&
+          Array.isArray(refComp.verplichteStandaarden)
+        ) {
+          refComp.verplichteStandaarden.forEach((standard) => {
+            const id =
+              standard?.id ||
+              standard?.identifier ||
+              standard?.value ||
+              standard?.slug ||
+              standard?.naam ||
+              standard?.name;
+            if (id) standardsSet.add(String(id));
+          });
+        }
+      });
+      return standardsSet;
+    };
+
+    const refStandardIds = getAllStandardsFromRefs();
+    const extraStandardsInCompliancy = existingCompliancy
+      .map((comp) => {
+        const standardId = String(comp.standaardversie);
+        // Check if this standard is NOT in referentieComponenten (i.e., it's an extra standard)
+        if (!refStandardIds.has(standardId)) {
+          // Find the option for this standard
+          return standaardenOptions.find(
+            (opt) =>
+              String(
+                opt.value || opt.data?.id || opt.data?.identifier || opt.data?.value
+              ) === standardId
+          );
+        }
+        return null;
+      })
+      .filter(Boolean);
+
+    if (extraStandardsInCompliancy.length > 0) {
+      setSelectedExtraStandards(extraStandardsInCompliancy);
+    }
+  }, [
+    standaardenOptions,
+    referentieComponentenWithStandards,
+    applicatie.compliancy,
+    selectedExtraStandards.length,
+  ]);
 
   // Function to search modules with debouncing using object store cache
   const performModulesSearch = useCallback(
@@ -1007,6 +1083,8 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
             referentieComponentenWithStandards={referentieComponentenWithStandards}
             standaardenOptions={standaardenOptions}
             standaardenOptionsLoading={standaardenOptionsLoading}
+            selectedExtraStandards={selectedExtraStandards}
+            setSelectedExtraStandards={setSelectedExtraStandards}
           />
         );
       case 6:

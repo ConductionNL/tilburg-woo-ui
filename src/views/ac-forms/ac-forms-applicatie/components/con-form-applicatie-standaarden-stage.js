@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { AcCheckbox, AcFormField } from '@src/molecules';
 import { LogoUploadField } from '@views/ac-beheer/shared/components/con-logo-upload-field';
 import {
@@ -11,6 +11,7 @@ import {
   Separator,
   Link,
 } from '@utrecht/component-library-react/dist/css-module';
+import ReactSelect from 'react-select';
 import { validateWebsite } from '../../validation/form-validations';
 
 /**
@@ -27,9 +28,14 @@ const ConFormApplicatieStandaardenStage = ({
   referentieComponentenWithStandards,
   standaardenOptions,
   standaardenOptionsLoading,
+  selectedExtraStandards,
+  setSelectedExtraStandards,
 }) => {
   // State to track compliance and bewijs for each standard
   const [tableState, setTableState] = useState({});
+
+  // Ref to track previous allStandards IDs to prevent unnecessary cleanup
+  const prevAllStandardsIdsRef = useRef(new Set());
 
   // Enhanced function to get standard ID with better matching
   const getStandardId = (standard) => {
@@ -230,12 +236,67 @@ const ConFormApplicatieStandaardenStage = ({
     return Array.from(standardsMap.values());
   };
 
-  const allStandards = getAllStandards();
+  const allStandards = useMemo(() => {
+    const result = getAllStandards();
+    return result;
+  }, [referentieComponentenWithStandards, standaardenMap]);
+
+  // Get IDs of standards already in referentieComponenten
+  const existingStandardIds = useMemo(() => {
+    return new Set(allStandards.map((s) => String(s.id)));
+  }, [allStandards]);
+
+  // Filter standaardenOptions to exclude standards already in referentieComponenten
+  const availableExtraStandardsOptions = useMemo(() => {
+    return (standaardenOptions || []).filter((opt) => {
+      const optId = String(
+        opt.value || opt.data?.id || opt.data?.identifier || opt.data?.value
+      );
+      return !existingStandardIds.has(optId);
+    });
+  }, [standaardenOptions, existingStandardIds]);
+
+  // Clean up selectedExtraStandards when standards move to referentieComponenten
+  useEffect(() => {
+    const allStandardsIds = new Set(allStandards.map((s) => String(s.id)));
+
+    // Check if allStandardsIds actually changed
+    const idsChanged =
+      prevAllStandardsIdsRef.current.size !== allStandardsIds.size ||
+      Array.from(prevAllStandardsIdsRef.current).some(
+        (id) => !allStandardsIds.has(id)
+      ) ||
+      Array.from(allStandardsIds).some(
+        (id) => !prevAllStandardsIdsRef.current.has(id)
+      );
+
+    if (!idsChanged) {
+      return;
+    }
+
+    // Update ref
+    prevAllStandardsIdsRef.current = allStandardsIds;
+
+    setSelectedExtraStandards((prev) => {
+      // Check if any selectedExtraStandards need to be removed
+      const needsCleanup = prev.some((opt) =>
+        allStandardsIds.has(String(opt.value))
+      );
+
+      if (!needsCleanup) {
+        return prev; // Return same reference if no changes
+      }
+
+      const filtered = prev.filter((opt) => !allStandardsIds.has(String(opt.value)));
+      return filtered;
+    });
+  }, [allStandards, setSelectedExtraStandards]);
 
   // Initialize table state based on existing compliancy data
   useEffect(() => {
     const initialState = {};
 
+    // Add standards from referentieComponenten
     allStandards.forEach((standard) => {
       const key = standard.id;
 
@@ -276,8 +337,114 @@ const ConFormApplicatieStandaardenStage = ({
       };
     });
 
+    // Add extra standards from multi-select
+    selectedExtraStandards.forEach((selectedOption) => {
+      const standardId = String(selectedOption.value);
+      if (!initialState[standardId]) {
+        const fetchedData = findMatchingStandardData({ id: standardId });
+        const { name: standardName, description: standardDescription } =
+          extractStandardInfo({ id: standardId }, fetchedData);
+
+        const existingCompliancy = (applicatie.compliancy || []).find(
+          (c) => c.standaardversie === standardId
+        );
+
+        initialState[standardId] = {
+          standardId,
+          standardName,
+          standardDescription,
+          standardType: 'extra',
+          componentInfo: 'EXTRA TOEGEVOEGD',
+          verplichteComponents: [],
+          aanbevolenComponents: [],
+          isCompliant: !!existingCompliancy,
+          bewijs: existingCompliancy?.bewijs || null,
+          bewijsFilename: existingCompliancy?.bewijsFilename || null,
+          url: existingCompliancy?.url || null,
+        };
+      }
+    });
+
+    // Only update if the state actually changed
+    const currentKeys = Object.keys(tableState);
+    const newKeys = Object.keys(initialState);
+    const keysChanged =
+      currentKeys.length !== newKeys.length ||
+      currentKeys.some((key) => !initialState[key]) ||
+      newKeys.some((key) => {
+        const current = tableState[key];
+        const next = initialState[key];
+        return (
+          !current ||
+          current.isCompliant !== next.isCompliant ||
+          current.bewijs !== next.bewijs ||
+          current.url !== next.url
+        );
+      });
+
+    if (!keysChanged && currentKeys.length > 0) {
+      return;
+    }
+
     setTableState(initialState);
-  }, [applicatie.compliancy, referentieComponentenWithStandards, standaardenMap]);
+  }, [
+    applicatie.compliancy,
+    referentieComponentenWithStandards,
+    standaardenMap,
+    selectedExtraStandards,
+  ]);
+
+  // Handle extra standards selection change
+  const handleExtraStandardsChange = (selectedOptions) => {
+    const newSelected = selectedOptions || [];
+    const newSelectedIds = new Set(newSelected.map((opt) => String(opt.value)));
+
+    // Find standards that were removed
+    const removedStandards = selectedExtraStandards.filter(
+      (opt) => !newSelectedIds.has(String(opt.value))
+    );
+
+    // Remove compliancy entries for removed standards
+    if (removedStandards.length > 0) {
+      const prevCompliancy = Array.isArray(applicatie.compliancy)
+        ? [...applicatie.compliancy]
+        : [];
+      const updatedCompliancy = prevCompliancy.filter(
+        (c) =>
+          !removedStandards.some(
+            (opt) => String(opt.value) === String(c.standaardversie)
+          )
+      );
+      setApplicatieData('compliancy', updatedCompliancy);
+
+      // Remove from standaarden array
+      const prevStandaarden = Array.isArray(applicatie.standaarden)
+        ? [...applicatie.standaarden]
+        : [];
+      const updatedStandaarden = prevStandaarden.filter(
+        (id) => !removedStandards.some((opt) => String(opt.value) === String(id))
+      );
+      setApplicatieData('standaarden', updatedStandaarden);
+
+      // Remove from standaardenGemma array
+      const prevStandaardenGemma = Array.isArray(applicatie.standaardenGemma)
+        ? [...applicatie.standaardenGemma]
+        : [];
+      removedStandards.forEach((opt) => {
+        const standardData = findMatchingStandardData({ id: opt.value });
+        const objectId = standardData?.id || standardData?.objectId || null;
+        if (objectId) {
+          const index = prevStandaardenGemma.indexOf(objectId);
+          if (index > -1) {
+            prevStandaardenGemma.splice(index, 1);
+          }
+        }
+      });
+      setApplicatieData('standaardenGemma', prevStandaardenGemma);
+    }
+
+    setSelectedExtraStandards(newSelected);
+  };
 
   // Toggle compliance for a specific standard
   const toggleCompliance = (key, isCompliant) => {
@@ -618,6 +785,10 @@ const ConFormApplicatieStandaardenStage = ({
       : [];
     if (prevCompliancy.length === 0) return;
 
+    // Early return if standaardenMap is not ready (empty)
+    if (!standaardenMap || Object.keys(standaardenMap.byId || {}).length === 0)
+      return;
+
     let compliancyHasChanges = false;
     let updatedCompliancy = [...prevCompliancy];
 
@@ -689,7 +860,7 @@ const ConFormApplicatieStandaardenStage = ({
     if (standaardenGemmaHasChanges) {
       setApplicatieData('standaardenGemma', updatedStandaardenGemma);
     }
-  }, [tableState, standaardenMap]);
+  }, [tableState]);
 
   // If no standards available, show message
   if (standaardenOptionsLoading) {
@@ -755,9 +926,10 @@ const ConFormApplicatieStandaardenStage = ({
   // Create table rows
   const tableRows = [];
   const sortedEntries = Object.values(tableState).sort((a, b) => {
-    // Sort by type first (verplicht before aanbevolen), then by name
+    // Sort by type first (verplicht > aanbevolen > extra), then by name
     if (a.standardType !== b.standardType) {
-      return a.standardType === 'verplicht' ? -1 : 1;
+      const typeOrder = { verplicht: 0, aanbevolen: 1, extra: 2 };
+      return (typeOrder[a.standardType] ?? 3) - (typeOrder[b.standardType] ?? 3);
     }
     return (a.standardName || '').localeCompare(b.standardName || '');
   });
@@ -817,6 +989,13 @@ const ConFormApplicatieStandaardenStage = ({
                 AANBEVOLEN - {componentName}
               </span>
             ))}
+
+            {/* Render badge for extra standards */}
+            {entry.standardType === 'extra' && (
+              <span className='con-standaard-badge con-standaard-badge--extra'>
+                EXTRA TOEGEVOEGD
+              </span>
+            )}
           </div>
         </TableCell>
 
@@ -923,6 +1102,26 @@ const ConFormApplicatieStandaardenStage = ({
         </Link>{' '}
         kunt u terecht op GEMMA Online.
       </Paragraph>
+
+      {/* Extra standards multi-select */}
+      {availableExtraStandardsOptions.length > 0 && (
+        <div style={{ marginBottom: '1.5rem' }}>
+          <Paragraph style={{ marginBottom: '0.5rem', fontWeight: '500' }}>
+            Voeg extra standaarden toe (optioneel)
+          </Paragraph>
+          <ReactSelect
+            isMulti
+            className='ac-beheer-select'
+            options={availableExtraStandardsOptions}
+            value={selectedExtraStandards}
+            onChange={handleExtraStandardsChange}
+            isLoading={standaardenOptionsLoading}
+            closeMenuOnSelect={false}
+            placeholder='Zoek en selecteer extra standaarden...'
+            isSearchable={true}
+          />
+        </div>
+      )}
 
       <TableContainer className='con-form-wizard-table-container'>
         <Table>

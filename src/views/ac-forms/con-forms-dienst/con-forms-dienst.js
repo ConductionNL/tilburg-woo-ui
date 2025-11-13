@@ -3,7 +3,7 @@ import { observer } from 'mobx-react-lite';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { withStore } from '@stores';
 import clsx from 'clsx';
-import { AcSection, AcContainer, AcColumn } from '@src/atoms';
+import { AcSection, AcContainer, AcColumn, AcFlex } from '@src/atoms';
 import { AcButton } from '@src/molecules';
 import { VISUALS } from '@src/constants';
 import { ProcessSteps } from '@gemeente-denhaag/components-react';
@@ -25,6 +25,7 @@ import ConFormDienstInformatieStage from './components/con-form-dienst-informati
 import ConFormApplicatiesStage from './components/con-form-applicaties-stage';
 import ConFormControlerenStage from './components/con-form-controleren-stage';
 import { getActiveWizard } from '@src/constants/wizards.constants';
+import ConUnsavedChangesAlertModal from '@src/components/con-unsaved-changes-alert-modal/con-unsaved-changes-alert-modal';
 // Legacy stages
 // import ConFormSoortDienstStage from './components/con-form-soort-dienst-stage';
 // import ConFormKoppelingenStage from './components/con-form-koppelingen-stage';
@@ -108,6 +109,9 @@ const ConFormsDienst = ({ store, userStore }) => {
 
   const [saving, setSaving] = useState(false);
   const [saveResult, setSaveResult] = useState(null);
+
+  // Unsaved changes alert
+  const [showUnsavedChangesAlert, setShowUnsavedChangesAlert] = useState(false);
 
   // Prefill dienst data when editing
   useEffect(() => {
@@ -1153,31 +1157,47 @@ const ConFormsDienst = ({ store, userStore }) => {
                       </AcButton>
                     )}
 
-                    {currentStep !== 2 && (
-                      <div className='ac-register-button-wrapper'>
+                    <AcFlex
+                      spacing='xs'
+                      style={{ width: 'fit-content' }}
+                      className={clsx(
+                        currentStep === 0 && 'ac-register-form-next-button'
+                      )}
+                    >
+                      {currentStep === 0 && (
                         <AcButton
                           style='button'
-                          className={clsx(
-                            currentStep === 0 && 'ac-register-form-next-button'
-                          )}
-                          icon={<VISUALS.ARROW_RIGHT />}
-                          onClick={handleNextStep}
-                          disabled={
-                            getDisabledStatus(currentStep) ||
-                            prefillLoading ||
-                            saving ||
-                            schemasLoading
-                          }
-                          title={
-                            getDisabledStatus(currentStep)
-                              ? getDisabledTooltip(currentStep)
-                              : ''
-                          }
+                          buttonType='secondary'
+                          icon={<VISUALS.CUBE />}
+                          onClick={() => setShowUnsavedChangesAlert(true)}
                         >
-                          Volgende
+                          Ik kan de gewenste applicatie niet vinden
                         </AcButton>
-                      </div>
-                    )}
+                      )}
+
+                      {currentStep !== 2 && (
+                        <div className='ac-register-button-wrapper'>
+                          <AcButton
+                            style='button'
+                            icon={<VISUALS.ARROW_RIGHT />}
+                            onClick={handleNextStep}
+                            disabled={
+                              getDisabledStatus(currentStep) ||
+                              prefillLoading ||
+                              saving ||
+                              schemasLoading
+                            }
+                            title={
+                              getDisabledStatus(currentStep)
+                                ? getDisabledTooltip(currentStep)
+                                : ''
+                            }
+                          >
+                            Volgende
+                          </AcButton>
+                        </div>
+                      )}
+                    </AcFlex>
 
                     {currentStep === 2 && (
                       <AcButton
@@ -1202,6 +1222,19 @@ const ConFormsDienst = ({ store, userStore }) => {
           )}
         </AcColumn>
       </AcContainer>
+
+      <ConUnsavedChangesAlertModal
+        key='unsaved-changes-alert-modal'
+        showModal={showUnsavedChangesAlert}
+        onClose={() => setShowUnsavedChangesAlert(false)}
+        onConfirm={() => navigate('/forms/applicatie')}
+        title='Waarschuwing'
+        message='Je staat op het punt om de applicatieregistratie te verlaten. Al je wijzigingen zullen niet worden opgeslagen.'
+        confirmLabel='Verlaten'
+        cancelLabel='Blijven'
+        confirmIcon={<VISUALS.ARROW_RIGHT />}
+        cancelIcon={<VISUALS.ARROW_LEFT />}
+      />
     </AcSection>
   );
 };

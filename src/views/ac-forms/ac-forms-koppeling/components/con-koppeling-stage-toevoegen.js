@@ -177,12 +177,12 @@ const ConKoppelingStageToevoegen = ({
                 marginBottom: '1rem',
               }}
             >
-              {/* Row 1: Applicatie A - Applicatie B */}
+              {/* Row 1: Applicatie A - Richting - Applicatie B */}
               <div
                 className='ac-register-form-grid'
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                  gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
                   gap: '1rem',
                 }}
               >
@@ -207,6 +207,39 @@ const ConKoppelingStageToevoegen = ({
                     value={ownApp || null}
                     placeholder='Selecteer applicatie A'
                     inputId={appAId}
+                    aria-required='true'
+                  />
+                </div>
+                <div>
+                  <label
+                    className='utrecht-form-label'
+                    htmlFor={richtingId}
+                    style={{ display: 'block' }}
+                  >
+                    Richting
+                    <span className='required-indicator' aria-hidden='true'>
+                      *
+                    </span>
+                    <span className='sr-only'>(verplicht)</span>
+                  </label>
+                  <ReactSelect
+                    className={clsx(
+                      'ac-beheer-select',
+                      loading && 'ac-beheer-select--disabled'
+                    )}
+                    options={directionOptions}
+                    value={
+                      directionByRow[rowId]
+                        ? directionOptions.find(
+                            (o) => o.value === directionByRow[rowId]
+                          )
+                        : null
+                    }
+                    onChange={(opt) =>
+                      setDirectionByRow((prev) => ({ ...prev, [rowId]: opt?.value }))
+                    }
+                    placeholder='Richting'
+                    inputId={richtingId}
                     aria-required='true'
                   />
                 </div>
@@ -272,49 +305,16 @@ const ConKoppelingStageToevoegen = ({
                 </div>
               </div>
 
-              {/* Row 2: Richting - Soort */}
+              {/* Row 2: Soort - Naam - Status */}
               <div
                 className='ac-register-form-grid'
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                  gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
                   gap: '1rem',
                   marginTop: '1rem',
                 }}
               >
-                <div>
-                  <label
-                    className='utrecht-form-label'
-                    htmlFor={richtingId}
-                    style={{ display: 'block' }}
-                  >
-                    Richting
-                    <span className='required-indicator' aria-hidden='true'>
-                      *
-                    </span>
-                    <span className='sr-only'>(verplicht)</span>
-                  </label>
-                  <ReactSelect
-                    className={clsx(
-                      'ac-beheer-select',
-                      loading && 'ac-beheer-select--disabled'
-                    )}
-                    options={directionOptions}
-                    value={
-                      directionByRow[rowId]
-                        ? directionOptions.find(
-                            (o) => o.value === directionByRow[rowId]
-                          )
-                        : null
-                    }
-                    onChange={(opt) =>
-                      setDirectionByRow((prev) => ({ ...prev, [rowId]: opt?.value }))
-                    }
-                    placeholder='Richting'
-                    inputId={richtingId}
-                    aria-required='true'
-                  />
-                </div>
                 <div>
                   <label
                     className='utrecht-form-label'
@@ -342,22 +342,6 @@ const ConKoppelingStageToevoegen = ({
                     inputId={soortId}
                   />
                 </div>
-              </div>
-
-              <Separator
-                className='ac-register-review-header__separator'
-                style={{ marginBlock: '24px' }}
-              />
-
-              {/* Row 3: Naam - Status */}
-              <div
-                className='ac-register-form-grid'
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-                  gap: '1rem',
-                }}
-              >
                 <div>
                   <label
                     className='utrecht-form-label'
@@ -406,6 +390,11 @@ const ConKoppelingStageToevoegen = ({
                   />
                 </div>
               </div>
+
+              <Separator
+                className='ac-register-review-header__separator'
+                style={{ marginBlock: '24px' }}
+              />
 
               <div className='con-koppeling-standaarden-field'>
                 <label

@@ -4,7 +4,7 @@ import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { createDefaultFormObject } from '@src/utilities/schema-object-factory';
 import clsx from 'clsx';
-import { AcSection, AcContainer, AcColumn } from '@src/atoms';
+import { AcSection, AcContainer, AcColumn, AcFlex } from '@src/atoms';
 import { AcButton } from '@src/molecules';
 import { ProcessSteps } from '@gemeente-denhaag/components-react';
 import {
@@ -24,7 +24,9 @@ import { useDebouncedInput } from '@src/hooks';
 import { isUUID } from '@src/utilities/con-resolve-uuids-in-text';
 import { getActiveWizard } from '@src/constants/wizards.constants';
 import { getStatusMultiStep } from '@views/ac-forms/ac-forms-applicatie/utils/steps.utils';
+import { validateWebsite } from '@views/ac-forms/validation/form-validations';
 import _ from 'lodash';
+import ConUnsavedChangesAlertModal from '@src/components/con-unsaved-changes-alert-modal/con-unsaved-changes-alert-modal';
 
 const mapToOption = (item, index) => {
   const label =
@@ -219,6 +221,14 @@ const AcFormsGebruik = ({ store }) => {
   const setGebruikData = (key, value) =>
     setGebruik((prev) => ({ ...prev, [key]: value }));
 
+  /**
+   * Update function for afnemer organization data
+   * Used when creating a new organization for andere-organisatie usage
+   */
+  const setAfnemerOrganisatieData = useCallback((key, value) => {
+    setAfnemerOrganisatie((prev) => ({ ...prev, [key]: value }));
+  }, []);
+
   // Helper function to check if afnemer is samenwerking
   const isAfnemerSamenwerking = useCallback(() => {
     const type = gebruik?.afnemer?.organisatieType || gebruik?.afnemer?.type || '';
@@ -384,6 +394,27 @@ const AcFormsGebruik = ({ store }) => {
   // Usage type selection state - determined from URL or from API data in edit mode
   const [gebruikType, setGebruikType] = useState(getGebruikTypeFromUrl()); // 'eigen-organisatie' or 'andere-organisatie'
 
+  // State for afnemer selection (only for andere-organisatie)
+  const [afnemerKeuze, setAfnemerKeuze] = useState('bestaand'); // 'bestaand' or 'nieuw'
+
+  /**
+   * Afnemer Organization State Object
+   *
+   * This object holds organization data for creating a new organization.
+   * Only used when afnemerKeuze === 'nieuw' and gebruikType === 'andere-organisatie'
+   */
+  const [afnemerOrganisatie, setAfnemerOrganisatie] = useState({
+    naam: '',
+    type: '',
+    website: '',
+    beschrijvingKort: '',
+    beschrijvingLang: '',
+    'e-mailadres': '',
+    telefoonnummer: '',
+    kvkNummer: '',
+    logo: '',
+  });
+
   // Clear certain fields when gebruikType changes to 'andere-organisatie'
   useEffect(() => {
     if (gebruikType === 'andere-organisatie') {
@@ -437,13 +468,20 @@ const AcFormsGebruik = ({ store }) => {
   const [contactpersoonOptions, setContactpersoonOptions] = useState([]);
   const [contactpersoonLoading, setContactpersoonLoading] = useState(false);
 
+  // Unsaved changes alert
+  const [showUnsavedChangesAlert, setShowUnsavedChangesAlert] = useState(false);
+
   // Fetch schemas on component mount
   useEffect(() => {
     const fetchSchemaAndInit = async () => {
       try {
-        const response = await fetch('/api/apps/openregister/api/schemas/gebruik');
-        if (response.ok) {
-          const gebruikSchema = await response.json();
+        // Fetch gebruik schema
+        const gebruikResponse = await fetch(
+          '/api/apps/openregister/api/schemas/gebruik'
+        );
+        let gebruikSchema = null;
+        if (gebruikResponse.ok) {
+          gebruikSchema = await gebruikResponse.json();
           const defaultGebruik = createDefaultFormObject(
             store,
             gebruikSchema,
@@ -451,9 +489,22 @@ const AcFormsGebruik = ({ store }) => {
             { status: 'Verwerving' }
           );
           if (!isEditMode) setGebruik((prev) => ({ ...defaultGebruik, ...prev }));
-          setSchemas({ gebruik: gebruikSchema });
-          setSchemasLoading(false);
         }
+
+        // Fetch organisatie schema for organization form
+        let organisatieSchema = null;
+        try {
+          await store.object.fetchSchema('organisatie');
+          organisatieSchema = store.object.getSchema('schema_organisatie');
+        } catch (orgError) {
+          console.error('Failed to fetch organisatie schema:', orgError);
+        }
+
+        setSchemas({
+          gebruik: gebruikSchema,
+          organisatie: organisatieSchema,
+        });
+        setSchemasLoading(false);
       } catch (error) {
         console.error('Failed to fetch schemas for gebruik form:', error);
         setSchemas({});
@@ -1212,6 +1263,50 @@ const AcFormsGebruik = ({ store }) => {
   const handleRegister = async () => {
     setLoading(true);
     try {
+      let finalAfnemer = gebruik?.afnemer;
+
+      // ✅ For andere-organisatie with new organization, create the organization first
+      if (gebruikType === 'andere-organisatie' && afnemerKeuze === 'nieuw') {
+        try {
+          const newOrganizationData = {
+            naam: afnemerOrganisatie.naam,
+            type: afnemerOrganisatie.type,
+            website: afnemerOrganisatie.website,
+            beschrijvingKort: afnemerOrganisatie.beschrijvingKort,
+            beschrijvingLang: afnemerOrganisatie.beschrijvingLang,
+            'e-mailadres': afnemerOrganisatie['e-mailadres'],
+            telefoonnummer: afnemerOrganisatie.telefoonnummer,
+            kvkNummer: afnemerOrganisatie.kvkNummer,
+            logo: afnemerOrganisatie.logo,
+          };
+
+          // Create the organization and get its ID
+          const createdOrganization = await store.object.createObject(
+            'voorzieningen',
+            'organisatie',
+            newOrganizationData
+          );
+
+          // Use the newly created organization ID as afnemer
+          finalAfnemer =
+            createdOrganization?.id || createdOrganization?.['@self']?.id;
+
+          if (!finalAfnemer) {
+            throw new Error('Organisatie aangemaakt maar geen ID ontvangen');
+          }
+        } catch (orgError) {
+          console.error('Failed to create organization:', orgError);
+          setRegisterCallBack('error');
+          setError({
+            message:
+              'Er is een fout opgetreden bij het aanmaken van de organisatie. Probeer het opnieuw.',
+            errors: null,
+          });
+          setLoading(false);
+          return;
+        }
+      }
+
       // Strip any local IDs and prepare data for submission
       const gebruikData = {
         ...gebruik,
@@ -1219,6 +1314,13 @@ const AcFormsGebruik = ({ store }) => {
         contactpersoon: gebruik?.contactpersoon?.id,
         // Extract UUID from afnemer (should be UUID string for eigen-organisatie, object for andere-organisatie)
         afnemer: (() => {
+          // Use finalAfnemer if we just created a new organization
+          if (finalAfnemer) {
+            return typeof finalAfnemer === 'string'
+              ? finalAfnemer
+              : finalAfnemer.uuid || finalAfnemer.id || finalAfnemer.value;
+          }
+
           const afnemer = gebruik?.afnemer;
           if (!afnemer) return null;
           // If it's already a string (UUID), return it
@@ -1303,8 +1405,32 @@ const AcFormsGebruik = ({ store }) => {
     if (currentStep === 2) {
       // Gebruik informatie step - contactpersoon required for eigen organisatie only
       if (gebruikType === 'andere-organisatie') {
-        // For andere organisatie: only afnemer and status required
-        return !!gebruik?.afnemer && !!gebruik?.status;
+        // For andere organisatie: validate based on afnemerKeuze
+        if (afnemerKeuze === 'bestaand') {
+          // If selecting existing organization: only afnemer and status required
+          return !!gebruik?.afnemer && !!gebruik?.status;
+        } else {
+          // If creating new organization: validate required fields
+          const requiredNewOrgFields = ['naam', 'type', 'website'];
+          const missingNewOrgFields = requiredNewOrgFields.filter(
+            (field) =>
+              !afnemerOrganisatie[field] || !String(afnemerOrganisatie[field]).trim()
+          );
+
+          // Validate website format if provided
+          if (
+            afnemerOrganisatie.website &&
+            String(afnemerOrganisatie.website).trim()
+          ) {
+            const website = String(afnemerOrganisatie.website).trim();
+            if (!validateWebsite(website)) {
+              return false;
+            }
+          }
+
+          // All required fields must be filled and status must be set
+          return missingNewOrgFields.length === 0 && !!gebruik?.status;
+        }
       } else {
         // For eigen organisatie: contactpersoon, afnemer and status required
         return !!gebruik?.afnemer && !!gebruik?.status;
@@ -1362,6 +1488,10 @@ const AcFormsGebruik = ({ store }) => {
             schemas={schemas}
             schemasLoading={schemasLoading}
             gebruikType={gebruikType}
+            afnemerKeuze={afnemerKeuze}
+            setAfnemerKeuze={setAfnemerKeuze}
+            afnemerOrganisatie={afnemerOrganisatie}
+            setAfnemerOrganisatieData={setAfnemerOrganisatieData}
           />
         );
       case 3:
@@ -1607,26 +1737,66 @@ const AcFormsGebruik = ({ store }) => {
                         </AcButton>
                       )}
 
-                      {getLogicalStepFromPhysical(currentStep) !== 6 && (
-                        <div className='ac-register-button-wrapper'>
+                      <AcFlex
+                        spacing='xs'
+                        style={{ width: 'fit-content' }}
+                        className={clsx(
+                          currentStep === 0 && 'ac-register-form-next-button'
+                        )}
+                      >
+                        {currentStep === 2 &&
+                          gebruikType === 'andere-organisatie' && (
+                            <AcButton
+                              style='button'
+                              buttonType='secondary'
+                              icon={
+                                afnemerKeuze === 'bestaand' ? (
+                                  <VISUALS.ARROW_RIGHT />
+                                ) : (
+                                  <VISUALS.ARROW_LEFT />
+                                )
+                              }
+                              onClick={() =>
+                                afnemerKeuze === 'bestaand'
+                                  ? setAfnemerKeuze('nieuw')
+                                  : setAfnemerKeuze('bestaand')
+                              }
+                            >
+                              {afnemerKeuze === 'bestaand'
+                                ? 'Ik kan de gewenste leverancier niet vinden'
+                                : 'Bestaande leverancier selecteren'}
+                            </AcButton>
+                          )}
+
+                        {currentStep === 0 && (
                           <AcButton
                             style='button'
-                            className={clsx(
-                              currentStep === 0 && 'ac-register-form-next-button'
-                            )}
-                            icon={<VISUALS.ARROW_RIGHT />}
-                            onClick={() => setCurrentStep(currentStep + 1)}
-                            disabled={
-                              !canGoNext() ||
-                              loading ||
-                              prefillLoading ||
-                              !!prefillError
-                            }
+                            buttonType='secondary'
+                            icon={<VISUALS.CUBE />}
+                            onClick={() => setShowUnsavedChangesAlert(true)}
                           >
-                            Volgende
+                            Ik kan de gewenste applicatie niet vinden
                           </AcButton>
-                        </div>
-                      )}
+                        )}
+
+                        {getLogicalStepFromPhysical(currentStep) !== 6 && (
+                          <div className='ac-register-button-wrapper'>
+                            <AcButton
+                              style='button'
+                              icon={<VISUALS.ARROW_RIGHT />}
+                              onClick={() => setCurrentStep(currentStep + 1)}
+                              disabled={
+                                !canGoNext() ||
+                                loading ||
+                                prefillLoading ||
+                                !!prefillError
+                              }
+                            >
+                              Volgende
+                            </AcButton>
+                          </div>
+                        )}
+                      </AcFlex>
 
                       {getLogicalStepFromPhysical(currentStep) === 6 && (
                         <AcButton
@@ -1801,6 +1971,19 @@ const AcFormsGebruik = ({ store }) => {
           )}
         </AcColumn>
       </AcContainer>
+
+      <ConUnsavedChangesAlertModal
+        key='unsaved-changes-alert-modal'
+        showModal={showUnsavedChangesAlert}
+        onClose={() => setShowUnsavedChangesAlert(false)}
+        onConfirm={() => navigate('/forms/applicatie')}
+        title='Waarschuwing'
+        message='Je staat op het punt om de applicatieregistratie te verlaten. Al je wijzigingen zullen niet worden opgeslagen.'
+        confirmLabel='Verlaten'
+        cancelLabel='Blijven'
+        confirmIcon={<VISUALS.ARROW_RIGHT />}
+        cancelIcon={<VISUALS.ARROW_LEFT />}
+      />
     </AcSection>
   );
 };

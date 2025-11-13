@@ -112,7 +112,12 @@ const ConFormApplicatieLicentieStage = memo(
                 schemaProperty='hostingLocatie'
                 value={applicatie?.hostingLocatie || ''}
                 onChange={(value) => setApplicatieData('hostingLocatie', value)}
-                isDisabled={loading}
+                isDisabled={
+                  loading ||
+                  !applicatie?.cloudDienstverleningsmodel.includes(
+                    'On-premises (self-managed)'
+                  )
+                }
                 width='half'
                 touched={touched}
                 schemas={schemas}
@@ -123,7 +128,7 @@ const ConFormApplicatieLicentieStage = memo(
                 }}
               />
 
-              {/* Hosting locatie and Jurisdictie - right side */}
+              {/* right side */}
               <AcFlex column spacing='snail'>
                 <ConSchemaEnhancedField
                   schemaType='module'
@@ -132,7 +137,12 @@ const ConFormApplicatieLicentieStage = memo(
                   onChange={(value) =>
                     setApplicatieData('hostingJurisdictie', value)
                   }
-                  isDisabled={loading}
+                  isDisabled={
+                    loading ||
+                    !applicatie?.cloudDienstverleningsmodel.includes(
+                      'On-premises (self-managed)'
+                    )
+                  }
                   width='full'
                   touched={touched}
                   schemas={schemas}
