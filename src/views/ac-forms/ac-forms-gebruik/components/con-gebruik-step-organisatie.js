@@ -1,6 +1,5 @@
 import React, { memo, useEffect } from 'react';
 import { ConSchemaEnhancedField } from '@src/components';
-import { Separator } from '@utrecht/component-library-react/dist/css-module';
 import { validateWebsite } from '@views/ac-forms/validation/form-validations';
 
 /**
@@ -177,7 +176,7 @@ const ConGebruikStepOrganisatie = ({
       setAfnemerOrganisatieData('kvkNummer', '');
       setAfnemerOrganisatieData('logo', '');
     } else {
-        setGebruikData('afnemer', null);
+      setGebruikData('afnemer', null);
     }
   }, [afnemerKeuze, gebruikType, setAfnemerOrganisatieData]);
 
@@ -199,8 +198,7 @@ const ConGebruikStepOrganisatie = ({
               schemaType='gebruik'
               schemaProperty='afnemer'
               value={
-                typeof gebruik?.afnemer === 'object' &&
-                gebruik.afnemer !== null
+                typeof gebruik?.afnemer === 'object' && gebruik.afnemer !== null
                   ? gebruik.afnemer.id ||
                     gebruik.afnemer['@self']?.id ||
                     gebruik.afnemer.value
@@ -224,8 +222,8 @@ const ConGebruikStepOrganisatie = ({
                 marginTop: '0.25rem',
               }}
             >
-              Selecteer de organisatie die de applicatie gebruikt. Deze
-              organisatie wordt geïnformeerd en moet het gebruik goedkeuren.
+              Selecteer de organisatie die de applicatie gebruikt. Deze organisatie
+              wordt geïnformeerd en moet het gebruik goedkeuren.
             </div>
           </div>
         )}
@@ -247,4 +245,3 @@ const ConGebruikStepOrganisatie = ({
 };
 
 export default memo(ConGebruikStepOrganisatie);
-
