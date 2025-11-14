@@ -1,18 +1,16 @@
 import React, { memo } from 'react';
-import ReactSelect from 'react-select';
 import { ConSchemaEnhancedField } from '@src/components';
 
 /**
  * ConGebruikStepInformatie
  * Renders the "Gebruik informatie" step of the Gebruik wizard.
- * For eigen-organisatie: shows contactpersoon and referentiecomponenten.
+ * For eigen-organisatie: shows contactpersoon.
  * For andere-organisatie: only shows status and date fields (afnemer is handled in separate step).
  */
 const ConGebruikStepInformatie = ({
   gebruik,
   setGebruikData,
   loading,
-  refCompOptions,
   contactpersoonOptions,
   contactpersoonLoading,
   searchContactpersonen,
@@ -139,30 +137,6 @@ const ConGebruikStepInformatie = ({
               onChange={(e) =>
                 setGebruikData('startDatumUitGefaseerd', e.target.value)
               }
-            />
-          </div>
-        )}
-        {/* Referentiecomponenten - alleen tonen voor eigen organisatie gebruik */}
-        {gebruikType === 'eigen-organisatie' && (
-          <div style={{ gridColumn: 'span 2' }}>
-            <label className='utrecht-form-label'>Referentiecomponenten</label>
-            <ReactSelect
-              isMulti
-              className='ac-beheer-select'
-              closeMenuOnSelect={false}
-              options={refCompOptions.sort((a, b) => a.label.localeCompare(b.label))}
-              value={(gebruik?.gebruiktVoorReferentiecomponenten || [])
-                .map((v) =>
-                  refCompOptions.find((o) => String(o.value) === String(v))
-                )
-                .filter(Boolean)}
-              onChange={(opts) =>
-                setGebruikData(
-                  'gebruiktVoorReferentiecomponenten',
-                  Array.isArray(opts) ? opts.map((o) => String(o.value)) : []
-                )
-              }
-              placeholder='Selecteer referentiecomponenten...'
             />
           </div>
         )}

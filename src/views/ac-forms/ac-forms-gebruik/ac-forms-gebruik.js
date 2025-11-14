@@ -16,6 +16,8 @@ import ConGebruikStepInformatie from './components/con-gebruik-step-informatie';
 import ConGebruikStepProductApplicatie from './components/con-gebruik-step-product-applicatie';
 import ConGebruikStepVersie from './components/con-gebruik-step-versie';
 import ConGebruikStepOrganisatie from './components/con-gebruik-step-organisatie';
+import ConGebruikStepReferentiecomponenten from './components/con-gebruik-step-referentiecomponenten';
+import ConGebruikStepStandaarden from './components/con-gebruik-step-standaarden';
 import ConGebruikStepKoppelingen from './components/con-gebruik-step-koppelingen';
 import ConGebruikStepDiensten from './components/con-gebruik-step-diensten';
 import ConGebruikStepReview from './components/con-gebruik-step-review';
@@ -26,6 +28,7 @@ import { isUUID } from '@src/utilities/con-resolve-uuids-in-text';
 import { getActiveWizard } from '@src/constants/wizards.constants';
 import { getStatusMultiStep } from '@views/ac-forms/ac-forms-applicatie/utils/steps.utils';
 import { validateWebsite } from '@views/ac-forms/validation/form-validations';
+import { commongroundApiUrl } from '@config';
 import _ from 'lodash';
 import ConUnsavedChangesAlertModal from '@src/components/con-unsaved-changes-alert-modal/con-unsaved-changes-alert-modal';
 
@@ -254,7 +257,7 @@ const AcFormsGebruik = ({ store }) => {
    * Accounts for the optional Organisatie step (only shown for andere-organisatie)
    * and the optional Deelnemers step (only shown for samenwerking)
    * @param {number} logicalStep - The logical step number
-   * Logical steps: 0=Applicatie, 1=Versie, 2=Organisatie, 3=Informatie, 4=Koppelingen, 5=Diensten, 6=Deelnemers, 7=Controleren
+   * Logical steps: 0=Applicatie, 1=Versie, 2=Organisatie, 3=Informatie, 4=Referentiecomponenten, 5=Standaarden, 6=Koppelingen, 7=Diensten, 8=Deelnemers, 9=Controleren
    * @returns {number} The adjusted physical step index
    */
   const getAdjustedStepIndex = useCallback(
@@ -267,7 +270,7 @@ const AcFormsGebruik = ({ store }) => {
       }
 
       // If Deelnemers step is not shown and we're past it, adjust the index
-      if (!isAfnemerSamenwerking() && logicalStep > 6) {
+      if (!isAfnemerSamenwerking() && logicalStep > 8) {
         index -= 1;
       }
 
@@ -295,10 +298,10 @@ const AcFormsGebruik = ({ store }) => {
         }
       }
 
-      // If Deelnemers step is not shown, skip logical step 6
+      // If Deelnemers step is not shown, skip logical step 8
       if (!isAfnemerSamenwerking()) {
-        // If we're at or past where Deelnemers would be (logical step 6), add 1 to skip it
-        if (logicalStep >= 6) {
+        // If we're at or past where Deelnemers would be (logical step 8), add 1 to skip it
+        if (logicalStep >= 8) {
           logicalStep += 1;
         }
       }
@@ -332,16 +335,18 @@ const AcFormsGebruik = ({ store }) => {
     mapping.push(getAdjustedStepIndex(3));
     // Sub-steps under Gebruik configuratie
     mapping.push(getAdjustedStepIndex(3)); // Gebruik informatie
-    mapping.push(getAdjustedStepIndex(4)); // Koppelingen
-    mapping.push(getAdjustedStepIndex(5)); // Diensten
+    mapping.push(getAdjustedStepIndex(4)); // Referentiecomponenten
+    mapping.push(getAdjustedStepIndex(5)); // Standaarden
+    mapping.push(getAdjustedStepIndex(6)); // Koppelingen
+    mapping.push(getAdjustedStepIndex(7)); // Diensten
 
     // Conditionally include Deelnemers step
     if (isAfnemerSamenwerking()) {
-      mapping.push(getAdjustedStepIndex(6)); // Deelnemers
+      mapping.push(getAdjustedStepIndex(8)); // Deelnemers
     }
 
     // Main step 3: Controleren
-    mapping.push(getAdjustedStepIndex(7));
+    mapping.push(getAdjustedStepIndex(9));
 
     return mapping;
   }, [getAdjustedStepIndex, isAfnemerSamenwerking, gebruikType]);
@@ -484,6 +489,23 @@ const AcFormsGebruik = ({ store }) => {
 
   // Referentiecomponenten
   const [refCompOptions, setRefCompOptions] = useState([]);
+  // Referentiecomponenten options with search functionality
+  const [referentieComponentenOptions, setReferentieComponentenOptions] = useState(
+    []
+  );
+  const [referentieComponentenLoading, setReferentieComponentenLoading] =
+    useState(false);
+
+  // Separate array to track chosen referentieComponenten with their standards
+  // Structure: [{ id, naam, aanbevolenStandaarden: [], verplichteStandaarden: [], gebruikId }]
+  const [referentieComponentenWithStandards, setReferentieComponentenWithStandards] =
+    useState([]);
+
+  // Standaarden options with search functionality
+  const [standaardenOptions, setStandaardenOptions] = useState([]);
+  const [standaardenOptionsLoading, setStandaardenOptionsLoading] = useState(false);
+  // Extra standards selected via multi-select (not from referentieComponenten)
+  const [selectedExtraStandards, setSelectedExtraStandards] = useState([]);
 
   // Contactpersonen (filtered by organization for eigen-organisatie)
   const [contactpersoonOptions, setContactpersoonOptions] = useState([]);
@@ -901,6 +923,206 @@ const AcFormsGebruik = ({ store }) => {
       searchContactpersonen('');
     }
   }, [gebruikType, searchContactpersonen]);
+
+  // Function to load referentiecomponenten
+  const loadReferentieComponenten = useCallback(async () => {
+    console.info('📋 Loading referentiecomponenten...');
+    setReferentieComponentenLoading(true);
+
+    try {
+      const queryParams = new URLSearchParams({
+        _limit: '500',
+        _page: '1',
+        gemmaType: 'Referentiecomponent',
+        '_extend[]': '@self.schema',
+      });
+
+      // Fetch referentiecomponenten from openconnector endpoint
+      const response = await fetch(
+        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      const list = await response.json();
+
+      const mapToOption = (item, index) => {
+        const label =
+          item?.xml?.name?._value ||
+          item?.naam ||
+          item?.name ||
+          item?.title ||
+          item?.label ||
+          `Component ${index + 1}`;
+        const value = item?.value || item?.id || item?.slug || label;
+        return {
+          value: String(value),
+          label: String(label),
+          data: item, // Store the full API data for access to aanbevolenStandaarden, verplichteStandaarden
+        };
+      };
+
+      const options = list.results
+        .map(mapToOption)
+        .filter((o) => o.label && o.value);
+
+      setReferentieComponentenOptions(options);
+      console.info(`✅ Loaded ${options.length} referentiecomponenten`);
+    } catch (e) {
+      console.error('Failed to load referentie componenten:', e);
+      setReferentieComponentenOptions([]);
+    } finally {
+      setReferentieComponentenLoading(false);
+    }
+  }, []);
+
+  // ✅ Load referentiecomponenten when component mounts
+  useEffect(() => {
+    // Only load if we haven't loaded yet and we're not currently loading
+    const shouldLoadRefs =
+      referentieComponentenOptions.length === 0 && !referentieComponentenLoading;
+
+    if (shouldLoadRefs) {
+      loadReferentieComponenten();
+    }
+  }, [loadReferentieComponenten, referentieComponentenOptions.length, referentieComponentenLoading]);
+
+  // Function to load standaarden
+  const loadStandaarden = useCallback(async () => {
+    console.info('📋 Loading standaarden...');
+    setStandaardenOptionsLoading(true);
+
+    try {
+      const queryParams = new URLSearchParams({
+        _limit: '500',
+        _page: '1',
+        gemmaType: 'Standaard',
+        '_extend[]': '@self.schema',
+      });
+
+      // Fetch standards from openconnector endpoint
+      const response = await fetch(
+        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      const list = await response.json();
+
+      const options = list.results
+        .map((item, index) => {
+          const label =
+            item?.xml?.name?._value ||
+            item?.naam ||
+            item?.name ||
+            item?.title ||
+            item?.label ||
+            `Standaard ${index + 1}`;
+          const value = item?.value || item?.id || item?.slug || label;
+          return { value: String(value), label: String(label), data: item };
+        })
+        .filter((o) => o.label && o.value);
+
+      setStandaardenOptions(options);
+      console.info(`✅ Loaded ${options.length} standaarden`);
+    } catch (e) {
+      console.error('Failed to load standaarden:', e);
+      setStandaardenOptions([]);
+    } finally {
+      setStandaardenOptionsLoading(false);
+    }
+  }, []);
+
+  // ✅ Load standaarden when component mounts
+  useEffect(() => {
+    // Only load if we haven't loaded yet and we're not currently loading
+    const shouldLoadStandards =
+      standaardenOptions.length === 0 && !standaardenOptionsLoading;
+
+    if (shouldLoadStandards) {
+      loadStandaarden();
+    }
+  }, [loadStandaarden, standaardenOptions.length, standaardenOptionsLoading]);
+
+  // Initialize selectedExtraStandards from existing compliancy data
+  useEffect(() => {
+    if (standaardenOptions.length === 0) return;
+    if (selectedExtraStandards.length > 0) return; // Already initialized
+
+    const existingCompliancy = gebruik.compliancy || [];
+    if (existingCompliancy.length === 0) return;
+
+    // Get all standard IDs from referentieComponentenWithStandards
+    const getAllStandardsFromRefs = () => {
+      const standardsSet = new Set();
+      referentieComponentenWithStandards.forEach((refComp) => {
+        if (
+          refComp.aanbevolenStandaarden &&
+          Array.isArray(refComp.aanbevolenStandaarden)
+        ) {
+          refComp.aanbevolenStandaarden.forEach((standard) => {
+            const id =
+              standard?.id ||
+              standard?.identifier ||
+              standard?.value ||
+              standard?.slug ||
+              standard?.naam ||
+              standard?.name;
+            if (id) standardsSet.add(String(id));
+          });
+        }
+        if (
+          refComp.verplichteStandaarden &&
+          Array.isArray(refComp.verplichteStandaarden)
+        ) {
+          refComp.verplichteStandaarden.forEach((standard) => {
+            const id =
+              standard?.id ||
+              standard?.identifier ||
+              standard?.value ||
+              standard?.slug ||
+              standard?.naam ||
+              standard?.name;
+            if (id) standardsSet.add(String(id));
+          });
+        }
+      });
+      return standardsSet;
+    };
+
+    const refStandardIds = getAllStandardsFromRefs();
+    const extraStandardsInCompliancy = existingCompliancy
+      .map((comp) => {
+        const standardId = String(comp.standaardversie);
+        // Check if this standard is NOT in referentieComponenten (i.e., it's an extra standard)
+        if (!refStandardIds.has(standardId)) {
+          // Find the option for this standard
+          return standaardenOptions.find(
+            (opt) =>
+              String(
+                opt.value || opt.data?.id || opt.data?.identifier || opt.data?.value
+              ) === standardId
+          );
+        }
+        return null;
+      })
+      .filter(Boolean);
+
+    if (extraStandardsInCompliancy.length > 0) {
+      setSelectedExtraStandards(extraStandardsInCompliancy);
+    }
+  }, [
+    standaardenOptions,
+    referentieComponentenWithStandards,
+    gebruik.compliancy,
+    selectedExtraStandards.length,
+  ]);
 
   // Resolve contactpersoon display name when options become available
   useEffect(() => {
@@ -1384,6 +1606,8 @@ const AcFormsGebruik = ({ store }) => {
       'Applicatie',
       'Applicatie versie',
       'Gebruik informatie',
+      'Referentiecomponenten',
+      'Standaarden',
       'Koppelingen',
       'Diensten',
     ];
@@ -1406,12 +1630,16 @@ const AcFormsGebruik = ({ store }) => {
       case 3:
         return 'Gebruik informatie';
       case 4:
-        return 'Koppelingen';
+        return 'Referentiecomponenten';
       case 5:
-        return 'Diensten';
+        return 'Standaarden';
       case 6:
-        return 'Deelnemers';
+        return 'Koppelingen';
       case 7:
+        return 'Diensten';
+      case 8:
+        return 'Deelnemers';
+      case 9:
         return 'Controleren';
       default:
         return stepsList[step] || '';
@@ -1465,12 +1693,30 @@ const AcFormsGebruik = ({ store }) => {
       return !!gebruik?.status;
     }
     if (logicalStep === 4) {
-      return true; // koppelingen optional
+      return true; // Referentiecomponenten optional
     }
     if (logicalStep === 5) {
+      // Standaarden step: validate URLs in compliancy array
+      if (Array.isArray(gebruik.compliancy)) {
+        const invalidUrls = gebruik.compliancy.filter(
+          (comp) =>
+            comp.url &&
+            String(comp.url).trim() &&
+            !validateWebsite(String(comp.url).trim())
+        );
+        if (invalidUrls.length > 0) {
+          return false; // Cannot proceed if there are invalid URLs
+        }
+      }
+      return true; // Standaarden optional (but URLs must be valid if provided)
+    }
+    if (logicalStep === 6) {
+      return true; // koppelingen optional
+    }
+    if (logicalStep === 7) {
       return true; // diensten optional
     }
-    if (logicalStep === 6 && isAfnemerSamenwerking()) {
+    if (logicalStep === 8 && isAfnemerSamenwerking()) {
       return true; // deelnemers optional
     }
     return false;
@@ -1526,7 +1772,6 @@ const AcFormsGebruik = ({ store }) => {
             gebruik={gebruik}
             setGebruikData={setGebruikData}
             loading={loading}
-            refCompOptions={refCompOptions}
             contactpersoonOptions={contactpersoonOptions}
             contactpersoonLoading={contactpersoonLoading}
             searchContactpersonen={debouncedSearchContactpersonen}
@@ -1537,6 +1782,31 @@ const AcFormsGebruik = ({ store }) => {
         );
       case 4:
         return (
+          <ConGebruikStepReferentiecomponenten
+            gebruik={gebruik}
+            setGebruikData={setGebruikData}
+            referentieComponentenOptions={referentieComponentenOptions}
+            setReferentieComponentenWithStandards={
+              setReferentieComponentenWithStandards
+            }
+            loading={loading}
+            referentieComponentenLoading={referentieComponentenLoading}
+          />
+        );
+      case 5:
+        return (
+          <ConGebruikStepStandaarden
+            gebruik={gebruik}
+            setGebruikData={setGebruikData}
+            referentieComponentenWithStandards={referentieComponentenWithStandards}
+            standaardenOptions={standaardenOptions}
+            standaardenOptionsLoading={standaardenOptionsLoading}
+            selectedExtraStandards={selectedExtraStandards}
+            setSelectedExtraStandards={setSelectedExtraStandards}
+          />
+        );
+      case 6:
+        return (
           <ConGebruikStepKoppelingen
             gebruik={gebruik}
             setGebruikData={setGebruikData}
@@ -1544,7 +1814,7 @@ const AcFormsGebruik = ({ store }) => {
             schemas={schemas}
           />
         );
-      case 5:
+      case 7:
         return (
           <ConGebruikStepDiensten
             gebruik={gebruik}
@@ -1553,7 +1823,7 @@ const AcFormsGebruik = ({ store }) => {
             schemas={schemas}
           />
         );
-      case 6:
+      case 8:
         if (isAfnemerSamenwerking()) {
           return (
             <ConGebruikStepDeelnemers
@@ -1565,7 +1835,7 @@ const AcFormsGebruik = ({ store }) => {
           );
         }
       // fall through to review if not samenwerking
-      case 7:
+      case 9:
       default:
         return (
           <ConGebruikStepReview
@@ -1670,7 +1940,7 @@ const AcFormsGebruik = ({ store }) => {
                             currentStep,
                             getAdjustedStepIndex(3),
                             getAdjustedStepIndex(3),
-                            getAdjustedStepIndex(isAfnemerSamenwerking() ? 6 : 5)
+                            getAdjustedStepIndex(isAfnemerSamenwerking() ? 8 : 7)
                           ),
                           title: 'Gebruik configuratie',
                           steps: [
@@ -1683,10 +1953,26 @@ const AcFormsGebruik = ({ store }) => {
                               title: 'Gebruik informatie',
                             },
                             {
-                              id: 'koppelingen-substep',
+                              id: 'referentiecomponenten-substep',
                               status: getStatus(
                                 currentStep,
                                 getAdjustedStepIndex(4)
+                              ),
+                              title: 'Referentiecomponenten',
+                            },
+                            {
+                              id: 'standaarden-substep',
+                              status: getStatus(
+                                currentStep,
+                                getAdjustedStepIndex(5)
+                              ),
+                              title: 'Standaarden',
+                            },
+                            {
+                              id: 'koppelingen-substep',
+                              status: getStatus(
+                                currentStep,
+                                getAdjustedStepIndex(6)
                               ),
                               title: 'Koppelingen',
                             },
@@ -1694,7 +1980,7 @@ const AcFormsGebruik = ({ store }) => {
                               id: 'diensten-substep',
                               status: getStatus(
                                 currentStep,
-                                getAdjustedStepIndex(5)
+                                getAdjustedStepIndex(7)
                               ),
                               title: 'Diensten',
                             },
@@ -1705,7 +1991,7 @@ const AcFormsGebruik = ({ store }) => {
                                     id: 'deelnemers-substep',
                                     status: getStatus(
                                       currentStep,
-                                      getAdjustedStepIndex(6)
+                                      getAdjustedStepIndex(8)
                                     ),
                                     title: 'Deelnemers',
                                   },
@@ -1716,7 +2002,7 @@ const AcFormsGebruik = ({ store }) => {
                         {
                           id: 'controleren-step',
                           marker: gebruikType === 'andere-organisatie' ? 4 : 3,
-                          status: getStatus(currentStep, getAdjustedStepIndex(7)),
+                          status: getStatus(currentStep, getAdjustedStepIndex(9)),
                           title: 'Controleren',
                         },
                       ]}
@@ -1835,7 +2121,7 @@ const AcFormsGebruik = ({ store }) => {
                           </AcButton>
                         )}
 
-                        {getLogicalStepFromPhysical(currentStep) !== 7 && (
+                        {getLogicalStepFromPhysical(currentStep) !== 9 && (
                           <div className='ac-register-button-wrapper'>
                             <AcButton
                               style='button'
@@ -1854,7 +2140,7 @@ const AcFormsGebruik = ({ store }) => {
                         )}
                       </AcFlex>
 
-                      {getLogicalStepFromPhysical(currentStep) === 7 && (
+                      {getLogicalStepFromPhysical(currentStep) === 9 && (
                         <AcButton
                           style='button'
                           buttonType='primary'
