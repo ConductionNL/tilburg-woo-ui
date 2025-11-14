@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
-import clsx from 'clsx';
-import ReactSelect from 'react-select';
+import React from 'react';
 import { AcFlex } from '@src/atoms';
+import { ConSchemaEnhancedField } from '@src/components';
 import {
   Paragraph,
   UnorderedList,
@@ -21,8 +20,8 @@ const ConKoppelingStageZoeken = ({
   resultsLoading = false,
   getArrowForDirection,
   isEditMode,
+  onSearchModules,
 }) => {
-  const [ownAppMenuOpen, setOwnAppMenuOpen] = useState(false);
   const idToLabel = Object.fromEntries(
     (resolvedModulesFromResults || []).map((o) => [String(o.value), String(o.label)])
   );
@@ -76,38 +75,48 @@ const ConKoppelingStageZoeken = ({
       )}
 
       <div className='ac-register-form-grid'>
-        <div style={{ gridColumn: 'span 2' }}>
-          <label className='utrecht-form-label'>Uw applicatie (optioneel)</label>
-          <ReactSelect
-            className={clsx(
-              'ac-beheer-select',
-              loading && 'ac-beheer-select--disabled'
-            )}
-            options={ownAppOptions}
-            value={ownApp}
-            onChange={(opt) => {
-              setOwnApp(opt || null);
+        <div style={{ gridColumn: 'span 2', maxWidth: '640px' }}>
+          <ConSchemaEnhancedField
+            schemaType='module'
+            schemaProperty={{
+              type: 'string',
+              title: 'Applicatie',
+              $ref: '#/definitions/module',
+            }}
+            value={ownApp || null}
+            onChange={(value) => {
+              // ConSchemaEnhancedField returns the option object directly when using optionsProvider
+              // Handle both object and string formats
+              if (!value) {
+                setOwnApp(null);
+              } else if (typeof value === 'object' && value.value !== undefined) {
+                // It's an option object with value property
+                setOwnApp(value);
+              } else if (typeof value === 'string') {
+                // It's just the ID string, find the option
+                const option = ownAppOptions.find((opt) => String(opt.value) === String(value));
+                setOwnApp(option || null);
+              } else {
+                setOwnApp(null);
+              }
               // Clear the search input so the selected value renders
               setOwnAppInput('');
-              // Close the menu after selection
-              setOwnAppMenuOpen(false);
             }}
             isDisabled={loading || isEditMode}
-            placeholder='Selecteer uw applicatie...'
-            isClearable
             isLoading={ownAppLoading}
-            inputValue={ownAppInput}
-            loadingMessage={() => 'Bezig met laden…'}
-            menuIsOpen={ownAppMenuOpen}
-            onInputChange={(input, { action }) => {
-              if (action === 'input-change' && !isEditMode) {
-                setOwnAppInput(input || '');
-                setOwnAppMenuOpen(true);
-              }
-              return input;
+            width='full'
+            schemas={{}}
+            optionsProvider={ownAppOptions}
+            onSearch={onSearchModules ? (_path, _refSlug, q) => {
+              setOwnAppInput(q || '');
+              onSearchModules(q);
+            } : null}
+            customProps={{
+              label: 'Applicatie',
+              placeholder: 'Selecteer een applicatie',
+              isClearable: false,
+              required: true,
             }}
-            onMenuOpen={() => setOwnAppMenuOpen(true)}
-            onMenuClose={() => setOwnAppMenuOpen(false)}
           />
         </div>
       </div>

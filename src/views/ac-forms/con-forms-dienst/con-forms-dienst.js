@@ -1459,7 +1459,7 @@ const ConFormsDienst = ({ store, userStore }) => {
         onClose={() => setShowUnsavedChangesAlert(false)}
         onConfirm={() => navigate('/forms/applicatie')}
         title='Waarschuwing'
-        message='Je staat op het punt om de applicatieregistratie te verlaten. Al je wijzigingen zullen niet worden opgeslagen.'
+        message='Je staat op het punt om de dienstregistratie te verlaten. Al je wijzigingen zullen niet worden opgeslagen.'
         confirmLabel='Verlaten'
         cancelLabel='Blijven'
         confirmIcon={<VISUALS.ARROW_RIGHT />}

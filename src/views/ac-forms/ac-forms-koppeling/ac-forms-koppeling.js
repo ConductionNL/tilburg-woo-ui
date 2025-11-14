@@ -392,6 +392,11 @@ const AcFormsKoppeling = ({ store }) => {
     };
   }, [isEditMode, koppelingId]);
 
+  // Search handler for modules (used by ConSchemaEnhancedField)
+  const handleSearchModules = useCallback((query) => {
+    setOwnAppInput(query || '');
+  }, []);
+
   // Debounced server-side search on modules for the own-app select only
   useEffect(() => {
     let cancelled = false;
@@ -686,6 +691,13 @@ const AcFormsKoppeling = ({ store }) => {
 
   // Build a detailed tooltip similar to ac-register when Next is disabled
   const getNextDisabledTooltip = () => {
+    if (currentStep === 0) {
+      // Step 0: Applicatie selectie is verplicht
+      if (!ownApp?.value) {
+        return 'Selecteer eerst een applicatie om door te gaan.';
+      }
+      return '';
+    }
     if (currentStep !== 1) return ''; // Updated: step 1 is now Toevoegen (was step 2)
     const messages = [];
     const missing = [];
@@ -713,7 +725,7 @@ const AcFormsKoppeling = ({ store }) => {
   const canGoNext = () => {
     // LEGACY: Step 0 (type selection) removed - type now comes from URL
     // if (currentStep === 0) return koppelingsType !== null; // type must be selected
-    if (currentStep === 0) return true; // search is optional to proceed (was step 1)
+    if (currentStep === 0) return !!ownApp?.value; // Applicatie selectie is nu verplicht
     if (currentStep === 1) {
       // Toevoegen step (was step 2)
       if (!rows.length) return false;
@@ -1000,6 +1012,7 @@ const AcFormsKoppeling = ({ store }) => {
             resultsLoading={resultsLoading}
             getArrowForDirection={getArrowForDirection}
             isEditMode={isEditMode}
+            onSearchModules={handleSearchModules}
           />
         );
 
@@ -1318,7 +1331,7 @@ const AcFormsKoppeling = ({ store }) => {
         onClose={() => setShowUnsavedChangesAlert(false)}
         onConfirm={() => navigate('/forms/applicatie')}
         title='Waarschuwing'
-        message='Je staat op het punt om de applicatieregistratie te verlaten. Al je wijzigingen zullen niet worden opgeslagen.'
+        message='Je staat op het punt om de koppeling registratie te verlaten. Al je wijzigingen zullen niet worden opgeslagen.'
         confirmLabel='Verlaten'
         cancelLabel='Blijven'
         confirmIcon={<VISUALS.ARROW_RIGHT />}
