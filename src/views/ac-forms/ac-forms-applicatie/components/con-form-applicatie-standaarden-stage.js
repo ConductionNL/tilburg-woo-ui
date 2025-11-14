@@ -923,20 +923,22 @@ const ConFormApplicatieStandaardenStage = ({
     );
   }
 
-  // Create table rows
-  const tableRows = [];
-  const sortedEntries = Object.values(tableState).sort((a, b) => {
-    // Sort by type first (verplicht > aanbevolen > extra), then by name
-    if (a.standardType !== b.standardType) {
-      const typeOrder = { verplicht: 0, aanbevolen: 1, extra: 2 };
-      return (typeOrder[a.standardType] ?? 3) - (typeOrder[b.standardType] ?? 3);
-    }
-    return (a.standardName || '').localeCompare(b.standardName || '');
-  });
+  // Split entries by type
+  const allEntries = Object.values(tableState);
+  const verplichtEntries = allEntries
+    .filter((entry) => entry.standardType === 'verplicht')
+    .sort((a, b) => (a.standardName || '').localeCompare(b.standardName || ''));
+  const aanbevolenEntries = allEntries
+    .filter((entry) => entry.standardType === 'aanbevolen')
+    .sort((a, b) => (a.standardName || '').localeCompare(b.standardName || ''));
+  const extraEntries = allEntries
+    .filter((entry) => entry.standardType === 'extra')
+    .sort((a, b) => (a.standardName || '').localeCompare(b.standardName || ''));
 
-  sortedEntries.forEach((entry) => {
+  // Helper function to render a table row for an entry
+  const renderEntryRow = (entry) => {
     const entryKey = entry.key || entry.standardId;
-    tableRows.push(
+    return (
       <TableRow key={entryKey}>
         {/* Standaard column */}
         <TableCell style={{ verticalAlign: 'top', padding: '12px' }}>
@@ -1074,6 +1076,56 @@ const ConFormApplicatieStandaardenStage = ({
         </TableCell>
       </TableRow>
     );
+  };
+
+  // Create table rows with section headers
+  const tableRows = [];
+
+  // Verplicht section
+  if (verplichtEntries.length > 0) {
+    tableRows.push(
+      <TableRow key='header-verplicht'>
+        <TableCell
+          colSpan={3}
+          style={{
+            fontWeight: 'bold',
+            backgroundColor: '#f8f9fa',
+            padding: '12px',
+          }}
+        >
+          Verplicht
+        </TableCell>
+      </TableRow>
+    );
+    verplichtEntries.forEach((entry) => {
+      tableRows.push(renderEntryRow(entry));
+    });
+  }
+
+  // Aanbevolen section
+  if (aanbevolenEntries.length > 0) {
+    tableRows.push(
+      <TableRow key='header-aanbevolen'>
+        <TableCell
+          colSpan={3}
+          style={{
+            fontWeight: 'bold',
+            backgroundColor: '#f8f9fa',
+            padding: '12px',
+          }}
+        >
+          Aanbevolen
+        </TableCell>
+      </TableRow>
+    );
+    aanbevolenEntries.forEach((entry) => {
+      tableRows.push(renderEntryRow(entry));
+    });
+  }
+
+  // Extra section (no header)
+  extraEntries.forEach((entry) => {
+    tableRows.push(renderEntryRow(entry));
   });
 
   return (
