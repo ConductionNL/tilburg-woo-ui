@@ -1316,31 +1316,50 @@ const AcFormsKoppeling = ({ store }) => {
 
                 {saveResult !== 'success' && saveResult !== 'error' && (
                   <div
-                    className={clsx(
-                      'ac-register-form-buttons',
-                      currentStep !== 0 && 'ac-register-form-buttons-not-first-step'
-                    )}
+                    className={clsx('ac-register-form-buttons')}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                    }}
                   >
-                    {currentStep !== 0 && (
-                      <AcButton
-                        style='button'
-                        buttonType='secondary'
-                        icon={<VISUALS.ARROW_LEFT />}
-                        onClick={() => setCurrentStep(currentStep - 1)}
-                        disabled={loading || saveLoading || prefillLoading}
-                      >
-                        Vorige
-                      </AcButton>
-                    )}
-
-                    <AcFlex
-                      spacing='xs'
-                      style={{ width: 'fit-content' }}
-                      className={clsx(
-                        currentStep === 0 && 'ac-register-form-next-button'
+                    <AcFlex spacing='xs' style={{ width: 'fit-content' }}>
+                      {currentStep !== 0 && (
+                        <AcButton
+                          style='button'
+                          buttonType='secondary'
+                          icon={<VISUALS.ARROW_LEFT />}
+                          onClick={() => setCurrentStep(currentStep - 1)}
+                          disabled={loading || saveLoading || prefillLoading}
+                        >
+                          Vorige
+                        </AcButton>
                       )}
-                    >
-                      {currentStep === 0 && (
+
+                      {getLogicalStepFromPhysical(currentStep) === 0 &&
+                        koppelingsType === 'aanbieden-koppeling' && (
+                          <AcButton
+                            style='button'
+                            buttonType='secondary'
+                            icon={
+                              aanbiederKeuze === 'bestaand' ? (
+                                <VISUALS.ARROW_RIGHT />
+                              ) : (
+                                <VISUALS.ARROW_LEFT />
+                              )
+                            }
+                            onClick={() =>
+                              aanbiederKeuze === 'bestaand'
+                                ? setAanbiederKeuze('nieuw')
+                                : setAanbiederKeuze('bestaand')
+                            }
+                          >
+                            {aanbiederKeuze === 'bestaand'
+                              ? 'Ik kan de gewenste leverancier niet vinden'
+                              : 'Bestaande leverancier selecteren'}
+                          </AcButton>
+                        )}
+
+                      {getLogicalStepFromPhysical(currentStep) === 1 && (
                         <AcButton
                           style='button'
                           buttonType='secondary'
@@ -1350,8 +1369,16 @@ const AcFormsKoppeling = ({ store }) => {
                           Ik kan de gewenste applicatie niet vinden
                         </AcButton>
                       )}
+                    </AcFlex>
 
-                      {currentStep !== 2 && ( // Was step 3
+                    <AcFlex
+                      spacing='xs'
+                      style={{ width: 'fit-content' }}
+                      className={clsx(
+                        currentStep === 0 && 'ac-register-form-next-button'
+                      )}
+                    >
+                      {getLogicalStepFromPhysical(currentStep) !== 3 && (
                         <div className='ac-register-button-wrapper'>
                           <AcButton
                             style='button'
@@ -1371,7 +1398,7 @@ const AcFormsKoppeling = ({ store }) => {
                       )}
                     </AcFlex>
 
-                    {currentStep === 2 && ( // Was step 3
+                    {getLogicalStepFromPhysical(currentStep) === 3 && (
                       <AcButton
                         style='button'
                         buttonType='primary'

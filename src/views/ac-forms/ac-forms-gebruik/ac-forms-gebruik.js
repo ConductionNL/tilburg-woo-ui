@@ -2079,6 +2079,17 @@ const AcFormsGebruik = ({ store }) => {
                         </AcButton>
                       )}
 
+                      {currentStep === 0 && (
+                        <AcButton
+                          style='button'
+                          buttonType='secondary'
+                          icon={<VISUALS.CUBE />}
+                          onClick={() => setShowUnsavedChangesAlert(true)}
+                        >
+                          Ik kan de gewenste applicatie niet vinden
+                        </AcButton>
+                      )}
+
                       <AcFlex
                         spacing='xs'
                         style={{ width: 'fit-content' }}
@@ -2109,17 +2120,6 @@ const AcFormsGebruik = ({ store }) => {
                                 : 'Bestaande leverancier selecteren'}
                             </AcButton>
                           )}
-
-                        {currentStep === 0 && (
-                          <AcButton
-                            style='button'
-                            buttonType='secondary'
-                            icon={<VISUALS.CUBE />}
-                            onClick={() => setShowUnsavedChangesAlert(true)}
-                          >
-                            Ik kan de gewenste applicatie niet vinden
-                          </AcButton>
-                        )}
 
                         {getLogicalStepFromPhysical(currentStep) !== 9 && (
                           <div className='ac-register-button-wrapper'>

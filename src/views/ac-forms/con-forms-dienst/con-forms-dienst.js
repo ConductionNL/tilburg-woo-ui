@@ -1363,6 +1363,17 @@ const ConFormsDienst = ({ store, userStore }) => {
                       </AcButton>
                     )}
 
+                    {currentStep === 0 && (
+                      <AcButton
+                        style='button'
+                        buttonType='secondary'
+                        icon={<VISUALS.CUBE />}
+                        onClick={() => setShowUnsavedChangesAlert(true)}
+                      >
+                        Ik kan de gewenste applicatie niet vinden
+                      </AcButton>
+                    )}
+
                     <AcFlex
                       spacing='xs'
                       style={{ width: 'fit-content' }}
@@ -1370,17 +1381,6 @@ const ConFormsDienst = ({ store, userStore }) => {
                         currentStep === 0 && 'ac-register-form-next-button'
                       )}
                     >
-                      {currentStep === 0 && (
-                        <AcButton
-                          style='button'
-                          buttonType='secondary'
-                          icon={<VISUALS.CUBE />}
-                          onClick={() => setShowUnsavedChangesAlert(true)}
-                        >
-                          Ik kan de gewenste applicatie niet vinden
-                        </AcButton>
-                      )}
-
                       {currentStep === getAdjustedStepIndex(1) &&
                         formType === 'ontbrekend-dienst' && (
                           <AcButton
