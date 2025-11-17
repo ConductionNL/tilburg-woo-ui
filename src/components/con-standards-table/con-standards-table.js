@@ -662,9 +662,7 @@ const ConStandardsTable = ({
                             placeholder='https://...'
                             value={complianceStandard?.url || ''}
                             type='url'
-                            onChange={(e) =>
-                              updateUrl(refStandard.id, e)
-                            }
+                            onChange={(e) => updateUrl(refStandard.id, e)}
                             disabled={disabled || !!complianceStandard?.bewijs}
                             className='ac-register-form-field__no-width-limit'
                             hasError={validateWebsite(complianceStandard?.url)}
