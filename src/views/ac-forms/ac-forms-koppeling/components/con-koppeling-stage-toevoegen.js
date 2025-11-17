@@ -17,6 +17,10 @@ const ConKoppelingStageToevoegen = ({
   removeRow,
   modulesOptions,
   setModulesOptions,
+  buitengemeentelijkeOptions,
+  setBuitengemeentelijkeOptions,
+  buitengemeentelijkeOptionsLoading,
+  setBuitengemeentelijkeOptionsLoading,
   setSelectedModuleLabels,
   loading,
   selectedAppAByRow,
@@ -57,6 +61,17 @@ const ConKoppelingStageToevoegen = ({
       ...prev,
       [String(opt.value)]: String(opt.label),
     }));
+  };
+
+  const getMergedOptions = () => {
+    const merged = [...modulesOptions];
+    buitengemeentelijkeOptions.forEach((buitenOpt) => {
+      const exists = merged.some((o) => String(o.value) === String(buitenOpt.value));
+      if (!exists) {
+        merged.push(buitenOpt);
+      }
+    });
+    return merged;
   };
 
   const fetchModuleOptions = async (q, signal) => {
@@ -120,6 +135,8 @@ const ConKoppelingStageToevoegen = ({
       if (which === 'B') setAppBLoadingByRow((p) => ({ ...p, [rowId]: true }));
       const opts = q
         ? await fetchModuleOptions(q, controller.signal)
+        : which === 'B'
+        ? getMergedOptions()
         : modulesOptions;
       // If another fetch started after this one, skip applying results
       if (abortControllersRef.current[key] !== controller) return;
@@ -261,9 +278,9 @@ const ConKoppelingStageToevoegen = ({
                       loading && 'ac-beheer-select--disabled'
                     )}
                     isClearable
-                    options={appBOptionsByRow[rowId] || modulesOptions}
+                    options={appBOptionsByRow[rowId] || getMergedOptions()}
                     value={(() => {
-                      const options = appBOptionsByRow[rowId] || modulesOptions;
+                      const options = appBOptionsByRow[rowId] || getMergedOptions();
                       const selectedValue =
                         selectedAppBByRow[rowId] != null
                           ? String(selectedAppBByRow[rowId])
