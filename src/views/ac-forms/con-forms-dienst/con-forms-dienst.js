@@ -1109,7 +1109,7 @@ const ConFormsDienst = ({ store, userStore }) => {
               {_.capitalize(schema)}
               {isEditMode
                 ? ' updaten'
-                : dienstType === 'andere-organisatie'
+                : formType === 'ontbrekend-dienst'
                 ? ' melden'
                 : ' registreren'}
             </Heading1>
