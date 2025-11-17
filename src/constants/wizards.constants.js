@@ -195,7 +195,7 @@ export const getWizardUrl = (wizard, useParams = true) => {
 };
 
 /**
- * gets the active wizard based on the current path
+ * gets the active wizard based on the current path + params
  * @returns {{
  *   icon: LoadableComponent<any>,
  *   name: string,
@@ -211,11 +211,39 @@ export const getWizardUrl = (wizard, useParams = true) => {
  */
 export const getActiveWizard = () => {
   const path = window.location.pathname;
-  const wizard = Object.values(DASHBOARD_WIZARDS).find(
-    (wizard) => wizard.path === path
-  );
-  if (wizard) {
-    return wizard;
+  const searchParams = new URLSearchParams(window.location.search);
+  const urlParamKeys = Array.from(searchParams.keys());
+
+  const allWizards = Object.values(DASHBOARD_WIZARDS);
+
+  // Try to find an exact match: path + matching number of params + all param keys and values match
+  const exactMatchWizard = allWizards.find((wizard) => {
+    if (wizard.path !== path) return false;
+
+    const wizardParamKeys = wizard.params ? Object.keys(wizard.params) : [];
+    // Both must have no params
+    if (wizardParamKeys.length === 0 && urlParamKeys.length === 0) {
+      return true;
+    }
+    // If amount and presence of param keys do not match, not an exact match
+    if (wizardParamKeys.length !== urlParamKeys.length) {
+      return false;
+    }
+    // All params and values must match
+    return wizardParamKeys.every(
+      (key) => searchParams.get(key) === String(wizard.params[key])
+    );
+  });
+
+  if (exactMatchWizard) {
+    return exactMatchWizard;
+  }
+
+  // Fallback: return first wizard whose path matches, ignoring params
+  const fallbackWizard = allWizards.find((wizard) => wizard.path === path);
+
+  if (fallbackWizard) {
+    return fallbackWizard;
   }
   return null;
 };
