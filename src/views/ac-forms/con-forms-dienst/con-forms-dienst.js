@@ -840,6 +840,9 @@ const ConFormsDienst = ({ store, userStore }) => {
             koppelingOptions={koppelingOptions}
             userStore={userStore}
             dienstType={dienstType}
+            formType={formType}
+            aanbiederKeuze={aanbiederKeuze}
+            aanbiederOrganisatie={aanbiederOrganisatie}
           />
         );
       default:
@@ -1205,70 +1208,70 @@ const ConFormsDienst = ({ store, userStore }) => {
 
               <div className='ac-register-container ac-forms-product'>
                 <div ref={processStepsRef} className='ac-register-process-steps'>
-                      <ProcessSteps
-                        steps={(() => {
-                          const baseSteps = [
-                            {
-                              id: 'a9p0p1l2-i3c4-a5t6-i7e8-s9t0a1g2e3f4',
-                              marker: 1,
-                              status: getStatus(currentStep, getAdjustedStepIndex(0)),
-                              title: 'Applicaties',
-                            },
-                          ];
+                  <ProcessSteps
+                    steps={(() => {
+                      const baseSteps = [
+                        {
+                          id: 'a9p0p1l2-i3c4-a5t6-i7e8-s9t0a1g2e3f4',
+                          marker: 1,
+                          status: getStatus(currentStep, getAdjustedStepIndex(0)),
+                          title: 'Applicaties',
+                        },
+                      ];
 
-                          // Only add Aanbieder step for ontbrekend-dienst
-                          if (formType === 'ontbrekend-dienst') {
-                            baseSteps.push({
-                              id: 'a1a2n3b4-i5e6-d7e8-r9i0-n1f2o3r4m5a6t7i8e9',
-                              marker: 2,
-                              status: getStatus(currentStep, getAdjustedStepIndex(1)),
-                              title: 'Aanbieder',
-                            });
-                          }
+                      // Only add Aanbieder step for ontbrekend-dienst
+                      if (formType === 'ontbrekend-dienst') {
+                        baseSteps.push({
+                          id: 'a1a2n3b4-i5e6-d7e8-r9i0-n1f2o3r4m5a6t7i8e9',
+                          marker: 2,
+                          status: getStatus(currentStep, getAdjustedStepIndex(1)),
+                          title: 'Aanbieder',
+                        });
+                      }
 
-                          // Legacy nested steps structure (commented out)
-                          // {
-                          //   id: 'p7r8o9d0-u1c2-t3e4-n5a6-p7p8l9i0c1a2',
-                          //   marker: 2,
-                          //   status:
-                          //     currentStep >= 1 && currentStep <= 2
-                          //       ? 'current'
-                          //       : currentStep < 1
-                          //       ? 'not-checked'
-                          //       : 'checked',
-                          //   title: 'Producten en applicaties',
-                          //   steps: [
-                          //     {
-                          //       id: 'p3r4o5d6-u7c8-t9e0-n1s2-t3a4g5e6f7g8',
-                          //       status: getStatus(currentStep, 1),
-                          //       title: 'Producten',
-                          //     },
-                          //     {
-                          //       id: 'a9p0p1l2-i3c4-a5t6-i7e8-s9t0a1g2e3f4',
-                          //       status: getStatus(currentStep, 2),
-                          //       title: 'Applicaties',
-                          //     },
-                          //   ],
-                          // },
+                      // Legacy nested steps structure (commented out)
+                      // {
+                      //   id: 'p7r8o9d0-u1c2-t3e4-n5a6-p7p8l9i0c1a2',
+                      //   marker: 2,
+                      //   status:
+                      //     currentStep >= 1 && currentStep <= 2
+                      //       ? 'current'
+                      //       : currentStep < 1
+                      //       ? 'not-checked'
+                      //       : 'checked',
+                      //   title: 'Producten en applicaties',
+                      //   steps: [
+                      //     {
+                      //       id: 'p3r4o5d6-u7c8-t9e0-n1s2-t3a4g5e6f7g8',
+                      //       status: getStatus(currentStep, 1),
+                      //       title: 'Producten',
+                      //     },
+                      //     {
+                      //       id: 'a9p0p1l2-i3c4-a5t6-i7e8-s9t0a1g2e3f4',
+                      //       status: getStatus(currentStep, 2),
+                      //       title: 'Applicaties',
+                      //     },
+                      //   ],
+                      // },
 
-                          baseSteps.push(
-                            {
-                              id: 'd1e2n3s4-t5i6-n7f8-o9r0-m1a2t3i4e5f6',
-                              marker: formType === 'ontbrekend-dienst' ? 3 : 2,
-                              status: getStatus(currentStep, getAdjustedStepIndex(2)),
-                              title: 'Dienst informatie',
-                            },
-                            {
-                              id: 'c5o6n7t8-r9o0-l1e2-r3e4-n5s6t7a8g9e0',
-                              marker: formType === 'ontbrekend-dienst' ? 4 : 3,
-                              status: getStatus(currentStep, getAdjustedStepIndex(3)),
-                              title: 'Controleren',
-                            }
-                          );
+                      baseSteps.push(
+                        {
+                          id: 'd1e2n3s4-t5i6-n7f8-o9r0-m1a2t3i4e5f6',
+                          marker: formType === 'ontbrekend-dienst' ? 3 : 2,
+                          status: getStatus(currentStep, getAdjustedStepIndex(2)),
+                          title: 'Dienst informatie',
+                        },
+                        {
+                          id: 'c5o6n7t8-r9o0-l1e2-r3e4-n5s6t7a8g9e0',
+                          marker: formType === 'ontbrekend-dienst' ? 4 : 3,
+                          status: getStatus(currentStep, getAdjustedStepIndex(3)),
+                          title: 'Controleren',
+                        }
+                      );
 
-                          return baseSteps;
-                        })()}
-                      />
+                      return baseSteps;
+                    })()}
+                  />
                 </div>
 
                 <div className='ac-register-form-container'>
