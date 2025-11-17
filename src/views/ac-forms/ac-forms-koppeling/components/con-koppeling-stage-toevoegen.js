@@ -24,7 +24,6 @@ const ConKoppelingStageToevoegen = ({
   setSelectedModuleLabels,
   loading,
   selectedAppAByRow,
-  setSelectedAppAByRow,
   ownApp,
   typeOptions,
   typeByRow,
@@ -47,9 +46,7 @@ const ConKoppelingStageToevoegen = ({
   standaardenByRow,
   setStandaardenByRow,
 }) => {
-  const [appAOptionsByRow, setAppAOptionsByRow] = useState({});
   const [appBOptionsByRow, setAppBOptionsByRow] = useState({});
-  const [appALoadingByRow, setAppALoadingByRow] = useState({});
   const [appBLoadingByRow, setAppBLoadingByRow] = useState({});
   const debounceTimersRef = useRef({});
   const abortControllersRef = useRef({});
@@ -135,7 +132,6 @@ const ConKoppelingStageToevoegen = ({
       }
       const controller = new AbortController();
       abortControllersRef.current[key] = controller;
-      if (which === 'A') setAppALoadingByRow((p) => ({ ...p, [rowId]: true }));
       if (which === 'B') setAppBLoadingByRow((p) => ({ ...p, [rowId]: true }));
       const opts = q
         ? await fetchModuleOptions(q, controller.signal)
@@ -144,11 +140,7 @@ const ConKoppelingStageToevoegen = ({
         : modulesOptions;
       // If another fetch started after this one, skip applying results
       if (abortControllersRef.current[key] !== controller) return;
-      if (which === 'A') {
-        if (Array.isArray(opts))
-          setAppAOptionsByRow((p) => ({ ...p, [rowId]: opts }));
-        setAppALoadingByRow((p) => ({ ...p, [rowId]: false }));
-      } else {
+      if (which === 'B') {
         if (Array.isArray(opts))
           setAppBOptionsByRow((p) => ({ ...p, [rowId]: opts }));
         setAppBLoadingByRow((p) => ({ ...p, [rowId]: false }));
@@ -202,12 +194,12 @@ const ConKoppelingStageToevoegen = ({
                 marginBottom: '1rem',
               }}
             >
-              {/* Row 1: Applicatie A - Applicatie B */}
+              {/* Row 1: Applicatie A - Richting - Applicatie B */}
               <div
                 className='ac-register-form-grid'
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                  gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
                   gap: '1rem',
                 }}
               >
@@ -224,55 +216,48 @@ const ConKoppelingStageToevoegen = ({
                     <span className='sr-only'>(verplicht)</span>
                   </label>
                   <ReactSelect
-                    isClearable
+                    isDisabled
+                    className={clsx(
+                      'ac-beheer-select',
+                      'ac-beheer-select--disabled'
+                    )}
+                    value={ownApp || null}
+                    placeholder='Selecteer applicatie A'
+                    inputId={appAId}
+                    aria-required='true'
+                  />
+                </div>
+                <div>
+                  <label
+                    className='utrecht-form-label'
+                    htmlFor={richtingId}
+                    style={{ display: 'block' }}
+                  >
+                    Richting
+                    <span className='required-indicator' aria-hidden='true'>
+                      *
+                    </span>
+                    <span className='sr-only'>(verplicht)</span>
+                  </label>
+                  <ReactSelect
                     className={clsx(
                       'ac-beheer-select',
                       loading && 'ac-beheer-select--disabled'
                     )}
-                    options={appAOptionsByRow[rowId] || modulesOptions}
-                    value={(() => {
-                      const options = appAOptionsByRow[rowId] || modulesOptions;
-                      const selectedValue =
-                        selectedAppAByRow[rowId] != null
-                          ? String(selectedAppAByRow[rowId])
-                          : ownApp?.value != null
-                          ? String(ownApp.value)
-                          : null;
-                      const found = selectedValue
-                        ? options.find((o) => String(o.value) === selectedValue)
-                        : null;
-                      if (found) return found;
-                      if (selectedAppAByRow[rowId] == null && ownApp)
-                        return { value: String(ownApp.value), label: ownApp.label };
-                      return null;
-                    })()}
-                    onChange={(opt) => {
-                      setSelectedAppAByRow((prev) => ({
-                        ...prev,
-                        [rowId]: opt?.value,
-                      }));
-                      if (opt) upsertModuleOption(opt);
-                    }}
-                    placeholder='Selecteer applicatie A'
-                    inputId={appAId}
-                    aria-required='true'
-                    isOptionDisabled={(opt) =>
-                      String(opt?.value) === String(selectedAppBByRow[rowId] || '')
+                    options={directionOptions}
+                    value={
+                      directionByRow[rowId]
+                        ? directionOptions.find(
+                            (o) => o.value === directionByRow[rowId]
+                          )
+                        : null
                     }
-                    onInputChange={(input, { action }) => {
-                      if (action === 'input-change')
-                        debounceFetchForRow(rowId, 'A', input || '');
-                      return input;
-                    }}
-                    isLoading={!!appALoadingByRow[rowId]}
-                    loadingMessage={() => 'Bezig met laden…'}
-                    getOptionLabel={(opt) => {
-                      const base = opt?.label ?? '';
-                      return String(opt?.value) ===
-                        String(selectedAppBByRow[rowId] || '')
-                        ? `${base} (al gekozen bij B)`
-                        : base;
-                    }}
+                    onChange={(opt) =>
+                      setDirectionByRow((prev) => ({ ...prev, [rowId]: opt?.value }))
+                    }
+                    placeholder='Richting'
+                    inputId={richtingId}
+                    aria-required='true'
                   />
                 </div>
                 <div>
@@ -337,49 +322,16 @@ const ConKoppelingStageToevoegen = ({
                 </div>
               </div>
 
-              {/* Row 2: Richting - Soort */}
+              {/* Row 2: Soort - Naam - Status */}
               <div
                 className='ac-register-form-grid'
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                  gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
                   gap: '1rem',
                   marginTop: '1rem',
                 }}
               >
-                <div>
-                  <label
-                    className='utrecht-form-label'
-                    htmlFor={richtingId}
-                    style={{ display: 'block' }}
-                  >
-                    Richting
-                    <span className='required-indicator' aria-hidden='true'>
-                      *
-                    </span>
-                    <span className='sr-only'>(verplicht)</span>
-                  </label>
-                  <ReactSelect
-                    className={clsx(
-                      'ac-beheer-select',
-                      loading && 'ac-beheer-select--disabled'
-                    )}
-                    options={directionOptions}
-                    value={
-                      directionByRow[rowId]
-                        ? directionOptions.find(
-                            (o) => o.value === directionByRow[rowId]
-                          )
-                        : null
-                    }
-                    onChange={(opt) =>
-                      setDirectionByRow((prev) => ({ ...prev, [rowId]: opt?.value }))
-                    }
-                    placeholder='Richting'
-                    inputId={richtingId}
-                    aria-required='true'
-                  />
-                </div>
                 <div>
                   <label
                     className='utrecht-form-label'
@@ -407,22 +359,6 @@ const ConKoppelingStageToevoegen = ({
                     inputId={soortId}
                   />
                 </div>
-              </div>
-
-              <Separator
-                className='ac-register-review-header__separator'
-                style={{ marginBlock: '24px' }}
-              />
-
-              {/* Row 3: Naam - Status */}
-              <div
-                className='ac-register-form-grid'
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-                  gap: '1rem',
-                }}
-              >
                 <div>
                   <label
                     className='utrecht-form-label'
@@ -471,6 +407,11 @@ const ConKoppelingStageToevoegen = ({
                   />
                 </div>
               </div>
+
+              <Separator
+                className='ac-register-review-header__separator'
+                style={{ marginBlock: '24px' }}
+              />
 
               <div className='con-koppeling-standaarden-field'>
                 <label

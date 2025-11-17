@@ -3,13 +3,14 @@ import { observer } from 'mobx-react-lite';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { withStore } from '@stores';
 import clsx from 'clsx';
-import { AcSection, AcContainer, AcColumn } from '@src/atoms';
+import { AcSection, AcContainer, AcColumn, AcFlex } from '@src/atoms';
 import { AcButton } from '@src/molecules';
 import { VISUALS } from '@src/constants';
 import { ProcessSteps } from '@gemeente-denhaag/components-react';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 import { validateWebsite } from '@views/ac-forms/validation/form-validations';
 import { useDebouncedInput } from '@src/hooks';
+import _ from 'lodash';
 import {
   Heading1,
   Paragraph,
@@ -23,6 +24,9 @@ import ConFormDienstInformatieStage from './components/con-form-dienst-informati
 // import ConFormProductenStage from './components/con-form-producten-stage';
 import ConFormApplicatiesStage from './components/con-form-applicaties-stage';
 import ConFormControlerenStage from './components/con-form-controleren-stage';
+import ConFormDienstAanbiederInformatieStage from './components/con-form-dienst-aanbieder-informatie-stage';
+import ConUnsavedChangesAlertModal from '@src/components/con-unsaved-changes-alert-modal/con-unsaved-changes-alert-modal';
+import { getActiveWizard } from '@src/constants/wizards.constants';
 // Legacy stages
 // import ConFormSoortDienstStage from './components/con-form-soort-dienst-stage';
 // import ConFormKoppelingenStage from './components/con-form-koppelingen-stage';
@@ -43,6 +47,7 @@ const ConFormsDienst = ({ store, userStore }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const dienstId = searchParams.get('id') || '';
+  const formType = searchParams.get('type') || '';
   const isEditMode = !!dienstId;
   const [currentStep, setCurrentStep] = useState(0);
   const processStepsRef = useRef(null);
@@ -53,6 +58,7 @@ const ConFormsDienst = ({ store, userStore }) => {
     product: null,
     module: null,
     koppeling: null,
+    organisatie: null,
   });
   const [schemasLoading, setSchemasLoading] = useState(true);
 
@@ -81,10 +87,34 @@ const ConFormsDienst = ({ store, userStore }) => {
   // Service type selection state - default to 'eigen-organisatie' since selection stage is disabled
   const [dienstType, setDienstType] = useState('eigen-organisatie'); // 'eigen-organisatie' or 'andere-organisatie'
 
+  // State for aanbieder selection
+  const [aanbiederKeuze, setAanbiederKeuze] = useState('bestaand'); // 'bestaand' or 'nieuw'
+
+  /**
+   * Aanbieder Organization State Object
+   *
+   * This object holds organization data for creating a new organization.
+   * Only used when aanbiederKeuze === 'nieuw'
+   */
+  const [aanbiederOrganisatie, setAanbiederOrganisatie] = useState({
+    naam: '',
+    type: '',
+    website: '',
+    beschrijvingKort: '',
+    beschrijvingLang: '',
+    'e-mailadres': '',
+    telefoonnummer: '',
+    logo: '',
+  });
+
   const setDienstData = (key, value) => {
     setDienst((prev) => ({ ...prev, [key]: value }));
     setTouched((prev) => ({ ...prev, [key]: true }));
   };
+
+  const setAanbiederOrganisatieData = useCallback((key, value) => {
+    setAanbiederOrganisatie((prev) => ({ ...prev, [key]: value }));
+  }, []);
 
   // Options/state
   // Product-related states commented out
@@ -107,6 +137,9 @@ const ConFormsDienst = ({ store, userStore }) => {
   const [saving, setSaving] = useState(false);
   const [saveResult, setSaveResult] = useState(null);
 
+  // Unsaved changes alert
+  const [showUnsavedChangesAlert, setShowUnsavedChangesAlert] = useState(false);
+
   // Prefill dienst data when editing
   useEffect(() => {
     let cancelled = false;
@@ -115,7 +148,7 @@ const ConFormsDienst = ({ store, userStore }) => {
       setPrefillLoading(true);
       setPrefillError(null);
       try {
-        // Skip to step 0 in edit mode (Dienst informatie)
+        // Skip to step 0 in edit mode (Applicaties)
         setCurrentStep(0);
         await store.object.fetchObject('voorzieningen', 'dienst', String(dienstId), {
           _extend: ['@self.schema'],
@@ -256,7 +289,7 @@ const ConFormsDienst = ({ store, userStore }) => {
   useEffect(() => {
     const load = async () => {
       setSchemasLoading(true);
-      const types = ['dienst', 'product', 'module', 'koppeling'];
+      const types = ['dienst', 'product', 'module', 'koppeling', 'organisatie'];
       const fetched = {};
       try {
         await Promise.all(
@@ -393,6 +426,12 @@ const ConFormsDienst = ({ store, userStore }) => {
       setModulesLoading(false);
     }
   };
+
+  // Load modules on mount (step 0 is now Applicaties)
+  useEffect(() => {
+    loadAllModules();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Server-side search for modules (searches all modules)
   const searchModules = useCallback(
@@ -648,25 +687,54 @@ const ConFormsDienst = ({ store, userStore }) => {
     }
   };
 
+  /**
+   * Helper function to get the correct step index accounting for optional steps
+   * Accounts for the optional Aanbieder step (only shown for ontbrekend-dienst)
+   * @param {number} logicalStep - The logical step number
+   * Logical steps: 0=Applicaties, 1=Aanbieder, 2=Dienst informatie, 3=Controleren
+   * @returns {number} The adjusted physical step index
+   */
+  const getAdjustedStepIndex = useCallback(
+    (logicalStep) => {
+      let index = logicalStep;
+
+      // If Aanbieder step is not shown and we're past it, adjust the index
+      if (formType !== 'ontbrekend-dienst' && logicalStep > 1) {
+        index -= 1;
+      }
+
+      return index;
+    },
+    [formType]
+  );
+
+  /**
+   * Convert physical step index to logical step number
+   * Accounts for optional Aanbieder step
+   * @param {number} physicalStep - The physical step index
+   * @returns {number} The logical step number
+   */
+  const getLogicalStepFromPhysical = useCallback(
+    (physicalStep) => {
+      // Start with physical step
+      let logicalStep = physicalStep;
+
+      // If Aanbieder step is not shown, add 1 to account for skipped step
+      if (formType !== 'ontbrekend-dienst') {
+        // If we're at or past where Aanbieder would be (logical step 1), add 1 to skip it
+        if (logicalStep >= 1) {
+          logicalStep += 1;
+        }
+      }
+
+      return logicalStep;
+    },
+    [formType]
+  );
+
   const handleNextStep = async () => {
     const next = currentStep + 1;
     setCurrentStep(next);
-    // Producten step is commented out, so step 1 is now Applicaties
-    if (next === 1) {
-      // Load all modules when moving to Applicaties step
-      await loadAllModules();
-    }
-    // Legacy loading logic (commented out)
-    // if (next === 2) {
-    //   // Load modules when moving to Applicaties step
-    //   await loadModulesForProducts();
-    // }
-    // if (next === 3) {
-    //   await loadModulesForProducts();
-    // }
-    // if (next === 4) {
-    //   await loadKoppelingenForModules();
-    // }
   };
 
   const getStatus = (active, step) => {
@@ -676,7 +744,10 @@ const ConFormsDienst = ({ store, userStore }) => {
   };
 
   const renderStep = (step) => {
-    switch (step) {
+    // Convert physical step to logical step using helper function
+    const logicalStep = getLogicalStepFromPhysical(step);
+
+    switch (logicalStep) {
       // Legacy step 0 - ConFormSoortDienstStage (commented out)
       // case 0:
       //   return (
@@ -688,31 +759,6 @@ const ConFormsDienst = ({ store, userStore }) => {
       //     />
       //   );
       case 0:
-        return (
-          <ConFormDienstInformatieStage
-            dienst={dienst}
-            setDienstData={setDienstData}
-            loading={schemasLoading}
-            touched={touched}
-            schemas={schemas}
-            userStore={userStore}
-            dienstType={dienstType}
-          />
-        );
-      // Producten stage commented out (step 1)
-      // case 1:
-      //   return (
-      //     <ConFormProductenStage
-      //       selectedProductIds={selectedProductIds}
-      //       setSelectedProductIds={setSelectedProductIds}
-      //       setSelectedProductOptions={setSelectedProductOptions}
-      //       productOptions={productOptions}
-      //       productsLoading={productsLoading}
-      //       searchProducts={performProductsSearch}
-      //       dienstType={dienstType}
-      //     />
-      //   );
-      case 1:
         return (
           <ConFormApplicatiesStage
             // Product-related props commented out
@@ -731,6 +777,44 @@ const ConFormsDienst = ({ store, userStore }) => {
             dienstType={dienstType}
           />
         );
+      case 1:
+        // Aanbieder - only for ontbrekend-dienst
+        return (
+          <ConFormDienstAanbiederInformatieStage
+            dienst={dienst}
+            setDienstData={setDienstData}
+            aanbiederOrganisatie={aanbiederOrganisatie}
+            setAanbiederOrganisatieData={setAanbiederOrganisatieData}
+            loading={schemasLoading}
+            schemas={schemas}
+            aanbiederKeuze={aanbiederKeuze}
+          />
+        );
+      // Producten stage commented out
+      // case 1:
+      //   return (
+      //     <ConFormProductenStage
+      //       selectedProductIds={selectedProductIds}
+      //       setSelectedProductIds={setSelectedProductIds}
+      //       setSelectedProductOptions={setSelectedProductOptions}
+      //       productOptions={productOptions}
+      //       productsLoading={productsLoading}
+      //       searchProducts={performProductsSearch}
+      //       dienstType={dienstType}
+      //     />
+      //   );
+      case 2:
+        return (
+          <ConFormDienstInformatieStage
+            dienst={dienst}
+            setDienstData={setDienstData}
+            loading={schemasLoading}
+            touched={touched}
+            schemas={schemas}
+            userStore={userStore}
+            dienstType={dienstType}
+          />
+        );
       // Legacy step - ConFormKoppelingenStage (commented out)
       // case 4:
       //   return (
@@ -743,7 +827,7 @@ const ConFormsDienst = ({ store, userStore }) => {
       //       dienstType={dienstType}
       //     />
       //   );
-      case 2:
+      case 3:
         return (
           <ConFormControlerenStage
             dienst={dienst}
@@ -756,6 +840,9 @@ const ConFormsDienst = ({ store, userStore }) => {
             koppelingOptions={koppelingOptions}
             userStore={userStore}
             dienstType={dienstType}
+            formType={formType}
+            aanbiederKeuze={aanbiederKeuze}
+            aanbiederOrganisatie={aanbiederOrganisatie}
           />
         );
       default:
@@ -764,15 +851,20 @@ const ConFormsDienst = ({ store, userStore }) => {
   };
 
   const currentStepName = (step) => {
-    switch (step) {
+    // Convert physical step to logical step using helper function
+    const logicalStep = getLogicalStepFromPhysical(step);
+
+    switch (logicalStep) {
       case 0:
-        return 'Dienst informatie';
+        return 'Applicaties';
+      case 1:
+        return 'Aanbieder';
       // Producten step commented out
       // case 1:
       //   return 'Producten';
-      case 1:
-        return 'Applicaties';
       case 2:
+        return 'Dienst informatie';
+      case 3:
         return 'Controleer uw gegevens';
       // Legacy step names (commented out)
       // case 0: return 'Soort dienst';
@@ -798,7 +890,46 @@ const ConFormsDienst = ({ store, userStore }) => {
 
   // Validation mirroring product form style
   const getDisabledStatus = (step) => {
-    if (step === 0) {
+    // Convert physical step to logical step using helper function
+    const logicalStep = getLogicalStepFromPhysical(step);
+
+    if (logicalStep === 0) {
+      // Applicaties: at least one applicatie selected
+      return selectedModuleIds.length === 0;
+    }
+    if (logicalStep === 1 && formType === 'ontbrekend-dienst') {
+      // Aanbieder step validation
+      // If user selected "bestaand", check if aanbieder is selected
+      if (aanbiederKeuze === 'bestaand') {
+        return !dienst.aanbieder || !String(dienst.aanbieder).trim();
+      }
+
+      // If user selected "nieuw", check if all required fields are filled
+      const requiredNewOrgFields = ['naam', 'type', 'website'];
+      const missingNewOrgFields = requiredNewOrgFields.filter(
+        (field) =>
+          !aanbiederOrganisatie[field] || !String(aanbiederOrganisatie[field]).trim()
+      );
+
+      // Validate website format if provided
+      if (
+        aanbiederOrganisatie.website &&
+        String(aanbiederOrganisatie.website).trim()
+      ) {
+        const website = String(aanbiederOrganisatie.website).trim();
+        if (!validateWebsite(website)) {
+          return true;
+        }
+      }
+
+      return missingNewOrgFields.length > 0;
+    }
+    // Producten step validation commented out
+    // if (logicalStep === 1) {
+    //   // Producten: at least one product selected
+    //   return selectedProductIds.length === 0;
+    // }
+    if (logicalStep === 2) {
       // Dienst informatie: Respect schema requiredness
       const naamRequired = isSchemaFieldRequired('dienst', 'naam');
       const websiteRequired = isSchemaFieldRequired('dienst', 'website');
@@ -817,18 +948,9 @@ const ConFormsDienst = ({ store, userStore }) => {
       }
       return false;
     }
-    // Producten step validation commented out (step 1)
-    // if (step === 1) {
-    //   // Producten: at least one product selected
-    //   return selectedProductIds.length === 0;
-    // }
-    if (step === 1) {
-      // Applicaties: at least one applicatie selected
-      return selectedModuleIds.length === 0;
-    }
     // Legacy validation (commented out)
 
-    // if (step === 4) {
+    // if (logicalStep === 4) {
     //   // Koppelingen: no strict validation (optional)
     //   return false;
     // }
@@ -837,7 +959,45 @@ const ConFormsDienst = ({ store, userStore }) => {
   };
 
   const getDisabledTooltip = (step) => {
-    if (step === 0) {
+    // Convert physical step to logical step using helper function
+    const logicalStep = getLogicalStepFromPhysical(step);
+
+    if (logicalStep === 0) {
+      return selectedModuleIds.length === 0
+        ? 'Selecteer minimaal één applicatie'
+        : '';
+    }
+    if (logicalStep === 1 && formType === 'ontbrekend-dienst') {
+      // Aanbieder step validation messages
+      if (aanbiederKeuze === 'bestaand') {
+        if (!dienst.aanbieder || !String(dienst.aanbieder).trim()) {
+          return 'Selecteer een aanbieder';
+        }
+      } else {
+        const messages = [];
+        if (!aanbiederOrganisatie.naam || !aanbiederOrganisatie.naam.trim()) {
+          messages.push('Vul de naam van de organisatie in');
+        }
+        if (!aanbiederOrganisatie.type || !aanbiederOrganisatie.type.trim()) {
+          messages.push('Selecteer het type organisatie');
+        }
+        if (!aanbiederOrganisatie.website || !aanbiederOrganisatie.website.trim()) {
+          messages.push('Vul de website van de organisatie in');
+        }
+        if (
+          aanbiederOrganisatie.website &&
+          !validateWebsite(String(aanbiederOrganisatie.website).trim())
+        ) {
+          messages.push('Website heeft een ongeldig formaat');
+        }
+        return messages.join('\n');
+      }
+    }
+    // Producten step tooltip commented out
+    // if (logicalStep === 1) {
+    //   return selectedProductIds.length === 0 ? 'Selecteer minimaal één product' : '';
+    // }
+    if (logicalStep === 2) {
       // Dienst informatie validation messages
       const messages = [];
       const naamRequired = isSchemaFieldRequired('dienst', 'naam');
@@ -862,36 +1022,55 @@ const ConFormsDienst = ({ store, userStore }) => {
       }
       return messages.join('\n');
     }
-    // Producten step tooltip commented out (step 1)
-    // if (step === 1) {
-    //   return selectedProductIds.length === 0 ? 'Selecteer minimaal één product' : '';
-    // }
-    if (step === 1) {
-      return selectedModuleIds.length === 0
-        ? 'Selecteer minimaal één applicatie'
-        : '';
-    }
     // Legacy tooltips (commented out)
     return '';
-  };
-
-  // Determine page title based on dienst type
-  const getPageTitle = () => {
-    if (dienstType === 'eigen-organisatie') {
-      return 'Dienst Aanmelden voor eigen organisatie';
-    }
-    if (dienstType === 'andere-organisatie') {
-      return 'Dienst Aanmelden voor andere organisatie';
-    }
-    return 'Dienst Aanmelden';
   };
 
   const handleSaveDienst = async () => {
     setSaving(true);
     setSaveResult(null);
     try {
+      let finalAanbieder = dienst.aanbieder;
+
+      // ✅ For new organization, create the organization first (only for ontbrekend-dienst)
+      if (formType === 'ontbrekend-dienst' && aanbiederKeuze === 'nieuw') {
+        try {
+          const newOrganizationData = {
+            naam: aanbiederOrganisatie.naam,
+            type: aanbiederOrganisatie.type,
+            website: aanbiederOrganisatie.website,
+            beschrijvingKort: aanbiederOrganisatie.beschrijvingKort,
+            beschrijvingLang: aanbiederOrganisatie.beschrijvingLang,
+            'e-mailadres': aanbiederOrganisatie['e-mailadres'],
+            telefoonnummer: aanbiederOrganisatie.telefoonnummer,
+            logo: aanbiederOrganisatie.logo,
+          };
+
+          // Create the organization and get its ID
+          const createdOrganization = await store.object.createObject(
+            'voorzieningen',
+            'organisatie',
+            newOrganizationData
+          );
+
+          // Use the newly created organization ID as aanbieder
+          finalAanbieder =
+            createdOrganization?.id || createdOrganization?.['@self']?.id;
+
+          if (!finalAanbieder) {
+            throw new Error('Organisatie aangemaakt maar geen ID ontvangen');
+          }
+        } catch (orgError) {
+          console.error('Failed to create organization:', orgError);
+          setSaveResult('error');
+          setSaving(false);
+          return;
+        }
+      }
+
       const payload = {
         ...dienst,
+        aanbieder: finalAanbieder,
         producten: [], // Producten selection commented out
         modules: selectedModuleIds,
         koppelingen: selectedKoppelingIds,
@@ -916,12 +1095,24 @@ const ConFormsDienst = ({ store, userStore }) => {
     }
   };
 
+  const { icon: Icon, schema } = getActiveWizard();
+
   return (
     <AcSection spacing>
       <AcContainer>
         <AcColumn gap='tiger'>
           <div>
-            <Heading1>{isEditMode ? 'Dienst updaten' : getPageTitle()}</Heading1>
+            <Heading1
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+            >
+              <Icon style={{ width: '1em', height: '1em' }} />
+              {_.capitalize(schema)}
+              {isEditMode
+                ? ' updaten'
+                : formType === 'ontbrekend-dienst'
+                ? ' melden'
+                : ' registreren'}
+            </Heading1>
             <Paragraph>
               {isEditMode
                 ? 'Werk uw dienstgegevens bij in onze catalogus.'
@@ -1021,65 +1212,63 @@ const ConFormsDienst = ({ store, userStore }) => {
                     steps={(() => {
                       const baseSteps = [
                         {
-                          id: 'd1e2n3s4-t5i6-n7f8-o9r0-m1a2t3i4e5f6',
+                          id: 'a9p0p1l2-i3c4-a5t6-i7e8-s9t0a1g2e3f4',
                           marker: 1,
-                          status: getStatus(currentStep, 0),
+                          status: getStatus(currentStep, getAdjustedStepIndex(0)),
+                          title: 'Applicaties',
+                        },
+                      ];
+
+                      // Only add Aanbieder step for ontbrekend-dienst
+                      if (formType === 'ontbrekend-dienst') {
+                        baseSteps.push({
+                          id: 'a1a2n3b4-i5e6-d7e8-r9i0-n1f2o3r4m5a6t7i8e9',
+                          marker: 2,
+                          status: getStatus(currentStep, getAdjustedStepIndex(1)),
+                          title: 'Aanbieder',
+                        });
+                      }
+
+                      // Legacy nested steps structure (commented out)
+                      // {
+                      //   id: 'p7r8o9d0-u1c2-t3e4-n5a6-p7p8l9i0c1a2',
+                      //   marker: 2,
+                      //   status:
+                      //     currentStep >= 1 && currentStep <= 2
+                      //       ? 'current'
+                      //       : currentStep < 1
+                      //       ? 'not-checked'
+                      //       : 'checked',
+                      //   title: 'Producten en applicaties',
+                      //   steps: [
+                      //     {
+                      //       id: 'p3r4o5d6-u7c8-t9e0-n1s2-t3a4g5e6f7g8',
+                      //       status: getStatus(currentStep, 1),
+                      //       title: 'Producten',
+                      //     },
+                      //     {
+                      //       id: 'a9p0p1l2-i3c4-a5t6-i7e8-s9t0a1g2e3f4',
+                      //       status: getStatus(currentStep, 2),
+                      //       title: 'Applicaties',
+                      //     },
+                      //   ],
+                      // },
+
+                      baseSteps.push(
+                        {
+                          id: 'd1e2n3s4-t5i6-n7f8-o9r0-m1a2t3i4e5f6',
+                          marker: formType === 'ontbrekend-dienst' ? 3 : 2,
+                          status: getStatus(currentStep, getAdjustedStepIndex(2)),
                           title: 'Dienst informatie',
                         },
                         {
-                          id: 'p7r8o9d0-u1c2-t3e4-n5a6-p7p8l9i0c1a2',
-                          marker: 2,
-                          status:
-                            currentStep === 1
-                              ? 'current'
-                              : currentStep < 1
-                              ? 'not-checked'
-                              : 'checked',
-                          title: 'Applicaties',
-                          steps: [
-                            // {
-                            //   id: 'p3r4o5d6-u7c8-t9e0-n1s2-t3a4g5e6f7g8',
-                            //   status: getStatus(currentStep, 1),
-                            //   title: 'Producten',
-                            // },
-                            {
-                              id: 'a9p0p1l2-i3c4-a5t6-i7e8-s9t0a1g2e3f4',
-                              status: getStatus(currentStep, 1),
-                              title: 'Applicaties',
-                            },
-                          ],
-                        },
-                        {
                           id: 'c5o6n7t8-r9o0-l1e2-r3e4-n5s6t7a8g9e0',
-                          marker: 3,
-                          status: getStatus(currentStep, 2),
+                          marker: formType === 'ontbrekend-dienst' ? 4 : 3,
+                          status: getStatus(currentStep, getAdjustedStepIndex(3)),
                           title: 'Controleren',
-                        },
-                        // Legacy nested steps structure (commented out)
-                        // {
-                        //   id: 'p7r8o9d0-u1c2-t3e4-n5a6-p7p8l9i0c1a2',
-                        //   marker: 2,
-                        //   status:
-                        //     currentStep >= 1 && currentStep <= 2
-                        //       ? 'current'
-                        //       : currentStep < 1
-                        //       ? 'not-checked'
-                        //       : 'checked',
-                        //   title: 'Producten en applicaties',
-                        //   steps: [
-                        //     {
-                        //       id: 'p3r4o5d6-u7c8-t9e0-n1s2-t3a4g5e6f7g8',
-                        //       status: getStatus(currentStep, 1),
-                        //       title: 'Producten',
-                        //     },
-                        //     {
-                        //       id: 'a9p0p1l2-i3c4-a5t6-i7e8-s9t0a1g2e3f4',
-                        //       status: getStatus(currentStep, 2),
-                        //       title: 'Applicaties',
-                        //     },
-                        //   ],
-                        // },
-                      ];
+                        }
+                      );
+
                       return baseSteps;
                     })()}
                   />
@@ -1177,33 +1366,73 @@ const ConFormsDienst = ({ store, userStore }) => {
                       </AcButton>
                     )}
 
-                    {currentStep !== 2 && (
-                      <div className='ac-register-button-wrapper'>
-                        <AcButton
-                          style='button'
-                          className={clsx(
-                            currentStep === 0 && 'ac-register-form-next-button'
-                          )}
-                          icon={<VISUALS.ARROW_RIGHT />}
-                          onClick={handleNextStep}
-                          disabled={
-                            getDisabledStatus(currentStep) ||
-                            prefillLoading ||
-                            saving ||
-                            schemasLoading
-                          }
-                          title={
-                            getDisabledStatus(currentStep)
-                              ? getDisabledTooltip(currentStep)
-                              : ''
-                          }
-                        >
-                          Volgende
-                        </AcButton>
-                      </div>
+                    {currentStep === 0 && (
+                      <AcButton
+                        style='button'
+                        buttonType='secondary'
+                        icon={<VISUALS.CUBE />}
+                        onClick={() => setShowUnsavedChangesAlert(true)}
+                      >
+                        Ik kan de gewenste applicatie niet vinden
+                      </AcButton>
                     )}
 
-                    {currentStep === 2 && (
+                    <AcFlex
+                      spacing='xs'
+                      style={{ width: 'fit-content' }}
+                      className={clsx(
+                        currentStep === 0 && 'ac-register-form-next-button'
+                      )}
+                    >
+                      {currentStep === getAdjustedStepIndex(1) &&
+                        formType === 'ontbrekend-dienst' && (
+                          <AcButton
+                            style='button'
+                            buttonType='secondary'
+                            icon={
+                              aanbiederKeuze === 'bestaand' ? (
+                                <VISUALS.BUILDING />
+                              ) : (
+                                <VISUALS.ARROW_LEFT />
+                              )
+                            }
+                            onClick={() =>
+                              aanbiederKeuze === 'bestaand'
+                                ? setAanbiederKeuze('nieuw')
+                                : setAanbiederKeuze('bestaand')
+                            }
+                          >
+                            {aanbiederKeuze === 'bestaand'
+                              ? 'Ik kan de gewenste leverancier niet vinden'
+                              : 'Bestaande leverancier selecteren'}
+                          </AcButton>
+                        )}
+
+                      {getLogicalStepFromPhysical(currentStep) !== 3 && (
+                        <div className='ac-register-button-wrapper'>
+                          <AcButton
+                            style='button'
+                            icon={<VISUALS.ARROW_RIGHT />}
+                            onClick={handleNextStep}
+                            disabled={
+                              getDisabledStatus(currentStep) ||
+                              prefillLoading ||
+                              saving ||
+                              schemasLoading
+                            }
+                            title={
+                              getDisabledStatus(currentStep)
+                                ? getDisabledTooltip(currentStep)
+                                : ''
+                            }
+                          >
+                            Volgende
+                          </AcButton>
+                        </div>
+                      )}
+                    </AcFlex>
+
+                    {getLogicalStepFromPhysical(currentStep) === 3 && (
                       <AcButton
                         style='button'
                         buttonType='primary'
@@ -1226,6 +1455,19 @@ const ConFormsDienst = ({ store, userStore }) => {
           )}
         </AcColumn>
       </AcContainer>
+
+      <ConUnsavedChangesAlertModal
+        key='unsaved-changes-alert-modal'
+        showModal={showUnsavedChangesAlert}
+        onClose={() => setShowUnsavedChangesAlert(false)}
+        onConfirm={() => navigate('/forms/applicatie')}
+        title='Waarschuwing'
+        message='Je staat op het punt om de dienstregistratie te verlaten. Al je wijzigingen zullen niet worden opgeslagen.'
+        confirmLabel='Verlaten'
+        cancelLabel='Blijven'
+        confirmIcon={<VISUALS.ARROW_RIGHT />}
+        cancelIcon={<VISUALS.ARROW_LEFT />}
+      />
     </AcSection>
   );
 };

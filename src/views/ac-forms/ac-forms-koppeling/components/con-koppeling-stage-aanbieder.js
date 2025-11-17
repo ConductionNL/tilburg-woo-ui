@@ -7,36 +7,44 @@ import {
 } from '@views/ac-forms/validation/form-validations';
 
 /**
- * Aanbieder Informatie Form Component
+ * Aanbieder Informatie Form Component for Koppeling
  *
  * This step allows users to either select an existing organization or create a new one
- * when registering a missing applicatie (type=ontbrekend-applicatie).
+ * when registering a koppeling with type=aanbieden-koppeling.
  *
  * Features:
- * - Radio button choice between existing and new organization
+ * - Choice between existing and new organization
  * - Searchable dropdown for existing organizations
  * - Full form for creating new organization based on organisatie schema
  *
- * Only shown when formType === 'ontbrekend-applicatie'
+ * Only shown when koppelingsType === 'aanbieden-koppeling'
  *
- * @param {Object} applicatie - The applicatie object containing form data
- * @param {Function} setApplicatieData - Function to update applicatie data
+ * @param {Object} aanbieder - The aanbieder value (UUID string or null)
+ * @param {Function} setAanbieder - Function to update aanbieder value
  * @param {Object} aanbiederOrganisatie - The organization object for creating new organization
  * @param {Function} setAanbiederOrganisatieData - Function to update organization data
  * @param {boolean} loading - Loading state indicator
- * @param {Object} schemas - Available schemas for field configuration (organisatie schema)
+ * @param {Object} schemas - Available schemas for field configuration (koppeling and organisatie schemas)
+ * @param {boolean} schemasLoading - Loading state for schemas
  * @param {string} aanbiederKeuze - Choice between 'bestaand' or 'nieuw'
  * @param {Function} setAanbiederKeuze - Function to update choice
+ * @param {Array} organisatieOptions - Options for existing organizations
+ * @param {boolean} organisatieLoading - Loading state for organizations
+ * @param {Function} searchOrganisaties - Function to search organizations
  */
-const ConFormApplicatieAanbiederInformatieStage = memo(
+const ConKoppelingStageAanbieder = memo(
   ({
-    applicatie,
-    setApplicatieData,
+    aanbieder,
+    setAanbieder,
     aanbiederOrganisatie,
     setAanbiederOrganisatieData,
     loading,
     schemas,
+    schemasLoading,
     aanbiederKeuze,
+    organisatieOptions,
+    organisatieLoading,
+    searchOrganisaties,
   }) => {
     // Handle choice change between existing and new
     const handleChoiceChange = () => {
@@ -49,12 +57,11 @@ const ConFormApplicatieAanbiederInformatieStage = memo(
         setAanbiederOrganisatieData('beschrijvingLang', '');
         setAanbiederOrganisatieData('e-mailadres', '');
         setAanbiederOrganisatieData('telefoonnummer', '');
+        setAanbiederOrganisatieData('kvkNummer', '');
         setAanbiederOrganisatieData('logo', '');
-        // Don't auto-set aanbieder - let user explicitly select from dropdown
-        setApplicatieData('aanbieder', null);
       } else {
         // Clear existing organization selection
-        setApplicatieData('aanbieder', null);
+        setAanbieder(null);
       }
     };
 
@@ -69,26 +76,55 @@ const ConFormApplicatieAanbiederInformatieStage = memo(
         {/* Use the same container class as ConDynamicSchemaForm for consistency */}
         <div className='con-dynamic-form-container'>
           <div className='con-form-fields-container'>
-            {/* Choice between existing and new organization - using same styling as ProductOpbouw */}
+            {/* Choice between existing and new organization */}
             <div className='con-form-field-wrapper field-size-full'>
               <h3>Aanbieder selecteren</h3>
             </div>
 
-            {/* Existing organization dropdown - using ConSchemaEnhancedField */}
+            {/* Existing organization dropdown */}
             {aanbiederKeuze === 'bestaand' && (
-              <ConSchemaEnhancedField
-                schemaType='module'
-                schemaProperty='aanbieder'
-                value={applicatie.aanbieder}
-                onChange={(value) => setApplicatieData('aanbieder', value)}
-                isDisabled={loading}
-                width='full'
-                customProps={{
-                  // placeholder will come from schema example
-                  isClearable: true,
-                }}
-                schemas={schemas}
-              />
+              <div style={{ gridColumn: 'span 2' }}>
+                <ConSchemaEnhancedField
+                  schemaType='koppeling'
+                  schemaProperty='aanbieder'
+                  value={aanbieder}
+                  onChange={(value) => {
+                    // Handle both object and string formats
+                    if (!value) {
+                      setAanbieder(null);
+                    } else if (
+                      typeof value === 'object' &&
+                      value.value !== undefined
+                    ) {
+                      setAanbieder(value.value);
+                    } else if (typeof value === 'string') {
+                      setAanbieder(value);
+                    } else {
+                      setAanbieder(null);
+                    }
+                  }}
+                  isDisabled={loading || schemasLoading}
+                  width='full'
+                  schemas={schemas}
+                  optionsProvider={organisatieOptions}
+                  isLoading={organisatieLoading || schemasLoading}
+                  onSearch={(_path, _refSlug, q) => searchOrganisaties(q)}
+                  customProps={{
+                    label: 'Aanbieder',
+                    placeholder: 'Selecteer een aanbieder',
+                    isClearable: true,
+                  }}
+                />
+                <div
+                  style={{
+                    fontSize: '0.875rem',
+                    color: '#666',
+                    marginTop: '0.25rem',
+                  }}
+                >
+                  Selecteer de organisatie die deze koppeling aanbiedt.
+                </div>
+              </div>
             )}
 
             {/* New organization form fields */}
@@ -100,9 +136,8 @@ const ConFormApplicatieAanbiederInformatieStage = memo(
                   schemaProperty='naam'
                   value={aanbiederOrganisatie.naam || ''}
                   onChange={(value) => setAanbiederOrganisatieData('naam', value)}
-                  isDisabled={loading}
+                  isDisabled={loading || schemasLoading}
                   width='full'
-                  // placeholder will come from schema example
                   schemas={schemas}
                 />
 
@@ -112,7 +147,7 @@ const ConFormApplicatieAanbiederInformatieStage = memo(
                   schemaProperty='type'
                   value={aanbiederOrganisatie.type || ''}
                   onChange={(value) => setAanbiederOrganisatieData('type', value)}
-                  isDisabled={loading}
+                  isDisabled={loading || schemasLoading}
                   width='half'
                   schemas={schemas}
                 />
@@ -123,7 +158,7 @@ const ConFormApplicatieAanbiederInformatieStage = memo(
                   schemaProperty='website'
                   value={aanbiederOrganisatie.website || ''}
                   onChange={(value) => setAanbiederOrganisatieData('website', value)}
-                  isDisabled={loading}
+                  isDisabled={loading || schemasLoading}
                   width='half'
                   customProps={{
                     inputType: 'text',
@@ -149,7 +184,7 @@ const ConFormApplicatieAanbiederInformatieStage = memo(
                   onChange={(value) =>
                     setAanbiederOrganisatieData('beschrijvingKort', value)
                   }
-                  isDisabled={loading}
+                  isDisabled={loading || schemasLoading}
                   width='full'
                   customProps={{
                     label: 'Korte beschrijving',
@@ -166,7 +201,7 @@ const ConFormApplicatieAanbiederInformatieStage = memo(
                   onChange={(value) =>
                     setAanbiederOrganisatieData('beschrijvingLang', value)
                   }
-                  isDisabled={loading}
+                  isDisabled={loading || schemasLoading}
                   width='full'
                   customProps={{
                     label: 'Lange beschrijving',
@@ -184,7 +219,7 @@ const ConFormApplicatieAanbiederInformatieStage = memo(
                   onChange={(value) =>
                     setAanbiederOrganisatieData('e-mailadres', value)
                   }
-                  isDisabled={loading}
+                  isDisabled={loading || schemasLoading}
                   width='half'
                   customProps={{
                     inputType: 'text',
@@ -207,7 +242,7 @@ const ConFormApplicatieAanbiederInformatieStage = memo(
                   onChange={(value) =>
                     setAanbiederOrganisatieData('telefoonnummer', value)
                   }
-                  isDisabled={loading}
+                  isDisabled={loading || schemasLoading}
                   width='half'
                   customProps={{
                     validation: {
@@ -222,13 +257,26 @@ const ConFormApplicatieAanbiederInformatieStage = memo(
                   schemas={schemas}
                 />
 
+                {/* KvK Number */}
+                <ConSchemaEnhancedField
+                  schemaType='organisatie'
+                  schemaProperty='kvkNummer'
+                  value={aanbiederOrganisatie.kvkNummer || ''}
+                  onChange={(value) =>
+                    setAanbiederOrganisatieData('kvkNummer', value)
+                  }
+                  isDisabled={loading || schemasLoading}
+                  width='half'
+                  schemas={schemas}
+                />
+
                 {/* Logo */}
                 <ConSchemaEnhancedField
                   schemaType='organisatie'
                   schemaProperty='logo'
                   value={aanbiederOrganisatie.logo || ''}
                   onChange={(value) => setAanbiederOrganisatieData('logo', value)}
-                  isDisabled={loading}
+                  isDisabled={loading || schemasLoading}
                   width='half'
                   customProps={{
                     inputType: 'file',
@@ -245,7 +293,6 @@ const ConFormApplicatieAanbiederInformatieStage = memo(
   }
 );
 
-ConFormApplicatieAanbiederInformatieStage.displayName =
-  'ConFormApplicatieAanbiederInformatieStage';
+ConKoppelingStageAanbieder.displayName = 'ConKoppelingStageAanbieder';
 
-export default ConFormApplicatieAanbiederInformatieStage;
+export default ConKoppelingStageAanbieder;

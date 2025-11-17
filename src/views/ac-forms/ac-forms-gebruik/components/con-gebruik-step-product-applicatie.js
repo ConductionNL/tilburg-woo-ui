@@ -47,6 +47,7 @@ const ConGebruikStepProductApplicatie = ({
             customProps={{
               label: 'Applicatie',
               placeholder: 'Selecteer een applicatie',
+              required: true,
             }}
           />
         </div>

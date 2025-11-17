@@ -140,6 +140,30 @@ const ConFormApplicatieKoppelingenStage = memo(
       });
     };
 
+    // Clear all fields in a row except Applicatie A
+    const clearRow = (rowId) => {
+      // Remove the koppeling from applicatie data if it exists
+      persistRowIntoApplicatie(rowId, {
+        appBId: null,
+        richting: null,
+        soort: null,
+      });
+
+      // Clear UI state for this row
+      setKoppelingenFormState((prev) => ({
+        ...prev,
+        selectedAppBByRow: Object.fromEntries(
+          Object.entries(prev.selectedAppBByRow).filter(([k]) => Number(k) !== rowId)
+        ),
+        directionByRow: Object.fromEntries(
+          Object.entries(prev.directionByRow).filter(([k]) => Number(k) !== rowId)
+        ),
+        typeByRow: Object.fromEntries(
+          Object.entries(prev.typeByRow).filter(([k]) => Number(k) !== rowId)
+        ),
+      }));
+    };
+
     const removeRow = (rowId) => {
       const localId = koppelingIdByRow[rowId];
 
@@ -284,10 +308,10 @@ const ConFormApplicatieKoppelingenStage = memo(
                   <b>Applicatie A</b>
                 </TableCell>
                 <TableCell>
-                  <b>Applicatie B</b>
+                  <b>Richting data-uitwisseling</b>
                 </TableCell>
                 <TableCell>
-                  <b>Richting data-uitwisseling</b>
+                  <b>Applicatie B / Buiten Gemeentenlijke voorziening</b>
                 </TableCell>
                 <TableCell>
                   <b>Soort koppeling</b>
@@ -311,6 +335,29 @@ const ConFormApplicatieKoppelingenStage = memo(
                     >
                       {applicatie.naam || 'Deze applicatie'}
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    <ReactSelect
+                      options={directionOptions}
+                      value={
+                        directionByRow[rowId]
+                          ? directionOptions.find(
+                              (o) => o.value === directionByRow[rowId]
+                            )
+                          : null
+                      }
+                      onChange={(opt) => {
+                        // Persist immediately with the fresh value
+                        persistRowIntoApplicatie(rowId, { richting: opt?.value });
+                        // Keep UI state in sync
+                        setKoppelingValue(rowId, (prev) => ({
+                          directionByRow: {
+                            ...prev.directionByRow,
+                            [rowId]: opt?.value,
+                          },
+                        }));
+                      }}
+                    />
                   </TableCell>
                   <TableCell>
                     <ReactSelect
@@ -354,29 +401,6 @@ const ConFormApplicatieKoppelingenStage = memo(
                   </TableCell>
                   <TableCell>
                     <ReactSelect
-                      options={directionOptions}
-                      value={
-                        directionByRow[rowId]
-                          ? directionOptions.find(
-                              (o) => o.value === directionByRow[rowId]
-                            )
-                          : null
-                      }
-                      onChange={(opt) => {
-                        // Persist immediately with the fresh value
-                        persistRowIntoApplicatie(rowId, { richting: opt?.value });
-                        // Keep UI state in sync
-                        setKoppelingValue(rowId, (prev) => ({
-                          directionByRow: {
-                            ...prev.directionByRow,
-                            [rowId]: opt?.value,
-                          },
-                        }));
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <ReactSelect
                       options={typeOptions}
                       value={
                         typeByRow[rowId]
@@ -399,9 +423,8 @@ const ConFormApplicatieKoppelingenStage = memo(
                         style='button'
                         buttonType='secondary'
                         icon={<VISUALS.TRASHCAN />}
-                        disabled={rows.length === 1}
                         onClick={() => {
-                          removeRow(rowId);
+                          rows.length === 1 ? clearRow(rowId) : removeRow(rowId);
                         }}
                         title='Rij verwijderen'
                       ></AcButton>

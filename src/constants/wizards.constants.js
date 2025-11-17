@@ -46,7 +46,7 @@ export const DASHBOARD_WIZARDS = {
     id: 'eigen-applicatie',
     name: 'Applicatie registreren',
     description: 'Voeg een applicatie van uw eigen organisatie toe aan de catalogus',
-    icon: VISUALS.CUBES,
+    icon: VISUALS.CUBE,
     path: PATHS.FORMS_APPLICATIE,
     requiresAuth: true,
     requiresOrganization: true,
@@ -59,7 +59,7 @@ export const DASHBOARD_WIZARDS = {
     id: 'ontbrekend-applicatie',
     name: 'Applicatie melden',
     description: 'Meld een applicatie dat nog niet in de catalogus staat',
-    icon: VISUALS.PLUS,
+    icon: VISUALS.CUBE,
     path: PATHS.FORMS_APPLICATIE,
     requiresAuth: true,
     requiresOrganization: false,
@@ -81,6 +81,19 @@ export const DASHBOARD_WIZARDS = {
     color: 'blue',
     schema: 'dienst',
   },
+  DIENST_MELDEN: {
+    id: 'dienst-ontbrekend',
+    name: 'Dienst melden',
+    description: 'Meld een dienst dat nog niet in de catalogus staat',
+    icon: VISUALS.HAND_SHAKE,
+    path: PATHS.FORMS_DIENST,
+    requiresAuth: true,
+    requiresOrganization: false,
+    groupTypes: ['leverancier', 'gemeente', 'samenwerking', 'community'],
+    params: { type: 'ontbrekend-dienst' },
+    color: 'blue',
+    schema: 'dienst',
+  },
   GEBRUIK: {
     id: 'gebruik',
     name: 'Gebruik registreren',
@@ -94,22 +107,22 @@ export const DASHBOARD_WIZARDS = {
     color: 'blue',
     schema: 'gebruik',
   },
-  KOPPELING_AANBIEDEN: {
-    id: 'koppeling-aanbieden',
-    name: 'Koppeling Aanbieden',
-    description: 'Registreer een koppeling tussen een product en een dienst',
-    icon: VISUALS.LINK,
-    path: PATHS.FORMS_KOPPELING,
+  GEBRUIK_MELDEN: {
+    id: 'gebruik-ontbrekend',
+    name: 'Gebruik melden',
+    description: 'Meld een gebruik dat nog niet in de catalogus staat',
+    icon: VISUALS.CLIPBOARD_CHECK,
+    path: PATHS.FORMS_GEBRUIK,
     requiresAuth: true,
-    requiresOrganization: true,
+    requiresOrganization: false,
     groupTypes: ['gemeente', 'samenwerking', 'community'],
-    params: { type: 'aanbieden-koppeling' },
+    params: { type: 'ontbrekend-organisatie' },
     color: 'blue',
-    schema: 'koppeling',
+    schema: 'gebruik',
   },
-  KOPPELING_EIGEN_ORGANISATIE: {
-    id: 'koppeling-eigen-organisatie',
-    name: 'Koppeling Eigen Organisatie',
+  KOPPELING_REGISTREREN: {
+    id: 'koppeling-registreren',
+    name: 'Koppeling registreren',
     description: 'Registreer een koppeling tussen een product en een dienst',
     icon: VISUALS.LINK,
     path: PATHS.FORMS_KOPPELING,
@@ -117,6 +130,19 @@ export const DASHBOARD_WIZARDS = {
     requiresOrganization: true,
     groupTypes: ['gemeente', 'samenwerking', 'community'],
     params: { type: 'eigen-organisatie' },
+    color: 'blue',
+    schema: 'koppeling',
+  },
+  KOPPELING_MELDEN: {
+    id: 'koppeling-melden',
+    name: 'Koppeling melden',
+    description: 'Meld een koppeling dat nog niet in de catalogus staat',
+    icon: VISUALS.LINK,
+    path: PATHS.FORMS_KOPPELING,
+    requiresAuth: true,
+    requiresOrganization: false,
+    groupTypes: ['gemeente', 'samenwerking', 'community'],
+    params: { type: 'aanbieden-koppeling' },
     color: 'blue',
     schema: 'koppeling',
   },
@@ -166,6 +192,60 @@ export const getWizardUrl = (wizard, useParams = true) => {
   }
 
   return url;
+};
+
+/**
+ * gets the active wizard based on the current path + params
+ * @returns {{
+ *   icon: LoadableComponent<any>,
+ *   name: string,
+ *   description: string,
+ *   path: string,
+ *   requiresAuth: boolean,
+ *   requiresOrganization: boolean,
+ *   groupTypes: string[],
+ *   params: Record<string, any>,
+ *   color: string,
+ *   schema: string
+ * } | null} the active wizard or null if no wizard is found
+ */
+export const getActiveWizard = () => {
+  const path = window.location.pathname;
+  const searchParams = new URLSearchParams(window.location.search);
+  const urlParamKeys = Array.from(searchParams.keys());
+
+  const allWizards = Object.values(DASHBOARD_WIZARDS);
+
+  // Try to find an exact match: path + matching number of params + all param keys and values match
+  const exactMatchWizard = allWizards.find((wizard) => {
+    if (wizard.path !== path) return false;
+
+    const wizardParamKeys = wizard.params ? Object.keys(wizard.params) : [];
+    // Both must have no params
+    if (wizardParamKeys.length === 0 && urlParamKeys.length === 0) {
+      return true;
+    }
+    // If amount and presence of param keys do not match, not an exact match
+    if (wizardParamKeys.length !== urlParamKeys.length) {
+      return false;
+    }
+    // All params and values must match
+    return wizardParamKeys.every(
+      (key) => searchParams.get(key) === String(wizard.params[key])
+    );
+  });
+
+  if (exactMatchWizard) {
+    return exactMatchWizard;
+  }
+
+  // Fallback: return first wizard whose path matches, ignoring params
+  const fallbackWizard = allWizards.find((wizard) => wizard.path === path);
+
+  if (fallbackWizard) {
+    return fallbackWizard;
+  }
+  return null;
 };
 
 /**

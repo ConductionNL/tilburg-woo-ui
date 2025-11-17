@@ -9,7 +9,12 @@ import { AcButton } from '@src/molecules';
 import { ProcessSteps } from '@gemeente-denhaag/components-react';
 import { commongroundApiUrl } from '@config';
 import { useDebouncedInput } from '@src/hooks';
-import { validateWebsite } from '@views/ac-forms/validation/form-validations';
+import {
+  validateWebsite,
+  validateEmail,
+  validatePhone,
+} from '@views/ac-forms/validation/form-validations';
+import _ from 'lodash';
 
 import {
   Heading1,
@@ -33,6 +38,7 @@ import ConFormApplicatieAanbiederInformatieStage from './components/con-form-app
 
 // Utils
 import { getStatusMultiStep } from './utils/steps.utils';
+import { getActiveWizard } from '@src/constants/wizards.constants';
 
 /**
  * Applicatie Aanmelden Wizard (AcFormsApplicatie)
@@ -62,13 +68,13 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
   const [currentStep, setCurrentStep] = useState(0);
 
   // State for aanbieder selection (only for ontbrekend-applicatie)
-  const [aanbiederkeuze, setAanbiederKeuze] = useState('bestaand'); // 'bestaand' or 'nieuw'
+  const [aanbiederKeuze, setAanbiederKeuze] = useState('bestaand'); // 'bestaand' or 'nieuw'
 
   /**
    * Aanbieder Organization State Object
    *
    * This object holds organization data for creating a new organization.
-   * Only used when aanbiederkeuze === 'nieuw' and formType === 'ontbrekend-applicatie'
+   * Only used when aanbiederKeuze === 'nieuw' and formType === 'ontbrekend-applicatie'
    */
   const [aanbiederOrganisatie, setAanbiederOrganisatie] = useState({
     naam: '',
@@ -257,6 +263,8 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
   // Standaarden options with search functionality
   const [standaardenOptions, setStandaardenOptions] = useState([]);
   const [standaardenOptionsLoading, setStandaardenOptionsLoading] = useState(false);
+  // Extra standards selected via multi-select (not from referentieComponenten)
+  const [selectedExtraStandards, setSelectedExtraStandards] = useState([]);
 
   // Modules options with search functionality for koppelingen
   const [modulesOptions, setModulesOptions] = useState([]);
@@ -575,6 +583,80 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
     }
   }, [schemas?.module]);
 
+  // Initialize selectedExtraStandards from existing compliancy data
+  useEffect(() => {
+    if (standaardenOptions.length === 0) return;
+    if (selectedExtraStandards.length > 0) return; // Already initialized
+
+    const existingCompliancy = applicatie.compliancy || [];
+    if (existingCompliancy.length === 0) return;
+
+    // Get all standard IDs from referentieComponentenWithStandards
+    const getAllStandardsFromRefs = () => {
+      const standardsSet = new Set();
+      referentieComponentenWithStandards.forEach((refComp) => {
+        if (
+          refComp.aanbevolenStandaarden &&
+          Array.isArray(refComp.aanbevolenStandaarden)
+        ) {
+          refComp.aanbevolenStandaarden.forEach((standard) => {
+            const id =
+              standard?.id ||
+              standard?.identifier ||
+              standard?.value ||
+              standard?.slug ||
+              standard?.naam ||
+              standard?.name;
+            if (id) standardsSet.add(String(id));
+          });
+        }
+        if (
+          refComp.verplichteStandaarden &&
+          Array.isArray(refComp.verplichteStandaarden)
+        ) {
+          refComp.verplichteStandaarden.forEach((standard) => {
+            const id =
+              standard?.id ||
+              standard?.identifier ||
+              standard?.value ||
+              standard?.slug ||
+              standard?.naam ||
+              standard?.name;
+            if (id) standardsSet.add(String(id));
+          });
+        }
+      });
+      return standardsSet;
+    };
+
+    const refStandardIds = getAllStandardsFromRefs();
+    const extraStandardsInCompliancy = existingCompliancy
+      .map((comp) => {
+        const standardId = String(comp.standaardversie);
+        // Check if this standard is NOT in referentieComponenten (i.e., it's an extra standard)
+        if (!refStandardIds.has(standardId)) {
+          // Find the option for this standard
+          return standaardenOptions.find(
+            (opt) =>
+              String(
+                opt.value || opt.data?.id || opt.data?.identifier || opt.data?.value
+              ) === standardId
+          );
+        }
+        return null;
+      })
+      .filter(Boolean);
+
+    if (extraStandardsInCompliancy.length > 0) {
+      setSelectedExtraStandards(extraStandardsInCompliancy);
+    }
+  }, [
+    standaardenOptions,
+    referentieComponentenWithStandards,
+    applicatie.compliancy,
+    selectedExtraStandards.length,
+  ]);
+
   // Function to search modules with debouncing using object store cache
   const performModulesSearch = useCallback(
     async (searchTerm = '') => {
@@ -839,7 +921,7 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
       let finalAanbieder = applicatie.aanbieder;
 
       // ✅ For type=ontbrekend-applicatie with new organization, create the organization first
-      if (formType === 'ontbrekend-applicatie' && aanbiederkeuze === 'nieuw') {
+      if (formType === 'ontbrekend-applicatie' && aanbiederKeuze === 'nieuw') {
         try {
           const newOrganizationData = {
             naam: aanbiederOrganisatie.naam,
@@ -946,7 +1028,7 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
             setAanbiederOrganisatieData={setAanbiederOrganisatieData}
             loading={loading}
             schemas={schemas}
-            aanbiederkeuze={aanbiederkeuze}
+            aanbiederKeuze={aanbiederKeuze}
             setAanbiederKeuze={setAanbiederKeuze}
           />
         );
@@ -1005,6 +1087,8 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
             referentieComponentenWithStandards={referentieComponentenWithStandards}
             standaardenOptions={standaardenOptions}
             standaardenOptionsLoading={standaardenOptionsLoading}
+            selectedExtraStandards={selectedExtraStandards}
+            setSelectedExtraStandards={setSelectedExtraStandards}
           />
         );
       case 6:
@@ -1081,7 +1165,7 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
     // Aanbieder step (logical step 0) - only for 'ontbrekend-applicatie' type
     if (logicalStep === 0 && formType === 'ontbrekend-applicatie') {
       // If user selected "bestaand", check if aanbieder is selected
-      if (aanbiederkeuze === 'bestaand') {
+      if (aanbiederKeuze === 'bestaand') {
         return !applicatie.aanbieder || !String(applicatie.aanbieder).trim();
       }
 
@@ -1103,17 +1187,57 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
         }
       }
 
+      // Validate email format if provided
+      if (
+        aanbiederOrganisatie['e-mailadres'] &&
+        String(aanbiederOrganisatie['e-mailadres']).trim()
+      ) {
+        const email = String(aanbiederOrganisatie['e-mailadres']).trim();
+        if (!validateEmail(email)) {
+          return true;
+        }
+      }
+
+      // Validate phone format if provided
+      if (
+        aanbiederOrganisatie.telefoonnummer &&
+        String(aanbiederOrganisatie.telefoonnummer).trim()
+      ) {
+        const phone = String(aanbiederOrganisatie.telefoonnummer).trim();
+        if (!validatePhone(phone)) {
+          return true;
+        }
+      }
+
       return missingNewOrgFields.length > 0;
     }
 
     // Applicatie informatie: naam is required
     if (logicalStep === 1) {
-      return !applicatie.naam || applicatie.naam.trim() === '';
+      return (
+        !applicatie.naam?.trim?.() ||
+        (applicatie.website && !validateWebsite(applicatie.website))
+      );
     }
     // licentie: licentie is required when open source is selected
     if (logicalStep === 2) {
       if (applicatie.licentietype === 'Open source') {
         return !applicatie.licentie || applicatie.licentie.trim() === '';
+      }
+    }
+
+    // Standaarden step: validate URLs in compliancy array
+    if (logicalStep === 5) {
+      if (Array.isArray(applicatie.compliancy)) {
+        const invalidUrls = applicatie.compliancy.filter(
+          (comp) =>
+            comp.url &&
+            String(comp.url).trim() &&
+            !validateWebsite(String(comp.url).trim())
+        );
+        if (invalidUrls.length > 0) {
+          return true;
+        }
       }
     }
 
@@ -1126,7 +1250,7 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
 
     // Aanbieder step validation messages
     if (logicalStep === 0 && formType === 'ontbrekend-applicatie') {
-      if (aanbiederkeuze === 'bestaand') {
+      if (aanbiederKeuze === 'bestaand') {
         if (!applicatie.aanbieder || !String(applicatie.aanbieder).trim()) {
           return 'Selecteer een aanbieder';
         }
@@ -1146,6 +1270,18 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
         ) {
           return 'Website heeft een ongeldig formaat';
         }
+        if (
+          aanbiederOrganisatie['e-mailadres'] &&
+          !validateEmail(String(aanbiederOrganisatie['e-mailadres']).trim())
+        ) {
+          return 'E-mailadres heeft een ongeldig formaat';
+        }
+        if (
+          aanbiederOrganisatie.telefoonnummer &&
+          !validatePhone(String(aanbiederOrganisatie.telefoonnummer).trim())
+        ) {
+          return 'Telefoonnummer heeft een ongeldig formaat';
+        }
       }
     }
 
@@ -1153,19 +1289,26 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
       if (!applicatie.naam || applicatie.naam.trim() === '') {
         return 'Vul de naam van de applicatie in';
       }
+      if (applicatie.website && !validateWebsite(applicatie.website)) {
+        return 'Website heeft een ongeldig formaat';
+      }
     }
-    return '';
-  };
 
-  const getPageTitle = (formType) => {
-    switch (formType) {
-      case 'eigen':
-        return 'Uw applicatie registreren';
-      case 'ontbrekend-applicatie':
-        return 'Applicatie melden en registreren';
-      default:
-        return 'Applicatie aanmelden';
+    if (logicalStep === 5) {
+      if (Array.isArray(applicatie.compliancy)) {
+        const invalidUrl = applicatie.compliancy.find(
+          (comp) =>
+            comp.url &&
+            String(comp.url).trim() &&
+            !validateWebsite(String(comp.url).trim())
+        );
+        if (invalidUrl) {
+          return 'Een of meer URLs in de compliancy hebben een ongeldig formaat';
+        }
+      }
     }
+
+    return '';
   };
 
   const getPageDescription = (formType) => {
@@ -1179,6 +1322,8 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
     }
   };
 
+  const { icon: Icon, schema } = getActiveWizard();
+
   return (
     <AcSection spacing>
       <AcContainer>
@@ -1186,8 +1331,16 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
           {!registerCallBack && (
             <>
               <div>
-                <Heading1>
-                  {isEditMode ? 'Applicatie updaten' : getPageTitle(formType)}
+                <Heading1
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                >
+                  <Icon style={{ width: '1em', height: '1em' }} />
+                  {_.capitalize(schema)}
+                  {isEditMode
+                    ? ' updaten'
+                    : formType === 'ontbrekend-applicatie'
+                    ? ' melden'
+                    : ' registreren'}
                 </Heading1>
                 <Paragraph>
                   {isEditMode
@@ -1410,6 +1563,29 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
                             Vorige
                           </AcButton>
                         )}
+                        {currentStep === 0 &&
+                          formType === 'ontbrekend-applicatie' && (
+                            <AcButton
+                              style='button'
+                              buttonType='secondary'
+                              icon={
+                                aanbiederKeuze === 'bestaand' ? (
+                                  <VISUALS.BUILDING />
+                                ) : (
+                                  <VISUALS.ARROW_LEFT />
+                                )
+                              }
+                              onClick={() =>
+                                aanbiederKeuze === 'bestaand'
+                                  ? setAanbiederKeuze('nieuw')
+                                  : setAanbiederKeuze('bestaand')
+                              }
+                            >
+                              {aanbiederKeuze === 'bestaand'
+                                ? 'Ik kan de gewenste leverancier niet vinden'
+                                : 'Bestaande leverancier selecteren'}
+                            </AcButton>
+                          )}
                         {getLogicalStepFromPhysical(currentStep) !== 8 && (
                           <AcButton
                             style='button'

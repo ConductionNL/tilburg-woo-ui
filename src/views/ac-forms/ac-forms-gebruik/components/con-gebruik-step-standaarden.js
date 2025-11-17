@@ -15,16 +15,16 @@ import ReactSelect from 'react-select';
 import { validateWebsite } from '../../validation/form-validations';
 
 /**
- * Standaarden Form Stage for Applicatie Form
+ * Standaarden Form Stage for Gebruik Form
  *
  * Table columns:
  * 1. Standaarden
  * 2. Compliant (checkbox)
  * 3. Bewijs (file upload when compliant)
  */
-const ConFormApplicatieStandaardenStage = ({
-  applicatie,
-  setApplicatieData,
+const ConGebruikStepStandaarden = ({
+  gebruik,
+  setGebruikData,
   referentieComponentenWithStandards,
   standaardenOptions,
   standaardenOptionsLoading,
@@ -301,7 +301,7 @@ const ConFormApplicatieStandaardenStage = ({
       const key = standard.id;
 
       // Check if there's existing compliancy data
-      const existingCompliancy = (applicatie.compliancy || []).find(
+      const existingCompliancy = (gebruik.compliancy || []).find(
         (c) => c.standaardversie === standard.id
       );
 
@@ -345,7 +345,7 @@ const ConFormApplicatieStandaardenStage = ({
         const { name: standardName, description: standardDescription } =
           extractStandardInfo({ id: standardId }, fetchedData);
 
-        const existingCompliancy = (applicatie.compliancy || []).find(
+        const existingCompliancy = (gebruik.compliancy || []).find(
           (c) => c.standaardversie === standardId
         );
 
@@ -388,7 +388,7 @@ const ConFormApplicatieStandaardenStage = ({
 
     setTableState(initialState);
   }, [
-    applicatie.compliancy,
+    gebruik.compliancy,
     referentieComponentenWithStandards,
     standaardenMap,
     selectedExtraStandards,
@@ -404,44 +404,44 @@ const ConFormApplicatieStandaardenStage = ({
       (opt) => !newSelectedIds.has(String(opt.value))
     );
 
-    // Remove compliancy entries for removed standards
-    if (removedStandards.length > 0) {
-      const prevCompliancy = Array.isArray(applicatie.compliancy)
-        ? [...applicatie.compliancy]
-        : [];
-      const updatedCompliancy = prevCompliancy.filter(
-        (c) =>
-          !removedStandards.some(
-            (opt) => String(opt.value) === String(c.standaardversie)
-          )
-      );
-      setApplicatieData('compliancy', updatedCompliancy);
+      // Remove compliancy entries for removed standards
+      if (removedStandards.length > 0) {
+        const prevCompliancy = Array.isArray(gebruik.compliancy)
+          ? [...gebruik.compliancy]
+          : [];
+        const updatedCompliancy = prevCompliancy.filter(
+          (c) =>
+            !removedStandards.some(
+              (opt) => String(opt.value) === String(c.standaardversie)
+            )
+        );
+        setGebruikData('compliancy', updatedCompliancy);
 
-      // Remove from standaarden array
-      const prevStandaarden = Array.isArray(applicatie.standaarden)
-        ? [...applicatie.standaarden]
-        : [];
-      const updatedStandaarden = prevStandaarden.filter(
-        (id) => !removedStandards.some((opt) => String(opt.value) === String(id))
-      );
-      setApplicatieData('standaarden', updatedStandaarden);
+        // Remove from standaarden array
+        const prevStandaarden = Array.isArray(gebruik.standaarden)
+          ? [...gebruik.standaarden]
+          : [];
+        const updatedStandaarden = prevStandaarden.filter(
+          (id) => !removedStandards.some((opt) => String(opt.value) === String(id))
+        );
+        setGebruikData('standaarden', updatedStandaarden);
 
-      // Remove from standaardenGemma array
-      const prevStandaardenGemma = Array.isArray(applicatie.standaardenGemma)
-        ? [...applicatie.standaardenGemma]
-        : [];
-      removedStandards.forEach((opt) => {
-        const standardData = findMatchingStandardData({ id: opt.value });
-        const objectId = standardData?.id || standardData?.objectId || null;
-        if (objectId) {
-          const index = prevStandaardenGemma.indexOf(objectId);
-          if (index > -1) {
-            prevStandaardenGemma.splice(index, 1);
+        // Remove from standaardenGemma array
+        const prevStandaardenGemma = Array.isArray(gebruik.standaardenGemma)
+          ? [...gebruik.standaardenGemma]
+          : [];
+        removedStandards.forEach((opt) => {
+          const standardData = findMatchingStandardData({ id: opt.value });
+          const objectId = standardData?.id || standardData?.objectId || null;
+          if (objectId) {
+            const index = prevStandaardenGemma.indexOf(objectId);
+            if (index > -1) {
+              prevStandaardenGemma.splice(index, 1);
+            }
           }
-        }
-      });
-      setApplicatieData('standaardenGemma', prevStandaardenGemma);
-    }
+        });
+        setGebruikData('standaardenGemma', prevStandaardenGemma);
+      }
 
     setSelectedExtraStandards(newSelected);
   };
@@ -467,9 +467,9 @@ const ConFormApplicatieStandaardenStage = ({
       },
     }));
 
-    // Update applicatie data
-    const prevCompliancy = Array.isArray(applicatie.compliancy)
-      ? [...applicatie.compliancy]
+    // Update gebruik data
+    const prevCompliancy = Array.isArray(gebruik.compliancy)
+      ? [...gebruik.compliancy]
       : [];
     let newCompliancy = prevCompliancy;
 
@@ -505,11 +505,11 @@ const ConFormApplicatieStandaardenStage = ({
       );
     }
 
-    setApplicatieData('compliancy', newCompliancy);
+    setGebruikData('compliancy', newCompliancy);
 
     // Update standaarden and standaardenGemma arrays
-    const prevStandaarden = Array.isArray(applicatie.standaarden)
-      ? [...applicatie.standaarden]
+    const prevStandaarden = Array.isArray(gebruik.standaarden)
+      ? [...gebruik.standaarden]
       : [];
     let newStandaarden = prevStandaarden;
 
@@ -526,10 +526,10 @@ const ConFormApplicatieStandaardenStage = ({
       }
     }
 
-    setApplicatieData('standaarden', newStandaarden);
+    setGebruikData('standaarden', newStandaarden);
 
-    const prevStandaardenGemma = Array.isArray(applicatie.standaardenGemma)
-      ? [...applicatie.standaardenGemma]
+    const prevStandaardenGemma = Array.isArray(gebruik.standaardenGemma)
+      ? [...gebruik.standaardenGemma]
       : [];
     let newStandaardenGemma = prevStandaardenGemma;
 
@@ -550,7 +550,7 @@ const ConFormApplicatieStandaardenStage = ({
       }
     }
 
-    setApplicatieData('standaardenGemma', newStandaardenGemma);
+    setGebruikData('standaardenGemma', newStandaardenGemma);
   };
 
   // Update bewijs for a specific standard
@@ -568,9 +568,9 @@ const ConFormApplicatieStandaardenStage = ({
       },
     }));
 
-    // Update applicatie data
-    const prevCompliancy = Array.isArray(applicatie.compliancy)
-      ? [...applicatie.compliancy]
+    // Update gebruik data
+    const prevCompliancy = Array.isArray(gebruik.compliancy)
+      ? [...gebruik.compliancy]
       : [];
     const updatedCompliancy = prevCompliancy.map((c) =>
       c.standaardversie === entry.standardId
@@ -584,7 +584,7 @@ const ConFormApplicatieStandaardenStage = ({
         : c
     );
 
-    setApplicatieData('compliancy', updatedCompliancy);
+    setGebruikData('compliancy', updatedCompliancy);
   };
 
   // Update URL for a specific standard
@@ -603,9 +603,9 @@ const ConFormApplicatieStandaardenStage = ({
       },
     }));
 
-    // Update applicatie data
-    const prevCompliancy = Array.isArray(applicatie.compliancy)
-      ? [...applicatie.compliancy]
+    // Update gebruik data
+    const prevCompliancy = Array.isArray(gebruik.compliancy)
+      ? [...gebruik.compliancy]
       : [];
     const updatedCompliancy = prevCompliancy.map((c) =>
       c.standaardversie === entry.standardId
@@ -619,7 +619,7 @@ const ConFormApplicatieStandaardenStage = ({
         : c
     );
 
-    setApplicatieData('compliancy', updatedCompliancy);
+    setGebruikData('compliancy', updatedCompliancy);
   };
 
   // Update bewijs filename for a specific standard
@@ -636,9 +636,9 @@ const ConFormApplicatieStandaardenStage = ({
       },
     }));
 
-    // Update applicatie data
-    const prevCompliancy = Array.isArray(applicatie.compliancy)
-      ? [...applicatie.compliancy]
+    // Update gebruik data
+    const prevCompliancy = Array.isArray(gebruik.compliancy)
+      ? [...gebruik.compliancy]
       : [];
     const updatedCompliancy = prevCompliancy.map((c) =>
       c.standaardversie === entry.standardId
@@ -651,7 +651,7 @@ const ConFormApplicatieStandaardenStage = ({
         : c
     );
 
-    setApplicatieData('compliancy', updatedCompliancy);
+    setGebruikData('compliancy', updatedCompliancy);
   };
 
   // Clear both bewijs and filename
@@ -669,9 +669,9 @@ const ConFormApplicatieStandaardenStage = ({
       },
     }));
 
-    // Update applicatie data
-    const prevCompliancy = Array.isArray(applicatie.compliancy)
-      ? [...applicatie.compliancy]
+    // Update gebruik data
+    const prevCompliancy = Array.isArray(gebruik.compliancy)
+      ? [...gebruik.compliancy]
       : [];
     const updatedCompliancy = prevCompliancy.map((c) =>
       c.standaardversie === entry.standardId
@@ -684,7 +684,7 @@ const ConFormApplicatieStandaardenStage = ({
         : c
     );
 
-    setApplicatieData('compliancy', updatedCompliancy);
+    setGebruikData('compliancy', updatedCompliancy);
   };
 
   // Generate filename from data URL
@@ -721,8 +721,8 @@ const ConFormApplicatieStandaardenStage = ({
       );
 
       if (entriesWithCompliancy.length > 0) {
-        const prevCompliancy = Array.isArray(applicatie.compliancy)
-          ? [...applicatie.compliancy]
+        const prevCompliancy = Array.isArray(gebruik.compliancy)
+          ? [...gebruik.compliancy]
           : [];
         let hasChanges = false;
         let updatedCompliancy = [...prevCompliancy];
@@ -760,7 +760,7 @@ const ConFormApplicatieStandaardenStage = ({
         });
 
         if (hasChanges) {
-          setApplicatieData('compliancy', updatedCompliancy);
+          setGebruikData('compliancy', updatedCompliancy);
         }
       }
     }
@@ -780,8 +780,8 @@ const ConFormApplicatieStandaardenStage = ({
   useEffect(() => {
     if (Object.keys(tableState).length === 0) return;
 
-    const prevCompliancy = Array.isArray(applicatie.compliancy)
-      ? [...applicatie.compliancy]
+    const prevCompliancy = Array.isArray(gebruik.compliancy)
+      ? [...gebruik.compliancy]
       : [];
     if (prevCompliancy.length === 0) return;
 
@@ -811,12 +811,12 @@ const ConFormApplicatieStandaardenStage = ({
     });
 
     if (compliancyHasChanges) {
-      setApplicatieData('compliancy', updatedCompliancy);
+      setGebruikData('compliancy', updatedCompliancy);
     }
 
-    const compliancy = applicatie.compliancy || [];
-    const prevStandaarden = Array.isArray(applicatie.standaarden)
-      ? [...applicatie.standaarden]
+    const compliancy = gebruik.compliancy || [];
+    const prevStandaarden = Array.isArray(gebruik.standaarden)
+      ? [...gebruik.standaarden]
       : [];
     let standaardenHasChanges = false;
     let updatedStandaarden = [...prevStandaarden];
@@ -833,11 +833,11 @@ const ConFormApplicatieStandaardenStage = ({
     });
 
     if (standaardenHasChanges) {
-      setApplicatieData('standaarden', updatedStandaarden);
+      setGebruikData('standaarden', updatedStandaarden);
     }
 
-    const prevStandaardenGemma = Array.isArray(applicatie.standaardenGemma)
-      ? [...applicatie.standaardenGemma]
+    const prevStandaardenGemma = Array.isArray(gebruik.standaardenGemma)
+      ? [...gebruik.standaardenGemma]
       : [];
     let standaardenGemmaHasChanges = false;
     let updatedStandaardenGemma = [...prevStandaardenGemma];
@@ -858,7 +858,7 @@ const ConFormApplicatieStandaardenStage = ({
     });
 
     if (standaardenGemmaHasChanges) {
-      setApplicatieData('standaardenGemma', updatedStandaardenGemma);
+      setGebruikData('standaardenGemma', updatedStandaardenGemma);
     }
   }, [tableState]);
 
@@ -882,12 +882,12 @@ const ConFormApplicatieStandaardenStage = ({
         </h2>
 
         <Paragraph className='con-form-wizard-paragraph'>
-          <strong>Selecteer de standaarden voor uw applicatie</strong>
+          <strong>Selecteer de standaarden voor uw gebruik</strong>
           <br />
-          Geef voor uw applicatie aan welke standaarden worden ondersteund en of een
+          Geef voor uw gebruik aan welke standaarden worden ondersteund en of een
           testrapport beschikbaar is. Er worden de standaarden getoond die verplicht
           of aanbevolen zijn voor de in de vorige stap geselecteerde
-          referentiecomponenten. Dit helpt gemeenten te beoordelen hoe uw software
+          referentiecomponenten. Dit helpt gemeenten te beoordelen hoe uw gebruik
           past in hun architectuur en vergemakkelijkt integraties. Voor{' '}
           <Link
             href='https://www.gemmaonline.nl/wiki/GEMMA_standaardenlijst'
@@ -923,22 +923,20 @@ const ConFormApplicatieStandaardenStage = ({
     );
   }
 
-  // Split entries by type
-  const allEntries = Object.values(tableState);
-  const verplichtEntries = allEntries
-    .filter((entry) => entry.standardType === 'verplicht')
-    .sort((a, b) => (a.standardName || '').localeCompare(b.standardName || ''));
-  const aanbevolenEntries = allEntries
-    .filter((entry) => entry.standardType === 'aanbevolen')
-    .sort((a, b) => (a.standardName || '').localeCompare(b.standardName || ''));
-  const extraEntries = allEntries
-    .filter((entry) => entry.standardType === 'extra')
-    .sort((a, b) => (a.standardName || '').localeCompare(b.standardName || ''));
+  // Create table rows
+  const tableRows = [];
+  const sortedEntries = Object.values(tableState).sort((a, b) => {
+    // Sort by type first (verplicht > aanbevolen > extra), then by name
+    if (a.standardType !== b.standardType) {
+      const typeOrder = { verplicht: 0, aanbevolen: 1, extra: 2 };
+      return (typeOrder[a.standardType] ?? 3) - (typeOrder[b.standardType] ?? 3);
+    }
+    return (a.standardName || '').localeCompare(b.standardName || '');
+  });
 
-  // Helper function to render a table row for an entry
-  const renderEntryRow = (entry) => {
+  sortedEntries.forEach((entry) => {
     const entryKey = entry.key || entry.standardId;
-    return (
+    tableRows.push(
       <TableRow key={entryKey}>
         {/* Standaard column */}
         <TableCell style={{ verticalAlign: 'top', padding: '12px' }}>
@@ -1076,56 +1074,6 @@ const ConFormApplicatieStandaardenStage = ({
         </TableCell>
       </TableRow>
     );
-  };
-
-  // Create table rows with section headers
-  const tableRows = [];
-
-  // Verplicht section
-  if (verplichtEntries.length > 0) {
-    tableRows.push(
-      <TableRow key='header-verplicht'>
-        <TableCell
-          colSpan={3}
-          style={{
-            fontWeight: 'bold',
-            backgroundColor: '#f8f9fa',
-            padding: '12px',
-          }}
-        >
-          Verplicht
-        </TableCell>
-      </TableRow>
-    );
-    verplichtEntries.forEach((entry) => {
-      tableRows.push(renderEntryRow(entry));
-    });
-  }
-
-  // Aanbevolen section
-  if (aanbevolenEntries.length > 0) {
-    tableRows.push(
-      <TableRow key='header-aanbevolen'>
-        <TableCell
-          colSpan={3}
-          style={{
-            fontWeight: 'bold',
-            backgroundColor: '#f8f9fa',
-            padding: '12px',
-          }}
-        >
-          Aanbevolen
-        </TableCell>
-      </TableRow>
-    );
-    aanbevolenEntries.forEach((entry) => {
-      tableRows.push(renderEntryRow(entry));
-    });
-  }
-
-  // Extra section (no header)
-  extraEntries.forEach((entry) => {
-    tableRows.push(renderEntryRow(entry));
   });
 
   return (
@@ -1135,12 +1083,12 @@ const ConFormApplicatieStandaardenStage = ({
       </h2>
 
       <Paragraph className='con-form-wizard-paragraph'>
-        <strong>Selecteer de standaarden voor uw applicatie</strong>
+        <strong>Selecteer de standaarden voor uw gebruik</strong>
         <br />
-        Geef voor uw applicatie aan welke standaarden worden ondersteund en of een
+        Geef voor uw gebruik aan welke standaarden worden ondersteund en of een
         testrapport beschikbaar is. Er worden de standaarden getoond die verplicht of
         aanbevolen zijn voor de in de vorige stap geselecteerde
-        referentiecomponenten. Dit helpt gemeenten te beoordelen hoe uw software past
+        referentiecomponenten. Dit helpt gemeenten te beoordelen hoe uw gebruik past
         in hun architectuur en vergemakkelijkt integraties. Voor{' '}
         <Link
           href='https://www.gemmaonline.nl/wiki/GEMMA_standaardenlijst'
@@ -1253,4 +1201,4 @@ const ConFormApplicatieStandaardenStage = ({
   );
 };
 
-export default ConFormApplicatieStandaardenStage;
+export default ConGebruikStepStandaarden;

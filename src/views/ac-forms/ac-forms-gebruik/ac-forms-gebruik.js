@@ -4,7 +4,7 @@ import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { createDefaultFormObject } from '@src/utilities/schema-object-factory';
 import clsx from 'clsx';
-import { AcSection, AcContainer, AcColumn } from '@src/atoms';
+import { AcSection, AcContainer, AcColumn, AcFlex } from '@src/atoms';
 import { AcButton } from '@src/molecules';
 import { ProcessSteps } from '@gemeente-denhaag/components-react';
 import {
@@ -12,10 +12,12 @@ import {
   Paragraph,
   Alert,
 } from '@utrecht/component-library-react/dist/css-module';
-import ConGebruikStepSoort from './components/con-gebruik-step-soort';
 import ConGebruikStepInformatie from './components/con-gebruik-step-informatie';
 import ConGebruikStepProductApplicatie from './components/con-gebruik-step-product-applicatie';
 import ConGebruikStepVersie from './components/con-gebruik-step-versie';
+import ConGebruikStepOrganisatie from './components/con-gebruik-step-organisatie';
+import ConGebruikStepReferentiecomponenten from './components/con-gebruik-step-referentiecomponenten';
+import ConGebruikStepStandaarden from './components/con-gebruik-step-standaarden';
 import ConGebruikStepKoppelingen from './components/con-gebruik-step-koppelingen';
 import ConGebruikStepDiensten from './components/con-gebruik-step-diensten';
 import ConGebruikStepReview from './components/con-gebruik-step-review';
@@ -23,6 +25,12 @@ import ConGebruikStepDeelnemers from './components/con-gebruik-step-deelnemers';
 import { VISUALS } from '@src/constants';
 import { useDebouncedInput } from '@src/hooks';
 import { isUUID } from '@src/utilities/con-resolve-uuids-in-text';
+import { getActiveWizard } from '@src/constants/wizards.constants';
+import { getStatusMultiStep } from '@views/ac-forms/ac-forms-applicatie/utils/steps.utils';
+import { validateWebsite } from '@views/ac-forms/validation/form-validations';
+import { commongroundApiUrl } from '@config';
+import _ from 'lodash';
+import ConUnsavedChangesAlertModal from '@src/components/con-unsaved-changes-alert-modal/con-unsaved-changes-alert-modal';
 
 const mapToOption = (item, index) => {
   const label =
@@ -40,6 +48,7 @@ const AcFormsGebruik = ({ store }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const gebruikId = searchParams.get('id') || '';
+  const typeFromUrl = searchParams.get('type') || '';
   const isEditMode = !!gebruikId;
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -53,35 +62,6 @@ const AcFormsGebruik = ({ store }) => {
 
   // Ref for ProcessSteps to add click handlers
   const processStepsRef = useRef(null);
-
-  // Add click handlers to steps
-  useEffect(() => {
-    if (!processStepsRef.current) return;
-    if (prefillLoading || prefillError) return;
-
-    const addClickHandlers = () => {
-      const stepElements = processStepsRef.current.querySelectorAll(
-        '.denhaag-process-steps .denhaag-process-steps__step'
-      );
-
-      stepElements.forEach((stepEl, index) => {
-        stepEl.style.cursor = '';
-        stepEl.onclick = null;
-        stepEl.classList.remove('ac-step-clickable');
-
-        if (index < currentStep) {
-          stepEl.classList.add('ac-step-clickable');
-          stepEl.onclick = (e) => {
-            e.preventDefault();
-            setCurrentStep(index);
-          };
-        }
-      });
-    };
-
-    const timeoutId = setTimeout(addClickHandlers, 100);
-    return () => clearTimeout(timeoutId);
-  }, [currentStep, prefillLoading, prefillError]);
 
   // Helper to extract id string from various API reference shapes
   const getIdString = useCallback((ref) => {
@@ -245,8 +225,221 @@ const AcFormsGebruik = ({ store }) => {
   const setGebruikData = (key, value) =>
     setGebruik((prev) => ({ ...prev, [key]: value }));
 
-  // Usage type selection state
-  const [gebruikType, setGebruikType] = useState(null); // 'eigen-organisatie' or 'andere-organisatie'
+  /**
+   * Update function for afnemer organization data
+   * Used when creating a new organization for andere-organisatie usage
+   */
+  const setAfnemerOrganisatieData = useCallback((key, value) => {
+    setAfnemerOrganisatie((prev) => ({ ...prev, [key]: value }));
+  }, []);
+
+  // Helper function to check if afnemer is samenwerking
+  const isAfnemerSamenwerking = useCallback(() => {
+    const type = gebruik?.afnemer?.organisatieType || gebruik?.afnemer?.type || '';
+    return String(type).toLowerCase() === 'samenwerking';
+  }, [gebruik?.afnemer]);
+
+  // Determine gebruikType from URL type parameter
+  // When type=ontbrekend-organisatie, it means the user doesn't have an organization, so it's andere-organisatie
+  const getGebruikTypeFromUrl = useCallback(() => {
+    if (typeFromUrl === 'ontbrekend-organisatie') {
+      return 'andere-organisatie';
+    }
+    // If no type specified, default to null (will be determined from afnemer in edit mode or set by user selection)
+    return null;
+  }, [typeFromUrl]);
+
+  // Usage type selection state - determined from URL or from API data in edit mode
+  const [gebruikType, setGebruikType] = useState(getGebruikTypeFromUrl()); // 'eigen-organisatie' or 'andere-organisatie'
+
+  /**
+   * Helper function to get the correct step index accounting for optional steps
+   * Accounts for the optional Organisatie step (only shown for andere-organisatie)
+   * and the optional Deelnemers step (only shown for samenwerking)
+   * @param {number} logicalStep - The logical step number
+   * Logical steps: 0=Applicatie, 1=Versie, 2=Organisatie, 3=Informatie, 4=Referentiecomponenten, 5=Standaarden, 6=Koppelingen, 7=Diensten, 8=Deelnemers, 9=Controleren
+   * @returns {number} The adjusted physical step index
+   */
+  const getAdjustedStepIndex = useCallback(
+    (logicalStep) => {
+      let index = logicalStep;
+
+      // If Organisatie step is not shown (not andere-organisatie), adjust steps after it
+      if (gebruikType !== 'andere-organisatie' && logicalStep > 2) {
+        index -= 1;
+      }
+
+      // If Deelnemers step is not shown and we're past it, adjust the index
+      if (!isAfnemerSamenwerking() && logicalStep > 8) {
+        index -= 1;
+      }
+
+      return index;
+    },
+    [isAfnemerSamenwerking, gebruikType]
+  );
+
+  /**
+   * Convert physical step index to logical step number
+   * Accounts for optional steps (Organisatie and Deelnemers)
+   * @param {number} physicalStep - The physical step index
+   * @returns {number} The logical step number
+   */
+  const getLogicalStepFromPhysical = useCallback(
+    (physicalStep) => {
+      // Start with physical step
+      let logicalStep = physicalStep;
+
+      // If Organisatie step is not shown (not andere-organisatie), skip logical step 2
+      if (gebruikType !== 'andere-organisatie') {
+        // If we're at or past where Organisatie would be (logical step 2), add 1 to skip it
+        if (logicalStep >= 2) {
+          logicalStep += 1;
+        }
+      }
+
+      // If Deelnemers step is not shown, skip logical step 8
+      if (!isAfnemerSamenwerking()) {
+        // If we're at or past where Deelnemers would be (logical step 8), add 1 to skip it
+        if (logicalStep >= 8) {
+          logicalStep += 1;
+        }
+      }
+
+      return logicalStep;
+    },
+    [isAfnemerSamenwerking, gebruikType]
+  );
+
+  /**
+   * Generate a mapping of visual step indices to actual step indices
+   * This must match the order in which ProcessSteps renders clickable elements
+   * @returns {number[]} Array where index is visual position, value is actual step index
+   */
+  const generateStepIndexMapping = useCallback(() => {
+    const mapping = [];
+
+    // Main step 1 header (Applicatie selectie)
+    mapping.push(getAdjustedStepIndex(0));
+    // Sub-step: Applicatie
+    mapping.push(getAdjustedStepIndex(0));
+    // Sub-step: Applicatie versie
+    mapping.push(getAdjustedStepIndex(1));
+
+    // Conditionally include Organisatie step (only for andere-organisatie)
+    if (gebruikType === 'andere-organisatie') {
+      mapping.push(getAdjustedStepIndex(2)); // Organisatie
+    }
+
+    // Main step 2 header (Gebruik configuratie)
+    mapping.push(getAdjustedStepIndex(3));
+    // Sub-steps under Gebruik configuratie
+    mapping.push(getAdjustedStepIndex(3)); // Gebruik informatie
+    mapping.push(getAdjustedStepIndex(4)); // Referentiecomponenten
+    mapping.push(getAdjustedStepIndex(5)); // Standaarden
+    mapping.push(getAdjustedStepIndex(6)); // Koppelingen
+    mapping.push(getAdjustedStepIndex(7)); // Diensten
+
+    // Conditionally include Deelnemers step
+    if (isAfnemerSamenwerking()) {
+      mapping.push(getAdjustedStepIndex(8)); // Deelnemers
+    }
+
+    // Main step 3: Controleren
+    mapping.push(getAdjustedStepIndex(9));
+
+    return mapping;
+  }, [getAdjustedStepIndex, isAfnemerSamenwerking, gebruikType]);
+
+  /**
+   * Handle step navigation from clickable process steps
+   * Maps visual step indices to actual step numbers
+   * @param {number} visualStepIndex - The index from the visual step representation
+   */
+  const handleStepNavigation = useCallback(
+    (visualStepIndex) => {
+      const mapping = generateStepIndexMapping();
+      const targetStep = mapping[visualStepIndex];
+
+      if (targetStep !== undefined) {
+        setCurrentStep(targetStep);
+      }
+    },
+    [generateStepIndexMapping]
+  );
+
+  // Add click handlers to steps
+  useEffect(() => {
+    if (!processStepsRef.current) return;
+    if (prefillLoading || prefillError) return;
+
+    const addClickHandlers = () => {
+      // Find all step elements in the DOM (headers and sub-steps)
+      const stepElements = processStepsRef.current.querySelectorAll(
+        '.denhaag-process-steps .denhaag-process-steps__step .denhaag-process-steps__step-header, .denhaag-process-steps .denhaag-process-steps__step .denhaag-process-steps__sub-step'
+      );
+
+      // Generate the current mapping to know which visual steps are valid
+      const mapping = generateStepIndexMapping();
+
+      stepElements.forEach((stepEl, index) => {
+        // Remove any existing click handlers first
+        stepEl.style.cursor = '';
+        stepEl.onclick = null;
+        stepEl.classList.remove('ac-step-clickable');
+
+        // Only make completed steps clickable if they have a valid mapping
+        const targetStep = mapping[index];
+        if (targetStep !== undefined && targetStep < currentStep) {
+          stepEl.classList.add('ac-step-clickable');
+
+          stepEl.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleStepNavigation(index);
+          };
+        }
+      });
+    };
+
+    // Add handlers immediately
+    addClickHandlers();
+
+    // Also add handlers after a slight delay to handle async rendering
+    const timeoutId = setTimeout(addClickHandlers, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [
+    currentStep,
+    prefillLoading,
+    prefillError,
+    generateStepIndexMapping,
+    handleStepNavigation,
+    gebruikType,
+  ]);
+
+  // State for afnemer selection (only for andere-organisatie)
+  const [afnemerKeuze, setAfnemerKeuze] = useState('bestaand'); // 'bestaand' or 'nieuw'
+
+  /**
+   * Afnemer Organization State Object
+   *
+   * This object holds organization data for creating a new organization.
+   * Only used when afnemerKeuze === 'nieuw' and gebruikType === 'andere-organisatie'
+   */
+  const [afnemerOrganisatie, setAfnemerOrganisatie] = useState({
+    naam: '',
+    type: '',
+    website: '',
+    beschrijvingKort: '',
+    beschrijvingLang: '',
+    'e-mailadres': '',
+    telefoonnummer: '',
+    kvkNummer: '',
+    logo: '',
+  });
 
   // Clear certain fields when gebruikType changes to 'andere-organisatie'
   useEffect(() => {
@@ -296,18 +489,42 @@ const AcFormsGebruik = ({ store }) => {
 
   // Referentiecomponenten
   const [refCompOptions, setRefCompOptions] = useState([]);
+  // Referentiecomponenten options with search functionality
+  const [referentieComponentenOptions, setReferentieComponentenOptions] = useState(
+    []
+  );
+  const [referentieComponentenLoading, setReferentieComponentenLoading] =
+    useState(false);
+
+  // Separate array to track chosen referentieComponenten with their standards
+  // Structure: [{ id, naam, aanbevolenStandaarden: [], verplichteStandaarden: [], gebruikId }]
+  const [referentieComponentenWithStandards, setReferentieComponentenWithStandards] =
+    useState([]);
+
+  // Standaarden options with search functionality
+  const [standaardenOptions, setStandaardenOptions] = useState([]);
+  const [standaardenOptionsLoading, setStandaardenOptionsLoading] = useState(false);
+  // Extra standards selected via multi-select (not from referentieComponenten)
+  const [selectedExtraStandards, setSelectedExtraStandards] = useState([]);
 
   // Contactpersonen (filtered by organization for eigen-organisatie)
   const [contactpersoonOptions, setContactpersoonOptions] = useState([]);
   const [contactpersoonLoading, setContactpersoonLoading] = useState(false);
 
+  // Unsaved changes alert
+  const [showUnsavedChangesAlert, setShowUnsavedChangesAlert] = useState(false);
+
   // Fetch schemas on component mount
   useEffect(() => {
     const fetchSchemaAndInit = async () => {
       try {
-        const response = await fetch('/api/apps/openregister/api/schemas/gebruik');
-        if (response.ok) {
-          const gebruikSchema = await response.json();
+        // Fetch gebruik schema
+        const gebruikResponse = await fetch(
+          '/api/apps/openregister/api/schemas/gebruik'
+        );
+        let gebruikSchema = null;
+        if (gebruikResponse.ok) {
+          gebruikSchema = await gebruikResponse.json();
           const defaultGebruik = createDefaultFormObject(
             store,
             gebruikSchema,
@@ -315,9 +532,22 @@ const AcFormsGebruik = ({ store }) => {
             { status: 'Verwerving' }
           );
           if (!isEditMode) setGebruik((prev) => ({ ...defaultGebruik, ...prev }));
-          setSchemas({ gebruik: gebruikSchema });
-          setSchemasLoading(false);
         }
+
+        // Fetch organisatie schema for organization form
+        let organisatieSchema = null;
+        try {
+          await store.object.fetchSchema('organisatie');
+          organisatieSchema = store.object.getSchema('schema_organisatie');
+        } catch (orgError) {
+          console.error('Failed to fetch organisatie schema:', orgError);
+        }
+
+        setSchemas({
+          gebruik: gebruikSchema,
+          organisatie: organisatieSchema,
+        });
+        setSchemasLoading(false);
       } catch (error) {
         console.error('Failed to fetch schemas for gebruik form:', error);
         setSchemas({});
@@ -327,12 +557,12 @@ const AcFormsGebruik = ({ store }) => {
     fetchSchemaAndInit();
   }, [store, isEditMode]);
 
-  // Prefill for edit mode: fetch existing gebruik and map to local state; jump to step 1
+  // Prefill for edit mode: fetch existing gebruik and map to local state; start at step 0
   useEffect(() => {
     let cancelled = false;
     const run = async () => {
       if (!isEditMode) return;
-      setCurrentStep(1);
+      setCurrentStep(0);
       setPrefillLoading(true);
       setPrefillError(null);
       try {
@@ -372,6 +602,43 @@ const AcFormsGebruik = ({ store }) => {
       cancelled = true;
     };
   }, [isEditMode, gebruikId, mapFetchedGebruikToLocalState, store]);
+
+  // Update gebruikType when URL type parameter changes (for non-edit mode)
+  useEffect(() => {
+    if (!isEditMode) {
+      const typeFromUrl = getGebruikTypeFromUrl();
+      if (typeFromUrl) {
+        setGebruikType(typeFromUrl);
+      }
+    }
+  }, [isEditMode, getGebruikTypeFromUrl]);
+
+  // Determine gebruikType from afnemer when it's not set from URL
+  useEffect(() => {
+    if (gebruikType !== null || isEditMode) return; // Skip if already set or in edit mode
+
+    const afnemer = gebruik?.afnemer;
+    if (afnemer) {
+      const determinedType = determineGebruikType(
+        afnemer,
+        store?.user?.activeOrganization
+      );
+      if (determinedType) {
+        setGebruikType(determinedType);
+      }
+    } else {
+      // If no afnemer and user has an organization, default to eigen-organisatie
+      if (store?.user?.activeOrganization) {
+        setGebruikType('eigen-organisatie');
+      }
+    }
+  }, [
+    gebruik?.afnemer,
+    store?.user?.activeOrganization,
+    isEditMode,
+    gebruikType,
+    determineGebruikType,
+  ]);
 
   // Preload all slow API calls at component mount (hotloading like in product form)
   useEffect(() => {
@@ -656,6 +923,210 @@ const AcFormsGebruik = ({ store }) => {
       searchContactpersonen('');
     }
   }, [gebruikType, searchContactpersonen]);
+
+  // Function to load referentiecomponenten
+  const loadReferentieComponenten = useCallback(async () => {
+    console.info('📋 Loading referentiecomponenten...');
+    setReferentieComponentenLoading(true);
+
+    try {
+      const queryParams = new URLSearchParams({
+        _limit: '500',
+        _page: '1',
+        gemmaType: 'Referentiecomponent',
+        '_extend[]': '@self.schema',
+      });
+
+      // Fetch referentiecomponenten from openconnector endpoint
+      const response = await fetch(
+        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      const list = await response.json();
+
+      const mapToOption = (item, index) => {
+        const label =
+          item?.xml?.name?._value ||
+          item?.naam ||
+          item?.name ||
+          item?.title ||
+          item?.label ||
+          `Component ${index + 1}`;
+        const value = item?.value || item?.id || item?.slug || label;
+        return {
+          value: String(value),
+          label: String(label),
+          data: item, // Store the full API data for access to aanbevolenStandaarden, verplichteStandaarden
+        };
+      };
+
+      const options = list.results
+        .map(mapToOption)
+        .filter((o) => o.label && o.value);
+
+      setReferentieComponentenOptions(options);
+      console.info(`✅ Loaded ${options.length} referentiecomponenten`);
+    } catch (e) {
+      console.error('Failed to load referentie componenten:', e);
+      setReferentieComponentenOptions([]);
+    } finally {
+      setReferentieComponentenLoading(false);
+    }
+  }, []);
+
+  // ✅ Load referentiecomponenten when component mounts
+  useEffect(() => {
+    // Only load if we haven't loaded yet and we're not currently loading
+    const shouldLoadRefs =
+      referentieComponentenOptions.length === 0 && !referentieComponentenLoading;
+
+    if (shouldLoadRefs) {
+      loadReferentieComponenten();
+    }
+  }, [
+    loadReferentieComponenten,
+    referentieComponentenOptions.length,
+    referentieComponentenLoading,
+  ]);
+
+  // Function to load standaarden
+  const loadStandaarden = useCallback(async () => {
+    console.info('📋 Loading standaarden...');
+    setStandaardenOptionsLoading(true);
+
+    try {
+      const queryParams = new URLSearchParams({
+        _limit: '500',
+        _page: '1',
+        gemmaType: 'Standaard',
+        '_extend[]': '@self.schema',
+      });
+
+      // Fetch standards from openconnector endpoint
+      const response = await fetch(
+        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      const list = await response.json();
+
+      const options = list.results
+        .map((item, index) => {
+          const label =
+            item?.xml?.name?._value ||
+            item?.naam ||
+            item?.name ||
+            item?.title ||
+            item?.label ||
+            `Standaard ${index + 1}`;
+          const value = item?.value || item?.id || item?.slug || label;
+          return { value: String(value), label: String(label), data: item };
+        })
+        .filter((o) => o.label && o.value);
+
+      setStandaardenOptions(options);
+      console.info(`✅ Loaded ${options.length} standaarden`);
+    } catch (e) {
+      console.error('Failed to load standaarden:', e);
+      setStandaardenOptions([]);
+    } finally {
+      setStandaardenOptionsLoading(false);
+    }
+  }, []);
+
+  // ✅ Load standaarden when component mounts
+  useEffect(() => {
+    // Only load if we haven't loaded yet and we're not currently loading
+    const shouldLoadStandards =
+      standaardenOptions.length === 0 && !standaardenOptionsLoading;
+
+    if (shouldLoadStandards) {
+      loadStandaarden();
+    }
+  }, [loadStandaarden, standaardenOptions.length, standaardenOptionsLoading]);
+
+  // Initialize selectedExtraStandards from existing compliancy data
+  useEffect(() => {
+    if (standaardenOptions.length === 0) return;
+    if (selectedExtraStandards.length > 0) return; // Already initialized
+
+    const existingCompliancy = gebruik.compliancy || [];
+    if (existingCompliancy.length === 0) return;
+
+    // Get all standard IDs from referentieComponentenWithStandards
+    const getAllStandardsFromRefs = () => {
+      const standardsSet = new Set();
+      referentieComponentenWithStandards.forEach((refComp) => {
+        if (
+          refComp.aanbevolenStandaarden &&
+          Array.isArray(refComp.aanbevolenStandaarden)
+        ) {
+          refComp.aanbevolenStandaarden.forEach((standard) => {
+            const id =
+              standard?.id ||
+              standard?.identifier ||
+              standard?.value ||
+              standard?.slug ||
+              standard?.naam ||
+              standard?.name;
+            if (id) standardsSet.add(String(id));
+          });
+        }
+        if (
+          refComp.verplichteStandaarden &&
+          Array.isArray(refComp.verplichteStandaarden)
+        ) {
+          refComp.verplichteStandaarden.forEach((standard) => {
+            const id =
+              standard?.id ||
+              standard?.identifier ||
+              standard?.value ||
+              standard?.slug ||
+              standard?.naam ||
+              standard?.name;
+            if (id) standardsSet.add(String(id));
+          });
+        }
+      });
+      return standardsSet;
+    };
+
+    const refStandardIds = getAllStandardsFromRefs();
+    const extraStandardsInCompliancy = existingCompliancy
+      .map((comp) => {
+        const standardId = String(comp.standaardversie);
+        // Check if this standard is NOT in referentieComponenten (i.e., it's an extra standard)
+        if (!refStandardIds.has(standardId)) {
+          // Find the option for this standard
+          return standaardenOptions.find(
+            (opt) =>
+              String(
+                opt.value || opt.data?.id || opt.data?.identifier || opt.data?.value
+              ) === standardId
+          );
+        }
+        return null;
+      })
+      .filter(Boolean);
+
+    if (extraStandardsInCompliancy.length > 0) {
+      setSelectedExtraStandards(extraStandardsInCompliancy);
+    }
+  }, [
+    standaardenOptions,
+    referentieComponentenWithStandards,
+    gebruik.compliancy,
+    selectedExtraStandards.length,
+  ]);
 
   // Resolve contactpersoon display name when options become available
   useEffect(() => {
@@ -1035,15 +1506,54 @@ const AcFormsGebruik = ({ store }) => {
     return 'checked';
   };
 
-  const isAfnemerSamenwerking = () => {
-    const type = gebruik?.afnemer?.organisatieType || gebruik?.afnemer?.type || '';
-    return String(type).toLowerCase() === 'samenwerking';
-  };
-
   // Submission handler (following product wizard pattern)
   const handleRegister = async () => {
     setLoading(true);
     try {
+      let finalAfnemer = gebruik?.afnemer;
+
+      // ✅ For andere-organisatie with new organization, create the organization first
+      if (gebruikType === 'andere-organisatie' && afnemerKeuze === 'nieuw') {
+        try {
+          const newOrganizationData = {
+            naam: afnemerOrganisatie.naam,
+            type: afnemerOrganisatie.type,
+            website: afnemerOrganisatie.website,
+            beschrijvingKort: afnemerOrganisatie.beschrijvingKort,
+            beschrijvingLang: afnemerOrganisatie.beschrijvingLang,
+            'e-mailadres': afnemerOrganisatie['e-mailadres'],
+            telefoonnummer: afnemerOrganisatie.telefoonnummer,
+            kvkNummer: afnemerOrganisatie.kvkNummer,
+            logo: afnemerOrganisatie.logo,
+          };
+
+          // Create the organization and get its ID
+          const createdOrganization = await store.object.createObject(
+            'voorzieningen',
+            'organisatie',
+            newOrganizationData
+          );
+
+          // Use the newly created organization ID as afnemer
+          finalAfnemer =
+            createdOrganization?.id || createdOrganization?.['@self']?.id;
+
+          if (!finalAfnemer) {
+            throw new Error('Organisatie aangemaakt maar geen ID ontvangen');
+          }
+        } catch (orgError) {
+          console.error('Failed to create organization:', orgError);
+          setRegisterCallBack('error');
+          setError({
+            message:
+              'Er is een fout opgetreden bij het aanmaken van de organisatie. Probeer het opnieuw.',
+            errors: null,
+          });
+          setLoading(false);
+          return;
+        }
+      }
+
       // Strip any local IDs and prepare data for submission
       const gebruikData = {
         ...gebruik,
@@ -1051,6 +1561,13 @@ const AcFormsGebruik = ({ store }) => {
         contactpersoon: gebruik?.contactpersoon?.id,
         // Extract UUID from afnemer (should be UUID string for eigen-organisatie, object for andere-organisatie)
         afnemer: (() => {
+          // Use finalAfnemer if we just created a new organization
+          if (finalAfnemer) {
+            return typeof finalAfnemer === 'string'
+              ? finalAfnemer
+              : finalAfnemer.uuid || finalAfnemer.id || finalAfnemer.value;
+          }
+
           const afnemer = gebruik?.afnemer;
           if (!afnemer) return null;
           // If it's already a string (UUID), return it
@@ -1090,10 +1607,11 @@ const AcFormsGebruik = ({ store }) => {
 
   const stepsList = (() => {
     const base = [
-      'Soort gebruik',
-      'Gebruik informatie',
       'Applicatie',
       'Applicatie versie',
+      'Gebruik informatie',
+      'Referentiecomponenten',
+      'Standaarden',
       'Koppelingen',
       'Diensten',
     ];
@@ -1102,69 +1620,117 @@ const AcFormsGebruik = ({ store }) => {
     return base;
   })();
 
+  const currentStepName = (step) => {
+    // Convert physical step to logical step using helper function
+    const logicalStep = getLogicalStepFromPhysical(step);
+
+    switch (logicalStep) {
+      case 0:
+        return 'Applicatie';
+      case 1:
+        return 'Applicatie versie';
+      case 2:
+        return 'Afnemer';
+      case 3:
+        return 'Gebruik informatie';
+      case 4:
+        return 'Referentiecomponenten';
+      case 5:
+        return 'Standaarden';
+      case 6:
+        return 'Koppelingen';
+      case 7:
+        return 'Diensten';
+      case 8:
+        return 'Deelnemers';
+      case 9:
+        return 'Controleren';
+      default:
+        return stepsList[step] || '';
+    }
+  };
+
   const canGoNext = () => {
-    if (currentStep === 0) {
-      return !!gebruikType; // Must select usage type
-    }
-    if (currentStep === 1) {
-      // Gebruik informatie step - contactpersoon required for eigen organisatie only
-      if (gebruikType === 'andere-organisatie') {
-        // For andere organisatie: only afnemer and status required
-        return !!gebruik?.afnemer && !!gebruik?.status;
-      } else {
-        // For eigen organisatie: contactpersoon, afnemer and status required
-        return !!gebruik?.afnemer && !!gebruik?.status;
-      }
-    }
-    if (currentStep === 2) {
+    const logicalStep = getLogicalStepFromPhysical(currentStep);
+
+    if (logicalStep === 0) {
       return !!gebruik?.module; // Applicatie step
     }
-    if (currentStep === 3) {
+    if (logicalStep === 1) {
       return true; // Versie step
     }
-    if (currentStep === 4) {
+    if (logicalStep === 2) {
+      // Organisatie step (only for andere-organisatie)
+      if (gebruikType === 'andere-organisatie') {
+        // Validate based on afnemerKeuze
+        if (afnemerKeuze === 'bestaand') {
+          // If selecting existing organization: only afnemer required
+          return !!gebruik?.afnemer;
+        } else {
+          // If creating new organization: validate required fields
+          const requiredNewOrgFields = ['naam', 'type', 'website'];
+          const missingNewOrgFields = requiredNewOrgFields.filter(
+            (field) =>
+              !afnemerOrganisatie[field] || !String(afnemerOrganisatie[field]).trim()
+          );
+
+          // Validate website format if provided
+          if (
+            afnemerOrganisatie.website &&
+            String(afnemerOrganisatie.website).trim()
+          ) {
+            const website = String(afnemerOrganisatie.website).trim();
+            if (!validateWebsite(website)) {
+              return false;
+            }
+          }
+
+          // All required fields must be filled
+          return missingNewOrgFields.length === 0;
+        }
+      }
+      // This shouldn't happen, but if somehow we're on step 2 without andere-organisatie, allow progression
+      return true;
+    }
+    if (logicalStep === 3) {
+      // Gebruik informatie step - status required
+      return !!gebruik?.status;
+    }
+    if (logicalStep === 4) {
+      return true; // Referentiecomponenten optional
+    }
+    if (logicalStep === 5) {
+      // Standaarden step: validate URLs in compliancy array
+      if (Array.isArray(gebruik.compliancy)) {
+        const invalidUrls = gebruik.compliancy.filter(
+          (comp) =>
+            comp.url &&
+            String(comp.url).trim() &&
+            !validateWebsite(String(comp.url).trim())
+        );
+        if (invalidUrls.length > 0) {
+          return false; // Cannot proceed if there are invalid URLs
+        }
+      }
+      return true; // Standaarden optional (but URLs must be valid if provided)
+    }
+    if (logicalStep === 6) {
       return true; // koppelingen optional
     }
-    if (currentStep === 5) {
+    if (logicalStep === 7) {
       return true; // diensten optional
     }
-    if (currentStep === 6 && isAfnemerSamenwerking()) {
+    if (logicalStep === 8 && isAfnemerSamenwerking()) {
       return true; // deelnemers optional
     }
     return false;
   };
 
   const renderStep = (step) => {
-    switch (step) {
+    const logicalStep = getLogicalStepFromPhysical(step);
+
+    switch (logicalStep) {
       case 0:
-        return (
-          <ConGebruikStepSoort
-            gebruikType={gebruikType}
-            setGebruikType={setGebruikType}
-            loading={loading}
-            gebruik={gebruik}
-            isEditMode={isEditMode}
-          />
-        );
-      case 1:
-        return (
-          <ConGebruikStepInformatie
-            gebruik={gebruik}
-            setGebruikData={setGebruikData}
-            loading={loading}
-            refCompOptions={refCompOptions}
-            organisatieOptions={organisatieOptions}
-            organisatieLoading={organisatieLoading}
-            searchOrganisaties={debouncedSearchOrganisaties}
-            contactpersoonOptions={contactpersoonOptions}
-            contactpersoonLoading={contactpersoonLoading}
-            searchContactpersonen={debouncedSearchContactpersonen}
-            schemas={schemas}
-            schemasLoading={schemasLoading}
-            gebruikType={gebruikType}
-          />
-        );
-      case 2:
         return (
           <ConGebruikStepProductApplicatie
             gebruik={gebruik}
@@ -1176,7 +1742,7 @@ const AcFormsGebruik = ({ store }) => {
             schemas={schemas}
           />
         );
-      case 3:
+      case 1:
         return (
           <ConGebruikStepVersie
             gebruik={gebruik}
@@ -1186,7 +1752,64 @@ const AcFormsGebruik = ({ store }) => {
             schemas={schemas}
           />
         );
+      case 2:
+        // Organisatie step (only for andere-organisatie)
+        return (
+          <ConGebruikStepOrganisatie
+            gebruik={gebruik}
+            setGebruikData={setGebruikData}
+            loading={loading}
+            organisatieOptions={organisatieOptions}
+            organisatieLoading={organisatieLoading}
+            searchOrganisaties={debouncedSearchOrganisaties}
+            schemas={schemas}
+            gebruikType={gebruikType}
+            afnemerKeuze={afnemerKeuze}
+            setAfnemerKeuze={setAfnemerKeuze}
+            afnemerOrganisatie={afnemerOrganisatie}
+            setAfnemerOrganisatieData={setAfnemerOrganisatieData}
+          />
+        );
+      case 3:
+        return (
+          <ConGebruikStepInformatie
+            gebruik={gebruik}
+            setGebruikData={setGebruikData}
+            loading={loading}
+            contactpersoonOptions={contactpersoonOptions}
+            contactpersoonLoading={contactpersoonLoading}
+            searchContactpersonen={debouncedSearchContactpersonen}
+            schemas={schemas}
+            schemasLoading={schemasLoading}
+            gebruikType={gebruikType}
+          />
+        );
       case 4:
+        return (
+          <ConGebruikStepReferentiecomponenten
+            gebruik={gebruik}
+            setGebruikData={setGebruikData}
+            referentieComponentenOptions={referentieComponentenOptions}
+            setReferentieComponentenWithStandards={
+              setReferentieComponentenWithStandards
+            }
+            loading={loading}
+            referentieComponentenLoading={referentieComponentenLoading}
+          />
+        );
+      case 5:
+        return (
+          <ConGebruikStepStandaarden
+            gebruik={gebruik}
+            setGebruikData={setGebruikData}
+            referentieComponentenWithStandards={referentieComponentenWithStandards}
+            standaardenOptions={standaardenOptions}
+            standaardenOptionsLoading={standaardenOptionsLoading}
+            selectedExtraStandards={selectedExtraStandards}
+            setSelectedExtraStandards={setSelectedExtraStandards}
+          />
+        );
+      case 6:
         return (
           <ConGebruikStepKoppelingen
             gebruik={gebruik}
@@ -1195,7 +1818,7 @@ const AcFormsGebruik = ({ store }) => {
             schemas={schemas}
           />
         );
-      case 5:
+      case 7:
         return (
           <ConGebruikStepDiensten
             gebruik={gebruik}
@@ -1204,7 +1827,7 @@ const AcFormsGebruik = ({ store }) => {
             schemas={schemas}
           />
         );
-      case 6:
+      case 8:
         if (isAfnemerSamenwerking()) {
           return (
             <ConGebruikStepDeelnemers
@@ -1216,6 +1839,7 @@ const AcFormsGebruik = ({ store }) => {
           );
         }
       // fall through to review if not samenwerking
+      case 9:
       default:
         return (
           <ConGebruikStepReview
@@ -1227,24 +1851,14 @@ const AcFormsGebruik = ({ store }) => {
             organisatieOptions={organisatieOptions}
             moduleOptions={modulesOptions}
             contactpersoonOptions={contactpersoonOptions}
+            standaardenOptions={standaardenOptions}
+            referentieComponentenWithStandards={referentieComponentenWithStandards}
           />
         );
     }
   };
 
-  const currentStepName = (step) => stepsList[step] || '';
-
-  // Determine page title based on gebruik type
-  const getPageTitle = () => {
-    if (isEditMode) return 'Gebruik bewerken';
-    if (gebruikType === 'eigen-organisatie') {
-      return 'Gebruik Aanmelden voor eigen organisatie';
-    }
-    if (gebruikType === 'andere-organisatie') {
-      return 'Gebruik Aanmelden voor andere organisatie';
-    }
-    return 'Gebruik Aanmelden';
-  };
+  const { icon: Icon, schema } = getActiveWizard();
 
   return (
     <AcSection spacing>
@@ -1254,7 +1868,17 @@ const AcFormsGebruik = ({ store }) => {
           {!registerCallBack && (
             <>
               <div>
-                <Heading1>{getPageTitle()}</Heading1>
+                <Heading1
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                >
+                  <Icon style={{ width: '1em', height: '1em' }} />
+                  {_.capitalize(schema)}
+                  {isEditMode
+                    ? ' updaten'
+                    : gebruikType === 'andere-organisatie'
+                    ? ' melden'
+                    : ' registreren'}
+                </Heading1>
                 <Paragraph>
                   Selecteer een applicatie, vul aanvullende informatie aan en
                   controleer uw invoer.
@@ -1271,12 +1895,123 @@ const AcFormsGebruik = ({ store }) => {
                 <div className='ac-register-container ac-forms-product'>
                   <div ref={processStepsRef} className='ac-register-process-steps'>
                     <ProcessSteps
-                      steps={stepsList.map((title, index) => ({
-                        id: `step-${index}`,
-                        marker: index + 1,
-                        status: getStatus(currentStep, index),
-                        title,
-                      }))}
+                      steps={[
+                        {
+                          id: 'applicatie-selectie-step',
+                          marker: 1,
+                          status: getStatusMultiStep(
+                            currentStep,
+                            getAdjustedStepIndex(0),
+                            getAdjustedStepIndex(0),
+                            getAdjustedStepIndex(1)
+                          ),
+                          title: 'Applicatie selectie',
+                          steps: [
+                            {
+                              id: 'applicatie-substep',
+                              status: getStatus(
+                                currentStep,
+                                getAdjustedStepIndex(0)
+                              ),
+                              title: 'Applicatie',
+                            },
+                            {
+                              id: 'versie-substep',
+                              status: getStatus(
+                                currentStep,
+                                getAdjustedStepIndex(1)
+                              ),
+                              title: 'Applicatie versie',
+                            },
+                          ],
+                        },
+                        // Conditionally include Organisatie step (only for andere-organisatie)
+                        ...(gebruikType === 'andere-organisatie'
+                          ? [
+                              {
+                                id: 'afnemer-step',
+                                marker: 2,
+                                status: getStatus(
+                                  currentStep,
+                                  getAdjustedStepIndex(2)
+                                ),
+                                title: 'Afnemer',
+                              },
+                            ]
+                          : []),
+                        {
+                          id: 'gebruik-configuratie-step',
+                          marker: gebruikType === 'andere-organisatie' ? 3 : 2,
+                          status: getStatusMultiStep(
+                            currentStep,
+                            getAdjustedStepIndex(3),
+                            getAdjustedStepIndex(3),
+                            getAdjustedStepIndex(isAfnemerSamenwerking() ? 8 : 7)
+                          ),
+                          title: 'Gebruik configuratie',
+                          steps: [
+                            {
+                              id: 'informatie-substep',
+                              status: getStatus(
+                                currentStep,
+                                getAdjustedStepIndex(3)
+                              ),
+                              title: 'Gebruik informatie',
+                            },
+                            {
+                              id: 'referentiecomponenten-substep',
+                              status: getStatus(
+                                currentStep,
+                                getAdjustedStepIndex(4)
+                              ),
+                              title: 'Referentiecomponenten',
+                            },
+                            {
+                              id: 'standaarden-substep',
+                              status: getStatus(
+                                currentStep,
+                                getAdjustedStepIndex(5)
+                              ),
+                              title: 'Standaarden',
+                            },
+                            {
+                              id: 'koppelingen-substep',
+                              status: getStatus(
+                                currentStep,
+                                getAdjustedStepIndex(6)
+                              ),
+                              title: 'Koppelingen',
+                            },
+                            {
+                              id: 'diensten-substep',
+                              status: getStatus(
+                                currentStep,
+                                getAdjustedStepIndex(7)
+                              ),
+                              title: 'Diensten',
+                            },
+                            // Conditionally include Deelnemers step
+                            ...(isAfnemerSamenwerking()
+                              ? [
+                                  {
+                                    id: 'deelnemers-substep',
+                                    status: getStatus(
+                                      currentStep,
+                                      getAdjustedStepIndex(8)
+                                    ),
+                                    title: 'Deelnemers',
+                                  },
+                                ]
+                              : []),
+                          ],
+                        },
+                        {
+                          id: 'controleren-step',
+                          marker: gebruikType === 'andere-organisatie' ? 4 : 3,
+                          status: getStatus(currentStep, getAdjustedStepIndex(9)),
+                          title: 'Controleren',
+                        },
+                      ]}
                     />
                   </div>
 
@@ -1350,28 +2085,68 @@ const AcFormsGebruik = ({ store }) => {
                         </AcButton>
                       )}
 
-                      {currentStep !== stepsList.length - 1 && (
-                        <div className='ac-register-button-wrapper'>
-                          <AcButton
-                            style='button'
-                            className={clsx(
-                              currentStep === 0 && 'ac-register-form-next-button'
-                            )}
-                            icon={<VISUALS.ARROW_RIGHT />}
-                            onClick={() => setCurrentStep(currentStep + 1)}
-                            disabled={
-                              !canGoNext() ||
-                              loading ||
-                              prefillLoading ||
-                              !!prefillError
-                            }
-                          >
-                            Volgende
-                          </AcButton>
-                        </div>
+                      {currentStep === 0 && (
+                        <AcButton
+                          style='button'
+                          buttonType='secondary'
+                          icon={<VISUALS.CUBE />}
+                          onClick={() => setShowUnsavedChangesAlert(true)}
+                        >
+                          Ik kan de gewenste applicatie niet vinden
+                        </AcButton>
                       )}
 
-                      {currentStep === stepsList.length - 1 && (
+                      <AcFlex
+                        spacing='xs'
+                        style={{ width: 'fit-content' }}
+                        className={clsx(
+                          currentStep === 0 && 'ac-register-form-next-button'
+                        )}
+                      >
+                        {getLogicalStepFromPhysical(currentStep) === 2 &&
+                          gebruikType === 'andere-organisatie' && (
+                            <AcButton
+                              style='button'
+                              buttonType='secondary'
+                              icon={
+                                afnemerKeuze === 'bestaand' ? (
+                                  <VISUALS.BUILDING />
+                                ) : (
+                                  <VISUALS.ARROW_LEFT />
+                                )
+                              }
+                              onClick={() =>
+                                afnemerKeuze === 'bestaand'
+                                  ? setAfnemerKeuze('nieuw')
+                                  : setAfnemerKeuze('bestaand')
+                              }
+                            >
+                              {afnemerKeuze === 'bestaand'
+                                ? 'Ik kan de gewenste leverancier niet vinden'
+                                : 'Bestaande leverancier selecteren'}
+                            </AcButton>
+                          )}
+
+                        {getLogicalStepFromPhysical(currentStep) !== 9 && (
+                          <div className='ac-register-button-wrapper'>
+                            <AcButton
+                              style='button'
+                              icon={<VISUALS.ARROW_RIGHT />}
+                              onClick={() => setCurrentStep(currentStep + 1)}
+                              disabled={
+                                !canGoNext() ||
+                                loading ||
+                                prefillLoading ||
+                                !!prefillError
+                              }
+                            >
+                              Volgende
+                            </AcButton>
+                          </div>
+                        )}
+                      </AcFlex>
+
+                      {getLogicalStepFromPhysical(currentStep) === 9 && (
                         <AcButton
                           style='button'
                           buttonType='primary'
@@ -1533,7 +2308,7 @@ const AcFormsGebruik = ({ store }) => {
                       startDatumUitTeFaseren: '',
                       startDatumUitGefaseerd: '',
                     });
-                    setGebruikType(null);
+                    setGebruikType(getGebruikTypeFromUrl());
                     setError({ message: null, errors: null });
                   }}
                 >
@@ -1544,6 +2319,19 @@ const AcFormsGebruik = ({ store }) => {
           )}
         </AcColumn>
       </AcContainer>
+
+      <ConUnsavedChangesAlertModal
+        key='unsaved-changes-alert-modal'
+        showModal={showUnsavedChangesAlert}
+        onClose={() => setShowUnsavedChangesAlert(false)}
+        onConfirm={() => navigate('/forms/applicatie')}
+        title='Waarschuwing'
+        message='Je staat op het punt om de gebruikregistratie te verlaten. Al je wijzigingen zullen niet worden opgeslagen.'
+        confirmLabel='Verlaten'
+        cancelLabel='Blijven'
+        confirmIcon={<VISUALS.ARROW_RIGHT />}
+        cancelIcon={<VISUALS.ARROW_LEFT />}
+      />
     </AcSection>
   );
 };

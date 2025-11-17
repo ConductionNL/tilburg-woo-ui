@@ -1,37 +1,30 @@
 import React, { memo, useEffect } from 'react';
 import ConSchemaEnhancedField from '@components/con-schema-enhanced-field/con-schema-enhanced-field';
-import {
-  validateWebsite,
-  validateEmail,
-  validatePhone,
-} from '@views/ac-forms/validation/form-validations';
+import { validateWebsite } from '@views/ac-forms/validation/form-validations';
 
 /**
  * Aanbieder Informatie Form Component
  *
  * This step allows users to either select an existing organization or create a new one
- * when registering a missing applicatie (type=ontbrekend-applicatie).
+ * when registering a dienst.
  *
  * Features:
  * - Radio button choice between existing and new organization
  * - Searchable dropdown for existing organizations
  * - Full form for creating new organization based on organisatie schema
  *
- * Only shown when formType === 'ontbrekend-applicatie'
- *
- * @param {Object} applicatie - The applicatie object containing form data
- * @param {Function} setApplicatieData - Function to update applicatie data
+ * @param {Object} dienst - The dienst object containing form data
+ * @param {Function} setDienstData - Function to update dienst data
  * @param {Object} aanbiederOrganisatie - The organization object for creating new organization
  * @param {Function} setAanbiederOrganisatieData - Function to update organization data
  * @param {boolean} loading - Loading state indicator
  * @param {Object} schemas - Available schemas for field configuration (organisatie schema)
  * @param {string} aanbiederKeuze - Choice between 'bestaand' or 'nieuw'
- * @param {Function} setAanbiederKeuze - Function to update choice
  */
-const ConFormApplicatieAanbiederInformatieStage = memo(
+const ConFormDienstAanbiederInformatieStage = memo(
   ({
-    applicatie,
-    setApplicatieData,
+    dienst,
+    setDienstData,
     aanbiederOrganisatie,
     setAanbiederOrganisatieData,
     loading,
@@ -39,7 +32,7 @@ const ConFormApplicatieAanbiederInformatieStage = memo(
     aanbiederKeuze,
   }) => {
     // Handle choice change between existing and new
-    const handleChoiceChange = () => {
+    useEffect(() => {
       if (aanbiederKeuze === 'bestaand') {
         // Clear new organization fields
         setAanbiederOrganisatieData('naam', '');
@@ -51,14 +44,12 @@ const ConFormApplicatieAanbiederInformatieStage = memo(
         setAanbiederOrganisatieData('telefoonnummer', '');
         setAanbiederOrganisatieData('logo', '');
         // Don't auto-set aanbieder - let user explicitly select from dropdown
-        setApplicatieData('aanbieder', null);
+        setDienstData('aanbieder', null);
       } else {
         // Clear existing organization selection
-        setApplicatieData('aanbieder', null);
+        setDienstData('aanbieder', null);
       }
-    };
-
-    useEffect(handleChoiceChange, [aanbiederKeuze]);
+    }, [aanbiederKeuze]);
 
     return (
       <div role='group' aria-labelledby='aanbieder-section-title'>
@@ -77,10 +68,10 @@ const ConFormApplicatieAanbiederInformatieStage = memo(
             {/* Existing organization dropdown - using ConSchemaEnhancedField */}
             {aanbiederKeuze === 'bestaand' && (
               <ConSchemaEnhancedField
-                schemaType='module'
+                schemaType='dienst'
                 schemaProperty='aanbieder'
-                value={applicatie.aanbieder}
-                onChange={(value) => setApplicatieData('aanbieder', value)}
+                value={dienst.aanbieder}
+                onChange={(value) => setDienstData('aanbieder', value)}
                 isDisabled={loading}
                 width='full'
                 customProps={{
@@ -186,16 +177,7 @@ const ConFormApplicatieAanbiederInformatieStage = memo(
                   }
                   isDisabled={loading}
                   width='half'
-                  customProps={{
-                    inputType: 'text',
-                    validation: {
-                      custom: (value) => {
-                        if (!value || value.trim() === '') return true;
-                        return validateEmail(value.trim());
-                      },
-                      customErrorMessage: 'Ongeldig e-mailadres',
-                    },
-                  }}
+                  // placeholder will come from schema example
                   schemas={schemas}
                 />
 
@@ -209,16 +191,7 @@ const ConFormApplicatieAanbiederInformatieStage = memo(
                   }
                   isDisabled={loading}
                   width='half'
-                  customProps={{
-                    validation: {
-                      custom: (value) => {
-                        if (!value || value.trim() === '') return true;
-                        return validatePhone(value.trim());
-                      },
-                      customErrorMessage:
-                        'Ongeldig telefoonnummer. (+31 6 1234 5678)',
-                    },
-                  }}
+                  // placeholder will come from schema example
                   schemas={schemas}
                 />
 
@@ -245,7 +218,8 @@ const ConFormApplicatieAanbiederInformatieStage = memo(
   }
 );
 
-ConFormApplicatieAanbiederInformatieStage.displayName =
-  'ConFormApplicatieAanbiederInformatieStage';
+ConFormDienstAanbiederInformatieStage.displayName =
+  'ConFormDienstAanbiederInformatieStage';
 
-export default ConFormApplicatieAanbiederInformatieStage;
+export default ConFormDienstAanbiederInformatieStage;
+
