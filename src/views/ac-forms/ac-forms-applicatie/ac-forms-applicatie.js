@@ -9,7 +9,11 @@ import { AcButton } from '@src/molecules';
 import { ProcessSteps } from '@gemeente-denhaag/components-react';
 import { commongroundApiUrl } from '@config';
 import { useDebouncedInput } from '@src/hooks';
-import { validateWebsite } from '@views/ac-forms/validation/form-validations';
+import {
+  validateWebsite,
+  validateEmail,
+  validatePhone,
+} from '@views/ac-forms/validation/form-validations';
 import _ from 'lodash';
 
 import {
@@ -1183,6 +1187,28 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
         }
       }
 
+      // Validate email format if provided
+      if (
+        aanbiederOrganisatie['e-mailadres'] &&
+        String(aanbiederOrganisatie['e-mailadres']).trim()
+      ) {
+        const email = String(aanbiederOrganisatie['e-mailadres']).trim();
+        if (!validateEmail(email)) {
+          return true;
+        }
+      }
+
+      // Validate phone format if provided
+      if (
+        aanbiederOrganisatie.telefoonnummer &&
+        String(aanbiederOrganisatie.telefoonnummer).trim()
+      ) {
+        const phone = String(aanbiederOrganisatie.telefoonnummer).trim();
+        if (!validatePhone(phone)) {
+          return true;
+        }
+      }
+
       return missingNewOrgFields.length > 0;
     }
 
@@ -1243,6 +1269,18 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
           !validateWebsite(String(aanbiederOrganisatie.website).trim())
         ) {
           return 'Website heeft een ongeldig formaat';
+        }
+        if (
+          aanbiederOrganisatie['e-mailadres'] &&
+          !validateEmail(String(aanbiederOrganisatie['e-mailadres']).trim())
+        ) {
+          return 'E-mailadres heeft een ongeldig formaat';
+        }
+        if (
+          aanbiederOrganisatie.telefoonnummer &&
+          !validatePhone(String(aanbiederOrganisatie.telefoonnummer).trim())
+        ) {
+          return 'Telefoonnummer heeft een ongeldig formaat';
         }
       }
     }

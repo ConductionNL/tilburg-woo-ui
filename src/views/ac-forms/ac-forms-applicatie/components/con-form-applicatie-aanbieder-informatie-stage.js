@@ -1,6 +1,10 @@
 import React, { memo, useEffect } from 'react';
 import ConSchemaEnhancedField from '@components/con-schema-enhanced-field/con-schema-enhanced-field';
-import { validateWebsite } from '@views/ac-forms/validation/form-validations';
+import {
+  validateWebsite,
+  validateEmail,
+  validatePhone,
+} from '@views/ac-forms/validation/form-validations';
 
 /**
  * Aanbieder Informatie Form Component
@@ -182,7 +186,16 @@ const ConFormApplicatieAanbiederInformatieStage = memo(
                   }
                   isDisabled={loading}
                   width='half'
-                  // placeholder will come from schema example
+                  customProps={{
+                    inputType: 'text',
+                    validation: {
+                      custom: (value) => {
+                        if (!value || value.trim() === '') return true;
+                        return validateEmail(value.trim());
+                      },
+                      customErrorMessage: 'Ongeldig e-mailadres',
+                    },
+                  }}
                   schemas={schemas}
                 />
 
@@ -196,7 +209,16 @@ const ConFormApplicatieAanbiederInformatieStage = memo(
                   }
                   isDisabled={loading}
                   width='half'
-                  // placeholder will come from schema example
+                  customProps={{
+                    validation: {
+                      custom: (value) => {
+                        if (!value || value.trim() === '') return true;
+                        return validatePhone(value.trim());
+                      },
+                      customErrorMessage:
+                        'Ongeldig telefoonnummer. (+31 6 1234 5678)',
+                    },
+                  }}
                   schemas={schemas}
                 />
 
