@@ -1391,7 +1391,7 @@ const ConFormsDienst = ({ store, userStore }) => {
                             buttonType='secondary'
                             icon={
                               aanbiederKeuze === 'bestaand' ? (
-                                <VISUALS.ARROW_RIGHT />
+                                <VISUALS.BUILDING />
                               ) : (
                                 <VISUALS.ARROW_LEFT />
                               )

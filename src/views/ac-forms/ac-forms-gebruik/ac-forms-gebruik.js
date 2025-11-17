@@ -2110,7 +2110,7 @@ const AcFormsGebruik = ({ store }) => {
                               buttonType='secondary'
                               icon={
                                 afnemerKeuze === 'bestaand' ? (
-                                  <VISUALS.ARROW_RIGHT />
+                                  <VISUALS.BUILDING />
                                 ) : (
                                   <VISUALS.ARROW_LEFT />
                                 )

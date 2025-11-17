@@ -1676,7 +1676,7 @@ const AcFormsKoppeling = ({ store }) => {
                             buttonType='secondary'
                             icon={
                               aanbiederKeuze === 'bestaand' ? (
-                                <VISUALS.ARROW_RIGHT />
+                                <VISUALS.BUILDING />
                               ) : (
                                 <VISUALS.ARROW_LEFT />
                               )

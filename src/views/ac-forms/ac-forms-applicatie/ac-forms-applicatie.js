@@ -1570,7 +1570,7 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
                               buttonType='secondary'
                               icon={
                                 aanbiederKeuze === 'bestaand' ? (
-                                  <VISUALS.ARROW_RIGHT />
+                                  <VISUALS.BUILDING />
                                 ) : (
                                   <VISUALS.ARROW_LEFT />
                                 )
