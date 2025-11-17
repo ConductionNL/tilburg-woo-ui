@@ -988,7 +988,11 @@ const AcFormsGebruik = ({ store }) => {
     if (shouldLoadRefs) {
       loadReferentieComponenten();
     }
-  }, [loadReferentieComponenten, referentieComponentenOptions.length, referentieComponentenLoading]);
+  }, [
+    loadReferentieComponenten,
+    referentieComponentenOptions.length,
+    referentieComponentenLoading,
+  ]);
 
   // Function to load standaarden
   const loadStandaarden = useCallback(async () => {
@@ -1847,6 +1851,8 @@ const AcFormsGebruik = ({ store }) => {
             organisatieOptions={organisatieOptions}
             moduleOptions={modulesOptions}
             contactpersoonOptions={contactpersoonOptions}
+            standaardenOptions={standaardenOptions}
+            referentieComponentenWithStandards={referentieComponentenWithStandards}
           />
         );
     }
