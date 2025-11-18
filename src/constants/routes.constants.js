@@ -24,6 +24,7 @@ import {
   ConDirectory,
   AcFormsGebruik,
   AcFormsProduct,
+  AcFormsApplicatie,
   AcFormsKoppeling,
   ConFormsDienst,
   ConViewsList,
@@ -57,6 +58,7 @@ export const PATHS = AcLockObject({
   FORMS_REGISTER: '/forms/register',
   FORMS_GEBRUIK: '/forms/gebruik',
   FORMS_PRODUCT: '/forms/product',
+  FORMS_APPLICATIE: '/forms/applicatie',
   FORMS_KOPPELING: '/forms/koppeling',
   FORMS_DIENST: '/forms/dienst',
   VIEWS: '/views/:id',
@@ -312,6 +314,14 @@ export const ROUTES = {
       AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
     } | Formulier Product`,
     component: AcFormsProduct,
+  },
+  FORMS_APPLICATIE: {
+    id: AcUUID(),
+    name: 'Formulier Applicatie',
+    label: 'Formulier Applicatie',
+    path: PATHS.FORMS_APPLICATIE,
+    title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | Formulier Applicatie`,
+    component: AcFormsApplicatie,
   },
   FORMS_KOPPELING: {
     id: AcUUID(),

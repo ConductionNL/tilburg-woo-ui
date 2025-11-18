@@ -5,6 +5,8 @@ import {
   Separator,
 } from '@utrecht/component-library-react/dist/css-module';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
+import { AcLink } from '@src/molecules';
+import { handleFileClick } from '@utils';
 
 /**
  * ConGebruikStepReview
@@ -17,8 +19,9 @@ const ConGebruikStepReview = ({
   koppelingOptions,
   dienstOptions,
   organisatieOptions,
-  productOptions,
   moduleOptions,
+  standaardenOptions,
+  referentieComponentenWithStandards,
 }) => {
   // Helper function to get the correct afnemer display name
   const getAfnemerDisplayName = () => {
@@ -84,6 +87,92 @@ const ConGebruikStepReview = ({
 
   const relevantStartDate = getRelevantStartDate();
 
+  // Helper function to get standard name from ID
+  const getStandardNameFromId = (standardId) => {
+    if (!standardId) return standardId;
+
+    // First try to find in standaardenOptions
+    if (standaardenOptions && Array.isArray(standaardenOptions)) {
+      const foundOption = standaardenOptions.find(
+        (opt) =>
+          String(opt.value) === String(standardId) ||
+          String(opt.data?.id) === String(standardId)
+      );
+      if (foundOption) {
+        return (
+          foundOption.label ||
+          foundOption.data?.naam ||
+          foundOption.data?.name ||
+          standardId
+        );
+      }
+    }
+
+    // Fallback: search through referentieComponentenWithStandards
+    if (
+      referentieComponentenWithStandards &&
+      Array.isArray(referentieComponentenWithStandards)
+    ) {
+      for (const refComp of referentieComponentenWithStandards) {
+        // Check verplichte standards
+        if (Array.isArray(refComp.verplichteStandaarden)) {
+          const found = refComp.verplichteStandaarden.find(
+            (standard) =>
+              standard.id === standardId || `id-${standard.id}` === standardId
+          );
+          if (found) return found.naam || found.title || standardId;
+        }
+
+        // Check aanbevolen standards
+        if (Array.isArray(refComp.aanbevolenStandaarden)) {
+          const found = refComp.aanbevolenStandaarden.find(
+            (standard) =>
+              standard.id === standardId || `id-${standard.id}` === standardId
+          );
+          if (found) return found.naam || found.title || standardId;
+        }
+      }
+    }
+
+    return standardId; // Fallback to ID if name not found
+  };
+
+  // Helper function to create middle ellipsis for long filenames
+  const createMiddleEllipsis = (filename, maxLength = 25) => {
+    if (!filename) return 'bewijs';
+
+    // If filename is short enough, return as is
+    if (filename.length <= maxLength) {
+      return filename;
+    }
+
+    // Find the extension
+    const lastDotIndex = filename.lastIndexOf('.');
+    if (lastDotIndex === -1) {
+      // No extension, truncate from end
+      return filename.substring(0, maxLength - 3) + '...';
+    }
+
+    const name = filename.substring(0, lastDotIndex);
+    const extension = filename.substring(lastDotIndex);
+
+    // Calculate how much space we have for the name part
+    const availableLength = maxLength - extension.length - 3; // 3 for "..."
+
+    if (availableLength <= 0) {
+      return '...' + extension;
+    }
+
+    // Split the available space between start and end of filename
+    const startLength = Math.ceil(availableLength / 2);
+    const endLength = Math.floor(availableLength / 2);
+
+    const startPart = name.substring(0, startLength);
+    const endPart = name.substring(name.length - endLength);
+
+    return startPart + '...' + endPart + extension;
+  };
+
   return (
     <div
       className='ac-register-form-section'
@@ -145,10 +234,13 @@ const ConGebruikStepReview = ({
             </div>
           )}
 
-          <div className='ac-register-review__field'>
-            <strong>Afnemer:</strong>
-            <div>{getAfnemerDisplayName()}</div>
-          </div>
+          {/* Only show Afnemer when type is 'ontbrekend-organisatie' */}
+          {gebruik?.type === 'ontbrekend-organisatie' && (
+            <div className='ac-register-review__field'>
+              <strong>Afnemer:</strong>
+              <div>{getAfnemerDisplayName()}</div>
+            </div>
+          )}
 
           <div className='ac-register-review__field'>
             <strong>Status:</strong>
@@ -185,13 +277,6 @@ const ConGebruikStepReview = ({
             </div>
           </div>
 
-          <div className='ac-register-review__field'>
-            <strong>Product:</strong>
-            <div>
-              {productOptions.find((o) => o.value === gebruik?.product)?.label ||
-                '-'}
-            </div>
-          </div>
           <div className='ac-register-review__field'>
             <strong>Applicatie:</strong>
             <div>
@@ -263,6 +348,64 @@ const ConGebruikStepReview = ({
                     return (
                       <UnorderedListItem key={v}>
                         {opt ? opt.label : v}
+                      </UnorderedListItem>
+                    );
+                  })}
+                </UnorderedList>
+              </div>
+            </div>
+          )}
+
+          {/* Ondersteunde Standaarden (Compliancy) */}
+          {Array.isArray(gebruik?.compliancy) && gebruik.compliancy.length > 0 && (
+            <div className='ac-register-review__field'>
+              <strong>Ondersteunde standaarden:</strong>
+              <div>
+                <UnorderedList>
+                  {gebruik.compliancy.map((comp, i) => {
+                    const displayName =
+                      comp.standaardnaam ||
+                      getStandardNameFromId(comp.standaardversie);
+
+                    return (
+                      <UnorderedListItem key={comp.standaardversie || i}>
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.25rem',
+                          }}
+                        >
+                          <span>{displayName}</span>
+                          {comp.bewijs ? (
+                            <>
+                              <span>- bewijs:</span>
+                              <AcLink
+                                href='#'
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  handleFileClick(comp.bewijs);
+                                }}
+                                title={comp.bewijsFilename || 'bewijs'}
+                              >
+                                {createMiddleEllipsis(comp.bewijsFilename)}
+                              </AcLink>
+                            </>
+                          ) : comp.url ? (
+                            <>
+                              <span>- bewijs:</span>
+                              <AcLink
+                                href={comp.url}
+                                target='_blank'
+                                rel='noopener noreferrer'
+                              >
+                                {comp.url}
+                              </AcLink>
+                            </>
+                          ) : (
+                            <span style={{ color: '#666' }}>(geen bewijs)</span>
+                          )}
+                        </span>
                       </UnorderedListItem>
                     );
                   })}

@@ -1,28 +1,20 @@
 import React, { memo } from 'react';
-import ReactSelect from 'react-select';
-import { Textbox } from '@utrecht/component-library-react/dist/css-module';
 import { ConSchemaEnhancedField } from '@src/components';
 
 /**
  * ConGebruikStepInformatie
  * Renders the "Gebruik informatie" step of the Gebruik wizard.
- * Behavior changes based on gebruikType:
- * - eigen-organisatie: afnemer is locked to current user's organization
- * - andere-organisatie: afnemer can be selected from available organizations
+ * For eigen-organisatie: shows contactpersoon.
+ * For andere-organisatie: only shows status and date fields (afnemer is handled in separate step).
  */
 const ConGebruikStepInformatie = ({
   gebruik,
   setGebruikData,
   loading,
-  refCompOptions,
-  organisatieOptions,
-  organisatieLoading,
-  searchOrganisaties,
   contactpersoonOptions,
   contactpersoonLoading,
   searchContactpersonen,
   schemas,
-  // schemasLoading,
   gebruikType,
 }) => {
   return (
@@ -37,7 +29,7 @@ const ConGebruikStepInformatie = ({
 
       <div className='ac-register-form-grid'>
         {/* Contactpersoon - alleen tonen voor eigen organisatie gebruik */}
-        {gebruikType !== 'andere-organisatie' && (
+        {gebruikType === 'eigen-organisatie' && (
           <div style={{ gridColumn: 'span 2' }}>
             <ConSchemaEnhancedField
               schemaType='gebruik'
@@ -71,60 +63,6 @@ const ConGebruikStepInformatie = ({
                 },
               }}
             />
-          </div>
-        )}
-        {gebruikType !== 'eigen-organisatie' && (
-          <div style={{ gridColumn: 'span 2' }}>
-            {gebruikType === 'andere-organisatie' ? (
-              <>
-                <ConSchemaEnhancedField
-                  schemaType='gebruik'
-                  schemaProperty='afnemer'
-                  value={
-                    typeof gebruik?.afnemer === 'object' && gebruik.afnemer !== null
-                      ? gebruik.afnemer.id ||
-                        gebruik.afnemer['@self']?.id ||
-                        gebruik.afnemer.value
-                      : gebruik?.afnemer || null
-                  }
-                  onChange={(value) => {
-                    setGebruikData('afnemer', value);
-                  }}
-                  isDisabled={loading}
-                  width='full'
-                  schemas={schemas}
-                  optionsProvider={organisatieOptions}
-                  isLoading={organisatieLoading}
-                  onSearch={(_path, _refSlug, q) => searchOrganisaties(q)}
-                  placeholder='Selecteer de klantorganisatie...'
-                />
-                <div
-                  style={{
-                    fontSize: '0.875rem',
-                    color: '#666',
-                    marginTop: '0.25rem',
-                  }}
-                >
-                  Selecteer de organisatie die uw product gebruikt. Deze organisatie
-                  wordt geïnformeerd en moet het gebruik goedkeuren.
-                </div>
-              </>
-            ) : (
-              <>
-                <label className='utrecht-form-label'>Afnemer</label>
-                <Textbox placeholder='Selecteer eerst het type gebruik' disabled />
-                <div
-                  style={{
-                    fontSize: '0.875rem',
-                    color: '#orange',
-                    marginTop: '0.25rem',
-                  }}
-                >
-                  Ga terug naar &quot;Soort gebruik&quot; om het type registratie te
-                  selecteren.
-                </div>
-              </>
-            )}
           </div>
         )}
         <div style={{ gridColumn: 'span 2' }}>
@@ -199,30 +137,6 @@ const ConGebruikStepInformatie = ({
               onChange={(e) =>
                 setGebruikData('startDatumUitGefaseerd', e.target.value)
               }
-            />
-          </div>
-        )}
-        {/* Referentiecomponenten - alleen tonen voor eigen organisatie gebruik */}
-        {gebruikType !== 'andere-organisatie' && (
-          <div style={{ gridColumn: 'span 2' }}>
-            <label className='utrecht-form-label'>Referentiecomponenten</label>
-            <ReactSelect
-              isMulti
-              className='ac-beheer-select'
-              closeMenuOnSelect={false}
-              options={refCompOptions.sort((a, b) => a.label.localeCompare(b.label))}
-              value={(gebruik?.gebruiktVoorReferentiecomponenten || [])
-                .map((v) =>
-                  refCompOptions.find((o) => String(o.value) === String(v))
-                )
-                .filter(Boolean)}
-              onChange={(opts) =>
-                setGebruikData(
-                  'gebruiktVoorReferentiecomponenten',
-                  Array.isArray(opts) ? opts.map((o) => String(o.value)) : []
-                )
-              }
-              placeholder='Selecteer referentiecomponenten...'
             />
           </div>
         )}

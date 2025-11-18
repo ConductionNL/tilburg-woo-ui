@@ -88,3 +88,42 @@
 .con-koppeling-standaarden-select > div {
   min-width: -webkit-fill-available !important;
 }
+
+// Standaard badges with pastel colors
+.con-standaard-badge {
+  font-size: 0.75rem;
+  color: #fff;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  line-height: 1.2;
+
+  &--verplicht {
+    background-color: #0066cc; // Blue
+    color: #fff; // White text for contrast
+  }
+
+  &--aanbevolen {
+    background-color: #888888; // Gray
+    color: #fff; // White text for contrast
+  }
+}
+
+// Summary text colors for standaarden
+.con-standaard-summary-verplicht {
+  color: #0066cc;
+  font-weight: 600;
+}
+
+.con-standaard-summary-aanbevolen {
+  color: #888888;
+  font-weight: 600;
+}
+
+// Form field without width limit
+.ac-register-form-field__no-width-limit {
+  width: 100%;
+  max-width: none !important;
+}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import RelatedTabs from './con-related-tabs';
 import ConLogoPreview from '../ac-register/con-logo-preview';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
@@ -245,6 +245,21 @@ const AcPublicationProduct = ({
   const [usedLoading, setUsedLoading] = useState(false);
   const [tabIndex, setTabIndex] = useState(0);
 
+  // Extract contactpersoon from uses data instead of get_single
+  const contact = useMemo(() => {
+    if (!uses?.length) return null;
+
+    // Find the first contactpersoon object in the uses array
+    // (if multiple contactpersonen exist, we take the first one)
+    const contactpersoonObject = uses.find(
+      (use) => use?.['@self']?.schema?.slug === 'contactpersoon'
+    );
+
+    if (!contactpersoonObject) return null;
+
+    return contactpersoonObject;
+  }, [uses]);
+
   // Resolved referentieComponenten names for custom tab rendering
   const [resolvedReferentieComponenten, setResolvedReferentieComponenten] = useState(
     []
@@ -378,7 +393,7 @@ const AcPublicationProduct = ({
                   get_single?.name ||
                   'Applicatie'}{' '}
                 {'('}
-                <ConUuidResolver>{get_single['@self'].organisation}</ConUuidResolver>
+                <ConUuidResolver>{get_single?.aanbieder}</ConUuidResolver>
                 {')'}
               </Heading>
             </div>
@@ -475,6 +490,57 @@ const AcPublicationProduct = ({
             )}
           </AcFlex>
           <AcFlex column spacing='sm' style={{ flex: 1 }}>
+            {(get_single?.website || get_single?.contactpersoon) && (
+              <AcFlex
+                column
+                spacing='sm'
+                className='con-product-details--contact-info'
+              >
+                {get_single?.website && (
+                  <AcFlex column>
+                    <b>Website:</b>
+                    <Link
+                      href={get_single?.website}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                    >
+                      <p>{get_single?.website}</p>
+                    </Link>
+                  </AcFlex>
+                )}
+                {typeof contact === 'object' && contact !== null ? (
+                  <AcFlex column>
+                    <b>Contactpersoon:</b>
+                    <p>
+                      {contact?.voornaam} {contact?.tussenvoegsel}{' '}
+                      {contact?.achternaam}
+                    </p>
+                    <Link
+                      href={`mailto:${contact?.['e-mailadres']}`}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                    >
+                      <p>{contact?.['e-mailadres']}</p>
+                    </Link>
+                    <Link
+                      href={`tel:${contact?.telefoonnummer}`}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                    >
+                      <p>{contact?.telefoonnummer}</p>
+                    </Link>
+                  </AcFlex>
+                ) : (
+                  typeof get_single?.contactpersoon === 'string' &&
+                  get_single?.contactpersoon?.trim?.() && (
+                    <AcFlex column>
+                      <b>Contactpersoon:</b>
+                      <ConUuidResolver>{get_single?.contactpersoon}</ConUuidResolver>
+                    </AcFlex>
+                  )
+                )}
+              </AcFlex>
+            )}
             <AcFlex
               column
               spacing='sm'
@@ -502,18 +568,29 @@ const AcPublicationProduct = ({
                   </p>
                 </div>
               )}
-              {get_single?.website && (
+              {get_single?.hostingLocatie && (
                 <div>
-                  <b>Website:</b>
-                  <p>{get_single?.website}</p>
+                  <b>De applicatie wordt gehost in:</b>
+                  <p>{get_single.hostingLocatie}</p>
                 </div>
               )}
-              {get_single?.website && (
+              {get_single?.hostingJurisdictie && (
                 <div>
-                  <b>Website:</b>
-                  <p>{get_single?.website}</p>
+                  <b>De data wordt opgeslagen in:</b>
+                  <p>{get_single.hostingJurisdictie}</p>
                 </div>
               )}
+              {Array.isArray(get_single?.cloudDienstverleningsmodel) &&
+                get_single.cloudDienstverleningsmodel.length > 0 && (
+                  <div>
+                    <b>Hosting type:</b>
+                    <ul style={{ margin: 0, paddingLeft: '1.25em' }}>
+                      {get_single.cloudDienstverleningsmodel.map((model, idx) => (
+                        <li key={idx}>{model}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
             </AcFlex>
 
             {/* <TabList
@@ -547,10 +624,10 @@ const AcPublicationProduct = ({
         object={object}
         navigateTo='publication'
         user={user}
-        tabNameOverride={{
-          schemaName: 'product',
-          newTabName: 'Onderdeel van product(en)',
-        }}
+        // tabNameOverride={{
+        //   schemaName: 'product',
+        //   newTabName: 'Onderdeel van product(en)',
+        // }}
         customTabsBefore={[
           {
             id: 'standaarden',

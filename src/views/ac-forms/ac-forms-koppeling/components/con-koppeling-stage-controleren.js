@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AcButton } from '@src/molecules';
 import { VISUALS } from '@src/constants';
+import { ConUuidResolver } from '@src/components';
 import {
   Alert,
   Paragraph,
@@ -34,6 +35,11 @@ const ConKoppelingStageControleren = ({
   onResetForm,
   standaardenByRow,
   standaardenOptions,
+  koppelingsType,
+  aanbieder,
+  organisatieOptions,
+  aanbiederKeuze,
+  aanbiederOrganisatie,
 }) => {
   const navigate = useNavigate();
 
@@ -151,6 +157,39 @@ const ConKoppelingStageControleren = ({
     return fromPool?.label || '';
   };
 
+  // Helper function to get the correct aanbieder display name
+  const getAanbiederDisplayName = () => {
+    // If creating a new organization, show the naam from aanbiederOrganisatie
+    if (aanbiederKeuze === 'nieuw' && aanbiederOrganisatie?.naam) {
+      return aanbiederOrganisatie.naam;
+    }
+
+    // If no aanbieder selected yet, return '-'
+    if (!aanbieder) return '-';
+
+    // If aanbieder is an object (from ConSchemaEnhancedField), use its name
+    if (typeof aanbieder === 'object') {
+      return (
+        aanbieder?.['@self']?.name ||
+        aanbieder?.naam ||
+        aanbieder?.name ||
+        aanbieder?.title ||
+        '-'
+      );
+    }
+
+    // If aanbieder is a string (UUID), try to find it in organisatieOptions
+    const orgOption = (organisatieOptions || []).find(
+      (opt) => String(opt.value) === String(aanbieder)
+    );
+    if (orgOption) {
+      return orgOption.label;
+    }
+
+    // Fallback: use ConUuidResolver for UUID strings
+    return <ConUuidResolver>{aanbieder}</ConUuidResolver>;
+  };
+
   return (
     <div
       className='ac-register-form-section'
@@ -180,6 +219,14 @@ const ConKoppelingStageControleren = ({
             <h3 className='utrecht-heading-4'>Koppelingen</h3>
           </div>
           <Separator className='ac-register-review-header__separator' />
+
+          {/* Only show Aanbieder when type is 'aanbieden-koppeling' */}
+          {koppelingsType === 'aanbieden-koppeling' && (
+            <div className='ac-register-review__field'>
+              <strong>Aanbieder:</strong>
+              <div>{getAanbiederDisplayName()}</div>
+            </div>
+          )}
 
           {!rows.length ? (
             <Paragraph>Geen koppelingen toegevoegd.</Paragraph>
@@ -226,7 +273,18 @@ const ConKoppelingStageControleren = ({
                         <div style={{ color: '#666', fontSize: '0.9rem' }}>
                           {statusLabel && <div>Status: {statusLabel}</div>}
                           {beschrijving && <div>Beschrijving: {beschrijving}</div>}
-                          {standaardenByRow && <div>Standaarden: {standaardenByRow[rowId].map((s) => standaardenOptions.find((o) => o.value === s)?.label).join(', ')}</div>}
+                          {standaardenByRow?.[rowId]?.length > 0 && (
+                            <div>
+                              Standaarden:{' '}
+                              {standaardenByRow[rowId]
+                                .map(
+                                  (s) =>
+                                    standaardenOptions.find((o) => o.value === s)
+                                      ?.label
+                                )
+                                .join(', ')}
+                            </div>
+                          )}
                         </div>
                       </UnorderedListItem>
                     );

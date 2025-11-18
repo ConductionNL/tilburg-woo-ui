@@ -83,21 +83,20 @@ const ConFormDienstInformatieStage = memo(
           <br />
           {dienstType === 'eigen-organisatie' ? (
             <>
-              U gaat een dienst registreren op een product van uw eigen organisatie.
-              In de volgende stappen vult u de basisgegevens in, selecteert u een van
-              uw producten, applicaties en kiest u relevante koppelingen.
+              U gaat een dienst registreren voor uw eigen organisatie.
+              In de volgende stappen vult u de basisgegevens in en selecteert u
+              relevante applicaties.
             </>
           ) : dienstType === 'andere-organisatie' ? (
             <>
-              U gaat een dienst registreren op een product van een andere
-              organisatie. In de volgende stappen vult u de basisgegevens in,
-              selecteert u een extern product, applicaties en kiest u relevante
-              koppelingen.
+              U gaat een dienst registreren voor een andere organisatie.
+              In de volgende stappen vult u de basisgegevens in en selecteert u
+              relevante applicaties.
             </>
           ) : (
             <>
-              In de volgende stappen vult u de basisgegevens in, selecteert u de
-              bijbehorende producten en applicaties en kiest u relevante koppelingen.
+              In de volgende stappen vult u de basisgegevens in en selecteert u
+              relevante applicaties.
             </>
           )}
           <br />
