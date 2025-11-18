@@ -76,18 +76,22 @@ const AcPublicationProduct = ({
   useEffect(() => {
     if (!get_single?.['@self']?.schema?.slug || !id) return;
 
-    const items = makeActionsForContext(id).map(
-      ({ key, label, onClick, schema, icon }) => ({
-        key,
-        label,
-        onClick,
-        schema,
-        icon,
-      })
-    );
+    const items = makeActionsForContext(
+      id,
+      null,
+      get_single,
+      'voorzieningen',
+      get_single?.['@self']?.schema?.slug
+    ).map(({ key, label, onClick, schema, icon }) => ({
+      key,
+      label,
+      onClick,
+      schema,
+      icon,
+    }));
 
     setActionMenuItems(items);
-  }, [get_single?.['@self']?.schema?.slug, id, makeActionsForContext]);
+  }, [get_single?.['@self']?.schema?.slug, id, makeActionsForContext, get_single]);
 
   // Tabs
   const [uses, setUses] = useState([]);

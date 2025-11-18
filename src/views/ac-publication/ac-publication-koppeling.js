@@ -56,26 +56,27 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
     schemaRef: get_single?.['@self']?.schema?.slug,
     currentType: get_single?.['@self']?.schema?.slug,
     openDynamicCreate,
-    currentObject: get_single,
-    currentObjectRegister: 'voorzieningen',
-    currentObjectSchema: get_single?.['@self']?.schema?.slug,
   });
 
   const [actionMenuItems, setActionMenuItems] = useState([]);
 
   useEffect(() => {
     if (!get_single?.['@self']?.schema?.slug || !id) return;
-    const items = makeActionsForContext(id).map(
-      ({ key, label, onClick, schema, icon }) => ({
-        key,
-        label,
-        onClick,
-        schema,
-        icon,
-      })
-    );
+    const items = makeActionsForContext(
+      id,
+      null,
+      get_single,
+      'voorzieningen',
+      get_single?.['@self']?.schema?.slug
+    ).map(({ key, label, onClick, schema, icon }) => ({
+      key,
+      label,
+      onClick,
+      schema,
+      icon,
+    }));
     setActionMenuItems(items);
-  }, [get_single?.['@self']?.schema?.slug, id, makeActionsForContext]);
+  }, [get_single?.['@self']?.schema?.slug, id, makeActionsForContext, get_single]);
 
   const fetchUses = useCallback(async () => {
     if (!id) return;

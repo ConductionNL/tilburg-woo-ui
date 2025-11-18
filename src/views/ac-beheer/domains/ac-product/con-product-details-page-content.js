@@ -19,6 +19,7 @@ import {
 import { TOOLTIP_ID } from '@src/index.web';
 import { useNavigate } from 'react-router-dom';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
+import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 
 /**
  * Content for the product details page
@@ -116,6 +117,70 @@ const ConProductDetailsPageContent = ({
       };
 
   const actualCanEdit = canEdit && hasEditPermission;
+
+  // Setup dynamic create callback for related actions
+  const openDynamicCreate = useCallback(
+    (targetType, preSelected, metadata = {}) => {
+      actionMenuProps?.setDynamicCreateTargetType?.(targetType);
+      actionMenuProps?.setDynamicCreatePreSelected?.(preSelected);
+      actionMenuProps?.setDynamicCreateMetadata?.(metadata);
+      actionMenuProps?.setOpenModal?.('dynamicCreate');
+    },
+    [actionMenuProps]
+  );
+
+  // Initialize related create actions hook
+  const { makeActionsForContext } = useRelatedCreateActions({
+    object,
+    user,
+    schemaRef: config?.schemaSlug,
+    currentType: 'product',
+    openDynamicCreate,
+  });
+
+  // Generate unique actions from config
+  const uniqueActions = useMemo(() => {
+    if (!config?.uniqueActions || !data) return [];
+    return config.uniqueActions
+      .filter((action) => action.condition?.(data))
+      .map((action) => ({
+        key: action.key,
+        label: action.label,
+        icon: action.icon,
+        onClick: () => {
+          if (action.action === 'wizard' && action.wizardPath) {
+            const params = action.wizardParams ? action.wizardParams(data) : {};
+            const searchParams = new URLSearchParams(params);
+            const queryString = searchParams.toString();
+            navigate(`${action.wizardPath}${queryString ? '?' + queryString : ''}`);
+          } else if (typeof action.onClick === 'function') {
+            action.onClick(data);
+          } else {
+            actionMenuProps?.setOpenModal?.(action.action);
+          }
+        },
+      }));
+  }, [config?.uniqueActions, data, navigate, actionMenuProps]);
+
+  // Generate dynamic create actions
+  const dynamicCreateActions = useMemo(() => {
+    if (!id || config?.disableRelatedCreateActions) return [];
+    return makeActionsForContext(
+      id,
+      config?.dynamicActionFilter,
+      data,
+      config?.registerSlug,
+      config?.schemaSlug
+    );
+  }, [
+    id,
+    config?.disableRelatedCreateActions,
+    config?.dynamicActionFilter,
+    makeActionsForContext,
+    data,
+    config?.registerSlug,
+    config?.schemaSlug,
+  ]);
 
   useEffect(() => {
     fetchUses();
@@ -254,6 +319,35 @@ const ConProductDetailsPageContent = ({
                     Depubliceren
                   </ConActionMenu.Button>
                 )}
+
+                {/* Unique actions from config */}
+                {uniqueActions.map((action) => (
+                  <ConActionMenu.Button
+                    key={action.key}
+                    icon={action.icon}
+                    onClick={action.onClick}
+                    disabled={!actualCanEdit}
+                    data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
+                    data-tooltip-content={
+                      !actualCanEdit
+                        ? getDisabledActionTooltip(action.key, reason)
+                        : undefined
+                    }
+                  >
+                    {action.label}
+                  </ConActionMenu.Button>
+                ))}
+
+                {/* Dynamic create actions */}
+                {dynamicCreateActions.map((action) => (
+                  <ConActionMenu.Button
+                    key={action.key}
+                    icon={action.icon}
+                    onClick={action.onClick}
+                  >
+                    {action.label}
+                  </ConActionMenu.Button>
+                ))}
 
                 <ConActionMenu.Button
                   icon={<VISUALS.TRASHCAN />}

@@ -219,17 +219,29 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
   useEffect(() => {
     if (isExtendView) return;
     if (!config?.schemaSlug || !data?.id) return;
-    const items = makeActionsForContext(data.id).map(
-      ({ key, label, onClick, schema, icon }) => ({
-        key,
-        label,
-        onClick,
-        schema,
-        icon,
-      })
-    );
+    const items = makeActionsForContext(
+      data.id,
+      config.dynamicActionFilter,
+      data,
+      config?.registerSlug,
+      config?.schemaSlug
+    ).map(({ key, label, onClick, schema, icon }) => ({
+      key,
+      label,
+      onClick,
+      schema,
+      icon,
+    }));
     setActionMenuItems(items);
-  }, [config?.schemaSlug, data?.id, makeActionsForContext, isExtendView]);
+  }, [
+    config?.schemaSlug,
+    data?.id,
+    makeActionsForContext,
+    isExtendView,
+    data,
+    config?.registerSlug,
+    config?.dynamicActionFilter,
+  ]);
 
   if (!config) {
     return <AcBeheerError error={'Onbekend detailtype'} store={store} />;
