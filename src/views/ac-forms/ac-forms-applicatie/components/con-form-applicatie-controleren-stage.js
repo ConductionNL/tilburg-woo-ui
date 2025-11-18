@@ -32,6 +32,7 @@ import rehypeSanitize from 'rehype-sanitize';
  * @param {Array} referentieComponentenWithStandards - Available reference components with their standards
  * @param {Array} standaardenOptions - Available standards options for display
  * @param {Array} modulesOptions - Available modules/applicaties for connections display
+ * @param {Array} buitengemeentelijkeOptions - Available external facilities for connections display
  * @param {Array} dienstOptions - Available service options for display
  * @param {Object} store - MobX store for fetching objects
  */
@@ -42,6 +43,7 @@ const ConFormApplicatieControlerenStage = memo(
     referentieComponentenWithStandards,
     standaardenOptions,
     modulesOptions,
+    buitengemeentelijkeOptions,
     dienstOptions,
     store,
   }) => {
@@ -186,9 +188,19 @@ const ConFormApplicatieControlerenStage = memo(
     const getModuleBDisplayName = (moduleBId) => {
       if (!moduleBId) return moduleBId;
 
-      // Try to find in modulesOptions
+      // Try to find in modulesOptions (applicaties)
       if (modulesOptions && Array.isArray(modulesOptions)) {
         const foundOption = modulesOptions.find(
+          (opt) => String(opt.value) === String(moduleBId)
+        );
+        if (foundOption) {
+          return foundOption.label;
+        }
+      }
+
+      // Try to find in buitengemeentelijkeOptions (external facilities)
+      if (buitengemeentelijkeOptions && Array.isArray(buitengemeentelijkeOptions)) {
+        const foundOption = buitengemeentelijkeOptions.find(
           (opt) => String(opt.value) === String(moduleBId)
         );
         if (foundOption) {

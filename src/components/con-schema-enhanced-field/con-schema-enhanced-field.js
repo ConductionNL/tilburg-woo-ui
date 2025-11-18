@@ -125,6 +125,7 @@ const ConSchemaEnhancedField = ({
   schemaType,
   schemaProperty,
   value,
+  required = false,
   onChange,
   onFieldChange = null,
   schemas = {},
@@ -352,7 +353,7 @@ const ConSchemaEnhancedField = ({
   const fieldRenderer = utilRenderField({
     path: fieldName,
     propertySchema,
-    required: propertySchema?.required || false,
+    required: propertySchema?.required || required || false,
     touched: touched,
     formData: updatedFormData,
     fieldConfigs: { [fieldName]: fieldConfig },
@@ -364,7 +365,7 @@ const ConSchemaEnhancedField = ({
     onFieldChange: (field, value) => {
       // Handle main field change
       if (field === fieldName) {
-        console.log('ConSchemaEnhancedField onChange:', { field, value, fieldName });
+        console.info('ConSchemaEnhancedField onChange:', { field, value, fieldName });
         onChange(value);
       }
       // Handle related field changes (like filename for file uploads)
@@ -431,6 +432,7 @@ ConSchemaEnhancedField.propTypes = {
   schemaProperty: PropTypes.oneOfType([PropTypes.string, PropTypes.object])
     .isRequired,
   value: PropTypes.any,
+  required: PropTypes.bool,
   onChange: PropTypes.func.isRequired,
   onFieldChange: PropTypes.func, // For handling related field changes (like filename)
   schemas: PropTypes.object,
