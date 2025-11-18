@@ -67,6 +67,10 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
   const [error, setError] = useState({ message: null, errors: null });
   const [currentStep, setCurrentStep] = useState(0);
 
+  // Edit-mode prefill state
+  const [prefillLoading, setPrefillLoading] = useState(false);
+  const [prefillError, setPrefillError] = useState(null);
+
   // State for aanbieder selection (only for ontbrekend-applicatie)
   const [aanbiederKeuze, setAanbiederKeuze] = useState('bestaand'); // 'bestaand' or 'nieuw'
 
@@ -407,6 +411,118 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
 
     fetchSchemas();
   }, [createDefaultApplicatieFromSchema]);
+
+  // Prefill applicatie data when editing
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      if (!isEditMode || !applicatieId) return;
+      if (schemasLoading) return; // Wait for schemas to load first
+
+      setPrefillLoading(true);
+      setPrefillError(null);
+      try {
+        // Fetch the applicatie object with extended koppelingen and diensten
+        await store.object.fetchObject(
+          'voorzieningen',
+          'module',
+          String(applicatieId),
+          {
+            _extend: ['@self.schema', 'koppelingen', 'diensten'],
+          }
+        );
+        if (cancelled) return;
+
+        const fetched = store.object.getObject(
+          'voorzieningen_module',
+          String(applicatieId)
+        );
+        if (!fetched) {
+          setPrefillError('Applicatie niet gevonden');
+          return;
+        }
+
+        // Helper function to extract ID from object or string
+        const mapId = (item) =>
+          item && typeof item === 'object'
+            ? String(item.id || item.value || item.uuid || item.slug || '')
+            : String(item || '');
+
+        // Map referentieComponenten
+        const prefilledReferentieComponenten = Array.isArray(
+          fetched.referentieComponenten
+        )
+          ? fetched.referentieComponenten.map((rc) => mapId(rc)).filter(Boolean)
+          : [];
+
+        // Map koppelingen with _localId for tracking (same pattern as product form)
+        const prefilledKoppelingen = Array.isArray(fetched.koppelingen)
+          ? fetched.koppelingen.map((kpl) => ({
+              // Preserve existing ID if present, otherwise generate local ID
+              _localId: kpl.id
+                ? `existing_${kpl.id}`
+                : `kpl_${Date.now().toString(36)}_${Math.random()
+                    .toString(36)
+                    .slice(2, 8)}`,
+              ...kpl,
+            }))
+          : [];
+
+        // Map diensten with _localId for tracking (same pattern as product form)
+        const prefilledDiensten = Array.isArray(fetched.diensten)
+          ? fetched.diensten.map((dienst) => ({
+              // Preserve existing dienst ID if present, otherwise generate local ID
+              _localId:
+                typeof dienst === 'object' && dienst.id
+                  ? `existing_${dienst.id}`
+                  : `dienst_${Date.now().toString(36)}_${Math.random()
+                      .toString(36)
+                      .slice(2, 8)}`,
+              ...(typeof dienst === 'object' ? dienst : { type: dienst }),
+            }))
+          : [];
+
+        // Update applicatie object with fetched data
+        setApplicatie((prev) => ({
+          ...prev,
+          naam: fetched.naam || '',
+          beschrijvingKort: fetched.beschrijvingKort || '',
+          beschrijvingLang: fetched.beschrijvingLang || '',
+          website: fetched.website || '',
+          logo: fetched.logo || '',
+          contactpersoon: fetched.contactpersoon || null,
+          aanbieder: fetched.aanbieder ? mapId(fetched.aanbieder) : null,
+          cloudDienstverleningsmodel: fetched.cloudDienstverleningsmodel || '',
+          licentietype: fetched.licentietype || fetched.licentieType || '',
+          licentieType: fetched.licentietype || fetched.licentieType || '',
+          licentie: fetched.licentie || '',
+          hostingLocatie: fetched.hostingLocatie || '',
+          hostingJurisdictie: fetched.hostingJurisdictie || '',
+          referentieComponenten: prefilledReferentieComponenten,
+          moduleVersies: fetched.moduleVersies || [],
+          compliancy: fetched.compliancy || [],
+          standaarden: fetched.standaarden || [],
+          standaardenGemma: fetched.standaardenGemma || [],
+          koppelingen: prefilledKoppelingen,
+          diensten: prefilledDiensten,
+        }));
+
+        console.info('✅ Applicatie data prefilled for edit mode');
+      } catch (err) {
+        console.error('Failed to prefill applicatie data:', err);
+        setPrefillError('Fout bij het laden van applicatie gegevens');
+      } finally {
+        if (!cancelled) {
+          setPrefillLoading(false);
+        }
+      }
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [isEditMode, applicatieId, schemasLoading, store.object]);
 
   // ✅ Set aanbieder after schemas are loaded to avoid race condition
   useEffect(() => {
@@ -933,7 +1049,9 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
 
   // Add click handlers to ProcessSteps after each render
   useEffect(() => {
+    // Early return if ref doesn't exist, loading, or error state
     if (!processStepsRef.current) return;
+    if (prefillLoading || prefillError) return;
 
     const addClickHandlers = () => {
       // Find all step elements in the DOM
@@ -973,7 +1091,13 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [currentStep, handleStepNavigation, generateStepIndexMapping]);
+  }, [
+    currentStep,
+    handleStepNavigation,
+    generateStepIndexMapping,
+    prefillLoading,
+    prefillError,
+  ]);
 
   const handleRegister = async () => {
     setLoading(true);
@@ -1183,6 +1307,7 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
             referentieComponentenWithStandards={referentieComponentenWithStandards}
             standaardenOptions={standaardenOptions}
             modulesOptions={modulesOptions}
+            buitengemeentelijkeOptions={buitengemeentelijkeOptions}
             dienstOptions={dienstOptions}
             store={store}
           />
@@ -1410,290 +1535,332 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
                     : getPageDescription(formType)}
                 </Paragraph>
               </div>
-              <div>
-                <h3
-                  className={clsx('utrecht-heading-3', 'ac-register-form-heading')}
-                >
-                  {currentStepName(currentStep)}
-                </h3>
 
-                {registerCallBack === 'error' && error.message && (
-                  <Alert type='error'>
-                    <Paragraph>{error.message}</Paragraph>
-                    {error.errors && (
-                      <UnorderedList>
-                        {Object.entries(error.errors).map(([field, messages]) => (
-                          <UnorderedListItem key={field}>
-                            <strong>{field}:</strong>{' '}
-                            {Array.isArray(messages)
-                              ? messages.join(', ')
-                              : messages}
-                          </UnorderedListItem>
-                        ))}
-                      </UnorderedList>
+              {/* Error state for prefill */}
+              {prefillError && (
+                <Alert type='error'>
+                  <Paragraph>
+                    <strong>Fout bij het laden van applicatie</strong>
+                  </Paragraph>
+                  <Paragraph>{prefillError}</Paragraph>
+                  <AcButton
+                    style='button'
+                    buttonType='secondary'
+                    onClick={() => navigate('/beheer')}
+                  >
+                    Terug naar beheer
+                  </AcButton>
+                </Alert>
+              )}
+
+              {/* Only show form if not loading and no error */}
+              {!prefillLoading && !prefillError && (
+                <>
+                  <div>
+                    <h3
+                      className={clsx(
+                        'utrecht-heading-3',
+                        'ac-register-form-heading'
+                      )}
+                    >
+                      {currentStepName(currentStep)}
+                    </h3>
+
+                    {registerCallBack === 'error' && error.message && (
+                      <Alert type='error'>
+                        <Paragraph>{error.message}</Paragraph>
+                        {error.errors && (
+                          <UnorderedList>
+                            {Object.entries(error.errors).map(
+                              ([field, messages]) => (
+                                <UnorderedListItem key={field}>
+                                  <strong>{field}:</strong>{' '}
+                                  {Array.isArray(messages)
+                                    ? messages.join(', ')
+                                    : messages}
+                                </UnorderedListItem>
+                              )
+                            )}
+                          </UnorderedList>
+                        )}
+                      </Alert>
                     )}
-                  </Alert>
-                )}
 
-                <AcColumn gap='sm'>
-                  <div className='ac-register-container ac-forms-applicatie'>
-                    <div ref={processStepsRef} className='ac-register-process-steps'>
-                      <ProcessSteps
-                        steps={[
-                          {
-                            id: 'applicatie-setup-step',
-                            marker: 1,
-                            status:
-                              formType === 'ontbrekend-applicatie'
-                                ? getStatusMultiStep(
-                                    currentStep,
-                                    getAdjustedStepIndex(0),
-                                    getAdjustedStepIndex(0),
-                                    getAdjustedStepIndex(1)
-                                  )
-                                : getStatus(currentStep, getAdjustedStepIndex(1)),
-                            title: 'Applicatie informatie',
-                            steps:
-                              formType === 'ontbrekend-applicatie'
-                                ? [
-                                    {
-                                      id: 'aanbieder-substep',
-                                      status: getStatus(
+                    <AcColumn gap='sm'>
+                      <div className='ac-register-container ac-forms-applicatie'>
+                        <div
+                          ref={processStepsRef}
+                          className='ac-register-process-steps'
+                        >
+                          <ProcessSteps
+                            steps={[
+                              {
+                                id: 'applicatie-setup-step',
+                                marker: 1,
+                                status:
+                                  formType === 'ontbrekend-applicatie'
+                                    ? getStatusMultiStep(
                                         currentStep,
-                                        getAdjustedStepIndex(0)
-                                      ),
-                                      title: 'Aanbieder',
-                                    },
-                                    {
-                                      id: 'applicatie-info-substep',
-                                      status: getStatus(
+                                        getAdjustedStepIndex(0),
+                                        getAdjustedStepIndex(0),
+                                        getAdjustedStepIndex(1)
+                                      )
+                                    : getStatus(
                                         currentStep,
                                         getAdjustedStepIndex(1)
                                       ),
-                                      title: 'Applicatie gegevens',
-                                    },
-                                  ]
-                                : undefined,
-                          },
-                          {
-                            id: 'applicatie-configuratie-step',
-                            marker: 2,
-                            status: getStatusMultiStep(
-                              currentStep,
-                              getAdjustedStepIndex(2),
-                              getAdjustedStepIndex(2),
-                              getAdjustedStepIndex(8)
-                            ),
-                            title: 'Applicatie configuratie',
-                            steps: [
-                              {
-                                id: 'licentie-substep',
-                                status: getStatus(
-                                  currentStep,
-                                  getAdjustedStepIndex(2)
-                                ),
-                                title: 'Licentie / Hosting',
-                              },
-                              // Conditionally include Versies step for On-premises
-                              ...(shouldShowVersiesStep()
-                                ? [
-                                    {
-                                      id: 'versies-substep',
-                                      status: getStatus(
-                                        currentStep,
-                                        getAdjustedStepIndex(3)
-                                      ),
-                                      title: 'Versies',
-                                    },
-                                  ]
-                                : []),
-                              {
-                                id: 'referentiecomponenten-substep',
-                                status: getStatus(
-                                  currentStep,
-                                  getAdjustedStepIndex(4)
-                                ),
-                                title: 'Referentiecomponenten',
+                                title: 'Applicatie informatie',
+                                steps:
+                                  formType === 'ontbrekend-applicatie'
+                                    ? [
+                                        {
+                                          id: 'aanbieder-substep',
+                                          status: getStatus(
+                                            currentStep,
+                                            getAdjustedStepIndex(0)
+                                          ),
+                                          title: 'Aanbieder',
+                                        },
+                                        {
+                                          id: 'applicatie-info-substep',
+                                          status: getStatus(
+                                            currentStep,
+                                            getAdjustedStepIndex(1)
+                                          ),
+                                          title: 'Applicatie gegevens',
+                                        },
+                                      ]
+                                    : undefined,
                               },
                               {
-                                id: 'standaarden-substep',
-                                status: getStatus(
+                                id: 'applicatie-configuratie-step',
+                                marker: 2,
+                                status: getStatusMultiStep(
                                   currentStep,
-                                  getAdjustedStepIndex(5)
+                                  getAdjustedStepIndex(2),
+                                  getAdjustedStepIndex(2),
+                                  getAdjustedStepIndex(8)
                                 ),
-                                title: 'Standaarden',
+                                title: 'Applicatie configuratie',
+                                steps: [
+                                  {
+                                    id: 'licentie-substep',
+                                    status: getStatus(
+                                      currentStep,
+                                      getAdjustedStepIndex(2)
+                                    ),
+                                    title: 'Licentie / Hosting',
+                                  },
+                                  // Conditionally include Versies step for On-premises
+                                  ...(shouldShowVersiesStep()
+                                    ? [
+                                        {
+                                          id: 'versies-substep',
+                                          status: getStatus(
+                                            currentStep,
+                                            getAdjustedStepIndex(3)
+                                          ),
+                                          title: 'Versies',
+                                        },
+                                      ]
+                                    : []),
+                                  {
+                                    id: 'referentiecomponenten-substep',
+                                    status: getStatus(
+                                      currentStep,
+                                      getAdjustedStepIndex(4)
+                                    ),
+                                    title: 'Referentiecomponenten',
+                                  },
+                                  {
+                                    id: 'standaarden-substep',
+                                    status: getStatus(
+                                      currentStep,
+                                      getAdjustedStepIndex(5)
+                                    ),
+                                    title: 'Standaarden',
+                                  },
+                                  {
+                                    id: 'koppelingen-substep',
+                                    status: getStatus(
+                                      currentStep,
+                                      getAdjustedStepIndex(6)
+                                    ),
+                                    title: 'Koppelingen',
+                                  },
+                                  {
+                                    id: 'diensten-substep',
+                                    status: getStatus(
+                                      currentStep,
+                                      getAdjustedStepIndex(7)
+                                    ),
+                                    title: 'Diensten',
+                                  },
+                                ],
                               },
                               {
-                                id: 'koppelingen-substep',
+                                id: 'applicatie-controleren-step',
+                                marker: 3,
                                 status: getStatus(
                                   currentStep,
-                                  getAdjustedStepIndex(6)
+                                  getAdjustedStepIndex(8)
                                 ),
-                                title: 'Koppelingen',
+                                title: 'Controleren',
                               },
-                              {
-                                id: 'diensten-substep',
-                                status: getStatus(
-                                  currentStep,
-                                  getAdjustedStepIndex(7)
-                                ),
-                                title: 'Diensten',
-                              },
-                            ],
-                          },
-                          {
-                            id: 'applicatie-controleren-step',
-                            marker: 3,
-                            status: getStatus(currentStep, getAdjustedStepIndex(8)),
-                            title: 'Controleren',
-                          },
-                        ]}
-                      />
-                    </div>
-                    <div className='ac-register-form-container'>
-                      <div
-                        className='sr-only'
-                        role='status'
-                        aria-live='polite'
-                        id='form-status'
-                      >
-                        {currentStepName(currentStep)}
-                      </div>
-                      <div tabIndex='-1' id='formStart'></div>
-
-                      {/* Debug JSON Display - only in development */}
-                      {process.env.NODE_ENV === 'development' && (
-                        <div
-                          style={{
-                            marginBottom: '2rem',
-                            padding: '1rem',
-                            backgroundColor: '#f8f9fa',
-                            border: '1px solid #dee2e6',
-                            borderRadius: '4px',
-                            fontSize: '0.8rem',
-                          }}
-                        >
-                          <details>
-                            <summary
-                              style={{
-                                cursor: 'pointer',
-                                fontWeight: 'bold',
-                                marginBottom: '0.5rem',
-                              }}
-                            >
-                              🐛 Debug: Applicatie Object (Click to expand)
-                            </summary>
-                            <pre
-                              style={{
-                                whiteSpace: 'pre-wrap',
-                                wordBreak: 'break-word',
-                                maxHeight: '300px',
-                                overflow: 'auto',
-                                backgroundColor: '#ffffff',
-                                padding: '0.5rem',
-                                border: '1px solid #ccc',
-                                borderRadius: '2px',
-                              }}
-                            >
-                              {JSON.stringify(applicatie, null, 2)}
-                            </pre>
-                          </details>
-
-                          <pre>Step {currentStep}</pre>
+                            ]}
+                          />
                         </div>
-                      )}
-
-                      {renderStep(currentStep)}
-
-                      <div
-                        className={clsx(
-                          'ac-register-form-buttons',
-                          currentStep !== 0 &&
-                            'ac-register-form-buttons-not-first-step'
-                        )}
-                      >
-                        {currentStep !== 0 && (
-                          <AcButton
-                            style='button'
-                            buttonType='secondary'
-                            icon={<VISUALS.ARROW_LEFT />}
-                            onClick={() => {
-                              setCurrentStep(currentStep - 1);
-                            }}
-                            disabled={loading}
+                        <div className='ac-register-form-container'>
+                          <div
+                            className='sr-only'
+                            role='status'
+                            aria-live='polite'
+                            id='form-status'
                           >
-                            Vorige
-                          </AcButton>
-                        )}
-                        {currentStep === 0 &&
-                          formType === 'ontbrekend-applicatie' && (
-                            <AcButton
-                              style='button'
-                              buttonType='secondary'
-                              icon={
-                                aanbiederKeuze === 'bestaand' ? (
-                                  <VISUALS.BUILDING />
-                                ) : (
-                                  <VISUALS.ARROW_LEFT />
-                                )
-                              }
-                              onClick={() =>
-                                aanbiederKeuze === 'bestaand'
-                                  ? setAanbiederKeuze('nieuw')
-                                  : setAanbiederKeuze('bestaand')
-                              }
+                            {currentStepName(currentStep)}
+                          </div>
+                          <div tabIndex='-1' id='formStart'></div>
+
+                          {/* Debug JSON Display - only in development */}
+                          {process.env.NODE_ENV === 'development' && (
+                            <div
+                              style={{
+                                marginBottom: '2rem',
+                                padding: '1rem',
+                                backgroundColor: '#f8f9fa',
+                                border: '1px solid #dee2e6',
+                                borderRadius: '4px',
+                                fontSize: '0.8rem',
+                              }}
                             >
-                              {aanbiederKeuze === 'bestaand'
-                                ? 'Ik kan de gewenste leverancier niet vinden'
-                                : 'Bestaande leverancier selecteren'}
-                            </AcButton>
-                          )}
-                        {getLogicalStepFromPhysical(currentStep) !== 8 && (
-                          <AcButton
-                            style='button'
-                            className={clsx(
-                              currentStep === 0 && 'ac-register-form-next-button'
-                            )}
-                            icon={<VISUALS.ARROW_RIGHT />}
-                            disabled={getDisabledStatus(currentStep) || loading}
-                            onClick={() => {
-                              focusForm();
-                              setCurrentStep(currentStep + 1);
-                            }}
-                            title={
-                              getDisabledStatus(currentStep)
-                                ? getDisabledTooltip(currentStep)
-                                : ''
-                            }
-                          >
-                            Volgende
-                          </AcButton>
-                        )}
+                              <details>
+                                <summary
+                                  style={{
+                                    cursor: 'pointer',
+                                    fontWeight: 'bold',
+                                    marginBottom: '0.5rem',
+                                  }}
+                                >
+                                  🐛 Debug: Applicatie Object (Click to expand)
+                                </summary>
+                                <pre
+                                  style={{
+                                    whiteSpace: 'pre-wrap',
+                                    wordBreak: 'break-word',
+                                    maxHeight: '300px',
+                                    overflow: 'auto',
+                                    backgroundColor: '#ffffff',
+                                    padding: '0.5rem',
+                                    border: '1px solid #ccc',
+                                    borderRadius: '2px',
+                                  }}
+                                >
+                                  {JSON.stringify(applicatie, null, 2)}
+                                </pre>
+                              </details>
 
-                        {getLogicalStepFromPhysical(currentStep) === 8 && (
-                          <AcButton
-                            style='button'
-                            icon={
-                              isEditMode ? (
-                                <VISUALS.SAVE />
-                              ) : (
-                                <VISUALS.CLIPBOARD_CHECK />
-                              )
-                            }
-                            onClick={handleRegister}
-                            loading={loading}
-                            disabled={loading}
+                              <pre>Step {currentStep}</pre>
+                            </div>
+                          )}
+
+                          {renderStep(currentStep)}
+
+                          <div
+                            className={clsx(
+                              'ac-register-form-buttons',
+                              currentStep !== 0 &&
+                                'ac-register-form-buttons-not-first-step'
+                            )}
                           >
-                            {isEditMode
-                              ? 'Applicatie updaten'
-                              : 'Applicatie aanmelden'}
-                          </AcButton>
-                        )}
+                            {currentStep !== 0 && (
+                              <AcButton
+                                style='button'
+                                buttonType='secondary'
+                                icon={<VISUALS.ARROW_LEFT />}
+                                onClick={() => {
+                                  setCurrentStep(currentStep - 1);
+                                }}
+                                disabled={loading || prefillLoading}
+                              >
+                                Vorige
+                              </AcButton>
+                            )}
+                            {currentStep === 0 &&
+                              formType === 'ontbrekend-applicatie' && (
+                                <AcButton
+                                  style='button'
+                                  buttonType='secondary'
+                                  icon={
+                                    aanbiederKeuze === 'bestaand' ? (
+                                      <VISUALS.BUILDING />
+                                    ) : (
+                                      <VISUALS.ARROW_LEFT />
+                                    )
+                                  }
+                                  onClick={() =>
+                                    aanbiederKeuze === 'bestaand'
+                                      ? setAanbiederKeuze('nieuw')
+                                      : setAanbiederKeuze('bestaand')
+                                  }
+                                >
+                                  {aanbiederKeuze === 'bestaand'
+                                    ? 'Ik kan de gewenste leverancier niet vinden'
+                                    : 'Bestaande leverancier selecteren'}
+                                </AcButton>
+                              )}
+                            {getLogicalStepFromPhysical(currentStep) !== 8 && (
+                              <AcButton
+                                style='button'
+                                className={clsx(
+                                  currentStep === 0 && 'ac-register-form-next-button'
+                                )}
+                                icon={<VISUALS.ARROW_RIGHT />}
+                                disabled={
+                                  getDisabledStatus(currentStep) ||
+                                  loading ||
+                                  prefillLoading ||
+                                  schemasLoading
+                                }
+                                onClick={() => {
+                                  focusForm();
+                                  setCurrentStep(currentStep + 1);
+                                }}
+                                title={
+                                  getDisabledStatus(currentStep)
+                                    ? getDisabledTooltip(currentStep)
+                                    : ''
+                                }
+                              >
+                                Volgende
+                              </AcButton>
+                            )}
+
+                            {getLogicalStepFromPhysical(currentStep) === 8 && (
+                              <AcButton
+                                style='button'
+                                icon={
+                                  isEditMode ? (
+                                    <VISUALS.SAVE />
+                                  ) : (
+                                    <VISUALS.CLIPBOARD_CHECK />
+                                  )
+                                }
+                                onClick={handleRegister}
+                                loading={loading}
+                                disabled={loading || prefillLoading}
+                              >
+                                {isEditMode
+                                  ? 'Applicatie updaten'
+                                  : 'Applicatie aanmelden'}
+                              </AcButton>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    </AcColumn>
                   </div>
-                </AcColumn>
-              </div>
+                </>
+              )}
             </>
           )}
 
