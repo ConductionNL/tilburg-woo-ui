@@ -1354,17 +1354,37 @@ const ConFormsDienst = ({ store, userStore }) => {
                       currentStep !== 0 && 'ac-register-form-buttons-not-first-step'
                     )}
                   >
-                    {currentStep !== 0 && (
-                      <AcButton
-                        style='button'
-                        buttonType='secondary'
-                        icon={<VISUALS.ARROW_LEFT />}
-                        onClick={() => setCurrentStep(currentStep - 1)}
-                        disabled={saving || schemasLoading}
-                      >
-                        Vorige
-                      </AcButton>
-                    )}
+                    <AcFlex spacing='xs' style={{ width: 'fit-content' }}>
+                      {currentStep !== 0 && (
+                        <AcButton
+                          style='button'
+                          buttonType='secondary'
+                          icon={<VISUALS.ARROW_LEFT />}
+                          onClick={() => setCurrentStep(currentStep - 1)}
+                          disabled={saving || schemasLoading}
+                        >
+                          Vorige
+                        </AcButton>
+                      )}
+
+                      {currentStep === getAdjustedStepIndex(1) &&
+                        formType === 'ontbrekend-dienst' && (
+                          <AcButton
+                            style='button'
+                            buttonType='secondary'
+                            icon={<VISUALS.BUILDING />}
+                            onClick={() =>
+                              aanbiederKeuze === 'bestaand'
+                                ? setAanbiederKeuze('nieuw')
+                                : setAanbiederKeuze('bestaand')
+                            }
+                          >
+                            {aanbiederKeuze === 'bestaand'
+                              ? 'Ik kan de gewenste leverancier niet vinden'
+                              : 'Bestaande leverancier selecteren'}
+                          </AcButton>
+                        )}
+                    </AcFlex>
 
                     {currentStep === 0 && (
                       <AcButton
@@ -1384,30 +1404,6 @@ const ConFormsDienst = ({ store, userStore }) => {
                         currentStep === 0 && 'ac-register-form-next-button'
                       )}
                     >
-                      {currentStep === getAdjustedStepIndex(1) &&
-                        formType === 'ontbrekend-dienst' && (
-                          <AcButton
-                            style='button'
-                            buttonType='secondary'
-                            icon={
-                              aanbiederKeuze === 'bestaand' ? (
-                                <VISUALS.BUILDING />
-                              ) : (
-                                <VISUALS.ARROW_LEFT />
-                              )
-                            }
-                            onClick={() =>
-                              aanbiederKeuze === 'bestaand'
-                                ? setAanbiederKeuze('nieuw')
-                                : setAanbiederKeuze('bestaand')
-                            }
-                          >
-                            {aanbiederKeuze === 'bestaand'
-                              ? 'Ik kan de gewenste leverancier niet vinden'
-                              : 'Bestaande leverancier selecteren'}
-                          </AcButton>
-                        )}
-
                       {getLogicalStepFromPhysical(currentStep) !== 3 && (
                         <div className='ac-register-button-wrapper'>
                           <AcButton
