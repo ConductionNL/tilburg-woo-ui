@@ -105,6 +105,24 @@ const ConFormApplicatieLicentieStage = memo(
               }}
             />
 
+            <ConSchemaEnhancedField
+              schemaType='module'
+              schemaProperty='cloudDienstverleningsmodel'
+              value={applicatie?.cloudDienstverleningsmodel || ''}
+              onChange={(value) =>
+                setApplicatieData('cloudDienstverleningsmodel', value)
+              }
+              isDisabled={loading}
+              width='full'
+              touched={touched}
+              schemas={schemas}
+              customProps={{
+                description:
+                  'Kies één of meerdere hosting typen waarmee de applicatie wordt aangeboden.',
+                placeholder: 'Selecteer hosting type(s)',
+              }}
+            />
+
             {/* Hosting fields in flex layout */}
             <AcFlex spacing='snail'>
               <ConSchemaEnhancedField
@@ -114,8 +132,10 @@ const ConFormApplicatieLicentieStage = memo(
                 onChange={(value) => setApplicatieData('hostingLocatie', value)}
                 isDisabled={
                   loading ||
-                  !applicatie?.cloudDienstverleningsmodel.includes(
-                    'On-premises (self-managed)'
+                  !(
+                    applicatie?.cloudDienstverleningsmodel.includes(
+                      'On-premises (self-managed)'
+                    ) && applicatie?.cloudDienstverleningsmodel.length > 1
                   )
                 }
                 width='half'
@@ -139,8 +159,10 @@ const ConFormApplicatieLicentieStage = memo(
                   }
                   isDisabled={
                     loading ||
-                    !applicatie?.cloudDienstverleningsmodel.includes(
-                      'On-premises (self-managed)'
+                    !(
+                      applicatie?.cloudDienstverleningsmodel.includes(
+                        'On-premises (self-managed)'
+                      ) && applicatie?.cloudDienstverleningsmodel.length > 1
                     )
                   }
                   width='full'
@@ -150,24 +172,6 @@ const ConFormApplicatieLicentieStage = memo(
                     description:
                       'Kies de wetgeving die geldt voor de opgeslagen gegevens.',
                     placeholder: 'Selecteer jurisdictie',
-                  }}
-                />
-
-                <ConSchemaEnhancedField
-                  schemaType='module'
-                  schemaProperty='cloudDienstverleningsmodel'
-                  value={applicatie?.cloudDienstverleningsmodel || ''}
-                  onChange={(value) =>
-                    setApplicatieData('cloudDienstverleningsmodel', value)
-                  }
-                  isDisabled={loading}
-                  width='full'
-                  touched={touched}
-                  schemas={schemas}
-                  customProps={{
-                    description:
-                      'Kies één of meerdere hosting typen waarmee de applicatie wordt aangeboden.',
-                    placeholder: 'Selecteer hosting type(s)',
                   }}
                 />
               </AcFlex>
