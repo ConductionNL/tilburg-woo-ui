@@ -49,6 +49,7 @@ const ConFormApplicatiesStage = memo(
             <ConSchemaEnhancedField
               schemaType='dienst'
               schemaProperty='modules'
+              required={true}
               value={selectedModuleIds}
               onChange={handleChange}
               isDisabled={loadingModules}

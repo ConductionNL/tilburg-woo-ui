@@ -78,6 +78,7 @@ const ConFormApplicatieAanbiederInformatieStage = memo(
             {aanbiederKeuze === 'bestaand' && (
               <ConSchemaEnhancedField
                 schemaType='module'
+                required={true}
                 schemaProperty='aanbieder'
                 value={applicatie.aanbieder}
                 onChange={(value) => setApplicatieData('aanbieder', value)}
