@@ -57,7 +57,6 @@ const ConKoppelingStageAanbieder = memo(
         setAanbiederOrganisatieData('beschrijvingLang', '');
         setAanbiederOrganisatieData('e-mailadres', '');
         setAanbiederOrganisatieData('telefoonnummer', '');
-        setAanbiederOrganisatieData('kvkNummer', '');
         setAanbiederOrganisatieData('logo', '');
       } else {
         // Clear existing organization selection
@@ -254,19 +253,6 @@ const ConKoppelingStageAanbieder = memo(
                         'Ongeldig telefoonnummer. (+31 6 1234 5678)',
                     },
                   }}
-                  schemas={schemas}
-                />
-
-                {/* KvK Number */}
-                <ConSchemaEnhancedField
-                  schemaType='organisatie'
-                  schemaProperty='kvkNummer'
-                  value={aanbiederOrganisatie.kvkNummer || ''}
-                  onChange={(value) =>
-                    setAanbiederOrganisatieData('kvkNummer', value)
-                  }
-                  isDisabled={loading || schemasLoading}
-                  width='half'
                   schemas={schemas}
                 />
 

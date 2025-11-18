@@ -68,6 +68,7 @@ const ConAfnemerOrganisatieForm = memo(
             isDisabled={loading}
             width='full'
             customProps={{
+              label: 'Korte beschrijving',
               maxLength: 255,
             }}
             schemas={schemas}
@@ -84,8 +85,8 @@ const ConAfnemerOrganisatieForm = memo(
             isDisabled={loading}
             width='full'
             customProps={{
-              component: 'AcTextarea',
-              rows: 4,
+              label: 'Lange beschrijving',
+              component: 'WysiwygMarkdown',
               maxLength: 5000,
             }}
             schemas={schemas}
@@ -113,18 +114,7 @@ const ConAfnemerOrganisatieForm = memo(
             schemas={schemas}
           />
 
-          {/* KvK Number */}
-          <ConSchemaEnhancedField
-            schemaType='organisatie'
-            schemaProperty='kvkNummer'
-            value={afnemerOrganisatie.kvkNummer || ''}
-            onChange={(value) => setAfnemerOrganisatieData('kvkNummer', value)}
-            isDisabled={loading}
-            width='half'
-            schemas={schemas}
-          />
-
-          {/* Logo URL */}
+          {/* Logo */}
           <ConSchemaEnhancedField
             schemaType='organisatie'
             schemaProperty='logo'
@@ -132,6 +122,10 @@ const ConAfnemerOrganisatieForm = memo(
             onChange={(value) => setAfnemerOrganisatieData('logo', value)}
             isDisabled={loading}
             width='half'
+            customProps={{
+              inputType: 'file',
+              format: 'base64',
+            }}
             schemas={schemas}
           />
         </div>
@@ -173,7 +167,6 @@ const ConGebruikStepOrganisatie = ({
       setAfnemerOrganisatieData('beschrijvingLang', '');
       setAfnemerOrganisatieData('e-mailadres', '');
       setAfnemerOrganisatieData('telefoonnummer', '');
-      setAfnemerOrganisatieData('kvkNummer', '');
       setAfnemerOrganisatieData('logo', '');
     } else {
       setGebruikData('afnemer', null);
