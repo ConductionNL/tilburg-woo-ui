@@ -277,55 +277,57 @@ const ConFormControlerenStage = memo(
         </div>
         */}
 
-        <h3 className='con-form-wizard-review-heading-header'>Applicaties</h3>
-        <div className='ac-register-review'>
-          <div className='ac-register-review__section'>
-            {modulesWithDetails.length > 0 ? (
-              <div className='ac-register-review__field'>
-                <UnorderedList>
-                  {modulesWithDetails.map((module, i) => (
-                    <UnorderedListItem key={`mod-${module.id}-${i}`}>
-                      <div>
-                        <strong>
-                          <ConUuidResolver>{module.label}</ConUuidResolver>
-                        </strong>
-                        {module.data?.beschrijvingKort && (
-                          <div
-                            style={{
-                              fontSize: '0.875rem',
-                              color: '#666',
-                              marginTop: '0.25rem',
-                            }}
-                          >
-                            {module.data.beschrijvingKort}
-                          </div>
-                        )}
-                        {module.data?.licentieType && (
-                          <div
-                            style={{
-                              fontSize: '0.875rem',
-                              color: '#666',
-                              marginTop: '0.25rem',
-                            }}
-                          >
-                            Licentie: {module.data.licentieType}
-                            {module.data.licentie &&
-                              module.data.licentieType !== 'Closed Source' &&
-                              ` (${module.data.licentie})`}
-                          </div>
-                        )}
-                      </div>
-                    </UnorderedListItem>
-                  ))}
-                </UnorderedList>
-              </div>
-            ) : (
-              <div className='ac-register-review__field'>
-                <Paragraph style={{ fontStyle: 'italic', color: '#666' }}>
-                  Geen applicaties geselecteerd
-                </Paragraph>
-              </div>
-            )}
+        <div className='con-form-wizard-review-heading-container'>
+          <h3 className='con-form-wizard-review-heading-header'>Applicaties</h3>
+          <div className='ac-register-review'>
+            <div className='ac-register-review__section'>
+              {modulesWithDetails.length > 0 ? (
+                <div className='ac-register-review__field'>
+                  <UnorderedList>
+                    {modulesWithDetails.map((module, i) => (
+                      <UnorderedListItem key={`mod-${module.id}-${i}`}>
+                        <div>
+                          <strong>
+                            <ConUuidResolver>{module.label}</ConUuidResolver>
+                          </strong>
+                          {module.data?.beschrijvingKort && (
+                            <div
+                              style={{
+                                fontSize: '0.875rem',
+                                color: '#666',
+                                marginTop: '0.25rem',
+                              }}
+                            >
+                              {module.data.beschrijvingKort}
+                            </div>
+                          )}
+                          {module.data?.licentieType && (
+                            <div
+                              style={{
+                                fontSize: '0.875rem',
+                                color: '#666',
+                                marginTop: '0.25rem',
+                              }}
+                            >
+                              Licentie: {module.data.licentieType}
+                              {module.data.licentie &&
+                                module.data.licentieType !== 'Closed Source' &&
+                                ` (${module.data.licentie})`}
+                            </div>
+                          )}
+                        </div>
+                      </UnorderedListItem>
+                    ))}
+                  </UnorderedList>
+                </div>
+              ) : (
+                <div className='ac-register-review__field'>
+                  <Paragraph style={{ fontStyle: 'italic', color: '#666' }}>
+                    Geen applicaties geselecteerd
+                  </Paragraph>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

@@ -1,6 +1,10 @@
-import React, { memo, useEffect } from 'react';
+import React, { memo, useEffect, useRef } from 'react';
 import ConSchemaEnhancedField from '@components/con-schema-enhanced-field/con-schema-enhanced-field';
-import { validateWebsite } from '@views/ac-forms/validation/form-validations';
+import {
+  validateWebsite,
+  validateEmail,
+  validatePhone,
+} from '@views/ac-forms/validation/form-validations';
 
 /**
  * Aanbieder Informatie Form Component
@@ -31,8 +35,17 @@ const ConFormDienstAanbiederInformatieStage = memo(
     schemas,
     aanbiederKeuze,
   }) => {
+    // Track previous aanbiederKeuze to detect actual changes (not just remounts)
+    const previousAanbiederKeuze = useRef(aanbiederKeuze);
+
     // Handle choice change between existing and new
+    // Only clear fields when the choice actually changes, not on component mount/remount
+
     useEffect(() => {
+      // Skip if this is the first render or if the choice hasn't actually changed
+      if (previousAanbiederKeuze.current === aanbiederKeuze) {
+        return;
+      }
       if (aanbiederKeuze === 'bestaand') {
         // Clear new organization fields
         setAanbiederOrganisatieData('naam', '');
@@ -49,7 +62,10 @@ const ConFormDienstAanbiederInformatieStage = memo(
         // Clear existing organization selection
         setDienstData('aanbieder', null);
       }
-    }, [aanbiederKeuze]);
+
+      // Update the previous value
+      previousAanbiederKeuze.current = aanbiederKeuze;
+    }, [aanbiederKeuze, setDienstData, setAanbiederOrganisatieData]);
 
     return (
       <div role='group' aria-labelledby='aanbieder-section-title'>
@@ -177,7 +193,16 @@ const ConFormDienstAanbiederInformatieStage = memo(
                   }
                   isDisabled={loading}
                   width='half'
-                  // placeholder will come from schema example
+                  customProps={{
+                    inputType: 'text',
+                    validation: {
+                      custom: (value) => {
+                        if (!value || value.trim() === '') return true;
+                        return validateEmail(value.trim());
+                      },
+                      customErrorMessage: 'Ongeldig e-mailadres',
+                    },
+                  }}
                   schemas={schemas}
                 />
 
@@ -191,7 +216,17 @@ const ConFormDienstAanbiederInformatieStage = memo(
                   }
                   isDisabled={loading}
                   width='half'
-                  // placeholder will come from schema example
+                  customProps={{
+                    inputType: 'text',
+                    validation: {
+                      custom: (value) => {
+                        if (!value || value.trim() === '') return true;
+                        return validatePhone(value.trim());
+                      },
+                      customErrorMessage:
+                        'Ongeldig telefoonnummer. (+31 6 1234 5678)',
+                    },
+                  }}
                   schemas={schemas}
                 />
 
@@ -222,4 +257,3 @@ ConFormDienstAanbiederInformatieStage.displayName =
   'ConFormDienstAanbiederInformatieStage';
 
 export default ConFormDienstAanbiederInformatieStage;
-
