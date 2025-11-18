@@ -44,7 +44,7 @@ export const DASHBOARD_WIZARDS = {
   // },
   EIGEN_APPLICATIE: {
     id: 'eigen-applicatie',
-    name: 'Applicatie registreren',
+    name: 'Applicatie publiceren',
     description: 'Voeg een applicatie van uw eigen organisatie toe aan de catalogus',
     icon: VISUALS.CUBE,
     path: PATHS.FORMS_APPLICATIE,
@@ -70,8 +70,8 @@ export const DASHBOARD_WIZARDS = {
   },
   DIENST: {
     id: 'dienst',
-    name: 'Dienst registreren',
-    description: 'Registreer een nieuwe dienst in de catalogus',
+    name: 'Dienst publiceren',
+    description: 'Publiceer een nieuwe dienst in de catalogus',
     icon: VISUALS.HAND_SHAKE,
     path: PATHS.FORMS_DIENST, // or separate dienst form if it exists
     requiresAuth: true,
@@ -96,8 +96,8 @@ export const DASHBOARD_WIZARDS = {
   },
   GEBRUIK: {
     id: 'gebruik',
-    name: 'Gebruik registreren',
-    description: 'Registreer het gebruik van een product of dienst',
+    name: 'Gebruik publiceren',
+    description: 'Publiceer het gebruik van een product of dienst',
     icon: VISUALS.CLIPBOARD_CHECK,
     path: PATHS.FORMS_GEBRUIK,
     requiresAuth: true,
@@ -120,10 +120,10 @@ export const DASHBOARD_WIZARDS = {
     color: 'blue',
     schema: 'gebruik',
   },
-  KOPPELING_REGISTREREN: {
-    id: 'koppeling-registreren',
-    name: 'Koppeling registreren',
-    description: 'Registreer een koppeling tussen een product en een dienst',
+  KOPPELING_PUBLICEEREN: {
+    id: 'koppeling-publiceren',
+    name: 'Koppeling publiceren',
+    description: 'Publiceer een koppeling tussen een product en een dienst',
     icon: VISUALS.LINK,
     path: PATHS.FORMS_KOPPELING,
     requiresAuth: true,

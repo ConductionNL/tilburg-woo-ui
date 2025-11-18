@@ -1095,7 +1095,7 @@ const ConFormsDienst = ({ store, userStore }) => {
     }
   };
 
-  const { icon: Icon, schema } = getActiveWizard();
+  const { icon: Icon, name: wizardName } = getActiveWizard();
 
   return (
     <AcSection spacing>
@@ -1106,12 +1106,7 @@ const ConFormsDienst = ({ store, userStore }) => {
               style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
             >
               <Icon style={{ width: '1em', height: '1em' }} />
-              {_.capitalize(schema)}
-              {isEditMode
-                ? ' updaten'
-                : formType === 'ontbrekend-dienst'
-                ? ' melden'
-                : ' registreren'}
+              {_.capitalize(wizardName)}
             </Heading1>
             <Paragraph>
               {isEditMode

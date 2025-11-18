@@ -1384,7 +1384,7 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
     }
   };
 
-  const { icon: Icon, schema } = getActiveWizard();
+  const { icon: Icon, name: wizardName } = getActiveWizard();
 
   return (
     <AcSection spacing>
@@ -1397,12 +1397,7 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
                   style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                 >
                   <Icon style={{ width: '1em', height: '1em' }} />
-                  {_.capitalize(schema)}
-                  {isEditMode
-                    ? ' updaten'
-                    : formType === 'ontbrekend-applicatie'
-                    ? ' melden'
-                    : ' registreren'}
+                  Uw {wizardName}
                 </Heading1>
                 <Paragraph>
                   {isEditMode
