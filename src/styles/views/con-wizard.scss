@@ -109,6 +109,11 @@
     background-color: #888888; // Gray
     color: #fff; // White text for contrast
   }
+
+  &--toegevoegd {
+    background-color: #6f42c1; // Purple - indicates additional/extra
+    color: #fff; // White text for contrast
+  }
 }
 
 // Summary text colors for standaarden
