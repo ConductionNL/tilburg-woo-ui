@@ -184,17 +184,27 @@ const ConOrganisatieDetailsPage = ({ store }) => {
 
   useEffect(() => {
     if (!config?.schemaSlug || !data?.id) return;
-    const items = makeActionsForContext(data.id).map(
-      ({ key, label, onClick, schema, icon }) => ({
-        key,
-        label,
-        onClick,
-        schema,
-        icon,
-      })
-    );
+    const items = makeActionsForContext(
+      data.id,
+      null,
+      data,
+      config?.registerSlug,
+      config?.schemaSlug
+    ).map(({ key, label, onClick, schema, icon }) => ({
+      key,
+      label,
+      onClick,
+      schema,
+      icon,
+    }));
     setActionMenuItems(items);
-  }, [config?.schemaSlug, data?.id, makeActionsForContext]);
+  }, [
+    config?.schemaSlug,
+    data?.id,
+    makeActionsForContext,
+    data,
+    config?.registerSlug,
+  ]);
 
   if (!config) {
     return <AcBeheerError error={'Onbekend detailtype'} store={store} />;

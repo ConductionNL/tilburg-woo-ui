@@ -66,9 +66,6 @@ const AcPublicationProduct = ({
     schemaRef: get_single?.['@self']?.schema?.slug,
     currentType: get_single?.['@self']?.schema?.slug, // Use schema slug as current type
     openDynamicCreate,
-    currentObject: get_single, // Pass current object for organization permission checks
-    currentObjectRegister: 'voorzieningen', // Pass current object register (for publication pages)
-    currentObjectSchema: get_single?.['@self']?.schema?.slug, // Pass current object schema
   });
 
   // Delete modal state
@@ -92,18 +89,22 @@ const AcPublicationProduct = ({
   useEffect(() => {
     if (!get_single?.['@self']?.schema?.slug || !id) return;
 
-    const items = makeActionsForContext(id).map(
-      ({ key, label, onClick, schema, icon }) => ({
-        key,
-        label,
-        onClick,
-        schema,
-        icon,
-      })
-    );
+    const items = makeActionsForContext(
+      id,
+      null,
+      get_single,
+      'voorzieningen',
+      get_single?.['@self']?.schema?.slug
+    ).map(({ key, label, onClick, schema, icon }) => ({
+      key,
+      label,
+      onClick,
+      schema,
+      icon,
+    }));
 
     setActionMenuItems(items);
-  }, [get_single?.['@self']?.schema?.slug, id, makeActionsForContext]);
+  }, [get_single?.['@self']?.schema?.slug, id, makeActionsForContext, get_single]);
 
   // Fetch referentieComponenten data with their standards
   const fetchReferentieComponentenWithStandards = useCallback(async () => {

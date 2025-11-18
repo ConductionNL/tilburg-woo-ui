@@ -77,11 +77,6 @@ export const useRelatedCreateActions = ({
               .filter(Boolean)
           : [];
 
-        // Check organization permissions for current object (needed for outgoing relationships)
-        const { canEdit: canEditCurrentObject } = currentObject
-          ? checkOrganizationPermissions(user, currentObject)
-          : { canEdit: true }; // Default to true if no current object provided
-
         // Deduplicate by slug to prevent duplicate menu items
         const deduplicatedResults = relatedResults.reduce((acc, rs) => {
           if (!rs?.slug) return acc;
@@ -94,12 +89,8 @@ export const useRelatedCreateActions = ({
           return acc;
         }, []);
 
+        // Filter by user group authorization only (permission checks happen per-row in makeActionsForContext)
         const creatable = deduplicatedResults.filter((rs) => {
-          // For outgoing relationships, check if user can edit current object
-          if (outgoingSlugs.has(rs?.slug) && !canEditCurrentObject) {
-            return false; // Can't create outgoing relationships if can't edit current object
-          }
-
           // If authorization is null or undefined, allow access (no restrictions)
           if (!rs?.authorization) return true;
 
@@ -124,8 +115,8 @@ export const useRelatedCreateActions = ({
     };
 
     prepareRelatedActions();
-    // Only re-run when schema reference changes or current object changes (for permissions)
-  }, [schemaRef, user?.currentUser, object, currentObject]);
+    // Only re-run when schema reference changes
+  }, [schemaRef, user?.currentUser, object]);
 
   // Schema-driven helper to determine which field in the current object should be updated for outgoing relationships
   const getOutgoingRelationshipField = useCallback(
@@ -176,7 +167,7 @@ export const useRelatedCreateActions = ({
 
   // Schema-driven approach to build preSelected values with labels
   const buildPreSelected = useCallback(
-    async (targetType, ctxId) => {
+    async (targetType, ctxId, rowCurrentObject = null) => {
       const preSelected = {};
       const preSelectedLabels = {};
 
@@ -207,8 +198,8 @@ export const useRelatedCreateActions = ({
           return { preSelected, preSelectedLabels };
         }
 
-        // Get current object data to extract label/name
-        const currentObjectData = currentObject;
+        // Get current object data to extract label/name (use row-specific object if provided, otherwise fallback to hook-level currentObject)
+        const currentObjectData = rowCurrentObject || currentObject;
         const currentObjectLabel =
           currentObjectData?.naam ||
           currentObjectData?.name ||
@@ -257,8 +248,29 @@ export const useRelatedCreateActions = ({
     /**
      * @param {string} ctxId - REQUIRED - used with building actions to know what object to reference
      * @param {({ slug: string, title: string }: Schema) => boolean} filter - configurable filter function to be able to filter out unwanted actions, filtered content is a Schema object (runs on .filter())
+     * @param {Object} rowCurrentObject - Optional row-specific object for permission checks (falls back to hook-level currentObject)
+     * @param {string} rowCurrentObjectRegister - Optional row-specific register slug (falls back to hook-level currentObjectRegister)
+     * @param {string} rowCurrentObjectSchema - Optional row-specific schema slug (falls back to hook-level currentObjectSchema)
      */
-    (ctxId, filter = null) => {
+    (
+      ctxId,
+      filter = null,
+      rowCurrentObject = null,
+      rowCurrentObjectRegister = null,
+      rowCurrentObjectSchema = null
+    ) => {
+      // Use row-specific object if provided, otherwise fallback to hook-level currentObject
+      const effectiveCurrentObject = rowCurrentObject || currentObject;
+      const effectiveCurrentObjectRegister =
+        rowCurrentObjectRegister || currentObjectRegister;
+      const effectiveCurrentObjectSchema =
+        rowCurrentObjectSchema || currentObjectSchema;
+
+      // Check organization permissions for row-specific object (needed for outgoing relationships)
+      const { canEdit: canEditCurrentObject } = effectiveCurrentObject
+        ? checkOrganizationPermissions(user, effectiveCurrentObject)
+        : { canEdit: true }; // Default to true if no current object provided
+
       const filteredCreatableRelated =
         typeof filter === 'function' && Array.isArray(creatableRelated)
           ? creatableRelated.filter(filter)
@@ -269,13 +281,18 @@ export const useRelatedCreateActions = ({
           const slug = rs?.slug;
           if (!slug) return null;
 
+          // For outgoing relationships, check if user can edit current object
+          const isOutgoing = outgoingSchemas.has(slug);
+          if (isOutgoing && !canEditCurrentObject) {
+            return null; // Can't create outgoing relationships if can't edit current object
+          }
+
           // Use the schema slug directly as the target type (no more BEHEER_RENAMES dependency)
           const targetType = slug;
 
           const baseName = rs?.title ?? _.startCase(slug);
           const label = `${normalizeSchemaName(baseName)} toevoegen`;
 
-          const isOutgoing = outgoingSchemas.has(slug);
           const wizards = Object.values(DASHBOARD_WIZARDS);
           const wizard = wizards.find((w) => w.schema === slug);
           const areThereMultipleOptions =
@@ -304,7 +321,8 @@ export const useRelatedCreateActions = ({
 
               const { preSelected, preSelectedLabels } = await buildPreSelected(
                 targetType,
-                ctxId
+                ctxId,
+                effectiveCurrentObject
               );
               openDynamicCreate(targetType, preSelected, {
                 isOutgoing,
@@ -313,8 +331,8 @@ export const useRelatedCreateActions = ({
                   ? getOutgoingRelationshipField(targetType, currentType)
                   : null,
                 preSelectedLabels, // Pass the labels for optimization
-                currentObjectRegister, // Pass current object register for updating
-                currentObjectSchema, // Pass current object schema for updating
+                currentObjectRegister: effectiveCurrentObjectRegister, // Pass row-specific register for updating
+                currentObjectSchema: effectiveCurrentObjectSchema, // Pass row-specific schema for updating
               });
             },
           };
@@ -323,7 +341,19 @@ export const useRelatedCreateActions = ({
 
       return actions;
     },
-    [creatableRelated, openDynamicCreate, buildPreSelected]
+    [
+      creatableRelated,
+      openDynamicCreate,
+      buildPreSelected,
+      outgoingSchemas,
+      user,
+      currentObject,
+      currentObjectRegister,
+      currentObjectSchema,
+      currentType,
+      getOutgoingRelationshipField,
+      navigate,
+    ]
   );
 
   return useMemo(() => ({ makeActionsForContext }), [makeActionsForContext]);
