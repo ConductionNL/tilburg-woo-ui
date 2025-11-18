@@ -238,9 +238,14 @@ const ConFormApplicatieControlerenStage = memo(
     return (
       <div>
         <Paragraph>
-          Bekijk hieronder de ingevulde gegevens. Controleer of alle informatie klopt
-          voordat u uw applicatie aanmeldt. U kunt velden nog aanpassen via de
-          &apos;Vorige&apos; knop of op een later moment via uw eigen omgeving.
+          Hieronder staat een overzicht van de opgevoerde gegevens van uw applicatie.
+          Controleer of dit klopt, voordat u de registratie van de applicatie afrond.
+          <br />
+          Via de &quot;Vorige&quot; knop kunt u terug bladeren naar de verschillende
+          stappen.
+          <br />
+          Na het registreren van de applicatie kunt u via uw &quot;Dashboard&quot; de
+          applicatie opzoeken en indien gewenst aanpassen.
         </Paragraph>
         <br />
         <div className='con-form-wizard-review-heading-container'>

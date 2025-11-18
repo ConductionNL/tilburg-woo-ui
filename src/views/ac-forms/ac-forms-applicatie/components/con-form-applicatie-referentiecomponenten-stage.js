@@ -105,12 +105,10 @@ const ConFormApplicatieReferentiecomponentenStage = memo(
     return (
       <div>
         <h2 id='refcomp-section-title' className='sr-only'>
-          Referentiecomponenten
+          Koppel uw applicatie aan de GEMMA
         </h2>
 
         <Paragraph className='con-form-wizard-paragraph'>
-          <strong>Koppel uw applicatie aan de GEMMA</strong>
-          <br />
           Koppel uw applicatie aan de GEMMA-referentiecomponenten die de
           gemeentelijke functionaliteit weergeven. Dit helpt gemeenten te zien hoe uw
           applicatie past in hun architectuur. Een{' '}

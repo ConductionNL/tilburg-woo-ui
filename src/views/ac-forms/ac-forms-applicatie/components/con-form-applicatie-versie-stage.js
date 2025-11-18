@@ -114,14 +114,12 @@ const ConFormApplicatieVersieStage = memo(
         aria-labelledby='versie-section-title'
       >
         <h2 id='versie-section-title' className='sr-only'>
-          Versies
+          Laat weten welke versies er zijn
         </h2>
         <Paragraph className='con-form-wizard-paragraph'>
-          <strong>Laat weten welke versies er zijn.</strong>
-          <br />
-          Versie-informatie laat zien hoe actueel uw applicatie is. Gemeenten
-          gebruiken deze informatie voor beheer, planning en impactanalyses. Vermeld
-          het versienummer en de status.
+          Versie-informatie laat zien hoe actueel is. Gemeenten gebruiken deze
+          informatie planning en impactanalyses. Vermeld het en de status. uw
+          applicatie voor beheer, versienummer.
         </Paragraph>
 
         {/* Closeable info alert about updating versie details later */}
@@ -138,8 +136,6 @@ const ConFormApplicatieVersieStage = memo(
             <div className='ac-forms-product-info-alert__content'>
               <VISUALS.INFO className='ac-forms-product-info-alert__icon' />
               <div>
-                <strong>Versie details aanpassen</strong>
-                <br />
                 <span className='ac-forms-product-info-alert__text'>
                   Hier vult u de basisinformatie in over de on-premise versie van uw
                   applicatie. Voor gehoste applicaties wordt een default versie
