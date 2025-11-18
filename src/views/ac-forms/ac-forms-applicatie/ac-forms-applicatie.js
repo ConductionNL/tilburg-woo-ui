@@ -270,6 +270,11 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
   const [modulesOptions, setModulesOptions] = useState([]);
   const [modulesLoading, setModulesLoading] = useState(false);
 
+  // Add state for external facilities options
+  const [buitengemeentelijkeOptions, setBuitengemeentelijkeOptions] = useState([]);
+  const [buitengemeentelijkeOptionsLoading, setBuitengemeentelijkeOptionsLoading] =
+    useState(false);
+
   // Koppelingen form state
   const [koppelingenFormState, setKoppelingenFormState] = useState({
     rows: [0],
@@ -727,6 +732,61 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
     performModulesSearch('');
   }, [performModulesSearch]);
 
+  // Function to load buitengemeentelijke voorzieningen
+  const loadBuitengemeentelijkeVoorzieningen = useCallback(async () => {
+    console.info('📋 Loading external facilities via object store cache...');
+    setBuitengemeentelijkeOptionsLoading(true);
+
+    try {
+      const queryParams = new URLSearchParams({
+        _limit: '500',
+        _page: '1',
+        gemmaType: 'Buitengemeentelijke voorziening',
+        '_extend[]': '@self.schema',
+      });
+
+      console.info('📋 Fetching external facilities from openconnector endpoint...');
+
+      const response = await fetch(
+        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      const list = await response.json();
+
+      const options = list.results
+        .map((item, index) => {
+          const label =
+            item?.xml?.name?._value ||
+            item?.naam ||
+            item?.name ||
+            item?.title ||
+            item?.label ||
+            `Facility ${index + 1}`;
+          const value = item?.value || item?.id || item?.slug || label;
+          return { value: String(value), label: String(label), data: item };
+        })
+        .filter((o) => o.label && o.value);
+
+      setBuitengemeentelijkeOptions(options);
+      console.info(`✅ Loaded ${options.length} external facilities (cache-first)`);
+    } catch (e) {
+      console.error('Failed to load external facilities:', e);
+      setBuitengemeentelijkeOptions([]);
+    } finally {
+      setBuitengemeentelijkeOptionsLoading(false);
+    }
+  }, []);
+
+  // Load buitengemeentelijke voorzieningen on mount
+  useEffect(() => {
+    loadBuitengemeentelijkeVoorzieningen();
+  }, [loadBuitengemeentelijkeVoorzieningen]);
+
   // Initialize koppelingen form state from applicatie.koppelingen (for edit mode)
   useEffect(() => {
     const koppelingen = Array.isArray(applicatie?.koppelingen)
@@ -1098,6 +1158,8 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
             setApplicatieData={setApplicatieData}
             modulesOptions={modulesOptions}
             modulesLoading={modulesLoading}
+            buitengemeentelijkeOptions={buitengemeentelijkeOptions}
+            buitengemeentelijkeOptionsLoading={buitengemeentelijkeOptionsLoading}
             koppelingenFormState={koppelingenFormState}
             setKoppelingenFormState={setKoppelingenFormState}
             searchModules={searchModules}
