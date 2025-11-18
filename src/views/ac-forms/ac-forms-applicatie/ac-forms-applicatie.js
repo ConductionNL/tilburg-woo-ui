@@ -14,7 +14,6 @@ import {
   validateEmail,
   validatePhone,
 } from '@views/ac-forms/validation/form-validations';
-import _ from 'lodash';
 
 import {
   Heading1,
@@ -1327,19 +1326,19 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
       case 1:
         return 'Informatie over uw applicatie';
       case 2:
-        return 'Licentie';
+        return 'Licentie en Hosting informatie';
       case 3:
-        return 'Versies';
+        return 'Laat weten welke versies er zijn';
       case 4:
         return 'Koppel uw applicatie aan de GEMMA';
       case 5:
-        return 'Standaarden';
+        return 'Selecteer de standaarden voor uw applicatie';
       case 6:
-        return 'Koppelingen';
+        return 'Koppelingen met andere applicaties';
       case 7:
         return 'Diensten';
       case 8:
-        return 'Controleren';
+        return 'Controleer uw gegevens';
       default:
         return '';
     }
@@ -1501,7 +1500,7 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
   const getPageDescription = (formType) => {
     switch (formType) {
       case 'eigen':
-        return 'Vul dit formulier in om uw applicatie te registreren in de softwarecatalogus.';
+        return 'Vul dit formulier in om een door u aangeboden applicatie toe te voegen aan de softwarecatalogus.';
       case 'ontbrekend-applicatie':
         return 'Meld een applicatie die nog niet in de catalogus staat en registreer deze.';
       default:
@@ -1509,7 +1508,7 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
     }
   };
 
-  const { icon: Icon, schema } = getActiveWizard();
+  const { icon: Icon, name: wizardName } = getActiveWizard();
 
   return (
     <AcSection spacing>
@@ -1522,12 +1521,7 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
                   style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                 >
                   <Icon style={{ width: '1em', height: '1em' }} />
-                  {_.capitalize(schema)}
-                  {isEditMode
-                    ? ' updaten'
-                    : formType === 'ontbrekend-applicatie'
-                    ? ' melden'
-                    : ' registreren'}
+                  Uw {wizardName}
                 </Heading1>
                 <Paragraph>
                   {isEditMode

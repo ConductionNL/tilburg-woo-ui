@@ -44,7 +44,7 @@ export const DASHBOARD_WIZARDS = {
   // },
   EIGEN_APPLICATIE: {
     id: 'eigen-applicatie',
-    name: 'Applicatie registreren',
+    name: 'Applicatie publiceren',
     description: 'Voeg een applicatie van uw eigen organisatie toe aan de catalogus',
     icon: VISUALS.CUBE,
     path: PATHS.FORMS_APPLICATIE,
@@ -57,7 +57,7 @@ export const DASHBOARD_WIZARDS = {
   },
   ONTBREKEND_APPLICATIE: {
     id: 'ontbrekend-applicatie',
-    name: 'Applicatie melden',
+    name: 'Applicatie toevoegen',
     description: 'Meld een applicatie dat nog niet in de catalogus staat',
     icon: VISUALS.CUBE,
     path: PATHS.FORMS_APPLICATIE,
@@ -70,8 +70,8 @@ export const DASHBOARD_WIZARDS = {
   },
   DIENST: {
     id: 'dienst',
-    name: 'Dienst registreren',
-    description: 'Registreer een nieuwe dienst in de catalogus',
+    name: 'Dienst publiceren',
+    description: 'Publiceer een nieuwe dienst in de catalogus',
     icon: VISUALS.HAND_SHAKE,
     path: PATHS.FORMS_DIENST, // or separate dienst form if it exists
     requiresAuth: true,
@@ -81,9 +81,9 @@ export const DASHBOARD_WIZARDS = {
     color: 'blue',
     schema: 'dienst',
   },
-  DIENST_MELDEN: {
+  DIENST_TOEVOEGEN: {
     id: 'dienst-ontbrekend',
-    name: 'Dienst melden',
+    name: 'Dienst toevoegen',
     description: 'Meld een dienst dat nog niet in de catalogus staat',
     icon: VISUALS.HAND_SHAKE,
     path: PATHS.FORMS_DIENST,
@@ -107,9 +107,9 @@ export const DASHBOARD_WIZARDS = {
     color: 'blue',
     schema: 'gebruik',
   },
-  GEBRUIK_MELDEN: {
+  GEBRUIK_TOEVOEGEN: {
     id: 'gebruik-ontbrekend',
-    name: 'Gebruik melden',
+    name: 'Gebruik toevoegen',
     description: 'Meld een gebruik dat nog niet in de catalogus staat',
     icon: VISUALS.CLIPBOARD_CHECK,
     path: PATHS.FORMS_GEBRUIK,
@@ -120,10 +120,10 @@ export const DASHBOARD_WIZARDS = {
     color: 'blue',
     schema: 'gebruik',
   },
-  KOPPELING_REGISTREREN: {
-    id: 'koppeling-registreren',
-    name: 'Koppeling registreren',
-    description: 'Registreer een koppeling tussen een product en een dienst',
+  KOPPELING_PUBLICEEREN: {
+    id: 'koppeling-publiceren',
+    name: 'Koppeling publiceren',
+    description: 'Publiceer een koppeling tussen een product en een dienst',
     icon: VISUALS.LINK,
     path: PATHS.FORMS_KOPPELING,
     requiresAuth: true,
@@ -133,9 +133,9 @@ export const DASHBOARD_WIZARDS = {
     color: 'blue',
     schema: 'koppeling',
   },
-  KOPPELING_MELDEN: {
-    id: 'koppeling-melden',
-    name: 'Koppeling melden',
+  KOPPELING_TOEVOEGEN: {
+    id: 'koppeling-toevoegen',
+    name: 'Koppeling toevoegen',
     description: 'Meld een koppeling dat nog niet in de catalogus staat',
     icon: VISUALS.LINK,
     path: PATHS.FORMS_KOPPELING,

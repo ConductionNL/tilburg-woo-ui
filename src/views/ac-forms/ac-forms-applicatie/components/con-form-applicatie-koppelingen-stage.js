@@ -1,5 +1,5 @@
 import React, { memo, useState, useEffect } from 'react';
-import { VISUALS, PATHS } from '@src/constants';
+import { VISUALS } from '@src/constants';
 import { AcButton } from '@src/molecules';
 import {
   Paragraph,
@@ -9,7 +9,6 @@ import {
   TableContainer,
   TableRow,
   Alert,
-  Link,
 } from '@utrecht/component-library-react/dist/css-module';
 import ReactSelect from 'react-select';
 
@@ -245,28 +244,24 @@ const ConFormApplicatieKoppelingenStage = memo(
       ),
     ]);
 
-    // Handle opening applicatie form in new tab
-    const handleOpenApplicatieForm = () => {
-      const applicatieFormUrl = `${window.location.origin}${PATHS.FORMS_APPLICATIE}?type=ontbrekend-applicatie`;
-      window.open(applicatieFormUrl, '_blank', 'noopener,noreferrer');
-    };
+    // // Handle opening applicatie form in new tab
+    // const handleOpenApplicatieForm = () => {
+    //   const applicatieFormUrl = `${window.location.origin}${PATHS.FORMS_APPLICATIE}?type=ontbrekend-applicatie`;
+    //   window.open(applicatieFormUrl, '_blank', 'noopener,noreferrer');
+    // };
 
     return (
       <div>
         <h2 id='koppelingen-section-title' className='sr-only'>
-          Koppelingen
+          Koppelingen met andere applicaties
         </h2>
 
         <Paragraph className='con-form-wizard-paragraph'>
-          <strong>Koppelingen met andere applicaties</strong>
-          <br />
           Geef aan met welke andere applicaties uw oplossing gegevens uitwisselt. Zo
           kunnen gemeenten zien hoe uw applicatie past in hun applicatielandschap.
-          <br />
-          <br />
           Vul per koppeling in:
           <ul style={{ marginInlineStart: '1rem' }}>
-            <li>met welke applicaties u koppelt,</li>
+            <li>met welke applicatie u koppelt,</li>
             <li>de richting van de gegevensuitwisseling,</li>
             <li>en het type koppeling (bijvoorbeeld API, bestand of bericht).</li>
           </ul>
@@ -289,29 +284,14 @@ const ConFormApplicatieKoppelingenStage = memo(
                 <strong>Koppeling informatie aanpassen</strong>
                 <br />
                 <span className='ac-forms-product-info-alert__text'>
-                  U definieert hier basis informatie van koppelingen tussen uw
+                  U definieert hier basisinformatie van koppelingen tussen uw
                   applicatie en die van anderen. Na het opslaan van uw registratie
                   van de applicatie kunt u op de detailpagina van elke koppeling
                   aanvullende technische details toevoegen.
                   <br />
-                  <br />
                   Als de applicatie waarmee uw wilt koppelen nog niet bestaat, dan
-                  dient u deze eerst op te voeren via het{' '}
-                  <Link
-                    onClick={handleOpenApplicatieForm}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: 'inherit',
-                      textDecoration: 'underline',
-                      cursor: 'pointer',
-                      padding: 0,
-                      font: 'inherit',
-                    }}
-                  >
-                    &quot;Applicatie melden&quot;
-                  </Link>
-                  . Dit kan pas na het afronden van de registratie van uw applicatie.
+                  kunt u de leverancier vragen zich ook aan te melden bij de
+                  softwarecatalogus.
                 </span>
               </div>
             </div>

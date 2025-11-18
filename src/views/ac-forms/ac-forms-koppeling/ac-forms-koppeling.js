@@ -1496,7 +1496,7 @@ const AcFormsKoppeling = ({ store }) => {
     return true;
   };
 
-  const { icon: Icon, schema } = getActiveWizard();
+  const { icon: Icon, name: wizardName } = getActiveWizard();
 
   return (
     <AcSection spacing>
@@ -1507,12 +1507,7 @@ const AcFormsKoppeling = ({ store }) => {
               style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
             >
               <Icon style={{ width: '1em', height: '1em' }} />
-              {_.capitalize(schema)}
-              {isEditMode
-                ? ' updaten'
-                : koppelingsType === 'aanbieden-koppeling'
-                ? ' melden'
-                : ' registreren'}
+              {_.capitalize(wizardName)}
             </Heading1>
             <Paragraph>
               Zoek naar bestaande koppelingen, voeg nieuwe koppelingen toe en

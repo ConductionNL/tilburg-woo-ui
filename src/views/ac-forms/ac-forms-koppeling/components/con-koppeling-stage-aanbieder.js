@@ -53,12 +53,8 @@ const ConKoppelingStageAanbieder = memo(
         setAanbiederOrganisatieData('naam', '');
         setAanbiederOrganisatieData('type', '');
         setAanbiederOrganisatieData('website', '');
-        setAanbiederOrganisatieData('beschrijvingKort', '');
-        setAanbiederOrganisatieData('beschrijvingLang', '');
         setAanbiederOrganisatieData('e-mailadres', '');
         setAanbiederOrganisatieData('telefoonnummer', '');
-        setAanbiederOrganisatieData('kvkNummer', '');
-        setAanbiederOrganisatieData('logo', '');
       } else {
         // Clear existing organization selection
         setAanbieder(null);
@@ -176,41 +172,6 @@ const ConKoppelingStageAanbieder = memo(
                   schemas={schemas}
                 />
 
-                {/* Short Description */}
-                <ConSchemaEnhancedField
-                  schemaType='organisatie'
-                  schemaProperty='beschrijvingKort'
-                  value={aanbiederOrganisatie.beschrijvingKort || ''}
-                  onChange={(value) =>
-                    setAanbiederOrganisatieData('beschrijvingKort', value)
-                  }
-                  isDisabled={loading || schemasLoading}
-                  width='full'
-                  customProps={{
-                    label: 'Korte beschrijving',
-                    maxLength: 255,
-                  }}
-                  schemas={schemas}
-                />
-
-                {/* Long Description */}
-                <ConSchemaEnhancedField
-                  schemaType='organisatie'
-                  schemaProperty='beschrijvingLang'
-                  value={aanbiederOrganisatie.beschrijvingLang || ''}
-                  onChange={(value) =>
-                    setAanbiederOrganisatieData('beschrijvingLang', value)
-                  }
-                  isDisabled={loading || schemasLoading}
-                  width='full'
-                  customProps={{
-                    label: 'Lange beschrijving',
-                    component: 'WysiwygMarkdown',
-                    maxLength: 5000,
-                  }}
-                  schemas={schemas}
-                />
-
                 {/* Email Address */}
                 <ConSchemaEnhancedField
                   schemaType='organisatie'
@@ -226,7 +187,7 @@ const ConKoppelingStageAanbieder = memo(
                     validation: {
                       custom: (value) => {
                         if (!value || value.trim() === '') return true;
-                        return validateEmail(value.trim());
+                        return !!validateEmail(value.trim());
                       },
                       customErrorMessage: 'Ongeldig e-mailadres',
                     },
@@ -253,34 +214,6 @@ const ConKoppelingStageAanbieder = memo(
                       customErrorMessage:
                         'Ongeldig telefoonnummer. (+31 6 1234 5678)',
                     },
-                  }}
-                  schemas={schemas}
-                />
-
-                {/* KvK Number */}
-                <ConSchemaEnhancedField
-                  schemaType='organisatie'
-                  schemaProperty='kvkNummer'
-                  value={aanbiederOrganisatie.kvkNummer || ''}
-                  onChange={(value) =>
-                    setAanbiederOrganisatieData('kvkNummer', value)
-                  }
-                  isDisabled={loading || schemasLoading}
-                  width='half'
-                  schemas={schemas}
-                />
-
-                {/* Logo */}
-                <ConSchemaEnhancedField
-                  schemaType='organisatie'
-                  schemaProperty='logo'
-                  value={aanbiederOrganisatie.logo || ''}
-                  onChange={(value) => setAanbiederOrganisatieData('logo', value)}
-                  isDisabled={loading || schemasLoading}
-                  width='half'
-                  customProps={{
-                    inputType: 'file',
-                    format: 'base64',
                   }}
                   schemas={schemas}
                 />

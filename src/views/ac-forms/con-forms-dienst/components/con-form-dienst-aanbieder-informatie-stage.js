@@ -51,11 +51,8 @@ const ConFormDienstAanbiederInformatieStage = memo(
         setAanbiederOrganisatieData('naam', '');
         setAanbiederOrganisatieData('type', '');
         setAanbiederOrganisatieData('website', '');
-        setAanbiederOrganisatieData('beschrijvingKort', '');
-        setAanbiederOrganisatieData('beschrijvingLang', '');
         setAanbiederOrganisatieData('e-mailadres', '');
         setAanbiederOrganisatieData('telefoonnummer', '');
-        setAanbiederOrganisatieData('logo', '');
         // Don't auto-set aanbieder - let user explicitly select from dropdown
         setDienstData('aanbieder', null);
       } else {
@@ -148,41 +145,6 @@ const ConFormDienstAanbiederInformatieStage = memo(
                   schemas={schemas}
                 />
 
-                {/* Short Description */}
-                <ConSchemaEnhancedField
-                  schemaType='organisatie'
-                  schemaProperty='beschrijvingKort'
-                  value={aanbiederOrganisatie.beschrijvingKort || ''}
-                  onChange={(value) =>
-                    setAanbiederOrganisatieData('beschrijvingKort', value)
-                  }
-                  isDisabled={loading}
-                  width='full'
-                  customProps={{
-                    label: 'Korte beschrijving',
-                    maxLength: 255,
-                  }}
-                  schemas={schemas}
-                />
-
-                {/* Long Description */}
-                <ConSchemaEnhancedField
-                  schemaType='organisatie'
-                  schemaProperty='beschrijvingLang'
-                  value={aanbiederOrganisatie.beschrijvingLang || ''}
-                  onChange={(value) =>
-                    setAanbiederOrganisatieData('beschrijvingLang', value)
-                  }
-                  isDisabled={loading}
-                  width='full'
-                  customProps={{
-                    label: 'Lange beschrijving',
-                    component: 'WysiwygMarkdown',
-                    maxLength: 5000,
-                  }}
-                  schemas={schemas}
-                />
-
                 {/* Email Address */}
                 <ConSchemaEnhancedField
                   schemaType='organisatie'
@@ -198,7 +160,7 @@ const ConFormDienstAanbiederInformatieStage = memo(
                     validation: {
                       custom: (value) => {
                         if (!value || value.trim() === '') return true;
-                        return validateEmail(value.trim());
+                        return !!validateEmail(value.trim());
                       },
                       customErrorMessage: 'Ongeldig e-mailadres',
                     },
@@ -226,21 +188,6 @@ const ConFormDienstAanbiederInformatieStage = memo(
                       customErrorMessage:
                         'Ongeldig telefoonnummer. (+31 6 1234 5678)',
                     },
-                  }}
-                  schemas={schemas}
-                />
-
-                {/* Logo */}
-                <ConSchemaEnhancedField
-                  schemaType='organisatie'
-                  schemaProperty='logo'
-                  value={aanbiederOrganisatie.logo || ''}
-                  onChange={(value) => setAanbiederOrganisatieData('logo', value)}
-                  isDisabled={loading}
-                  width='half'
-                  customProps={{
-                    inputType: 'file',
-                    format: 'base64',
                   }}
                   schemas={schemas}
                 />

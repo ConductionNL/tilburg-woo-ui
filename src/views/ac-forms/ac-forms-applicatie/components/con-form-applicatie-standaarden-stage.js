@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { VISUALS } from '@src/constants';
 import { AcCheckbox, AcFormField } from '@src/molecules';
 import { LogoUploadField } from '@views/ac-beheer/shared/components/con-logo-upload-field';
 import {
@@ -10,6 +11,7 @@ import {
   TableRow,
   Separator,
   Link,
+  Alert,
 } from '@utrecht/component-library-react/dist/css-module';
 import ReactSelect from 'react-select';
 import { validateWebsite } from '../../validation/form-validations';
@@ -354,7 +356,7 @@ const ConFormApplicatieStandaardenStage = ({
           standardName,
           standardDescription,
           standardType: 'extra',
-          componentInfo: 'EXTRA TOEGEVOEGD',
+          componentInfo: 'TOEGEVOEGD',
           verplichteComponents: [],
           aanbevolenComponents: [],
           isCompliant: !!existingCompliancy,
@@ -398,10 +400,18 @@ const ConFormApplicatieStandaardenStage = ({
   const handleExtraStandardsChange = (selectedOptions) => {
     const newSelected = selectedOptions || [];
     const newSelectedIds = new Set(newSelected.map((opt) => String(opt.value)));
+    const prevSelectedIds = new Set(
+      selectedExtraStandards.map((opt) => String(opt.value))
+    );
 
     // Find standards that were removed
     const removedStandards = selectedExtraStandards.filter(
       (opt) => !newSelectedIds.has(String(opt.value))
+    );
+
+    // Find standards that were newly added
+    const addedStandards = newSelected.filter(
+      (opt) => !prevSelectedIds.has(String(opt.value))
     );
 
     // Remove compliancy entries for removed standards
@@ -441,6 +451,65 @@ const ConFormApplicatieStandaardenStage = ({
         }
       });
       setApplicatieData('standaardenGemma', prevStandaardenGemma);
+    }
+
+    // Automatically mark newly added standards as compliant
+    if (addedStandards.length > 0) {
+      const prevCompliancy = Array.isArray(applicatie.compliancy)
+        ? [...applicatie.compliancy]
+        : [];
+      const updatedCompliancy = [...prevCompliancy];
+
+      const prevStandaarden = Array.isArray(applicatie.standaarden)
+        ? [...applicatie.standaarden]
+        : [];
+      const updatedStandaarden = [...prevStandaarden];
+
+      const prevStandaardenGemma = Array.isArray(applicatie.standaardenGemma)
+        ? [...applicatie.standaardenGemma]
+        : [];
+      const updatedStandaardenGemma = [...prevStandaardenGemma];
+
+      addedStandards.forEach((opt) => {
+        const standardId = String(opt.value);
+        const standardData = findMatchingStandardData({ id: standardId });
+        const { name: standardName } = extractStandardInfo(
+          { id: standardId },
+          standardData
+        );
+        const objectId = standardData?.id || standardData?.objectId || null;
+
+        // Check if compliancy entry already exists
+        const existingIndex = updatedCompliancy.findIndex(
+          (c) => c.standaardversie === standardId
+        );
+
+        if (existingIndex < 0) {
+          // Create new compliancy entry
+          updatedCompliancy.push({
+            standaardversie: standardId,
+            standaardGemma: objectId,
+            standaardnaam: standardName,
+            bewijs: null,
+            bewijsFilename: null,
+            url: null,
+          });
+        }
+
+        // Add to standaarden array if not already present
+        if (!updatedStandaarden.includes(standardId)) {
+          updatedStandaarden.push(standardId);
+        }
+
+        // Add to standaardenGemma array if not already present
+        if (objectId && !updatedStandaardenGemma.includes(objectId)) {
+          updatedStandaardenGemma.push(objectId);
+        }
+      });
+
+      setApplicatieData('compliancy', updatedCompliancy);
+      setApplicatieData('standaarden', updatedStandaarden);
+      setApplicatieData('standaardenGemma', updatedStandaardenGemma);
     }
 
     setSelectedExtraStandards(newSelected);
@@ -995,7 +1064,7 @@ const ConFormApplicatieStandaardenStage = ({
             {/* Render badge for extra standards */}
             {entry.standardType === 'extra' && (
               <span className='con-standaard-badge con-standaard-badge--extra'>
-                EXTRA TOEGEVOEGD
+                TOEGEVOEGD
               </span>
             )}
           </div>
@@ -1124,19 +1193,33 @@ const ConFormApplicatieStandaardenStage = ({
   }
 
   // Extra section (no header)
-  extraEntries.forEach((entry) => {
-    tableRows.push(renderEntryRow(entry));
-  });
+  if (extraEntries.length > 0) {
+    tableRows.push(
+      <TableRow key='header-aanbevolen'>
+        <TableCell
+          colSpan={3}
+          style={{
+            fontWeight: 'bold',
+            backgroundColor: '#f8f9fa',
+            padding: '12px',
+          }}
+        >
+          Toegevoegd
+        </TableCell>
+      </TableRow>
+    );
+    extraEntries.forEach((entry) => {
+      tableRows.push(renderEntryRow(entry));
+    });
+  }
 
   return (
     <div>
       <h2 id='standaarden-section-title' className='sr-only'>
-        Standaarden
+        Selecteer de standaarden voor uw applicatie
       </h2>
 
       <Paragraph className='con-form-wizard-paragraph'>
-        <strong>Selecteer de standaarden voor uw applicatie</strong>
-        <br />
         Geef voor uw applicatie aan welke standaarden worden ondersteund en of een
         testrapport beschikbaar is. Er worden de standaarden getoond die verplicht of
         aanbevolen zijn voor de in de vorige stap geselecteerde
@@ -1155,25 +1238,22 @@ const ConFormApplicatieStandaardenStage = ({
         kunt u terecht op GEMMA Online.
       </Paragraph>
 
-      {/* Extra standards multi-select */}
-      {availableExtraStandardsOptions.length > 0 && (
-        <div style={{ marginBottom: '1.5rem' }}>
-          <Paragraph style={{ marginBottom: '0.5rem', fontWeight: '500' }}>
-            Voeg extra standaarden toe (optioneel)
-          </Paragraph>
-          <ReactSelect
-            isMulti
-            className='ac-beheer-select'
-            options={availableExtraStandardsOptions}
-            value={selectedExtraStandards}
-            onChange={handleExtraStandardsChange}
-            isLoading={standaardenOptionsLoading}
-            closeMenuOnSelect={false}
-            placeholder='Zoek en selecteer extra standaarden...'
-            isSearchable={true}
-          />
+      <Alert severity='info' className='ac-forms-product-info-alert'>
+        <div className='ac-forms-product-info-alert__content'>
+          <VISUALS.INFO className='ac-forms-product-info-alert__icon' />
+          <div>
+            <strong>Extra standaarden toevoegen</strong>
+            <br />
+            <span className='ac-forms-product-info-alert__text'>
+              Onderstaand overzicht toont de standaarden die verplicht of aanbevolen
+              zijn voor uw geselecteerde referentiecomponenten. Wilt u aanvullende
+              standaarden toevoegen die niet in dit overzicht staan? Scroll dan naar
+              onderaan deze pagina waar u extra standaarden kunt selecteren via het
+              zoekveld.
+            </span>
+          </div>
         </div>
-      )}
+      </Alert>
 
       <TableContainer className='con-form-wizard-table-container'>
         <Table>
@@ -1249,6 +1329,26 @@ const ConFormApplicatieStandaardenStage = ({
           );
         })()}
       </div>
+
+      {/* Extra standards multi-select */}
+      {availableExtraStandardsOptions.length > 0 && (
+        <div style={{ marginBlock: '1.5rem' }}>
+          <Paragraph style={{ marginBottom: '0.5rem', fontWeight: '500' }}>
+            Voeg extra standaarden toe (optioneel)
+          </Paragraph>
+          <ReactSelect
+            isMulti
+            className='ac-beheer-select'
+            options={availableExtraStandardsOptions}
+            value={selectedExtraStandards}
+            onChange={handleExtraStandardsChange}
+            isLoading={standaardenOptionsLoading}
+            closeMenuOnSelect={false}
+            placeholder='Zoek en selecteer extra standaarden...'
+            isSearchable={true}
+          />
+        </div>
+      )}
     </div>
   );
 };
