@@ -353,8 +353,8 @@ const ConGebruikStepStandaarden = ({
           standardId,
           standardName,
           standardDescription,
-          standardType: 'extra',
-          componentInfo: 'EXTRA TOEGEVOEGD',
+          standardType: 'toegevoegd',
+          componentInfo: 'TOEGEVOEGD',
           verplichteComponents: [],
           aanbevolenComponents: [],
           isCompliant: !!existingCompliancy,
@@ -404,44 +404,44 @@ const ConGebruikStepStandaarden = ({
       (opt) => !newSelectedIds.has(String(opt.value))
     );
 
-      // Remove compliancy entries for removed standards
-      if (removedStandards.length > 0) {
-        const prevCompliancy = Array.isArray(gebruik.compliancy)
-          ? [...gebruik.compliancy]
-          : [];
-        const updatedCompliancy = prevCompliancy.filter(
-          (c) =>
-            !removedStandards.some(
-              (opt) => String(opt.value) === String(c.standaardversie)
-            )
-        );
-        setGebruikData('compliancy', updatedCompliancy);
+    // Remove compliancy entries for removed standards
+    if (removedStandards.length > 0) {
+      const prevCompliancy = Array.isArray(gebruik.compliancy)
+        ? [...gebruik.compliancy]
+        : [];
+      const updatedCompliancy = prevCompliancy.filter(
+        (c) =>
+          !removedStandards.some(
+            (opt) => String(opt.value) === String(c.standaardversie)
+          )
+      );
+      setGebruikData('compliancy', updatedCompliancy);
 
-        // Remove from standaarden array
-        const prevStandaarden = Array.isArray(gebruik.standaarden)
-          ? [...gebruik.standaarden]
-          : [];
-        const updatedStandaarden = prevStandaarden.filter(
-          (id) => !removedStandards.some((opt) => String(opt.value) === String(id))
-        );
-        setGebruikData('standaarden', updatedStandaarden);
+      // Remove from standaarden array
+      const prevStandaarden = Array.isArray(gebruik.standaarden)
+        ? [...gebruik.standaarden]
+        : [];
+      const updatedStandaarden = prevStandaarden.filter(
+        (id) => !removedStandards.some((opt) => String(opt.value) === String(id))
+      );
+      setGebruikData('standaarden', updatedStandaarden);
 
-        // Remove from standaardenGemma array
-        const prevStandaardenGemma = Array.isArray(gebruik.standaardenGemma)
-          ? [...gebruik.standaardenGemma]
-          : [];
-        removedStandards.forEach((opt) => {
-          const standardData = findMatchingStandardData({ id: opt.value });
-          const objectId = standardData?.id || standardData?.objectId || null;
-          if (objectId) {
-            const index = prevStandaardenGemma.indexOf(objectId);
-            if (index > -1) {
-              prevStandaardenGemma.splice(index, 1);
-            }
+      // Remove from standaardenGemma array
+      const prevStandaardenGemma = Array.isArray(gebruik.standaardenGemma)
+        ? [...gebruik.standaardenGemma]
+        : [];
+      removedStandards.forEach((opt) => {
+        const standardData = findMatchingStandardData({ id: opt.value });
+        const objectId = standardData?.id || standardData?.objectId || null;
+        if (objectId) {
+          const index = prevStandaardenGemma.indexOf(objectId);
+          if (index > -1) {
+            prevStandaardenGemma.splice(index, 1);
           }
-        });
-        setGebruikData('standaardenGemma', prevStandaardenGemma);
-      }
+        }
+      });
+      setGebruikData('standaardenGemma', prevStandaardenGemma);
+    }
 
     setSelectedExtraStandards(newSelected);
   };
@@ -991,9 +991,9 @@ const ConGebruikStepStandaarden = ({
             ))}
 
             {/* Render badge for extra standards */}
-            {entry.standardType === 'extra' && (
-              <span className='con-standaard-badge con-standaard-badge--extra'>
-                EXTRA TOEGEVOEGD
+            {entry.standardType === 'toegevoegd' && (
+              <span className='con-standaard-badge con-standaard-badge--toegevoegd'>
+                TOEGEVOEGD
               </span>
             )}
           </div>
