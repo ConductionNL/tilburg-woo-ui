@@ -22,6 +22,8 @@ import ReactSelect from 'react-select';
  * @param {Function} setApplicatieData - Function to update applicatie data
  * @param {Array} modulesOptions - Available modules/applicaties for connections
  * @param {boolean} modulesLoading - Loading state for modules options
+ * @param {Array} buitengemeentelijkeOptions - Available external facilities for connections
+ * @param {boolean} buitengemeentelijkeOptionsLoading - Loading state for external facilities
  * @param {Object} koppelingenFormState - UI state for the koppelingen form
  * @param {Function} setKoppelingenFormState - Function to update koppelingen form state
  * @param {Function} searchModules - Function to search for modules/applicaties
@@ -32,6 +34,8 @@ const ConFormApplicatieKoppelingenStage = memo(
     setApplicatieData,
     modulesOptions,
     modulesLoading,
+    buitengemeentelijkeOptions,
+    buitengemeentelijkeOptionsLoading,
     koppelingenFormState,
     setKoppelingenFormState,
     searchModules,
@@ -78,6 +82,20 @@ const ConFormApplicatieKoppelingenStage = memo(
 
     const generateLocalId = () =>
       `kpl_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+
+    // Helper function to merge modules and buitengemeentelijke options
+    const getMergedOptions = () => {
+      const merged = [...modulesOptions];
+      (buitengemeentelijkeOptions || []).forEach((buitenOpt) => {
+        const exists = merged.some(
+          (o) => String(o.value) === String(buitenOpt.value)
+        );
+        if (!exists) {
+          merged.push(buitenOpt);
+        }
+      });
+      return merged;
+    };
 
     // Persist row data into applicatie object
     const persistRowIntoApplicatie = (rowId, overrides = {}) => {
@@ -361,11 +379,11 @@ const ConFormApplicatieKoppelingenStage = memo(
                   </TableCell>
                   <TableCell>
                     <ReactSelect
-                      options={modulesOptions || []}
+                      options={getMergedOptions()}
                       value={(() => {
                         const selected = selectedAppBByRow[rowId];
                         if (selected == null) return null;
-                        const opts = modulesOptions || [];
+                        const opts = getMergedOptions();
                         let found = opts.find(
                           (o) => String(o.value) === String(selected)
                         );
@@ -382,7 +400,7 @@ const ConFormApplicatieKoppelingenStage = memo(
                         }
                         return inputValue;
                       }}
-                      isLoading={modulesLoading}
+                      isLoading={modulesLoading || buitengemeentelijkeOptionsLoading}
                       isClearable={true}
                       onChange={(opt) => {
                         // Update UI state first
