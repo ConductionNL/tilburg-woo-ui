@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { VISUALS } from '@src/constants';
 import { AcCheckbox, AcFormField } from '@src/molecules';
 import { LogoUploadField } from '@views/ac-beheer/shared/components/con-logo-upload-field';
 import {
@@ -10,6 +11,7 @@ import {
   TableRow,
   Separator,
   Link,
+  Alert,
 } from '@utrecht/component-library-react/dist/css-module';
 import ReactSelect from 'react-select';
 import { validateWebsite } from '../../validation/form-validations';
@@ -1235,6 +1237,23 @@ const ConFormApplicatieStandaardenStage = ({
         </Link>{' '}
         kunt u terecht op GEMMA Online.
       </Paragraph>
+
+      <Alert severity='info' className='ac-forms-product-info-alert'>
+        <div className='ac-forms-product-info-alert__content'>
+          <VISUALS.INFO className='ac-forms-product-info-alert__icon' />
+          <div>
+            <strong>Extra standaarden toevoegen</strong>
+            <br />
+            <span className='ac-forms-product-info-alert__text'>
+              Onderstaand overzicht toont de standaarden die verplicht of aanbevolen
+              zijn voor uw geselecteerde referentiecomponenten. Wilt u aanvullende
+              standaarden toevoegen die niet in dit overzicht staan? Scroll dan naar
+              onderaan deze pagina waar u extra standaarden kunt selecteren via het
+              zoekveld.
+            </span>
+          </div>
+        </div>
+      </Alert>
 
       <TableContainer className='con-form-wizard-table-container'>
         <Table>

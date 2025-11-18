@@ -57,41 +57,6 @@ const ConAfnemerOrganisatieForm = memo(
             schemas={schemas}
           />
 
-          {/* Short Description */}
-          <ConSchemaEnhancedField
-            schemaType='organisatie'
-            schemaProperty='beschrijvingKort'
-            value={afnemerOrganisatie.beschrijvingKort || ''}
-            onChange={(value) =>
-              setAfnemerOrganisatieData('beschrijvingKort', value)
-            }
-            isDisabled={loading}
-            width='full'
-            customProps={{
-              label: 'Korte beschrijving',
-              maxLength: 255,
-            }}
-            schemas={schemas}
-          />
-
-          {/* Long Description */}
-          <ConSchemaEnhancedField
-            schemaType='organisatie'
-            schemaProperty='beschrijvingLang'
-            value={afnemerOrganisatie.beschrijvingLang || ''}
-            onChange={(value) =>
-              setAfnemerOrganisatieData('beschrijvingLang', value)
-            }
-            isDisabled={loading}
-            width='full'
-            customProps={{
-              label: 'Lange beschrijving',
-              component: 'WysiwygMarkdown',
-              maxLength: 5000,
-            }}
-            schemas={schemas}
-          />
-
           {/* Email Address */}
           <ConSchemaEnhancedField
             schemaType='organisatie'
@@ -111,21 +76,6 @@ const ConAfnemerOrganisatieForm = memo(
             onChange={(value) => setAfnemerOrganisatieData('telefoonnummer', value)}
             isDisabled={loading}
             width='half'
-            schemas={schemas}
-          />
-
-          {/* Logo */}
-          <ConSchemaEnhancedField
-            schemaType='organisatie'
-            schemaProperty='logo'
-            value={afnemerOrganisatie.logo || ''}
-            onChange={(value) => setAfnemerOrganisatieData('logo', value)}
-            isDisabled={loading}
-            width='half'
-            customProps={{
-              inputType: 'file',
-              format: 'base64',
-            }}
             schemas={schemas}
           />
         </div>
@@ -163,11 +113,8 @@ const ConGebruikStepOrganisatie = ({
       setAfnemerOrganisatieData('naam', '');
       setAfnemerOrganisatieData('type', '');
       setAfnemerOrganisatieData('website', '');
-      setAfnemerOrganisatieData('beschrijvingKort', '');
-      setAfnemerOrganisatieData('beschrijvingLang', '');
       setAfnemerOrganisatieData('e-mailadres', '');
       setAfnemerOrganisatieData('telefoonnummer', '');
-      setAfnemerOrganisatieData('logo', '');
     } else {
       setGebruikData('afnemer', null);
     }
