@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Link,
   Table,
@@ -278,12 +278,81 @@ const ConStandardsTable = ({
     effectiveReferentieComponentenWithStandards
   );
 
+  // Get IDs of standards from referentieComponenten
+  const referentieStandardIds = useMemo(() => {
+    return new Set(allReferentieStandards.map((s) => String(s.id)));
+  }, [allReferentieStandards]);
+
+  // Find "toegevoegd" (added) standards - standards in complianceStandards but not in referentieComponenten
+  const toegevoegdeStandards = useMemo(() => {
+    if (!complianceStandards || complianceStandards.length === 0) {
+      return [];
+    }
+
+    return complianceStandards
+      .filter((cs) => {
+        const standardId = String(cs.standaardversie);
+        // Also check if this standard might be using a different identifier format
+        // by looking it up in effectiveStandards and checking if any of its identifiers
+        // match a referentie standard
+        const standardData = effectiveStandards?.find(
+          (s) =>
+            String(s.id) === standardId ||
+            String(s.identifier) === standardId ||
+            String(s.value) === standardId
+        );
+
+        if (standardData) {
+          // Check all possible identifier formats
+          const possibleIds = [
+            String(standardData.id),
+            String(standardData.identifier),
+            String(standardData.value),
+            String(standardData.uuid),
+          ].filter(Boolean);
+
+          // If any of these IDs match a referentie standard, it's not toegevoegd
+          return !possibleIds.some((id) => referentieStandardIds.has(id));
+        }
+
+        // If we can't find the standard data, just check the direct ID
+        return !referentieStandardIds.has(standardId);
+      })
+      .map((cs) => {
+        // Find the standard data to get the identifier that ConStandardsResolver will use
+        const standardData = effectiveStandards?.find(
+          (s) =>
+            String(s.id) === String(cs.standaardversie) ||
+            String(s.identifier) === String(cs.standaardversie) ||
+            String(s.value) === String(cs.standaardversie)
+        );
+
+        // Use the identifier that ConStandardsResolver will match on
+        const resolverIdentifier =
+          standardData?.identifier ||
+          standardData?.id ||
+          standardData?.value ||
+          cs.standaardversie;
+
+        return {
+          id: resolverIdentifier,
+          type: 'TOEGEVOEGD',
+          referentieComponent: 'Extra toegevoegd',
+        };
+      });
+  }, [complianceStandards, referentieStandardIds, effectiveStandards]);
+
+  // Combine referentie standards with toegevoegde standards
+  const allStandards = useMemo(() => {
+    return [...allReferentieStandards, ...toegevoegdeStandards];
+  }, [allReferentieStandards, toegevoegdeStandards]);
+
   // Notify parent component when standards count changes
   useEffect(() => {
     if (onStandardsCountChange) {
-      onStandardsCountChange(allReferentieStandards.length);
+      onStandardsCountChange(allStandards.length);
     }
-  }, [allReferentieStandards.length, onStandardsCountChange]);
+  }, [allStandards.length, onStandardsCountChange]);
 
   // Notify parent component when referentieComponenten data changes
   useEffect(() => {
@@ -304,24 +373,24 @@ const ConStandardsTable = ({
       let newCompliancy;
 
       if (isCompliant) {
-        // Add or update compliancy
-        const existingIndex = currentCompliancy.findIndex(
-          (c) => c.standaardversie === standardId
-        );
-
-        // Find the standard name and objectId for display
-        const standard = allReferentieStandards.find((s) => s.id === standardId);
-        const standardName = standard
-          ? effectiveStandards?.find(
-              (s) => s.id === standardId || s.identifier === standardId
-            )?.name || standard.id
-          : standardId;
-
         // Find the objectId from the effectiveStandards data
         const standardData = effectiveStandards?.find(
           (s) => s.id === standardId || s.identifier === standardId
         );
         const objectId = standardData?.id || standardData?.objectId || null;
+
+        // Add or update compliancy - check both standaardversie and standaardGemma
+        const existingIndex = currentCompliancy.findIndex(
+          (c) => c.standaardversie === standardId || c.standaardGemma === standardId
+        );
+
+        // Find the standard name for display
+        const standard = allStandards.find((s) => s.id === standardId);
+        const standardName = standard
+          ? effectiveStandards?.find(
+              (s) => s.id === standardId || s.identifier === standardId
+            )?.name || standard.id
+          : standardId;
 
         const compliancyObject = {
           standaardversie: standardId,
@@ -339,9 +408,9 @@ const ConStandardsTable = ({
           newCompliancy = [...currentCompliancy, compliancyObject];
         }
       } else {
-        // Remove compliancy
+        // Remove compliancy - check both standaardversie and standaardGemma
         newCompliancy = currentCompliancy.filter(
-          (c) => c.standaardversie !== standardId
+          (c) => c.standaardversie !== standardId && c.standaardGemma !== standardId
         );
       }
 
@@ -351,7 +420,7 @@ const ConStandardsTable = ({
       isEditing,
       onComplianceChange,
       complianceStandards,
-      allReferentieStandards,
+      allStandards,
       effectiveStandards,
     ]
   );
@@ -362,7 +431,7 @@ const ConStandardsTable = ({
 
       const currentCompliancy = complianceStandards || [];
       const newCompliancy = currentCompliancy.map((c) =>
-        c.standaardversie === standardId
+        c.standaardversie === standardId || c.standaardGemma === standardId
           ? { ...c, bewijs, url: null, bewijsFilename: c.bewijsFilename } // Clear URL when file is uploaded (mutually exclusive)
           : c
       );
@@ -378,7 +447,7 @@ const ConStandardsTable = ({
 
       const currentCompliancy = complianceStandards || [];
       const newCompliancy = currentCompliancy.map((c) =>
-        c.standaardversie === standardId
+        c.standaardversie === standardId || c.standaardGemma === standardId
           ? { ...c, url, bewijs: null, bewijsFilename: null } // Clear file when URL is set (mutually exclusive)
           : c
       );
@@ -394,7 +463,9 @@ const ConStandardsTable = ({
 
       const currentCompliancy = complianceStandards || [];
       const newCompliancy = currentCompliancy.map((c) =>
-        c.standaardversie === standardId ? { ...c, bewijsFilename: filename } : c
+        c.standaardversie === standardId || c.standaardGemma === standardId
+          ? { ...c, bewijsFilename: filename }
+          : c
       );
 
       onComplianceChange(newCompliancy);
@@ -408,7 +479,7 @@ const ConStandardsTable = ({
 
       const currentCompliancy = complianceStandards || [];
       const newCompliancy = currentCompliancy.map((c) =>
-        c.standaardversie === standardId
+        c.standaardversie === standardId || c.standaardGemma === standardId
           ? { ...c, bewijs: null, bewijsFilename: null, url: null }
           : c
       );
@@ -422,7 +493,7 @@ const ConStandardsTable = ({
     return <p>Standaarden laden...</p>;
   }
 
-  if (!allReferentieStandards || allReferentieStandards.length === 0) {
+  if (!allStandards || allStandards.length === 0) {
     return (
       <p style={{ padding: '16px', color: '#6c757d', fontStyle: 'italic' }}>
         {noStandardsMessage}
@@ -430,7 +501,7 @@ const ConStandardsTable = ({
     );
   }
 
-  // const shouldScroll = enableScrolling && allReferentieStandards.length > 5;
+  // const shouldScroll = enableScrolling && allStandards.length > 5;
 
   return (
     <div
@@ -488,179 +559,268 @@ const ConStandardsTable = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {allReferentieStandards.map((refStandard, idx) => {
-            // Check if this standard is in the complianceStandards array
-            const complianceStandard = complianceStandards?.find(
-              (cs) => cs.standaardversie === refStandard.id
+          {(() => {
+            // Group standards by type
+            const verplichtStandards = allStandards.filter(
+              (s) => s.type === 'VERPLICHT'
             );
-            const hasBewijs = !!complianceStandard?.bewijs;
-            const hasUrl = !!complianceStandard?.url;
-            const isCompliant = hasBewijs || hasUrl;
-            const isOndersteund = !!complianceStandard && !hasBewijs && !hasUrl;
-
-            // Find the actual standard object to get its real ID
-            const actualStandard = effectiveStandards?.find(
-              (standard) =>
-                standard.identifier === refStandard.id ||
-                standard.id === refStandard.id ||
-                standard.objectId === refStandard.id
+            const aanbevolenStandards = allStandards.filter(
+              (s) => s.type === 'AANBEVOLEN'
+            );
+            const toegevoegdStandards = allStandards.filter(
+              (s) => s.type === 'TOEGEVOEGD'
             );
 
-            // Use the actual standard's ID, fallback to refStandard.id if not found
-            const standardObjectId = actualStandard?.id || refStandard.id;
+            const renderStandardRow = (refStandard, idx) => {
+              // Check if this standard is in the complianceStandards array
+              // For toegevoegd standards, we need to match by multiple possible identifiers
+              const complianceStandard = complianceStandards?.find((cs) => {
+                // Direct match
+                if (cs.standaardversie === refStandard.id) return true;
 
-            return (
-              <TableRow key={idx}>
-                <TableCell
-                  style={{
-                    alignContent: 'center',
-                    paddingLeft:
-                      'var(--utrecht-table-cell-padding-inline-end) !important',
-                    width: '50%',
-                    wordWrap: 'break-word',
-                    overflow: 'hidden',
-                  }}
-                >
-                  <div>
-                    <Link
-                      href={`https://www.gemmaonline.nl/wiki/GEMMA/id-${standardObjectId}`}
-                      target='_blank'
-                    >
-                      <ConStandardsResolver
-                        standardId={refStandard.id}
-                        standards={effectiveStandards}
-                      />
-                    </Link>
-                    <div style={{ marginTop: '4px' }}>
-                      <span
-                        key={`${refStandard.type}-${idx}`}
-                        className={`con-standaard-badge con-standaard-badge--${refStandard.type.toLowerCase()}`}
+                // Also check standaardGemma (the canonical ID)
+                if (cs.standaardGemma === refStandard.id) return true;
+
+                // For toegevoegd standards, check if any identifier matches
+                if (refStandard.type === 'TOEGEVOEGD') {
+                  const standardData = effectiveStandards?.find(
+                    (s) =>
+                      String(s.id) === String(refStandard.id) ||
+                      String(s.identifier) === String(refStandard.id) ||
+                      String(s.value) === String(refStandard.id)
+                  );
+
+                  if (standardData) {
+                    return (
+                      String(cs.standaardversie) === String(standardData.id) ||
+                      String(cs.standaardversie) ===
+                        String(standardData.identifier) ||
+                      String(cs.standaardversie) === String(standardData.value) ||
+                      String(cs.standaardGemma) === String(standardData.id)
+                    );
+                  }
+                }
+
+                return false;
+              });
+              const hasBewijs = !!complianceStandard?.bewijs;
+              const hasUrl = !!complianceStandard?.url;
+              const isCompliant = hasBewijs || hasUrl;
+              const isOndersteund = !!complianceStandard && !hasBewijs && !hasUrl;
+
+              // Find the actual standard object to get its real ID
+              const actualStandard = effectiveStandards?.find(
+                (standard) =>
+                  standard.identifier === refStandard.id ||
+                  standard.id === refStandard.id ||
+                  standard.objectId === refStandard.id
+              );
+
+              // Use the actual standard's ID, fallback to refStandard.id if not found
+              const standardObjectId = actualStandard?.id || refStandard.id;
+
+              return (
+                <TableRow key={`${refStandard.type}-${idx}`}>
+                  <TableCell
+                    style={{
+                      alignContent: 'center',
+                      paddingLeft:
+                        'var(--utrecht-table-cell-padding-inline-end) !important',
+                      width: '50%',
+                      wordWrap: 'break-word',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <div>
+                      <Link
+                        href={`https://www.gemmaonline.nl/wiki/GEMMA/id-${standardObjectId}`}
+                        target='_blank'
                       >
-                        {refStandard.type}
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        marginTop: '4px',
-                        fontSize: '0.75rem',
-                        color: '#6c757d',
-                        wordWrap: 'break-word',
-                      }}
-                    >
-                      {refStandard.referentieComponent}
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell
-                  style={{
-                    alignContent: 'center',
-                    width: '25%',
-                    overflow: 'hidden',
-                  }}
-                >
-                  {isEditing ? (
-                    <div style={{ display: 'flex', justifyContent: 'center' }}>
-                      <AcCheckbox
-                        checked={isCompliant}
-                        onChange={(checked) =>
-                          toggleCompliance(refStandard.id, checked)
-                        }
-                        disabled={disabled}
-                        label=''
-                      />
-                    </div>
-                  ) : (
-                    <span
-                      style={{
-                        fontSize: '0.75rem',
-                        color: '#fff',
-                        backgroundColor: isCompliant
-                          ? '#28a745'
-                          : isOndersteund
-                          ? '#ffc107'
-                          : '#6c757d',
-                        fontWeight: '600',
-                        textTransform: 'uppercase',
-                        padding: '3px 8px',
-                        borderRadius: '4px',
-                        display: 'inline-block',
-                        lineHeight: '1.2',
-                        margin: '0px',
-                        marginBlockStart: '0px',
-                        marginBlockEnd: '0px',
-                        marginInlineStart: '0px',
-                        marginInlineEnd: '0px',
-                      }}
-                    >
-                      {isCompliant
-                        ? 'COMPLIANT'
-                        : isOndersteund
-                        ? 'ONDERSTEUND'
-                        : 'NON-COMPLIANT'}
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell
-                  style={{
-                    alignContent: 'center',
-                    width: '25%',
-                    overflow: 'hidden',
-                  }}
-                >
-                  {isEditing ? (
-                    // Show file upload or URL input when editing and compliant/ondersteund
-                    isCompliant || isOndersteund ? (
+                        <ConStandardsResolver
+                          standardId={refStandard.id}
+                          standards={effectiveStandards}
+                        />
+                      </Link>
+                      <div style={{ marginTop: '4px' }}>
+                        <span
+                          key={`${refStandard.type}-${idx}`}
+                          className={`con-standaard-badge con-standaard-badge--${refStandard.type.toLowerCase()}`}
+                        >
+                          {refStandard.type}
+                        </span>
+                      </div>
                       <div
                         style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '8px',
+                          marginTop: '4px',
+                          fontSize: '0.75rem',
+                          color: '#6c757d',
+                          wordWrap: 'break-word',
                         }}
                       >
-                        <LogoUploadField
-                          fieldConfig={{
-                            label: '',
-                            filename: complianceStandard?.bewijs
-                              ? 'Bestand geüpload'
-                              : '',
-                          }}
-                          _value={complianceStandard?.bewijs || ''}
-                          onChange={(dataUrl) =>
-                            updateBewijs(refStandard.id, dataUrl)
-                          }
-                          onChangeFileName={(filename) =>
-                            updateBewijsFilename(refStandard.id, filename)
-                          }
-                          onClear={() => clearBewijs(refStandard.id)}
-                          accept={['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx']}
-                          showPreview={false}
-                          validation={{ required: false }}
-                          propertyName={`bewijs-${refStandard.id}`}
-                          size='small'
-                          isDisabled={disabled || !!complianceStandard?.url}
-                        />
-                        <Separator />
-                        <div>
-                          <AcFormField
-                            placeholder='https://...'
-                            value={complianceStandard?.url || ''}
-                            type='url'
-                            onChange={(e) => updateUrl(refStandard.id, e)}
-                            disabled={disabled || !!complianceStandard?.bewijs}
-                            className='ac-register-form-field__no-width-limit'
-                            hasError={validateWebsite(complianceStandard?.url)}
-                          />
-                          {complianceStandard?.url &&
-                            (!complianceStandard?.url ||
-                              !validateWebsite(complianceStandard?.url)) && (
-                              <span className='ac-register-form-field-error'>
-                                {complianceStandard?.url &&
-                                  !validateWebsite(complianceStandard?.url) &&
-                                  'URL heeft een ongeldig formaat'}
-                              </span>
-                            )}
-                        </div>
+                        {refStandard.referentieComponent}
                       </div>
+                    </div>
+                  </TableCell>
+                  <TableCell
+                    style={{
+                      alignContent: 'center',
+                      width: '25%',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {isEditing ? (
+                      <div style={{ display: 'flex', justifyContent: 'center' }}>
+                        <AcCheckbox
+                          checked={isCompliant}
+                          onChange={(checked) =>
+                            toggleCompliance(refStandard.id, checked)
+                          }
+                          disabled={disabled}
+                          label=''
+                        />
+                      </div>
+                    ) : (
+                      <span
+                        style={{
+                          fontSize: '0.75rem',
+                          color: '#fff',
+                          backgroundColor: isCompliant
+                            ? '#28a745'
+                            : isOndersteund
+                            ? '#ffc107'
+                            : refStandard.type === 'VERPLICHT'
+                            ? '#dc3545'
+                            : '#6c757d',
+                          fontWeight: '600',
+                          textTransform: 'uppercase',
+                          padding: '3px 8px',
+                          borderRadius: '4px',
+                          display: 'inline-block',
+                          lineHeight: '1.2',
+                          margin: '0px',
+                          marginBlockStart: '0px',
+                          marginBlockEnd: '0px',
+                          marginInlineStart: '0px',
+                          marginInlineEnd: '0px',
+                        }}
+                      >
+                        {isCompliant
+                          ? 'COMPLIANT'
+                          : isOndersteund
+                          ? 'ONDERSTEUND'
+                          : 'NON-COMPLIANT'}
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell
+                    style={{
+                      alignContent: 'center',
+                      width: '25%',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {isEditing ? (
+                      // Show file upload or URL input when editing and compliant/ondersteund
+                      isCompliant || isOndersteund ? (
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '8px',
+                          }}
+                        >
+                          <LogoUploadField
+                            fieldConfig={{
+                              label: '',
+                              filename: complianceStandard?.bewijs
+                                ? 'Bestand geüpload'
+                                : '',
+                            }}
+                            _value={complianceStandard?.bewijs || ''}
+                            onChange={(dataUrl) =>
+                              updateBewijs(refStandard.id, dataUrl)
+                            }
+                            onChangeFileName={(filename) =>
+                              updateBewijsFilename(refStandard.id, filename)
+                            }
+                            onClear={() => clearBewijs(refStandard.id)}
+                            accept={[
+                              '.pdf',
+                              '.jpg',
+                              '.jpeg',
+                              '.png',
+                              '.doc',
+                              '.docx',
+                            ]}
+                            showPreview={false}
+                            validation={{ required: false }}
+                            propertyName={`bewijs-${refStandard.id}`}
+                            size='small'
+                            isDisabled={disabled || !!complianceStandard?.url}
+                          />
+                          <Separator />
+                          <div>
+                            <AcFormField
+                              placeholder='https://...'
+                              value={complianceStandard?.url || ''}
+                              type='url'
+                              onChange={(e) => updateUrl(refStandard.id, e)}
+                              disabled={disabled || !!complianceStandard?.bewijs}
+                              className='ac-register-form-field__no-width-limit'
+                              hasError={validateWebsite(complianceStandard?.url)}
+                            />
+                            {complianceStandard?.url &&
+                              (!complianceStandard?.url ||
+                                !validateWebsite(complianceStandard?.url)) && (
+                                <span className='ac-register-form-field-error'>
+                                  {complianceStandard?.url &&
+                                    !validateWebsite(complianceStandard?.url) &&
+                                    'URL heeft een ongeldig formaat'}
+                                </span>
+                              )}
+                          </div>
+                        </div>
+                      ) : (
+                        <span
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'left',
+                          }}
+                        >
+                          -
+                        </span>
+                      )
+                    ) : // Always show download button when not editing
+                    hasBewijs ? (
+                      <Link
+                        href='#'
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleFileClick(complianceStandard.bewijs);
+                        }}
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'left',
+                          cursor: 'pointer',
+                        }}
+                        title='Download bewijs bestand'
+                      >
+                        <VISUALS.DOWNLOAD />
+                      </Link>
+                    ) : hasUrl ? (
+                      <Link
+                        href={complianceStandard.url}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'left',
+                          cursor: 'pointer',
+                        }}
+                        title={`Open bewijs URL: ${complianceStandard.url}`}
+                      >
+                        <VISUALS.EXTERNAL_LINK />
+                      </Link>
                     ) : (
                       <span
                         style={{
@@ -670,52 +830,79 @@ const ConStandardsTable = ({
                       >
                         -
                       </span>
-                    )
-                  ) : // Always show download button when not editing
-                  hasBewijs ? (
-                    <Link
-                      href='#'
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleFileClick(complianceStandard.bewijs);
-                      }}
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'left',
-                        cursor: 'pointer',
-                      }}
-                      title='Download bewijs bestand'
-                    >
-                      <VISUALS.DOWNLOAD />
-                    </Link>
-                  ) : hasUrl ? (
-                    <Link
-                      href={complianceStandard.url}
-                      target='_blank'
-                      rel='noopener noreferrer'
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'left',
-                        cursor: 'pointer',
-                      }}
-                      title={`Open bewijs URL: ${complianceStandard.url}`}
-                    >
-                      <VISUALS.EXTERNAL_LINK />
-                    </Link>
-                  ) : (
-                    <span
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'left',
-                      }}
-                    >
-                      -
-                    </span>
-                  )}
-                </TableCell>
-              </TableRow>
-            );
-          })}
+                    )}
+                  </TableCell>
+                </TableRow>
+              );
+            };
+
+            const rows = [];
+
+            // Verplicht section
+            if (verplichtStandards.length > 0) {
+              rows.push(
+                <TableRow key='header-verplicht'>
+                  <TableCell
+                    colSpan={3}
+                    style={{
+                      fontWeight: 'bold',
+                      backgroundColor: '#f8f9fa',
+                      padding: '12px',
+                    }}
+                  >
+                    Verplicht
+                  </TableCell>
+                </TableRow>
+              );
+              verplichtStandards.forEach((standard, idx) => {
+                rows.push(renderStandardRow(standard, idx));
+              });
+            }
+
+            // Aanbevolen section
+            if (aanbevolenStandards.length > 0) {
+              rows.push(
+                <TableRow key='header-aanbevolen'>
+                  <TableCell
+                    colSpan={3}
+                    style={{
+                      fontWeight: 'bold',
+                      backgroundColor: '#f8f9fa',
+                      padding: '12px',
+                    }}
+                  >
+                    Aanbevolen
+                  </TableCell>
+                </TableRow>
+              );
+              aanbevolenStandards.forEach((standard, idx) => {
+                rows.push(renderStandardRow(standard, idx));
+              });
+            }
+
+            // Toegevoegd section
+            if (toegevoegdStandards.length > 0) {
+              rows.push(
+                <TableRow key='header-toegevoegd'>
+                  <TableCell
+                    colSpan={3}
+                    style={{
+                      fontWeight: 'bold',
+                      backgroundColor: '#f8f9fa',
+                      padding: '12px',
+                    }}
+                  >
+                    Toegevoegd
+                  </TableCell>
+                </TableRow>
+              );
+              toegevoegdStandards.forEach((standard, idx) => {
+                rows.push(renderStandardRow(standard, idx));
+              });
+            }
+
+            return rows;
+          })()}
         </TableBody>
       </Table>
     </div>

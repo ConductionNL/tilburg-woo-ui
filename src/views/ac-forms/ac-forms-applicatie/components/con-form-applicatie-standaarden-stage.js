@@ -355,7 +355,7 @@ const ConFormApplicatieStandaardenStage = ({
           standardId,
           standardName,
           standardDescription,
-          standardType: 'extra',
+          standardType: 'toegevoegd',
           componentInfo: 'TOEGEVOEGD',
           verplichteComponents: [],
           aanbevolenComponents: [],
@@ -1001,7 +1001,7 @@ const ConFormApplicatieStandaardenStage = ({
     .filter((entry) => entry.standardType === 'aanbevolen')
     .sort((a, b) => (a.standardName || '').localeCompare(b.standardName || ''));
   const extraEntries = allEntries
-    .filter((entry) => entry.standardType === 'extra')
+    .filter((entry) => entry.standardType === 'toegevoegd')
     .sort((a, b) => (a.standardName || '').localeCompare(b.standardName || ''));
 
   // Helper function to render a table row for an entry
@@ -1062,8 +1062,8 @@ const ConFormApplicatieStandaardenStage = ({
             ))}
 
             {/* Render badge for extra standards */}
-            {entry.standardType === 'extra' && (
-              <span className='con-standaard-badge con-standaard-badge--extra'>
+            {entry.standardType === 'toegevoegd' && (
+              <span className='con-standaard-badge con-standaard-badge--toegevoegd'>
                 TOEGEVOEGD
               </span>
             )}
