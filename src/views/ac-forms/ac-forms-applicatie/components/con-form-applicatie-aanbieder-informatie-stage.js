@@ -1,4 +1,4 @@
-import React, { memo, useEffect } from 'react';
+import React, { memo, useEffect, useRef } from 'react';
 import ConSchemaEnhancedField from '@components/con-schema-enhanced-field/con-schema-enhanced-field';
 import {
   validateWebsite,
@@ -38,10 +38,19 @@ const ConFormApplicatieAanbiederInformatieStage = memo(
     schemas,
     aanbiederKeuze,
   }) => {
+    // Track previous aanbiederKeuze to detect actual changes (not just remounts)
+    const previousAanbiederKeuze = useRef(aanbiederKeuze);
+
     // Handle choice change between existing and new
-    const handleChoiceChange = () => {
+    // Only clear fields when the choice actually changes, not on component mount/remount
+    useEffect(() => {
+      // Skip if this is the first render or if the choice hasn't actually changed
+      if (previousAanbiederKeuze.current === aanbiederKeuze) {
+        return;
+      }
+
       if (aanbiederKeuze === 'bestaand') {
-        // Clear new organization fields
+        // Clear new organization fields when switching to existing
         setAanbiederOrganisatieData('naam', '');
         setAanbiederOrganisatieData('type', '');
         setAanbiederOrganisatieData('website', '');
@@ -50,15 +59,16 @@ const ConFormApplicatieAanbiederInformatieStage = memo(
         setAanbiederOrganisatieData('e-mailadres', '');
         setAanbiederOrganisatieData('telefoonnummer', '');
         setAanbiederOrganisatieData('logo', '');
-        // Don't auto-set aanbieder - let user explicitly select from dropdown
+        // Clear the selected aanbieder when switching FROM nieuw TO bestaand
         setApplicatieData('aanbieder', null);
       } else {
-        // Clear existing organization selection
+        // Clear existing organization selection when switching to new
         setApplicatieData('aanbieder', null);
       }
-    };
 
-    useEffect(handleChoiceChange, [aanbiederKeuze]);
+      // Update the previous value
+      previousAanbiederKeuze.current = aanbiederKeuze;
+    }, [aanbiederKeuze, setApplicatieData, setAanbiederOrganisatieData]);
 
     return (
       <div role='group' aria-labelledby='aanbieder-section-title'>
