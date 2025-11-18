@@ -509,9 +509,6 @@ const ConStandardsTable = ({
             // Use the actual standard's ID, fallback to refStandard.id if not found
             const standardObjectId = actualStandard?.id || refStandard.id;
 
-            const typeColor =
-              refStandard.type === 'VERPLICHT' ? '#dc3545' : '#28a745';
-
             return (
               <TableRow key={idx}>
                 <TableCell
@@ -536,22 +533,8 @@ const ConStandardsTable = ({
                     </Link>
                     <div style={{ marginTop: '4px' }}>
                       <span
-                        style={{
-                          fontSize: '0.75rem',
-                          color: '#fff',
-                          backgroundColor: typeColor,
-                          fontWeight: '600',
-                          textTransform: 'uppercase',
-                          padding: '3px 8px',
-                          borderRadius: '4px',
-                          display: 'inline-block',
-                          lineHeight: '1.2',
-                          margin: '0px',
-                          marginBlockStart: '0px',
-                          marginBlockEnd: '0px',
-                          marginInlineStart: '0px',
-                          marginInlineEnd: '0px',
-                        }}
+                        key={`${refStandard.type}-${idx}`}
+                        className={`con-standaard-badge con-standaard-badge--${refStandard.type.toLowerCase()}`}
                       >
                         {refStandard.type}
                       </span>
