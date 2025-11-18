@@ -1858,7 +1858,7 @@ const AcFormsGebruik = ({ store }) => {
     }
   };
 
-  const { icon: Icon, schema } = getActiveWizard();
+  const { icon: Icon, name: wizardName } = getActiveWizard();
 
   return (
     <AcSection spacing>
@@ -1872,12 +1872,7 @@ const AcFormsGebruik = ({ store }) => {
                   style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                 >
                   <Icon style={{ width: '1em', height: '1em' }} />
-                  {_.capitalize(schema)}
-                  {isEditMode
-                    ? ' updaten'
-                    : gebruikType === 'andere-organisatie'
-                    ? ' melden'
-                    : ' registreren'}
+                  {_.capitalize(wizardName)}
                 </Heading1>
                 <Paragraph>
                   Selecteer een applicatie, vul aanvullende informatie aan en

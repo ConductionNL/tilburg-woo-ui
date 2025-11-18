@@ -46,7 +46,7 @@ const ConFormApplicatieLicentieStage = memo(
         aria-labelledby='license-hosting-section-title'
       >
         <h2 id='license-hosting-section-title' className='sr-only'>
-          Licentie / Hosting
+          Licentie en Hosting informatie
         </h2>
         <Paragraph className='con-form-wizard-paragraph'>
           Geef aan onder welke licentie u de applicatie aanbiedt. Vermeld daarnaast

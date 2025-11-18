@@ -1,4 +1,4 @@
-import React, { memo, useEffect } from 'react';
+import React, { memo } from 'react';
 import { AcCheckbox } from '@src/molecules';
 import ConSchemaEnhancedField from '@components/con-schema-enhanced-field/con-schema-enhanced-field';
 import { validateWebsite } from '@views/ac-forms/validation/form-validations';
@@ -32,7 +32,6 @@ const ConFormAanbiederInformatieStage = memo(
     loading,
     // touched,
     schemas,
-    userStore,
     aanbiederkeuze,
     setAanbiederKeuze,
   }) => {

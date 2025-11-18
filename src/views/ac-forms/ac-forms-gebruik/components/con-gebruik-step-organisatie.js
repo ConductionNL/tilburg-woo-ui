@@ -57,40 +57,6 @@ const ConAfnemerOrganisatieForm = memo(
             schemas={schemas}
           />
 
-          {/* Short Description */}
-          <ConSchemaEnhancedField
-            schemaType='organisatie'
-            schemaProperty='beschrijvingKort'
-            value={afnemerOrganisatie.beschrijvingKort || ''}
-            onChange={(value) =>
-              setAfnemerOrganisatieData('beschrijvingKort', value)
-            }
-            isDisabled={loading}
-            width='full'
-            customProps={{
-              maxLength: 255,
-            }}
-            schemas={schemas}
-          />
-
-          {/* Long Description */}
-          <ConSchemaEnhancedField
-            schemaType='organisatie'
-            schemaProperty='beschrijvingLang'
-            value={afnemerOrganisatie.beschrijvingLang || ''}
-            onChange={(value) =>
-              setAfnemerOrganisatieData('beschrijvingLang', value)
-            }
-            isDisabled={loading}
-            width='full'
-            customProps={{
-              component: 'AcTextarea',
-              rows: 4,
-              maxLength: 5000,
-            }}
-            schemas={schemas}
-          />
-
           {/* Email Address */}
           <ConSchemaEnhancedField
             schemaType='organisatie'
@@ -108,28 +74,6 @@ const ConAfnemerOrganisatieForm = memo(
             schemaProperty='telefoonnummer'
             value={afnemerOrganisatie.telefoonnummer || ''}
             onChange={(value) => setAfnemerOrganisatieData('telefoonnummer', value)}
-            isDisabled={loading}
-            width='half'
-            schemas={schemas}
-          />
-
-          {/* KvK Number */}
-          <ConSchemaEnhancedField
-            schemaType='organisatie'
-            schemaProperty='kvkNummer'
-            value={afnemerOrganisatie.kvkNummer || ''}
-            onChange={(value) => setAfnemerOrganisatieData('kvkNummer', value)}
-            isDisabled={loading}
-            width='half'
-            schemas={schemas}
-          />
-
-          {/* Logo URL */}
-          <ConSchemaEnhancedField
-            schemaType='organisatie'
-            schemaProperty='logo'
-            value={afnemerOrganisatie.logo || ''}
-            onChange={(value) => setAfnemerOrganisatieData('logo', value)}
             isDisabled={loading}
             width='half'
             schemas={schemas}
@@ -169,12 +113,8 @@ const ConGebruikStepOrganisatie = ({
       setAfnemerOrganisatieData('naam', '');
       setAfnemerOrganisatieData('type', '');
       setAfnemerOrganisatieData('website', '');
-      setAfnemerOrganisatieData('beschrijvingKort', '');
-      setAfnemerOrganisatieData('beschrijvingLang', '');
       setAfnemerOrganisatieData('e-mailadres', '');
       setAfnemerOrganisatieData('telefoonnummer', '');
-      setAfnemerOrganisatieData('kvkNummer', '');
-      setAfnemerOrganisatieData('logo', '');
     } else {
       setGebruikData('afnemer', null);
     }
