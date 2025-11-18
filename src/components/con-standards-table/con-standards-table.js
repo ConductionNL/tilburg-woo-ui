@@ -373,24 +373,24 @@ const ConStandardsTable = ({
       let newCompliancy;
 
       if (isCompliant) {
-        // Add or update compliancy
+        // Find the objectId from the effectiveStandards data
+        const standardData = effectiveStandards?.find(
+          (s) => s.id === standardId || s.identifier === standardId
+        );
+        const objectId = standardData?.id || standardData?.objectId || null;
+
+        // Add or update compliancy - check both standaardversie and standaardGemma
         const existingIndex = currentCompliancy.findIndex(
-          (c) => c.standaardversie === standardId
+          (c) => c.standaardversie === standardId || c.standaardGemma === standardId
         );
 
-        // Find the standard name and objectId for display
+        // Find the standard name for display
         const standard = allStandards.find((s) => s.id === standardId);
         const standardName = standard
           ? effectiveStandards?.find(
               (s) => s.id === standardId || s.identifier === standardId
             )?.name || standard.id
           : standardId;
-
-        // Find the objectId from the effectiveStandards data
-        const standardData = effectiveStandards?.find(
-          (s) => s.id === standardId || s.identifier === standardId
-        );
-        const objectId = standardData?.id || standardData?.objectId || null;
 
         const compliancyObject = {
           standaardversie: standardId,
@@ -408,9 +408,9 @@ const ConStandardsTable = ({
           newCompliancy = [...currentCompliancy, compliancyObject];
         }
       } else {
-        // Remove compliancy
+        // Remove compliancy - check both standaardversie and standaardGemma
         newCompliancy = currentCompliancy.filter(
-          (c) => c.standaardversie !== standardId
+          (c) => c.standaardversie !== standardId && c.standaardGemma !== standardId
         );
       }
 
@@ -431,7 +431,7 @@ const ConStandardsTable = ({
 
       const currentCompliancy = complianceStandards || [];
       const newCompliancy = currentCompliancy.map((c) =>
-        c.standaardversie === standardId
+        c.standaardversie === standardId || c.standaardGemma === standardId
           ? { ...c, bewijs, url: null, bewijsFilename: c.bewijsFilename } // Clear URL when file is uploaded (mutually exclusive)
           : c
       );
@@ -447,7 +447,7 @@ const ConStandardsTable = ({
 
       const currentCompliancy = complianceStandards || [];
       const newCompliancy = currentCompliancy.map((c) =>
-        c.standaardversie === standardId
+        c.standaardversie === standardId || c.standaardGemma === standardId
           ? { ...c, url, bewijs: null, bewijsFilename: null } // Clear file when URL is set (mutually exclusive)
           : c
       );
@@ -463,7 +463,9 @@ const ConStandardsTable = ({
 
       const currentCompliancy = complianceStandards || [];
       const newCompliancy = currentCompliancy.map((c) =>
-        c.standaardversie === standardId ? { ...c, bewijsFilename: filename } : c
+        c.standaardversie === standardId || c.standaardGemma === standardId
+          ? { ...c, bewijsFilename: filename }
+          : c
       );
 
       onComplianceChange(newCompliancy);
@@ -477,7 +479,7 @@ const ConStandardsTable = ({
 
       const currentCompliancy = complianceStandards || [];
       const newCompliancy = currentCompliancy.map((c) =>
-        c.standaardversie === standardId
+        c.standaardversie === standardId || c.standaardGemma === standardId
           ? { ...c, bewijs: null, bewijsFilename: null, url: null }
           : c
       );
@@ -571,9 +573,36 @@ const ConStandardsTable = ({
 
             const renderStandardRow = (refStandard, idx) => {
               // Check if this standard is in the complianceStandards array
-              const complianceStandard = complianceStandards?.find(
-                (cs) => cs.standaardversie === refStandard.id
-              );
+              // For toegevoegd standards, we need to match by multiple possible identifiers
+              const complianceStandard = complianceStandards?.find((cs) => {
+                // Direct match
+                if (cs.standaardversie === refStandard.id) return true;
+
+                // Also check standaardGemma (the canonical ID)
+                if (cs.standaardGemma === refStandard.id) return true;
+
+                // For toegevoegd standards, check if any identifier matches
+                if (refStandard.type === 'TOEGEVOEGD') {
+                  const standardData = effectiveStandards?.find(
+                    (s) =>
+                      String(s.id) === String(refStandard.id) ||
+                      String(s.identifier) === String(refStandard.id) ||
+                      String(s.value) === String(refStandard.id)
+                  );
+
+                  if (standardData) {
+                    return (
+                      String(cs.standaardversie) === String(standardData.id) ||
+                      String(cs.standaardversie) ===
+                        String(standardData.identifier) ||
+                      String(cs.standaardversie) === String(standardData.value) ||
+                      String(cs.standaardGemma) === String(standardData.id)
+                    );
+                  }
+                }
+
+                return false;
+              });
               const hasBewijs = !!complianceStandard?.bewijs;
               const hasUrl = !!complianceStandard?.url;
               const isCompliant = hasBewijs || hasUrl;
