@@ -1,4 +1,4 @@
-import { useState, useEffect, memo, useRef, useCallback } from 'react';
+import { useState, useEffect, memo, useRef, useCallback, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
@@ -49,6 +49,7 @@ const AcFormsGebruik = ({ store }) => {
   const navigate = useNavigate();
   const gebruikId = searchParams.get('id') || '';
   const typeFromUrl = searchParams.get('type') || '';
+  const applicatieFromUrl = searchParams.get('applicatie') || '';
   const isEditMode = !!gebruikId;
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -474,6 +475,7 @@ const AcFormsGebruik = ({ store }) => {
   const [modulesOptions, setModulesOptions] = useState([]);
   const [modulesLoading, setModulesLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [applicatiePreloadLoading, setApplicatiePreloadLoading] = useState(false);
   // Version dropdown loading not used anymore (derived locally from module data)
   const [koppelingOptions, setKoppelingOptions] = useState([]);
   const [dienstOptions, setDienstOptions] = useState([]);
@@ -732,6 +734,63 @@ const AcFormsGebruik = ({ store }) => {
       cancelled = true;
     };
   }, []);
+
+  // Pre-select applicatie from URL parameter
+  useEffect(() => {
+    if (!applicatieFromUrl || isEditMode) return; // Skip if editing or no applicatie in URL
+
+    const preSelectApplicatie = async () => {
+      try {
+        // Wait for modules to be loaded first
+        if (modulesOptions.length === 0) return;
+
+        // Check if the applicatie exists in options
+        const applicatieOption = modulesOptions.find(
+          (opt) => String(opt.value) === String(applicatieFromUrl)
+        );
+
+        if (applicatieOption) {
+          // Pre-select the applicatie (already in options, no fetch needed)
+          setGebruikData('module', applicatieOption.value);
+        } else {
+          // If applicatie not in initial list, fetch it directly
+          setApplicatiePreloadLoading(true);
+          try {
+            await store.object.fetchObject(
+              'voorzieningen',
+              'module',
+              String(applicatieFromUrl),
+              {
+                '_extend[]': '@self.schema',
+              }
+            );
+            const fetched = store.object.getObject(
+              'voorzieningen_module',
+              String(applicatieFromUrl)
+            );
+            if (fetched) {
+              const option = mapToOption(fetched, 0);
+              setModulesOptions((prev) => {
+                const exists = prev.some((o) => o.value === option.value);
+                if (exists) return prev;
+                return [...prev, option];
+              });
+              setGebruikData('module', option.value);
+            }
+          } catch (error) {
+            console.error('Error pre-selecting applicatie from URL:', error);
+          } finally {
+            setApplicatiePreloadLoading(false);
+          }
+        }
+      } catch (error) {
+        console.error('Error pre-selecting applicatie from URL:', error);
+        setApplicatiePreloadLoading(false);
+      }
+    };
+
+    preSelectApplicatie();
+  }, [applicatieFromUrl, modulesOptions, isEditMode, store]);
 
   // Server-side search for modules (searches all modules)
   const searchModules = useCallback(
@@ -1736,7 +1795,7 @@ const AcFormsGebruik = ({ store }) => {
             gebruik={gebruik}
             setGebruikData={setGebruikData}
             moduleOptions={modulesOptions}
-            modulesLoading={modulesLoading}
+            modulesLoading={modulesLoading || applicatiePreloadLoading}
             searchLoading={searchLoading}
             searchModules={debouncedSearchModules}
             schemas={schemas}
@@ -1858,7 +1917,19 @@ const AcFormsGebruik = ({ store }) => {
     }
   };
 
-  const { icon: Icon, name: wizardName } = getActiveWizard();
+  const {
+    icon: Icon,
+    name: wizardName,
+    schema: wizardSchema,
+  } = useMemo(() => getActiveWizard() || {}, [gebruikType]);
+  const capitalizedSchema = _.capitalize(wizardSchema);
+  const editModeTitle = `${capitalizedSchema} updaten`;
+
+  const wizardType = isEditMode
+    ? 'update'
+    : gebruikType === 'andere-organisatie'
+    ? 'toevoegen'
+    : 'registratie';
 
   return (
     <AcSection spacing>
@@ -1872,7 +1943,7 @@ const AcFormsGebruik = ({ store }) => {
                   style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                 >
                   <Icon style={{ width: '1em', height: '1em' }} />
-                  {_.capitalize(wizardName)}
+                  {isEditMode ? editModeTitle : wizardName}
                 </Heading1>
                 <Paragraph>
                   Selecteer een applicatie, vul aanvullende informatie aan en
@@ -2319,9 +2390,15 @@ const AcFormsGebruik = ({ store }) => {
         key='unsaved-changes-alert-modal'
         showModal={showUnsavedChangesAlert}
         onClose={() => setShowUnsavedChangesAlert(false)}
-        onConfirm={() => navigate('/forms/applicatie')}
+        onConfirm={() => {
+          const currentUrl = `${window.location.pathname}${window.location.search}`;
+          const encodedRedirect = encodeURIComponent(currentUrl);
+          navigate(
+            `/forms/applicatie?type=ontbrekend-applicatie&redirect=${encodedRedirect}`
+          );
+        }}
         title='Waarschuwing'
-        message='Je staat op het punt om de gebruikregistratie te verlaten. Al je wijzigingen zullen niet worden opgeslagen.'
+        message={`Je staat op het punt om de gebruik ${wizardType} wizard te verlaten om een applicatie aan te maken. Na het aanmaken van de applicatie word je teruggeleid naar dit formulier. Al je huidige wijzigingen zullen niet worden opgeslagen.`}
         confirmLabel='Verlaten'
         cancelLabel='Blijven'
         confirmIcon={<VISUALS.ARROW_RIGHT />}

@@ -13,7 +13,6 @@ const ConKoppelingStageZoeken = ({
   ownApp,
   setOwnApp,
   ownAppLoading,
-  ownAppInput,
   setOwnAppInput,
   searchResults,
   resolvedModulesFromResults = [],
@@ -83,7 +82,7 @@ const ConKoppelingStageZoeken = ({
               title: 'Applicatie',
               $ref: '#/definitions/module',
             }}
-            value={ownApp || null}
+            value={ownApp?.value || null}
             onChange={(value) => {
               // ConSchemaEnhancedField returns the option object directly when using optionsProvider
               // Handle both object and string formats
@@ -94,7 +93,9 @@ const ConKoppelingStageZoeken = ({
                 setOwnApp(value);
               } else if (typeof value === 'string') {
                 // It's just the ID string, find the option
-                const option = ownAppOptions.find((opt) => String(opt.value) === String(value));
+                const option = ownAppOptions.find(
+                  (opt) => String(opt.value) === String(value)
+                );
                 setOwnApp(option || null);
               } else {
                 setOwnApp(null);
@@ -107,10 +108,14 @@ const ConKoppelingStageZoeken = ({
             width='full'
             schemas={{}}
             optionsProvider={ownAppOptions}
-            onSearch={onSearchModules ? (_path, _refSlug, q) => {
-              setOwnAppInput(q || '');
-              onSearchModules(q);
-            } : null}
+            onSearch={
+              onSearchModules
+                ? (_path, _refSlug, q) => {
+                    setOwnAppInput(q || '');
+                    onSearchModules(q);
+                  }
+                : null
+            }
             customProps={{
               label: 'Applicatie',
               placeholder: 'Selecteer een applicatie',
