@@ -1315,14 +1315,25 @@ const ConFormApplicatieStandaardenStage = ({
             <Paragraph style={{ margin: 0, fontSize: '0.9rem', color: '#6c757d' }}>
               <strong>Overzicht:</strong>{' '}
               <span className='con-standaard-summary-verplicht'>
-                {verplichteCount} verplichte standaarden (waarvan{' '}
+                {verplichteCount} verplichte {`standaard${verplichteCount > 1 ? 'en' : ''}`} (waarvan{' '}
                 {verplichteCompliant} ondersteund)
               </span>
               {verplichteCount > 0 && aanbevolenCount > 0 && ', '}
               {aanbevolenCount > 0 && (
                 <span className='con-standaard-summary-aanbevolen'>
-                  {aanbevolenCount} aanbevolen standaarden (waarvan{' '}
+                  {aanbevolenCount} aanbevolen {`standaard${aanbevolenCount > 1 ? 'en' : ''}`} (waarvan{' '}
                   {aanbevolenCompliant} ondersteund)
+                </span>
+              )}
+              {verplichteCount > 0 &&
+                aanbevolenCount > 0 &&
+                extraEntries.length > 0 &&
+                ', '}
+              {extraEntries.length > 0 && (
+                <span className='con-standaard-summary-toegevoegd'>
+                  {extraEntries.length} toegevoegde {`standaard${extraEntries.length > 1 ? 'en' : ''}`} (waarvan{' '}
+                  {extraEntries.filter((entry) => entry.isCompliant).length}{' '}
+                  ondersteund)
                 </span>
               )}
             </Paragraph>
