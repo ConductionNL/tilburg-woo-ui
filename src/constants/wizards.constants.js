@@ -224,8 +224,6 @@ export const getActiveWizard = () => {
       return bParams - aParams;
     });
 
-  console.groupEnd();
-
   // Find the most specific wizard: all of its params must match in the search (URL may have extras)
   const matchingWizard = sortedWizards.find((wizard) => {
     const wizardParamKeys = wizard.params ? Object.keys(wizard.params) : [];
