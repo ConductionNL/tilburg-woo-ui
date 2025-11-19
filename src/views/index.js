@@ -38,6 +38,9 @@ const AcFormsKoppeling = loadable(() =>
 const ConFormsDienst = loadable(() =>
   import('@views/ac-forms/con-forms-dienst/con-forms-dienst')
 );
+const ConFormsSuite = loadable(() =>
+  import('@views/ac-forms/con-forms-suite/con-forms-suite')
+);
 const ConFormsIndex = loadable(() =>
   import('@views/ac-forms/con-forms-index/con-forms-index')
 );
@@ -70,6 +73,7 @@ export {
   AcFormsApplicatie,
   AcFormsKoppeling,
   ConFormsDienst,
+  ConFormsSuite,
   ConFormsIndex,
   ConViewsList,
   ConBeheerViews,
