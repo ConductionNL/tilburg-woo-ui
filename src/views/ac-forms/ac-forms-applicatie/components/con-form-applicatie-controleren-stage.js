@@ -360,9 +360,7 @@ const ConFormApplicatieControlerenStage = memo(
 
             <div className='ac-register-review__field'>
               <strong>Hosting vorm:</strong>{' '}
-              {applicatie.cloudDienstverleningsmodel
-                .map((model) => model)
-                .join(', ') || '-'}
+              {applicatie.cloudDienstverleningsmodel?.join(', ') || '-'}
             </div>
 
             <div className='ac-register-review__field'>
@@ -588,13 +586,11 @@ const ConFormApplicatieControlerenStage = memo(
                     <ConUuidResolver>{applicatie.aanbieder}</ConUuidResolver>
                   </span>
                 </div>
-              ) : aanbiederKeuze === 'nieuw' &&
-                aanbiederOrganisatie ? (
+              ) : aanbiederKeuze === 'nieuw' && aanbiederOrganisatie ? (
                 <>
                   {aanbiederOrganisatie.naam && (
                     <div className='ac-register-review__field'>
-                      <strong>Naam:</strong>{' '}
-                      <span>{aanbiederOrganisatie.naam}</span>
+                      <strong>Naam:</strong> <span>{aanbiederOrganisatie.naam}</span>
                     </div>
                   )}
                   {aanbiederOrganisatie.type && (
