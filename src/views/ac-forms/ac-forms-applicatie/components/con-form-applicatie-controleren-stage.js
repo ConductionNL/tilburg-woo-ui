@@ -45,7 +45,10 @@ const ConFormApplicatieControlerenStage = memo(
     modulesOptions,
     buitengemeentelijkeOptions,
     dienstOptions,
+    formType,
     store,
+    aanbiederOrganisatie,
+    aanbiederKeuze,
   }) => {
     // State to store fetched contactpersoon object
     const [contactpersoonData, setContactpersoonData] = useState(null);
@@ -356,8 +359,8 @@ const ConFormApplicatieControlerenStage = memo(
             )}
 
             <div className='ac-register-review__field'>
-              <strong>Cloud dienstverleningsmodel:</strong>{' '}
-              {applicatie.cloudDienstverleningsmodel || '-'}
+              <strong>Hosting vorm:</strong>{' '}
+              {applicatie.cloudDienstverleningsmodel?.join(', ') || '-'}
             </div>
 
             <div className='ac-register-review__field'>
@@ -572,6 +575,131 @@ const ConFormApplicatieControlerenStage = memo(
               )}
           </div>
         </div>
+        {formType === 'ontbrekend-applicatie' && (
+          <div className='con-form-wizard-review-heading-container'>
+            <h3 className='con-form-wizard-review-heading-header'>Aanbieder</h3>
+            <div className='ac-register-review__section'>
+              {formType === 'ontbrekend-applicatie' && applicatie.aanbieder ? (
+                <div className='ac-register-review__field'>
+                  <strong>Aanbieder:</strong>{' '}
+                  <span>
+                    <ConUuidResolver>{applicatie.aanbieder}</ConUuidResolver>
+                  </span>
+                </div>
+              ) : aanbiederKeuze === 'nieuw' && aanbiederOrganisatie ? (
+                <>
+                  {aanbiederOrganisatie.naam && (
+                    <div className='ac-register-review__field'>
+                      <strong>Naam:</strong> <span>{aanbiederOrganisatie.naam}</span>
+                    </div>
+                  )}
+                  {aanbiederOrganisatie.type && (
+                    <div className='ac-register-review__field'>
+                      <strong>Type:</strong>{' '}
+                      <span>
+                        <ConUuidResolver>
+                          {aanbiederOrganisatie.type}
+                        </ConUuidResolver>
+                      </span>
+                    </div>
+                  )}
+                  {aanbiederOrganisatie.website && (
+                    <div className='ac-register-review__field'>
+                      <strong>Website:</strong>{' '}
+                      {aanbiederOrganisatie.website ? (
+                        <AcLink
+                          href={aanbiederOrganisatie.website}
+                          target='_blank'
+                          rel='noopener noreferrer'
+                        >
+                          {aanbiederOrganisatie.website}
+                        </AcLink>
+                      ) : (
+                        '-'
+                      )}
+                    </div>
+                  )}
+                  {aanbiederOrganisatie.beschrijvingKort && (
+                    <div className='ac-register-review__field'>
+                      <strong>Korte beschrijving:</strong>
+                      <div
+                        style={{
+                          wordBreak: 'break-word',
+                          overflowWrap: 'break-word',
+                          hyphens: 'auto',
+                          marginTop: '0.25rem',
+                        }}
+                      >
+                        {aanbiederOrganisatie.beschrijvingKort}
+                      </div>
+                    </div>
+                  )}
+                  {aanbiederOrganisatie.beschrijvingLang && (
+                    <div className='ac-register-review__description'>
+                      <strong className='ac-register-review__description__heading'>
+                        Lange beschrijving:
+                      </strong>
+                      <div
+                        style={{
+                          wordBreak: 'break-word',
+                          overflowWrap: 'break-word',
+                          hyphens: 'auto',
+                        }}
+                      >
+                        <MDEditor.Markdown
+                          wrapperElement={{
+                            'data-color-mode': 'light',
+                          }}
+                          className='con-my-account-description'
+                          source={aanbiederOrganisatie.beschrijvingLang}
+                          remarkPlugins={[
+                            [remarkGfm, { singleTilde: false }],
+                            remarkDefinitionList,
+                            remarkEmoji,
+                            remarkSupersub,
+                            remarkMark,
+                          ]}
+                          rehypePlugins={[
+                            rehypeSlug,
+                            [rehypeSanitize],
+                            [remarkRehype, { handlers: { ...defListHastHandlers } }],
+                          ]}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  {aanbiederOrganisatie['e-mailadres'] && (
+                    <div className='ac-register-review__field'>
+                      <strong>E-mailadres:</strong>{' '}
+                      <span>{aanbiederOrganisatie['e-mailadres']}</span>
+                    </div>
+                  )}
+                  {aanbiederOrganisatie.telefoonnummer && (
+                    <div className='ac-register-review__field'>
+                      <strong>Telefoonnummer:</strong>{' '}
+                      <span>{aanbiederOrganisatie.telefoonnummer}</span>
+                    </div>
+                  )}
+                  {aanbiederOrganisatie.logo && (
+                    <div className='ac-register-review__field'>
+                      <strong>Logo:</strong>
+                      <ConLogoPreview
+                        logoUrl={aanbiederOrganisatie.logo}
+                        className='ac-register-review__logo'
+                      />
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className='ac-register-review__field'>
+                  <Paragraph style={{ fontStyle: 'italic', color: '#666' }}>
+                    Geen aanbieder geselecteerd
+                  </Paragraph>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     );
   }

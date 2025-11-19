@@ -1302,12 +1302,15 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
         return (
           <ConFormApplicatieControlerenStage
             applicatie={applicatie}
+            aanbiederOrganisatie={aanbiederOrganisatie}
+            aanbiederKeuze={aanbiederKeuze}
             referentieComponentenOptions={referentieComponentenOptions}
             referentieComponentenWithStandards={referentieComponentenWithStandards}
             standaardenOptions={standaardenOptions}
             modulesOptions={modulesOptions}
             buitengemeentelijkeOptions={buitengemeentelijkeOptions}
             dienstOptions={dienstOptions}
+            formType={formType}
             store={store}
           />
         );
