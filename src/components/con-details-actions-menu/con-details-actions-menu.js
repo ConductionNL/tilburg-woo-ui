@@ -224,10 +224,10 @@ const ConDetailsActionsMenu = ({
           );
         })}
 
-        {/* Divider before related actions */}
+        {/* Divider before related actions - show if there are any standard actions above */}
         {relatedActions.length > 0 && canEdit && <ConActionMenu.Divider />}
 
-        {/* Related schema actions */}
+        {/* Related schema actions - shown for both owners and non-owners */}
         {relatedActions.map((action) => {
           const handleClick = () => {
             const opened = attemptWizard(action);

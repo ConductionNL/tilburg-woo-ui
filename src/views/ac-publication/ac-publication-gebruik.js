@@ -13,6 +13,7 @@ import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-behe
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
+import { checkOrganizationPermissions } from '@utils/organization-permissions';
 
 /**
  * Publication page for schema slug 'gebruik'.
@@ -46,12 +47,30 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
     [navigate, id]
   );
 
+  // Exclude specific schemas from actions
+  const excludeSchemas = useMemo(
+    () => [
+      'contract',
+      'beoordeeling',
+      'moduleversie',
+      'module',
+      'contactpersoon',
+      'organisatie',
+      'koppeling',
+      'element',
+      'dienst',
+    ],
+    []
+  );
+
   const { makeActionsForContext } = useRelatedCreateActions({
     object,
     user,
     schemaRef: get_single?.['@self']?.schema?.slug,
     currentType: get_single?.['@self']?.schema?.slug,
     openDynamicCreate,
+    currentObject: get_single,
+    excludeSchemas,
   });
 
   const [actionMenuItems, setActionMenuItems] = useState([]);
@@ -142,44 +161,46 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
             })()}
             {getTabHeaderName(get_single?.['@self'].schema.slug, true)}
           </Heading>
-          <ConDetailsActionsMenu
-            user={user}
-            id={id}
-            schemaSlug={get_single?.['@self']?.schema?.slug}
-            title={get_single?.id}
-            published={get_single?.['@self']?.published}
-            object={get_single}
-            showViewAction={false}
-            showEditAction={true}
-            showPublishActions={true}
-            onDelete={handleDelete}
-            onEdit={() => {
-              const schemaSlug = get_single?.['@self']?.schema?.slug;
-              if (schemaSlug) {
-                const wizards = Object.values(DASHBOARD_WIZARDS);
-                const wizard = wizards.find((w) => w.schema === schemaSlug);
-                if (wizard) {
-                  const baseUrl = getWizardUrl(wizard);
-                  const url = new URL(baseUrl, window.location.origin);
-                  url.searchParams.set('id', id);
-                  navigate(url.pathname + url.search);
-                  return;
+          {checkOrganizationPermissions(user, get_single).canEdit && (
+            <ConDetailsActionsMenu
+              user={user}
+              id={id}
+              schemaSlug={get_single?.['@self']?.schema?.slug}
+              title={get_single?.id}
+              published={get_single?.['@self']?.published}
+              object={get_single}
+              showViewAction={false}
+              showEditAction={true}
+              showPublishActions={true}
+              onDelete={handleDelete}
+              onEdit={() => {
+                const schemaSlug = get_single?.['@self']?.schema?.slug;
+                if (schemaSlug) {
+                  const wizards = Object.values(DASHBOARD_WIZARDS);
+                  const wizard = wizards.find((w) => w.schema === schemaSlug);
+                  if (wizard) {
+                    const baseUrl = getWizardUrl(wizard);
+                    const url = new URL(baseUrl, window.location.origin);
+                    url.searchParams.set('id', id);
+                    navigate(url.pathname + url.search);
+                    return;
+                  }
+                  const beheerUrl = `/beheer/${schemaSlug}/${id}`;
+                  window.open(beheerUrl, '_blank');
                 }
-                const beheerUrl = `/beheer/${schemaSlug}/${id}`;
-                window.open(beheerUrl, '_blank');
-              }
-            }}
-            uniqueActions={[
-              {
-                key: 'delete',
-                label: 'Verwijderen',
-                icon: VISUALS.TRASHCAN,
-                onClick: handleDelete,
-              },
-            ]}
-            triggerStyle='button'
-            relatedActions={actionMenuItems}
-          />
+              }}
+              uniqueActions={[
+                {
+                  key: 'delete',
+                  label: 'Verwijderen',
+                  icon: VISUALS.TRASHCAN,
+                  onClick: handleDelete,
+                },
+              ]}
+              triggerStyle='button'
+              relatedActions={actionMenuItems}
+            />
+          )}
         </AcFlex>
 
         <Heading level={3} style={{ marginBlockStart: '1rem' }}>

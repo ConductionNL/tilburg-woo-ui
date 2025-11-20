@@ -21,6 +21,10 @@ import { normalizeSchemaName } from '@src/utilities';
  * @param {Object} params.currentObject - Current object for organization permission checks (optional)
  * @param {string} params.currentObjectRegister - Register slug of the current object (optional)
  * @param {string} params.currentObjectSchema - Schema slug of the current object (optional)
+ * @param {Array<string>} params.excludeSchemas - Array of schema slugs to exclude from actions (optional)
+ * @param {Array<string>} params.onlyIncludeSchemas - Array of schema slugs to include (whitelist mode - only these will show) (optional)
+ * @param {Object.<string, string>} params.labelOverrides - Object mapping schema slug to custom label (optional)
+ * @param {Object.<string, React.ReactNode>} params.iconOverrides - Object mapping schema slug to custom icon (optional)
  */
 export const useRelatedCreateActions = ({
   object,
@@ -31,10 +35,35 @@ export const useRelatedCreateActions = ({
   currentObject = null, // Add current object for organization permission checks
   currentObjectRegister = null, // Add current object register information
   currentObjectSchema = null, // Add current object schema information
+  excludeSchemas = [], // Array of schema slugs to exclude
+  onlyIncludeSchemas = null, // Array of schema slugs to include (whitelist mode)
+  labelOverrides = {}, // Object mapping schema slug to custom label
+  iconOverrides = {}, // Object mapping schema slug to custom icon
 }) => {
   const navigate = useNavigate();
   const [creatableRelated, setCreatableRelated] = useState([]);
   const [outgoingSchemas, setOutgoingSchemas] = useState(new Set());
+
+  // Create stable references for array/object parameters to prevent infinite loops
+  const excludeSchemasString = useMemo(
+    () => JSON.stringify(excludeSchemas),
+    [excludeSchemas]
+  );
+
+  const onlyIncludeSchemasString = useMemo(
+    () => JSON.stringify(onlyIncludeSchemas),
+    [onlyIncludeSchemas]
+  );
+
+  const labelOverridesString = useMemo(
+    () => JSON.stringify(labelOverrides),
+    [labelOverrides]
+  );
+
+  const iconOverridesString = useMemo(
+    () => JSON.stringify(iconOverrides),
+    [iconOverrides]
+  );
 
   useEffect(() => {
     if (!schemaRef) return;
@@ -89,8 +118,39 @@ export const useRelatedCreateActions = ({
           return acc;
         }, []);
 
-        // Filter by user group authorization only (permission checks happen per-row in makeActionsForContext)
+        // Filter by user group authorization, include/exclude lists
         const creatable = deduplicatedResults.filter((rs) => {
+          // Check if current user is the owner of the object
+          // If currentObject is provided, check organization ownership
+          const isOwner = currentObject
+            ? checkOrganizationPermissions(user, currentObject).canEdit
+            : true; // If no object provided, treat as owner for backward compatibility
+
+          // For non-owners: apply whitelist if provided
+          const isWhitelistMode =
+            onlyIncludeSchemas !== null && Array.isArray(onlyIncludeSchemas);
+          const isInWhitelist =
+            isWhitelistMode && onlyIncludeSchemas.includes(rs?.slug);
+
+          if (!isOwner && isWhitelistMode) {
+            if (!isInWhitelist) {
+              return false; // Not in whitelist, hide it
+            }
+            // If in whitelist, skip API permission checks for non-owners
+            // (we explicitly want them to see this action)
+          }
+
+          // For everyone (owners and non-owners): apply exclude list
+          if (excludeSchemas.includes(rs?.slug)) {
+            return false;
+          }
+
+          // For non-owners with whitelisted schemas, skip API authorization checks
+          if (!isOwner && isInWhitelist) {
+            return true; // Explicitly allowed via whitelist
+          }
+
+          // For owners or when no whitelist: check API authorization
           // If authorization is null or undefined, allow access (no restrictions)
           if (!rs?.authorization) return true;
 
@@ -105,7 +165,6 @@ export const useRelatedCreateActions = ({
           if (createGroups.includes('public')) return true;
           return createGroups.some((grp) => userGroups.includes(grp));
         });
-
         setCreatableRelated(creatable);
       } catch (e) {
         // eslint-disable-next-line no-console
@@ -116,7 +175,19 @@ export const useRelatedCreateActions = ({
 
     prepareRelatedActions();
     // Only re-run when schema reference changes
-  }, [schemaRef, user?.currentUser, object]);
+    // Note: user and currentObject are passed directly but changes to user.activeOrganization
+    // or currentObject.@self.organisation will trigger re-evaluation within the filter
+  }, [
+    schemaRef,
+    user?.currentUser,
+    user?.activeOrganization?.id,
+    user?.activeOrganization?.uuid,
+    object,
+    excludeSchemasString,
+    onlyIncludeSchemasString,
+    currentObject?.['@self']?.organisation,
+    currentObject?.['@self']?.organization,
+  ]);
 
   // Schema-driven helper to determine which field in the current object should be updated for outgoing relationships
   const getOutgoingRelationshipField = useCallback(
@@ -282,27 +353,37 @@ export const useRelatedCreateActions = ({
           if (!slug) return null;
 
           // For outgoing relationships, check if user can edit current object
+          // UNLESS the schema is explicitly whitelisted for non-owners
           const isOutgoing = outgoingSchemas.has(slug);
-          if (isOutgoing && !canEditCurrentObject) {
-            return null; // Can't create outgoing relationships if can't edit current object
+          const isWhitelisted =
+            onlyIncludeSchemas !== null &&
+            Array.isArray(onlyIncludeSchemas) &&
+            onlyIncludeSchemas.includes(slug);
+
+          if (isOutgoing && !canEditCurrentObject && !isWhitelisted) {
+            return null; // Can't create outgoing relationships if can't edit current object (unless whitelisted)
           }
 
           // Use the schema slug directly as the target type (no more BEHEER_RENAMES dependency)
           const targetType = slug;
 
           const baseName = rs?.title ?? _.startCase(slug);
-          const label = `${normalizeSchemaName(baseName)} toevoegen`;
+          const defaultLabel = `${normalizeSchemaName(baseName)} toevoegen`;
+          // Apply label override if provided
+          const label = labelOverrides[slug] || defaultLabel;
 
           const wizards = Object.values(DASHBOARD_WIZARDS);
           const wizard = wizards.find((w) => w.schema === slug);
           const areThereMultipleOptions =
             wizards.filter((w) => w.schema === slug).length > 1;
 
-          const iconElement = wizard ? (
+          const defaultIcon = wizard ? (
             <VISUALS.WAND_SPARKLES_SOLID />
           ) : (
             <VISUALS.PLUS />
           );
+          // Apply icon override if provided
+          const iconElement = iconOverrides[slug] || defaultIcon;
 
           return {
             key: `create-${slug}`,
@@ -353,6 +434,10 @@ export const useRelatedCreateActions = ({
       currentType,
       getOutgoingRelationshipField,
       navigate,
+      labelOverridesString,
+      iconOverridesString,
+      labelOverrides,
+      iconOverrides,
     ]
   );
 
