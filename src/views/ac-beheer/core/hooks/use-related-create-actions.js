@@ -25,6 +25,7 @@ import { normalizeSchemaName } from '@src/utilities';
  * @param {Array<string>} params.onlyIncludeSchemas - Array of schema slugs to include (whitelist mode - only these will show) (optional)
  * @param {Object.<string, string>} params.labelOverrides - Object mapping schema slug to custom label (optional)
  * @param {Object.<string, React.ReactNode>} params.iconOverrides - Object mapping schema slug to custom icon (optional)
+ * @param {Object.<string, any>} params.wizardParams - Object with additional URL parameters to pass to wizards (optional)
  */
 export const useRelatedCreateActions = ({
   object,
@@ -39,6 +40,7 @@ export const useRelatedCreateActions = ({
   onlyIncludeSchemas = null, // Array of schema slugs to include (whitelist mode)
   labelOverrides = {}, // Object mapping schema slug to custom label
   iconOverrides = {}, // Object mapping schema slug to custom icon
+  wizardParams = {}, // Additional URL parameters for wizards
 }) => {
   const navigate = useNavigate();
   const [creatableRelated, setCreatableRelated] = useState([]);
@@ -63,6 +65,11 @@ export const useRelatedCreateActions = ({
   const iconOverridesString = useMemo(
     () => JSON.stringify(iconOverrides),
     [iconOverrides]
+  );
+
+  const wizardParamsString = useMemo(
+    () => JSON.stringify(wizardParams),
+    [wizardParams]
   );
 
   useEffect(() => {
@@ -374,6 +381,7 @@ export const useRelatedCreateActions = ({
 
           const wizards = Object.values(DASHBOARD_WIZARDS);
           const wizard = wizards.find((w) => w.schema === slug);
+
           const areThereMultipleOptions =
             wizards.filter((w) => w.schema === slug).length > 1;
 
@@ -393,9 +401,16 @@ export const useRelatedCreateActions = ({
             onClick: async () => {
               // Prefer wizard when available
               if (wizard) {
-                const url = getWizardUrl(wizard, !areThereMultipleOptions);
-                if (url) {
-                  navigate(url);
+                const baseUrl = getWizardUrl(wizard, !areThereMultipleOptions);
+                if (baseUrl) {
+                  // Add wizardParams to the URL if provided
+                  const url = new URL(baseUrl, window.location.origin);
+                  Object.entries(wizardParams).forEach(([key, value]) => {
+                    if (value !== null && value !== undefined) {
+                      url.searchParams.set(key, value);
+                    }
+                  });
+                  navigate(url.pathname + url.search);
                   return;
                 }
               }
@@ -438,6 +453,8 @@ export const useRelatedCreateActions = ({
       iconOverridesString,
       labelOverrides,
       iconOverrides,
+      wizardParamsString,
+      wizardParams,
     ]
   );
 

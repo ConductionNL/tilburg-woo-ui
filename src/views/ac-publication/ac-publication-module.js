@@ -73,6 +73,7 @@ const AcPublicationProduct = ({
       'contactpersoon',
       'product',
       'element',
+      'suite',
     ],
     []
   );
@@ -87,6 +88,13 @@ const AcPublicationProduct = ({
     []
   );
 
+  const wizardParams = useMemo(
+    () => ({
+      applicatie: id,
+    }),
+    [id]
+  );
+
   const { makeActionsForContext } = useRelatedCreateActions({
     object,
     user,
@@ -97,6 +105,7 @@ const AcPublicationProduct = ({
     onlyIncludeSchemas, // Whitelist mode: only these actions will show for non-owners
     excludeSchemas, // Additional exclusions (applies to everyone)
     labelOverrides,
+    wizardParams, // Pass applicatie ID to wizards
     // Example: Custom icons for specific actions
     // iconOverrides: {
     //   'moduleversie': <VISUALS.PLUS />,
