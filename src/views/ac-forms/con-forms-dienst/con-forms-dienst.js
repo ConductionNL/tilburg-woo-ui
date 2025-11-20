@@ -1,4 +1,4 @@
-import { useState, useEffect, memo, useRef, useCallback } from 'react';
+import { useState, useEffect, memo, useRef, useCallback, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { withStore } from '@stores';
@@ -48,6 +48,7 @@ const ConFormsDienst = ({ store, userStore }) => {
   const navigate = useNavigate();
   const dienstId = searchParams.get('id') || '';
   const formType = searchParams.get('type') || '';
+  const applicatieFromUrl = searchParams.get('applicatie') || '';
   const isEditMode = !!dienstId;
   const [currentStep, setCurrentStep] = useState(0);
   const processStepsRef = useRef(null);
@@ -129,6 +130,7 @@ const ConFormsDienst = ({ store, userStore }) => {
   const [selectedModuleIds, setSelectedModuleIds] = useState([]);
   const [modulesLoading, setModulesLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [applicatiePreloadLoading, setApplicatiePreloadLoading] = useState(false);
   const [moduleOptions, setModuleOptions] = useState([]);
 
   const [koppelingOptions, setKoppelingOptions] = useState([]);
@@ -432,6 +434,69 @@ const ConFormsDienst = ({ store, userStore }) => {
     loadAllModules();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Pre-select applicatie from URL parameter
+  useEffect(() => {
+    if (!applicatieFromUrl || isEditMode) return; // Skip if editing or no applicatie in URL
+
+    const preSelectApplicatie = async () => {
+      try {
+        // Wait for modules to be loaded first
+        if (moduleOptions.length === 0) return;
+
+        // Check if the applicatie exists in options
+        const applicatieOption = moduleOptions.find(
+          (opt) => String(opt.value) === String(applicatieFromUrl)
+        );
+
+        if (applicatieOption) {
+          // Pre-select the applicatie (already in options, no fetch needed)
+          setSelectedModuleIds((prev) => {
+            if (prev.includes(applicatieOption.value)) return prev;
+            return [...prev, applicatieOption.value];
+          });
+        } else {
+          // If applicatie not in initial list, fetch it directly
+          setApplicatiePreloadLoading(true);
+          try {
+            await store.object.fetchObject(
+              'voorzieningen',
+              'module',
+              String(applicatieFromUrl),
+              {
+                _extend: ['@self.schema'],
+              }
+            );
+            const fetched = store.object.getObject(
+              'voorzieningen_module',
+              String(applicatieFromUrl)
+            );
+            if (fetched) {
+              const option = mapToOption(fetched, 0);
+              setModuleOptions((prev) => {
+                const exists = prev.some((o) => o.value === option.value);
+                if (exists) return prev;
+                return [...prev, option];
+              });
+              setSelectedModuleIds((prev) => {
+                if (prev.includes(option.value)) return prev;
+                return [...prev, option.value];
+              });
+            }
+          } catch (error) {
+            console.error('Error pre-selecting applicatie from URL:', error);
+          } finally {
+            setApplicatiePreloadLoading(false);
+          }
+        }
+      } catch (error) {
+        console.error('Error pre-selecting applicatie from URL:', error);
+        setApplicatiePreloadLoading(false);
+      }
+    };
+
+    preSelectApplicatie();
+  }, [applicatieFromUrl, moduleOptions, isEditMode, store]);
 
   // Server-side search for modules (searches all modules)
   const searchModules = useCallback(
@@ -769,7 +834,7 @@ const ConFormsDienst = ({ store, userStore }) => {
             // productLabels={productLabels}
             selectedModuleIds={selectedModuleIds}
             setSelectedModuleIds={setSelectedModuleIds}
-            loadingModules={modulesLoading}
+            loadingModules={modulesLoading || applicatiePreloadLoading}
             searchLoading={searchLoading}
             moduleOptions={moduleOptions}
             searchModules={debouncedSearchModules}
@@ -1095,7 +1160,19 @@ const ConFormsDienst = ({ store, userStore }) => {
     }
   };
 
-  const { icon: Icon, name: wizardName } = getActiveWizard();
+  const {
+    icon: Icon,
+    name: wizardName,
+    schema: wizardSchema,
+  } = useMemo(() => getActiveWizard() || {}, [dienstType]);
+  const capitalizedSchema = _.capitalize(wizardSchema);
+  const editModeTitle = `${capitalizedSchema} updaten`;
+
+  const wizardType = isEditMode
+    ? 'update'
+    : dienstType === 'ontbrekend-dienst'
+    ? 'toevoegen'
+    : 'publicatie';
 
   return (
     <AcSection spacing>
@@ -1106,7 +1183,7 @@ const ConFormsDienst = ({ store, userStore }) => {
               style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
             >
               <Icon style={{ width: '1em', height: '1em' }} />
-              {_.capitalize(wizardName)}
+              {isEditMode ? editModeTitle : wizardName}
             </Heading1>
             <Paragraph>
               {isEditMode
@@ -1451,9 +1528,15 @@ const ConFormsDienst = ({ store, userStore }) => {
         key='unsaved-changes-alert-modal'
         showModal={showUnsavedChangesAlert}
         onClose={() => setShowUnsavedChangesAlert(false)}
-        onConfirm={() => navigate('/forms/applicatie')}
+        onConfirm={() => {
+          const currentUrl = `${window.location.pathname}${window.location.search}`;
+          const encodedRedirect = encodeURIComponent(currentUrl);
+          navigate(
+            `/forms/applicatie?type=ontbrekend-applicatie&redirect=${encodedRedirect}`
+          );
+        }}
         title='Waarschuwing'
-        message='Je staat op het punt om de dienstregistratie te verlaten. Al je wijzigingen zullen niet worden opgeslagen.'
+        message={`Je staat op het punt om de dienst ${wizardType} wizard te verlaten om een applicatie aan te maken. Na het aanmaken van de applicatie word je teruggeleid naar dit formulier. Al je huidige wijzigingen zullen niet worden opgeslagen.`}
         confirmLabel='Verlaten'
         cancelLabel='Blijven'
         confirmIcon={<VISUALS.ARROW_RIGHT />}

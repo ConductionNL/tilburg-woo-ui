@@ -9,6 +9,7 @@ import { AcButton } from '@src/molecules';
 import { ProcessSteps } from '@gemeente-denhaag/components-react';
 import { commongroundApiUrl } from '@config';
 import { useDebouncedInput } from '@src/hooks';
+import _ from 'lodash';
 import {
   validateWebsite,
   validateEmail,
@@ -53,7 +54,13 @@ import { getActiveWizard } from '@src/constants/wizards.constants';
  *   }
  */
 
-const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) => {
+const AcFormsApplicatieInner = ({
+  userStore,
+  store,
+  formType,
+  applicatieId,
+  redirect,
+}) => {
   //   TODO: Remove info log when userStore is fully implemented
   console.info('userStore', userStore);
 
@@ -1151,6 +1158,7 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
         aanbieder: finalAanbieder,
       };
 
+      let createdApplicatie = null;
       if (applicatieId) {
         // Edit mode: update existing applicatie via PUT
         await store.object.updateObject(
@@ -1159,9 +1167,46 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
           String(applicatieId),
           applicatieData
         );
+        // For edit mode, use the existing applicatieId
+        createdApplicatie = { id: applicatieId };
       } else {
         // Create mode: create new applicatie via POST
-        await store.object.createObject('voorzieningen', 'module', applicatieData);
+        createdApplicatie = await store.object.createObject(
+          'voorzieningen',
+          'module',
+          applicatieData
+        );
+      }
+
+      // Check if redirect parameter exists
+      if (redirect && createdApplicatie) {
+        const applicatieIdValue =
+          createdApplicatie?.id || createdApplicatie?.['@self']?.id;
+        if (applicatieIdValue) {
+          try {
+            // Decode the redirect URL (it's a relative path like /forms/dienst?type=...)
+            const decodedRedirect = decodeURIComponent(redirect);
+
+            // Parse the URL - decodedRedirect is a relative path, so we need to construct a full URL to parse it
+            const url = new URL(decodedRedirect, window.location.origin);
+            const redirectParams = new URLSearchParams(url.search);
+
+            // Add applicatie parameter
+            redirectParams.set('applicatie', String(applicatieIdValue));
+
+            // Reconstruct the relative URL with the new parameter
+            const redirectUrl = `${url.pathname}${
+              redirectParams.toString() ? `?${redirectParams.toString()}` : ''
+            }`;
+
+            // Navigate to the redirect URL
+            navigate(redirectUrl);
+            return; // Exit early, don't show success page
+          } catch (redirectError) {
+            console.error('Failed to parse redirect URL:', redirectError);
+            // Fall through to show success page if redirect fails
+          }
+        }
       }
 
       setRegisterCallBack('success');
@@ -1511,7 +1556,13 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
     }
   };
 
-  const { icon: Icon, name: wizardName } = getActiveWizard();
+  const {
+    icon: Icon,
+    name: wizardName,
+    schema: wizardSchema,
+  } = useMemo(() => getActiveWizard() || {}, [formType]);
+  const capitalizedSchema = _.capitalize(wizardSchema);
+  const editModeTitle = `${capitalizedSchema} updaten`;
 
   return (
     <AcSection spacing>
@@ -1524,7 +1575,7 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
                   style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                 >
                   <Icon style={{ width: '1em', height: '1em' }} />
-                  Uw {wizardName}
+                  Uw {isEditMode ? editModeTitle : wizardName}
                 </Heading1>
                 <Paragraph>
                   {isEditMode
@@ -1848,6 +1899,8 @@ const AcFormsApplicatieInner = ({ userStore, store, formType, applicatieId }) =>
                               >
                                 {isEditMode
                                   ? 'Applicatie updaten'
+                                  : redirect
+                                  ? 'Applicatie aanmelden en terug naar vorige wizard'
                                   : 'Applicatie aanmelden'}
                               </AcButton>
                             )}
@@ -1938,6 +1991,7 @@ const AcFormsApplicatie = ({ userStore, store }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const formType = searchParams.get('type') || '';
   const applicatieId = searchParams.get('id') || '';
+  const redirect = searchParams.get('redirect') || '';
 
   const handleClearApplicatieId = useCallback(() => {
     const next = new URLSearchParams(searchParams);
@@ -1957,6 +2011,7 @@ const AcFormsApplicatie = ({ userStore, store }) => {
       store={store}
       formType={formType}
       applicatieId={applicatieId}
+      redirect={redirect}
       onClearApplicatieId={handleClearApplicatieId}
     />
   );

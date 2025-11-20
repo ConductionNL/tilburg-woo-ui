@@ -1,4 +1,4 @@
-import { useState, useEffect, memo, useRef, useCallback } from 'react';
+import { useState, useEffect, memo, useRef, useCallback, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
@@ -153,6 +153,7 @@ const AcFormsKoppeling = ({ store }) => {
   // Options/loading specifically for the own-app searchable select
   const [ownAppOptions, setOwnAppOptions] = useState([]);
   const [ownAppLoading, setOwnAppLoading] = useState(false);
+  const [applicatiePreloadLoading, setApplicatiePreloadLoading] = useState(false);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -365,15 +366,80 @@ const AcFormsKoppeling = ({ store }) => {
     const preSelectApplicatie = async () => {
       try {
         // Wait for modules to be loaded first
-        if (modulesOptions.length === 0) return;
+        if (modulesOptions.length === 0 && ownAppOptions.length === 0) return;
 
-        // Check if the applicatie exists in options
-        const applicatieOption = modulesOptions.find(
-          (opt) => String(opt.value) === String(applicatieFromUrl)
-        );
+        // Check if the applicatie exists in options (check both modulesOptions and ownAppOptions)
+        let applicatieOption =
+          modulesOptions.find(
+            (opt) => String(opt.value) === String(applicatieFromUrl)
+          ) ||
+          ownAppOptions.find(
+            (opt) => String(opt.value) === String(applicatieFromUrl)
+          );
 
+        if (!applicatieOption) {
+          // If applicatie not in initial list, fetch it directly using object store
+          setApplicatiePreloadLoading(true);
+          try {
+            await store.object.fetchObject(
+              'voorzieningen',
+              'module',
+              String(applicatieFromUrl),
+              {
+                _extend: ['@self.schema'],
+              }
+            );
+            const fetched = store.object.getObject(
+              'voorzieningen_module',
+              String(applicatieFromUrl)
+            );
+            if (fetched) {
+              const label =
+                fetched?.naam ||
+                fetched?.name ||
+                fetched?.title ||
+                fetched?.label ||
+                fetched?.['@self']?.name ||
+                String(applicatieFromUrl);
+              const option = {
+                value: String(applicatieFromUrl),
+                label: String(label),
+                data: fetched,
+              };
+              // Add to both options lists first
+              setModulesOptions((prev) => {
+                const exists = prev.some((o) => o.value === option.value);
+                if (exists) return prev;
+                return [...prev, option];
+              });
+              setOwnAppOptions((prev) => {
+                const exists = prev.some((o) => o.value === option.value);
+                if (exists) return prev;
+                return [...prev, option];
+              });
+              // Use the newly created option
+              applicatieOption = option;
+            }
+          } catch (error) {
+            console.error('Error pre-selecting applicatie from URL:', error);
+            setApplicatiePreloadLoading(false);
+            return;
+          } finally {
+            setApplicatiePreloadLoading(false);
+          }
+        }
+
+        // Pre-select the applicatie (use the exact option object from the array)
         if (applicatieOption) {
-          // Pre-select the applicatie as "own app" (needs to be an object with value and label)
+          // Ensure the option is in ownAppOptions (ReactSelect needs it there)
+          setOwnAppOptions((prev) => {
+            const exists = prev.some(
+              (o) => String(o.value) === String(applicatieOption.value)
+            );
+            if (exists) return prev;
+            return [...prev, applicatieOption];
+          });
+          // Set ownApp using the exact option object
           setOwnApp({
             value: applicatieOption.value,
             label: applicatieOption.label,
@@ -383,28 +449,15 @@ const AcFormsKoppeling = ({ store }) => {
             ...prev,
             [applicatieOption.value]: applicatieOption.label,
           }));
-        } else {
-          // If applicatie not in initial list, fetch it directly
-          const label = await ensureModuleOptionAndGetLabel(applicatieFromUrl);
-          if (label) {
-            setOwnApp({
-              value: String(applicatieFromUrl),
-              label: String(label),
-            });
-            setSelectedAppAByRow((prev) => ({ ...prev, [0]: applicatieFromUrl }));
-            setSelectedModuleLabels((prev) => ({
-              ...prev,
-              [applicatieFromUrl]: label,
-            }));
-          }
         }
       } catch (error) {
         console.error('Error pre-selecting applicatie from URL:', error);
+        setApplicatiePreloadLoading(false);
       }
     };
 
     preSelectApplicatie();
-  }, [applicatieFromUrl, modulesOptions, isEditMode]);
+  }, [applicatieFromUrl, modulesOptions, ownAppOptions, isEditMode, store]);
 
   // Helper to ensure a module option exists and return its label
   const ensureModuleOptionAndGetLabel = async (id) => {
@@ -1374,7 +1427,7 @@ const AcFormsKoppeling = ({ store }) => {
             ownAppOptions={ownAppOptions}
             ownApp={ownApp}
             setOwnApp={setOwnApp}
-            ownAppLoading={ownAppLoading}
+            ownAppLoading={ownAppLoading || applicatiePreloadLoading}
             setOwnAppInput={setOwnAppInput}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
@@ -1496,7 +1549,19 @@ const AcFormsKoppeling = ({ store }) => {
     return true;
   };
 
-  const { icon: Icon, name: wizardName } = getActiveWizard();
+  const {
+    icon: Icon,
+    name: wizardName,
+    schema: wizardSchema,
+  } = useMemo(() => getActiveWizard() || {}, [koppelingsType]);
+  const capitalizedSchema = _.capitalize(wizardSchema);
+  const editModeTitle = `${capitalizedSchema} updaten`;
+
+  const wizardType = isEditMode
+    ? 'update'
+    : koppelingsType === 'aanbieden-koppeling'
+    ? 'toevoegen'
+    : 'publicatie';
 
   return (
     <AcSection spacing>
@@ -1507,7 +1572,7 @@ const AcFormsKoppeling = ({ store }) => {
               style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
             >
               <Icon style={{ width: '1em', height: '1em' }} />
-              {_.capitalize(wizardName)}
+              {isEditMode ? editModeTitle : wizardName}
             </Heading1>
             <Paragraph>
               Zoek naar bestaande koppelingen, voeg nieuwe koppelingen toe en
@@ -1751,9 +1816,15 @@ const AcFormsKoppeling = ({ store }) => {
         key='unsaved-changes-alert-modal'
         showModal={showUnsavedChangesAlert}
         onClose={() => setShowUnsavedChangesAlert(false)}
-        onConfirm={() => navigate('/forms/applicatie')}
+        onConfirm={() => {
+          const currentUrl = `${window.location.pathname}${window.location.search}`;
+          const encodedRedirect = encodeURIComponent(currentUrl);
+          navigate(
+            `/forms/applicatie?type=ontbrekend-applicatie&redirect=${encodedRedirect}`
+          );
+        }}
         title='Waarschuwing'
-        message='Je staat op het punt om de koppeling registratie te verlaten. Al je wijzigingen zullen niet worden opgeslagen.'
+        message={`Je staat op het punt om de koppeling ${wizardType} wizard te verlaten om een applicatie aan te maken. Na het aanmaken van de applicatie word je teruggeleid naar dit formulier. Al je huidige wijzigingen zullen niet worden opgeslagen.`}
         confirmLabel='Verlaten'
         cancelLabel='Blijven'
         confirmIcon={<VISUALS.ARROW_RIGHT />}
