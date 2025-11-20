@@ -224,16 +224,22 @@ const ConDetailsActionsMenu = ({
           );
         })}
 
-        {/* Divider before related actions */}
+        {/* Divider before related actions - show if there are any standard actions above */}
         {relatedActions.length > 0 && canEdit && <ConActionMenu.Divider />}
 
-        {/* Related schema actions */}
+        {/* Related schema actions - shown for both owners and non-owners */}
         {relatedActions.map((action) => {
           const handleClick = () => {
+            // If the action has its own onClick handler, use it directly
+            // This allows the hook to handle wizard navigation with custom params
+            if (action?.onClick) {
+              action.onClick();
+              return;
+            }
+
+            // Fallback to attemptWizard for actions without onClick
             const opened = attemptWizard(action);
             if (opened) return;
-
-            action?.onClick?.();
           };
 
           return (
