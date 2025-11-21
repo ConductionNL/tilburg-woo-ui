@@ -10,6 +10,7 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@src/constants';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
+import { TOOLTIP_ID } from '@src/index.web';
 
 const ConKoppelingStageToevoegen = ({
   rows,
@@ -261,13 +262,18 @@ const ConKoppelingStageToevoegen = ({
                   <label
                     className='utrecht-form-label'
                     htmlFor={appBId}
-                    style={{ display: 'block' }}
+                    style={{ display: 'flex', alignItems: 'center' }}
                   >
                     Applicatie B
                     <span className='required-indicator' aria-hidden='true'>
                       *
                     </span>
                     <span className='sr-only'>(verplicht)</span>
+                    <VISUALS.INFO
+                      style={{ marginLeft: '0.5em' }}
+                      data-tooltip-id={TOOLTIP_ID}
+                      data-tooltip-content='Applicatie B kan ook een buiten gemeentelijke voorziening zijn.'
+                    />
                   </label>
                   <ReactSelect
                     className={clsx(
