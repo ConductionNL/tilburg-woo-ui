@@ -350,10 +350,13 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
       return;
     }
 
+    const schemaSlug =
+      config.schemaSlug === 'module' ? 'applicatie' : config.schemaSlug;
+
     const wizards = Object.values(DASHBOARD_WIZARDS);
-    const wizard = wizards.find((w) => w.schema === config.schemaSlug);
+    const wizard = wizards.find((w) => w.schema === schemaSlug);
     const areThereMultipleOptions =
-      wizards.filter((w) => w.schema === config.schemaSlug).length > 1;
+      wizards.filter((w) => w.schema === schemaSlug).length > 1;
 
     if (wizard) {
       navigate(getWizardUrl(wizard, !areThereMultipleOptions));
@@ -533,7 +536,8 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
           onClick: () => {
             // Prefer wizard editing when available; fallback to legacy modal
             if (config?.schemaSlug) {
-              const slug = config.schemaSlug === 'module' ? 'applicatie' : config.schemaSlug;
+              const slug =
+                config.schemaSlug === 'module' ? 'applicatie' : config.schemaSlug;
               const wizards = Object.values(DASHBOARD_WIZARDS);
               const wizard = wizards.find((w) => w.schema === slug);
 
