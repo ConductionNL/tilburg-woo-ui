@@ -150,33 +150,45 @@ export const DASHBOARD_WIZARDS = {
 
 /**
  * Get wizards that are available for the dashboard (excludes registers)
- * Filters based on user authentication and organization status
+ * Filters based on user groups
  */
-// eslint-disable-next-line no-unused-vars -- it'll get used... eventually
-export const getDashboardWizards = (user = null, userOrganization = null) => {
-  // Always show all wizards - no filtering
+export const getDashboardWizards = (user = null) => {
+  // Get user groups from the user object
+  const userGroups = user?.user?.groups || [];
 
-  const wizards = Object.values(DASHBOARD_WIZARDS);
+  // Define which wizards are available for each group
+  const aanbodBeheerderWizards = [
+    DASHBOARD_WIZARDS.EIGEN_APPLICATIE,
+    DASHBOARD_WIZARDS.DIENST,
+    DASHBOARD_WIZARDS.GEBRUIK_TOEVOEGEN,
+    DASHBOARD_WIZARDS.KOPPELING_PUBLICEEREN,
+  ];
 
-  if (
-    userOrganization.type === 'Gemeente' ||
-    userOrganization.type === 'Samenwerking'
-  ) {
-    return wizards.filter(
-      (wizard) => wizard !== DASHBOARD_WIZARDS.KOPPELING_AANBIEDEN
-    );
+  const gebruikBeheerderWizards = [
+    DASHBOARD_WIZARDS.ONTBREKEND_APPLICATIE,
+    DASHBOARD_WIZARDS.DIENST_TOEVOEGEN,
+    DASHBOARD_WIZARDS.GEBRUIK,
+    DASHBOARD_WIZARDS.KOPPELING_TOEVOEGEN,
+  ];
+
+  // Check which groups the user has
+  const hasAanbodBeheerder = userGroups.includes('aanbod-beheerder');
+  const hasGebruikBeheerder = userGroups.includes('gebruik-beheerder');
+
+  // Return appropriate wizards based on user groups
+  if (hasAanbodBeheerder && hasGebruikBeheerder) {
+    // User has both groups - show all wizards
+    return [...aanbodBeheerderWizards, ...gebruikBeheerderWizards];
+  } else if (hasAanbodBeheerder) {
+    // User only has aanbod-beheerder group
+    return aanbodBeheerderWizards;
+  } else if (hasGebruikBeheerder) {
+    // User only has gebruik-beheerder group
+    return gebruikBeheerderWizards;
   }
 
-  if (
-    userOrganization.type === 'Leverancier' ||
-    userOrganization.type === 'Community'
-  ) {
-    return wizards.filter(
-      (wizard) => wizard !== DASHBOARD_WIZARDS.KOPPELING_EIGEN_ORGANISATIE
-    );
-  }
-
-  return wizards;
+  // No relevant groups - return empty array
+  return [];
 };
 
 /**
