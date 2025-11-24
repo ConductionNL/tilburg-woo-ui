@@ -158,6 +158,7 @@ export const DASHBOARD_WIZARDS = {
     params: { type: 'suite' },
     color: 'blue',
     schema: 'suite',
+    visible: false, // does nothing right now since visible wizards are hardcoded
   },
   SUITE_TOEVOEGEN: {
     id: 'suite-ontbrekend',
@@ -171,6 +172,7 @@ export const DASHBOARD_WIZARDS = {
     params: { type: 'ontbrekend-suite' },
     color: 'blue',
     schema: 'suite',
+    visible: false, // does nothing right now since visible wizards are hardcoded
   },
 };
 
