@@ -285,6 +285,17 @@ const AcFormsApplicatieInner = ({
   const [buitengemeentelijkeOptionsLoading, setBuitengemeentelijkeOptionsLoading] =
     useState(false);
 
+  // Contactpersoon options with search functionality
+  const [contactpersoonOptions, setContactpersoonOptions] = useState([]);
+  const [contactpersoonLoading, setContactpersoonLoading] = useState(false);
+  const [contactpersoonSearchLoading, setContactpersoonSearchLoading] =
+    useState(false);
+
+  // Aanbieder (organisatie) options with search functionality
+  const [aanbiederOptions, setAanbiederOptions] = useState([]);
+  const [aanbiederLoading, setAanbiederLoading] = useState(false);
+  const [aanbiederSearchLoading, setAanbiederSearchLoading] = useState(false);
+
   // Koppelingen form state
   const [koppelingenFormState, setKoppelingenFormState] = useState({
     rows: [0],
@@ -854,6 +865,175 @@ const AcFormsApplicatieInner = ({
     performModulesSearch('');
   }, [performModulesSearch]);
 
+  // Server-side search for contactpersonen
+  const searchContactpersonen = useCallback(
+    async (query) => {
+      try {
+        setContactpersoonSearchLoading(true);
+        const q = String(query || '').trim();
+
+        const queryParams = {
+          _limit: '50',
+          _page: '1',
+          _source: 'database',
+        };
+
+        // Add search parameter if provided
+        if (q) {
+          queryParams._search = q;
+        }
+
+        await store.object.fetchCollection(
+          'voorzieningen',
+          'contactpersoon',
+          queryParams
+        );
+        const collection = store.object.getCollection(
+          'voorzieningen_contactpersoon'
+        );
+        const list = collection?.results || collection || [];
+        const options = list.map((item, index) => {
+          const fullName = [item?.voornaam, item?.tussenvoegsel, item?.achternaam]
+            .filter(Boolean)
+            .join(' ');
+          const label = fullName || `Contactpersoon ${index + 1}`;
+          const value = item?.['@self']?.id || item?.id || item?.slug || label;
+          return { value: String(value), label: String(label), data: item };
+        });
+
+        // Merge with existing options to preserve selected items
+        setContactpersoonOptions((prevOptions) => {
+          const newOptionsMap = new Map(options.map((opt) => [opt.value, opt]));
+
+          // Combine existing and new options, preferring new data for existing items
+          const mergedOptions = [...newOptionsMap.values()];
+
+          // Add any existing options that aren't in the new results
+          // This preserves previously selected items that might not match the current search
+          prevOptions.forEach((opt) => {
+            if (!newOptionsMap.has(opt.value)) {
+              mergedOptions.push(opt);
+            }
+          });
+
+          return mergedOptions;
+        });
+      } catch (e) {
+        // Don't clear options on error to preserve existing selections
+        console.error('Contactpersoon search failed:', e);
+      } finally {
+        setContactpersoonSearchLoading(false);
+      }
+    },
+    [store]
+  );
+
+  // Debounced search function for contactpersonen
+  const debouncedSearchContactpersonen = useDebouncedInput(
+    searchContactpersonen,
+    250,
+    {
+      disableInstantValidation: true,
+    }
+  );
+
+  // Pre-load contactpersonen once so dropdown has initial options
+  useEffect(() => {
+    const loadInitialContactpersonen = async () => {
+      setContactpersoonLoading(true);
+      try {
+        await searchContactpersonen('');
+      } finally {
+        setContactpersoonLoading(false);
+      }
+    };
+    loadInitialContactpersonen();
+  }, [searchContactpersonen]);
+
+  // Server-side search for organisaties (aanbieder)
+  const searchAanbieders = useCallback(
+    async (query) => {
+      try {
+        setAanbiederSearchLoading(true);
+        const q = String(query || '').trim();
+
+        const queryParams = {
+          _limit: '50',
+          _page: '1',
+          _source: 'index',
+          '_extend[]': '@self.schema',
+        };
+
+        // Add search parameter if provided
+        if (q) {
+          queryParams._search = q;
+        }
+
+        await store.object.fetchCollection(
+          'voorzieningen',
+          'organisatie',
+          queryParams
+        );
+        const collection = store.object.getCollection('voorzieningen_organisatie');
+        const list = collection?.results || collection || [];
+        const options = list.map((item, index) => {
+          const label =
+            item?.['@self']?.name ||
+            item?.naam ||
+            item?.name ||
+            item?.title ||
+            `Organisatie ${index + 1}`;
+          const value = item?.['@self']?.id || item?.id || item?.slug || label;
+          return { value: String(value), label: String(label), data: item };
+        });
+
+        // Merge with existing options to preserve selected items
+        setAanbiederOptions((prevOptions) => {
+          const newOptionsMap = new Map(options.map((opt) => [opt.value, opt]));
+
+          // Combine existing and new options, preferring new data for existing items
+          const mergedOptions = [...newOptionsMap.values()];
+
+          // Add any existing options that aren't in the new results
+          // This preserves previously selected items that might not match the current search
+          prevOptions.forEach((opt) => {
+            if (!newOptionsMap.has(opt.value)) {
+              mergedOptions.push(opt);
+            }
+          });
+
+          return mergedOptions;
+        });
+      } catch (e) {
+        // Don't clear options on error to preserve existing selections
+        console.error('Aanbieder search failed:', e);
+      } finally {
+        setAanbiederSearchLoading(false);
+      }
+    },
+    [store]
+  );
+
+  // Debounced search function for organisaties
+  const debouncedSearchAanbieders = useDebouncedInput(searchAanbieders, 250, {
+    disableInstantValidation: true,
+  });
+
+  // Pre-load organisaties once so dropdown has initial options (only for ontbrekend-applicatie)
+  useEffect(() => {
+    if (formType !== 'ontbrekend-applicatie') return;
+
+    const loadInitialAanbieders = async () => {
+      setAanbiederLoading(true);
+      try {
+        await searchAanbieders('');
+      } finally {
+        setAanbiederLoading(false);
+      }
+    };
+    loadInitialAanbieders();
+  }, [formType, searchAanbieders]);
+
   // Function to load buitengemeentelijke voorzieningen
   const loadBuitengemeentelijkeVoorzieningen = useCallback(async () => {
     console.info('📋 Loading external facilities via object store cache...');
@@ -1258,6 +1438,10 @@ const AcFormsApplicatieInner = ({
             schemas={schemas}
             aanbiederKeuze={aanbiederKeuze}
             setAanbiederKeuze={setAanbiederKeuze}
+            aanbiederOptions={aanbiederOptions}
+            aanbiederLoading={aanbiederLoading}
+            aanbiederSearchLoading={aanbiederSearchLoading}
+            searchAanbieders={debouncedSearchAanbieders}
           />
         );
       case 1:
@@ -1269,6 +1453,10 @@ const AcFormsApplicatieInner = ({
             loading={loading}
             touched={touched}
             schemas={schemas}
+            contactpersoonOptions={contactpersoonOptions}
+            contactpersoonLoading={contactpersoonLoading}
+            contactpersoonSearchLoading={contactpersoonSearchLoading}
+            searchContactpersonen={debouncedSearchContactpersonen}
           />
         );
       case 2:
