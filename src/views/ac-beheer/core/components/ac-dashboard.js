@@ -135,7 +135,7 @@ const AcDashboard = ({ store }) => {
                   <ConSpinLoader />
                 </AcFlex>
               ) : availableWizards.length > 0 ? (
-                <AcGrid columns={5} gap='xl' className='ac-dashboard-wizard-grid'>
+                <AcGrid columns={4} gap='xl' className='ac-dashboard-wizard-grid'>
                   {availableWizards.map((wizard) => (
                     <AcTile
                       key={wizard.id}
@@ -206,22 +206,6 @@ const AcDashboard = ({ store }) => {
                 te beheren en te ontdekken en deze te koppelen aan uw ICT
                 Architectuur op basis van de GEMMA.
               </Paragraph>
-
-              <div
-                className='ac-register-review__field'
-                style={{ marginTop: 'var(--tilburg-space-block-lg)' }}
-              >
-                <strong>Product aanbieden:</strong>
-                <span>registreer uw softwareproduct als leverancier.</span>
-              </div>
-
-              <div
-                className='ac-register-review__field'
-                style={{ marginTop: 'var(--tilburg-space-block-lg)' }}
-              >
-                <strong>Product melden:</strong>
-                <span>geef door als een product nog ontbreekt in de catalogus.</span>
-              </div>
 
               <div className='ac-register-review__field'>
                 <strong>Dienst registreren:</strong>

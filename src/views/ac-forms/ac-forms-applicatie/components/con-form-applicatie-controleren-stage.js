@@ -214,6 +214,56 @@ const ConFormApplicatieControlerenStage = memo(
       return moduleBId; // Fallback to ID if not found
     };
 
+    // Helper function to normalize URLs for external links
+    // Adds https:// prefix if needed for external URLs, keeps local URLs as-is
+    const normalizeUrl = (url) => {
+      if (!url || typeof url !== 'string') return url;
+
+      const trimmedUrl = url.trim();
+
+      // Already has protocol, return as-is
+      if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
+        return trimmedUrl;
+      }
+
+      // Local/relative URL (starts with /), return as-is
+      if (trimmedUrl.startsWith('/')) {
+        return trimmedUrl;
+      }
+
+      // External URL without protocol (e.g., www.test.com, example.com)
+      // Add https:// prefix
+      return `https://${trimmedUrl}`;
+    };
+
+    // Helper function to check if URL is external (not a local/relative path)
+    const isExternalUrl = (url) => {
+      if (!url || typeof url !== 'string') return false;
+      const trimmedUrl = url.trim();
+
+      // Local/relative URL (starts with /)
+      if (trimmedUrl.startsWith('/')) {
+        return false;
+      }
+
+      // Already has protocol, definitely external
+      if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
+        return true;
+      }
+
+      // Starts with www. or contains domain-like pattern (has dot and doesn't start with .)
+      // This covers cases like www.test.com, example.com, subdomain.example.com
+      if (
+        trimmedUrl.startsWith('www.') ||
+        (trimmedUrl.includes('.') && !trimmedUrl.startsWith('.'))
+      ) {
+        return true;
+      }
+
+      // Default to local for ambiguous cases
+      return false;
+    };
+
     // Helper function to create middle ellipsis for long filenames
     const createMiddleEllipsis = (filename, maxLength = 25) => {
       if (!filename) return 'bewijs';
@@ -330,9 +380,18 @@ const ConFormApplicatieControlerenStage = memo(
             <div className='ac-register-review__field'>
               <strong>Website:</strong>{' '}
               {applicatie.website ? (
-                <AcLink href={applicatie.website} target='_blank'>
-                  {applicatie.website}
-                </AcLink>
+                isExternalUrl(applicatie.website) ? (
+                  <a
+                    href={normalizeUrl(applicatie.website)}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    className='utrecht-link utrecht-link--html-a'
+                  >
+                    {applicatie.website}
+                  </a>
+                ) : (
+                  <AcLink href={applicatie.website}>{applicatie.website}</AcLink>
+                )
               ) : (
                 '-'
               )}
@@ -476,13 +535,18 @@ const ConFormApplicatieControlerenStage = memo(
                               ) : comp.url ? (
                                 <>
                                   <span>- bewijs:</span>
-                                  <AcLink
-                                    href={comp.url}
-                                    target='_blank'
-                                    rel='noopener noreferrer'
-                                  >
-                                    {comp.url}
-                                  </AcLink>
+                                  {isExternalUrl(comp.url) ? (
+                                    <a
+                                      href={normalizeUrl(comp.url)}
+                                      target='_blank'
+                                      rel='noopener noreferrer'
+                                      className='utrecht-link utrecht-link--html-a'
+                                    >
+                                      {comp.url}
+                                    </a>
+                                  ) : (
+                                    <AcLink href={comp.url}>{comp.url}</AcLink>
+                                  )}
                                 </>
                               ) : (
                                 <span style={{ color: '#666' }}>(geen bewijs)</span>
@@ -607,13 +671,20 @@ const ConFormApplicatieControlerenStage = memo(
                     <div className='ac-register-review__field'>
                       <strong>Website:</strong>{' '}
                       {aanbiederOrganisatie.website ? (
-                        <AcLink
-                          href={aanbiederOrganisatie.website}
-                          target='_blank'
-                          rel='noopener noreferrer'
-                        >
-                          {aanbiederOrganisatie.website}
-                        </AcLink>
+                        isExternalUrl(aanbiederOrganisatie.website) ? (
+                          <a
+                            href={normalizeUrl(aanbiederOrganisatie.website)}
+                            target='_blank'
+                            rel='noopener noreferrer'
+                            className='utrecht-link utrecht-link--html-a'
+                          >
+                            {aanbiederOrganisatie.website}
+                          </a>
+                        ) : (
+                          <AcLink href={aanbiederOrganisatie.website}>
+                            {aanbiederOrganisatie.website}
+                          </AcLink>
+                        )
                       ) : (
                         '-'
                       )}

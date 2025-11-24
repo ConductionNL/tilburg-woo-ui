@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import RelatedTabs from './con-related-tabs';
 import ConLogoPreview from '../ac-register/con-logo-preview';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
@@ -11,6 +11,7 @@ import { VISUALS } from '@constants';
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
+import { checkOrganizationPermissions } from '@utils/organization-permissions';
 
 // Markdown Editor
 import remarkDefinitionList, { defListHastHandlers } from 'remark-definition-list';
@@ -46,12 +47,17 @@ const AcPublicationModuleVersie = ({ store: { publications, user, object } }) =>
     [navigate, id]
   );
 
+  // Exclude specific schemas from actions
+  const excludeSchemas = useMemo(() => ['gebruik', 'module'], []);
+
   const { makeActionsForContext } = useRelatedCreateActions({
     object,
     user,
     schemaRef: get_single?.['@self']?.schema?.slug,
     currentType: get_single?.['@self']?.schema?.slug,
     openDynamicCreate,
+    currentObject: get_single,
+    excludeSchemas,
   });
 
   // Delete modal state
@@ -218,34 +224,36 @@ const AcPublicationModuleVersie = ({ store: { publications, user, object } }) =>
               })()}
               {getTabHeaderName(get_single?.['@self'].schema.slug, true)}
             </Heading>
-            <ConDetailsActionsMenu
-              user={user}
-              id={id}
-              schemaSlug={get_single?.['@self']?.schema?.slug}
-              title={get_single?.['@self']?.name || get_single?.id}
-              published={get_single?.['@self']?.published}
-              object={get_single}
-              showViewAction={false}
-              showEditAction={true}
-              showPublishActions={true}
-              onDelete={handleDelete}
-              onEdit={() => {
-                // Navigate to beheer edit page in new tab
-                const schemaSlug = get_single?.['@self']?.schema?.slug;
-                const beheerUrl = `/beheer/${schemaSlug}/${id}`;
-                window.open(beheerUrl, '_blank');
-              }}
-              uniqueActions={[
-                {
-                  key: 'delete',
-                  label: 'Verwijderen',
-                  icon: VISUALS.TRASHCAN,
-                  onClick: handleDelete,
-                },
-              ]}
-              triggerStyle='button'
-              relatedActions={actionMenuItems}
-            />
+            {checkOrganizationPermissions(user, get_single).canEdit && (
+              <ConDetailsActionsMenu
+                user={user}
+                id={id}
+                schemaSlug={get_single?.['@self']?.schema?.slug}
+                title={get_single?.['@self']?.name || get_single?.id}
+                published={get_single?.['@self']?.published}
+                object={get_single}
+                showViewAction={false}
+                showEditAction={true}
+                showPublishActions={true}
+                onDelete={handleDelete}
+                onEdit={() => {
+                  // Navigate to beheer edit page in new tab
+                  const schemaSlug = get_single?.['@self']?.schema?.slug;
+                  const beheerUrl = `/beheer/${schemaSlug}/${id}`;
+                  window.open(beheerUrl, '_blank');
+                }}
+                uniqueActions={[
+                  {
+                    key: 'delete',
+                    label: 'Verwijderen',
+                    icon: VISUALS.TRASHCAN,
+                    onClick: handleDelete,
+                  },
+                ]}
+                triggerStyle='button'
+                relatedActions={actionMenuItems}
+              />
+            )}
           </AcFlex>
         </AcFlex>
         <AcFlex spacing='sm' justifyContent='between'>

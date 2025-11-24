@@ -60,12 +60,56 @@ const AcPublicationProduct = ({
     [navigate, id]
   );
 
+  // Memoize configuration objects to prevent infinite loops
+  // Using whitelist mode: only show these specific actions for logged-in users
+  const onlyIncludeSchemas = useMemo(() => ['gebruik', 'dienst', 'koppeling'], []);
+
+  const excludeSchemas = useMemo(
+    () => [
+      'kwetsbaarheid',
+      'compliancy',
+      'beoordeeling',
+      'organisatie',
+      'contactpersoon',
+      'product',
+      'element',
+      'suite',
+    ],
+    []
+  );
+
+  const labelOverrides = useMemo(
+    () => ({
+      moduleversie: 'Applicatie Versie toevoegen',
+      gebruik: 'Gebruik publiceren',
+      dienst: 'Dienst publiceren',
+      koppeling: 'Koppeling publiceren',
+    }),
+    []
+  );
+
+  const wizardParams = useMemo(
+    () => ({
+      applicatie: id,
+    }),
+    [id]
+  );
+
   const { makeActionsForContext } = useRelatedCreateActions({
     object,
     user,
     schemaRef: get_single?.['@self']?.schema?.slug,
     currentType: get_single?.['@self']?.schema?.slug, // Use schema slug as current type
     openDynamicCreate,
+    currentObject: get_single, // Pass current object for ownership checks
+    onlyIncludeSchemas, // Whitelist mode: only these actions will show for non-owners
+    excludeSchemas, // Additional exclusions (applies to everyone)
+    labelOverrides,
+    wizardParams, // Pass applicatie ID to wizards
+    // Example: Custom icons for specific actions
+    // iconOverrides: {
+    //   'moduleversie': <VISUALS.PLUS />,
+    // },
   });
 
   // Delete modal state

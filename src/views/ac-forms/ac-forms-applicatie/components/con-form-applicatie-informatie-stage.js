@@ -21,9 +21,23 @@ import { validateWebsite } from '@views/ac-forms/validation/form-validations';
  * @param {boolean} loading - Loading state indicator
  * @param {Object} touched - Touched field tracking for validation
  * @param {Object} schemas - Available schemas for field configuration
+ * @param {Array} contactpersoonOptions - Options for contactpersoon dropdown
+ * @param {boolean} contactpersoonLoading - Loading state for contactpersoon options
+ * @param {boolean} contactpersoonSearchLoading - Loading state for contactpersoon search
+ * @param {Function} searchContactpersonen - Search function for contactpersonen
  */
 const ConFormApplicatieInformatieStage = memo(
-  ({ applicatie, setApplicatieData, loading, touched, schemas }) => {
+  ({
+    applicatie,
+    setApplicatieData,
+    loading,
+    touched,
+    schemas,
+    contactpersoonOptions = [],
+    contactpersoonLoading = false,
+    contactpersoonSearchLoading = false,
+    searchContactpersonen,
+  }) => {
     return (
       <div role='group' aria-labelledby='applicatie-info-section-title'>
         <h2 id='applicatie-info-section-title' className='sr-only'>
@@ -132,10 +146,17 @@ const ConFormApplicatieInformatieStage = memo(
               schemaType='module'
               schemaProperty='contactpersoon'
               value={applicatie.contactpersoon || ''}
-              onChange={(value) => setApplicatieData('contactpersoon', value)}
+              onChange={(value) => {
+                setApplicatieData('contactpersoon', value);
+              }}
               isDisabled={loading}
+              isLoading={contactpersoonLoading || contactpersoonSearchLoading}
               width='half'
               schemas={schemas}
+              optionsProvider={contactpersoonOptions}
+              onSearch={(_path, _refSlug, q) =>
+                searchContactpersonen && searchContactpersonen(q || '')
+              }
               customProps={{
                 getOptionLabel: (opt) => {
                   const c = opt?.data ?? opt;
@@ -159,6 +180,7 @@ const ConFormApplicatieInformatieStage = memo(
                 },
                 isClearable: true,
                 description: 'Selecteer de contactpersoon voor deze applicatie',
+                placeholder: 'Zoek en selecteer contactpersoon',
               }}
             />
           </div>
