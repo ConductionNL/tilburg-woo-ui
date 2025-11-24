@@ -27,6 +27,11 @@ import {
  * @param {Object} schemas - Available schemas for field configuration (organisatie schema)
  * @param {string} aanbiederKeuze - Choice between 'bestaand' or 'nieuw'
  * @param {Function} setAanbiederKeuze - Function to update choice
+ * @param {Array} aanbiederOptions - Options for aanbieder dropdown
+ * @param {boolean} aanbiederLoading - Loading state for aanbieder options
+ * @param {boolean} aanbiederSearchLoading - Loading state for aanbieder search
+ * @param {Function} searchAanbieders - Debounced search function for organisaties (for typing)
+ * @param {Function} searchAanbiedersImmediate - Non-debounced search function for organisaties (for clearing)
  */
 const ConFormApplicatieAanbiederInformatieStage = memo(
   ({
@@ -37,6 +42,10 @@ const ConFormApplicatieAanbiederInformatieStage = memo(
     loading,
     schemas,
     aanbiederKeuze,
+    aanbiederOptions = [],
+    aanbiederLoading = false,
+    aanbiederSearchLoading = false,
+    searchAanbieders,
   }) => {
     // Track previous aanbiederKeuze to detect actual changes (not just remounts)
     const previousAanbiederKeuze = useRef(aanbiederKeuze);
@@ -88,14 +97,22 @@ const ConFormApplicatieAanbiederInformatieStage = memo(
                 required={true}
                 schemaProperty='aanbieder'
                 value={applicatie.aanbieder}
-                onChange={(value) => setApplicatieData('aanbieder', value)}
+                onChange={(value) => { 
+                  setApplicatieData('aanbieder', value);
+                }}
                 isDisabled={loading}
+                isLoading={aanbiederLoading || aanbiederSearchLoading}
                 width='full'
+                schemas={schemas}
+                optionsProvider={aanbiederOptions}
+                onSearch={(_path, _refSlug, q) =>
+                  searchAanbieders && searchAanbieders(q || '')
+                }
                 customProps={{
                   // placeholder will come from schema example
                   isClearable: true,
+                  placeholder: 'Zoek en selecteer aanbieder',
                 }}
-                schemas={schemas}
               />
             )}
 
