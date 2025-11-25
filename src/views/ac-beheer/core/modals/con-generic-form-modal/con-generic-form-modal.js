@@ -801,6 +801,13 @@ const ConGenericFormModal = ({
   const handleModalClose = () => {
     if (!config) return;
 
+    // Manually remove overflow style from body as fallback
+    // The CSS selector body:has(.ac-modal[open]) should handle this, but sometimes it doesn't work
+    // this is just a dirty fix
+    if (document.body) {
+      document.body.style.overflow = '';
+    }
+
     setFormData(_.cloneDeep(config.initialData));
     setIsValid(false);
     setSubmitError(null);
@@ -813,10 +820,17 @@ const ConGenericFormModal = ({
     onClose?.();
   };
 
-  // Open modal when showModal prop changes
+  // Open/close modal when showModal prop changes
   useEffect(() => {
     if (showModal) {
       handleModalOpen();
+    } else {
+      // Manually remove overflow style from body when modal is closed
+      // This ensures cleanup even if the dialog gets unmounted quickly
+      // This is a dirty fix
+      if (document.body) {
+        document.body.style.overflow = '';
+      }
     }
   }, [showModal]);
 

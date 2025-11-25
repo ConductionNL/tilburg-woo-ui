@@ -34,14 +34,15 @@ const OrganisatieFilterHeadersDrawer = forwardRef(
     ref
   ) => {
     const drawerRef = useRef(null);
-    const [touched, setTouched] = useState(false);
+    const touchedRef = useRef(false);
     const [checkedIds, setCheckedIds] = useState(() => new Set(defaultHeaders));
     const [selectedBeoordeling, setSelectedBeoordeling] = useState(null);
+    const isInitialMount = useRef(true);
 
     // Update checkedIds when defaultHeaders changes and component hasn't been touched
     useEffect(() => {
-      if (!touched) setCheckedIds(new Set(defaultHeaders));
-    }, [defaultHeaders, touched]);
+      if (!touchedRef.current) setCheckedIds(new Set(defaultHeaders));
+    }, [defaultHeaders]);
 
     useImperativeHandle(
       ref,
@@ -55,7 +56,7 @@ const OrganisatieFilterHeadersDrawer = forwardRef(
     );
 
     const toggleHeader = (id) => {
-      setTouched(true);
+      touchedRef.current = true;
       setCheckedIds((prev) => {
         const next = new Set(prev);
         if (next.has(id)) next.delete(id);
@@ -65,6 +66,10 @@ const OrganisatieFilterHeadersDrawer = forwardRef(
     };
 
     useEffect(() => {
+      if (isInitialMount.current) {
+        isInitialMount.current = false;
+        return;
+      }
       onChange?.(headers.filter((h) => checkedIds.has(h.id)));
     }, [Array.from(checkedIds).join(',')]);
 
