@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
+import { useSearchParams } from 'react-router-dom';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcFlex, AcSection, AcContainer } from '@atoms';
@@ -13,9 +14,7 @@ import AcColumn from '@atoms/ac-column/ac-column';
 import ConTable from '@views/ac-beheer/shared/components/con-table';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
 import { Pagination } from '@amsterdam/design-system-react';
-import ConPaginationLimitSelector, {
-  usePaginationLimit,
-} from '@src/components/con-pagination-limit-selector/con-pagination-limit-selector';
+import ConPaginationLimitSelector from '@src/components/con-pagination-limit-selector/con-pagination-limit-selector';
 import BeheerModalFactory from '@views/ac-beheer/core/factories/con-beheer-modal-factory';
 import FilterDrawerFactory from '@views/ac-beheer/core/factories/con-filter-drawer-factory';
 import BeheerPageConfigFactory from '@views/ac-beheer/core/factories/con-beheer-page-config-factory';
@@ -25,7 +24,52 @@ import { AcButton, AcFormField } from '@molecules';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { canReadField } from '@utils/field-authorization';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
-import { extractReferenceIdsFromCollection } from '@src/utilities';
+import {
+  extractReferenceIdsFromCollection,
+  AcGetState,
+  AcSaveState,
+} from '@src/utilities';
+
+/**
+ * Custom hook for managing pagination limit with URL query params and backwards compatibility
+ * Priority: URL _limit > session storage > defaultValue
+ * Writes sync to both URL and session storage
+ */
+const useLimitWithBackwardsCompat = (objectType, defaultValue = 20) => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [changeKey, setChangeKey] = useState(0);
+
+  // Read limit: URL first, then session storage, then default
+  const limit = useMemo(() => {
+    const urlLimit = searchParams.get('_limit');
+    if (urlLimit) {
+      const parsed = parseInt(urlLimit, 10);
+      if (!isNaN(parsed) && parsed > 0) {
+        return parsed;
+      }
+    }
+    const sessionLimit = AcGetState(`pagination_limit_${objectType}`);
+    return sessionLimit || defaultValue;
+  }, [searchParams, objectType, defaultValue, changeKey]);
+
+  // Update limit: write to both URL and session storage
+  const updateLimit = useCallback(
+    (newLimit) => {
+      // Write to session storage
+      AcSaveState(`pagination_limit_${objectType}`, newLimit);
+
+      // Write to URL
+      const params = new URLSearchParams(searchParams);
+      params.set('_limit', newLimit.toString());
+      setSearchParams(params, { replace: true });
+
+      setChangeKey((prev) => prev + 1);
+    },
+    [objectType, searchParams, setSearchParams]
+  );
+
+  return [limit, updateLimit];
+};
 
 /**
  * Generic Beheer Page Component
@@ -35,11 +79,19 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
   // Destructure the stores we need
   const { object, user } = store;
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [beoordelingFilter, setBeoordelingFilter] = useState(null);
-  const [showSearch, setShowSearch] = useState(false);
-  const [searchQuery, setSearchQuery] = useState(''); // Simple search query state
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(''); // Debounced search value
+  // Initialize showSearch based on whether _search parameter exists in URL
+  const [showSearch, setShowSearch] = useState(() => {
+    return !!searchParams.get('_search');
+  });
   const [enhancedConfig, setEnhancedConfig] = useState(null);
+
+  // Local search input state for immediate UI updates
+  const [localSearchInput, setLocalSearchInput] = useState('');
+
+  // Debounced search query ref for URL updates
+  const searchDebounceTimerRef = useRef(null);
 
   // Get base configuration for this type
   const baseConfig = useMemo(() => {
@@ -79,6 +131,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
       })()
     : null;
 
+  // Get pagination info from store (only total and pages, page comes from URL)
   const objectStorePagination = objectType
     ? object.getPagination(objectType)
     : { total: 0, page: 1, pages: 0, limit: 20 };
@@ -135,16 +188,39 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     }
   }, [baseConfig, dataProperties, schemaData, schemaLoading, schemaError, type]);
 
-  // Use the custom hook for pagination limit management
-  const [limit, setLimit] = usePaginationLimit(config.paginationKey);
+  // Use custom hook for pagination limit with URL + backwards compatibility
+  const [limit, setLimit] = useLimitWithBackwardsCompat(config?.paginationKey, 20);
 
-  // Merge object store pagination with local limit preference
+  // Read page from URL, default to 1
+  const page = useMemo(() => {
+    const urlPage = searchParams.get('_page');
+    if (urlPage) {
+      const parsed = parseInt(urlPage, 10);
+      if (!isNaN(parsed) && parsed > 0) {
+        return parsed;
+      }
+    }
+    return 1;
+  }, [searchParams]);
+
+  // Read search query from URL
+  const searchQuery = useMemo(() => {
+    return searchParams.get('_search') || '';
+  }, [searchParams]);
+
+  // Sync local search input with URL when URL changes (e.g., browser back/forward)
+  useEffect(() => {
+    setLocalSearchInput(searchQuery);
+  }, [searchQuery]);
+
+  // Merge pagination: page from URL, limit from URL/session, total/pages from store
   const pagination = useMemo(
     () => ({
       ...objectStorePagination,
+      page,
       limit,
     }),
-    [objectStorePagination, limit]
+    [objectStorePagination, page, limit]
   );
 
   const filterHeadersDrawerRef = useRef(null);
@@ -167,29 +243,28 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
       // Build the extend parameters exactly as before
       const extend = [...config.extend];
 
-      // LEGACY: Old field-specific search implementation
-      // Convert extend array and searchParams to object format for object store
-      // const storeParams = {
-      //   _page: pagination.page,
-      //   _limit: pagination.limit,
-      //   _extend: extend,
-      //   _related: true, // Request related object data
-      //   _relatedNames: true, // Request ID to name mappings
-      //   ...searchParams,
-      // };
+      // Read values from URL query params
+      const urlPage = searchParams.get('_page');
+      const urlLimit = searchParams.get('_limit');
+      const urlSearch = searchParams.get('_search');
 
-      // New simple search implementation using _search parameter
+      const pageValue = urlPage ? parseInt(urlPage, 10) : 1;
+      const limitValue = urlLimit
+        ? parseInt(urlLimit, 10)
+        : AcGetState(`pagination_limit_${config.paginationKey}`) || 20;
+
+      // New simple search implementation using _search parameter from URL
       const storeParams = {
-        _page: pagination.page,
-        _limit: pagination.limit,
+        _page: pageValue,
+        _limit: limitValue,
         _extend: extend,
         _related: true, // Request related object data
         _relatedNames: true, // Request ID to name mappings
       };
 
-      // Add simple search from debounced search query
-      if (debouncedSearchQuery && debouncedSearchQuery.trim() !== '') {
-        storeParams._search = debouncedSearchQuery.trim();
+      // Add simple search from URL query params
+      if (urlSearch && urlSearch.trim() !== '') {
+        storeParams._search = urlSearch.trim();
       }
 
       if (beoordelingFilter) storeParams['beoordeling'] = beoordelingFilter;
@@ -233,15 +308,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
       }
       console.error('Error fetching data:', err);
     }
-  }, [
-    objectType,
-    config,
-    pagination.page,
-    pagination.limit,
-    beoordelingFilter,
-    debouncedSearchQuery,
-    object,
-  ]);
+  }, [objectType, config, searchParams, beoordelingFilter, object]);
 
   const downloadData = useCallback(
     async (type = 'csv') => {
@@ -250,10 +317,27 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     [object, config.registerSlug, config.schemaSlug]
   );
 
+  // Track previous type to detect actual type changes
+  const prevTypeRef = useRef(type);
+
   // Cancel all requests and reset state when type changes
   useEffect(() => {
+    // Only reset if type actually changed
+    if (prevTypeRef.current === type) {
+      return;
+    }
+
+    // Update ref for next comparison
+    prevTypeRef.current = type;
+
     // Cancel all active requests when switching types
     object.cancelAllRequests();
+
+    // Clear debounce timer
+    if (searchDebounceTimerRef.current) {
+      clearTimeout(searchDebounceTimerRef.current);
+      searchDebounceTimerRef.current = null;
+    }
 
     // Reset all state when type changes
     setSelectedRows([]);
@@ -262,7 +346,15 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     setBeoordelingFilter(null);
     setTableHeaders([]);
     setShowSearch(false);
-  }, [type]);
+    setLocalSearchInput('');
+
+    // Reset URL query params (keep only non-SPOT params like showCreateModal)
+    const params = new URLSearchParams(window.location.search);
+    params.delete('_page');
+    params.delete('_search');
+    // Note: _limit is kept for backwards compatibility (user preference)
+    setSearchParams(params, { replace: true });
+  }, [type, setSearchParams, object]);
 
   // Initialize related create actions after cancellation effect definition
   ({ makeActionsForContext } = useRelatedCreateActions({
@@ -281,22 +373,14 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     currentObject: null,
   }));
 
-  // Fetch data when component is ready and pagination changes
+  // Fetch data when component is ready and URL query params change
   useEffect(() => {
     if (!!config && objectType) {
       // Only fetch when objectType is available
       fetchData();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [objectType, pagination.limit, pagination.page, !config]);
-
-  // Refetch when debounced search query changes
-  useEffect(() => {
-    if (!!config && objectType) {
-      fetchData();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearchQuery]);
+  }, [objectType, searchParams.toString(), !config]);
 
   // Open create modal when query param is present, but only after the 'add' modal has actually mounted
   const openAddModal = useCallback(() => {
@@ -319,7 +403,16 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     if (prevObjectType && prevObjectType !== objectType) {
       object.cancelRequest(prevObjectType);
     }
-  }, [objectType, object]);
+  }, [objectType, object, config]);
+
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (searchDebounceTimerRef.current) {
+        clearTimeout(searchDebounceTimerRef.current);
+      }
+    };
+  }, []);
 
   // Refetch data when beoordelingFilter changes
   useEffect(() => {
@@ -334,14 +427,31 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
   const [singleSelectedRow, setSingleSelectedRow] = useState(null);
   const [openModal, setOpenModal] = useState(null);
 
-  // Debounce search input
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
-    }, 500); // 500ms delay like the ConTableSearch component
+  // Handle search input change with debouncing to URL
+  const handleSearchChange = useCallback(
+    (value) => {
+      // Update local state immediately for responsive UI
+      setLocalSearchInput(value);
 
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
+      // Clear existing timer
+      if (searchDebounceTimerRef.current) {
+        clearTimeout(searchDebounceTimerRef.current);
+      }
+
+      // Set new timer to update URL after 500ms
+      searchDebounceTimerRef.current = setTimeout(() => {
+        const params = new URLSearchParams(searchParams);
+        if (value && value.trim() !== '') {
+          params.set('_search', value.trim());
+        } else {
+          params.delete('_search');
+        }
+        // Don't reset page - keep current page when search changes
+        setSearchParams(params, { replace: true });
+      }, 500);
+    },
+    [searchParams, setSearchParams]
+  );
 
   // Handle create action → open corresponding wizard when available
   const handleCreateClick = useCallback(() => {
@@ -849,11 +959,11 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
                     label=''
                     type='text'
                     inputType='text'
-                    value={searchQuery}
+                    value={localSearchInput}
                     onChange={(e) => {
                       // Handle both event object and direct value
                       const value = e?.target?.value ?? e;
-                      setSearchQuery(value);
+                      handleSearchChange(value);
                     }}
                     placeholder='Zoeken...'
                   />
@@ -914,12 +1024,11 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
             <Pagination
               totalPages={pagination?.pages}
               page={parseInt(pagination?.page, 10)}
-              onPageChange={async (page) => {
-                // push new page to the store
-                object.setPagination(objectType, {
-                  ...object.getPagination(objectType),
-                  page,
-                });
+              onPageChange={(page) => {
+                // Update page in URL query params
+                const params = new URLSearchParams(searchParams);
+                params.set('_page', page.toString());
+                setSearchParams(params, { replace: true });
               }}
               nextLabel=''
               previousLabel=''
