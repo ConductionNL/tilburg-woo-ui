@@ -13,6 +13,7 @@ const FilterDrawerFactory = {
    */
   filterDrawerComponents: {
     default: ConFilterHeadersDrawer,
+    organisatie: OrganisatieFilterHeadersDrawer,
     organisaties: OrganisatieFilterHeadersDrawer,
   },
 
@@ -52,6 +53,7 @@ const FilterDrawerFactory = {
     };
 
     switch (type) {
+      case 'organisatie':
       case 'organisaties':
         return {
           ...baseProps,

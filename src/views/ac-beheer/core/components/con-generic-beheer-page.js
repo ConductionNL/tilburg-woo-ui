@@ -25,6 +25,11 @@ import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related
 import { canReadField } from '@utils/field-authorization';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 import {
+  checkOrganizationPermissions,
+  getDisabledActionTooltip,
+} from '@utils/organization-permissions';
+import { TOOLTIP_ID } from '@src/index.web';
+import {
   extractReferenceIdsFromCollection,
   AcGetState,
   AcSaveState,
@@ -86,6 +91,10 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     return !!searchParams.get('_search');
   });
   const [enhancedConfig, setEnhancedConfig] = useState(null);
+  const [selectedRows, setSelectedRows] = useState([]);
+  const [singleSelectedRow, setSingleSelectedRow] = useState(null);
+  const [openModal, setOpenModal] = useState(null);
+  const [modalSelectedRows, setModalSelectedRows] = useState([]);
 
   // Local search input state for immediate UI updates
   const [localSearchInput, setLocalSearchInput] = useState('');
@@ -343,6 +352,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     setSelectedRows([]);
     setSingleSelectedRow(null);
     setOpenModal(null);
+    setModalSelectedRows([]);
     setBeoordelingFilter(null);
     setTableHeaders([]);
     setShowSearch(false);
@@ -373,6 +383,49 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     currentObject: null,
   }));
 
+  // Proactively reset to page 1 if current page exceeds total pages
+  // Uses pagination.pages from store (conservative, handles data changes)
+  // Also recalculates based on total/limit when limit changes
+  useEffect(() => {
+    if (!objectType || !config) return;
+
+    const currentPage = pagination.page;
+    const pages = pagination.pages;
+    const total = pagination.total;
+    const limit = pagination.limit;
+
+    let shouldReset = false;
+
+    // Check against pagination.pages from store (handles cases where data changed)
+    if (pages > 0 && currentPage > pages) {
+      shouldReset = true;
+    }
+
+    // Also recalculate based on total/limit (handles limit changes)
+    if (total > 0 && limit > 0) {
+      const calculatedMaxPages = Math.ceil(total / limit);
+      if (currentPage > calculatedMaxPages) {
+        shouldReset = true;
+      }
+    }
+
+    if (shouldReset) {
+      // Update page in URL query params (SPOT support)
+      const params = new URLSearchParams(searchParams);
+      params.set('_page', '1');
+      setSearchParams(params, { replace: true });
+    }
+  }, [
+    pagination.limit,
+    pagination.pages,
+    pagination.page,
+    pagination.total,
+    objectType,
+    config,
+    searchParams,
+    setSearchParams,
+  ]);
+
   // Fetch data when component is ready and URL query params change
   useEffect(() => {
     if (!!config && objectType) {
@@ -381,6 +434,13 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [objectType, searchParams.toString(), !config]);
+
+  // Reset modalSelectedRows when modal closes
+  useEffect(() => {
+    if (!openModal) {
+      setModalSelectedRows([]);
+    }
+  }, [openModal]);
 
   // Open create modal when query param is present, but only after the 'add' modal has actually mounted
   const openAddModal = useCallback(() => {
@@ -423,9 +483,15 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [beoordelingFilter]);
 
-  const [selectedRows, setSelectedRows] = useState([]);
-  const [singleSelectedRow, setSingleSelectedRow] = useState(null);
-  const [openModal, setOpenModal] = useState(null);
+  // Filter selected rows based on organization permissions
+  const filteredSelectedRows = useMemo(() => {
+    return selectedRows.filter((row) => {
+      const { canEdit } = checkOrganizationPermissions(user, row);
+      return canEdit;
+    });
+  }, [selectedRows, user]);
+
+  // const filteredOutCount = selectedRows.length - filteredSelectedRows.length;
 
   // Handle search input change with debouncing to URL
   const handleSearchChange = useCallback(
@@ -610,16 +676,29 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     setTableHeaders(next);
   }, [headerIdsKey, defaultHeaderIdsKey]);
 
+  // Filter rows based on permissions before opening modals
   const handleMultipleDelete = () => {
+    if (filteredSelectedRows.length === 0) return;
+    setModalSelectedRows(filteredSelectedRows);
     setOpenModal('delete');
   };
 
   // Bulk publish/depublish handlers
   const handleMultiplePublish = () => {
+    const publishableRows = filteredSelectedRows.filter(
+      (r) => !r['@self']?.published
+    );
+    if (publishableRows.length === 0) return;
+    setModalSelectedRows(publishableRows);
     setOpenModal('publish');
   };
 
   const handleMultipleDepublish = () => {
+    const depublishableRows = filteredSelectedRows.filter(
+      (r) => !!r['@self']?.published
+    );
+    if (depublishableRows.length === 0) return;
+    setModalSelectedRows(depublishableRows);
     setOpenModal('depublish');
   };
 
@@ -627,6 +706,12 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
   const generateActionButtons = useCallback(
     (row) => {
       const isViewOnlyRoute = ['extendview', 'view'].includes(config.routeType);
+
+      // Check organization permissions for this row
+      const { canEdit: canEditRow, reason } = checkOrganizationPermissions(
+        user,
+        row
+      );
 
       const baseActions = [
         {
@@ -663,6 +748,11 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
             setSingleSelectedRow(row);
             setOpenModal('edit');
           },
+          disabled: !canEditRow,
+          tooltipId: !canEditRow ? TOOLTIP_ID : undefined,
+          tooltipContent: !canEditRow
+            ? getDisabledActionTooltip('edit', reason)
+            : undefined,
         },
       ];
 
@@ -677,6 +767,11 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
             setSingleSelectedRow(row);
             setOpenModal('publish');
           },
+          disabled: !canEditRow,
+          tooltipId: !canEditRow ? TOOLTIP_ID : undefined,
+          tooltipContent: !canEditRow
+            ? getDisabledActionTooltip('publish', reason)
+            : undefined,
         });
       }
       if (row['@self']?.published) {
@@ -688,6 +783,11 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
             setSingleSelectedRow(row);
             setOpenModal('depublish');
           },
+          disabled: !canEditRow,
+          tooltipId: !canEditRow ? TOOLTIP_ID : undefined,
+          tooltipContent: !canEditRow
+            ? getDisabledActionTooltip('depublish', reason)
+            : undefined,
         });
       }
 
@@ -715,6 +815,11 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
                 setOpenModal(action.action);
               }
             },
+            disabled: !canEditRow,
+            tooltipId: !canEditRow ? TOOLTIP_ID : undefined,
+            tooltipContent: !canEditRow
+              ? getDisabledActionTooltip(action.key, reason)
+              : undefined,
           })) || [];
 
       // Map related schemas user can create → dynamic create actions
@@ -737,6 +842,11 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
           setSingleSelectedRow(row);
           setOpenModal('delete');
         },
+        disabled: !canEditRow,
+        tooltipId: !canEditRow ? TOOLTIP_ID : undefined,
+        tooltipContent: !canEditRow
+          ? getDisabledActionTooltip('delete', reason)
+          : undefined,
       };
 
       if (isViewOnlyRoute) {
@@ -758,6 +868,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
       config.disableDeleteAction,
       navigate,
       makeActionsForContext,
+      user,
     ]
   );
 
@@ -908,8 +1019,8 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
                         icon={<VISUALS.PUBLISH />}
                         onClick={handleMultiplePublish}
                         disabled={
-                          selectedRows.length === 0 ||
-                          !selectedRows.some((r) => !r['@self']?.published)
+                          filteredSelectedRows.length === 0 ||
+                          !filteredSelectedRows.some((r) => !r['@self']?.published)
                         }
                       >
                         Publiceren
@@ -919,8 +1030,8 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
                         icon={<VISUALS.PUBLISH_OFF />}
                         onClick={handleMultipleDepublish}
                         disabled={
-                          selectedRows.length === 0 ||
-                          !selectedRows.some((r) => !!r['@self']?.published)
+                          filteredSelectedRows.length === 0 ||
+                          !filteredSelectedRows.some((r) => !!r['@self']?.published)
                         }
                       >
                         Depubliceren
@@ -930,11 +1041,11 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
 
                       <ConActionMenu.Button
                         icon={<VISUALS.TRASHCAN />}
-                        disabled={selectedRows.length === 0}
+                        disabled={filteredSelectedRows.length === 0}
                         onClick={handleMultipleDelete}
                       >
-                        Delete {selectedRows.length}{' '}
-                        {selectedRows.length === 1 ? 'item' : 'items'}
+                        Delete {filteredSelectedRows.length}{' '}
+                        {filteredSelectedRows.length === 1 ? 'item' : 'items'}
                       </ConActionMenu.Button>
                     </ConActionMenu.Menu>
                   </ConActionMenu>
@@ -996,6 +1107,9 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
                           key={action.key}
                           icon={action.icon}
                           onClick={action.onClick}
+                          disabled={action.disabled}
+                          data-tooltip-id={action.tooltipId}
+                          data-tooltip-content={action.tooltipContent}
                         >
                           {action.label}
                         </ConActionMenu.Button>
@@ -1022,6 +1136,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
 
           <AcFlex justifyContent='between' alignItems='center'>
             <Pagination
+              key={pagination?.page}
               totalPages={pagination?.pages}
               page={parseInt(pagination?.page, 10)}
               onPageChange={(page) => {
@@ -1051,7 +1166,12 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
           {/* Render modals based on configuration */}
           {BeheerModalFactory.renderModals(type, {
             singleSelectedRow,
-            selectedRows,
+            selectedRows:
+              openModal === 'delete' ||
+              openModal === 'publish' ||
+              openModal === 'depublish'
+                ? modalSelectedRows
+                : selectedRows,
             openModal,
             setOpenModal,
             setSingleSelectedRow,
