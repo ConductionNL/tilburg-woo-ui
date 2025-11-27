@@ -410,10 +410,10 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     }
 
     if (shouldReset) {
-      object.setPagination(objectType, {
-        ...object.getPagination(objectType),
-        page: 1,
-      });
+      // Update page in URL query params (SPOT support)
+      const params = new URLSearchParams(searchParams);
+      params.set('_page', '1');
+      setSearchParams(params, { replace: true });
     }
   }, [
     pagination.limit,
@@ -421,8 +421,9 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     pagination.page,
     pagination.total,
     objectType,
-    object,
     config,
+    searchParams,
+    setSearchParams,
   ]);
 
   // Fetch data when component is ready and URL query params change
