@@ -4,18 +4,16 @@ import { ConSchemaEnhancedField } from '@src/components';
 /**
  * ConGebruikStepInformatie
  * Renders the "Gebruik informatie" step of the Gebruik wizard.
- * For eigen-organisatie: shows contactpersoon.
- * For andere-organisatie: only shows status and date fields (afnemer is handled in separate step).
+ * Shows hosting (filtered from applicatie), status, and interneNotitie fields.
  */
 const ConGebruikStepInformatie = ({
   gebruik,
   setGebruikData,
   loading,
-  contactpersoonOptions,
-  contactpersoonLoading,
-  searchContactpersonen,
   schemas,
-  gebruikType,
+  applicatieKeuze,
+  selectedApplicatieData,
+  nieuweApplicatie,
 }) => {
   return (
     <div
@@ -28,43 +26,63 @@ const ConGebruikStepInformatie = ({
       </h2>
 
       <div className='ac-register-form-grid'>
-        {/* Contactpersoon - alleen tonen voor eigen organisatie gebruik */}
-        {gebruikType === 'eigen-organisatie' && (
-          <div style={{ gridColumn: 'span 2' }}>
-            <ConSchemaEnhancedField
-              schemaType='gebruik'
-              schemaProperty='contactpersoon'
-              value={
-                typeof gebruik?.contactpersoon === 'object' &&
-                gebruik.contactpersoon !== null
-                  ? gebruik.contactpersoon.id
-                  : gebruik?.contactpersoon || ''
-              }
-              onChange={(value) => {
-                setGebruikData('contactpersoon', {
-                  id: value,
-                  _displayName: contactpersoonOptions.find(
-                    (opt) => opt.value === value
-                  )?.label,
-                });
-              }}
-              isDisabled={loading}
-              width='full'
-              schemas={schemas}
-              optionsProvider={contactpersoonOptions}
-              isLoading={contactpersoonLoading}
-              onSearch={(_path, _refSlug, q) => searchContactpersonen(q)}
-              customProps={{
-                getOptionLabel: (opt) => {
-                  const c = opt?.data ?? opt;
-                  return [c?.voornaam, c?.tussenvoegsel, c?.achternaam]
-                    .filter(Boolean)
-                    .join(' ');
-                },
-              }}
-            />
-          </div>
-        )}
+        {/* Hosting field - filtered from applicatie's cloudDienstverleningsmodel */}
+        <div style={{ gridColumn: 'span 2' }}>
+          {(() => {
+            // Get hosting options from selected applicatie
+            const hostingOptions = [];
+            if (
+              applicatieKeuze === 'bestaand' &&
+              selectedApplicatieData?.cloudDienstverleningsmodel
+            ) {
+              const hostingArray = Array.isArray(
+                selectedApplicatieData.cloudDienstverleningsmodel
+              )
+                ? selectedApplicatieData.cloudDienstverleningsmodel
+                : [selectedApplicatieData.cloudDienstverleningsmodel];
+              hostingOptions.push(
+                ...hostingArray.map((h) => ({ value: h, label: h }))
+              );
+            } else if (
+              applicatieKeuze === 'nieuw' &&
+              nieuweApplicatie?.cloudDienstverleningsmodel
+            ) {
+              const hostingArray = Array.isArray(
+                nieuweApplicatie.cloudDienstverleningsmodel
+              )
+                ? nieuweApplicatie.cloudDienstverleningsmodel
+                : [nieuweApplicatie.cloudDienstverleningsmodel];
+              hostingOptions.push(
+                ...hostingArray.map((h) => ({ value: h, label: h }))
+              );
+            }
+
+            return (
+              <ConSchemaEnhancedField
+                schemaType='gebruik'
+                schemaProperty='cloudDienstverleningsmodel'
+                value={gebruik?.cloudDienstverleningsmodel || ''}
+                onChange={(value) =>
+                  setGebruikData('cloudDienstverleningsmodel', value)
+                }
+                isDisabled={loading || hostingOptions.length === 0}
+                width='full'
+                schemas={schemas}
+                optionsProvider={hostingOptions}
+                customProps={{
+                  label: 'Hosting',
+                  placeholder:
+                    hostingOptions.length === 0
+                      ? 'Geen hosting opties beschikbaar'
+                      : 'Selecteer hosting',
+                  description: 'Hosting type zoals gedefinieerd door de applicatie',
+                }}
+              />
+            );
+          })()}
+        </div>
+
+        {/* Status field */}
         <div style={{ gridColumn: 'span 2' }}>
           <ConSchemaEnhancedField
             schemaType='gebruik'
@@ -77,69 +95,24 @@ const ConGebruikStepInformatie = ({
           />
         </div>
 
-        {gebruik?.status === 'Verwerving' && (
-          <div>
-            <label className='utrecht-form-label'>Startdatum Verwerving</label>
-            <input
-              type='date'
-              className='utrecht-textbox'
-              value={gebruik?.startDatumVerwerving || ''}
-              onChange={(e) =>
-                setGebruikData('startDatumVerwerving', e.target.value)
-              }
-            />
-          </div>
-        )}
-        {gebruik?.status === 'Gepland' && (
-          <div>
-            <label className='utrecht-form-label'>Geplande Startdatum</label>
-            <input
-              type='date'
-              className='utrecht-textbox'
-              value={gebruik?.startDatumGepland || ''}
-              onChange={(e) => setGebruikData('startDatumGepland', e.target.value)}
-            />
-          </div>
-        )}
-        {gebruik?.status === 'In productie' && (
-          <div>
-            <label className='utrecht-form-label'>Startdatum In Productie</label>
-            <input
-              type='date'
-              className='utrecht-textbox'
-              value={gebruik?.startDatumInProductie || ''}
-              onChange={(e) =>
-                setGebruikData('startDatumInProductie', e.target.value)
-              }
-            />
-          </div>
-        )}
-        {gebruik?.status === 'Uit te faseren' && (
-          <div>
-            <label className='utrecht-form-label'>Startdatum Uit Te Faseren</label>
-            <input
-              type='date'
-              className='utrecht-textbox'
-              value={gebruik?.startDatumUitTeFaseren || ''}
-              onChange={(e) =>
-                setGebruikData('startDatumUitTeFaseren', e.target.value)
-              }
-            />
-          </div>
-        )}
-        {gebruik?.status === 'Uitgefaseerd' && (
-          <div>
-            <label className='utrecht-form-label'>Startdatum Uit Gefaseerd</label>
-            <input
-              type='date'
-              className='utrecht-textbox'
-              value={gebruik?.startDatumUitGefaseerd || ''}
-              onChange={(e) =>
-                setGebruikData('startDatumUitGefaseerd', e.target.value)
-              }
-            />
-          </div>
-        )}
+        {/* Interne notitie field */}
+        <div style={{ gridColumn: 'span 2' }}>
+          <ConSchemaEnhancedField
+            schemaType='gebruik'
+            schemaProperty='interneAantekening'
+            value={gebruik?.interneAantekening || ''}
+            onChange={(value) => setGebruikData('interneAantekening', value)}
+            isDisabled={loading}
+            width='full'
+            schemas={schemas}
+            customProps={{
+              label: 'Interne notitie',
+              placeholder: 'Voeg een interne notitie toe',
+              description:
+                'Interne notitie die alleen zichtbaar is voor uw organisatie',
+            }}
+          />
+        </div>
       </div>
     </div>
   );
