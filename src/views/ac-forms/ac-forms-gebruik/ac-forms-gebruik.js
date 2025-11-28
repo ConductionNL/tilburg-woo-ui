@@ -1902,8 +1902,10 @@ const AcFormsGebruik = ({ store }) => {
                           </AcButton>
                         )}
 
+                      {/* Show this button when aanBieder step is NOT shown, so that its on the left */}
                       {getLogicalStepFromPhysical(currentStep) === 0 &&
-                        applicatieKeuze === 'bestaand' && (
+                        applicatieKeuze === 'bestaand' &&
+                        !needsAanbiederStep && (
                           <AcButton
                             style='button'
                             buttonType='secondary'
@@ -1921,6 +1923,20 @@ const AcFormsGebruik = ({ store }) => {
                           currentStep === 0 && 'ac-register-form-next-button'
                         )}
                       >
+                        {/* Show this button when aanBieder step is shown, so that its on the right */}
+                        {getLogicalStepFromPhysical(currentStep) === 0 &&
+                          applicatieKeuze === 'bestaand' &&
+                          needsAanbiederStep && (
+                            <AcButton
+                              style='button'
+                              buttonType='secondary'
+                              icon={<VISUALS.CUBE />}
+                              onClick={() => setApplicatieKeuze('nieuw')}
+                            >
+                              Ik kan de gewenste applicatie niet vinden
+                            </AcButton>
+                          )}
+
                         {getLogicalStepFromPhysical(currentStep) !== 5 && (
                           <div className='ac-register-button-wrapper'>
                             <AcButton
