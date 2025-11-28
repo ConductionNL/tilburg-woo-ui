@@ -12,7 +12,7 @@ import { Paragraph, Link } from '@utrecht/component-library-react/dist/css-modul
  * @param {Function} setGebruikData - Function to update gebruik data
  * @param {Array} referentieComponentenOptions - Available reference component options
  * @param {Array} referentieComponentenWithStandards - Reference components with their standards
- * @param {Function} setReferentieComponentenWithStandards - Function to update reference components with standards
+ * @param {Function} setSelectedReferentieComponenten - Function to update reference components with standards
  * @param {Object} schemas - Available schemas for field configuration
  * @param {boolean} loading - Loading state indicator
  * @param {boolean} referentieComponentenLoading - Loading state for referentiecomponenten options
@@ -24,7 +24,7 @@ const ConGebruikStepReferentiecomponenten = memo(
     gebruik,
     setGebruikData,
     referentieComponentenOptions,
-    setReferentieComponentenWithStandards,
+    setSelectedReferentieComponenten,
     loading,
     referentieComponentenLoading,
     applicatieKeuze = 'bestaand',
@@ -56,7 +56,7 @@ const ConGebruikStepReferentiecomponenten = memo(
       const refsArray = normalizeValues(refs);
 
       // Update the separate array with full referentieComponent data including standards
-      setReferentieComponentenWithStandards((prev) => {
+      setSelectedReferentieComponenten((prev) => {
         // Remove existing entries for this gebruik (using gebruikId 0 for single gebruik)
         const filtered = prev.filter((item) => item.gebruikId !== 0);
 
@@ -71,9 +71,6 @@ const ConGebruikStepReferentiecomponenten = memo(
             id: refId,
             naam: refOption?.label || refId,
             gebruikId: 0,
-            // Extract standards from the API data (these come from _extend query parameter)
-            aanbevolenStandaarden: refData.aanbevolenStandaarden || [],
-            verplichteStandaarden: refData.verplichteStandaarden || [],
             // Store the full API data for future use
             fullData: refData,
           };

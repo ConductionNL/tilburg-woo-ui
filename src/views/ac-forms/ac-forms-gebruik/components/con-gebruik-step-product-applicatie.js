@@ -96,7 +96,9 @@ const ConGebruikStepProductApplicatie = ({
         <div className='con-form-fields-container'>
           {/* Section 1: Leverancier */}
           <h3 className='utrecht-heading-3' style={{ width: '100%' }}>
-            Leverancier
+            {leverancierKeuze === 'bestaand'
+              ? 'Leverancier selecteren'
+              : 'Leverancier aanmaken'}
           </h3>
 
           {/* Existing leverancier dropdown */}
@@ -108,11 +110,27 @@ const ConGebruikStepProductApplicatie = ({
                 schemaProperty='aanbieder'
                 value={nieuweApplicatie.leverancier}
                 onChange={(value) => {
-                  const nextId =
-                    (value && value.data && (value.data.id || value.data.value)) ||
-                    (value && value.value) ||
-                    value;
-                  setNieuweApplicatieData('leverancier', nextId);
+                  // Check if this is the manually created aanbieder
+                  if (
+                    value &&
+                    (value._isManuallyCreatedAanbieder ||
+                      value.data?._isManuallyCreatedAanbieder ||
+                      (typeof value.value === 'string' &&
+                        value.value.startsWith('__manually_created_aanbieder__')))
+                  ) {
+                    // Store the full value to match the option, but we'll recognize it by the prefix
+                    setNieuweApplicatieData(
+                      'leverancier',
+                      value.value || '__manually_created_aanbieder__'
+                    );
+                  } else {
+                    // Normal leverancier selection
+                    const nextId =
+                      (value && value.data && (value.data.id || value.data.value)) ||
+                      (value && value.value) ||
+                      value;
+                    setNieuweApplicatieData('leverancier', nextId);
+                  }
                 }}
                 isDisabled={loading}
                 isLoading={leverancierLoading}
@@ -123,6 +141,7 @@ const ConGebruikStepProductApplicatie = ({
                   searchLeveranciers && searchLeveranciers(q || '')
                 }
                 customProps={{
+                  label: 'Leverancier',
                   isClearable: true,
                   placeholder: 'Zoek en selecteer leverancier',
                 }}
