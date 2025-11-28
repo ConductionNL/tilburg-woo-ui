@@ -302,9 +302,7 @@ const AcFormsGebruik = ({ store }) => {
       mapping.push(0);
     }
 
-    // Main step 1 header (Applicatie selectie)
-    mapping.push(getAdjustedStepIndex(0));
-    // Sub-step: Applicatie
+    // Main step 1 header (Applicatie selectie) - no sub-steps
     mapping.push(getAdjustedStepIndex(0));
 
     // Main step 2 header (Gebruik configuratie)
@@ -315,7 +313,7 @@ const AcFormsGebruik = ({ store }) => {
     mapping.push(getAdjustedStepIndex(3)); // Referentiecomponenten
 
     // Main step 3: Controleren
-    mapping.push(getAdjustedStepIndex(4));
+    mapping.push(getAdjustedStepIndex(5));
 
     return mapping;
   }, [getAdjustedStepIndex, needsAanbiederStep]);
