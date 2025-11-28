@@ -243,18 +243,42 @@ const ConFormApplicatieStandaardenStage = ({
     return result;
   }, [referentieComponentenWithStandards, standaardenMap]);
 
-  // Get IDs of standards already in referentieComponenten
+  // Get IDs of standards already in referentieComponenten (aanbevolen and verplicht)
   const existingStandardIds = useMemo(() => {
-    return new Set(allStandards.map((s) => String(s.id)));
-  }, [allStandards]);
+    const ids = new Set();
+
+    allStandards.forEach((s) => {
+      // Add primary ID
+      ids.add(String(s.id));
+
+      // Add alternative IDs from fetched data
+      const fetchedData = findMatchingStandardData({ id: s.id });
+      if (fetchedData) {
+        ['id', 'identifier', 'value', 'slug'].forEach((key) => {
+          if (fetchedData[key]) ids.add(String(fetchedData[key]));
+        });
+      }
+    });
+
+    return ids;
+  }, [allStandards, standaardenMap]);
 
   // Filter standaardenOptions to exclude standards already in referentieComponenten
   const availableExtraStandardsOptions = useMemo(() => {
     return (standaardenOptions || []).filter((opt) => {
-      const optId = String(
-        opt.value || opt.data?.id || opt.data?.identifier || opt.data?.value
-      );
-      return !existingStandardIds.has(optId);
+      // Collect all possible IDs from the option
+      const optIds = [
+        opt.value,
+        opt.data?.id,
+        opt.data?.identifier,
+        opt.data?.value,
+        opt.data?.slug,
+      ]
+        .filter(Boolean)
+        .map(String);
+
+      // Check if any ID matches existing standards
+      return !optIds.some((id) => existingStandardIds.has(id));
     });
   }, [standaardenOptions, existingStandardIds]);
 
@@ -1315,13 +1339,15 @@ const ConFormApplicatieStandaardenStage = ({
             <Paragraph style={{ margin: 0, fontSize: '0.9rem', color: '#6c757d' }}>
               <strong>Overzicht:</strong>{' '}
               <span className='con-standaard-summary-verplicht'>
-                {verplichteCount} verplichte {`standaard${verplichteCount > 1 ? 'en' : ''}`} (waarvan{' '}
+                {verplichteCount} verplichte{' '}
+                {`standaard${verplichteCount > 1 ? 'en' : ''}`} (waarvan{' '}
                 {verplichteCompliant} ondersteund)
               </span>
               {verplichteCount > 0 && aanbevolenCount > 0 && ', '}
               {aanbevolenCount > 0 && (
                 <span className='con-standaard-summary-aanbevolen'>
-                  {aanbevolenCount} aanbevolen {`standaard${aanbevolenCount > 1 ? 'en' : ''}`} (waarvan{' '}
+                  {aanbevolenCount} aanbevolen{' '}
+                  {`standaard${aanbevolenCount > 1 ? 'en' : ''}`} (waarvan{' '}
                   {aanbevolenCompliant} ondersteund)
                 </span>
               )}
@@ -1331,7 +1357,8 @@ const ConFormApplicatieStandaardenStage = ({
                 ', '}
               {extraEntries.length > 0 && (
                 <span className='con-standaard-summary-toegevoegd'>
-                  {extraEntries.length} toegevoegde {`standaard${extraEntries.length > 1 ? 'en' : ''}`} (waarvan{' '}
+                  {extraEntries.length} toegevoegde{' '}
+                  {`standaard${extraEntries.length > 1 ? 'en' : ''}`} (waarvan{' '}
                   {extraEntries.filter((entry) => entry.isCompliant).length}{' '}
                   ondersteund)
                 </span>

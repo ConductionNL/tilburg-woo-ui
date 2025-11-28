@@ -39,6 +39,7 @@ import ConFormApplicatieAanbiederInformatieStage from './components/con-form-app
 // Utils
 import { getStatusMultiStep } from './utils/steps.utils';
 import { getActiveWizard } from '@src/constants/wizards.constants';
+import { stripLocalIds } from './utils/serialization.utils';
 
 /**
  * Applicatie Aanmelden Wizard (AcFormsApplicatie)
@@ -439,13 +440,13 @@ const AcFormsApplicatieInner = ({
       setPrefillLoading(true);
       setPrefillError(null);
       try {
-        // Fetch the applicatie object with extended koppelingen and diensten
+        // Fetch the applicatie object with extended koppelingen, diensten, and moduleVersies
         await store.object.fetchObject(
           'voorzieningen',
           'module',
           String(applicatieId),
           {
-            _extend: ['@self.schema', 'koppelingen', 'diensten'],
+            _extend: ['@self.schema', 'koppelingen', 'diensten', 'moduleVersies'],
           }
         );
         if (cancelled) return;
@@ -1337,6 +1338,7 @@ const AcFormsApplicatieInner = ({
         ...applicatie,
         aanbieder: finalAanbieder,
       };
+      const sanitized = stripLocalIds(applicatieData);
 
       let createdApplicatie = null;
       if (applicatieId) {
@@ -1345,7 +1347,7 @@ const AcFormsApplicatieInner = ({
           'voorzieningen',
           'module',
           String(applicatieId),
-          applicatieData
+          sanitized
         );
         // For edit mode, use the existing applicatieId
         createdApplicatie = { id: applicatieId };
@@ -1354,7 +1356,7 @@ const AcFormsApplicatieInner = ({
         createdApplicatie = await store.object.createObject(
           'voorzieningen',
           'module',
-          applicatieData
+          sanitized
         );
       }
 
@@ -1434,7 +1436,7 @@ const AcFormsApplicatieInner = ({
             setApplicatieData={setApplicatieData}
             aanbiederOrganisatie={aanbiederOrganisatie}
             setAanbiederOrganisatieData={setAanbiederOrganisatieData}
-            loading={loading}
+            loading={loading || prefillLoading}
             schemas={schemas}
             aanbiederKeuze={aanbiederKeuze}
             setAanbiederKeuze={setAanbiederKeuze}
@@ -1450,7 +1452,7 @@ const AcFormsApplicatieInner = ({
           <ConFormApplicatieInformatieStage
             applicatie={applicatie}
             setApplicatieData={setApplicatieData}
-            loading={loading}
+            loading={loading || prefillLoading}
             touched={touched}
             schemas={schemas}
             contactpersoonOptions={contactpersoonOptions}
@@ -1789,8 +1791,8 @@ const AcFormsApplicatieInner = ({
                 </Alert>
               )}
 
-              {/* Only show form if not loading and no error */}
-              {!prefillLoading && !prefillError && (
+              {/* Show form always (even during loading), hide only on error */}
+              {!prefillError && (
                 <>
                   <div>
                     <h3
