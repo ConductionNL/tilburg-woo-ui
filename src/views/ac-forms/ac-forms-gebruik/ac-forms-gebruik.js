@@ -1905,7 +1905,7 @@ const AcFormsGebruik = ({ store }) => {
                       {/* Show this button when aanBieder step is NOT shown, so that its on the left */}
                       {getLogicalStepFromPhysical(currentStep) === 0 &&
                         applicatieKeuze === 'bestaand' &&
-                        !needsAanbiederStep && (
+                        currentStep === 0 && (
                           <AcButton
                             style='button'
                             buttonType='secondary'
@@ -1926,7 +1926,7 @@ const AcFormsGebruik = ({ store }) => {
                         {/* Show this button when aanBieder step is shown, so that its on the right */}
                         {getLogicalStepFromPhysical(currentStep) === 0 &&
                           applicatieKeuze === 'bestaand' &&
-                          needsAanbiederStep && (
+                          currentStep === 1 && (
                             <AcButton
                               style='button'
                               buttonType='secondary'
