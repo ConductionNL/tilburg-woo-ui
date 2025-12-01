@@ -3,10 +3,11 @@ import {
   UnorderedList,
   UnorderedListItem,
   Separator,
+  Link,
 } from '@utrecht/component-library-react/dist/css-module';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
-import { AcLink } from '@src/molecules';
 import { handleFileClick } from '@utils';
+import { AcFlex } from '@src/atoms';
 
 /**
  * ConGebruikStepReview
@@ -222,21 +223,39 @@ const ConGebruikStepReview = ({
                           </div>
                         )}
                         {afnemerOrganisatie?.website && (
-                          <div>
-                            <strong>Website:</strong> {afnemerOrganisatie.website}
-                          </div>
+                          <AcFlex spacing='xs'>
+                            <strong>Website:</strong>
+                            <Link
+                              href={
+                                afnemerOrganisatie.website.startsWith('http://') ||
+                                afnemerOrganisatie.website.startsWith('https://')
+                                  ? afnemerOrganisatie.website
+                                  : `https://${afnemerOrganisatie.website}`
+                              }
+                              target='_blank'
+                              rel='noopener noreferrer'
+                            >
+                              {afnemerOrganisatie.website}
+                            </Link>
+                          </AcFlex>
                         )}
                         {afnemerOrganisatie?.['e-mailadres'] && (
-                          <div>
-                            <strong>E-mailadres:</strong>{' '}
-                            {afnemerOrganisatie['e-mailadres']}
-                          </div>
+                          <AcFlex spacing='xs'>
+                            <strong>E-mailadres:</strong>
+                            <Link
+                              href={`mailto:${afnemerOrganisatie['e-mailadres']}`}
+                            >
+                              {afnemerOrganisatie['e-mailadres']}
+                            </Link>
+                          </AcFlex>
                         )}
                         {afnemerOrganisatie?.telefoonnummer && (
-                          <div>
-                            <strong>Telefoonnummer:</strong>{' '}
-                            {afnemerOrganisatie.telefoonnummer}
-                          </div>
+                          <AcFlex spacing='xs'>
+                            <strong>Telefoonnummer:</strong>
+                            <Link href={`tel:${afnemerOrganisatie.telefoonnummer}`}>
+                              {afnemerOrganisatie.telefoonnummer}
+                            </Link>
+                          </AcFlex>
                         )}
                       </div>
                     </div>
@@ -274,9 +293,21 @@ const ConGebruikStepReview = ({
                       <strong>Naam:</strong> {nieuweApplicatie?.naam || '-'}
                     </div>
                     {nieuweApplicatie?.website && (
-                      <div>
-                        <strong>Website:</strong> {nieuweApplicatie.website}
-                      </div>
+                      <AcFlex spacing='xs'>
+                        <strong>Website:</strong>
+                        <Link
+                          href={
+                            nieuweApplicatie.website.startsWith('http://') ||
+                            nieuweApplicatie.website.startsWith('https://')
+                              ? nieuweApplicatie.website
+                              : `https://${nieuweApplicatie.website}`
+                          }
+                          target='_blank'
+                          rel='noopener noreferrer'
+                        >
+                          {nieuweApplicatie.website}
+                        </Link>
+                      </AcFlex>
                     )}
                     {nieuweApplicatie?.beschrijvingKort && (
                       <div>
@@ -300,22 +331,45 @@ const ConGebruikStepReview = ({
                             </div>
                           )}
                           {leverancierOrganisatie?.website && (
-                            <div>
-                              <strong>Website:</strong>{' '}
-                              {leverancierOrganisatie.website}
-                            </div>
+                            <AcFlex spacing='xs'>
+                              <strong>Website:</strong>
+                              <Link
+                                href={
+                                  leverancierOrganisatie.website.startsWith(
+                                    'http://'
+                                  ) ||
+                                  leverancierOrganisatie.website.startsWith(
+                                    'https://'
+                                  )
+                                    ? leverancierOrganisatie.website
+                                    : `https://${leverancierOrganisatie.website}`
+                                }
+                                target='_blank'
+                                rel='noopener noreferrer'
+                              >
+                                {leverancierOrganisatie.website}
+                              </Link>
+                            </AcFlex>
                           )}
                           {leverancierOrganisatie?.['e-mailadres'] && (
-                            <div>
-                              <strong>E-mailadres:</strong>{' '}
-                              {leverancierOrganisatie['e-mailadres']}
-                            </div>
+                            <AcFlex spacing='xs'>
+                              <strong>E-mailadres:</strong>
+                              <Link
+                                href={`mailto:${leverancierOrganisatie['e-mailadres']}`}
+                              >
+                                {leverancierOrganisatie['e-mailadres']}
+                              </Link>
+                            </AcFlex>
                           )}
                           {leverancierOrganisatie?.telefoonnummer && (
-                            <div>
-                              <strong>Telefoonnummer:</strong>{' '}
-                              {leverancierOrganisatie.telefoonnummer}
-                            </div>
+                            <AcFlex spacing='xs'>
+                              <strong>Telefoonnummer:</strong>
+                              <Link
+                                href={`tel:${leverancierOrganisatie.telefoonnummer}`}
+                              >
+                                {leverancierOrganisatie.telefoonnummer}
+                              </Link>
+                            </AcFlex>
                           )}
                         </div>
                       </div>
@@ -466,7 +520,7 @@ const ConGebruikStepReview = ({
                           {comp.bewijs ? (
                             <>
                               <span>- bewijs:</span>
-                              <AcLink
+                              <Link
                                 href='#'
                                 onClick={(e) => {
                                   e.preventDefault();
@@ -475,18 +529,18 @@ const ConGebruikStepReview = ({
                                 title={comp.bewijsFilename || 'bewijs'}
                               >
                                 {createMiddleEllipsis(comp.bewijsFilename)}
-                              </AcLink>
+                              </Link>
                             </>
                           ) : comp.url ? (
                             <>
                               <span>- bewijs:</span>
-                              <AcLink
+                              <Link
                                 href={comp.url}
                                 target='_blank'
                                 rel='noopener noreferrer'
                               >
                                 {comp.url}
-                              </AcLink>
+                              </Link>
                             </>
                           ) : (
                             <span style={{ color: '#666' }}>(geen bewijs)</span>

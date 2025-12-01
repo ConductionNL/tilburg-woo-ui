@@ -13,7 +13,7 @@ const ConGebruikStepInformatie = ({
   schemas,
   applicatieKeuze,
   selectedApplicatieData,
-  nieuweApplicatie,
+  setNieuweApplicatieData,
 }) => {
   return (
     <div
@@ -29,7 +29,7 @@ const ConGebruikStepInformatie = ({
         {/* Hosting field - filtered from applicatie's cloudDienstverleningsmodel */}
         <div style={{ gridColumn: 'span 2' }}>
           {(() => {
-            // Get hosting options from selected applicatie
+            // Get hosting options from selected applicatie or module schema enum
             const hostingOptions = [];
             if (
               applicatieKeuze === 'bestaand' &&
@@ -43,18 +43,22 @@ const ConGebruikStepInformatie = ({
               hostingOptions.push(
                 ...hostingArray.map((h) => ({ value: h, label: h }))
               );
-            } else if (
-              applicatieKeuze === 'nieuw' &&
-              nieuweApplicatie?.cloudDienstverleningsmodel
-            ) {
-              const hostingArray = Array.isArray(
-                nieuweApplicatie.cloudDienstverleningsmodel
-              )
-                ? nieuweApplicatie.cloudDienstverleningsmodel
-                : [nieuweApplicatie.cloudDienstverleningsmodel];
-              hostingOptions.push(
-                ...hostingArray.map((h) => ({ value: h, label: h }))
-              );
+            } else if (applicatieKeuze === 'nieuw') {
+              // Get enum values from module schema for new applicatie flow
+              const moduleSchema = schemas?.module;
+              const cloudDienstverleningsmodelProperty =
+                moduleSchema?.properties?.cloudDienstverleningsmodel;
+              if (
+                cloudDienstverleningsmodelProperty?.type === 'array' &&
+                cloudDienstverleningsmodelProperty?.items?.enum
+              ) {
+                hostingOptions.push(
+                  ...cloudDienstverleningsmodelProperty.items.enum.map((h) => ({
+                    value: h,
+                    label: h,
+                  }))
+                );
+              }
             }
 
             return (
@@ -62,9 +66,13 @@ const ConGebruikStepInformatie = ({
                 schemaType='gebruik'
                 schemaProperty='cloudDienstverleningsmodel'
                 value={gebruik?.cloudDienstverleningsmodel || ''}
-                onChange={(value) =>
-                  setGebruikData('cloudDienstverleningsmodel', value)
-                }
+                onChange={(value) => {
+                  setGebruikData('cloudDienstverleningsmodel', value);
+                  // When creating new applicatie, also update nieuweApplicatie
+                  if (applicatieKeuze === 'nieuw' && setNieuweApplicatieData) {
+                    setNieuweApplicatieData('cloudDienstverleningsmodel', value);
+                  }
+                }}
                 isDisabled={loading || hostingOptions.length === 0}
                 width='full'
                 schemas={schemas}

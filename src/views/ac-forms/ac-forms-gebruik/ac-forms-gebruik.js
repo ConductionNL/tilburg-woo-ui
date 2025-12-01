@@ -247,7 +247,7 @@ const AcFormsGebruik = ({ store }) => {
    * Accounts for the optional Aanbieder step (only shown for ontbrekend-organisatie)
    * Accounts for the optional Deelnemers step (only shown for samenwerking)
    * @param {number} logicalStep - The logical step number
-   * Logical steps: -1=Aanbieder (optional), 0=Applicatie, 1=Informatie, 2=Versie, 3=Referentiecomponenten, 4=Deelnemers, 5=Controleren
+   * Logical steps: -1=Aanbieder (optional), 0=Applicatie, 1=Informatie, 2=Versie, 3=Referentiecomponenten, 4=Controleren
    * @returns {number} The adjusted physical step index
    */
   const getAdjustedStepIndex = useCallback(
@@ -313,7 +313,7 @@ const AcFormsGebruik = ({ store }) => {
     mapping.push(getAdjustedStepIndex(3)); // Referentiecomponenten
 
     // Main step 3: Controleren
-    mapping.push(getAdjustedStepIndex(5));
+    mapping.push(getAdjustedStepIndex(4));
 
     return mapping;
   }, [getAdjustedStepIndex, needsAanbiederStep]);
@@ -765,7 +765,7 @@ const AcFormsGebruik = ({ store }) => {
           {
             _limit: '50',
             _page: '1',
-            '_extend[]': '@self.schema',
+            '_extend[]': ['@self.schema', 'moduleVersies'],
           },
           null,
           'gebruik_form'
@@ -818,7 +818,7 @@ const AcFormsGebruik = ({ store }) => {
               'module',
               String(applicatieFromUrl),
               {
-                '_extend[]': '@self.schema',
+                '_extend[]': ['@self.schema', 'moduleVersies'],
               }
             );
             const fetched = store.object.getObject(
@@ -859,7 +859,7 @@ const AcFormsGebruik = ({ store }) => {
         const queryParams = {
           _limit: '50',
           _page: '1',
-          '_extend[]': '@self.schema',
+          '_extend[]': ['@self.schema', 'moduleVersies'],
         };
 
         // Add search parameter if provided
@@ -1165,7 +1165,7 @@ const AcFormsGebruik = ({ store }) => {
       if (!modData || !Array.isArray(versiesArray) || versiesArray.length === 0) {
         try {
           await store.object.fetchObject('voorzieningen', 'module', String(mod), {
-            '_extend[]': '@self.schema,@self.relations',
+            '_extend[]': ['@self.schema', '@self.relations', 'moduleVersies'],
           });
           if (cancelled) return;
           modData = store.object.getObject('voorzieningen_module', String(mod));
@@ -1652,7 +1652,7 @@ const AcFormsGebruik = ({ store }) => {
             gebruikType={gebruikType}
             applicatieKeuze={applicatieKeuze}
             selectedApplicatieData={selectedApplicatieData}
-            nieuweApplicatie={nieuweApplicatie}
+            setNieuweApplicatieData={setNieuweApplicatieData}
           />
         );
       case 2:
@@ -1817,7 +1817,7 @@ const AcFormsGebruik = ({ store }) => {
                         {
                           id: 'controleren-step',
                           marker: needsAanbiederStep ? 4 : 3,
-                          status: getStatus(currentStep, getAdjustedStepIndex(5)),
+                          status: getStatus(currentStep, getAdjustedStepIndex(4)),
                           title: 'Controleren',
                         },
                       ]}
@@ -1857,76 +1857,56 @@ const AcFormsGebruik = ({ store }) => {
 
                     {renderStep(currentStep)}
 
-                    <div
+                    <AcFlex
+                      justifyContent='between'
                       className={clsx(
                         'ac-register-form-buttons',
                         currentStep !== 0 &&
                           'ac-register-form-buttons-not-first-step'
                       )}
                     >
-                      {currentStep !== 0 && (
-                        <AcButton
-                          style='button'
-                          buttonType='secondary'
-                          icon={<VISUALS.ARROW_LEFT />}
-                          onClick={() => setCurrentStep(currentStep - 1)}
-                          disabled={loading || prefillLoading || !!prefillError}
-                        >
-                          Vorige
-                        </AcButton>
-                      )}
-
-                      {/* Show "Ik kan de gewenste aanbieder niet vinden" button only on Aanbieder step */}
-                      {getLogicalStepFromPhysical(currentStep) === -1 &&
-                        afnemerKeuze === 'bestaand' && (
-                          <AcButton
-                            style='button'
-                            buttonType='secondary'
-                            icon={<VISUALS.BUILDING />}
-                            onClick={() => setAfnemerKeuze('nieuw')}
-                          >
-                            Ik kan de gewenste aanbieder niet vinden
-                          </AcButton>
-                        )}
-
-                      {/* Show "Bestaande aanbieder selecteren" button only on Aanbieder step when creating new */}
-                      {getLogicalStepFromPhysical(currentStep) === -1 &&
-                        afnemerKeuze === 'nieuw' && (
+                      <AcFlex spacing='xs' style={{ width: 'fit-content' }}>
+                        {currentStep !== 0 && (
                           <AcButton
                             style='button'
                             buttonType='secondary'
                             icon={<VISUALS.ARROW_LEFT />}
-                            onClick={() => setAfnemerKeuze('bestaand')}
+                            onClick={() => setCurrentStep(currentStep - 1)}
+                            disabled={loading || prefillLoading || !!prefillError}
                           >
-                            Bestaande aanbieder selecteren
+                            Vorige
                           </AcButton>
                         )}
 
-                      {/* Show this button when aanBieder step is NOT shown, so that its on the left */}
-                      {getLogicalStepFromPhysical(currentStep) === 0 &&
-                        applicatieKeuze === 'bestaand' &&
-                        currentStep === 0 && (
-                          <AcButton
-                            style='button'
-                            buttonType='secondary'
-                            icon={<VISUALS.CUBE />}
-                            onClick={() => setApplicatieKeuze('nieuw')}
-                          >
-                            Ik kan de gewenste applicatie niet vinden
-                          </AcButton>
-                        )}
+                        {/* Show "Ik kan de gewenste aanbieder niet vinden" button only on Aanbieder step */}
+                        {getLogicalStepFromPhysical(currentStep) === -1 &&
+                          afnemerKeuze === 'bestaand' && (
+                            <AcButton
+                              style='button'
+                              buttonType='secondary'
+                              icon={<VISUALS.BUILDING />}
+                              onClick={() => setAfnemerKeuze('nieuw')}
+                            >
+                              Ik kan de gewenste aanbieder niet vinden
+                            </AcButton>
+                          )}
 
-                      <AcFlex
-                        spacing='xs'
-                        style={{ width: 'fit-content' }}
-                        className={clsx(
-                          currentStep === 0 && 'ac-register-form-next-button'
-                        )}
-                      >
-                        {/* Show this button when aanBieder step is shown, so that its on the right */}
+                        {/* Show "Bestaande aanbieder selecteren" button only on Aanbieder step when creating new */}
+                        {getLogicalStepFromPhysical(currentStep) === -1 &&
+                          afnemerKeuze === 'nieuw' && (
+                            <AcButton
+                              style='button'
+                              buttonType='secondary'
+                              icon={<VISUALS.ARROW_LEFT />}
+                              onClick={() => setAfnemerKeuze('bestaand')}
+                            >
+                              Bestaande aanbieder selecteren
+                            </AcButton>
+                          )}
+
+                        {/* Show this button when aanBieder step is NOT shown, so that its on the left */}
                         {getLogicalStepFromPhysical(currentStep) === 0 &&
-                          applicatieKeuze === 'bestaand' &&
-                          currentStep === 1 && (
+                          applicatieKeuze === 'bestaand' && (
                             <AcButton
                               style='button'
                               buttonType='secondary'
@@ -1937,7 +1917,39 @@ const AcFormsGebruik = ({ store }) => {
                             </AcButton>
                           )}
 
-                        {getLogicalStepFromPhysical(currentStep) !== 5 && (
+                        {/* Show this button when aanBieder step is NOT shown, so that its on the left */}
+                        {getLogicalStepFromPhysical(currentStep) === 0 &&
+                          applicatieKeuze === 'nieuw' && (
+                            <AcButton
+                              style='button'
+                              buttonType='secondary'
+                              icon={<VISUALS.ARROW_LEFT />}
+                              onClick={() => {
+                                setApplicatieKeuze('bestaand');
+                                // Reset leverancier-related state when switching back to existing applicatie
+                                setLeverancierKeuze('bestaand');
+                                setLeverancierOrganisatie((prev) => {
+                                  // Reset all properties of the prev object to empty strings
+                                  return Object.fromEntries(
+                                    Object.keys(prev).map((key) => [key, ''])
+                                  );
+                                });
+                                setNieuweApplicatieData('leverancier', null);
+                              }}
+                            >
+                              Bestaande applicatie selecteren
+                            </AcButton>
+                          )}
+                      </AcFlex>
+
+                      <AcFlex
+                        spacing='xs'
+                        style={{ width: 'fit-content' }}
+                        className={clsx(
+                          currentStep === 0 && 'ac-register-form-next-button'
+                        )}
+                      >
+                        {getLogicalStepFromPhysical(currentStep) !== 4 && (
                           <div className='ac-register-button-wrapper'>
                             <AcButton
                               style='button'
@@ -1956,7 +1968,7 @@ const AcFormsGebruik = ({ store }) => {
                         )}
                       </AcFlex>
 
-                      {getLogicalStepFromPhysical(currentStep) === 5 && (
+                      {getLogicalStepFromPhysical(currentStep) === 4 && (
                         <AcButton
                           style='button'
                           buttonType='primary'
@@ -1974,7 +1986,7 @@ const AcFormsGebruik = ({ store }) => {
                           {isEditMode ? 'Gebruik updaten' : 'Gebruik registreren'}
                         </AcButton>
                       )}
-                    </div>
+                    </AcFlex>
                   </div>
                 </div>
               </div>
