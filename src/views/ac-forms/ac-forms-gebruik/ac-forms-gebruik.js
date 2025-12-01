@@ -175,7 +175,15 @@ const AcFormsGebruik = ({ store }) => {
         })(),
         product: api.product || api?.['@self']?.relations?.product || null,
         // Use string ids for fields used as identifiers in requests
-        module: api.module || api?.['@self']?.relations?.module || null,
+        // Check relations if module is just an ID string
+        module: (() => {
+          const moduleRef = api.module || api?.['@self']?.relations?.module;
+          if (!moduleRef) return null;
+          // If it's already a string ID, return it directly
+          if (typeof moduleRef === 'string') return moduleRef;
+          // If it's an object, extract the ID
+          return getIdString(moduleRef) || null;
+        })(),
         moduleVersie:
           getIdString(
             api.moduleVersie ||
@@ -196,6 +204,8 @@ const AcFormsGebruik = ({ store }) => {
               .map((d) => getIdString(d))
               .filter((id) => typeof id === 'string' && id !== '')
           : [],
+        interneAantekening: api.interneAantekening || '',
+        cloudDienstverleningsmodel: api.cloudDienstverleningsmodel || '',
       };
 
       // Determine gebruikType based on afnemer vs current organization
@@ -660,7 +670,7 @@ const AcFormsGebruik = ({ store }) => {
     return () => {
       cancelled = true;
     };
-  }, [isEditMode, gebruikId, mapFetchedGebruikToLocalState, store]);
+  }, [isEditMode, gebruikId, mapFetchedGebruikToLocalState, store, getIdString]);
 
   // Update gebruikType when URL type parameter changes (for non-edit mode)
   useEffect(() => {
@@ -777,7 +787,17 @@ const AcFormsGebruik = ({ store }) => {
         );
         const list = collection?.results || collection || [];
         const options = list.map(mapToOption);
-        setModulesOptions(options);
+        // Merge with existing options to preserve modules added by edit mode fetch
+        setModulesOptions((prev) => {
+          const existingMap = new Map(prev.map((opt) => [opt.value, opt]));
+          // Add new options, preferring existing ones if they exist
+          options.forEach((opt) => {
+            if (!existingMap.has(opt.value)) {
+              existingMap.set(opt.value, opt);
+            }
+          });
+          return Array.from(existingMap.values());
+        });
       } catch (_) {
         if (!cancelled) {
           setModulesOptions([]);
@@ -1192,6 +1212,63 @@ const AcFormsGebruik = ({ store }) => {
     store,
     isEditMode,
     isInitialLoad,
+    getIdString,
+  ]);
+
+  // Add module to options when it becomes available (for edit mode)
+  useEffect(() => {
+    if (!isEditMode || !gebruik?.module) return;
+
+    const moduleId = getIdString(gebruik.module);
+    if (!moduleId) return;
+
+    // Already in options? Skip
+    const alreadyInOptions = modulesOptions.some(
+      (opt) => String(opt.value) === String(moduleId)
+    );
+    if (alreadyInOptions) return;
+
+    // Try to find module from various sources
+    let moduleData = null;
+
+    // Check selectedApplicatieData (set by module resolution useEffect)
+    if (
+      selectedApplicatieData &&
+      String(getIdString(selectedApplicatieData)) === String(moduleId)
+    ) {
+      moduleData = selectedApplicatieData;
+    }
+
+    // Check collection
+    if (!moduleData) {
+      const collection = store.object.getCollection(
+        'voorzieningen_module_gebruik_form'
+      );
+      const list = collection?.results || collection || [];
+      moduleData = list.find(
+        (item) => String(getIdString(item)) === String(moduleId)
+      );
+    }
+
+    // Check store (module might have been fetched by the resolution useEffect)
+    if (!moduleData) {
+      moduleData = store.object.getObject('voorzieningen_module', String(moduleId));
+    }
+
+    // Add to options if found
+    if (moduleData) {
+      const option = mapToOption(moduleData, 0);
+      setModulesOptions((prev) => {
+        const exists = prev.some((o) => String(o.value) === String(option.value));
+        return exists ? prev : [...prev, option];
+      });
+    }
+  }, [
+    isEditMode,
+    gebruik?.module,
+    modulesOptions,
+    selectedApplicatieData,
+    store,
     getIdString,
   ]);
 
