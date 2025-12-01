@@ -529,6 +529,35 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     const schemaSlug =
       config.schemaSlug === 'module' ? 'applicatie' : config.schemaSlug;
 
+    // Special handling for applicatie schema based on user roles
+    if (schemaSlug === 'applicatie') {
+      // Get user groups from the user object
+      const userGroups = user?.currentUser?.groups || user?.user?.groups || [];
+
+      // Check which groups the user has
+      const hasAanbodBeheerder = userGroups.includes('aanbod-beheerder');
+      const hasGebruikBeheerder = userGroups.includes('gebruik-beheerder');
+
+      // Route based on user groups
+      if (hasAanbodBeheerder && hasGebruikBeheerder) {
+        // User has both groups - go to type selection page
+        navigate('/forms/applicatie');
+        return;
+      } else if (hasAanbodBeheerder) {
+        // User only has aanbod-beheerder - go directly to eigen applicatie
+        navigate('/forms/applicatie?type=eigen');
+        return;
+      } else if (hasGebruikBeheerder) {
+        // User only has gebruik-beheerder - go directly to ontbrekend applicatie
+        navigate('/forms/applicatie?type=ontbrekend-applicatie');
+        return;
+      }
+
+      // Fallback: user has neither group - go to type selection page
+      navigate('/forms/applicatie');
+      return;
+    }
+
     const wizards = Object.values(DASHBOARD_WIZARDS);
     const wizard = wizards.find((w) => w.schema === schemaSlug);
     const areThereMultipleOptions =
@@ -541,7 +570,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
 
     // Fallback to legacy modal when no wizard is defined for this schema
     setOpenModal('add');
-  }, [config?.schemaSlug, navigate]);
+  }, [config?.schemaSlug, navigate, user]);
 
   // Generate headers from dataProperties schema
   const headers = useMemo(() => {
