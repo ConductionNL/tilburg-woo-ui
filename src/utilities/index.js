@@ -151,3 +151,4 @@ export {
   useResolvedArray,
 } from './con-resolve-uuids-in-text';
 export { normalizeSchemaName } from './con-normalize-schema-name';
+export { checkOrganizationPermissions } from './organization-permissions';

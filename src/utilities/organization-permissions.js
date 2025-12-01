@@ -2,84 +2,100 @@
  * Utility functions for checking organization-based permissions
  */
 
+import { isUUID } from '@src/utilities/con-resolve-uuids-in-text';
+
+/**
+ * Resolves a UUID to a name from cache, triggers background fetch if needed
+ * @param {string} uuid - The UUID to resolve
+ * @param {Object} objectStore - The object store with names cache
+ * @returns {string|null} - The resolved name or null if not in cache
+ */
+const resolveUUIDFromCache = (uuid, objectStore) => {
+  if (!uuid || !objectStore?.namesCache || !isUUID(uuid)) return null;
+
+  // Check if the name is in the cache
+  const cached = objectStore.namesCache[uuid];
+  if (cached) {
+    const age = Date.now() - cached.timestamp;
+    const maxAge = objectStore.namesCacheConfig?.maxAge || 600000; // 10 minutes default
+    if (age < maxAge && cached.name) return cached.name;
+  }
+
+  // Not in cache - trigger background fetch for next time (fire and forget)
+  objectStore.getNamesForSingleId?.(uuid).catch(() => {});
+  return null;
+};
+
 /**
  * Checks if a user can edit/publish an object based on organization matching
  * @param {Object} user - User store object
  * @param {Object} object - Object with @self property containing organization info
+ * @param {Object} objectStore - Object store for resolving UUIDs to names (optional, will use global if not provided)
  * @returns {Object} - { canEdit: boolean, reason: string }
  */
-export const checkOrganizationPermissions = (user, object) => {
+export const checkOrganizationPermissions = (user, object, objectStore = null) => {
+  // If objectStore not provided, try to get it from global
+  objectStore = objectStore || window?.app?.store?.object;
+
   // If user is not authenticated, no permissions
   if (!user?.isAuthenticated) {
-    return {
-      canEdit: false,
-      reason: 'Gebruiker is niet ingelogd'
-    };
+    return { canEdit: false, reason: 'Gebruiker is niet ingelogd' };
   }
 
   // Get user's active organization
   const userActiveOrg = user.activeOrganization;
-  
+
   // Get object's organization from @self property
-  const objectOrg = object?.['@self']?.organisation || object?.['@self']?.organization;
+  const objectOrg =
+    object?.['@self']?.organisation || object?.['@self']?.organization;
 
   // If no active organization for user, deny access
   if (!userActiveOrg) {
     return {
       canEdit: false,
-      reason: 'Geen actieve organisatie gevonden voor gebruiker'
+      reason: 'Geen actieve organisatie gevonden voor gebruiker',
     };
   }
 
   // If no organization info on object, allow (backward compatibility)
   if (!objectOrg) {
-    return {
-      canEdit: true,
-      reason: null
-    };
+    return { canEdit: true, reason: null };
   }
 
-  // Check if organization IDs match
   // Prefer UUID over numeric database ID for external API comparisons
   const userOrgId = userActiveOrg.uuid || userActiveOrg.id;
-  
-  // Handle both object and string organization IDs
-  let objectOrgId;
-  if (typeof objectOrg === 'string') {
-    // If objectOrg is a string UUID, use it directly
-    objectOrgId = objectOrg;
-  } else if (typeof objectOrg === 'object' && objectOrg !== null) {
-    // If objectOrg is an object, extract id or uuid
-    objectOrgId = objectOrg.id || objectOrg.uuid;
-  }
 
+  // Handle both object and string organization IDs
+  const objectOrgId =
+    typeof objectOrg === 'string' ? objectOrg : objectOrg?.id || objectOrg?.uuid;
+
+  // Check if organization IDs match
   if (userOrgId && objectOrgId && userOrgId === objectOrgId) {
-    return {
-      canEdit: true,
-      reason: null
-    };
+    return { canEdit: true, reason: null };
   }
 
   // Check if organization names match (fallback)
   const userOrgName = userActiveOrg.name || userActiveOrg.naam;
-  
-  // Only check name matching if objectOrg is an object
-  let objectOrgName;
-  if (typeof objectOrg === 'object' && objectOrg !== null) {
-    objectOrgName = objectOrg.name || objectOrg.naam;
-    
-    if (userOrgName && objectOrgName && userOrgName === objectOrgName) {
-      return {
-        canEdit: true,
-        reason: null
-      };
-    }
+  const objectOrgName = objectOrg?.name || objectOrg?.naam;
+
+  if (userOrgName && objectOrgName && userOrgName === objectOrgName) {
+    return { canEdit: true, reason: null };
   }
 
-  // Organizations don't match
+  // Try to resolve UUIDs to names from cache for better error messages
+  const resolvedObjectOrgName =
+    objectOrgName || resolveUUIDFromCache(objectOrgId, objectStore);
+  const resolvedUserOrgName =
+    userOrgName || resolveUUIDFromCache(userOrgId, objectStore);
+
+  // Organizations don't match - return permission denied with reason
   return {
     canEdit: false,
-    reason: `Dit object behoort tot een andere organisatie (${objectOrgName || objectOrgId || 'onbekend'}) dan uw actieve organisatie (${userOrgName || userOrgId || 'onbekend'})`
+    reason: `Dit object behoort tot een andere organisatie (${
+      resolvedObjectOrgName || objectOrgId || 'onbekend'
+    }) dan uw actieve organisatie (${
+      resolvedUserOrgName || userOrgId || 'onbekend'
+    })`,
   };
 };
 
@@ -92,9 +108,9 @@ export const checkOrganizationPermissions = (user, object) => {
 export const getDisabledActionTooltip = (action, reason) => {
   const actionMap = {
     edit: 'bewerken',
-    publish: 'publiceren', 
+    publish: 'publiceren',
     depublish: 'depubliceren',
-    delete: 'verwijderen'
+    delete: 'verwijderen',
   };
 
   const actionText = actionMap[action] || action;
