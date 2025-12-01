@@ -57,9 +57,16 @@ const ConStandardsTable = ({
   const [referentieComponentenWithStandards, setReferentieComponentenWithStandards] =
     useState([]);
 
+  // Memoize the referentieComponenten array to prevent unnecessary refetches
+  // when the parent component re-renders with a new array reference but same content
+  const memoizedReferentieComponenten = useMemo(() => {
+    if (!referentieComponenten?.length) return [];
+    return referentieComponenten;
+  }, [JSON.stringify(referentieComponenten)]);
+
   // Fetch referentieComponenten data with their standards
   const fetchReferentieComponentenWithStandards = useCallback(async () => {
-    if (!referentieComponenten?.length) {
+    if (!memoizedReferentieComponenten?.length) {
       setReferentieComponentenWithStandards([]);
       return;
     }
@@ -94,7 +101,7 @@ const ConStandardsTable = ({
       const allReferentieComponenten = data.results || data;
 
       // Filter to only the referentieComponenten that are used in this object
-      const objectReferentieComponenten = referentieComponenten
+      const objectReferentieComponenten = memoizedReferentieComponenten
         .map((refId) => {
           const refData = allReferentieComponenten.find(
             (ref) =>
@@ -137,7 +144,7 @@ const ConStandardsTable = ({
       );
       setReferentieComponentenWithStandards([]);
     }
-  }, [referentieComponenten]);
+  }, [memoizedReferentieComponenten]);
 
   // Fetch standards from openconnector endpoint
   const fetchStandards = useCallback(async () => {
@@ -355,12 +362,21 @@ const ConStandardsTable = ({
   }, [allStandards.length, onStandardsCountChange]);
 
   // Notify parent component when referentieComponenten data changes
+  // Use a ref to prevent calling the callback unnecessarily and causing infinite loops
+  const previousReferentieComponentenDataRef = React.useRef(null);
   useEffect(() => {
     if (
       onReferentieComponentenChange &&
       effectiveReferentieComponentenWithStandards
     ) {
-      onReferentieComponentenChange(effectiveReferentieComponentenWithStandards);
+      // Only call the callback if the data actually changed (deep comparison by JSON)
+      const currentDataJson = JSON.stringify(
+        effectiveReferentieComponentenWithStandards
+      );
+      if (previousReferentieComponentenDataRef.current !== currentDataJson) {
+        previousReferentieComponentenDataRef.current = currentDataJson;
+        onReferentieComponentenChange(effectiveReferentieComponentenWithStandards);
+      }
     }
   }, [effectiveReferentieComponentenWithStandards, onReferentieComponentenChange]);
 

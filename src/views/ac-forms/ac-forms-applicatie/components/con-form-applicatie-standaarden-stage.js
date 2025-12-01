@@ -247,12 +247,12 @@ const ConFormApplicatieStandaardenStage = ({
   const existingStandardIds = useMemo(() => {
     const ids = new Set();
 
-    allStandards.forEach((s) => {
+    allStandards.forEach((standard) => {
       // Add primary ID
-      ids.add(String(s.id));
+      ids.add(String(standard.id));
 
       // Add alternative IDs from fetched data
-      const fetchedData = findMatchingStandardData({ id: s.id });
+      const fetchedData = findMatchingStandardData({ id: standard.id });
       if (fetchedData) {
         ['id', 'identifier', 'value', 'slug'].forEach((key) => {
           if (fetchedData[key]) ids.add(String(fetchedData[key]));
@@ -265,35 +265,37 @@ const ConFormApplicatieStandaardenStage = ({
 
   // Filter standaardenOptions to exclude standards already in referentieComponenten
   const availableExtraStandardsOptions = useMemo(() => {
-    return (standaardenOptions || []).filter((opt) => {
+    return (standaardenOptions || []).filter((option) => {
       // Collect all possible IDs from the option
-      const optIds = [
-        opt.value,
-        opt.data?.id,
-        opt.data?.identifier,
-        opt.data?.value,
-        opt.data?.slug,
+      const optionIds = [
+        option.value,
+        option.data?.id,
+        option.data?.identifier,
+        option.data?.value,
+        option.data?.slug,
       ]
         .filter(Boolean)
         .map(String);
 
       // Check if any ID matches existing standards
-      return !optIds.some((id) => existingStandardIds.has(id));
+      return !optionIds.some((optionId) => existingStandardIds.has(optionId));
     });
   }, [standaardenOptions, existingStandardIds]);
 
   // Clean up selectedExtraStandards when standards move to referentieComponenten
   useEffect(() => {
-    const allStandardsIds = new Set(allStandards.map((s) => String(s.id)));
+    const allStandardsIds = new Set(
+      allStandards.map((standard) => String(standard.id))
+    );
 
     // Check if allStandardsIds actually changed
     const idsChanged =
       prevAllStandardsIdsRef.current.size !== allStandardsIds.size ||
       Array.from(prevAllStandardsIdsRef.current).some(
-        (id) => !allStandardsIds.has(id)
+        (standardId) => !allStandardsIds.has(standardId)
       ) ||
       Array.from(allStandardsIds).some(
-        (id) => !prevAllStandardsIdsRef.current.has(id)
+        (standardId) => !prevAllStandardsIdsRef.current.has(standardId)
       );
 
     if (!idsChanged) {
@@ -305,18 +307,110 @@ const ConFormApplicatieStandaardenStage = ({
 
     setSelectedExtraStandards((prev) => {
       // Check if any selectedExtraStandards need to be removed
-      const needsCleanup = prev.some((opt) =>
-        allStandardsIds.has(String(opt.value))
+      const needsCleanup = prev.some((option) =>
+        allStandardsIds.has(String(option.value))
       );
 
       if (!needsCleanup) {
         return prev; // Return same reference if no changes
       }
 
-      const filtered = prev.filter((opt) => !allStandardsIds.has(String(opt.value)));
+      const filtered = prev.filter(
+        (option) => !allStandardsIds.has(String(option.value))
+      );
       return filtered;
     });
   }, [allStandards, setSelectedExtraStandards]);
+
+  // Clean up orphaned compliancy entries when referentieComponenten or selectedExtraStandards change
+  useEffect(() => {
+    // Get all valid standard IDs (from both referentieComponenten and selectedExtraStandards)
+    const validStandardIds = new Set();
+
+    // Add standards from referentieComponenten (allStandards)
+    allStandards.forEach((standard) => {
+      // Add primary ID
+      validStandardIds.add(String(standard.id));
+
+      // Add alternative IDs from fetched data to handle different identifier formats
+      const fetchedData = findMatchingStandardData({ id: standard.id });
+      if (fetchedData) {
+        ['id', 'identifier', 'value', 'slug', 'uuid'].forEach((key) => {
+          if (fetchedData[key]) validStandardIds.add(String(fetchedData[key]));
+        });
+      }
+    });
+
+    // Add standards from selectedExtraStandards
+    selectedExtraStandards.forEach((option) => {
+      const standardId = String(option.value);
+      validStandardIds.add(standardId);
+
+      // Also add alternative IDs
+      const fetchedData = findMatchingStandardData({ id: standardId });
+      if (fetchedData) {
+        ['id', 'identifier', 'value', 'slug', 'uuid'].forEach((key) => {
+          if (fetchedData[key]) validStandardIds.add(String(fetchedData[key]));
+        });
+      }
+    });
+
+    // Check if any compliancy entries need to be removed
+    const currentCompliancy = Array.isArray(applicatie.compliancy)
+      ? applicatie.compliancy
+      : [];
+
+    const orphanedCompliancy = currentCompliancy.filter(
+      (compliancy) =>
+        !validStandardIds.has(String(compliancy.standaardversie)) &&
+        !validStandardIds.has(String(compliancy.standaardGemma))
+    );
+
+    // Only update if there are orphaned entries
+    if (orphanedCompliancy.length > 0) {
+      console.info(
+        `🧹 Cleaning up ${orphanedCompliancy.length} orphaned compliancy entries`
+      );
+
+      const cleanedCompliancy = currentCompliancy.filter(
+        (compliancy) =>
+          validStandardIds.has(String(compliancy.standaardversie)) ||
+          validStandardIds.has(String(compliancy.standaardGemma))
+      );
+
+      setApplicatieData('compliancy', cleanedCompliancy);
+
+      // Also clean up standaarden array
+      const currentStandaarden = Array.isArray(applicatie.standaarden)
+        ? applicatie.standaarden
+        : [];
+      const cleanedStandaarden = currentStandaarden.filter((standardId) =>
+        validStandardIds.has(String(standardId))
+      );
+      if (cleanedStandaarden.length !== currentStandaarden.length) {
+        setApplicatieData('standaarden', cleanedStandaarden);
+      }
+
+      // Also clean up standaardenGemma array
+      const currentStandaardenGemma = Array.isArray(applicatie.standaardenGemma)
+        ? applicatie.standaardenGemma
+        : [];
+      const cleanedStandaardenGemma = currentStandaardenGemma.filter((gemmaId) =>
+        validStandardIds.has(String(gemmaId))
+      );
+      if (cleanedStandaardenGemma.length !== currentStandaardenGemma.length) {
+        setApplicatieData('standaardenGemma', cleanedStandaardenGemma);
+      }
+    }
+  }, [
+    allStandards,
+    selectedExtraStandards,
+    applicatie.compliancy,
+    applicatie.standaarden,
+    applicatie.standaardenGemma,
+    setApplicatieData,
+    standaardenMap,
+  ]);
 
   // Initialize table state based on existing compliancy data
   useEffect(() => {
@@ -423,19 +517,21 @@ const ConFormApplicatieStandaardenStage = ({
   // Handle extra standards selection change
   const handleExtraStandardsChange = (selectedOptions) => {
     const newSelected = selectedOptions || [];
-    const newSelectedIds = new Set(newSelected.map((opt) => String(opt.value)));
+    const newSelectedIds = new Set(
+      newSelected.map((option) => String(option.value))
+    );
     const prevSelectedIds = new Set(
-      selectedExtraStandards.map((opt) => String(opt.value))
+      selectedExtraStandards.map((option) => String(option.value))
     );
 
     // Find standards that were removed
     const removedStandards = selectedExtraStandards.filter(
-      (opt) => !newSelectedIds.has(String(opt.value))
+      (option) => !newSelectedIds.has(String(option.value))
     );
 
     // Find standards that were newly added
     const addedStandards = newSelected.filter(
-      (opt) => !prevSelectedIds.has(String(opt.value))
+      (option) => !prevSelectedIds.has(String(option.value))
     );
 
     // Remove compliancy entries for removed standards
@@ -444,9 +540,9 @@ const ConFormApplicatieStandaardenStage = ({
         ? [...applicatie.compliancy]
         : [];
       const updatedCompliancy = prevCompliancy.filter(
-        (c) =>
+        (compliancy) =>
           !removedStandards.some(
-            (opt) => String(opt.value) === String(c.standaardversie)
+            (option) => String(option.value) === String(compliancy.standaardversie)
           )
       );
       setApplicatieData('compliancy', updatedCompliancy);
@@ -456,7 +552,10 @@ const ConFormApplicatieStandaardenStage = ({
         ? [...applicatie.standaarden]
         : [];
       const updatedStandaarden = prevStandaarden.filter(
-        (id) => !removedStandards.some((opt) => String(opt.value) === String(id))
+        (standardId) =>
+          !removedStandards.some(
+            (option) => String(option.value) === String(standardId)
+          )
       );
       setApplicatieData('standaarden', updatedStandaarden);
 
@@ -464,8 +563,8 @@ const ConFormApplicatieStandaardenStage = ({
       const prevStandaardenGemma = Array.isArray(applicatie.standaardenGemma)
         ? [...applicatie.standaardenGemma]
         : [];
-      removedStandards.forEach((opt) => {
-        const standardData = findMatchingStandardData({ id: opt.value });
+      removedStandards.forEach((option) => {
+        const standardData = findMatchingStandardData({ id: option.value });
         const objectId = standardData?.id || standardData?.objectId || null;
         if (objectId) {
           const index = prevStandaardenGemma.indexOf(objectId);
@@ -494,8 +593,8 @@ const ConFormApplicatieStandaardenStage = ({
         : [];
       const updatedStandaardenGemma = [...prevStandaardenGemma];
 
-      addedStandards.forEach((opt) => {
-        const standardId = String(opt.value);
+      addedStandards.forEach((option) => {
+        const standardId = String(option.value);
         const standardData = findMatchingStandardData({ id: standardId });
         const { name: standardName } = extractStandardInfo(
           { id: standardId },
@@ -505,7 +604,7 @@ const ConFormApplicatieStandaardenStage = ({
 
         // Check if compliancy entry already exists
         const existingIndex = updatedCompliancy.findIndex(
-          (c) => c.standaardversie === standardId
+          (compliancy) => compliancy.standaardversie === standardId
         );
 
         if (existingIndex < 0) {

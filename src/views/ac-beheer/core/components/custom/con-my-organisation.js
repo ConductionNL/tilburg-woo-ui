@@ -372,12 +372,16 @@ const ConMyOrganisationPage = ({ store }) => {
                 >
                   <Heading level={4}>
                     <div className='con-beheer-details--header-container'>
-                      {fullActiveOrganisation?.['@self']?.image || fullActiveOrganisation?.logo && (
-                        <ConLogoPreview
-                          className='con-beheer-details--logo-container'
-                          logoUrl={fullActiveOrganisation?.['@self']?.image || fullActiveOrganisation?.logo}
-                        />
-                      )}
+                      {fullActiveOrganisation?.['@self']?.image ||
+                        (fullActiveOrganisation?.logo && (
+                          <ConLogoPreview
+                            className='con-beheer-details--logo-container'
+                            logoUrl={
+                              fullActiveOrganisation?.['@self']?.image ||
+                              fullActiveOrganisation?.logo
+                            }
+                          />
+                        ))}
 
                       <Heading className='con-beheer-details--title'>
                         {fullActiveOrganisation?.['@self']?.name ||
