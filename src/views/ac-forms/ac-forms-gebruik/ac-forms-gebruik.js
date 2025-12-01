@@ -1231,12 +1231,15 @@ const AcFormsGebruik = ({ store }) => {
     }
 
     // Map moduleVersies to options format
-    const options = versiesArray.map((v, idx) => {
-      const label = v?.versie || v?.version || v?.nummer || `Versie ${idx + 1}`;
-      // Use versie as value since there's no id in the data structure
-      const value = v?.versie || v?.version || v?.nummer || label;
-      return { value: String(value), label: String(label), data: v };
-    });
+    // Filter out items without IDs and use ID as value
+    const options = versiesArray
+      .filter((v) => v?.id) // Filter out items without IDs
+      .map((v, idx) => {
+        const label = v?.versie || v?.version || v?.nummer || `Versie ${idx + 1}`;
+        // Use ID as value since moduleVersies now have IDs
+        const value = v?.id;
+        return { value: String(value), label: String(label), data: v };
+      });
 
     setVersionOptions(options);
     setVersionsLoading(false);
@@ -1709,6 +1712,7 @@ const AcFormsGebruik = ({ store }) => {
             afnemerOrganisatie={afnemerOrganisatie}
             leverancierOptions={leverancierOptions}
             afnemerOptions={afnemerOptions}
+            selectedApplicatieData={selectedApplicatieData}
           />
         );
     }

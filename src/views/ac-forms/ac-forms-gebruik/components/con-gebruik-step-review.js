@@ -33,6 +33,8 @@ const ConGebruikStepReview = ({
   // Options for existing entities
   leverancierOptions,
   afnemerOptions,
+  // Selected applicatie data (for looking up version by ID)
+  selectedApplicatieData,
 }) => {
   // Helper function to get the correct afnemer display name
   const getAfnemerDisplayName = () => {
@@ -404,11 +406,35 @@ const ConGebruikStepReview = ({
             <div className='ac-register-review__field'>
               <strong>Versie:</strong>
               <div>
-                {(
-                  (versionOptions || []).find(
-                    (o) => String(o.value) === String(gebruik?.moduleVersie)
-                  ) || {}
-                ).label || '-'}
+                {(() => {
+                  // Since moduleVersie now stores the ID, look it up in selectedApplicatieData.moduleVersies
+                  const moduleVersieId = gebruik?.moduleVersie;
+                  if (!moduleVersieId || !selectedApplicatieData) return '-';
+
+                  const versiesArray =
+                    selectedApplicatieData.moduleVersies ||
+                    selectedApplicatieData.moduleversies ||
+                    [];
+
+                  const foundVersie = versiesArray.find(
+                    (v) => String(v?.id) === String(moduleVersieId)
+                  );
+
+                  if (foundVersie) {
+                    return (
+                      foundVersie?.versie ||
+                      foundVersie?.version ||
+                      foundVersie?.nummer ||
+                      '-'
+                    );
+                  }
+
+                  // Fallback to versionOptions lookup (for backwards compatibility)
+                  const option = (versionOptions || []).find(
+                    (o) => String(o.value) === String(moduleVersieId)
+                  );
+                  return option ? option.label : '-';
+                })()}
               </div>
             </div>
           )}
