@@ -703,7 +703,7 @@ const ConGenericFormModal = ({
               currentObjectRegister,
               currentObjectSchema,
               metadata.currentObjectId,
-              { _extend: '@self.schema', _published: 'false' }
+              { '_extend[]': ['@self.schema'], _published: 'false' }
             );
 
             // Also refresh the related data (uses/used) to show the new item in tabs

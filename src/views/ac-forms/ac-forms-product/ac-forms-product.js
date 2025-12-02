@@ -1407,7 +1407,7 @@ const AcFormsProductInner = ({
           'product',
           String(productId),
           {
-            _extend: [
+            '_extend[]': [
               '@self.schema',
               'modules',
               'modules.koppelingen',

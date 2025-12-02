@@ -386,7 +386,7 @@ const AcFormsKoppeling = ({ store }) => {
               'module',
               String(applicatieFromUrl),
               {
-                _extend: ['@self.schema'],
+                '_extend[]': ['@self.schema'],
                 _published: 'false',
               }
             );

@@ -439,7 +439,12 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
           'module',
           String(applicatieId),
           {
-            _extend: ['@self.schema', 'koppelingen', 'diensten', 'moduleVersies'],
+            '_extend[]': [
+              '@self.schema',
+              'koppelingen',
+              'diensten',
+              'moduleVersies',
+            ],
             _published: 'false',
           }
         );

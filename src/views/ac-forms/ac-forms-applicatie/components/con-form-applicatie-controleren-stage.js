@@ -85,7 +85,7 @@ const ConFormApplicatieControlerenStage = memo(
             'contactpersoon',
             contactpersoonId,
             {
-              _extend: '@self.schema',
+              '_extend[]': ['@self.schema'],
               _published: 'false',
             }
           );

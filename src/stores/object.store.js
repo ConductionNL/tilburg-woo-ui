@@ -976,6 +976,7 @@ export class ObjectStore {
     delete queryParams._schema;
     delete queryParams._register;
     delete queryParams.extend;
+    delete queryParams._extend;
     delete queryParams.page;
     delete queryParams.limit;
 
