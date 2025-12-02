@@ -3,25 +3,38 @@ import {
   UnorderedList,
   UnorderedListItem,
   Separator,
+  Link,
 } from '@utrecht/component-library-react/dist/css-module';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
-import { AcLink } from '@src/molecules';
 import { handleFileClick } from '@utils';
+import { AcFlex } from '@src/atoms';
 
 /**
  * ConGebruikStepReview
- * Review screen mirroring product review UI.
+ * Review screen showing all selected and created data.
+ * Handles both existing selections and new entity creation flows.
  */
 const ConGebruikStepReview = ({
   gebruik,
   versionOptions,
   refCompOptions,
-  koppelingOptions,
-  dienstOptions,
   organisatieOptions,
   moduleOptions,
-  standaardenOptions,
-  referentieComponentenWithStandards,
+  // Selected referentiecomponenten with full data (including standards)
+  selectedReferentieComponenten,
+  // New flow markers
+  applicatieKeuze,
+  leverancierKeuze,
+  afnemerKeuze,
+  // New entity data
+  nieuweApplicatie,
+  leverancierOrganisatie,
+  afnemerOrganisatie,
+  // Options for existing entities
+  leverancierOptions,
+  afnemerOptions,
+  // Selected applicatie data (for looking up version by ID)
+  selectedApplicatieData,
 }) => {
   // Helper function to get the correct afnemer display name
   const getAfnemerDisplayName = () => {
@@ -39,12 +52,19 @@ const ConGebruikStepReview = ({
       );
     }
 
-    // If afnemer is a string (UUID), try to find it in organisatieOptions
+    // If afnemer is a string (UUID), try to find it in organisatieOptions or afnemerOptions
     const orgOption = (organisatieOptions || []).find(
       (opt) => String(opt.value) === String(afnemer)
     );
     if (orgOption) {
       return orgOption.label;
+    }
+
+    const afnemerOption = (afnemerOptions || []).find(
+      (opt) => String(opt.value) === String(afnemer)
+    );
+    if (afnemerOption) {
+      return afnemerOption.label;
     }
 
     // Fallback: use ConUuidResolver for UUID strings
@@ -86,56 +106,6 @@ const ConGebruikStepReview = ({
   };
 
   const relevantStartDate = getRelevantStartDate();
-
-  // Helper function to get standard name from ID
-  const getStandardNameFromId = (standardId) => {
-    if (!standardId) return standardId;
-
-    // First try to find in standaardenOptions
-    if (standaardenOptions && Array.isArray(standaardenOptions)) {
-      const foundOption = standaardenOptions.find(
-        (opt) =>
-          String(opt.value) === String(standardId) ||
-          String(opt.data?.id) === String(standardId)
-      );
-      if (foundOption) {
-        return (
-          foundOption.label ||
-          foundOption.data?.naam ||
-          foundOption.data?.name ||
-          standardId
-        );
-      }
-    }
-
-    // Fallback: search through referentieComponentenWithStandards
-    if (
-      referentieComponentenWithStandards &&
-      Array.isArray(referentieComponentenWithStandards)
-    ) {
-      for (const refComp of referentieComponentenWithStandards) {
-        // Check verplichte standards
-        if (Array.isArray(refComp.verplichteStandaarden)) {
-          const found = refComp.verplichteStandaarden.find(
-            (standard) =>
-              standard.id === standardId || `id-${standard.id}` === standardId
-          );
-          if (found) return found.naam || found.title || standardId;
-        }
-
-        // Check aanbevolen standards
-        if (Array.isArray(refComp.aanbevolenStandaarden)) {
-          const found = refComp.aanbevolenStandaarden.find(
-            (standard) =>
-              standard.id === standardId || `id-${standard.id}` === standardId
-          );
-          if (found) return found.naam || found.title || standardId;
-        }
-      }
-    }
-
-    return standardId; // Fallback to ID if name not found
-  };
 
   // Helper function to create middle ellipsis for long filenames
   const createMiddleEllipsis = (filename, maxLength = 25) => {
@@ -234,13 +204,69 @@ const ConGebruikStepReview = ({
             </div>
           )}
 
-          {/* Only show Afnemer when type is 'ontbrekend-organisatie' */}
-          {gebruik?.type === 'ontbrekend-organisatie' && (
-            <div className='ac-register-review__field'>
-              <strong>Afnemer:</strong>
-              <div>{getAfnemerDisplayName()}</div>
-            </div>
-          )}
+          {/* Afnemer section */}
+          {gebruik?.type === 'ontbrekend-organisatie' &&
+            (gebruik?.afnemer || afnemerKeuze === 'nieuw') && (
+              <div className='ac-register-review__field'>
+                <strong>Afnemer:</strong>
+                <div>
+                  {afnemerKeuze === 'nieuw' ? (
+                    <div>
+                      <div style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                        Nieuwe aanbieder aanmaken
+                      </div>
+                      <div style={{ marginLeft: '1rem' }}>
+                        <div>
+                          <strong>Naam:</strong> {afnemerOrganisatie?.naam || '-'}
+                        </div>
+                        {afnemerOrganisatie?.type && (
+                          <div>
+                            <strong>Type:</strong> {afnemerOrganisatie.type}
+                          </div>
+                        )}
+                        {afnemerOrganisatie?.website && (
+                          <AcFlex spacing='xs'>
+                            <strong>Website:</strong>
+                            <Link
+                              href={
+                                afnemerOrganisatie.website.startsWith('http://') ||
+                                afnemerOrganisatie.website.startsWith('https://')
+                                  ? afnemerOrganisatie.website
+                                  : `https://${afnemerOrganisatie.website}`
+                              }
+                              target='_blank'
+                              rel='noopener noreferrer'
+                            >
+                              {afnemerOrganisatie.website}
+                            </Link>
+                          </AcFlex>
+                        )}
+                        {afnemerOrganisatie?.['e-mailadres'] && (
+                          <AcFlex spacing='xs'>
+                            <strong>E-mailadres:</strong>
+                            <Link
+                              href={`mailto:${afnemerOrganisatie['e-mailadres']}`}
+                            >
+                              {afnemerOrganisatie['e-mailadres']}
+                            </Link>
+                          </AcFlex>
+                        )}
+                        {afnemerOrganisatie?.telefoonnummer && (
+                          <AcFlex spacing='xs'>
+                            <strong>Telefoonnummer:</strong>
+                            <Link href={`tel:${afnemerOrganisatie.telefoonnummer}`}>
+                              {afnemerOrganisatie.telefoonnummer}
+                            </Link>
+                          </AcFlex>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    getAfnemerDisplayName()
+                  )}
+                </div>
+              </div>
+            )}
 
           <div className='ac-register-review__field'>
             <strong>Status:</strong>
@@ -255,12 +281,212 @@ const ConGebruikStepReview = ({
             </div>
           )}
 
+          {/* Applicatie section */}
+          <div className='ac-register-review__field'>
+            <strong>Applicatie:</strong>
+            <div>
+              {applicatieKeuze === 'nieuw' ? (
+                <div>
+                  <div style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                    Nieuwe applicatie aanmaken
+                  </div>
+                  <div style={{ marginLeft: '1rem' }}>
+                    <div>
+                      <strong>Naam:</strong> {nieuweApplicatie?.naam || '-'}
+                    </div>
+                    {nieuweApplicatie?.website && (
+                      <AcFlex spacing='xs'>
+                        <strong>Website:</strong>
+                        <Link
+                          href={
+                            nieuweApplicatie.website.startsWith('http://') ||
+                            nieuweApplicatie.website.startsWith('https://')
+                              ? nieuweApplicatie.website
+                              : `https://${nieuweApplicatie.website}`
+                          }
+                          target='_blank'
+                          rel='noopener noreferrer'
+                        >
+                          {nieuweApplicatie.website}
+                        </Link>
+                      </AcFlex>
+                    )}
+                    {nieuweApplicatie?.beschrijvingKort && (
+                      <div>
+                        <strong>Beschrijving:</strong>{' '}
+                        {nieuweApplicatie.beschrijvingKort}
+                      </div>
+                    )}
+
+                    {/* Leverancier section within nieuwe applicatie */}
+                    {leverancierKeuze === 'nieuw' ? (
+                      <div style={{ marginTop: '0.5rem' }}>
+                        <strong>Leverancier:</strong> Nieuwe leverancier aanmaken
+                        <div style={{ marginLeft: '1rem', marginTop: '0.25rem' }}>
+                          <div>
+                            <strong>Naam:</strong>{' '}
+                            {leverancierOrganisatie?.naam || '-'}
+                          </div>
+                          {leverancierOrganisatie?.type && (
+                            <div>
+                              <strong>Type:</strong> {leverancierOrganisatie.type}
+                            </div>
+                          )}
+                          {leverancierOrganisatie?.website && (
+                            <AcFlex spacing='xs'>
+                              <strong>Website:</strong>
+                              <Link
+                                href={
+                                  leverancierOrganisatie.website.startsWith(
+                                    'http://'
+                                  ) ||
+                                  leverancierOrganisatie.website.startsWith(
+                                    'https://'
+                                  )
+                                    ? leverancierOrganisatie.website
+                                    : `https://${leverancierOrganisatie.website}`
+                                }
+                                target='_blank'
+                                rel='noopener noreferrer'
+                              >
+                                {leverancierOrganisatie.website}
+                              </Link>
+                            </AcFlex>
+                          )}
+                          {leverancierOrganisatie?.['e-mailadres'] && (
+                            <AcFlex spacing='xs'>
+                              <strong>E-mailadres:</strong>
+                              <Link
+                                href={`mailto:${leverancierOrganisatie['e-mailadres']}`}
+                              >
+                                {leverancierOrganisatie['e-mailadres']}
+                              </Link>
+                            </AcFlex>
+                          )}
+                          {leverancierOrganisatie?.telefoonnummer && (
+                            <AcFlex spacing='xs'>
+                              <strong>Telefoonnummer:</strong>
+                              <Link
+                                href={`tel:${leverancierOrganisatie.telefoonnummer}`}
+                              >
+                                {leverancierOrganisatie.telefoonnummer}
+                              </Link>
+                            </AcFlex>
+                          )}
+                        </div>
+                      </div>
+                    ) : nieuweApplicatie?.leverancier ? (
+                      <div style={{ marginTop: '0.5rem' }}>
+                        <strong>Leverancier:</strong>{' '}
+                        {(() => {
+                          const leverancierId = nieuweApplicatie.leverancier;
+                          const leverancierOption = (leverancierOptions || []).find(
+                            (opt) => String(opt.value) === String(leverancierId)
+                          );
+                          return leverancierOption
+                            ? leverancierOption.label
+                            : leverancierId.startsWith(
+                                '__manually_created_aanbieder__'
+                              )
+                            ? 'Handmatig aangemaakt'
+                            : leverancierId;
+                        })()}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              ) : (
+                moduleOptions.find((o) => o.value === gebruik?.module)?.label || '-'
+              )}
+            </div>
+          </div>
+
+          {/* Versie - only show for existing applicatie */}
+          {applicatieKeuze === 'bestaand' && (
+            <div className='ac-register-review__field'>
+              <strong>Versie:</strong>
+              <div>
+                {(() => {
+                  // Since moduleVersie now stores the ID, look it up in selectedApplicatieData.moduleVersies
+                  const moduleVersieId = gebruik?.moduleVersie;
+                  if (!moduleVersieId || !selectedApplicatieData) return '-';
+
+                  const versiesArray =
+                    selectedApplicatieData.moduleVersies ||
+                    selectedApplicatieData.moduleversies ||
+                    [];
+
+                  const foundVersie = versiesArray.find(
+                    (v) => String(v?.id) === String(moduleVersieId)
+                  );
+
+                  if (foundVersie) {
+                    return (
+                      foundVersie?.versie ||
+                      foundVersie?.version ||
+                      foundVersie?.nummer ||
+                      '-'
+                    );
+                  }
+
+                  // Fallback to versionOptions lookup (for backwards compatibility)
+                  const option = (versionOptions || []).find(
+                    (o) => String(o.value) === String(moduleVersieId)
+                  );
+                  return option ? option.label : '-';
+                })()}
+              </div>
+            </div>
+          )}
+
+          {/* Hosting - only show for existing applicatie */}
+          {applicatieKeuze === 'bestaand' && gebruik?.cloudDienstverleningsmodel && (
+            <div className='ac-register-review__field'>
+              <strong>Hosting:</strong>
+              <div>
+                {Array.isArray(gebruik.cloudDienstverleningsmodel) &&
+                gebruik.cloudDienstverleningsmodel.length > 0 ? (
+                  <UnorderedList>
+                    {gebruik.cloudDienstverleningsmodel.map((hosting, index) => (
+                      <UnorderedListItem key={index}>{hosting}</UnorderedListItem>
+                    ))}
+                  </UnorderedList>
+                ) : (
+                  gebruik.cloudDienstverleningsmodel
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Interne aantekening */}
+          {gebruik?.interneAantekening && (
+            <div className='ac-register-review__field'>
+              <strong>Interne aantekening:</strong>
+              <div>{gebruik.interneAantekening}</div>
+            </div>
+          )}
+
+          {/* Referentiecomponenten */}
           <div className='ac-register-review__field'>
             <strong>Referentiecomponenten:</strong>
             <div>
               {(gebruik?.gebruiktVoorReferentiecomponenten || []).length ? (
                 <UnorderedList>
                   {(gebruik.gebruiktVoorReferentiecomponenten || []).map((v) => {
+                    // Try to find in selectedReferentieComponenten first
+                    const selectedRefComp = (
+                      selectedReferentieComponenten || []
+                    ).find((ref) => String(ref.id) === String(v));
+
+                    if (selectedRefComp) {
+                      return (
+                        <UnorderedListItem key={v}>
+                          {selectedRefComp.naam || v}
+                        </UnorderedListItem>
+                      );
+                    }
+
+                    // Fallback to refCompOptions if not in selectedReferentieComponenten
                     const opt = (refCompOptions || []).find(
                       (o) => String(o.value) === String(v)
                     );
@@ -277,65 +503,7 @@ const ConGebruikStepReview = ({
             </div>
           </div>
 
-          <div className='ac-register-review__field'>
-            <strong>Applicatie:</strong>
-            <div>
-              {moduleOptions.find((o) => o.value === gebruik?.module)?.label || '-'}
-            </div>
-          </div>
-          <div className='ac-register-review__field'>
-            <strong>Applicatie versie:</strong>
-            <div>
-              {(
-                (versionOptions || []).find(
-                  (o) => String(o.value) === String(gebruik?.moduleVersie)
-                ) || {}
-              ).label || '-'}
-            </div>
-          </div>
-          <div className='ac-register-review__field'>
-            <strong>Koppelingen:</strong>
-            <div>
-              {(gebruik?.koppelingen || []).length ? (
-                <UnorderedList>
-                  {(gebruik.koppelingen || []).map((v) => {
-                    const opt = (koppelingOptions || []).find(
-                      (o) => String(o.value) === String(v)
-                    );
-                    return (
-                      <UnorderedListItem key={v}>
-                        {opt ? opt.label : <ConUuidResolver>{v}</ConUuidResolver>}
-                      </UnorderedListItem>
-                    );
-                  })}
-                </UnorderedList>
-              ) : (
-                '-'
-              )}
-            </div>
-          </div>
-          <div className='ac-register-review__field'>
-            <strong>Diensten:</strong>
-            <div>
-              {(gebruik?.diensten || []).length ? (
-                <UnorderedList>
-                  {(gebruik.diensten || []).map((v) => {
-                    const opt = (dienstOptions || []).find(
-                      (o) => String(o.value) === String(v)
-                    );
-                    return (
-                      <UnorderedListItem key={v}>
-                        {opt ? opt.label : <ConUuidResolver>{v}</ConUuidResolver>}
-                      </UnorderedListItem>
-                    );
-                  })}
-                </UnorderedList>
-              ) : (
-                '-'
-              )}
-            </div>
-          </div>
-
+          {/* Deelnemers */}
           {Array.isArray(gebruik?.deelnemers) && gebruik.deelnemers.length > 0 && (
             <div className='ac-register-review__field'>
               <strong>Deelnemers:</strong>
@@ -363,9 +531,7 @@ const ConGebruikStepReview = ({
               <div>
                 <UnorderedList>
                   {gebruik.compliancy.map((comp, i) => {
-                    const displayName =
-                      comp.standaardnaam ||
-                      getStandardNameFromId(comp.standaardversie);
+                    const displayName = comp.standaardnaam || comp.standaardversie;
 
                     return (
                       <UnorderedListItem key={comp.standaardversie || i}>
@@ -380,7 +546,7 @@ const ConGebruikStepReview = ({
                           {comp.bewijs ? (
                             <>
                               <span>- bewijs:</span>
-                              <AcLink
+                              <Link
                                 href='#'
                                 onClick={(e) => {
                                   e.preventDefault();
@@ -389,18 +555,18 @@ const ConGebruikStepReview = ({
                                 title={comp.bewijsFilename || 'bewijs'}
                               >
                                 {createMiddleEllipsis(comp.bewijsFilename)}
-                              </AcLink>
+                              </Link>
                             </>
                           ) : comp.url ? (
                             <>
                               <span>- bewijs:</span>
-                              <AcLink
+                              <Link
                                 href={comp.url}
                                 target='_blank'
                                 rel='noopener noreferrer'
                               >
                                 {comp.url}
-                              </AcLink>
+                              </Link>
                             </>
                           ) : (
                             <span style={{ color: '#666' }}>(geen bewijs)</span>

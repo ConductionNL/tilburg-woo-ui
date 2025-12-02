@@ -957,20 +957,31 @@ export class ObjectStore {
    * @returns {Object} Query parameters object
    */
   _constructQueryParams = (params = {}) => {
+    // Handle _extend[] merging - support multiple extend values
+    let extendValues = ['@self.schema']; // Default value
+
+    // Check if params already has '_extend[]' (as array or string)
+    if (params['_extend[]']) {
+      if (Array.isArray(params['_extend[]'])) {
+        // Merge arrays, ensuring @self.schema is included
+        extendValues = [...new Set([...params['_extend[]'], '@self.schema'])];
+      } else if (typeof params['_extend[]'] === 'string') {
+        // Convert string to array and merge
+        const paramExtends = params['_extend[]'].split(',').map((s) => s.trim());
+        extendValues = [...new Set([...paramExtends, '@self.schema'])];
+      }
+    }
+
     const queryParams = {
       _limit: params._limit || params.limit || 20,
       _page: params._page || params.page || 1,
-      '_extend[]': '@self.schema',
+      '_extend[]': extendValues,
       _source: 'database', // Always use database as source
       ...params,
     };
 
-    if (
-      Array.isArray(queryParams._extend) &&
-      !queryParams._extend.includes('@self.schema')
-    ) {
-      queryParams._extend.push('@self.schema');
-    }
+    // Ensure _extend[] is set correctly (overwrite if params had it)
+    queryParams['_extend[]'] = extendValues;
 
     // Remove internal parameters (but keep _source)
     delete queryParams._schema;
@@ -1159,8 +1170,18 @@ export class ObjectStore {
         page: pagination.page,
         limit: pagination.limit,
         ...params,
-        '_extend[]': params._extend || params.extend || '@self.schema',
       };
+
+      // Preserve '_extend[]' from params if provided, otherwise let _constructQueryParams set default
+      if (!params['_extend[]'] && (params._extend || params.extend)) {
+        // Support legacy _extend or extend params
+        const extendValue = params._extend || params.extend;
+        queryParams['_extend[]'] = Array.isArray(extendValue)
+          ? extendValue
+          : typeof extendValue === 'string'
+          ? extendValue.split(',').map((s) => s.trim())
+          : [extendValue];
+      }
 
       const response = await nextcloudApi.get(
         this._constructApiUrl(register, schema),
@@ -1244,8 +1265,18 @@ export class ObjectStore {
     try {
       const queryParams = {
         ...params,
-        _extend: params._extend || params.extend || '@self.schema',
       };
+
+      // Preserve '_extend[]' from params if provided, otherwise let _constructQueryParams set default
+      if (!params['_extend[]'] && (params._extend || params.extend)) {
+        // Support legacy _extend or extend params
+        const extendValue = params._extend || params.extend;
+        queryParams['_extend[]'] = Array.isArray(extendValue)
+          ? extendValue
+          : typeof extendValue === 'string'
+          ? extendValue.split(',').map((s) => s.trim())
+          : [extendValue];
+      }
 
       const response = await nextcloudApi.get(
         this._constructApiUrl(register, schema, id),
