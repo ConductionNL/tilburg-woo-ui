@@ -153,7 +153,7 @@ const ConFormsDienst = ({ store, userStore }) => {
         // Skip to step 0 in edit mode (Applicaties)
         setCurrentStep(0);
         await store.object.fetchObject('voorzieningen', 'dienst', String(dienstId), {
-          _extend: ['@self.schema'],
+          '_extend[]': ['@self.schema'],
         });
         if (cancelled) return;
 
@@ -464,7 +464,7 @@ const ConFormsDienst = ({ store, userStore }) => {
               'module',
               String(applicatieFromUrl),
               {
-                _extend: ['@self.schema'],
+                '_extend[]': ['@self.schema'],
               }
             );
             const fetched = store.object.getObject(

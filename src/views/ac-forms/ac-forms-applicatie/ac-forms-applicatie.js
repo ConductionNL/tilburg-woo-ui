@@ -446,7 +446,12 @@ const AcFormsApplicatieInner = ({
           'module',
           String(applicatieId),
           {
-            _extend: ['@self.schema', 'koppelingen', 'diensten', 'moduleVersies'],
+            '_extend[]': [
+              '@self.schema',
+              'koppelingen',
+              'diensten',
+              'moduleVersies',
+            ],
           }
         );
         if (cancelled) return;
