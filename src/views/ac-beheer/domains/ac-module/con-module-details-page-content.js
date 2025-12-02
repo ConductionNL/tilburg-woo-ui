@@ -425,15 +425,17 @@ const ConModuleDetailsPageContent = ({
                   <p>{data.licentie}</p>
                 </div>
               )}
-              {Array.isArray(data?.moduleVersies) && (
-                <div>
-                  <b>Huidige versie:</b>
-                  <p>
-                    {data.moduleVersies.find((v) => v.status === 'in gebruik')
-                      ?.versie || 'Geen versie in gebruik'}
-                  </p>
-                </div>
-              )}
+              {Array.isArray(data?.moduleVersies) &&
+                data.moduleVersies.length > 0 && (
+                  <div>
+                    <b>Huidige versie:</b>
+                    <p>
+                      {data.moduleVersies.find(
+                        (versie) => versie.status === 'in gebruik'
+                      )?.versie || 'Geen versie in gebruik'}
+                    </p>
+                  </div>
+                )}
               {Array.isArray(data?.cloudDienstverleningsmodel) &&
                 data.cloudDienstverleningsmodel.length > 0 && (
                   <div>
