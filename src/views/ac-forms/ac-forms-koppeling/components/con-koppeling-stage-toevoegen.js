@@ -74,7 +74,7 @@ const ConKoppelingStageToevoegen = ({
 
   const fetchModuleOptions = async (q, signal) => {
     try {
-      const params = new URLSearchParams({ _limit: '20', _page: '1' });
+      const params = new URLSearchParams({ _limit: '20', _page: '1', _published: 'false' });
       if (q) params.set('_search', q);
       const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module?${params}`;
       const res = await fetch(endpoint, {

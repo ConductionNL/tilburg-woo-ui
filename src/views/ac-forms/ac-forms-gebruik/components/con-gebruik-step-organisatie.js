@@ -31,6 +31,9 @@ const ConAfnemerOrganisatieForm = memo(
             isDisabled={loading}
             width='half'
             schemas={schemas}
+            customProps={{
+              additionalQueryParams: { _published: 'false' },
+            }}
           />
 
           {/* Organization Website - Required */}

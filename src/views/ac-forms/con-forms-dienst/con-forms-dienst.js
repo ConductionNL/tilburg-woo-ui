@@ -154,6 +154,7 @@ const ConFormsDienst = ({ store, userStore }) => {
         setCurrentStep(0);
         await store.object.fetchObject('voorzieningen', 'dienst', String(dienstId), {
           _extend: ['@self.schema'],
+          _published: 'false',
         });
         if (cancelled) return;
 
@@ -409,6 +410,7 @@ const ConFormsDienst = ({ store, userStore }) => {
         {
           _limit: '50',
           _page: '1',
+          _published: 'false',
         },
         null,
         'dienst_form'
@@ -465,6 +467,7 @@ const ConFormsDienst = ({ store, userStore }) => {
               String(applicatieFromUrl),
               {
                 _extend: ['@self.schema'],
+                _published: 'false',
               }
             );
             const fetched = store.object.getObject(
@@ -508,6 +511,7 @@ const ConFormsDienst = ({ store, userStore }) => {
         const queryParams = {
           _limit: '50',
           _page: '1',
+          _published: 'false',
         };
 
         // Add search parameter if provided
@@ -689,7 +693,7 @@ const ConFormsDienst = ({ store, userStore }) => {
 
       // Fetch each selected module to read its koppelingen array
       const moduleFetches = selectedModuleIds.map((id) =>
-        fetch(`${BASE_URL}/openregister/api/objects/voorzieningen/module/${id}`, {
+        fetch(`${BASE_URL}/openregister/api/objects/voorzieningen/module/${id}?_published=false`, {
           headers: { Accept: 'application/json' },
         })
           .then((r) => (r.ok ? r.json() : null))
@@ -724,7 +728,7 @@ const ConFormsDienst = ({ store, userStore }) => {
       // Deduplicate and fetch each koppeling by ID
       const uniqueKoppelingIds = Array.from(new Set(collectedKoppelingIds));
       const koppelingFetches = uniqueKoppelingIds.map((id) =>
-        fetch(`${BASE_URL}/openregister/api/objects/voorzieningen/koppeling/${id}`, {
+        fetch(`${BASE_URL}/openregister/api/objects/voorzieningen/koppeling/${id}?_published=false`, {
           headers: { Accept: 'application/json' },
         })
           .then((r) => (r.ok ? r.json() : null))

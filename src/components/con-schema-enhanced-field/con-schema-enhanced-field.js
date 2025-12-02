@@ -235,6 +235,7 @@ const ConSchemaEnhancedField = ({
   const safeSchema = mockSchemaForRefOptions || { properties: {} };
   const refOptionsResult = useRefOptions(safeStore, 'voorzieningen', safeSchema, {
     [fieldName]: customProps,
+    additionalQueryParams: customProps?.additionalQueryParams,
   });
 
   // Debug RefOptions status

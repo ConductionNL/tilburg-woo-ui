@@ -66,6 +66,7 @@ const ConObjectUploadFiles = ({
       await objectStore.fetchObjectFiles(register, schema, id, {
         _limit: 500,
         _page: 1,
+        _published: 'false',
       });
       const type = `${register}_${schema}`;
       const filesData = objectStore.getRelatedData(type, 'files');

@@ -440,6 +440,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
           String(applicatieId),
           {
             _extend: ['@self.schema', 'koppelingen', 'diensten', 'moduleVersies'],
+            _published: 'false',
           }
         );
         if (cancelled) return;
@@ -594,6 +595,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         _page: '1',
         gemmaType: 'Referentiecomponent',
         '_extend[]': '@self.schema',
+        _published: 'false',
       });
 
       // Fetch referentiecomponenten from openconnector endpoint
@@ -664,6 +666,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         _page: '1',
         gemmaType: 'Standaard',
         '_extend[]': '@self.schema',
+        _published: 'false',
       });
 
       // Fetch standards from openconnector endpoint
@@ -798,6 +801,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         const queryParams = {
           _limit: '20',
           _page: '1',
+          _published: 'false',
         };
 
         // Add search parameter if provided
@@ -890,6 +894,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
           _limit: '50',
           _page: '1',
           _source: 'database',
+          _published: 'false',
         };
 
         // Add search parameter if provided
@@ -976,6 +981,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
           _page: '1',
           _source: 'index',
           '_extend[]': '@self.schema',
+          _published: 'false',
         };
 
         // Add search parameter if provided
@@ -1059,6 +1065,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         _page: '1',
         gemmaType: 'Buitengemeentelijke voorziening',
         '_extend[]': '@self.schema',
+        _published: 'false',
       });
 
       console.info('📋 Fetching external facilities from openconnector endpoint...');
@@ -1219,6 +1226,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
             String(moduleId),
             {
               _extend: '@self.schema',
+              _published: 'false',
             }
           );
           if (cancelled) return null;

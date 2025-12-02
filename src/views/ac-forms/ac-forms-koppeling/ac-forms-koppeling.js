@@ -307,7 +307,7 @@ const AcFormsKoppeling = ({ store }) => {
     const fetchModules = async () => {
       try {
         setOwnAppLoading(true);
-        const params = new URLSearchParams({ _limit: '20', _page: '1' });
+        const params = new URLSearchParams({ _limit: '20', _page: '1', _published: 'false' });
         const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module?${params}`;
         const res = await fetch(endpoint, {
           headers: { Accept: 'application/json' },
@@ -387,6 +387,7 @@ const AcFormsKoppeling = ({ store }) => {
               String(applicatieFromUrl),
               {
                 _extend: ['@self.schema'],
+                _published: 'false',
               }
             );
             const fetched = store.object.getObject(
@@ -470,7 +471,7 @@ const AcFormsKoppeling = ({ store }) => {
       const res = await fetch(
         `/api/apps/openregister/api/objects/voorzieningen/module/${encodeURIComponent(
           String(id)
-        )}`,
+        )}?_published=false`,
         { headers: { Accept: 'application/json' } }
       );
       if (!res.ok) return String(id);
@@ -508,7 +509,7 @@ const AcFormsKoppeling = ({ store }) => {
       try {
         const url = `/api/apps/openregister/api/objects/voorzieningen/koppeling/${encodeURIComponent(
           koppelingId
-        )}?_extend[]=@self.schema&_extend[]=@self.relations`;
+        )}?_extend[]=@self.schema&_extend[]=@self.relations&_published=false`;
         const res = await fetch(url, { headers: { Accept: 'application/json' } });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
@@ -588,7 +589,7 @@ const AcFormsKoppeling = ({ store }) => {
       }
       setOwnAppLoading(true);
       try {
-        const params = new URLSearchParams({ _limit: '20', _page: '1' });
+        const params = new URLSearchParams({ _limit: '20', _page: '1', _published: 'false' });
         params.set('_search', q);
         const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module?${params}`;
         const res = await fetch(endpoint, {
@@ -692,7 +693,7 @@ const AcFormsKoppeling = ({ store }) => {
         // Fetch missing module names in one batched call if any
         if (missingIds.length) {
           try {
-            const params = new URLSearchParams({ _limit: '100', _page: '1' });
+            const params = new URLSearchParams({ _limit: '100', _page: '1', _published: 'false' });
             for (const id of missingIds) params.append('_search', id);
             const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module?${params}`;
             const res = await fetch(endpoint, {
@@ -763,13 +764,13 @@ const AcFormsKoppeling = ({ store }) => {
       setResultsLoading(true);
       try {
         // Fetch koppelingen where moduleA = moduleId
-        const paramsA = new URLSearchParams({ _limit: '20', _page: '1' });
+        const paramsA = new URLSearchParams({ _limit: '20', _page: '1', _published: 'false' });
         paramsA.append('moduleA', moduleId);
         paramsA.append('_source', 'database');
         const endpointA = `${BASE_URL}/openregister/api/objects/voorzieningen/koppeling?${paramsA}`;
 
         // Fetch koppelingen where moduleB = moduleId
-        const paramsB = new URLSearchParams({ _limit: '20', _page: '1' });
+        const paramsB = new URLSearchParams({ _limit: '20', _page: '1', _published: 'false' });
         paramsB.append('moduleB', moduleId);
         paramsB.append('_source', 'database');
         const endpointB = `${BASE_URL}/openregister/api/objects/voorzieningen/koppeling?${paramsB}`;
@@ -862,6 +863,7 @@ const AcFormsKoppeling = ({ store }) => {
           _page: '1',
           _source: 'index',
           '_extend[]': '@self.schema',
+          _published: 'false',
         };
 
         // Add search parameter if query is provided
@@ -1143,6 +1145,7 @@ const AcFormsKoppeling = ({ store }) => {
         _page: '1',
         gemmaType: 'Standaard',
         '_extend[]': '@self.schema',
+        _published: 'false',
       });
 
       console.info('📋 Fetching standards from openconnector endpoint...');
@@ -1195,6 +1198,7 @@ const AcFormsKoppeling = ({ store }) => {
         _page: '1',
         gemmaType: 'Buitengemeentelijke voorziening',
         '_extend[]': '@self.schema',
+        _published: 'false',
       });
 
       console.info('📋 Fetching external facilities from openconnector endpoint...');

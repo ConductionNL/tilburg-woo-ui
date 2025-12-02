@@ -194,7 +194,7 @@ const ConGenericFormModal = ({
           await object.fetchCollection(
             optionConfig.register,
             optionConfig.schema,
-            { ...optionConfig.params, page: 1, limit: 9999 },
+            { ...optionConfig.params, page: 1, limit: 9999, _published: 'false' },
             false,
             'form-options'
           );
@@ -370,7 +370,9 @@ const ConGenericFormModal = ({
       const orgId = user?.activeOrganization?.uuid;
       if (showModal && orgId) {
         try {
-          await object.fetchObject('voorzieningen', 'organisatie', orgId);
+          await object.fetchObject('voorzieningen', 'organisatie', orgId, {
+            _published: 'false',
+          });
           const fullOrg = object.getObject('voorzieningen_organisatie', orgId);
           if (fullOrg) {
             setFullOrganization(fullOrg);
@@ -633,7 +635,10 @@ const ConGenericFormModal = ({
               await object.fetchObject(
                 currentObjectRegister,
                 currentObjectSchema,
-                metadata.currentObjectId
+                metadata.currentObjectId,
+                {
+                  _published: 'false',
+                }
               );
               // Try to find it again after fetching
               for (const objectType of possibleTypes) {
@@ -698,7 +703,7 @@ const ConGenericFormModal = ({
               currentObjectRegister,
               currentObjectSchema,
               metadata.currentObjectId,
-              { _extend: '@self.schema' }
+              { _extend: '@self.schema', _published: 'false' }
             );
 
             // Also refresh the related data (uses/used) to show the new item in tabs

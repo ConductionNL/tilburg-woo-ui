@@ -244,7 +244,7 @@ const FormModalConfigFactory = {
                   await objectStore.fetchCollection(
                     'voorzieningen',
                     'voorziening',
-                    voorzieningParams
+                    { ...voorzieningParams, _published: 'false' }
                   );
 
                   const voorzieningType = objectStore.getTypeFromParams(
@@ -278,7 +278,7 @@ const FormModalConfigFactory = {
                   await objectStore.fetchCollection(
                     'voorzieningen',
                     'standaard',
-                    standaardenParams
+                    { ...standaardenParams, _published: 'false' }
                   );
 
                   const standaardenType = objectStore.getTypeFromParams(
@@ -672,7 +672,7 @@ const FormModalConfigFactory = {
                   await objectStore.fetchCollection(
                     'voorzieningen',
                     'voorzieningaanbod',
-                    aanbodParams
+                    { ...aanbodParams, _published: 'false' }
                   );
 
                   const aanbodType = objectStore.getTypeFromParams(
@@ -696,7 +696,7 @@ const FormModalConfigFactory = {
                   await objectStore.fetchCollection(
                     'voorzieningen',
                     'voorzieningversie',
-                    versieParams
+                    { ...versieParams, _published: 'false' }
                   );
 
                   const versieType = objectStore.getTypeFromParams(

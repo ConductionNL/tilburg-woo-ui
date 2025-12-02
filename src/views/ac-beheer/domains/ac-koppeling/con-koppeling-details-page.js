@@ -71,6 +71,7 @@ const ConKoppelingDetailsPage = ({ store }) => {
       _extend: extendParams,
       _related: true,
       _relatedNames: true,
+      _published: 'false',
     });
     store.object.fetchSchema(config.schemaSlug);
   }, [config?.schemaSlug, config?.registerSlug, id, config?.extend]);
@@ -126,6 +127,7 @@ const ConKoppelingDetailsPage = ({ store }) => {
                       _extend: config.extend,
                       _related: true,
                       _relatedNames: true,
+                      _published: 'false',
                     });
                   },
                 }}

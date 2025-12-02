@@ -138,7 +138,7 @@ const BeheerTable = forwardRef(({ store, ...props }, ref) => {
       await objectStore.fetchCollection(
         config.registerSlug,
         config.schemaSlug,
-        params
+        { ...params, _published: 'false' }
       );
 
       const typeKey = objectStore.getTypeFromParams(

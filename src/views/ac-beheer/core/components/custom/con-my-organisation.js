@@ -115,7 +115,7 @@ const ConMyOrganisationPage = ({ store }) => {
     setUsesLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${organisationId}/uses?_extend[]=@self.schema`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${organisationId}/uses?_extend[]=@self.schema&_published=false`,
         {
           method: 'GET',
           headers: {
@@ -142,7 +142,7 @@ const ConMyOrganisationPage = ({ store }) => {
     setUsedLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${organisationId}/used?_extend[]=@self.schema`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${organisationId}/used?_extend[]=@self.schema&_published=false`,
         {
           method: 'GET',
           headers: {
@@ -175,6 +175,7 @@ const ConMyOrganisationPage = ({ store }) => {
           _extend: ['@self.schema', 'contactpersonen'],
           _related: true,
           _relatedNames: true,
+          _published: 'false',
         });
         // Ensure active object is set so related data selectors work
         object.setActiveObject('voorzieningen', 'organisatie', {
