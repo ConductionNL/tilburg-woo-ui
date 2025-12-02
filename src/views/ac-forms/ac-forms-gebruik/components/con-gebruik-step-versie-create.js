@@ -1,5 +1,4 @@
-import React, { memo } from 'react';
-import clsx from 'clsx';
+import React, { memo, useEffect } from 'react';
 import {
   Paragraph,
   Table,
@@ -8,7 +7,6 @@ import {
   TableRow,
   Textbox,
 } from '@utrecht/component-library-react/dist/css-module';
-import ReactSelect from 'react-select';
 
 /**
  * Gebruik Versie Creation Stage Component
@@ -23,16 +21,8 @@ import ReactSelect from 'react-select';
  */
 const ConGebruikStepVersieCreate = memo(
   ({ nieuweApplicatie, setNieuweApplicatieData, loading, schemas }) => {
-    // Get moduleVersie schema for status options and defaults
+    // Get moduleVersie schema for defaults
     const moduleVersieSchema = schemas?.moduleversie;
-    const statusOptions =
-      moduleVersieSchema?.properties?.status?.enum?.map((status) => ({
-        value: status,
-        label:
-          typeof status === 'string' && status.length > 0
-            ? status.charAt(0).toUpperCase() + status.slice(1)
-            : status,
-      })) || [];
 
     // Extract default values from schema
     const getSchemaDefaults = () => {
@@ -70,6 +60,14 @@ const ConGebruikStepVersieCreate = memo(
       };
       setNieuweApplicatieData('moduleVersies', [updatedVersie]);
     };
+
+    // Ensure status is always set to "in gebruik"
+    useEffect(() => {
+      const versie = getVersie();
+      if (versie.status !== 'in gebruik') {
+        updateVersie('status', 'in gebruik');
+      }
+    }, [nieuweApplicatie?.moduleVersies]);
 
     const versie = getVersie();
 
@@ -116,22 +114,7 @@ const ConGebruikStepVersieCreate = memo(
                   />
                 </TableCell>
                 <TableCell>
-                  <ReactSelect
-                    className={clsx(
-                      'ac-beheer-select',
-                      loading && 'ac-beheer-select--disabled'
-                    )}
-                    value={
-                      statusOptions.find(
-                        (opt) =>
-                          opt.value === (versie.status || schemaDefaults.status)
-                      ) || null
-                    }
-                    onChange={(opt) => updateVersie('status', opt?.value || null)}
-                    options={statusOptions}
-                    isDisabled={loading}
-                    placeholder={schemaDefaults.status || 'Selecteer status'}
-                  />
+                  <span style={{ color: '#666' }}>In gebruik</span>
                 </TableCell>
               </TableRow>
             </TableBody>
