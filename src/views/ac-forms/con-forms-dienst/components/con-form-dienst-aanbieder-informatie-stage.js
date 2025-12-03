@@ -90,6 +90,7 @@ const ConFormDienstAanbiederInformatieStage = memo(
                 customProps={{
                   // placeholder will come from schema example
                   isClearable: true,
+                  additionalQueryParams: { _published: 'false' },
                 }}
                 schemas={schemas}
               />
@@ -119,6 +120,9 @@ const ConFormDienstAanbiederInformatieStage = memo(
                   isDisabled={loading}
                   width='half'
                   schemas={schemas}
+                  customProps={{
+                    additionalQueryParams: { _published: 'false' },
+                  }}
                 />
 
                 {/* Organization Website - Required */}

@@ -269,6 +269,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
         _extend: extend,
         _related: true, // Request related object data
         _relatedNames: true, // Request ID to name mappings
+        _published: 'false',
       };
 
       // Add simple search from URL query params

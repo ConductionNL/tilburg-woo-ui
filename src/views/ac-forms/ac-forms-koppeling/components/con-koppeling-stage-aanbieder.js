@@ -146,6 +146,9 @@ const ConKoppelingStageAanbieder = memo(
                   isDisabled={loading || schemasLoading}
                   width='half'
                   schemas={schemas}
+                  customProps={{
+                    additionalQueryParams: { _published: 'false' },
+                  }}
                 />
 
                 {/* Organization Website - Required */}

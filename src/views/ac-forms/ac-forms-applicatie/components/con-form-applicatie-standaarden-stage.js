@@ -1318,7 +1318,7 @@ const ConFormApplicatieStandaardenStage = ({
   // Extra section (no header)
   if (extraEntries.length > 0) {
     tableRows.push(
-      <TableRow key='header-aanbevolen'>
+      <TableRow key='header-toegevoegd'>
         <TableCell
           colSpan={3}
           style={{
