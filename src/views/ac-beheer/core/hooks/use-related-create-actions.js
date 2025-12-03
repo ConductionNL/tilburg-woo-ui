@@ -379,11 +379,14 @@ export const useRelatedCreateActions = ({
           // Apply label override if provided
           const label = labelOverrides[slug] || defaultLabel;
 
+          // Normalize schema slug for wizard lookup using normalizeSchemaName
+          const wizardSchemaSlug = normalizeSchemaName(slug).toLowerCase();
+
           const wizards = Object.values(DASHBOARD_WIZARDS);
-          const wizard = wizards.find((w) => w.schema === slug);
+          const wizard = wizards.find((w) => w.schema === wizardSchemaSlug);
 
           const areThereMultipleOptions =
-            wizards.filter((w) => w.schema === slug).length > 1;
+            wizards.filter((w) => w.schema === wizardSchemaSlug).length > 1;
 
           const defaultIcon = wizard ? (
             <VISUALS.WAND_SPARKLES_SOLID />
