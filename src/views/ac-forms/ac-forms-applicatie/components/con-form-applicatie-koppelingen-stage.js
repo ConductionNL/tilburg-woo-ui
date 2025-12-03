@@ -260,12 +260,12 @@ const ConFormApplicatieKoppelingenStage = memo(
           Geef aan met welke andere applicaties uw oplossing gegevens uitwisselt. Zo
           kunnen gemeenten zien hoe uw applicatie past in hun applicatielandschap.
           Vul per koppeling in:
-          <ul style={{ marginInlineStart: '1rem' }}>
-            <li>met welke applicatie u koppelt,</li>
-            <li>de richting van de gegevensuitwisseling,</li>
-            <li>en het type koppeling (bijvoorbeeld API, bestand of bericht).</li>
-          </ul>
         </Paragraph>
+        <ul style={{ marginInlineStart: '1rem' }}>
+          <li>met welke applicatie u koppelt,</li>
+          <li>de richting van de gegevensuitwisseling,</li>
+          <li>en het type koppeling (bijvoorbeeld API, bestand of bericht).</li>
+        </ul>
 
         {/* Closeable info alert about updating koppeling details later */}
         {showInfoAlert && (
