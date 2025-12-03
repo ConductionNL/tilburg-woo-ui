@@ -452,7 +452,7 @@ const ConFormApplicatieControlerenStage = memo(
                   <div>
                     <UnorderedList>
                       {applicatie.moduleVersies.map((versie, i) => (
-                        <UnorderedListItem key={versie.versie || i}>
+                        <UnorderedListItem key={i}>
                           <strong>{versie.versie}</strong> - {versie.status}
                           {versie.beschrijvingKort && (
                             <div
