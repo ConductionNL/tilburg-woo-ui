@@ -213,6 +213,7 @@ const ConFormDienstInformatieStage = memo(
                   );
                 },
                 isClearable: true,
+                additionalQueryParams: { _published: 'false' },
               }}
             />
 
@@ -226,6 +227,9 @@ const ConFormDienstInformatieStage = memo(
               isDisabled={loading}
               width='half'
               schemas={schemas}
+              customProps={{
+                additionalQueryParams: { _published: 'false' },
+              }}
             />
           </div>
         </div>

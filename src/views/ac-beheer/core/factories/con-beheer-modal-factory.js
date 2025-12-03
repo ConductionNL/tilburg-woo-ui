@@ -302,7 +302,8 @@ const BeheerModalFactory = {
                     // Use the correct register: voorzieningen (same as organisaties)
                     await store.object.fetchCollection(
                       'voorzieningen',
-                      'contactpersoon'
+                      'contactpersoon',
+                      { _published: 'false' }
                     );
                     console.info(
                       '✅ Refreshed contactpersonen collection after creation'

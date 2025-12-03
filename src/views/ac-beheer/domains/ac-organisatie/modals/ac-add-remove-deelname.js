@@ -67,6 +67,7 @@ const AcAddRemoveDeelnameModal = ({
           'type[]': ['Samenwerking', 'Community'],
           _limit: 300,
           _source: 'index', // Use index to get public organizations from all tenants
+          _published: 'false',
         },
         false,
         'deelname-opties'

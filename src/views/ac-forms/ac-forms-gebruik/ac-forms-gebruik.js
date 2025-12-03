@@ -639,6 +639,7 @@ const AcFormsGebruik = ({ store }) => {
           String(gebruikId),
           {
             '_extend[]': ['@self.schema'],
+            _published: 'false',
           }
         );
         if (cancelled) return;
@@ -733,6 +734,7 @@ const AcFormsGebruik = ({ store }) => {
           _source: 'index',
           gemmaType: 'Referentiecomponent',
           '_extend[]': '@self.schema',
+          _published: 'false',
         });
         const collection = store.object.getCollection('vng-gemma_element');
         const list = collection?.results || collection || [];
@@ -776,6 +778,7 @@ const AcFormsGebruik = ({ store }) => {
             _limit: '50',
             _page: '1',
             '_extend[]': ['@self.schema', 'moduleVersies'],
+            _published: 'false',
           },
           null,
           'gebruik_form'
@@ -839,6 +842,7 @@ const AcFormsGebruik = ({ store }) => {
               String(applicatieFromUrl),
               {
                 '_extend[]': ['@self.schema', 'moduleVersies'],
+                _published: 'false',
               }
             );
             const fetched = store.object.getObject(
@@ -880,6 +884,7 @@ const AcFormsGebruik = ({ store }) => {
           _limit: '50',
           _page: '1',
           '_extend[]': ['@self.schema', 'moduleVersies'],
+          _published: 'false',
         };
 
         // Add search parameter if provided
@@ -940,6 +945,7 @@ const AcFormsGebruik = ({ store }) => {
           _page: '1',
           _source: 'index',
           '_extend[]': '@self.schema',
+          _published: 'false',
         };
 
         // Add search parameter if query is provided
@@ -1000,6 +1006,7 @@ const AcFormsGebruik = ({ store }) => {
           _limit: '50',
           _page: '1',
           _source: 'database',
+          _published: 'false',
         };
 
         // Add search parameter if query is provided
@@ -1080,6 +1087,7 @@ const AcFormsGebruik = ({ store }) => {
         _page: '1',
         gemmaType: 'Referentiecomponent',
         '_extend[]': '@self.schema',
+        _published: 'false',
       });
 
       // Fetch referentiecomponenten from openconnector endpoint
@@ -1186,6 +1194,7 @@ const AcFormsGebruik = ({ store }) => {
         try {
           await store.object.fetchObject('voorzieningen', 'module', String(mod), {
             '_extend[]': ['@self.schema', '@self.relations', 'moduleVersies'],
+            _published: 'false',
           });
           if (cancelled) return;
           modData = store.object.getObject('voorzieningen_module', String(mod));

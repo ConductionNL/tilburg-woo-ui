@@ -123,6 +123,7 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
       _extend: extendParams,
       _related: true,
       _relatedNames: true,
+      _published: 'false',
     });
     object.fetchSchema(config.schemaSlug);
   }, [config?.schemaSlug, config?.registerSlug, id, isExtendView]);
@@ -639,6 +640,7 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
           }
           return object.fetchObject(registerSlug, schemaSlug, id, {
             _extend: config.extend,
+            _published: 'false',
           });
         },
         config: modalConfig,

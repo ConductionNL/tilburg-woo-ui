@@ -84,6 +84,7 @@ const ConProductDetailsPage = ({ store }) => {
       _extend: extendParams,
       _related: true,
       _relatedNames: true,
+      _published: 'false',
     });
     object.fetchSchema(config.schemaSlug);
   }, [config?.schemaSlug, config?.registerSlug, id, config?.extend]);
@@ -171,6 +172,7 @@ const ConProductDetailsPage = ({ store }) => {
           }
           return object.fetchObject(registerSlug, schemaSlug, id, {
             _extend: config.extend,
+            _published: 'false',
           });
         },
         config: modalConfig,

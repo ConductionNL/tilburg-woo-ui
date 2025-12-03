@@ -287,6 +287,7 @@ export const useRefOptions = (
           _limit: 50,
           _page: 1, // Always start from page 1 for form field options
           ...schemaQueryParams, // Add schema-defined query parameters
+          ...(optimizations?.additionalQueryParams || {}), // Add additional query params from optimizations
         };
 
         await object.fetchCollection(
