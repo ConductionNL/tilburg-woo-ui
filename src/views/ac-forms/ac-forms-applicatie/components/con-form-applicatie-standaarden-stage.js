@@ -356,51 +356,61 @@ const ConFormApplicatieStandaardenStage = ({
     });
 
     // Check if any compliancy entries need to be removed
+    // Only remove entries that have no data AND are not in valid standards
     const currentCompliancy = Array.isArray(applicatie.compliancy)
       ? applicatie.compliancy
       : [];
 
+    // Find orphaned entries (not in valid standards)
     const orphanedCompliancy = currentCompliancy.filter(
       (compliancy) =>
         !validStandardIds.has(String(compliancy.standaardversie)) &&
         !validStandardIds.has(String(compliancy.standaardGemma))
     );
 
-    // Only update if there are orphaned entries
-    if (orphanedCompliancy.length > 0) {
+    // Only remove orphaned entries that have no data
+    const orphanedWithoutData = orphanedCompliancy.filter(
+      (compliancy) => !compliancy.bewijs && !compliancy.url
+    );
+
+    // Only update if there are orphaned entries without data to remove
+    if (orphanedWithoutData.length > 0) {
       console.info(
-        `🧹 Cleaning up ${orphanedCompliancy.length} orphaned compliancy entries`
+        `🧹 Cleaning up ${orphanedWithoutData.length} orphaned compliancy entries without data`
       );
 
+      // Keep entries that are in valid standards OR have data
       const cleanedCompliancy = currentCompliancy.filter(
         (compliancy) =>
           validStandardIds.has(String(compliancy.standaardversie)) ||
-          validStandardIds.has(String(compliancy.standaardGemma))
+          validStandardIds.has(String(compliancy.standaardGemma)) ||
+          compliancy.bewijs ||
+          compliancy.url
       );
 
       setApplicatieData('compliancy', cleanedCompliancy);
+    }
 
-      // Also clean up standaarden array
-      const currentStandaarden = Array.isArray(applicatie.standaarden)
-        ? applicatie.standaarden
-        : [];
-      const cleanedStandaarden = currentStandaarden.filter((standardId) =>
-        validStandardIds.has(String(standardId))
-      );
-      if (cleanedStandaarden.length !== currentStandaarden.length) {
-        setApplicatieData('standaarden', cleanedStandaarden);
-      }
+    // Always clean up standaarden array (compliance indicator)
+    const currentStandaarden = Array.isArray(applicatie.standaarden)
+      ? applicatie.standaarden
+      : [];
+    const cleanedStandaarden = currentStandaarden.filter((standardId) =>
+      validStandardIds.has(String(standardId))
+    );
+    if (cleanedStandaarden.length !== currentStandaarden.length) {
+      setApplicatieData('standaarden', cleanedStandaarden);
+    }
 
-      // Also clean up standaardenGemma array
-      const currentStandaardenGemma = Array.isArray(applicatie.standaardenGemma)
-        ? applicatie.standaardenGemma
-        : [];
-      const cleanedStandaardenGemma = currentStandaardenGemma.filter((gemmaId) =>
-        validStandardIds.has(String(gemmaId))
-      );
-      if (cleanedStandaardenGemma.length !== currentStandaardenGemma.length) {
-        setApplicatieData('standaardenGemma', cleanedStandaardenGemma);
-      }
+    // Always clean up standaardenGemma array (compliance indicator)
+    const currentStandaardenGemma = Array.isArray(applicatie.standaardenGemma)
+      ? applicatie.standaardenGemma
+      : [];
+    const cleanedStandaardenGemma = currentStandaardenGemma.filter((gemmaId) =>
+      validStandardIds.has(String(gemmaId))
+    );
+    if (cleanedStandaardenGemma.length !== currentStandaardenGemma.length) {
+      setApplicatieData('standaardenGemma', cleanedStandaardenGemma);
     }
   }, [
     allStandards,
@@ -416,14 +426,22 @@ const ConFormApplicatieStandaardenStage = ({
   useEffect(() => {
     const initialState = {};
 
+    // Get standaarden array to check compliance status
+    const standaardenArray = Array.isArray(applicatie.standaarden)
+      ? applicatie.standaarden.map(String)
+      : [];
+
     // Add standards from referentieComponenten
     allStandards.forEach((standard) => {
       const key = standard.id;
 
-      // Check if there's existing compliancy data
+      // Check if there's existing compliancy data (load even if not compliant)
       const existingCompliancy = (applicatie.compliancy || []).find(
         (c) => c.standaardversie === standard.id
       );
+
+      // Check standaarden array to determine compliance status
+      const isCompliant = standaardenArray.includes(String(standard.id));
 
       // Determine the primary type (verplicht takes precedence)
       const primaryType =
@@ -450,7 +468,8 @@ const ConFormApplicatieStandaardenStage = ({
         componentInfo: componentInfo.join(', '),
         verplichteComponents: standard.verplichteComponents,
         aanbevolenComponents: standard.aanbevolenComponents,
-        isCompliant: !!existingCompliancy,
+        isCompliant,
+        // Load compliancy data even if not compliant (preserved data)
         bewijs: existingCompliancy?.bewijs || null,
         bewijsFilename: existingCompliancy?.bewijsFilename || null,
         url: existingCompliancy?.url || null,
@@ -469,6 +488,9 @@ const ConFormApplicatieStandaardenStage = ({
           (c) => c.standaardversie === standardId
         );
 
+        // Check standaarden array to determine compliance status
+        const isCompliant = standaardenArray.includes(standardId);
+
         initialState[standardId] = {
           standardId,
           standardName,
@@ -477,7 +499,8 @@ const ConFormApplicatieStandaardenStage = ({
           componentInfo: 'TOEGEVOEGD',
           verplichteComponents: [],
           aanbevolenComponents: [],
-          isCompliant: !!existingCompliancy,
+          isCompliant,
+          // Load compliancy data even if not compliant (preserved data)
           bewijs: existingCompliancy?.bewijs || null,
           bewijsFilename: existingCompliancy?.bewijsFilename || null,
           url: existingCompliancy?.url || null,
@@ -509,6 +532,7 @@ const ConFormApplicatieStandaardenStage = ({
     setTableState(initialState);
   }, [
     applicatie.compliancy,
+    applicatie.standaarden,
     referentieComponentenWithStandards,
     standaardenMap,
     selectedExtraStandards,
@@ -534,20 +558,31 @@ const ConFormApplicatieStandaardenStage = ({
       (option) => !prevSelectedIds.has(String(option.value))
     );
 
-    // Remove compliancy entries for removed standards
+    // Handle removed standards - preserve compliancy entries if they have data
     if (removedStandards.length > 0) {
       const prevCompliancy = Array.isArray(applicatie.compliancy)
         ? [...applicatie.compliancy]
         : [];
-      const updatedCompliancy = prevCompliancy.filter(
-        (compliancy) =>
-          !removedStandards.some(
-            (option) => String(option.value) === String(compliancy.standaardversie)
-          )
-      );
+
+      // Only remove compliancy entries that have no data (no bewijs, no url)
+      const updatedCompliancy = prevCompliancy.filter((compliancy) => {
+        const isRemovedStandard = removedStandards.some(
+          (option) => String(option.value) === String(compliancy.standaardversie)
+        );
+
+        if (!isRemovedStandard) {
+          // Keep entries for standards that weren't removed
+          return true;
+        }
+
+        // For removed standards, only keep if they have data
+        const hasData = compliancy.bewijs || compliancy.url;
+        return hasData;
+      });
+
       setApplicatieData('compliancy', updatedCompliancy);
 
-      // Remove from standaarden array
+      // Always remove from standaarden array (compliance indicator)
       const prevStandaarden = Array.isArray(applicatie.standaarden)
         ? [...applicatie.standaarden]
         : [];
@@ -559,7 +594,7 @@ const ConFormApplicatieStandaardenStage = ({
       );
       setApplicatieData('standaarden', updatedStandaarden);
 
-      // Remove from standaardenGemma array
+      // Always remove from standaardenGemma array (compliance indicator)
       const prevStandaardenGemma = Array.isArray(applicatie.standaardenGemma)
         ? [...applicatie.standaardenGemma]
         : [];
@@ -652,54 +687,50 @@ const ConFormApplicatieStandaardenStage = ({
       [key]: {
         ...prev[key],
         isCompliant,
-        // Clear bewijs, filename, and url if not compliant
-        bewijs: isCompliant ? prev[key]?.bewijs || null : null,
-        bewijsFilename: isCompliant ? prev[key]?.bewijsFilename || null : null,
-        url: isCompliant ? prev[key]?.url || null : null,
+        // Preserve bewijs, filename, and url regardless of compliance status
+        bewijs: prev[key]?.bewijs || null,
+        bewijsFilename: prev[key]?.bewijsFilename || null,
+        url: prev[key]?.url || null,
       },
     }));
 
     // Update applicatie data
+    // Always preserve compliancy entries - never remove them
     const prevCompliancy = Array.isArray(applicatie.compliancy)
       ? [...applicatie.compliancy]
       : [];
-    let newCompliancy = prevCompliancy;
 
-    if (isCompliant) {
-      // Find the standard data to get the objectId
-      const standardData = findMatchingStandardData({
-        id: currentEntry.standardId,
-      });
-      const objectId = standardData?.id || standardData?.objectId || null;
+    // Find the standard data to get the objectId
+    const standardData = findMatchingStandardData({
+      id: currentEntry.standardId,
+    });
+    const objectId = standardData?.id || standardData?.objectId || null;
 
-      // Add or update compliancy object
-      const existingIndex = newCompliancy.findIndex(
-        (c) => c.standaardversie === currentEntry.standardId
-      );
-      const compliancyObject = {
-        standaardversie: currentEntry.standardId,
-        standaardGemma: objectId,
-        standaardnaam: currentEntry.standardName,
-        bewijs: currentEntry.bewijs || null,
-        bewijsFilename: currentEntry.bewijsFilename || null,
-        url: currentEntry.url || null,
-      };
+    // Find existing compliancy entry or create new one
+    const existingIndex = prevCompliancy.findIndex(
+      (c) => c.standaardversie === currentEntry.standardId
+    );
 
-      if (existingIndex >= 0) {
-        newCompliancy[existingIndex] = compliancyObject;
-      } else {
-        newCompliancy.push(compliancyObject);
-      }
+    const compliancyObject = {
+      standaardversie: currentEntry.standardId,
+      standaardGemma: objectId,
+      standaardnaam: currentEntry.standardName,
+      // Preserve all data from current entry
+      bewijs: currentEntry.bewijs || null,
+      bewijsFilename: currentEntry.bewijsFilename || null,
+      url: currentEntry.url || null,
+    };
+
+    // Always update or add the compliancy entry (never remove)
+    if (existingIndex >= 0) {
+      prevCompliancy[existingIndex] = compliancyObject;
     } else {
-      // Remove compliancy object
-      newCompliancy = newCompliancy.filter(
-        (c) => c.standaardversie !== currentEntry.standardId
-      );
+      prevCompliancy.push(compliancyObject);
     }
 
-    setApplicatieData('compliancy', newCompliancy);
+    setApplicatieData('compliancy', prevCompliancy);
 
-    // Update standaarden and standaardenGemma arrays
+    // Update standaarden and standaardenGemma arrays based on compliance status
     const prevStandaarden = Array.isArray(applicatie.standaarden)
       ? [...applicatie.standaarden]
       : [];
@@ -711,7 +742,7 @@ const ConFormApplicatieStandaardenStage = ({
         newStandaarden.push(currentEntry.standardId);
       }
     } else {
-      // Remove from array
+      // Remove from array (but keep in compliancy)
       const standardIndex = newStandaarden.indexOf(currentEntry.standardId);
       if (standardIndex > -1) {
         newStandaarden.splice(standardIndex, 1);
@@ -726,14 +757,11 @@ const ConFormApplicatieStandaardenStage = ({
     let newStandaardenGemma = prevStandaardenGemma;
 
     if (isCompliant) {
-      const objectId =
-        findMatchingStandardData({ id: currentEntry.standardId })?.id || null;
       if (objectId && !newStandaardenGemma.includes(objectId)) {
         newStandaardenGemma.push(objectId);
       }
     } else {
-      const objectId =
-        findMatchingStandardData({ id: currentEntry.standardId })?.id || null;
+      // Remove from array (but keep in compliancy)
       if (objectId) {
         const objectIndex = newStandaardenGemma.indexOf(objectId);
         if (objectIndex > -1) {
@@ -1006,6 +1034,15 @@ const ConFormApplicatieStandaardenStage = ({
       setApplicatieData('compliancy', updatedCompliancy);
     }
 
+    // Only sync standaarden arrays for entries that are actually compliant
+    // Check tableState to determine which standards are compliant
+    const compliantStandardIds = new Set();
+    Object.values(tableState).forEach((entry) => {
+      if (entry.isCompliant && entry.standardId) {
+        compliantStandardIds.add(String(entry.standardId));
+      }
+    });
+
     const compliancy = applicatie.compliancy || [];
     const prevStandaarden = Array.isArray(applicatie.standaarden)
       ? [...applicatie.standaarden]
@@ -1013,12 +1050,16 @@ const ConFormApplicatieStandaardenStage = ({
     let standaardenHasChanges = false;
     let updatedStandaarden = [...prevStandaarden];
 
+    // Only add standards to standaarden array if they're actually compliant
     compliancy.forEach((comp) => {
       const standardId = comp.standaardversie;
       if (!standardId) return;
 
-      // Check if standard is missing from standaarden array
-      if (!updatedStandaarden.includes(standardId)) {
+      // Only add if compliant (in tableState with isCompliant=true) and not already in array
+      if (
+        compliantStandardIds.has(String(standardId)) &&
+        !updatedStandaarden.includes(standardId)
+      ) {
         updatedStandaarden.push(standardId);
         standaardenHasChanges = true;
       }
@@ -1034,9 +1075,13 @@ const ConFormApplicatieStandaardenStage = ({
     let standaardenGemmaHasChanges = false;
     let updatedStandaardenGemma = [...prevStandaardenGemma];
 
+    // Only add standards to standaardenGemma array if they're actually compliant
     compliancy.forEach((comp) => {
       const standardId = comp.standaardversie;
       if (!standardId) return;
+
+      // Only add if compliant (in tableState with isCompliant=true)
+      if (!compliantStandardIds.has(String(standardId))) return;
 
       // Find the standard data to get the objectId
       const standardData = findMatchingStandardData({ id: standardId });
@@ -1052,7 +1097,7 @@ const ConFormApplicatieStandaardenStage = ({
     if (standaardenGemmaHasChanges) {
       setApplicatieData('standaardenGemma', updatedStandaardenGemma);
     }
-  }, [tableState]);
+  }, [tableState, applicatie.compliancy, standaardenMap, setApplicatieData]);
 
   // If no standards available, show message
   if (standaardenOptionsLoading) {
