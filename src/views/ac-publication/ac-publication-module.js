@@ -304,6 +304,20 @@ const AcPublicationProduct = ({
     return contactpersoonObject;
   }, [uses]);
 
+  const moduleVersies = useMemo(() => {
+    if (!used?.length) return null;
+
+    // Find the first contactpersoon object in the uses array
+    // (if multiple contactpersonen exist, we take the first one)
+    const moduleVersiesObjects = used.filter(
+      (use) => use?.['@self']?.schema?.slug === 'moduleversie'
+    );
+
+    if (!moduleVersiesObjects.length) return null;
+
+    return moduleVersiesObjects;
+  }, [used]);
+
   // Resolved referentieComponenten names for custom tab rendering
   const [resolvedReferentieComponenten, setResolvedReferentieComponenten] = useState(
     []
@@ -602,13 +616,13 @@ const AcPublicationProduct = ({
                   <p>{get_single?.licentie}</p>
                 </div>
               )}
-              {get_single?.moduleVersies && (
+
+              {Array.isArray(moduleVersies) && moduleVersies.length > 0 && (
                 <div>
                   <b>Huidige versie:</b>
                   <p>
-                    {get_single.moduleVersies.find(
-                      (versie) => versie.status === 'in gebruik'
-                    )?.versie || 'Geen versie in gebruik'}
+                    {moduleVersies?.find((versie) => versie.status === 'in gebruik')
+                      ?.versie || 'Geen versie in gebruik'}
                   </p>
                 </div>
               )}
