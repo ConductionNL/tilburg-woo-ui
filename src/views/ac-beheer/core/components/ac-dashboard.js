@@ -53,9 +53,14 @@ const AcDashboard = ({ store }) => {
     // Fetch if not cached
     setIsLoadingOrganization(true);
     try {
-      await object.fetchObject('voorzieningen', 'organisatie', activeOrganizationId, {
-        _published: 'false',
-      });
+      await object.fetchObject(
+        'voorzieningen',
+        'organisatie',
+        activeOrganizationId,
+        {
+          _published: 'false',
+        }
+      );
 
       const result = object.getObject(
         'voorzieningen_organisatie',

@@ -34,6 +34,7 @@ import {
   AcGetState,
   AcSaveState,
 } from '@src/utilities';
+import Fuse from 'fuse.js';
 
 /**
  * Custom hook for managing pagination limit with URL query params and backwards compatibility
@@ -129,8 +130,15 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
   }, [config, object]);
 
   // Get reactive data from object store (read directly to enable MobX tracking)
-  const data = objectType ? object.getCollection(objectType).results || [] : [];
+  // This reads all pre-fetched data from warmup (up to 10,000 items)
+  const allData = objectType ? object.getCollection(objectType).results || [] : [];
 
+  // Check warmup status for loading state
+  const warmupLoading = schemaType ? object.isWarmupInProgress(schemaType) : false;
+  const warmupCompleted = schemaType ? object.isWarmupCompleted(schemaType) : false;
+  const warmupError = schemaType ? object.getWarmupError(schemaType) : null;
+
+  // Legacy loading state (for manual refresh)
   const loading = objectType ? object.isLoading(objectType) : false;
 
   const error = objectType
@@ -139,11 +147,6 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
         return storeError ? { message: storeError } : null;
       })()
     : null;
-
-  // Get pagination info from store (only total and pages, page comes from URL)
-  const objectStorePagination = objectType
-    ? object.getPagination(objectType)
-    : { total: 0, page: 1, pages: 0, limit: 20 };
 
   // Get schema properties from object store
   const dataProperties = schemaType ? object.getSchemaProperties(schemaType) : [];
@@ -222,15 +225,119 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     setLocalSearchInput(searchQuery);
   }, [searchQuery]);
 
-  // Merge pagination: page from URL, limit from URL/session, total/pages from store
-  const pagination = useMemo(
-    () => ({
-      ...objectStorePagination,
+  // Helper function to recursively extract all string values from an object
+  const extractAllStringValues = (obj, values = []) => {
+    if (obj === null || obj === undefined) {
+      return values;
+    }
+
+    if (typeof obj === 'string') {
+      values.push(obj);
+      return values;
+    }
+
+    if (typeof obj === 'number' || typeof obj === 'boolean') {
+      values.push(String(obj));
+      return values;
+    }
+
+    if (Array.isArray(obj)) {
+      obj.forEach((item) => extractAllStringValues(item, values));
+      return values;
+    }
+
+    if (typeof obj === 'object') {
+      Object.values(obj).forEach((value) => {
+        // Skip certain keys that shouldn't be searched
+        if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+          extractAllStringValues(value, values);
+        } else {
+          // For nested objects, recursively extract
+          extractAllStringValues(value, values);
+        }
+      });
+      return values;
+    }
+
+    return values;
+  };
+
+  // Frontend filtering using Fuse.js for fuzzy search
+  const filteredData = useMemo(() => {
+    if (!allData || allData.length === 0) {
+      return [];
+    }
+
+    // If no search query, return all data
+    if (!searchQuery || searchQuery.trim() === '') {
+      return allData;
+    }
+
+    // Create searchable data by adding a _searchableText property to each object
+    const searchableData = allData.map((item) => {
+      const allValues = extractAllStringValues(item);
+      return {
+        originalItem: item,
+        _searchableText: allValues.join(' ').toLowerCase(),
+      };
+    });
+
+    // Configure Fuse.js for fuzzy search on the searchable text
+    const fuseOptions = {
+      keys: ['_searchableText'],
+      threshold: 0.3, // Lower threshold = more strict matching (0.0 = exact, 1.0 = match anything)
+      ignoreLocation: true, // Search anywhere in the string
+      includeScore: true, // Include score to enable relevance sorting (Fuse sorts by score automatically)
+      minMatchCharLength: 1, // Minimum characters to match
+    };
+
+    // Create Fuse instance
+    const fuse = new Fuse(searchableData, fuseOptions);
+
+    // Perform search (convert query to lowercase to match searchable text)
+    // Fuse.js automatically sorts results by score (ascending - lower score = better match)
+    const searchResults = fuse.search(searchQuery.trim().toLowerCase());
+
+    // Extract results and remove the temporary _searchableText property
+    // Results are already sorted by relevance (best matches first)
+    return searchResults.map((result) => {
+      const item = result.item.originalItem;
+      return item;
+    });
+  }, [allData, searchQuery]);
+
+  // Apply beoordeling filter if applicable
+  const filteredDataWithBeoordeling = useMemo(() => {
+    if (!beoordelingFilter || type !== 'organisaties') {
+      return filteredData;
+    }
+
+    return filteredData.filter((item) => {
+      return item.beoordeling === beoordelingFilter;
+    });
+  }, [filteredData, beoordelingFilter, type]);
+
+  // Frontend pagination on filtered results
+  const paginatedData = useMemo(() => {
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    return filteredDataWithBeoordeling.slice(startIndex, endIndex);
+  }, [filteredDataWithBeoordeling, page, limit]);
+
+  // Calculate pagination info based on filtered data
+  const pagination = useMemo(() => {
+    const total = filteredDataWithBeoordeling.length;
+    const pages = Math.ceil(total / limit) || 1;
+    return {
+      total,
       page,
+      pages,
       limit,
-    }),
-    [objectStorePagination, page, limit]
-  );
+    };
+  }, [filteredDataWithBeoordeling.length, page, limit]);
+
+  // Use filtered and paginated data for table
+  const data = paginatedData;
 
   const filterHeadersDrawerRef = useRef(null);
   const tableRef = useRef(null);
@@ -385,56 +492,44 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
   }));
 
   // Proactively reset to page 1 if current page exceeds total pages
-  // Uses pagination.pages from store (conservative, handles data changes)
-  // Also recalculates based on total/limit when limit changes
+  // Uses frontend-calculated pagination (based on filtered data)
   useEffect(() => {
     if (!objectType || !config) return;
 
     const currentPage = pagination.page;
     const pages = pagination.pages;
-    const total = pagination.total;
-    const limit = pagination.limit;
 
-    let shouldReset = false;
-
-    // Check against pagination.pages from store (handles cases where data changed)
     if (pages > 0 && currentPage > pages) {
-      shouldReset = true;
-    }
-
-    // Also recalculate based on total/limit (handles limit changes)
-    if (total > 0 && limit > 0) {
-      const calculatedMaxPages = Math.ceil(total / limit);
-      if (currentPage > calculatedMaxPages) {
-        shouldReset = true;
-      }
-    }
-
-    if (shouldReset) {
-      // Update page in URL query params (SPOT support)
+      // Update page in URL query params (no API call triggered)
       const params = new URLSearchParams(searchParams);
       params.set('_page', '1');
       setSearchParams(params, { replace: true });
     }
   }, [
-    pagination.limit,
     pagination.pages,
     pagination.page,
-    pagination.total,
     objectType,
     config,
     searchParams,
     setSearchParams,
   ]);
 
-  // Fetch data when component is ready and URL query params change
+  // Fetch data only on manual refresh or initial load if warmup hasn't completed
+  // Phase 4: Disable automatic fetching - rely on warmup data instead
   useEffect(() => {
-    if (!!config && objectType) {
-      // Only fetch when objectType is available
-      fetchData();
+    if (!!config && objectType && schemaType) {
+      // Only fetch if warmup hasn't completed and we don't have data
+      const collection = object.getCollection(objectType);
+      const hasData =
+        collection && collection.results && collection.results.length > 0;
+
+      if (!warmupCompleted && !hasData && !warmupLoading) {
+        // Fallback: fetch if warmup hasn't run yet
+        fetchData();
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [objectType, searchParams.toString(), !config]);
+  }, [objectType, schemaType, warmupCompleted, warmupLoading]);
 
   // Reset modalSelectedRows when modal closes
   useEffect(() => {
@@ -475,14 +570,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     };
   }, []);
 
-  // Refetch data when beoordelingFilter changes
-  useEffect(() => {
-    if (!config) return;
-    if (type === 'organisaties') {
-      fetchData();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [beoordelingFilter]);
+  // Phase 4: Removed API refetch for beoordelingFilter - now handled by frontend filtering
 
   // Filter selected rows based on organization permissions
   const filteredSelectedRows = useMemo(() => {
@@ -494,28 +582,22 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
 
   // const filteredOutCount = selectedRows.length - filteredSelectedRows.length;
 
-  // Handle search input change with debouncing to URL
+  // Handle search input change - update URL immediately (no debounce needed for frontend filtering)
   const handleSearchChange = useCallback(
     (value) => {
       // Update local state immediately for responsive UI
       setLocalSearchInput(value);
 
-      // Clear existing timer
-      if (searchDebounceTimerRef.current) {
-        clearTimeout(searchDebounceTimerRef.current);
+      // Update URL immediately (frontend filtering is instant)
+      const params = new URLSearchParams(searchParams);
+      if (value && value.trim() !== '') {
+        params.set('_search', value.trim());
+      } else {
+        params.delete('_search');
       }
-
-      // Set new timer to update URL after 500ms
-      searchDebounceTimerRef.current = setTimeout(() => {
-        const params = new URLSearchParams(searchParams);
-        if (value && value.trim() !== '') {
-          params.set('_search', value.trim());
-        } else {
-          params.delete('_search');
-        }
-        // Don't reset page - keep current page when search changes
-        setSearchParams(params, { replace: true });
-      }, 500);
+      // Reset to page 1 when search changes
+      params.set('_page', '1');
+      setSearchParams(params, { replace: true });
     },
     [searchParams, setSearchParams]
   );
@@ -964,6 +1046,16 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     );
   }
 
+  if (warmupError) {
+    return (
+      <AcBeheerError
+        title={config.title === 'Module' ? 'Applicaties' : config.title}
+        error={warmupError}
+        store={store}
+      />
+    );
+  }
+
   return (
     <AcSection spacing className='ac-mijn-omgeving-section'>
       <AcFlex spacing='xl'>
@@ -1158,7 +1250,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
             // onHeaderSearch={fetchData}
             // dataProperties={dataProperties}
             // showSearch={showSearch}
-            loading={loading || schemaLoading}
+            loading={loading || schemaLoading || warmupLoading}
             // Names resolution props
             objectStore={object}
             schema={schemaData}
@@ -1170,7 +1262,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
               totalPages={pagination?.pages}
               page={parseInt(pagination?.page, 10)}
               onPageChange={(page) => {
-                // Update page in URL query params
+                // Update page in URL query params (no API call triggered - frontend pagination)
                 const params = new URLSearchParams(searchParams);
                 params.set('_page', page.toString());
                 setSearchParams(params, { replace: true });

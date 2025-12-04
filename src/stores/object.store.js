@@ -7,6 +7,7 @@ import {
   getCookie,
   sortPropertiesByOrder,
   AcFormatErrorMessage,
+  normalizeLinkToSchemaSlug,
 } from '@src/utilities';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 
@@ -526,6 +527,27 @@ export class ObjectStore {
    * */
   @observable
   schemaErrors = {}; // Error states for schema fetching
+
+  /**
+   * Warmup in progress state per type
+   * @type {{[type: string]: boolean}}
+   * */
+  @observable
+  warmupInProgress = {}; // Warmup in progress state per type
+
+  /**
+   * Warmup completed state per type
+   * @type {{[type: string]: boolean}}
+   * */
+  @observable
+  warmupCompleted = {}; // Warmup completed state per type
+
+  /**
+   * Warmup errors per type
+   * @type {{[type: string]: string}}
+   * */
+  @observable
+  warmupErrors = {}; // Warmup errors per type
 
   // Request cancellation methods
   /**
@@ -4145,6 +4167,455 @@ export class ObjectStore {
   @action
   resetCacheWarmingFlag = () => {
     this.initialCacheWarmingCompleted = false;
+  };
+
+  /**
+   * Checks if warmup is in progress for a specific type
+   * @param {string} type - The schema slug (e.g., 'module')
+   * @returns {boolean} True if warmup is in progress
+   */
+  isWarmupInProgress = (type) => {
+    return this.warmupInProgress[type] || false;
+  };
+
+  /**
+   * Checks if warmup is completed for a specific type
+   * @param {string} type - The schema slug (e.g., 'module')
+   * @returns {boolean} True if warmup is completed
+   */
+  isWarmupCompleted = (type) => {
+    return this.warmupCompleted[type] || false;
+  };
+
+  /**
+   * Gets warmup error for a specific type
+   * @param {string} type - The schema slug (e.g., 'module')
+   * @returns {string|null} Error message or null if no error
+   */
+  getWarmupError = (type) => {
+    return this.warmupErrors[type] || null;
+  };
+
+  /**
+   * Checks if a string matches any UUID format
+   * Supports:
+   * 1. Standard UUID: c903efd8-fa52-486d-b775-96063d93c039
+   * 2. UUID with id- prefix: id-b86c1b61-8db0-11e3-67ab-0050568a6153
+   * 3. Weird format: id-92b166c588a842c480782e483ecd8a3a
+   * @param {string} str - String to check
+   * @returns {boolean} True if string matches a UUID pattern
+   */
+  _isUUID = (str) => {
+    if (typeof str !== 'string' || str.length === 0) {
+      return false;
+    }
+
+    // Standard UUID format: 8-4-4-4-12 hex digits
+    const standardUUIDRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+    // UUID with id- prefix: id-8-4-4-4-12 hex digits
+    const idPrefixedUUIDRegex =
+      /^id-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+    // Weird format: id-32 hex digits (no dashes)
+    const weirdUUIDRegex = /^id-[0-9a-f]{32}$/i;
+
+    return (
+      standardUUIDRegex.test(str) ||
+      idPrefixedUUIDRegex.test(str) ||
+      weirdUUIDRegex.test(str)
+    );
+  };
+
+  /**
+   * Recursively finds all UUID strings in an object/array/value
+   * @param {any} value - Value to scan for UUIDs
+   * @param {Set<string>} uuids - Set to collect UUIDs in
+   */
+  _collectUUIDs = (value, uuids) => {
+    if (value === null || value === undefined) {
+      return;
+    }
+
+    if (typeof value === 'string') {
+      if (this._isUUID(value)) {
+        uuids.add(value);
+      }
+      return;
+    }
+
+    if (Array.isArray(value)) {
+      value.forEach((item) => {
+        if (typeof item === 'string' && this._isUUID(item)) {
+          uuids.add(item);
+        } else {
+          this._collectUUIDs(item, uuids);
+        }
+      });
+      return;
+    }
+
+    if (typeof value === 'object') {
+      Object.entries(value).forEach(([key, val]) => {
+        // Skip certain keys that shouldn't be resolved
+        if (key === '@self' || key === '@id' || key === 'id') {
+          return;
+        }
+
+        if (typeof val === 'string' && this._isUUID(val)) {
+          uuids.add(val);
+        } else {
+          this._collectUUIDs(val, uuids);
+        }
+      });
+    }
+  };
+
+  /**
+   * Recursively replaces UUIDs with resolved names in an object/array/value
+   * @param {any} value - Value to update
+   * @param {Object} resolvedNames - Map of UUID to resolved name
+   * @returns {any} Updated value
+   */
+  _replaceUUIDsWithNames = (value, resolvedNames) => {
+    if (value === null || value === undefined) {
+      return value;
+    }
+
+    if (typeof value === 'string') {
+      if (this._isUUID(value) && resolvedNames[value]) {
+        return resolvedNames[value];
+      }
+      return value;
+    }
+
+    if (Array.isArray(value)) {
+      return value.map((item) => this._replaceUUIDsWithNames(item, resolvedNames));
+    }
+
+    if (typeof value === 'object') {
+      const updated = { ...value };
+      Object.entries(updated).forEach(([key, val]) => {
+        // Skip certain keys that shouldn't be resolved
+        if (key === '@self' || key === '@id' || key === 'id') {
+          return;
+        }
+
+        if (typeof val === 'string' && this._isUUID(val) && resolvedNames[val]) {
+          updated[key] = resolvedNames[val];
+        } else {
+          updated[key] = this._replaceUUIDsWithNames(val, resolvedNames);
+        }
+      });
+      return updated;
+    }
+
+    return value;
+  };
+
+  /**
+   * Resolves UUID strings in a collection using the name cache system
+   * Checks all string fields for UUID patterns and resolves them to names
+   * @param {string} register - The register slug (e.g., 'voorzieningen')
+   * @param {string} schemaSlug - The schema slug (e.g., 'module')
+   */
+  @action
+  resolveRefsInCollection = async (register, schemaSlug) => {
+    const collectionType = this.getTypeFromParams(register, schemaSlug);
+    const collection = this.getCollection(collectionType);
+
+    if (!collection || !collection.results || collection.results.length === 0) {
+      return;
+    }
+
+    // Collect all UUIDs that need resolution
+    const uuidsToResolve = new Set();
+
+    // Scan all objects for UUIDs
+    collection.results.forEach((obj) => {
+      this._collectUUIDs(obj, uuidsToResolve);
+    });
+
+    if (uuidsToResolve.size === 0) {
+      return;
+    }
+
+    // Resolve all UUIDs in batch
+    const uuidArray = Array.from(uuidsToResolve);
+    const resolvedNames = await this.getNamesForMultipleIds(uuidArray);
+
+    // Update objects in store with resolved names
+    runInAction(() => {
+      const updatedResults = collection.results.map((obj) => {
+        return this._replaceUUIDsWithNames(obj, resolvedNames);
+      });
+
+      // Update the collection in store
+      this.collections[collectionType] = {
+        results: updatedResults,
+      };
+    });
+  };
+
+  /**
+   * Waits for names cache warmup to complete
+   * If warmup is in progress, waits for it. If not started, triggers it.
+   * @returns {Promise<void>}
+   */
+  waitForNamesCacheWarmup = async () => {
+    const warmupType = 'names_warmup';
+
+    // Check if warmup is already in progress
+    if (this.isLoading(warmupType)) {
+      console.info('Names cache warmup in progress, waiting...');
+      // Poll until warmup completes, max 30 seconds
+      let c = 0;
+      while (this.isLoading(warmupType)) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        c++;
+        if (c >= 300) {
+          console.warn(
+            'Names cache warmup timed out (30 seconds), continuing anyway'
+          );
+          break;
+        }
+      }
+      console.info('Names cache warmup completed');
+      return;
+    }
+
+    // Check if names cache has data (warmup might have completed already)
+    const cacheStats = this.getNamesStats();
+    if (cacheStats.totalNames > 0) {
+      console.info(
+        `Names cache already has ${cacheStats.totalNames} names, skipping warmup`
+      );
+      return;
+    }
+
+    // Trigger warmup if not started
+    console.info('Starting names cache warmup...');
+    try {
+      await this.warmupNamesCache();
+      console.info('Names cache warmup completed successfully');
+    } catch (error) {
+      console.warn('Names cache warmup failed, continuing anyway:', error);
+      // Continue even if warmup fails - getNamesForMultipleIds will fallback to backend
+    }
+  };
+
+  /**
+   * Warms up beheer data by pre-fetching all object types and their schemas
+   * Only fetches types that don't already have data in the store
+   */
+  @action
+  warmupBeheerData = async () => {
+    try {
+      // Get types from menu
+      const types = await this.extractBeheerTypesFromMenu();
+
+      if (types.length === 0) {
+        console.warn('No beheer types found in menu');
+        return;
+      }
+
+      const register = 'voorzieningen'; // Standard register for beheer objects
+
+      // Process each type - fetch schemas and collections first
+      for (const schemaSlug of types) {
+        const collectionType = this.getTypeFromParams(register, schemaSlug);
+        const collection = this.getCollection(collectionType);
+
+        // Check if collection exists and has data
+        const needsWarmup =
+          !collection || !collection.results || collection.results.length === 0;
+
+        if (!needsWarmup) {
+          console.info(`Skipping warmup for ${schemaSlug} - data already exists`);
+          continue;
+        }
+
+        // Set warmup in progress
+        runInAction(() => {
+          this.warmupInProgress[schemaSlug] = true;
+          this.warmupErrors[schemaSlug] = null;
+        });
+
+        try {
+          // Fetch schema if not already cached
+          const schemaType = this.getSchemaType(schemaSlug);
+          const existingSchema = this.getSchema(schemaType);
+          if (!existingSchema) {
+            await this.fetchSchema(schemaSlug);
+          }
+
+          // Fetch objects with limit 10000 and _published: false
+          await this.fetchCollection(register, schemaSlug, {
+            _limit: 10000,
+            _published: 'false',
+          });
+        } catch (error) {
+          console.error(`Error fetching data for ${schemaSlug}:`, error);
+          const errorMessage =
+            AcFormatErrorMessage(error) || error.message || 'Unknown error';
+          runInAction(() => {
+            this.warmupErrors[schemaSlug] = errorMessage;
+            this.warmupInProgress[schemaSlug] = false;
+          });
+          continue;
+        }
+      }
+
+      // Wait for names cache warmup to complete before resolving refs
+      await this.waitForNamesCacheWarmup();
+
+      // Now resolve $ref properties for all types that were fetched
+      for (const schemaSlug of types) {
+        const collectionType = this.getTypeFromParams(register, schemaSlug);
+        const collection = this.getCollection(collectionType);
+
+        // Skip if collection doesn't exist or is empty
+        if (!collection || !collection.results || collection.results.length === 0) {
+          continue;
+        }
+
+        // Skip if warmup failed for this type
+        if (this.warmupErrors[schemaSlug]) {
+          continue;
+        }
+
+        try {
+          // Resolve $ref properties using name cache
+          await this.resolveRefsInCollection(register, schemaSlug);
+
+          // Mark as completed
+          runInAction(() => {
+            this.warmupCompleted[schemaSlug] = true;
+            this.warmupInProgress[schemaSlug] = false;
+            this.warmupErrors[schemaSlug] = null;
+          });
+
+          console.info(`Warmup completed for ${schemaSlug}`);
+        } catch (error) {
+          console.error(`Error resolving refs for ${schemaSlug}:`, error);
+          const errorMessage =
+            AcFormatErrorMessage(error) || error.message || 'Unknown error';
+          runInAction(() => {
+            this.warmupErrors[schemaSlug] = errorMessage;
+            this.warmupInProgress[schemaSlug] = false;
+          });
+        }
+      }
+
+      // Mark types that were skipped (already had data) as completed
+      for (const schemaSlug of types) {
+        const collectionType = this.getTypeFromParams(register, schemaSlug);
+        const collection = this.getCollection(collectionType);
+        const hasData =
+          collection && collection.results && collection.results.length > 0;
+        const wasSkipped =
+          hasData &&
+          !this.warmupInProgress[schemaSlug] &&
+          !this.warmupCompleted[schemaSlug];
+
+        if (wasSkipped) {
+          runInAction(() => {
+            this.warmupCompleted[schemaSlug] = true;
+            this.warmupInProgress[schemaSlug] = false;
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error in warmupBeheerData:', error);
+      AcFormatErrorMessage(error);
+    }
+  };
+
+  /**
+   * Extracts beheer object types from the menu API.
+   * Fetches menu list, finds menu with position 7, extracts items,
+   * filters beheer links, and normalizes them to schema slugs.
+   * @returns {Promise<string[]>} Array of normalized schema type slugs
+   */
+  @action
+  extractBeheerTypesFromMenu = async () => {
+    /**
+     * Links that should be excluded from beheer type extraction
+     * These are non-object-type pages like dashboard, account settings, etc.
+     */
+    const ExcludedBeheerLinks = [
+      '/beheer',
+      '/beheer/my-account',
+      '/beheer/my-organisation',
+    ];
+
+    try {
+      // Fetch menu list via MenuAPI
+      const menuList = await app.store.api.menu.list();
+
+      // Find menu with position: 7
+      const beheerMenu = Array.isArray(menuList.results)
+        ? menuList.results.find((menu) => menu.position === 7)
+        : Array.isArray(menuList)
+        ? menuList.find((menu) => menu.position === 7)
+        : null;
+
+      if (!beheerMenu || !beheerMenu.items || !Array.isArray(beheerMenu.items)) {
+        console.warn('Beheer menu (position 7) not found or has no items');
+        return [];
+      }
+
+      // Extract and normalize types from menu items
+      const types = new Set();
+
+      for (const item of beheerMenu.items) {
+        if (!item.link || typeof item.link !== 'string') {
+          continue;
+        }
+
+        const link = item.link.trim();
+
+        // Filter out non-beheer links (must start with /beheer/)
+        if (!link.startsWith('/beheer/')) {
+          continue;
+        }
+
+        // Filter out excluded links
+        if (ExcludedBeheerLinks.includes(link)) {
+          continue;
+        }
+
+        // Extract slug from link (e.g., "/beheer/applicaties" => "applicaties")
+        const slug = link.replace(/^\/beheer\//, '').split('/')[0];
+
+        if (!slug) {
+          continue;
+        }
+
+        // Normalize slug to schema name (e.g., "applicaties" => "module")
+        const schemaSlug = normalizeLinkToSchemaSlug(slug);
+
+        // Skip if normalization returned empty
+        if (!schemaSlug) {
+          continue;
+        }
+
+        // Use normalized schema slug (normalizeLinkToSchemaSlug returns original if no mapping found)
+        const finalSchemaSlug = schemaSlug;
+
+        // Avoid duplicates
+        if (!types.has(finalSchemaSlug)) {
+          types.add(finalSchemaSlug);
+        }
+      }
+
+      return [...types];
+    } catch (error) {
+      console.error('Error extracting beheer types from menu:', error);
+      AcFormatErrorMessage(error);
+      return [];
+    }
   };
 }
 
