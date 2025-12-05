@@ -98,8 +98,6 @@ nextcloudApi.interceptors.response.use(
  *
  * #### Collection Operations
  * - `fetchCollection(register, schema, params, append)` - Fetches paginated collections of objects with cancellation support
- * - `loadMore(type)` - Loads next page of results
- * - `loadPrevious(type)` - Loads previous page of results
  * - `exportObjects(register, schema, type)` - Exports a collection as CSV or Excel
  *
  * #### Schema Operations
@@ -136,16 +134,12 @@ nextcloudApi.interceptors.response.use(
  * - `clearActiveObject(register, schema)` - Clears active object and related data
  *
  * ### Search and Filtering
- * - `setSearchTerm(type, term)` - Sets search term with debouncing
- * - `clearSearchTerm(type)` - Clears search term
  * - `initializeSchemaProperties(type, schema)` - Initializes schema properties for filtering
  * - `initializeColumnFilters(type)` - Sets up column filters based on schema
  * - `updateColumnFilter(type, id, enabled)` - Updates column filter state
  *
  * ### Selection Management
  * - `setSelectedObjects(objects)` - Sets selected objects for bulk operations
- * - `toggleSelectAllObjects(type)` - Toggles selection of all objects of a type
- * - `isAllSelectedForType(type)` - Checks if all objects of a type are selected
  *
  * ### Request Cancellation
  * - `cancelRequest(type)` - Cancels ongoing request for specific operation type
@@ -173,7 +167,6 @@ nextcloudApi.interceptors.response.use(
  * - `getActiveObject(type)` - Gets active object
  * - `getRelatedData(type, dataType)` - Gets related data (logs, uses, used, files)
  * - `getPagination(type)` - Gets pagination info
- * - `getSearchTerm(type)` - Gets current search term
  * - `getError(type)` - Gets error state for operation-specific tracking
  * - `getObjectError(objectId)` - Gets error for specific object
  * - `getState(type)` - Gets success/error state for operation-specific tracking
@@ -252,7 +245,6 @@ nextcloudApi.interceptors.response.use(
  * 3. `getSchemaProperties()` → Returns sorted properties using `sortPropertiesByOrder`
  *
  * ### Search and Filtering Workflow
- * 1. `setSearchTerm()` → Debounced → `fetchCollection()` with search params and cancellation
  * 2. `initializeSchemaProperties()` → `initializeColumnFilters()` → `updateColumnFilter()`
  *
  * ### Bulk Operations Workflow
@@ -265,7 +257,6 @@ nextcloudApi.interceptors.response.use(
  *
  * ### Pagination Workflow
  * 1. `fetchCollection()` → `setPagination()` → `getPagination()`
- * 2. `loadMore()` / `loadPrevious()` → `fetchCollection()` with append flag
  *
  * ## Error Handling (Enhanced)
  * - **Operation-Specific Errors**: Each operation has its own error/success state preventing conflicts
@@ -331,13 +322,6 @@ nextcloudApi.interceptors.response.use(
  * // Mass operations
  * const results = await store.object.massDeleteObjects(selectedObjects);
  * const results = await store.object.massPublishObjects(selectedObjects);
- *
- * // Search functionality
- * store.object.setSearchTerm('register-slug_schema-slug', 'search term');
- *
- * // Pagination
- * await store.object.loadMore('register-slug_schema-slug');
- * await store.object.loadPrevious('register-slug_schema-slug');
  *
  * // Initialize schema properties for column filtering
  * store.object.initializeSchemaProperties('object-type', schemaData);
@@ -463,13 +447,6 @@ export class ObjectStore {
    * */
   @observable
   relatedData = {};
-
-  /**
-   * Current search terms for different object types
-   * @type {{[type: string]: string}}
-   * */
-  @observable
-  searchTerms = {};
 
   /**
    * Debounce timers for search operations
@@ -677,20 +654,6 @@ export class ObjectStore {
   };
 
   /**
-   * Checks if all objects of a specific type are selected
-   * @param {string} type - The object type to check
-   * @returns {boolean} True if all objects of the type are selected, false otherwise
-   */
-  @action
-  isAllSelectedForType = (type) => {
-    const collection = this.collections[type];
-    if (!collection?.results?.length) return false;
-    return collection.results.every((obj) =>
-      this.selectedObjects.includes(obj['@self']?.id || obj.id)
-    );
-  };
-
-  /**
    * Sets the collection data for a specific type
    * @param {string} type - The collection type identifier
    * @param {Array<Object>} results - Array of objects to set as collection results
@@ -862,24 +825,6 @@ export class ObjectStore {
   @action
   clearAllObjectErrors = () => {
     this.objectErrors = {};
-  };
-
-  /**
-   * Toggles selection of all objects of a specific type
-   * @param {string} type - The object type to toggle selection for
-   */
-  @action
-  toggleSelectAllObjects = (type) => {
-    const collection = this.collections[type];
-    if (!collection?.results?.length) return;
-
-    if (this.isAllSelectedForType(type)) {
-      this.selectedObjects = [];
-    } else {
-      this.selectedObjects = collection.results.map(
-        (obj) => obj['@self']?.id || obj.id
-      );
-    }
   };
 
   /**
@@ -2422,98 +2367,6 @@ export class ObjectStore {
     }
   };
 
-  /**
-   * Sets search term for a specific type with debouncing
-   * @param {string} type - The type identifier for search
-   * @param {string} term - The search term
-   */
-  @action
-  setSearchTerm = (type, term) => {
-    if (!this.searchTerms[type]) {
-      this.searchTerms[type] = '';
-    }
-
-    this.searchTerms[type] = term;
-
-    if (this.searchDebounceTimers[type]) {
-      clearTimeout(this.searchDebounceTimers[type]);
-    }
-
-    this.searchDebounceTimers[type] = setTimeout(() => {
-      const [register, schema] = type.split('_');
-      this.fetchCollection(register, schema, term ? { _search: term } : {});
-    }, 500);
-  };
-
-  /**
-   * Clears search term for a specific type
-   * @param {string} type - The type identifier for search
-   */
-  @action
-  clearSearchTerm = (type) => {
-    this.searchTerms[type] = '';
-
-    if (this.searchDebounceTimers[type]) {
-      clearTimeout(this.searchDebounceTimers[type]);
-      this.searchDebounceTimers[type] = null;
-    }
-
-    const [register, schema] = type.split('_');
-    this.fetchCollection(register, schema);
-  };
-
-  /**
-   * Loads the next page of results for a collection
-   * @param {string} type - The type identifier for the collection
-   */
-  @action
-  loadMore = async (type) => {
-    const pagination = this.pagination[type];
-    const [register, schema] = type.split('_');
-
-    if (pagination.next) {
-      const url = new URL(pagination.next);
-      const params = Object.fromEntries(url.searchParams);
-      await this.fetchCollection(register, schema, params, true);
-    } else if (pagination.page < pagination.pages) {
-      await this.fetchCollection(
-        register,
-        schema,
-        {
-          _page: pagination.page + 1,
-          _limit: pagination.limit,
-        },
-        true
-      );
-    }
-  };
-
-  /**
-   * Loads the previous page of results for a collection
-   * @param {string} type - The type identifier for the collection
-   */
-  @action
-  loadPrevious = async (type) => {
-    const pagination = this.pagination[type];
-    const [register, schema] = type.split('_');
-
-    if (pagination.prev) {
-      const url = new URL(pagination.prev);
-      const params = Object.fromEntries(url.searchParams);
-      await this.fetchCollection(register, schema, params, false);
-    } else if (pagination.page > 1) {
-      await this.fetchCollection(
-        register,
-        schema,
-        {
-          _page: pagination.page - 1,
-          _limit: pagination.limit,
-        },
-        false
-      );
-    }
-  };
-
   // Mass operations
   /**
    * Deletes multiple objects in parallel
@@ -3089,13 +2942,6 @@ export class ObjectStore {
   getCollection = (type) => {
     return this.collections[type] || { results: [] };
   };
-
-  /**
-   * Gets the search term for a specific type
-   * @param {string} type - The type identifier
-   * @returns {string} Current search term or empty string
-   */
-  getSearchTerm = (type) => this.searchTerms[type] || '';
 
   /**
    * Gets a specific object by type and ID
