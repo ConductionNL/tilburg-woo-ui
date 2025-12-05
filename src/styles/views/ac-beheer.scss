@@ -40,14 +40,6 @@
   max-width: 400px;
 }
 
-.ac-beheer-select {
-  // fix color dots on reactSelect by making sure they remain a uniform size
-  div[class*='-singleValue']::before,
-  div[class*='-option']::before {
-    flex: none;
-  }
-}
-
 .ac-beheer-pagination-single-page {
   font-size: 14px;
   color: var(--utrecht-form-control-color);

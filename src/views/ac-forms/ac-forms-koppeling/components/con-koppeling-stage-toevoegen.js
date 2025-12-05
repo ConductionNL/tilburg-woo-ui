@@ -180,6 +180,7 @@ const ConKoppelingStageToevoegen = ({
       marginRight: 8,
       height: 10,
       width: 10,
+      flex: 'none',
     },
   });
 
