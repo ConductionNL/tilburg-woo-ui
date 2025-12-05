@@ -258,7 +258,7 @@ const ConKoppelingStageToevoegen = ({
             }}
           />
           <span style={{ fontSize: '0.875rem' }}>
-            Buiten gemeentelijke voorziening
+            Buiten Gemeentelijke Voorziening
           </span>
         </div>
       </div>
@@ -358,7 +358,7 @@ const ConKoppelingStageToevoegen = ({
                     htmlFor={appBId}
                     style={{ display: 'flex', alignItems: 'center' }}
                   >
-                    Applicatie B
+                    Applicatie B / BGV
                     <span className='required-indicator' aria-hidden='true'>
                       *
                     </span>
@@ -394,7 +394,6 @@ const ConKoppelingStageToevoegen = ({
                       }));
                       if (opt) upsertModuleOption(opt);
                     }}
-                    placeholder='Selecteer applicatie B'
                     inputId={appBId}
                     aria-required='true'
                     isOptionDisabled={(opt) =>
