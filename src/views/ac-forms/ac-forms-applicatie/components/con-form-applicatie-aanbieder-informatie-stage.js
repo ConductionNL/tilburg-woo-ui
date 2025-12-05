@@ -86,8 +86,13 @@ const ConFormApplicatieAanbiederInformatieStage = memo(
         <div className='con-dynamic-form-container'>
           <div className='con-form-fields-container'>
             {/* Choice between existing and new organization - using same styling as ProductOpbouw */}
-            <div className='con-form-field-wrapper field-size-full'>
-              <h3>Aanbieder selecteren</h3>
+            <div
+              className='con-form-field-wrapper field-size-full'
+              style={{ minHeight: 'auto' }}
+            >
+              <h3>{`Aanbieder ${
+                aanbiederKeuze === 'bestaand' ? 'selecteren' : 'aanmaken'
+              }`}</h3>
             </div>
 
             {/* Existing organization dropdown - using ConSchemaEnhancedField */}
@@ -97,7 +102,7 @@ const ConFormApplicatieAanbiederInformatieStage = memo(
                 required={true}
                 schemaProperty='aanbieder'
                 value={applicatie.aanbieder}
-                onChange={(value) => { 
+                onChange={(value) => {
                   setApplicatieData('aanbieder', value);
                 }}
                 isDisabled={loading}
