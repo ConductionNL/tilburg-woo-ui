@@ -471,22 +471,27 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
                             {showFilesTab && (
                               <AcTab selected={tabIndex === 0}>Bestanden</AcTab>
                             )}
-                            {usesSchemas.map((schema, idx) => (
-                              <AcTab
-                                key={`uses-${schema.id}`}
-                                selected={tabIndex === idx + 1}
-                              >
-                                {schema.title || schema.id}
-                              </AcTab>
-                            ))}
-                            {usedSchemas.map((schema, idx) => (
-                              <AcTab
-                                key={`used-${schema.id}`}
-                                selected={tabIndex === idx + 1 + usesSchemas.length}
-                              >
-                                {schema.title || schema.id}
-                              </AcTab>
-                            ))}
+                            {usesSchemas.length > 0 &&
+                              usesSchemas.map((schema, idx) => (
+                                <AcTab
+                                  key={`uses-${schema.id}`}
+                                  selected={tabIndex === idx + !!showFilesTab}
+                                >
+                                  {schema.title || schema.id}
+                                </AcTab>
+                              ))}
+                            {usedSchemas.length > 0 &&
+                              usedSchemas.map((schema, idx) => (
+                                <AcTab
+                                  key={`used-${schema.id}`}
+                                  selected={
+                                    tabIndex ===
+                                    idx + !!showFilesTab + usesSchemas.length
+                                  }
+                                >
+                                  {schema.title || schema.id}
+                                </AcTab>
+                              ))}
                           </AcTabList>
                           {showFilesTab && (
                             <AcTabPanel selected={tabIndex === 0}>
@@ -509,7 +514,7 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
                               return (
                                 <AcTabPanel
                                   key={`uses-${schema.id}`}
-                                  selected={tabIndex === idx + 1}
+                                  selected={tabIndex === idx + !!showFilesTab}
                                 >
                                   {metadata ? (
                                     <BeheerTable
@@ -565,7 +570,8 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
                                 <AcTabPanel
                                   key={`used-${schema.id}`}
                                   selected={
-                                    tabIndex === idx + 1 + usesSchemas.length
+                                    tabIndex ===
+                                    idx + !!showFilesTab + usesSchemas.length
                                   }
                                 >
                                   {metadata ? (

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
 import { VISUALS } from '@constants';
 import {
@@ -48,13 +48,29 @@ const ConDetailsActionsMenu = ({
 }) => {
   const navigate = useNavigate();
 
+  // Check organization permissions for edit and publish actions
+  // Memoize to prevent infinite loops when cache updates trigger re-renders
+  // Only depend on the actual organization IDs, not the cache state
+  const userOrgId = user?.activeOrganization?.uuid || user?.activeOrganization?.id;
+  const objectOrgId =
+    typeof (object?.['@self']?.organisation || object?.['@self']?.organization) ===
+    'string'
+      ? object?.['@self']?.organisation || object?.['@self']?.organization
+      : object?.['@self']?.organisation?.id ||
+        object?.['@self']?.organisation?.uuid ||
+        object?.['@self']?.organization?.id ||
+        object?.['@self']?.organization?.uuid;
+
+  const { canEdit, reason } = useMemo(
+    () => checkOrganizationPermissions(user, object),
+    // Only recalculate when actual organization IDs change, not when cache updates
+    [user?.isAuthenticated, userOrgId, objectOrgId]
+  );
+
   // Don't render if user is not authenticated
   if (!user?.isAuthenticated) {
     return null;
   }
-
-  // Check organization permissions for edit and publish actions
-  const { canEdit, reason } = checkOrganizationPermissions(user, object);
 
   const handleEdit = () => {
     if (onEdit) {
