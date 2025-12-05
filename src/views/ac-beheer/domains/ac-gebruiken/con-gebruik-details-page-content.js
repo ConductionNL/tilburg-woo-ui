@@ -112,15 +112,8 @@ const ConGebruikDetailsPageContent = ({
 
   const status = data?.status || '-';
 
-  // Extract deelnemer IDs from the data
-  const deelnemerIds = Array.isArray(data?.deelnemers)
-    ? data.deelnemers.map((deelnemer) => {
-        if (typeof deelnemer === 'object') {
-          return String(deelnemer?.id || deelnemer?.['@self']?.id || deelnemer);
-        }
-        return String(deelnemer);
-      })
-    : [];
+  // Extract deelnemer IDs from the data (always an array of UUID strings or empty)
+  const deelnemerIds = data?.deelnemers || [];
 
   if (loading || !data) return null;
 

@@ -27,20 +27,16 @@ export const useFacetNameResolution = (facets, objectStore) => {
         const resolvedFacetsObj = JSON.parse(JSON.stringify(facets)); // Deep clone
 
         // Apply schema label transformations immediately
-        const applySchemaTransformations = (facetsObj) => {
-          if (facetsObj['@self']?.schema?.buckets) {
-            facetsObj['@self'].schema.buckets.forEach((bucket) => {
-              if (bucket.label === 'Module') {
-                bucket.label = 'Applicatie';
-              }
-              if (bucket.label === 'Module Versie') {
-                bucket.label = 'Applicatie versie';
-              }
-            });
-          }
-        };
-
-        applySchemaTransformations(resolvedFacetsObj);
+        if (resolvedFacetsObj['@self']?.schema?.buckets) {
+          resolvedFacetsObj['@self'].schema.buckets.forEach((bucket) => {
+            if (bucket.label === 'Module') {
+              bucket.label = 'Applicatie';
+            }
+            if (bucket.label === 'Module Versie') {
+              bucket.label = 'Applicatie versie';
+            }
+          });
+        }
 
         // Collect all UUIDs from all facet buckets
         const uuidsToResolve = new Set();
