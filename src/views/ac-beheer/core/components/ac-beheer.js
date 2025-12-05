@@ -70,7 +70,7 @@ const AcBeheer = ({ store }) => {
     return <ConBeheerPageWrapper type={type} />;
   }
 
-  if (type === 'organisaties') {
+  if (type === 'organisaties' || type === 'organisatie') {
     return <ConOrganisatieDetailsPage />;
   }
   if (type === 'product') {

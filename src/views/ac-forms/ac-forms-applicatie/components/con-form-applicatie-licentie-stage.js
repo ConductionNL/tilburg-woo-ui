@@ -132,11 +132,11 @@ const ConFormApplicatieLicentieStage = memo(
                 onChange={(value) => setApplicatieData('hostingLocatie', value)}
                 isDisabled={
                   loading ||
-                  !(
-                    applicatie?.cloudDienstverleningsmodel.includes(
-                      'On-premises (self-managed)'
-                    ) && applicatie?.cloudDienstverleningsmodel.length > 1
-                  )
+                  !applicatie?.cloudDienstverleningsmodel?.length ||
+                  (applicatie?.cloudDienstverleningsmodel?.includes(
+                    'On-premises (self-managed)'
+                  ) &&
+                    applicatie?.cloudDienstverleningsmodel?.length === 1)
                 }
                 width='half'
                 touched={touched}
@@ -159,11 +159,11 @@ const ConFormApplicatieLicentieStage = memo(
                   }
                   isDisabled={
                     loading ||
-                    !(
-                      applicatie?.cloudDienstverleningsmodel.includes(
-                        'On-premises (self-managed)'
-                      ) && applicatie?.cloudDienstverleningsmodel.length > 1
-                    )
+                    !applicatie?.cloudDienstverleningsmodel?.length ||
+                    (applicatie?.cloudDienstverleningsmodel?.includes(
+                      'On-premises (self-managed)'
+                    ) &&
+                      applicatie?.cloudDienstverleningsmodel?.length === 1)
                   }
                   width='full'
                   touched={touched}
