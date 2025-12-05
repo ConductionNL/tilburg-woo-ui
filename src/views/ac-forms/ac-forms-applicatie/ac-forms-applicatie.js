@@ -128,7 +128,8 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
    * and the optional Versies step (only shown for On-premises)
    * @param {number} logicalStep - The logical step number
    * Logical steps: 0=Aanbieder, 1=Applicatie info, 2=Licentie, 3=Versies, 4=Referentiecomponenten,
-   *                5=Standaarden, 6=Koppelingen, 7=Diensten, 8=Controleren
+   *                5=Standaarden, 6=Koppelingen, 7=Controleren
+   * (Note: Diensten step temporarily disabled - was previously step 7, Controleren was step 8)
    * @returns {number} The adjusted physical step index
    */
   const getAdjustedStepIndex = useCallback(
@@ -212,10 +213,11 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     mapping.push(getAdjustedStepIndex(4)); // Referentiecomponenten
     mapping.push(getAdjustedStepIndex(5)); // Standaarden
     mapping.push(getAdjustedStepIndex(6)); // Koppelingen
-    mapping.push(getAdjustedStepIndex(7)); // Diensten
+    // Diensten step temporarily disabled - keeping code for later re-enabling
+    // mapping.push(getAdjustedStepIndex(7)); // Diensten (was step 7, now skipped)
 
     // Main step 3: Controleren
-    mapping.push(getAdjustedStepIndex(8));
+    mapping.push(getAdjustedStepIndex(7)); // Was step 8, now step 7 (Diensten disabled)
 
     return mapping;
   }, [formType, getAdjustedStepIndex, shouldShowVersiesStep]);
@@ -1654,17 +1656,18 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
             searchModules={searchModules}
           />
         );
-      case 7:
-        return (
-          <ConFormApplicatieDienstenStage
-            applicatie={applicatie}
-            dienstOptions={dienstOptions}
-            setApplicatieData={setApplicatieData}
-            dienstenFormState={dienstenFormState}
-            setDienstenFormState={setDienstenFormState}
-          />
-        );
-      case 8:
+      // Diensten step temporarily disabled - keeping code for later re-enabling
+      // case 7: (was Diensten, now used for Controleren below)
+      //   return (
+      //     <ConFormApplicatieDienstenStage
+      //       applicatie={applicatie}
+      //       dienstOptions={dienstOptions}
+      //       setApplicatieData={setApplicatieData}
+      //       dienstenFormState={dienstenFormState}
+      //       setDienstenFormState={setDienstenFormState}
+      //     />
+      //   );
+      case 7: // Was case 8 (Controleren) - renumbered due to Diensten being disabled
         return (
           <ConFormApplicatieControlerenStage
             applicatie={applicatie}
@@ -1704,9 +1707,10 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         return 'Selecteer de standaarden voor uw applicatie';
       case 6:
         return 'Koppelingen met andere applicaties';
-      case 7:
-        return 'Diensten';
-      case 8:
+      // Diensten step temporarily disabled - keeping code for later re-enabling
+      // case 7: (was Diensten, now used for Controleren below)
+      //   return 'Diensten';
+      case 7: // Was case 8 (Controleren) - renumbered due to Diensten being disabled
         return 'Controleer uw gegevens';
       default:
         return '';
@@ -2008,7 +2012,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
                                   currentStep,
                                   getAdjustedStepIndex(2),
                                   getAdjustedStepIndex(2),
-                                  getAdjustedStepIndex(8)
+                                  getAdjustedStepIndex(7) // Was 8, now 7 (Diensten disabled)
                                 ),
                                 title: 'Applicatie configuratie',
                                 steps: [
@@ -2057,14 +2061,15 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
                                     ),
                                     title: 'Koppelingen',
                                   },
-                                  {
-                                    id: 'diensten-substep',
-                                    status: getStatus(
-                                      currentStep,
-                                      getAdjustedStepIndex(7)
-                                    ),
-                                    title: 'Diensten',
-                                  },
+                                  // Diensten step temporarily disabled - keeping code for later re-enabling
+                                  // {
+                                  //   id: 'diensten-substep',
+                                  //   status: getStatus(
+                                  //     currentStep,
+                                  //     getAdjustedStepIndex(7)
+                                  //   ),
+                                  //   title: 'Diensten',
+                                  // },
                                 ],
                               },
                               {
@@ -2072,7 +2077,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
                                 marker: 3,
                                 status: getStatus(
                                   currentStep,
-                                  getAdjustedStepIndex(8)
+                                  getAdjustedStepIndex(7) // Was 8, now 7 (Diensten disabled)
                                 ),
                                 title: 'Controleren',
                               },
@@ -2177,7 +2182,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
                                     : 'Bestaande leverancier selecteren'}
                                 </AcButton>
                               )}
-                            {getLogicalStepFromPhysical(currentStep) !== 8 && (
+                            {getLogicalStepFromPhysical(currentStep) !== 7 && ( // Was 8, now 7 (Diensten disabled)
                               <AcButton
                                 style='button'
                                 className={clsx(
@@ -2204,7 +2209,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
                               </AcButton>
                             )}
 
-                            {getLogicalStepFromPhysical(currentStep) === 8 && (
+                            {getLogicalStepFromPhysical(currentStep) === 7 && ( // Was 8, now 7 (Diensten disabled)
                               <AcButton
                                 style='button'
                                 icon={
