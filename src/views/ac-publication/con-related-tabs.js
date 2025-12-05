@@ -248,7 +248,8 @@ const renderRelatedTabs = (
   customTabsBefore = [],
   customTabsAfter = [],
   user,
-  tabNameOverride = { schemaName: null, newTabName: null }
+  tabNameOverride = { schemaName: null, newTabName: null },
+  activeObjectId = null
 ) => {
   if (loading && (!items || items.length === 0)) {
     return (
@@ -276,21 +277,32 @@ const renderRelatedTabs = (
     : [];
 
   // Build schema-derived tabs
-  const schemaTabs = uniqueSchemas.map((schemaItem) => {
-    const schemaId = schemaItem['@self'].schema.id;
-    const schemaSlug = schemaItem['@self'].schema.slug;
-    const itemsWithThisSchema = (items || []).filter(
-      (u) => u['@self'].schema.id === schemaId
-    );
-    return {
-      kind: 'schema',
-      id: `schema-${schemaId}`,
-      schemaId,
-      schemaSlug,
-      items: itemsWithThisSchema,
-      count: itemsWithThisSchema.length,
-    };
-  });
+  const schemaTabs = uniqueSchemas
+    .map((schemaItem) => {
+      const schemaId = schemaItem['@self'].schema.id;
+      const schemaSlug = schemaItem['@self'].schema.slug;
+      let itemsWithThisSchema = (items || []).filter(
+        (u) => u['@self'].schema.id === schemaId
+      );
+
+      // Filter out items with matching ID for 'organisatie' schema
+      if (schemaSlug === 'organisatie' && activeObjectId) {
+        itemsWithThisSchema = itemsWithThisSchema.filter((item) => {
+          const itemId = item.id || item['@self']?.id;
+          return itemId !== activeObjectId;
+        });
+      }
+
+      return {
+        kind: 'schema',
+        id: `schema-${schemaId}`,
+        schemaId,
+        schemaSlug,
+        items: itemsWithThisSchema,
+        count: itemsWithThisSchema.length,
+      };
+    })
+    .filter((tab) => tab.count > 0); // Filter out tabs with 0 items
 
   // Normalize and filter custom tabs by visibility
   const normalizeCustomTabs = (tabs = []) =>
@@ -448,6 +460,8 @@ const RelatedTabs = observer(
 
     // Fetch ambtenaar gebruik for "Aangeboden gebruik" tab (optional, permission-based)
     const [ambtenaarData, setAmbtenaarData] = useState(null);
+    // Fetch gebruik data
+    const [gebruikData, setGebruikData] = useState(null);
 
     useEffect(() => {
       if (!activeObjectId) return;
@@ -476,7 +490,29 @@ const RelatedTabs = observer(
         }
       };
 
+      const fetchGebruik = async () => {
+        try {
+          const response = await fetch(
+            `${commongroundApiUrl()}/softwarecatalog/api/gebruik?_source=database&_extend[]=@self.schema`,
+            {
+              method: 'GET',
+              signal: abortController.signal,
+              headers: { Accept: 'application/json' },
+            }
+          );
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+          const data = (await response.json()).results || [];
+
+          if (isMounted) setGebruikData(data);
+        } catch (err) {
+          // Fetch failures are non-blocking
+          if (isMounted && err.name === 'AbortError') return;
+        }
+      };
+
       fetchAmbtenaarGebruik();
+      fetchGebruik();
 
       return () => {
         isMounted = false;
@@ -484,10 +520,14 @@ const RelatedTabs = observer(
       };
     }, []);
 
-    // Combine ambtenaar gebruik into the main items so there's a single 'gebruik' tab
+    // Combine ambtenaar gebruik and database gebruik into the main items so there's a single 'gebruik' tab
     const itemsWithAmbtenaarGebruik = mergeGebruiksIntoItems(
       mergedItems,
       ambtenaarData || []
+    );
+    const itemsWithAllGebruik = mergeGebruiksIntoItems(
+      itemsWithAmbtenaarGebruik,
+      gebruikData || []
     );
 
     // Determine if there are any visible custom tabs
@@ -499,7 +539,7 @@ const RelatedTabs = observer(
     // Show the tabs if we have data, custom tabs, or are loading
     const shouldShow =
       isLoading ||
-      (itemsWithAmbtenaarGebruik && itemsWithAmbtenaarGebruik.length > 0) ||
+      (itemsWithAllGebruik && itemsWithAllGebruik.length > 0) ||
       anyVisibleCustomTabs;
 
     return (
@@ -507,7 +547,7 @@ const RelatedTabs = observer(
         {shouldShow && (
           <div>
             {renderRelatedTabs(
-              itemsWithAmbtenaarGebruik,
+              itemsWithAllGebruik,
               isLoading,
               tabIndex,
               setTabIndex,
@@ -516,7 +556,8 @@ const RelatedTabs = observer(
               customTabsBefore,
               customTabsAfter,
               user,
-              tabNameOverride
+              tabNameOverride,
+              activeObjectId
             )}
           </div>
         )}
