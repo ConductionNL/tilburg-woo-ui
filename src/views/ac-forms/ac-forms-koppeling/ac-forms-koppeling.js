@@ -337,7 +337,7 @@ const AcFormsKoppeling = ({ store }) => {
             item?.value ||
             item?.slug ||
             `Applicatie ${index + 1}`;
-          return { value: String(id), label: String(label), data: item };
+          return { value: String(id), label: String(label), data: item, type: 'applicatie' };
         });
         if (isMounted) {
           setModulesOptions(options);
@@ -406,6 +406,7 @@ const AcFormsKoppeling = ({ store }) => {
                 value: String(applicatieFromUrl),
                 label: String(label),
                 data: fetched,
+                type: 'applicatie',
               };
               // Add to both options lists first
               setModulesOptions((prev) => {
@@ -483,7 +484,7 @@ const AcFormsKoppeling = ({ store }) => {
         item?.label ||
         item?.['@self']?.name ||
         String(id);
-      const option = { value: String(id), label: String(label), data: item };
+      const option = { value: String(id), label: String(label), data: item, type: 'applicatie' };
       setModulesOptions((prev) => {
         const exists = (prev || []).some((o) => String(o.value) === String(id));
         return exists ? prev : [...(prev || []), option];
@@ -620,7 +621,7 @@ const AcFormsKoppeling = ({ store }) => {
             item?.value ||
             item?.slug ||
             `Applicatie ${index + 1}`;
-          return { value: String(id), label: String(label), data: item };
+          return { value: String(id), label: String(label), data: item, type: 'applicatie' };
         });
         if (!cancelled) setOwnAppOptions(options);
       } catch {
@@ -1224,7 +1225,7 @@ const AcFormsKoppeling = ({ store }) => {
             item?.label ||
             `Facility ${index + 1}`;
           const value = item?.value || item?.id || item?.slug || label;
-          return { value: String(value), label: String(label), data: item };
+          return { value: String(value), label: String(label), data: item, type: 'buitengemeentelijke' };
         })
         .filter((o) => o.label && o.value);
 

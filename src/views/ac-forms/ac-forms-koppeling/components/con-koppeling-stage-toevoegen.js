@@ -74,7 +74,11 @@ const ConKoppelingStageToevoegen = ({
 
   const fetchModuleOptions = async (q, signal) => {
     try {
-      const params = new URLSearchParams({ _limit: '20', _page: '1', _published: 'false' });
+      const params = new URLSearchParams({
+        _limit: '20',
+        _page: '1',
+        _published: 'false',
+      });
       if (q) params.set('_search', q);
       const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module?${params}`;
       const res = await fetch(endpoint, {
@@ -106,7 +110,12 @@ const ConKoppelingStageToevoegen = ({
           item?.value ||
           item?.slug ||
           `Applicatie ${index + 1}`;
-        return { value: String(id), label: String(label), data: item };
+        return {
+          value: String(id),
+          label: String(label),
+          data: item,
+          type: 'applicatie',
+        };
       });
       // also upsert into shared pools for persistence
       mapped.forEach((o) => upsertModuleOption(o));
@@ -159,6 +168,50 @@ const ConKoppelingStageToevoegen = ({
     };
   }, []);
 
+  // Helper function to create colored dot style
+  const dot = (color = 'transparent') => ({
+    alignItems: 'center',
+    display: 'flex',
+    ':before': {
+      backgroundColor: color,
+      borderRadius: 10,
+      content: '" "',
+      display: 'block',
+      marginRight: 8,
+      height: 10,
+      width: 10,
+    },
+  });
+
+  // Custom styles for ReactSelect with colored dots
+  const getSelectStyles = () => ({
+    option: (styles, { data }) => {
+      const color = data?.type === 'buitengemeentelijke' ? '#3b82f6' : '#10b981';
+      return {
+        ...styles,
+        ...dot(color),
+      };
+    },
+    singleValue: (styles, { data }) => {
+      const color = data?.type === 'buitengemeentelijke' ? '#3b82f6' : '#10b981';
+      return {
+        ...styles,
+        ...dot(color),
+      };
+    },
+    multiValue: (styles, { data }) => {
+      const color = data?.type === 'buitengemeentelijke' ? '#3b82f6' : '#10b981';
+      return {
+        ...styles,
+        ...dot(color),
+      };
+    },
+    placeholder: (styles) => ({
+      ...styles,
+      ...dot('#ccc'),
+    }),
+  });
+
   return (
     <div
       className='ac-register-form-section'
@@ -168,6 +221,46 @@ const ConKoppelingStageToevoegen = ({
       <h2 id='koppeling-toevoegen-title' className='sr-only'>
         Toevoegen
       </h2>
+
+      {/* Legend */}
+      <div
+        style={{
+          display: 'flex',
+          gap: '1.5rem',
+          marginBottom: '1rem',
+          padding: '0.75rem',
+          backgroundColor: '#f9fafb',
+          borderRadius: '4px',
+          border: '1px solid #e5e7eb',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span
+            style={{
+              display: 'block',
+              width: '10px',
+              height: '10px',
+              borderRadius: '50%',
+              backgroundColor: '#10b981',
+            }}
+          />
+          <span style={{ fontSize: '0.875rem' }}>Applicatie</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span
+            style={{
+              display: 'block',
+              width: '10px',
+              height: '10px',
+              borderRadius: '50%',
+              backgroundColor: '#3b82f6',
+            }}
+          />
+          <span style={{ fontSize: '0.875rem' }}>
+            Buiten gemeentelijke voorziening
+          </span>
+        </div>
+      </div>
 
       <div className='con-form-wizard-rows'>
         {rows.map((rowId) => {
@@ -321,6 +414,7 @@ const ConKoppelingStageToevoegen = ({
                         ? `${base} (al gekozen bij A)`
                         : base;
                     }}
+                    styles={getSelectStyles()}
                   />
                 </div>
               </div>
