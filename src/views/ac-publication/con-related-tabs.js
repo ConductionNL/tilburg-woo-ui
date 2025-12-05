@@ -448,6 +448,8 @@ const RelatedTabs = observer(
 
     // Fetch ambtenaar gebruik for "Aangeboden gebruik" tab (optional, permission-based)
     const [ambtenaarData, setAmbtenaarData] = useState(null);
+    // Fetch gebruik data
+    const [gebruikData, setGebruikData] = useState(null);
 
     useEffect(() => {
       if (!activeObjectId) return;
@@ -476,7 +478,29 @@ const RelatedTabs = observer(
         }
       };
 
+      const fetchGebruik = async () => {
+        try {
+          const response = await fetch(
+            `${commongroundApiUrl()}/softwarecatalog/api/gebruik?_source=database&_extend[]=@self.schema`,
+            {
+              method: 'GET',
+              signal: abortController.signal,
+              headers: { Accept: 'application/json' },
+            }
+          );
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+          const data = (await response.json()).results || [];
+
+          if (isMounted) setGebruikData(data);
+        } catch (err) {
+          // Fetch failures are non-blocking
+          if (isMounted && err.name === 'AbortError') return;
+        }
+      };
+
       fetchAmbtenaarGebruik();
+      fetchGebruik();
 
       return () => {
         isMounted = false;
@@ -484,10 +508,14 @@ const RelatedTabs = observer(
       };
     }, []);
 
-    // Combine ambtenaar gebruik into the main items so there's a single 'gebruik' tab
+    // Combine ambtenaar gebruik and database gebruik into the main items so there's a single 'gebruik' tab
     const itemsWithAmbtenaarGebruik = mergeGebruiksIntoItems(
       mergedItems,
       ambtenaarData || []
+    );
+    const itemsWithAllGebruik = mergeGebruiksIntoItems(
+      itemsWithAmbtenaarGebruik,
+      gebruikData || []
     );
 
     // Determine if there are any visible custom tabs
@@ -499,7 +527,7 @@ const RelatedTabs = observer(
     // Show the tabs if we have data, custom tabs, or are loading
     const shouldShow =
       isLoading ||
-      (itemsWithAmbtenaarGebruik && itemsWithAmbtenaarGebruik.length > 0) ||
+      (itemsWithAllGebruik && itemsWithAllGebruik.length > 0) ||
       anyVisibleCustomTabs;
 
     return (
@@ -507,7 +535,7 @@ const RelatedTabs = observer(
         {shouldShow && (
           <div>
             {renderRelatedTabs(
-              itemsWithAmbtenaarGebruik,
+              itemsWithAllGebruik,
               isLoading,
               tabIndex,
               setTabIndex,

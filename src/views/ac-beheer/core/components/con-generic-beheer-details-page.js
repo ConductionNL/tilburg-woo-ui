@@ -27,6 +27,7 @@ import ConLogoPreview from '@views/ac-register/con-logo-preview';
 import { AcButton } from '@src/molecules';
 import AcGemmaView from '@views/ac-gemma/ac-gemma-view';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
+import { commongroundApiUrl } from '@src/config';
 
 /**
  * Generic Beheer Details Page
@@ -102,6 +103,67 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
   const usesData = objectType ? object.getRelatedData(objectType, 'uses') : null;
 
   const usedData = objectType ? object.getRelatedData(objectType, 'used') : null;
+
+  // Fetch database gebruik data
+  const [gebruikData, setGebruikData] = useState(null);
+
+  useEffect(() => {
+    if (isExtendView) return;
+
+    let isMounted = true;
+    const abortController = new AbortController();
+
+    const fetchGebruik = async () => {
+      try {
+        const response = await fetch(
+          `${commongroundApiUrl()}/softwarecatalog/api/gebruik?_source=database&_extend[]=@self.schema`,
+          {
+            method: 'GET',
+            signal: abortController.signal,
+            headers: { Accept: 'application/json' },
+          }
+        );
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data = (await response.json()).results || [];
+
+        if (isMounted) setGebruikData(data);
+      } catch (err) {
+        // Fetch failures are non-blocking
+        if (isMounted && err.name === 'AbortError') return;
+      }
+    };
+
+    fetchGebruik();
+
+    return () => {
+      isMounted = false;
+      abortController.abort();
+    };
+  }, [isExtendView]);
+
+  // Merge database gebruik data with uses and used data
+  const mergedUsesData = useMemo(() => {
+    if (!usesData && !gebruikData) return null;
+    const usesResults = usesData?.results || [];
+    const databaseResults = gebruikData || [];
+    const mergedResults = _.uniqBy([...usesResults, ...databaseResults], 'id');
+    return {
+      ...usesData,
+      results: mergedResults,
+    };
+  }, [usesData, gebruikData]);
+
+  const mergedUsedData = useMemo(() => {
+    if (!usedData && !gebruikData) return null;
+    const usedResults = usedData?.results || [];
+    const databaseResults = gebruikData || [];
+    const mergedResults = _.uniqBy([...usedResults, ...databaseResults], 'id');
+    return {
+      ...usedData,
+      results: mergedResults,
+    };
+  }, [usedData, gebruikData]);
 
   // Names cache for UUID resolution
   const namesMap = useMemo(() => {
@@ -186,8 +248,14 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
       .sort((a, b) => String(a.id).localeCompare(String(b.id)));
   }, []);
 
-  const usesSchemas = useMemo(() => uniqueSchemasFrom(usesData), [usesData]);
-  const usedSchemas = useMemo(() => uniqueSchemasFrom(usedData), [usedData]);
+  const usesSchemas = useMemo(
+    () => uniqueSchemasFrom(mergedUsesData),
+    [mergedUsesData]
+  );
+  const usedSchemas = useMemo(
+    () => uniqueSchemasFrom(mergedUsedData),
+    [mergedUsedData]
+  );
 
   const shortTooltip = (type) =>
     `Een korte beschrijving van de ${type.slice(0, -1)}`;
@@ -500,10 +568,10 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
                           )}
                           {usesSchemas.length > 0 &&
                             usesSchemas.map((schema, idx) => {
-                              const metadata = usesData?.results?.find(
+                              const metadata = mergedUsesData?.results?.find(
                                 (r) => r['@self']?.schema?.id === schema.id
                               )?.['@self'];
-                              const rows = (usesData?.results || []).filter(
+                              const rows = (mergedUsesData?.results || []).filter(
                                 (r) => r['@self']?.schema?.id === schema.id
                               );
                               return (
@@ -555,10 +623,10 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
                             })}
                           {usedSchemas.length > 0 &&
                             usedSchemas.map((schema, idx) => {
-                              const metadata = usedData?.results?.find(
+                              const metadata = mergedUsedData?.results?.find(
                                 (r) => r['@self']?.schema?.id === schema.id
                               )?.['@self'];
-                              const rows = (usedData?.results || []).filter(
+                              const rows = (mergedUsedData?.results || []).filter(
                                 (r) => r['@self']?.schema?.id === schema.id
                               );
                               return (
