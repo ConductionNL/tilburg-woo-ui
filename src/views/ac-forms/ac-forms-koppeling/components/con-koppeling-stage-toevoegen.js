@@ -358,7 +358,7 @@ const ConKoppelingStageToevoegen = ({
                     htmlFor={appBId}
                     style={{ display: 'flex', alignItems: 'center' }}
                   >
-                    Applicatie B / BGV
+                    Applicatie B of BGV
                     <span className='required-indicator' aria-hidden='true'>
                       *
                     </span>
