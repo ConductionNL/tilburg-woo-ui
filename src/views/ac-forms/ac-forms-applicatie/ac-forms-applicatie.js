@@ -834,6 +834,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
             value: String(value),
             label: String(label),
             data: item, // Store the full API data for later access
+            type: 'applicatie',
           };
         };
 
@@ -1096,7 +1097,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
             item?.label ||
             `Facility ${index + 1}`;
           const value = item?.value || item?.id || item?.slug || label;
-          return { value: String(value), label: String(label), data: item };
+          return { value: String(value), label: String(label), data: item, type: 'buitengemeentelijke' };
         })
         .filter((o) => o.label && o.value);
 
@@ -1267,6 +1268,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
           value: String(value),
           label: String(label),
           data: item,
+          type: 'applicatie',
         };
       };
 
