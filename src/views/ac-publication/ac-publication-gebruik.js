@@ -36,6 +36,9 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
   const [relatedTabIndex, setRelatedTabIndex] = useState(0);
   const fetchedIds = useRef(new Set());
 
+  // Resolved names state for referentiecomponenten (needed for sorting and GEMMA links)
+  const [sortedReferentiecomponenten, setSortedReferentiecomponenten] = useState([]);
+
   // Related create actions (wizard-aware) like module/product pages
   const openDynamicCreate = useCallback(
     (targetType, preSelected, metadata = {}) => {
@@ -132,15 +135,47 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
     fetchUsed();
   }, [id, fetchUses, fetchUsed]);
 
+  // Resolve and sort referentiecomponenten alphabetically
+  useEffect(() => {
+    const resolveAndSortReferentiecomponenten = async () => {
+      if (
+        !get_single?.gebruiktVoorReferentiecomponenten ||
+        !Array.isArray(get_single.gebruiktVoorReferentiecomponenten) ||
+        get_single.gebruiktVoorReferentiecomponenten.length === 0
+      ) {
+        setSortedReferentiecomponenten([]);
+        return;
+      }
+
+      const ids = get_single.gebruiktVoorReferentiecomponenten.map((refId) =>
+        String(refId)
+      );
+      const namesMap = await object.getNamesForMultipleIds(ids);
+
+      const withNames = ids
+        .map((refId) => ({
+          id: refId,
+          label: namesMap[refId] || refId,
+        }))
+        .sort((a, b) => a.label.localeCompare(b.label));
+
+      setSortedReferentiecomponenten(withNames);
+    };
+
+    resolveAndSortReferentiecomponenten();
+  }, [get_single?.gebruiktVoorReferentiecomponenten, object]);
+
   const status = get_single?.status || '-';
-  const statusDateKey = useMemo(() => {
-    if (status === 'In productie') return 'startDatumInProductie';
-    if (status === 'Gepland') return 'startDatumGepland';
-    if (status === 'Uit te faseren') return 'startDatumUitTeFaseren';
-    if (status === 'Uit gefaseerd') return 'startDatumUitGefaseerd';
-    return 'startDatumVerwerving';
-  }, [status]);
-  const statusDate = get_single?.[statusDateKey] || null;
+
+  // Extract deelnemer IDs from the data
+  const deelnemerIds = Array.isArray(get_single?.deelnemers)
+    ? get_single.deelnemers.map((deelnemer) => {
+        if (typeof deelnemer === 'object') {
+          return String(deelnemer?.id || deelnemer?.['@self']?.id || deelnemer);
+        }
+        return String(deelnemer);
+      })
+    : [];
 
   if (loading.status || !get_single) {
     return <AcLoader />;
@@ -149,11 +184,7 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
   return (
     <AcContainer margin='xl' className='ac-publication-container'>
       <AcColumn gap='sm' horizontalOverflowWrapper>
-        <AcFlex spacing='sm' justifyContent='between' alignItems='center'>
-          <Heading className='con-beheer-details--title'>
-            {get_single?.['@self']?.name || get_single?.id}
-          </Heading>
-
+        <AcFlex spacing='sm' justifyContent='end' alignItems='center'>
           <Heading className='con-module-publication--header-type'>
             {(() => {
               const Icon = getTabHeaderIcon(get_single?.['@self'].schema.slug);
@@ -212,30 +243,39 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
               <strong>Status: </strong>
               {status}
             </div>
-            <div style={{ marginBottom: '8px' }}>
-              <strong>Datum ({status}): </strong>
-              {statusDate || '-'}
-            </div>
-            {Array.isArray(get_single?.gebruiktVoorReferentiecomponenten) &&
-              get_single.gebruiktVoorReferentiecomponenten.length > 0 && (
-                <div style={{ marginBottom: '8px' }}>
-                  <strong>Referentiecomponenten: </strong>
-                  <div>
-                    {get_single.gebruiktVoorReferentiecomponenten.map((rid, idx) => (
-                      <div key={idx} style={{ marginBottom: '4px' }}>
-                        <Link
-                          href={`https://www.gemmaonline.nl/wiki/GEMMA/id-${rid}`}
-                          target='_blank'
-                          rel='noopener noreferrer'
-                        >
-                          <ConUuidResolver>{String(rid)}</ConUuidResolver>
-                        </Link>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
           </div>
+
+          {sortedReferentiecomponenten.length > 0 && (
+            <div style={{ marginBottom: '8px' }}>
+              <strong>Referentiecomponenten: </strong>
+              <div>
+                {sortedReferentiecomponenten.map((item) => (
+                  <div key={item.id} style={{ marginBottom: '4px' }}>
+                    <Link
+                      href={`https://www.gemmaonline.nl/wiki/GEMMA/id-${item.id}`}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                    >
+                      {item.label}
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {deelnemerIds.length > 0 && (
+            <div style={{ marginBottom: '8px' }}>
+              <strong>Deelnemers: </strong>
+              <div>
+                {deelnemerIds.map((deelnemerId) => (
+                  <div key={deelnemerId} style={{ marginBottom: '4px' }}>
+                    <ConUuidResolver>{deelnemerId}</ConUuidResolver>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div style={{ marginTop: '2rem' }}>
