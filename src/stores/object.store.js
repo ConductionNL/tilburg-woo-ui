@@ -4594,40 +4594,47 @@ export class ObjectStore {
       await this.waitForNamesCacheWarmup();
 
       // Now resolve $ref properties for all types that were fetched
-      for (const schemaSlug of types) {
-        const collectionType = this.getTypeFromParams(register, schemaSlug);
-        const collection = this.getCollection(collectionType);
-
-        // Skip if collection doesn't exist or is empty
-        if (!collection || !collection.results || collection.results.length === 0) {
-          continue;
-        }
-
+      for (const schemaSlug of typesToWarmup) {
         // Skip if warmup failed for this type
         if (this.warmupErrors[schemaSlug]) {
           continue;
         }
 
-        try {
-          // Resolve $ref properties using name cache
-          await this.resolveRefsInCollection(register, schemaSlug);
+        const collectionType = this.getTypeFromParams(register, schemaSlug);
+        const collection = this.getCollection(collectionType);
 
-          // Mark as completed
+        // Check if fetch returned data
+        if (collection?.results?.length > 0) {
+          try {
+            // Resolve $ref properties using name cache
+            await this.resolveRefsInCollection(register, schemaSlug);
+
+            // Mark as completed
+            runInAction(() => {
+              this.warmupCompleted[schemaSlug] = true;
+              this.warmupInProgress[schemaSlug] = false;
+              this.warmupErrors[schemaSlug] = null;
+            });
+
+            console.info(`Warmup completed for ${schemaSlug}`);
+          } catch (error) {
+            console.error(`Error resolving refs for ${schemaSlug}:`, error);
+            const errorMessage =
+              AcFormatErrorMessage(error) || error.message || 'Unknown error';
+            runInAction(() => {
+              this.warmupErrors[schemaSlug] = errorMessage;
+              this.warmupInProgress[schemaSlug] = false;
+            });
+          }
+        } else {
+          // Collection fetched but has no data - mark as completed anyway
           runInAction(() => {
             this.warmupCompleted[schemaSlug] = true;
             this.warmupInProgress[schemaSlug] = false;
             this.warmupErrors[schemaSlug] = null;
           });
 
-          console.info(`Warmup completed for ${schemaSlug}`);
-        } catch (error) {
-          console.error(`Error resolving refs for ${schemaSlug}:`, error);
-          const errorMessage =
-            AcFormatErrorMessage(error) || error.message || 'Unknown error';
-          runInAction(() => {
-            this.warmupErrors[schemaSlug] = errorMessage;
-            this.warmupInProgress[schemaSlug] = false;
-          });
+          console.info(`Warmup completed for ${schemaSlug} (no data)`);
         }
       }
 
