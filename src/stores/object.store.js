@@ -1630,6 +1630,62 @@ export class ObjectStore {
   };
 
   /**
+   * Updates a collection in-place with new/updated object data
+   * @param {string} type - The collection type identifier
+   * @param {Object} objectData - The object data to update/add
+   * @param {boolean} isNew - Whether this is a new object (add) or existing (update)
+   */
+  @action
+  _updateCollectionInPlace = (type, objectData, isNew = false) => {
+    const collection = this.collections[type];
+    if (!collection || !collection.results) {
+      return;
+    }
+
+    const objectId = objectData.id || objectData['@self']?.id;
+    if (!objectId) {
+      return;
+    }
+
+    runInAction(() => {
+      const index = collection.results.findIndex(
+        (obj) => (obj.id || obj['@self']?.id) === objectId
+      );
+
+      if (index !== -1) {
+        // Update existing object in collection
+        collection.results[index] = objectData;
+      } else if (isNew) {
+        // Add new object to collection
+        collection.results.push(objectData);
+      }
+    });
+  };
+
+  /**
+   * Removes an object from a collection in-place
+   * @param {string} type - The collection type identifier
+   * @param {string} objectId - The object ID to remove
+   */
+  @action
+  _removeFromCollectionInPlace = (type, objectId) => {
+    const collection = this.collections[type];
+    if (!collection || !collection.results) {
+      return;
+    }
+
+    runInAction(() => {
+      const index = collection.results.findIndex(
+        (obj) => (obj.id || obj['@self']?.id) === objectId
+      );
+
+      if (index !== -1) {
+        collection.results.splice(index, 1);
+      }
+    });
+  };
+
+  /**
    * Creates a new object
    * @param {string|Object} register - Register identifier or object
    * @param {string|Object} schema - Schema identifier or object
@@ -1657,9 +1713,10 @@ export class ObjectStore {
         this.objects[type][newObject.id] = newObject;
       });
 
-      await this.fetchCollection(register, schema);
+      // Update collection in-place instead of refetching
+      this._updateCollectionInPlace(type, newObject, true);
       console.info(
-        `✅ Collection refreshed after creating ${type} object:`,
+        `✅ Collection updated in-place after creating ${type} object:`,
         newObject.id
       );
 
@@ -1740,14 +1797,17 @@ export class ObjectStore {
         }
       });
 
-      // Refresh the entire collection to ensure data consistency
-      await this.fetchCollection(registerId, schemaId);
+      // Update collection in-place instead of refetching
+      this._updateCollectionInPlace(type, data, isNewObject);
+      console.info(
+        `✅ Collection updated in-place after saving ${type} object:`,
+        data.id
+      );
 
       // Clear list cache since object was saved
       this.clearListCache(registerId, schemaId);
       console.info(`🗑️ Cleared list cache for ${registerId}/${schemaId} after save`);
 
-      console.info(`✅ Collection refreshed after saving ${type} object:`, data.id);
       this.setSuccess(type, true);
       return { response, data };
     } catch (error) {
@@ -1795,21 +1855,23 @@ export class ObjectStore {
         // run in action to avoid Strict MobX warnings
         if (!this.objects[type]) this.objects[type] = {};
         this.objects[type][id] = updatedObject;
-      });
 
-      await this.fetchCollection(register, schema);
-      console.info(`✅ Collection refreshed after updating ${type} object:`, id);
-
-      // Clear list cache since object was updated
-      this.clearListCache(register, schema);
-      console.info(`🗑️ Cleared list cache for ${register}/${schema} after update`);
-
-      runInAction(() => {
-        // run in action to avoid Strict MobX warnings
+        // Update active object if it matches
         if (this.activeObjects[type]?.id === id) {
           this.activeObjects[type] = updatedObject;
         }
       });
+
+      // Update collection in-place instead of refetching
+      this._updateCollectionInPlace(type, updatedObject, false);
+      console.info(
+        `✅ Collection updated in-place after updating ${type} object:`,
+        id
+      );
+
+      // Clear list cache since object was updated
+      this.clearListCache(register, schema);
+      console.info(`🗑️ Cleared list cache for ${register}/${schema} after update`);
 
       this.setSuccess(requestType, true);
 
@@ -1871,17 +1933,19 @@ export class ObjectStore {
         // run in action to avoid Strict MobX warnings
         if (!this.objects[type]) this.objects[type] = {};
         this.objects[type][id] = updatedObject;
-      });
 
-      await this.fetchCollection(register, schema);
-      console.info(`✅ Collection refreshed after patching ${type} object:`, id);
-
-      runInAction(() => {
-        // run in action to avoid Strict MobX warnings
+        // Update active object if it matches
         if (this.activeObjects[type]?.id === id) {
           this.activeObjects[type] = updatedObject;
         }
       });
+
+      // Update collection in-place instead of refetching
+      this._updateCollectionInPlace(type, updatedObject, false);
+      console.info(
+        `✅ Collection updated in-place after patching ${type} object:`,
+        id
+      );
 
       this.setSuccess(requestType, true);
 
@@ -1944,6 +2008,28 @@ export class ObjectStore {
         this.setSelectedObjects(remainingSelected);
       }
 
+      // Remove from collection in-place instead of refetching
+      const type = `${registerId}_${schemaId}`;
+      this._removeFromCollectionInPlace(type, objectId);
+      console.info(
+        `✅ Collection updated in-place after deleting ${type} object:`,
+        objectId
+      );
+
+      // Also remove from objects cache
+      runInAction(() => {
+        if (this.objects[type]?.[objectId]) {
+          delete this.objects[type][objectId];
+        }
+        // Clear active object if it matches
+        if (
+          this.activeObjects[type]?.id === objectId ||
+          this.activeObjects[type]?.['@self']?.id === objectId
+        ) {
+          this.activeObjects[type] = null;
+        }
+      });
+
       // Clear list cache since object was deleted
       this.clearListCache(registerId, schemaId);
       console.info(
@@ -2001,10 +2087,15 @@ export class ObjectStore {
       }
 
       const updatedObject = response.data;
+      const type = `${registerId}_${schemaId}`;
 
-      // Update active object if it matches the published object
+      // Update store state after successful publish
       runInAction(() => {
         // run in action to avoid Strict MobX warnings
+        if (!this.objects[type]) this.objects[type] = {};
+        this.objects[type][objectId] = updatedObject;
+
+        // Update active object if it matches
         const objectType = this.getTypeFromObject(objectItem);
         const activeObject = this.activeObjects[objectType];
         if (
@@ -2015,6 +2106,13 @@ export class ObjectStore {
         }
       });
 
+      // Update collection in-place instead of refetching
+      this._updateCollectionInPlace(type, updatedObject, false);
+      console.info(
+        `✅ Collection updated in-place after publishing ${type} object:`,
+        objectId
+      );
+
       const isSelected = this.selectedObjects.some(
         (obj) => (obj.id || obj['@self']?.id) === objectId
       );
@@ -2024,6 +2122,12 @@ export class ObjectStore {
         );
         this.setSelectedObjects(remainingSelected);
       }
+
+      // Clear list cache since object was published
+      this.clearListCache(registerId, schemaId);
+      console.info(
+        `🗑️ Cleared list cache for ${registerId}/${schemaId} after publish`
+      );
 
       this.setSuccess(requestType, true);
       return updatedObject;
@@ -2076,10 +2180,15 @@ export class ObjectStore {
       }
 
       const updatedObject = response.data;
+      const type = `${registerId}_${schemaId}`;
 
-      // Update active object if it matches the depublished object
+      // Update store state after successful depublish
       runInAction(() => {
         // run in action to avoid Strict MobX warnings
+        if (!this.objects[type]) this.objects[type] = {};
+        this.objects[type][objectId] = updatedObject;
+
+        // Update active object if it matches
         const objectType = this.getTypeFromObject(objectItem);
         const activeObject = this.activeObjects[objectType];
         if (
@@ -2090,6 +2199,13 @@ export class ObjectStore {
         }
       });
 
+      // Update collection in-place instead of refetching
+      this._updateCollectionInPlace(type, updatedObject, false);
+      console.info(
+        `✅ Collection updated in-place after depublishing ${type} object:`,
+        objectId
+      );
+
       const isSelected = this.selectedObjects.some(
         (obj) => (obj.id || obj['@self']?.id) === objectId
       );
@@ -2099,6 +2215,12 @@ export class ObjectStore {
         );
         this.setSelectedObjects(remainingSelected);
       }
+
+      // Clear list cache since object was depublished
+      this.clearListCache(registerId, schemaId);
+      console.info(
+        `🗑️ Cleared list cache for ${registerId}/${schemaId} after depublish`
+      );
 
       this.setSuccess(requestType, true);
       return updatedObject;
