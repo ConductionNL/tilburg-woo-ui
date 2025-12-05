@@ -424,6 +424,12 @@ export class ObjectStore {
   };
 
   /**
+   * Track pending name fetch requests to prevent duplicate calls for the same ID
+   * @type {{[id: string]: Promise<string>}}
+   */
+  pendingNameRequests = {};
+
+  /**
    * Loading states for different operations (fetch, create, update, etc.)
    * @type {{[type: string]: boolean}}
    * */
@@ -3605,6 +3611,37 @@ export class ObjectStore {
   // ===============================
 
   /**
+   * Waits for names cache warmup to complete if it's in progress
+   * @returns {Promise<void>}
+   */
+  async waitForNamesWarmup() {
+    const warmupTypes = ['names_warmup', 'names_trigger_warmup'];
+    const isWarmingUp = warmupTypes.some((type) => this.isLoading(type));
+
+    if (!isWarmingUp) {
+      return;
+    }
+
+    console.info('⏳ Names cache warmup in progress, waiting...');
+
+    // Poll until warmup completes (with timeout)
+    const maxWaitTime = 30000; // 30 seconds max wait
+    const pollInterval = 100; // Check every 100ms
+    const startTime = Date.now();
+
+    while (Date.now() - startTime < maxWaitTime) {
+      const stillWarmingUp = warmupTypes.some((type) => this.isLoading(type));
+      if (!stillWarmingUp) {
+        console.info('✅ Names cache warmup completed');
+        return;
+      }
+      await new Promise((resolve) => setTimeout(resolve, pollInterval));
+    }
+
+    console.warn('⚠️ Names cache warmup wait timeout, proceeding anyway');
+  }
+
+  /**
    * Gets a single name from cache, falls back to backend if not found
    * @param {string} id - The UUID to resolve to a name
    * @returns {Promise<string>} The name for the given ID, or the ID if no name found
@@ -3625,46 +3662,77 @@ export class ObjectStore {
       delete this.namesCache[id];
     }
 
-    // Fallback to backend
-    try {
-      console.info(`🌐 Fetching name for ${id} from backend`);
-      const response = await nextcloudApi.get(`/openregister/api/names/${id}`);
+    // Wait for warmup to complete before making API calls
+    await this.waitForNamesWarmup();
 
-      if (response.ok && response.data?.names?.[id]) {
-        const name = response.data.names[id];
-        this.setNamesInCache({ [id]: name });
-        console.info(`✅ Single name fetched for ${id}: ${name}`);
-        return name;
-      } else if (response.ok && response.data?.name) {
-        // Fallback for different response format
-        const name = response.data.name;
-        this.setNamesInCache({ [id]: name });
-        console.info(`✅ Single name fetched (alt format) for ${id}: ${name}`);
-        return name;
-      } else if (response.ok) {
-        // API responded OK but no name found - cache the UUID to prevent future calls
+    // Check cache again after warmup (it might have been populated)
+    const cachedAfterWarmup = this.namesCache[id];
+    if (cachedAfterWarmup) {
+      const age = Date.now() - cachedAfterWarmup.timestamp;
+      if (age < this.namesCacheConfig.maxAge) {
         console.info(
-          `📝 No name found for ${id}, caching UUID to prevent future API calls`
+          `📋 Name cache hit after warmup for ${id}: ${cachedAfterWarmup.name}`
         );
-        this.setNamesInCache({ [id]: id });
-        return id;
+        return cachedAfterWarmup.name;
       }
-    } catch (error) {
-      // Handle 404 and other HTTP errors by caching the UUID to prevent repeated calls
-      if (error.response?.status === 404 || error.response?.status >= 400) {
-        console.info(
-          `🚫 Name not found (${
-            error.response?.status || 'error'
-          }) for ${id}, caching UUID to prevent future API calls`
-        );
-        this.setNamesInCache({ [id]: id });
-        return id;
-      }
-      console.warn(`⚠️ Failed to fetch name for ${id}:`, error.message);
     }
 
-    // Return ID as fallback if no name found
-    return id;
+    // Check if there's already a pending request for this ID to prevent duplicate calls
+    if (this.pendingNameRequests[id]) {
+      console.info(`⏳ Reusing pending request for ${id}`);
+      return this.pendingNameRequests[id];
+    }
+
+    // Create and store the pending request promise
+    const fetchPromise = (async () => {
+      try {
+        console.info(`🌐 Fetching name for ${id} from backend`);
+        const response = await nextcloudApi.get(`/openregister/api/names/${id}`);
+
+        if (response.ok && response.data?.names?.[id]) {
+          const name = response.data.names[id];
+          this.setNamesInCache({ [id]: name });
+          console.info(`✅ Single name fetched for ${id}: ${name}`);
+          return name;
+        } else if (response.ok && response.data?.name) {
+          // Fallback for different response format
+          const name = response.data.name;
+          this.setNamesInCache({ [id]: name });
+          console.info(`✅ Single name fetched (alt format) for ${id}: ${name}`);
+          return name;
+        } else if (response.ok) {
+          // API responded OK but no name found - cache the UUID to prevent future calls
+          console.info(
+            `📝 No name found for ${id}, caching UUID to prevent future API calls`
+          );
+          this.setNamesInCache({ [id]: id });
+          return id;
+        }
+      } catch (error) {
+        // Handle 404 and other HTTP errors by caching the UUID to prevent repeated calls
+        if (error.response?.status === 404 || error.response?.status >= 400) {
+          console.info(
+            `🚫 Name not found (${
+              error.response?.status || 'error'
+            }) for ${id}, caching UUID to prevent future API calls`
+          );
+          this.setNamesInCache({ [id]: id });
+          return id;
+        }
+        console.warn(`⚠️ Failed to fetch name for ${id}:`, error.message);
+      } finally {
+        // Clean up pending request after completion
+        delete this.pendingNameRequests[id];
+      }
+
+      // Return ID as fallback if no name found
+      return id;
+    })();
+
+    // Store the pending request
+    this.pendingNameRequests[id] = fetchPromise;
+
+    return fetchPromise;
   };
 
   /**
@@ -3706,12 +3774,31 @@ export class ObjectStore {
       }`
     );
 
+    // Wait for warmup to complete before making API calls
+    await this.waitForNamesWarmup();
+
+    // Check cache again after warmup (it might have been populated)
+    const stillMissingIds = [];
+    missingIds.forEach((id) => {
+      const cachedAfterWarmup = this.namesCache[id];
+      if (cachedAfterWarmup) {
+        const age = Date.now() - cachedAfterWarmup.timestamp;
+        if (age < this.namesCacheConfig.maxAge) {
+          results[id] = cachedAfterWarmup.name;
+          return;
+        }
+      }
+      stillMissingIds.push(id);
+    });
+
     // Fetch missing names from backend
-    if (missingIds.length > 0) {
+    if (stillMissingIds.length > 0) {
       try {
-        console.info(`🌐 Fetching names for ${missingIds.length} IDs from backend`);
+        console.info(
+          `🌐 Fetching names for ${stillMissingIds.length} IDs from backend`
+        );
         const response = await nextcloudApi.post('/openregister/api/names', {
-          ids: missingIds,
+          ids: stillMissingIds,
         });
 
         if (response.ok && response.data?.names) {
@@ -3741,7 +3828,7 @@ export class ObjectStore {
             }), caching UUIDs to prevent future API calls`
           );
           const failedLookups = {};
-          missingIds.forEach((id) => {
+          stillMissingIds.forEach((id) => {
             failedLookups[id] = id;
           });
           this.setNamesInCache(failedLookups);
@@ -3751,7 +3838,7 @@ export class ObjectStore {
 
     // Fill in missing names with IDs as fallback and cache them
     const uncachedFallbacks = {};
-    missingIds.forEach((id) => {
+    stillMissingIds.forEach((id) => {
       if (!results[id]) {
         results[id] = id;
         uncachedFallbacks[id] = id;

@@ -5,7 +5,8 @@
 import { isUUID } from '@src/utilities/con-resolve-uuids-in-text';
 
 /**
- * Resolves a UUID to a name from cache, triggers background fetch if needed
+ * Resolves a UUID to a name from cache synchronously (read-only)
+ * Does NOT trigger background fetches to prevent infinite loops during render
  * @param {string} uuid - The UUID to resolve
  * @param {Object} objectStore - The object store with names cache
  * @returns {string|null} - The resolved name or null if not in cache
@@ -13,7 +14,7 @@ import { isUUID } from '@src/utilities/con-resolve-uuids-in-text';
 const resolveUUIDFromCache = (uuid, objectStore) => {
   if (!uuid || !objectStore?.namesCache || !isUUID(uuid)) return null;
 
-  // Check if the name is in the cache
+  // Check if the name is in the cache (synchronous read-only check)
   const cached = objectStore.namesCache[uuid];
   if (cached) {
     const age = Date.now() - cached.timestamp;
@@ -21,8 +22,9 @@ const resolveUUIDFromCache = (uuid, objectStore) => {
     if (age < maxAge && cached.name) return cached.name;
   }
 
-  // Not in cache - trigger background fetch for next time (fire and forget)
-  objectStore.getNamesForSingleId?.(uuid).catch(() => {});
+  //   objectStore.getNamesForSingleId?.(uuid).catch(() => {});
+  // Don't trigger background fetches here - this is called during render
+  // Background fetches should be triggered elsewhere (e.g., in useEffect)
   return null;
 };
 
