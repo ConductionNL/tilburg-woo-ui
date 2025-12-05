@@ -248,7 +248,8 @@ const renderRelatedTabs = (
   customTabsBefore = [],
   customTabsAfter = [],
   user,
-  tabNameOverride = { schemaName: null, newTabName: null }
+  tabNameOverride = { schemaName: null, newTabName: null },
+  activeObjectId = null
 ) => {
   if (loading && (!items || items.length === 0)) {
     return (
@@ -279,9 +280,18 @@ const renderRelatedTabs = (
   const schemaTabs = uniqueSchemas.map((schemaItem) => {
     const schemaId = schemaItem['@self'].schema.id;
     const schemaSlug = schemaItem['@self'].schema.slug;
-    const itemsWithThisSchema = (items || []).filter(
+    let itemsWithThisSchema = (items || []).filter(
       (u) => u['@self'].schema.id === schemaId
     );
+
+    // Filter out items with matching ID for 'organisatie' schema
+    if (schemaSlug === 'organisatie' && activeObjectId) {
+      itemsWithThisSchema = itemsWithThisSchema.filter((item) => {
+        const itemId = item.id || item['@self']?.id;
+        return itemId !== activeObjectId;
+      });
+    }
+
     return {
       kind: 'schema',
       id: `schema-${schemaId}`,
@@ -544,7 +554,8 @@ const RelatedTabs = observer(
               customTabsBefore,
               customTabsAfter,
               user,
-              tabNameOverride
+              tabNameOverride,
+              activeObjectId
             )}
           </div>
         )}
