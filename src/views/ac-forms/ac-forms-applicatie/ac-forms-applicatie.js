@@ -32,7 +32,7 @@ import ConFormApplicatieVersieStage from './components/con-form-applicatie-versi
 import ConFormApplicatieReferentiecomponentenStage from './components/con-form-applicatie-referentiecomponenten-stage';
 import ConFormApplicatieStandaardenStage from './components/con-form-applicatie-standaarden-stage';
 import ConFormApplicatieKoppelingenStage from './components/con-form-applicatie-koppelingen-stage';
-import ConFormApplicatieDienstenStage from './components/con-form-applicatie-diensten-stage';
+// import ConFormApplicatieDienstenStage from './components/con-form-applicatie-diensten-stage';
 import ConFormApplicatieControlerenStage from './components/con-form-applicatie-controleren-stage';
 import ConFormApplicatieAanbiederInformatieStage from './components/con-form-applicatie-aanbieder-informatie-stage';
 
