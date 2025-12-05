@@ -979,31 +979,25 @@ export class ObjectStore {
    * @returns {Object} Query parameters object
    */
   _constructQueryParams = (params = {}) => {
-    // Handle _extend[] merging - support multiple extend values
-    let extendValues = ['@self.schema']; // Default value
-
-    // Check if params already has '_extend[]' (as array or string)
-    if (params['_extend[]']) {
-      if (Array.isArray(params['_extend[]'])) {
-        // Merge arrays, ensuring @self.schema is included
-        extendValues = [...new Set([...params['_extend[]'], '@self.schema'])];
-      } else if (typeof params['_extend[]'] === 'string') {
-        // Convert string to array and merge
-        const paramExtends = params['_extend[]'].split(',').map((s) => s.trim());
-        extendValues = [...new Set([...paramExtends, '@self.schema'])];
-      }
-    }
-
     const queryParams = {
       _limit: params._limit || params.limit || 20,
       _page: params._page || params.page || 1,
-      '_extend[]': extendValues,
       _source: 'database', // Always use database as source
       ...params,
     };
 
-    // Ensure _extend[] is set correctly (overwrite if params had it)
-    queryParams['_extend[]'] = extendValues;
+    // Handle _extend[] - only include if explicitly provided
+    if (params['_extend[]']) {
+      if (Array.isArray(params['_extend[]'])) {
+        queryParams['_extend[]'] = params['_extend[]'];
+      } else if (typeof params['_extend[]'] === 'string') {
+        queryParams['_extend[]'] = params['_extend[]']
+          .split(',')
+          .map((s) => s.trim());
+      } else {
+        queryParams['_extend[]'] = params['_extend[]'];
+      }
+    }
 
     // Remove internal parameters (but keep _source)
     delete queryParams._schema;
@@ -1194,9 +1188,8 @@ export class ObjectStore {
         ...params,
       };
 
-      // Preserve '_extend[]' from params if provided, otherwise let _constructQueryParams set default
+      // Support legacy _extend or extend params by converting to _extend[]
       if (!params['_extend[]'] && (params._extend || params.extend)) {
-        // Support legacy _extend or extend params
         const extendValue = params._extend || params.extend;
         queryParams['_extend[]'] = Array.isArray(extendValue)
           ? extendValue
@@ -1289,9 +1282,8 @@ export class ObjectStore {
         ...params,
       };
 
-      // Preserve '_extend[]' from params if provided, otherwise let _constructQueryParams set default
+      // Support legacy _extend or extend params by converting to _extend[]
       if (!params['_extend[]'] && (params._extend || params.extend)) {
-        // Support legacy _extend or extend params
         const extendValue = params._extend || params.extend;
         queryParams['_extend[]'] = Array.isArray(extendValue)
           ? extendValue
@@ -4422,7 +4414,8 @@ export class ObjectStore {
 
       const register = 'voorzieningen'; // Standard register for beheer objects
 
-      // Process each type - fetch schemas and collections first
+      // Identify types that need warmup and set their state
+      const typesToWarmup = [];
       for (const schemaSlug of types) {
         const collectionType = this.getTypeFromParams(register, schemaSlug);
         const collection = this.getCollection(collectionType);
@@ -4442,6 +4435,11 @@ export class ObjectStore {
           this.warmupErrors[schemaSlug] = null;
         });
 
+        typesToWarmup.push(schemaSlug);
+      }
+
+      // Fetch schemas and collections in parallel
+      const warmupPromises = typesToWarmup.map(async (schemaSlug) => {
         try {
           // Fetch schema if not already cached
           const schemaType = this.getSchemaType(schemaSlug);
@@ -4463,9 +4461,12 @@ export class ObjectStore {
             this.warmupErrors[schemaSlug] = errorMessage;
             this.warmupInProgress[schemaSlug] = false;
           });
-          continue;
+          throw error;
         }
-      }
+      });
+
+      // Wait for all parallel fetches to complete
+      await Promise.allSettled(warmupPromises);
 
       // Wait for names cache warmup to complete before resolving refs
       await this.waitForNamesCacheWarmup();
@@ -4529,6 +4530,84 @@ export class ObjectStore {
     } catch (error) {
       console.error('Error in warmupBeheerData:', error);
       AcFormatErrorMessage(error);
+    }
+  };
+
+  /**
+   * Refreshes warmup data for a single specific type.
+   * This bypasses the security check that prevents warmup from running multiple times.
+   * Useful for manual refresh operations.
+   * @param {string} schemaSlug - The schema slug to refresh (e.g., 'module')
+   * @param {string} register - Optional register slug (defaults to 'voorzieningen')
+   */
+  @action
+  refreshWarmupDataForType = async (schemaSlug, register = 'voorzieningen') => {
+    if (!schemaSlug) {
+      console.error('refreshWarmupDataForType: schemaSlug is required');
+      return;
+    }
+
+    try {
+      const collectionType = this.getTypeFromParams(register, schemaSlug);
+
+      // Reset warmup state for this type to force refresh
+      runInAction(() => {
+        this.warmupInProgress[schemaSlug] = true;
+        this.warmupCompleted[schemaSlug] = false;
+        this.warmupErrors[schemaSlug] = null;
+      });
+
+      try {
+        // Fetch schema if not already cached
+        const schemaType = this.getSchemaType(schemaSlug);
+        const existingSchema = this.getSchema(schemaType);
+        if (!existingSchema) {
+          await this.fetchSchema(schemaSlug);
+        }
+
+        // Fetch objects with limit 10000 and _published: false
+        await this.fetchCollection(register, schemaSlug, {
+          _limit: 10000,
+          _published: 'false',
+        });
+
+        // Wait for names cache warmup to complete before resolving refs
+        await this.waitForNamesCacheWarmup();
+
+        // Resolve $ref properties using name cache
+        const collection = this.getCollection(collectionType);
+        if (collection && collection.results && collection.results.length > 0) {
+          await this.resolveRefsInCollection(register, schemaSlug);
+
+          // Mark as completed
+          runInAction(() => {
+            this.warmupCompleted[schemaSlug] = true;
+            this.warmupInProgress[schemaSlug] = false;
+            this.warmupErrors[schemaSlug] = null;
+          });
+
+          console.info(`Warmup refresh completed for ${schemaSlug}`);
+        } else {
+          // No data fetched, but mark as completed anyway
+          runInAction(() => {
+            this.warmupCompleted[schemaSlug] = true;
+            this.warmupInProgress[schemaSlug] = false;
+          });
+        }
+      } catch (error) {
+        console.error(`Error refreshing warmup data for ${schemaSlug}:`, error);
+        const errorMessage =
+          AcFormatErrorMessage(error) || error.message || 'Unknown error';
+        runInAction(() => {
+          this.warmupErrors[schemaSlug] = errorMessage;
+          this.warmupInProgress[schemaSlug] = false;
+        });
+        throw error;
+      }
+    } catch (error) {
+      console.error(`Error in refreshWarmupDataForType for ${schemaSlug}:`, error);
+      AcFormatErrorMessage(error);
+      throw error;
     }
   };
 

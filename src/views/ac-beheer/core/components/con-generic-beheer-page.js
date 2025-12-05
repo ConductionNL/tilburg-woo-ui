@@ -19,7 +19,6 @@ import BeheerModalFactory from '@views/ac-beheer/core/factories/con-beheer-modal
 import FilterDrawerFactory from '@views/ac-beheer/core/factories/con-filter-drawer-factory';
 import BeheerPageConfigFactory from '@views/ac-beheer/core/factories/con-beheer-page-config-factory';
 import _ from 'lodash';
-import { CanceledError } from 'axios';
 import { AcButton, AcFormField } from '@molecules';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { canReadField } from '@utils/field-authorization';
@@ -29,11 +28,7 @@ import {
   getDisabledActionTooltip,
 } from '@utils/organization-permissions';
 import { TOOLTIP_ID } from '@src/index.web';
-import {
-  extractReferenceIdsFromCollection,
-  AcGetState,
-  AcSaveState,
-} from '@src/utilities';
+import { AcGetState, AcSaveState } from '@src/utilities';
 import Fuse from 'fuse.js';
 
 /**
@@ -133,10 +128,13 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
   // This reads all pre-fetched data from warmup (up to 10,000 items)
   const allData = objectType ? object.getCollection(objectType).results || [] : [];
 
-  // Check warmup status for loading state
-  const warmupLoading = schemaType ? object.isWarmupInProgress(schemaType) : false;
-  const warmupCompleted = schemaType ? object.isWarmupCompleted(schemaType) : false;
-  const warmupError = schemaType ? object.getWarmupError(schemaType) : null;
+  // Check warmup status for loading state (warmup state uses schemaSlug as key)
+  const warmupLoading = config?.schemaSlug
+    ? object.isWarmupInProgress(config.schemaSlug)
+    : false;
+  const warmupError = config?.schemaSlug
+    ? object.getWarmupError(config.schemaSlug)
+    : null;
 
   // Legacy loading state (for manual refresh)
   const loading = objectType ? object.isLoading(objectType) : false;
@@ -227,11 +225,19 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
 
   // Helper function to recursively extract all string values from an object
   const extractAllStringValues = (obj, values = []) => {
+    // Excludes metadata fields like @self and id to avoid polluting search results
+    // Also excludes keys starting with 'data:' (base64 image data)
+    const skipKeys = new Set(['@self', 'id']);
+
     if (obj === null || obj === undefined) {
       return values;
     }
 
     if (typeof obj === 'string') {
+      // Skip base64 data URLs (data:image/..., data:text/..., etc.)
+      if (obj.startsWith('data:')) {
+        return values;
+      }
       values.push(obj);
       return values;
     }
@@ -247,8 +253,18 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     }
 
     if (typeof obj === 'object') {
-      Object.values(obj).forEach((value) => {
-        // Skip certain keys that shouldn't be searched
+      Object.entries(obj).forEach(([key, value]) => {
+        // Skip metadata keys that shouldn't be searched
+        if (skipKeys.has(key)) {
+          return;
+        }
+
+        // Skip keys that start with 'data:' (base64 image data)
+        if (key.startsWith('data:')) {
+          return;
+        }
+
+        // Recursively extract from nested objects and arrays
         if (typeof value !== 'object' || value === null || Array.isArray(value)) {
           extractAllStringValues(value, values);
         } else {
@@ -350,83 +366,6 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
   // to avoid its initial fetch being aborted on type changes)
   let makeActionsForContext; // will be assigned below
 
-  const fetchData = useCallback(async () => {
-    if (!objectType || !config) {
-      return;
-    }
-
-    try {
-      // Build the extend parameters exactly as before
-      const extend = [...config.extend];
-
-      // Read values from URL query params
-      const urlPage = searchParams.get('_page');
-      const urlLimit = searchParams.get('_limit');
-      const urlSearch = searchParams.get('_search');
-
-      const pageValue = urlPage ? parseInt(urlPage, 10) : 1;
-      const limitValue = urlLimit
-        ? parseInt(urlLimit, 10)
-        : AcGetState(`pagination_limit_${config.paginationKey}`) || 20;
-
-      // New simple search implementation using _search parameter from URL
-      const storeParams = {
-        _page: pageValue,
-        _limit: limitValue,
-        _extend: extend,
-        _related: true, // Request related object data
-        _relatedNames: true, // Request ID to name mappings
-        _published: 'false',
-      };
-
-      // Add simple search from URL query params
-      if (urlSearch && urlSearch.trim() !== '') {
-        storeParams._search = urlSearch.trim();
-      }
-
-      if (beoordelingFilter) storeParams['beoordeling'] = beoordelingFilter;
-
-      console.info(
-        `🔗 Fetching collection for ${config.registerSlug}/${config.schemaSlug} with related names`
-      );
-
-      // Use object store for collection data - this handles loading/error states automatically
-      await object.fetchCollection(
-        config.registerSlug,
-        config.schemaSlug,
-        storeParams
-      );
-
-      // Fetch schema using object store
-      await object.fetchSchema(config.schemaSlug);
-
-      // Additional fallback: manually resolve any remaining reference IDs
-      // (for cases where backend doesn't support _relatedNames yet)
-      const collection = object.getCollection(objectType);
-      const schema = object.getSchema(schemaType);
-
-      if (collection.results?.length && schema) {
-        const referenceIds = extractReferenceIdsFromCollection(
-          collection.results,
-          schema
-        );
-        if (referenceIds.length > 0) {
-          console.info(
-            `📋 Found ${referenceIds.length} additional reference IDs to resolve`
-          );
-          // This will fetch any missing names and cache them
-          await object.getNamesForMultipleIds(referenceIds);
-        }
-      }
-    } catch (err) {
-      // Don't set error if request was cancelled - object store handles collection errors
-      if (err.code === 'ERR_CANCELED' || err instanceof CanceledError) {
-        return;
-      }
-      console.error('Error fetching data:', err);
-    }
-  }, [objectType, config, searchParams, beoordelingFilter, object]);
-
   const downloadData = useCallback(
     async (type = 'csv') => {
       await object.exportObjects(config.registerSlug, config.schemaSlug, type);
@@ -513,23 +452,6 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     searchParams,
     setSearchParams,
   ]);
-
-  // Fetch data only on manual refresh or initial load if warmup hasn't completed
-  // Phase 4: Disable automatic fetching - rely on warmup data instead
-  useEffect(() => {
-    if (!!config && objectType && schemaType) {
-      // Only fetch if warmup hasn't completed and we don't have data
-      const collection = object.getCollection(objectType);
-      const hasData =
-        collection && collection.results && collection.results.length > 0;
-
-      if (!warmupCompleted && !hasData && !warmupLoading) {
-        // Fallback: fetch if warmup hasn't run yet
-        fetchData();
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [objectType, schemaType, warmupCompleted, warmupLoading]);
 
   // Reset modalSelectedRows when modal closes
   useEffect(() => {
@@ -1102,8 +1024,13 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
                     <ConActionMenu.Menu position='right'>
                       <ConActionMenu.Button
                         icon={<VISUALS.RELOAD />}
-                        onClick={() => fetchData()}
-                        disabled={loading}
+                        onClick={() => {
+                          // Phase 4: Refresh warmup data for this specific type
+                          if (config?.schemaSlug) {
+                            object.refreshWarmupDataForType(config.schemaSlug);
+                          }
+                        }}
+                        disabled={loading || warmupLoading}
                       >
                         Vernieuwen
                       </ConActionMenu.Button>
@@ -1298,7 +1225,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
             setOpenModal,
             setSingleSelectedRow,
             tableRef,
-            fetchData,
+            fetchData: undefined, // Phase 4: Removed fetchData - rely on warmup refresh
             store: { object, user }, // Pass store for cross-collection refreshes
             config: modalConfig,
             dynamicCreateTargetType,
