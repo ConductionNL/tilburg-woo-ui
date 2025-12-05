@@ -277,30 +277,32 @@ const renderRelatedTabs = (
     : [];
 
   // Build schema-derived tabs
-  const schemaTabs = uniqueSchemas.map((schemaItem) => {
-    const schemaId = schemaItem['@self'].schema.id;
-    const schemaSlug = schemaItem['@self'].schema.slug;
-    let itemsWithThisSchema = (items || []).filter(
-      (u) => u['@self'].schema.id === schemaId
-    );
+  const schemaTabs = uniqueSchemas
+    .map((schemaItem) => {
+      const schemaId = schemaItem['@self'].schema.id;
+      const schemaSlug = schemaItem['@self'].schema.slug;
+      let itemsWithThisSchema = (items || []).filter(
+        (u) => u['@self'].schema.id === schemaId
+      );
 
-    // Filter out items with matching ID for 'organisatie' schema
-    if (schemaSlug === 'organisatie' && activeObjectId) {
-      itemsWithThisSchema = itemsWithThisSchema.filter((item) => {
-        const itemId = item.id || item['@self']?.id;
-        return itemId !== activeObjectId;
-      });
-    }
+      // Filter out items with matching ID for 'organisatie' schema
+      if (schemaSlug === 'organisatie' && activeObjectId) {
+        itemsWithThisSchema = itemsWithThisSchema.filter((item) => {
+          const itemId = item.id || item['@self']?.id;
+          return itemId !== activeObjectId;
+        });
+      }
 
-    return {
-      kind: 'schema',
-      id: `schema-${schemaId}`,
-      schemaId,
-      schemaSlug,
-      items: itemsWithThisSchema,
-      count: itemsWithThisSchema.length,
-    };
-  });
+      return {
+        kind: 'schema',
+        id: `schema-${schemaId}`,
+        schemaId,
+        schemaSlug,
+        items: itemsWithThisSchema,
+        count: itemsWithThisSchema.length,
+      };
+    })
+    .filter((tab) => tab.count > 0); // Filter out tabs with 0 items
 
   // Normalize and filter custom tabs by visibility
   const normalizeCustomTabs = (tabs = []) =>
