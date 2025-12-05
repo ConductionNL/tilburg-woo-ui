@@ -2,7 +2,7 @@ import { Heading, Link } from '@utrecht/component-library-react/dist/css-module'
 import { AcColumn } from '@src/atoms';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
 import { VISUALS } from '@src/constants';
-import { useCallback, useEffect, useMemo, useState } from 'preact/hooks';
+import { useCallback, useEffect, useState } from 'preact/hooks';
 import { commongroundApiUrl } from '@src/config';
 import RelatedTabs from '@views/ac-publication/con-related-tabs';
 import { TOOLTIP_ID } from '@src/index.web';
@@ -110,17 +110,17 @@ const ConGebruikDetailsPageContent = ({
     resolveAndSortReferentiecomponenten();
   }, [data?.gebruiktVoorReferentiecomponenten, object]);
 
-  // Determine date field based on status
   const status = data?.status || '-';
-  const statusDateKey = useMemo(() => {
-    if (status === 'In productie') return 'startDatumInProductie';
-    if (status === 'Gepland') return 'startDatumGepland';
-    if (status === 'Uit te faseren') return 'startDatumUitTeFaseren';
-    if (status === 'Uit gefaseerd') return 'startDatumUitGefaseerd';
-    return 'startDatumVerwerving';
-  }, [status]);
 
-  const statusDate = data?.[statusDateKey] || null;
+  // Extract deelnemer IDs from the data
+  const deelnemerIds = Array.isArray(data?.deelnemers)
+    ? data.deelnemers.map((deelnemer) => {
+        if (typeof deelnemer === 'object') {
+          return String(deelnemer?.id || deelnemer?.['@self']?.id || deelnemer);
+        }
+        return String(deelnemer);
+      })
+    : [];
 
   if (loading || !data) return null;
 
@@ -130,17 +130,10 @@ const ConGebruikDetailsPageContent = ({
         className='ac-register-review__organisation-header'
         style={{
           display: 'flex',
-          justifyContent: 'space-between',
+          justifyContent: 'flex-end',
           alignItems: 'center',
         }}
       >
-        <Heading level={4}>
-          <div className='con-beheer-details--header-container'>
-            <ConUuidResolver>
-              <Heading className='con-beheer-details--title'>{data?.id}</Heading>
-            </ConUuidResolver>
-          </div>
-        </Heading>
         <div className='ac-register-review__header-controls'>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <ConActionMenu>
@@ -245,10 +238,6 @@ const ConGebruikDetailsPageContent = ({
             <strong>Status: </strong>
             {status}
           </div>
-          <div style={{ marginBottom: '8px' }}>
-            <strong>Datum ({status}): </strong>
-            {statusDate || '-'}
-          </div>
         </div>
 
         {sortedReferentiecomponenten.length > 0 && (
@@ -264,6 +253,19 @@ const ConGebruikDetailsPageContent = ({
                   >
                     {item.label}
                   </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {deelnemerIds.length > 0 && (
+          <div style={{ marginBottom: '8px' }}>
+            <strong>Deelnemers: </strong>
+            <div>
+              {deelnemerIds.map((deelnemerId) => (
+                <div key={deelnemerId} style={{ marginBottom: '4px' }}>
+                  <ConUuidResolver>{deelnemerId}</ConUuidResolver>
                 </div>
               ))}
             </div>

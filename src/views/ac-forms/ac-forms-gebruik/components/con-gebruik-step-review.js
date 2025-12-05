@@ -35,6 +35,8 @@ const ConGebruikStepReview = ({
   afnemerOptions,
   // Selected applicatie data (for looking up version by ID)
   selectedApplicatieData,
+  // Deelnemer options for Samenwerking/Community organizations
+  deelnemerOptions = [],
 }) => {
   // Helper function to get the correct afnemer display name
   const getAfnemerDisplayName = () => {
@@ -509,13 +511,35 @@ const ConGebruikStepReview = ({
               <strong>Deelnemers:</strong>
               <div>
                 <UnorderedList>
-                  {gebruik.deelnemers.map((v) => {
-                    const opt = (organisatieOptions || []).find(
-                      (o) => String(o.value) === String(v)
+                  {gebruik.deelnemers.map((deelnemerId) => {
+                    // First try to find in deelnemerOptions (for Samenwerking/Community)
+                    const deelnemerOpt = (deelnemerOptions || []).find(
+                      (o) => String(o.value) === String(deelnemerId)
                     );
+                    if (deelnemerOpt) {
+                      return (
+                        <UnorderedListItem key={deelnemerId}>
+                          {deelnemerOpt.label}
+                        </UnorderedListItem>
+                      );
+                    }
+
+                    // Fallback to organisatieOptions
+                    const orgOpt = (organisatieOptions || []).find(
+                      (o) => String(o.value) === String(deelnemerId)
+                    );
+                    if (orgOpt) {
+                      return (
+                        <UnorderedListItem key={deelnemerId}>
+                          {orgOpt.label}
+                        </UnorderedListItem>
+                      );
+                    }
+
+                    // Fallback: use ConUuidResolver for unknown UUIDs
                     return (
-                      <UnorderedListItem key={v}>
-                        {opt ? opt.label : v}
+                      <UnorderedListItem key={deelnemerId}>
+                        <ConUuidResolver>{deelnemerId}</ConUuidResolver>
                       </UnorderedListItem>
                     );
                   })}
