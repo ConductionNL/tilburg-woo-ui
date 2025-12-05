@@ -20,7 +20,7 @@ import ConModuleVersieDetailsPage from '../../domains/con-module-version/con-mod
 
 const AcBeheer = ({ store }) => {
   const navigate = useNavigate();
-  const { user } = store;
+  const { user, object } = store;
 
   // Check authentication using the new UserStore
   useEffect(() => {
@@ -47,6 +47,11 @@ const AcBeheer = ({ store }) => {
 
     checkAuth();
   }, [user, navigate]);
+
+  // Trigger beheer data warmup when component mounts
+  useEffect(() => {
+    object.warmupBeheerData();
+  }, [object]);
 
   const { type, id } = useParams();
 
