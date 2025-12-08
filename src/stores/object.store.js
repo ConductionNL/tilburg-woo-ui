@@ -107,7 +107,6 @@ nextcloudApi.interceptors.response.use(
  * - `getSchemaProperties(type)` - Gets sorted schema properties for specific type
  * - `isSchemaLoading(type)` - Checks if schema is loading for specific type
  * - `getSchemaError(type)` - Gets schema error for specific type
- * - `clearSchema(type)` - Clears schema data for specific type
  *
  * #### Individual Object Operations
  * - `fetchObject(register, schema, id, params)` - Fetches single object with related data and cancellation support
@@ -119,25 +118,18 @@ nextcloudApi.interceptors.response.use(
  * #### Object Lifecycle Operations
  * - `publishObject(objectItem)` - Publishes object with operation-specific state tracking
  * - `depublishObject(objectItem)` - Depublishes object with operation-specific state tracking
- * - `lockObject(objectItem, process, duration)` - Locks object for editing with operation-specific state tracking
- * - `unlockObject(objectItem)` - Unlocks object with operation-specific state tracking
  *
  * #### Mass Operations (Parallel Processing)
  * - `massDeleteObjects(objects, onProgress)` - Deletes multiple objects in parallel
  * - `massPublishObjects(objects, onProgress)` - Publishes multiple objects in parallel
  * - `massDepublishObjects(objects, onProgress)` - Depublishes multiple objects in parallel
- * - `massLockObjects(objects, process, duration, onProgress)` - Locks multiple objects in parallel
- * - `massUnlockObjects(objects, onProgress)` - Unlocks multiple objects in parallel
  *
  * ### Related Data Management
  * - `fetchRelatedData(register, schema, id, dataType, params)` - Fetches logs, uses, used, files with cancellation support
  * - `setActiveObject(register, schema, object)` - Sets active object and fetches related data
- * - `clearActiveObject(register, schema)` - Clears active object and related data
  *
  * ### Search and Filtering
  * - `initializeSchemaProperties(type, schema)` - Initializes schema properties for filtering
- * - `initializeColumnFilters(type)` - Sets up column filters based on schema
- * - `updateColumnFilter(type, id, enabled)` - Updates column filter state
  *
  * ### Selection Management
  * - `setSelectedObjects(objects)` - Sets selected objects for bulk operations
@@ -160,7 +152,6 @@ nextcloudApi.interceptors.response.use(
  * - `clearAllObjectErrors()` - Clears all object errors
  * - `setSchemaLoading(type, isLoading)` - Sets schema loading state
  * - `setSchemaError(type, error)` - Sets schema error state
- * - `clearSchema(type)` - Clears schema data
  *
  * #### State Getters
  * - `getCollection(type)` - Gets collection data
@@ -169,10 +160,6 @@ nextcloudApi.interceptors.response.use(
  * - `getRelatedData(type, dataType)` - Gets related data (logs, uses, used, files)
  * - `getPagination(type)` - Gets pagination info
  * - `getError(type)` - Gets error state for operation-specific tracking
- * - `getObjectError(objectId)` - Gets error for specific object
- * - `getState(type)` - Gets success/error state for operation-specific tracking
- * - `getEnabledSchemaProperties(type)` - Gets enabled schema properties
- * - `getColumnFilters(type)` - Gets column filters
  * - `getSchemaPropertiesForType(type)` - Gets all schema properties
  * - `getSchema(type)` - Gets schema for specific type
  * - `getSchemaProperties(type)` - Gets sorted schema properties
@@ -181,9 +168,6 @@ nextcloudApi.interceptors.response.use(
  *
  * #### Utility Getters
  * - `isLoading(type)` - Checks if specific operation type is loading
- * - `hasMorePages(type)` - Checks if more pages available
- * - `hasPreviousPages(type)` - Checks if previous pages available
- * - `getAuditTrails(type)` - Gets audit trails
  *
  * ### Helper Methods
  * - `_constructApiUrl(register, schema, id, action)` - Constructs API URLs
@@ -210,10 +194,6 @@ nextcloudApi.interceptors.response.use(
  * - `cacheLoadRegister(registerSlug)` - Cache loads all schemas in a specific register
  * - `fetchRegister(registerSlug)` - Fetches register information including schemas
  * - `triggerBackendCacheLoad(registerId, schemaId)` - Triggers cache load for specific register/schema
- * - `isCacheLoading(registerSlug)` - Checks if cache loading is in progress for a register
- * - `getCacheLoadingError(registerSlug)` - Gets cache loading error for a register
- * - `isFullyCacheLoaded()` - Checks if all core registers are fully cache loaded
- * - `clearCacheLoadingState()` - Clears cache loading state and errors
  *
  * ## Operation-Specific State Tracking
  *
@@ -228,8 +208,6 @@ nextcloudApi.interceptors.response.use(
  * - `deleteObject` → `delete_objectId`
  * - `publishObject` → `publish_objectId`
  * - `depublishObject` → `depublish_objectId`
- * - `lockObject` → `lock_objectId`
- * - `unlockObject` → `unlock_objectId`
  *
  * ## Function Relationships and Workflows
  *
@@ -246,7 +224,6 @@ nextcloudApi.interceptors.response.use(
  * 3. `getSchemaProperties()` → Returns sorted properties using `sortPropertiesByOrder`
  *
  * ### Search and Filtering Workflow
- * 2. `initializeSchemaProperties()` → `initializeColumnFilters()` → `updateColumnFilter()`
  *
  * ### Bulk Operations Workflow
  * 1. `setSelectedObjects()` → `massDeleteObjects()` → Operation-specific error tracking → Update selections
@@ -317,8 +294,6 @@ nextcloudApi.interceptors.response.use(
  * await store.object.depublishObject(objectItem);
  *
  * // Lock/Unlock objects
- * await store.object.lockObject(objectItem, 'process-name', 3600);
- * await store.object.unlockObject(objectItem);
  *
  * // Mass operations
  * const results = await store.object.massDeleteObjects(selectedObjects);
@@ -326,21 +301,12 @@ nextcloudApi.interceptors.response.use(
  *
  * // Initialize schema properties for column filtering
  * store.object.initializeSchemaProperties('object-type', schemaData);
- * store.object.initializeColumnFilters('object-type');
  *
  * // Set active object and fetch related data
  * await store.object.setActiveObject('register-slug', 'schema-slug', object);
  *
- * // Clear active object
- * store.object.clearActiveObject('register-slug', 'schema-slug');
- *
  * // Backend cache loading (call during login)
  * await store.object.cacheLoad();
- *
- * // Check cache loading status
- * const isLoading = store.object.isCacheLoading('voorzieningen');
- * const error = store.object.getCacheLoadingError('voorzieningen');
- * const fullyLoaded = store.object.isFullyCacheLoaded();
  *
  * // Names cache system for UUID to name resolution
  * const name = await store.object.getNamesForSingleId('uuid-123');
@@ -628,23 +594,6 @@ export class ObjectStore {
 
   // Actions
   /**
-   * Gets enabled schema properties for a specific object type
-   * @param {string} type - The object type identifier
-   * @returns {Array<Object>} Array of enabled schema properties with id, key, and other properties
-   */
-  @action
-  getEnabledSchemaPropertiesForType = (type) => {
-    const typeProperties = this.schemaProperties[type] || {};
-    return Object.entries(typeProperties)
-      .filter(([, prop]) => prop.enabled)
-      .map(([key, prop]) => ({
-        id: `prop_${key}`,
-        key,
-        ...prop,
-      }));
-  };
-
-  /**
    * Gets all schema properties for a specific object type
    * @param {string} type - The object type identifier
    * @returns {Object} Object containing all schema properties for the type
@@ -766,23 +715,6 @@ export class ObjectStore {
   };
 
   /**
-   * Clears the active object and its related data
-   * @param {string|Object} register - Register identifier or object
-   * @param {string|Object} schema - Schema identifier or object
-   */
-  @action
-  clearActiveObject = (register, schema) => {
-    const type = `${register}_${schema}`;
-    this.activeObjects[type] = null;
-    this.relatedData[type] = {
-      logs: null,
-      uses: null,
-      used: null,
-      files: null,
-    };
-  };
-
-  /**
    * Sets pagination information for a specific type
    * @param {string} type - The type identifier for pagination
    * @param {Object} pagination - Pagination object with total, page, pages, limit, next, prev
@@ -829,27 +761,6 @@ export class ObjectStore {
   };
 
   /**
-   * Updates the column filter state for a specific property
-   * @param {string} type - The object type identifier
-   * @param {string} id - The column filter ID (e.g., 'prop_name')
-   * @param {boolean} enabled - Whether the column should be enabled
-   */
-  @action
-  updateColumnFilter = (type, id, enabled) => {
-    if (!this.columnFilters[type]) {
-      this.columnFilters[type] = {};
-    }
-    this.columnFilters[type][id] = enabled;
-
-    if (id.startsWith('prop_')) {
-      const propKey = id.replace('prop_', '');
-      if (this.schemaProperties[type]?.[propKey]) {
-        this.schemaProperties[type][propKey].enabled = enabled;
-      }
-    }
-  };
-
-  /**
    * Initializes schema properties from a schema object for a specific type
    * @param {string} type - The object type identifier
    * @param {Object} schema - Schema object containing properties
@@ -875,23 +786,6 @@ export class ObjectStore {
     });
 
     this.schemaProperties[type] = properties;
-  };
-
-  /**
-   * Initializes column filters based on current schema properties for a specific type
-   * @param {string} type - The object type identifier
-   */
-  @action
-  initializeColumnFilters = (type) => {
-    const filters = {};
-
-    if (this.schemaProperties[type]) {
-      Object.keys(this.schemaProperties[type]).forEach((key) => {
-        filters[`prop_${key}`] = this.schemaProperties[type][key].enabled;
-      });
-    }
-
-    this.columnFilters[type] = filters;
   };
 
   /**
@@ -1576,23 +1470,6 @@ export class ObjectStore {
   getSchemaError = (type) => this.schemaErrors[type] || null;
 
   /**
-   * Clears schema data for a specific type
-   * @param {string} type - The type identifier
-   */
-  @action
-  clearSchema = (type) => {
-    if (this.schemas[type]) {
-      delete this.schemas[type];
-    }
-    if (this.schemaLoading[type]) {
-      delete this.schemaLoading[type];
-    }
-    if (this.schemaErrors[type]) {
-      delete this.schemaErrors[type];
-    }
-  };
-
-  /**
    * Updates a collection in-place with new/updated object data
    * @param {string} type - The collection type identifier
    * @param {Object} objectData - The object data to update/add
@@ -2243,142 +2120,6 @@ export class ObjectStore {
     }
   };
 
-  /**
-   * Locks an object
-   * @param {Object} objectItem - The object to lock with id, register, and schema information
-   * @param {string|null} [process=null] - The process name for locking
-   * @param {number|null} [duration=null] - Lock duration in seconds
-   * @returns {Object} The updated object with lock status
-   */
-  @action
-  lockObject = async (objectItem, process = null, duration = null) => {
-    const objectId = objectItem.id || objectItem['@self']?.id;
-    const register = objectItem['@self']?.register || objectItem.register;
-    const schema = objectItem['@self']?.schema || objectItem.schema;
-
-    if (!objectId || !register || !schema) {
-      throw new Error('Object must have id, register, and schema information');
-    }
-
-    const registerId = this.extractId(register);
-    const schemaId = this.extractId(schema);
-
-    if (!registerId || !schemaId) {
-      throw new Error('Could not extract register or schema ID');
-    }
-
-    const requestType = `lock_${objectId}`;
-    this.setLoading(requestType, true);
-    this.setError(requestType, null);
-    this.setSuccess(requestType, null);
-
-    try {
-      const endpoint = `/openregister/api/objects/${registerId}/${schemaId}/${objectId}/lock`;
-
-      const body = {};
-      if (process) body.process = process;
-      if (duration) body.duration = duration;
-
-      const response = await nextcloudApi.post(endpoint, body);
-
-      if (!response.ok) {
-        throw new Error(
-          `Failed to lock object: ${response.status} ${response.statusText}`
-        );
-      }
-
-      const updatedObject = response.data;
-
-      // Update active object if it matches the locked object
-      runInAction(() => {
-        // run in action to avoid Strict MobX warnings
-        const objectType = this.getTypeFromObject(objectItem);
-        const activeObject = this.activeObjects[objectType];
-        if (
-          activeObject &&
-          (activeObject.id === objectId || activeObject['@self']?.id === objectId)
-        ) {
-          this.activeObjects[objectType] = updatedObject;
-        }
-      });
-
-      this.setSuccess(requestType, true);
-      return updatedObject;
-    } catch (error) {
-      console.error('Error locking object:', error);
-      this.setError(requestType, error.message);
-      this.setSuccess(requestType, false);
-      throw error;
-    } finally {
-      this.setLoading(requestType, false);
-    }
-  };
-
-  /**
-   * Unlocks an object
-   * @param {Object} objectItem - The object to unlock with id, register, and schema information
-   * @returns {Object} The updated object with lock status
-   */
-  @action
-  unlockObject = async (objectItem) => {
-    const objectId = objectItem.id || objectItem['@self']?.id;
-    const register = objectItem['@self']?.register || objectItem.register;
-    const schema = objectItem['@self']?.schema || objectItem.schema;
-
-    if (!objectId || !register || !schema) {
-      throw new Error('Object must have id, register, and schema information');
-    }
-
-    const registerId = this.extractId(register);
-    const schemaId = this.extractId(schema);
-
-    if (!registerId || !schemaId) {
-      throw new Error('Could not extract register or schema ID');
-    }
-
-    const requestType = `unlock_${objectId}`;
-    this.setLoading(requestType, true);
-    this.setError(requestType, null);
-    this.setSuccess(requestType, null);
-
-    try {
-      const endpoint = `/openregister/api/objects/${registerId}/${schemaId}/${objectId}/unlock`;
-
-      const response = await nextcloudApi.post(endpoint);
-
-      if (!response.ok) {
-        throw new Error(
-          `Failed to unlock object: ${response.status} ${response.statusText}`
-        );
-      }
-
-      const updatedObject = response.data;
-
-      // Update active object if it matches the unlocked object
-      runInAction(() => {
-        // run in action to avoid Strict MobX warnings
-        const objectType = this.getTypeFromObject(objectItem);
-        const activeObject = this.activeObjects[objectType];
-        if (
-          activeObject &&
-          (activeObject.id === objectId || activeObject['@self']?.id === objectId)
-        ) {
-          this.activeObjects[objectType] = updatedObject;
-        }
-      });
-
-      this.setSuccess(requestType, true);
-      return updatedObject;
-    } catch (error) {
-      console.error('Error unlocking object:', error);
-      this.setError(requestType, error.message);
-      this.setSuccess(requestType, false);
-      throw error;
-    } finally {
-      this.setLoading(requestType, false);
-    }
-  };
-
   // Mass operations
   /**
    * Deletes multiple objects in parallel
@@ -2514,129 +2255,6 @@ export class ObjectStore {
         try {
           const objectId = obj.id || obj['@self']?.id;
           await this.depublishObject(obj);
-          this.clearObjectError(objectId);
-
-          if (onProgress) {
-            onProgress(obj, true);
-          }
-
-          return { success: true, id: objectId, object: obj };
-        } catch (error) {
-          const objectId = obj.id || obj['@self']?.id;
-          const errorMessage = error.message || 'Unknown error';
-
-          this.setObjectError(objectId, errorMessage);
-
-          if (onProgress) {
-            onProgress(obj, false, errorMessage);
-          }
-
-          return { success: false, id: objectId, object: obj, error: errorMessage };
-        }
-      })
-    );
-
-    const successful = results
-      .filter((r) => r.status === 'fulfilled' && r.value.success)
-      .map((r) => r.value);
-    const failed = results
-      .filter(
-        (r) =>
-          r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)
-      )
-      .map((r) => r.value || { success: false, error: 'Unknown error' });
-
-    if (successful.length > 0) {
-      const successfulIds = successful.map((r) => r.id);
-      const remainingSelected = this.selectedObjects.filter(
-        (id) => !successfulIds.includes(id)
-      );
-      this.setSelectedObjects(remainingSelected);
-    }
-
-    return { successful, failed };
-  };
-
-  /**
-   * Locks multiple objects in parallel
-   * @param {Array<Object>} objects - Array of objects to lock
-   * @param {string|null} [process=null] - The process name for locking
-   * @param {number|null} [duration=null] - Lock duration in seconds
-   * @param {Function|null} [onProgress=null] - Progress callback function
-   * @returns {Object} Object with successful and failed operations
-   */
-  @action
-  massLockObjects = async (
-    objects,
-    process = null,
-    duration = null,
-    onProgress = null
-  ) => {
-    this.clearAllObjectErrors();
-
-    const results = await Promise.allSettled(
-      objects.map(async (obj) => {
-        try {
-          const objectId = obj.id || obj['@self']?.id;
-          await this.lockObject(obj, process, duration);
-          this.clearObjectError(objectId);
-
-          if (onProgress) {
-            onProgress(obj, true);
-          }
-
-          return { success: true, id: objectId, object: obj };
-        } catch (error) {
-          const objectId = obj.id || obj['@self']?.id;
-          const errorMessage = error.message || 'Unknown error';
-
-          this.setObjectError(objectId, errorMessage);
-
-          if (onProgress) {
-            onProgress(obj, false, errorMessage);
-          }
-
-          return { success: false, id: objectId, object: obj, error: errorMessage };
-        }
-      })
-    );
-
-    const successful = results
-      .filter((r) => r.status === 'fulfilled' && r.value.success)
-      .map((r) => r.value);
-    const failed = results
-      .filter(
-        (r) =>
-          r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)
-      )
-      .map((r) => r.value || { success: false, error: 'Unknown error' });
-
-    if (successful.length > 0) {
-      const successfulIds = successful.map((r) => r.id);
-      const remainingSelected = this.selectedObjects.filter(
-        (id) => !successfulIds.includes(id)
-      );
-      this.setSelectedObjects(remainingSelected);
-    }
-
-    return { successful, failed };
-  };
-
-  /**
-   * Unlocks multiple objects in parallel
-   * @param {Array<Object>} objects - Array of objects to unlock
-   * @param {Function|null} [onProgress=null] - Progress callback function
-   * @returns {Object} Object with successful and failed operations
-   */
-  @action
-  massUnlockObjects = async (objects, onProgress = null) => {
-    this.clearAllObjectErrors();
-
-    const results = await Promise.allSettled(
-      objects.map(async (obj) => {
-        try {
-          const objectId = obj.id || obj['@self']?.id;
-          await this.unlockObject(obj);
           this.clearObjectError(objectId);
 
           if (onProgress) {
@@ -2888,33 +2506,6 @@ export class ObjectStore {
   };
 
   /**
-   * Fetch tags for attachments
-   * @returns {Array} Array of tag values
-   */
-  @action
-  fetchTags = async () => {
-    const requestType = `tags_fetch`;
-    this.setLoading(requestType, true);
-    this.setError(requestType, null);
-
-    try {
-      const response = await nextcloudApi.get('/openregister/api/tags');
-      if (!response.ok) {
-        throw new Error(
-          `Failed to fetch tags: ${response.status} ${response.statusText}`
-        );
-      }
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching tags:', error);
-      this.setError(requestType, error.message);
-      throw error;
-    } finally {
-      this.setLoading(requestType, false);
-    }
-  };
-
-  /**
    * Convenience wrapper to fetch files related data
    * @param {string|Object} register
    * @param {string|Object} schema
@@ -2989,81 +2580,6 @@ export class ObjectStore {
     }
     const defaultLimit = type.includes('files') ? 500 : 20;
     return { total: 0, page: 1, pages: 1, limit: defaultLimit };
-  };
-
-  /**
-   * Checks if there are more pages available for a collection
-   * @param {string} type - The type identifier
-   * @returns {boolean} True if more pages are available
-   */
-  hasMorePages = (type) => {
-    const pagination = this.pagination[type];
-    return pagination
-      ? pagination.next !== null || pagination.page < pagination.pages
-      : false;
-  };
-
-  /**
-   * Checks if there are previous pages available for a collection
-   * @param {string} type - The type identifier
-   * @returns {boolean} True if previous pages are available
-   */
-  hasPreviousPages = (type) => {
-    const pagination = this.pagination[type];
-    return pagination ? pagination.prev !== null || pagination.page > 1 : false;
-  };
-
-  /**
-   * Gets audit trails for a specific type
-   * @param {string} type - The type identifier
-   * @returns {Array} Array of audit trail entries
-   */
-  getAuditTrails = (type) => this.relatedData[type]?.logs || [];
-
-  /**
-   * Gets the current state (success/error) for a specific type
-   * @param {string} type - The type identifier
-   * @returns {Object} Object with success and error properties
-   */
-  getState = (type) => ({
-    success: this.success[type] || null,
-    error: this.errors[type] || null,
-  });
-
-  /**
-   * Gets the error for a specific object
-   * @param {string} objectId - The object ID
-   * @returns {string|null} Error message or null if no error
-   */
-  getObjectError = (objectId) => this.objectErrors[objectId] || null;
-
-  /**
-   * Gets enabled schema properties for column filtering for a specific type
-   * @param {string} type - The object type identifier
-   * @returns {Array<Object>} Array of enabled schema properties
-   */
-  getEnabledSchemaProperties = (type) =>
-    this.getEnabledSchemaPropertiesForType(type);
-
-  /**
-   * Gets column filters for a specific type
-   * @param {string} type - The object type identifier
-   * @returns {Object} Object containing column filters for the type
-   */
-  getColumnFilters = (type) => this.columnFilters[type] || {};
-
-  /**
-   * Clears schema properties for a specific type
-   * @param {string} type - The object type identifier
-   */
-  @action
-  clearSchemaProperties = (type) => {
-    if (this.schemaProperties[type]) {
-      delete this.schemaProperties[type];
-    }
-    if (this.columnFilters[type]) {
-      delete this.columnFilters[type];
-    }
   };
 
   /**
@@ -4181,43 +3697,6 @@ export class ObjectStore {
       ...allResults,
       stats,
     };
-  };
-
-  /**
-   * Gets cache loading state for a specific register
-   * @param {string} registerSlug - The register slug
-   * @returns {boolean} True if cache loading is in progress
-   */
-  isCacheLoading = (registerSlug) => {
-    return this.cacheLoadingState[registerSlug] || false;
-  };
-
-  /**
-   * Gets cache loading error for a specific register
-   * @param {string} registerSlug - The register slug
-   * @returns {string|null} Error message or null if no error
-   */
-  getCacheLoadingError = (registerSlug) => {
-    return this.cacheLoadingErrors[registerSlug] || null;
-  };
-
-  /**
-   * Checks if all core registers have been successfully cache loaded
-   * @returns {boolean} True if all core registers are cache loaded
-   */
-  isFullyCacheLoaded = () => {
-    return this.CORE_REGISTERS.every((register) => {
-      return !this.isCacheLoading(register) && !this.getCacheLoadingError(register);
-    });
-  };
-
-  /**
-   * Clears cache loading state and errors
-   */
-  @action
-  clearCacheLoadingState = () => {
-    this.cacheLoadingState = {};
-    this.cacheLoadingErrors = {};
   };
 
   /**
