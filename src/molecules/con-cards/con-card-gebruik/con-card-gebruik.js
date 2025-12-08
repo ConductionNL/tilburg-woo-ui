@@ -65,7 +65,7 @@ const ConCardGebruik = ({
       <Paragraph>
         Geschikt voor:{' '}
         {resolvedReferentieComponenten
-          .sort((a, b) => a.localeCompare(b))
+          ?.sort((a, b) => a.localeCompare(b))
           ?.join(', ') || '-'}
       </Paragraph>
       <AcFlex justifyContent='between' className='meta'>
