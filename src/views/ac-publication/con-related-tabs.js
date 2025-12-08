@@ -20,6 +20,7 @@ import {
   ConCardModuleVersie,
 } from '@molecules/con-cards';
 import { commongroundApiUrl } from '@src/config';
+import { schemaCache } from '@services/schemaCache.service';
 
 // Helper function to define the desired tab order
 const getTabOrder = (schemaSlug) => {
@@ -33,9 +34,21 @@ const getTabOrder = (schemaSlug) => {
   return order[schemaSlug] || 999; // Other relations get a high number to appear last
 };
 
+// Helper function to get schema slug - handles backend bug where schema might be extended
+// Only use for comparisons or display purposes
+const getSchemaSlug = (item) => {
+  // Check if schema is extended (backend bug workaround)
+  if (item?.['@self']?.schema?.slug) {
+    return item['@self'].schema.slug;
+  }
+  // Otherwise use schema cache
+  const schemaId = item?.['@self']?.schema;
+  return schemaId ? schemaCache.get(schemaId) : null;
+};
+
 // Helper function to render a card based on schema type
 const renderCard = (item, object, navigateTo, user) => {
-  const schemaSlug = item['@self']?.schema?.slug;
+  const schemaSlug = getSchemaSlug(item);
 
   switch (schemaSlug) {
     case 'product':
@@ -49,7 +62,7 @@ const renderCard = (item, object, navigateTo, user) => {
           summary={extractSummary(item['@self']?.summary || item?.beschrijvingKort)}
           logo={getImageFromPublication(item)}
           cardType={schemaSlug}
-          type={item['@self'].schema.title}
+          type={schemaSlug ? getTabHeaderName(schemaSlug, true) : null}
           referenceComponents={item.referentieComponenten}
           updated={item['@self'].updated}
           published={item['@self'].published}
@@ -95,7 +108,7 @@ const renderCard = (item, object, navigateTo, user) => {
           summary={item.beschrijving ?? item.beschrijvingKort ?? ''}
           updated={item['@self']?.updated}
           published={item['@self']?.published}
-          category={item['@self']?.schema?.title}
+          category={schemaSlug ? getTabHeaderName(schemaSlug, true) : null}
           themes={item.themes}
           aanbieder={item['@self']?.relations?.aanbieder || item.aanbieder}
           status={item.status}
@@ -149,7 +162,7 @@ const renderCard = (item, object, navigateTo, user) => {
               item['@self']?.name
           )}
           item={item}
-          category={item['@self']?.schema?.title}
+          category={schemaSlug ? getTabHeaderName(schemaSlug, true) : null}
           themes={item.themes}
           navigateTo={navigateTo}
         />
@@ -162,7 +175,7 @@ const renderCard = (item, object, navigateTo, user) => {
           title={item.title ?? item.titel ?? item.name ?? item.naam ?? item.id}
           summary={item.beschrijving ?? item.beschrijvingKort ?? ''}
           published={item['@self']?.published}
-          category={item['@self']?.schema?.title}
+          category={schemaSlug ? getTabHeaderName(schemaSlug, true) : null}
           themes={item.themes}
           navigateTo={navigateTo}
         />
@@ -175,12 +188,11 @@ const mergeAndDeduplicateItems = (uses = [], used = []) => {
   // Combine both arrays
   const allItems = [...uses, ...used];
 
-  // Remove duplicates based on item ID and filter out elements
-  return _.uniqBy(allItems, 'id').filter(
-    (item) =>
-      item['@self']?.schema?.slug !== 'element' &&
-      item['@self']?.schema?.slug !== 'compliancy'
-  );
+  // Remove duplicates based on item ID and filter out elements & compliancy
+  return _.uniqBy(allItems, 'id').filter((item) => {
+    const schemaSlug = getSchemaSlug(item);
+    return schemaSlug !== 'element' && schemaSlug !== 'compliancy';
+  });
 };
 
 // Helper function to merge ambtenaar gebruik items into the combined list so there's a single 'gebruik' tab
@@ -209,10 +221,14 @@ const mergeGebruiksIntoItems = (items = [], ambtenaarItems = []) => {
     return normalized;
   });
 
-  const nonGebruikItems = items.filter(
-    (i) => i?.['@self']?.schema?.slug !== 'gebruik'
-  );
-  const gebruikItems = items.filter((i) => i?.['@self']?.schema?.slug === 'gebruik');
+  const nonGebruikItems = items.filter((i) => {
+    const schemaSlug = getSchemaSlug(i);
+    return schemaSlug !== 'gebruik';
+  });
+  const gebruikItems = items.filter((i) => {
+    const schemaSlug = getSchemaSlug(i);
+    return schemaSlug === 'gebruik';
+  });
 
   const mergedGebruik = _.uniqBy([...gebruikItems, ...normalizedAmbtenaar], 'id');
 
@@ -269,21 +285,22 @@ const renderRelatedTabs = (
     return undefined;
   };
 
-  const uniqueSchemas = (items || []).length
-    ? _.uniqBy(items, (item) => item['@self'].schema.id).sort(
-        (a, b) =>
-          getTabOrder(a['@self'].schema.slug) - getTabOrder(b['@self'].schema.slug)
-      )
-    : [];
+  // Group items by schema slug (not schema ID) to ensure tabs with same slug are combined
+  const itemsBySlug = {};
+  (items || []).forEach((item) => {
+    const schemaSlug = getSchemaSlug(item);
+    if (!schemaSlug) return;
 
-  // Build schema-derived tabs
-  const schemaTabs = uniqueSchemas
-    .map((schemaItem) => {
-      const schemaId = schemaItem['@self'].schema.id;
-      const schemaSlug = schemaItem['@self'].schema.slug;
-      let itemsWithThisSchema = (items || []).filter(
-        (u) => u['@self'].schema.id === schemaId
-      );
+    if (!itemsBySlug[schemaSlug]) {
+      itemsBySlug[schemaSlug] = [];
+    }
+    itemsBySlug[schemaSlug].push(item);
+  });
+
+  // Build schema-derived tabs, sorted by tab order
+  const schemaTabs = Object.keys(itemsBySlug)
+    .map((schemaSlug) => {
+      let itemsWithThisSchema = itemsBySlug[schemaSlug];
 
       // Filter out items with matching ID for 'organisatie' schema
       if (schemaSlug === 'organisatie' && activeObjectId) {
@@ -293,15 +310,19 @@ const renderRelatedTabs = (
         });
       }
 
+      // Get a representative schema ID from the first item (for tab ID)
+      const representativeSchemaId = itemsWithThisSchema[0]?.['@self']?.schema;
+
       return {
         kind: 'schema',
-        id: `schema-${schemaId}`,
-        schemaId,
+        id: `schema-${schemaSlug}`,
+        schemaId: representativeSchemaId,
         schemaSlug,
         items: itemsWithThisSchema,
         count: itemsWithThisSchema.length,
       };
     })
+    .sort((a, b) => getTabOrder(a.schemaSlug) - getTabOrder(b.schemaSlug))
     .filter((tab) => tab.count > 0); // Filter out tabs with 0 items
 
   // Normalize and filter custom tabs by visibility
@@ -493,7 +514,7 @@ const RelatedTabs = observer(
       const fetchGebruik = async () => {
         try {
           const response = await fetch(
-            `${commongroundApiUrl()}/softwarecatalog/api/gebruik?_source=database&_extend[]=@self.schema`,
+            `${commongroundApiUrl()}/softwarecatalog/api/gebruik?_source=database`,
             {
               method: 'GET',
               signal: abortController.signal,
