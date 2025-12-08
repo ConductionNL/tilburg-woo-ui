@@ -66,7 +66,7 @@ const ConModuleDetailsPageContent = ({
     setUsesLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend[]=@self.schema`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses`,
         {
           method: 'GET',
           headers: {
@@ -93,7 +93,7 @@ const ConModuleDetailsPageContent = ({
     setUsedLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=@self.schema&_limit=500`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_limit=500`,
         {
           method: 'GET',
           headers: {

@@ -115,7 +115,7 @@ const ConMyOrganisationPage = ({ store }) => {
     setUsesLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${organisationId}/uses?_extend[]=@self.schema&_published=false`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${organisationId}/uses?_published=false`,
         {
           method: 'GET',
           headers: {
@@ -142,7 +142,7 @@ const ConMyOrganisationPage = ({ store }) => {
     setUsedLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${organisationId}/used?_extend[]=@self.schema&_published=false`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${organisationId}/used?_published=false`,
         {
           method: 'GET',
           headers: {
@@ -172,7 +172,7 @@ const ConMyOrganisationPage = ({ store }) => {
       try {
         // Fetch the full organization data using the object store
         await object.fetchObject('voorzieningen', 'organisatie', organisationId, {
-          '_extend[]': ['@self.schema', 'contactpersonen'],
+          '_extend[]': ['contactpersonen'],
           _related: true,
           _relatedNames: true,
           _published: 'false',

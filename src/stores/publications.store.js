@@ -21,7 +21,6 @@ const DEFAULT_QUERY = {
 export const buildPublicationsSearchQuery = (baseQuery) => {
   return {
     ...baseQuery,
-    extend: '@self.schema',
   };
 };
 
