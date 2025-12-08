@@ -4,19 +4,19 @@
   min-width: 130px !important;
   width: 130px !important;
   min-height: 40px !important;
-  
+
   // Ensure consistent button sizing regardless of text length
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   gap: 0.5rem !important;
-  
+
   // Override any inherited width styles
   flex: none !important;
-  
+
   // Larger padding for better touch targets
   padding: 0.5rem 1rem !important;
-  
+
   // Ensure icon is visible and properly sized
   .ac-button__icon {
     display: inline-block !important;
@@ -24,10 +24,46 @@
     height: 18px !important;
     flex-shrink: 0 !important;
   }
-  
+
   // Ensure text doesn't wrap
   white-space: nowrap !important;
-  
+
   // Slightly larger font size
   font-size: 0.9rem !important;
+}
+
+// Error alert styling - matching the pattern from ac-forms-product-info-alert
+.con-suggesties-error-alert {
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.con-suggesties-error-alert__close-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  line-height: 1;
+  color: #666;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+
+  &:focus {
+    outline: 2px solid var(--tilburg-color-blue-400);
+    outline-offset: 2px;
+  }
+}
+
+.con-suggesties-error-alert__content {
+  padding-right: 2rem;
 }

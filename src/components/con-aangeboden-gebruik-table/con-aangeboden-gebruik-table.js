@@ -66,6 +66,8 @@ const ConAangebodenSuggestiesTable = ({ store, onDataChange, id }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  // Track which row and action is currently being processed
+  const [processingAction, setProcessingAction] = useState(null); // { id: string, action: 'claim' | 'deny' }
 
   // Use the pagination limit hook for consistent behavior with other beheer pages
   const [pageSize, setPageSize] = usePaginationLimit(
@@ -185,7 +187,7 @@ const ConAangebodenSuggestiesTable = ({ store, onDataChange, id }) => {
       if (!api?.aangebodenGebruik) return;
 
       try {
-        setLoading(true);
+        setProcessingAction({ id: suggestionId, action: 'claim' });
         const response = await api.aangebodenGebruik.claimGebruik(suggestionId);
 
         if (response.success) {
@@ -199,7 +201,7 @@ const ConAangebodenSuggestiesTable = ({ store, onDataChange, id }) => {
         console.error('Error taking over suggestion:', claimError);
         setError('Er is een fout opgetreden bij het overnemen.');
       } finally {
-        setLoading(false);
+        setProcessingAction(null);
       }
     },
     [api, fetchSuggestions]
@@ -213,7 +215,7 @@ const ConAangebodenSuggestiesTable = ({ store, onDataChange, id }) => {
       if (!api?.aangebodenGebruik) return;
 
       try {
-        setLoading(true);
+        setProcessingAction({ id: suggestionId, action: 'deny' });
         const response = await api.aangebodenGebruik.denyGebruik(suggestionId);
 
         if (response.success) {
@@ -227,7 +229,7 @@ const ConAangebodenSuggestiesTable = ({ store, onDataChange, id }) => {
         console.error('Error denying suggestion:', denyError);
         setError('Er is een fout opgetreden bij het afwijzen.');
       } finally {
-        setLoading(false);
+        setProcessingAction(null);
       }
     },
     [api, fetchSuggestions]
@@ -284,53 +286,74 @@ const ConAangebodenSuggestiesTable = ({ store, onDataChange, id }) => {
       label: 'Acties',
       key: '',
       static: true,
-      customContent: (row) => (
-        <AcFlex spacing='xs'>
-          <AcButton
-            style='buttonSlim'
-            buttonType='primary'
-            onClick={() => handleClaim(row?.['@self']?.id)}
-            disabled={loading}
-            className='con-gebruik-action-button'
-          >
-            <VISUALS.CHECK className='ac-button__icon' />
-            Overnemen
-          </AcButton>
-          <AcButton
-            style='buttonSlim'
-            buttonType='secondary'
-            onClick={() => handleDeny(row?.['@self']?.id)}
-            disabled={loading}
-            className='con-gebruik-action-button'
-          >
-            <VISUALS.XMARK className='ac-button__icon' />
-            Afwijzen
-          </AcButton>
-        </AcFlex>
-      ),
+      customContent: (row) => {
+        const rowId = row?.['@self']?.id;
+        const isThisRowProcessing = processingAction?.id === rowId;
+        const isClaimLoading =
+          isThisRowProcessing && processingAction?.action === 'claim';
+        const isDenyLoading =
+          isThisRowProcessing && processingAction?.action === 'deny';
+
+        return (
+          <AcFlex spacing='xs'>
+            <AcButton
+              style='buttonSlim'
+              buttonType='primary'
+              icon={<VISUALS.CHECK />}
+              onClick={() => handleClaim(rowId)}
+              disabled={isThisRowProcessing}
+              loading={isClaimLoading}
+              className='con-gebruik-action-button'
+            >
+              Overnemen
+            </AcButton>
+            <AcButton
+              style='buttonSlim'
+              buttonType='secondary'
+              icon={<VISUALS.XMARK />}
+              onClick={() => handleDeny(rowId)}
+              disabled={isThisRowProcessing}
+              loading={isDenyLoading}
+              className='con-gebruik-action-button'
+            >
+              Afwijzen
+            </AcButton>
+          </AcFlex>
+        );
+      },
     },
   ];
 
-  // Show error if there's one
-  if (error) {
-    return (
-      <Alert type='error'>
-        <Paragraph>{error}</Paragraph>
-      </Alert>
-    );
-  }
-
   // Don't show empty state - parent component will hide the entire container
-  if (!loading && allData.length === 0) {
+  // But still show if there's an error so user can try again
+  if (!loading && allData.length === 0 && !error) {
     return null;
   }
 
   return (
     <div>
+      {/* Show error above the table so user can still interact with remaining items */}
+      {error && (
+        <Alert type='error' className='con-suggesties-error-alert'>
+          <button
+            type='button'
+            onClick={() => setError(null)}
+            className='con-suggesties-error-alert__close-button'
+            title='Sluiten'
+            aria-label='Alert sluiten'
+          >
+            <VISUALS.CLOSE />
+          </button>
+          <div className='con-suggesties-error-alert__content'>
+            <Paragraph>{error}</Paragraph>
+          </div>
+        </Alert>
+      )}
+
       <ConTable
         data={paginatedData}
         tableHeaders={tableHeaders}
-        loading={loading}
+        loading={loading && !processingAction}
         renderSelectRowButtons={false}
         truncateLines={2}
         showSortButtons={true}
