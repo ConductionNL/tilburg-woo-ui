@@ -55,10 +55,13 @@ export const ENDPOINTS = AcLockObject({
     SINGLE: (_id) => `/opencatalogi/api/menus/${_id}`, // GET
   },
   AANGEBODEN_GEBRUIK: {
+    AANBOD: `/softwarecatalog/api/aanbod`, // GET
+    ACCEPT: (_id) => `/softwarecatalog/api/aanbod/${_id}/accept`, // PUT
+    DENY: (_id) => `/softwarecatalog/api/aanbod/${_id}/deny`, // DELETE
     AFNEMER: `/softwarecatalog/api/aangeboden-gebruik/afnemer`, // GET
     DEELNEMERS: `/softwarecatalog/api/aangeboden-gebruik/deelnemers`, // GET
     SET_SELF: (_id) => `/softwarecatalog/api/aangeboden-gebruik/${_id}/set-self`, // PUT
-    DENY: (_id) => `/softwarecatalog/api/aangeboden-gebruik/${_id}/deny`, // DELETE
+    DENY_OLD: (_id) => `/softwarecatalog/api/aangeboden-gebruik/${_id}/deny`, // DELETE
     KOPPELING: (_id) => `/softwarecatalog/api/koppelingen-gebruik/${_id}`, // GET
     DOCS: `/softwarecatalog/api/aangeboden-gebruik/docs`, // GET
   },
