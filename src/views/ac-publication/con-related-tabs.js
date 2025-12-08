@@ -270,9 +270,9 @@ const renderRelatedTabs = (
   };
 
   const uniqueSchemas = (items || []).length
-    ? _.uniqBy(items, (item) => item['@self'].schema.id).sort(
+    ? _.uniqBy(items, (item) => item['@self']?.schema?.id).sort(
         (a, b) =>
-          getTabOrder(a['@self'].schema.slug) - getTabOrder(b['@self'].schema.slug)
+          getTabOrder(a['@self']?.schema?.slug) - getTabOrder(b['@self']?.schema?.slug)
       )
     : [];
 
