@@ -1,39 +1,25 @@
 /**
- * ConSchemaResolver - Resolves schema IDs to human-readable labels
+ * ConSchemaResolver - Resolves schema IDs to slugs
  *
  * Works like ConUuidResolver but for schema IDs.
- * Looks up the schema ID in the schemaCache and displays the slug as a label.
+ * Looks up the schema ID in the schemaCache and displays the slug.
  */
 
 import React from 'react';
+import _ from 'lodash';
 import { schemaCache } from '@services/schemaCache.service';
 
 /**
- * Human-readable labels for schema types (Dutch)
- */
-const SCHEMA_TYPE_LABELS = {
-  gebruik: 'Gebruik',
-  applicatie: 'Applicatie',
-  koppeling: 'Koppeling',
-  dienst: 'Dienst',
-  module: 'Module',
-  moduleversie: 'Moduleversie',
-  organisatie: 'Organisatie',
-  contactpersoon: 'Contactpersoon',
-  view: 'View',
-};
-
-/**
- * Component that resolves a schema ID to a human-readable label
+ * Component that resolves a schema ID to its slug
  * @param {Object} props
  * @param {string|number} props.children - Schema ID to resolve
  * @param {string} props.as - HTML element to render as (default: 'span')
- * @param {boolean} props.showSlug - If true, show slug instead of label (default: false)
+ * @param {boolean} props.capitalize - If true, capitalize the first letter (default: false)
  */
 const ConSchemaResolver = ({
   children: schemaId,
   as: Component = 'span',
-  showSlug = false,
+  capitalize: shouldCapitalize = false,
   ...props
 }) => {
   if (!schemaId) {
@@ -44,8 +30,8 @@ const ConSchemaResolver = ({
   const slug = schemaCache.get(schemaId);
 
   if (slug) {
-    // Found in cache - show label or slug
-    const display = showSlug ? slug : SCHEMA_TYPE_LABELS[slug] || slug;
+    // Found in cache - show slug (optionally uppercase first letter using lodash)
+    const display = shouldCapitalize ? _.upperFirst(slug) : slug;
     return <Component {...props}>{display}</Component>;
   }
 
@@ -53,5 +39,4 @@ const ConSchemaResolver = ({
   return <Component {...props}>{schemaId}</Component>;
 };
 
-export { SCHEMA_TYPE_LABELS };
 export default ConSchemaResolver;

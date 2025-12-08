@@ -185,7 +185,7 @@ const ConAangebodenSuggestiesTable = ({ store, onDataChange, id }) => {
       customContent: (row) => {
         const schemaId = row?.['@self']?.schema;
         if (!schemaId) return '-';
-        return <ConSchemaResolver>{schemaId}</ConSchemaResolver>;
+        return <ConSchemaResolver capitalize>{schemaId}</ConSchemaResolver>;
       },
     },
     {
