@@ -279,16 +279,16 @@ const renderRelatedTabs = (
   // Build schema-derived tabs
   const schemaTabs = uniqueSchemas
     .map((schemaItem) => {
-      const schemaId = schemaItem['@self'].schema.id;
-      const schemaSlug = schemaItem['@self'].schema.slug;
+      const schemaId = schemaItem['@self']?.schema?.id;
+      const schemaSlug = schemaItem['@self']?.schema?.slug;
       let itemsWithThisSchema = (items || []).filter(
-        (u) => u['@self'].schema.id === schemaId
+        (u) => u['@self']?.schema?.id === schemaId
       );
 
       // Filter out items with matching ID for 'organisatie' schema
       if (schemaSlug === 'organisatie' && activeObjectId) {
         itemsWithThisSchema = itemsWithThisSchema.filter((item) => {
-          const itemId = item.id || item['@self']?.id;
+          const itemId = item?.id || item['@self']?.id;
           return itemId !== activeObjectId;
         });
       }
