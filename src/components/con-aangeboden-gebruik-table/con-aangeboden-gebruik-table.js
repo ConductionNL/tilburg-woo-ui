@@ -11,6 +11,7 @@ import { Pagination } from '@amsterdam/design-system-react';
 import ConPaginationLimitSelector, {
   usePaginationLimit,
 } from '@src/components/con-pagination-limit-selector/con-pagination-limit-selector';
+import { schemaCache } from '@services/schemaCache.service';
 
 /**
  * Default client-side pagination limit - items shown per page
@@ -84,7 +85,7 @@ const ConAangebodenSuggestiesTable = ({ store, onDataChange, id }) => {
 
       // Fetch both gebruik and koppeling from the koppelingen endpoint
       const response = await api.aangebodenGebruik
-        .getKoppelingenGebruiks(id)
+        .getAanbod(id)
         .catch((fetchError) => {
           console.warn('Error fetching suggestions:', fetchError);
           return { results: [] };
@@ -129,7 +130,7 @@ const ConAangebodenSuggestiesTable = ({ store, onDataChange, id }) => {
 
       try {
         setProcessingAction({ id: suggestionId, action: 'claim' });
-        const response = await api.aangebodenGebruik.claimGebruik(suggestionId);
+        const response = await api.aangebodenGebruik.acceptAanbod(suggestionId);
 
         if (response.success) {
           // Refresh the data after successful takeover
@@ -157,7 +158,7 @@ const ConAangebodenSuggestiesTable = ({ store, onDataChange, id }) => {
 
       try {
         setProcessingAction({ id: suggestionId, action: 'deny' });
-        const response = await api.aangebodenGebruik.denyGebruik(suggestionId);
+        const response = await api.aangebodenGebruik.denyAanbod(suggestionId);
 
         if (response.success) {
           // Refresh the data after successful denial
@@ -193,11 +194,60 @@ const ConAangebodenSuggestiesTable = ({ store, onDataChange, id }) => {
       label: 'Applicatie',
       key: '@self',
       customContent: (row) => {
-        // Extract module (applicatie) from relations and resolve UUID to name
+        // Get the schema slug to determine the type
+        const schemaId = row?.['@self']?.schema;
+        const schemaSlug = schemaId ? schemaCache.get(schemaId) : null;
+
+        // For module (Applicatie): display the name of the application itself
+        if (schemaSlug === 'module') {
+          const name = row?.naam || row?.name;
+          if (name) return name;
+          // Fallback to resolving the row's own ID
+          const rowId = row?.['@self']?.id;
+          return rowId ? <ConUuidResolver>{rowId}</ConUuidResolver> : '-';
+        }
+
+        // For koppeling: display moduleA
+        if (schemaSlug === 'koppeling') {
+          const moduleA = row?.moduleA;
+          if (!moduleA) return '-';
+          const moduleAId =
+            typeof moduleA === 'string'
+              ? moduleA
+              : moduleA?.['@self']?.id || moduleA?.id;
+          return moduleAId ? <ConUuidResolver>{moduleAId}</ConUuidResolver> : '-';
+        }
+
+        // For dienst: display modules array joined with commas
+        if (schemaSlug === 'dienst') {
+          const modules = row?.modules;
+          if (!modules || !Array.isArray(modules) || modules.length === 0)
+            return '-';
+
+          return (
+            <>
+              {modules.map((moduleItem, index) => {
+                const moduleId =
+                  typeof moduleItem === 'string'
+                    ? moduleItem
+                    : moduleItem?.['@self']?.id || moduleItem?.id;
+                if (!moduleId) return null;
+
+                return (
+                  <React.Fragment key={moduleId}>
+                    <ConUuidResolver>{moduleId}</ConUuidResolver>
+                    {index < modules.length - 1 && ', '}
+                  </React.Fragment>
+                );
+              })}
+            </>
+          );
+        }
+
+        // Default fallback: try to get module from relations (for gebruik and other types)
         const module = row?.module || row?.['@self']?.relations?.module;
         if (!module) return '-';
 
-        // Handle both UUID string and object formats
         const moduleId =
           typeof module === 'string' ? module : module?.['@self']?.id || module?.id;
         if (!moduleId) return '-';
@@ -228,7 +278,9 @@ const ConAangebodenSuggestiesTable = ({ store, onDataChange, id }) => {
       key: '',
       static: true,
       customContent: (row) => {
-        const rowId = row?.['@self']?.id;
+        // Hack because id does not give back the correct uuid TODO: if fixed in the api remove this
+        // const rowId = row?.['@self']?.id;
+        const rowId = row?.['@self']?.uuid;
         const isThisRowProcessing = processingAction?.id === rowId;
         const isClaimLoading =
           isThisRowProcessing && processingAction?.action === 'claim';
