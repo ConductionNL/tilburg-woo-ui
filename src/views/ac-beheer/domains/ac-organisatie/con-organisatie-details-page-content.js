@@ -50,7 +50,7 @@ const ConOrganisatieDetailsPageContent = ({
     setUsesLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend[]=@self.schema&_published=false`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_published=false`,
         {
           method: 'GET',
           headers: {
@@ -77,7 +77,7 @@ const ConOrganisatieDetailsPageContent = ({
     setUsedLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=@self.schema&_limit=500&_published=false`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_limit=500&_published=false`,
         {
           method: 'GET',
           headers: {
