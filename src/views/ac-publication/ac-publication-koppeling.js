@@ -11,6 +11,7 @@ import {
   Alert,
 } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
+import { schemaCache } from '@services/schemaCache.service';
 import RelatedTabs from '@views/ac-publication/con-related-tabs';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
@@ -27,6 +28,12 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { get_single, loading } = publications;
+
+  const schemaId = get_single?.['@self']?.schema;
+  const schemaSlug = useMemo(
+    () => (schemaId ? schemaCache.get(schemaId) : null),
+    [schemaId]
+  );
 
   // Delete modal state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -57,8 +64,8 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
   const { makeActionsForContext } = useRelatedCreateActions({
     object,
     user,
-    schemaRef: get_single?.['@self']?.schema?.slug,
-    currentType: get_single?.['@self']?.schema?.slug,
+    schemaRef: schemaSlug,
+    currentType: schemaSlug,
     openDynamicCreate,
     currentObject: get_single,
     excludeSchemas,
@@ -67,13 +74,13 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
   const [actionMenuItems, setActionMenuItems] = useState([]);
 
   useEffect(() => {
-    if (!get_single?.['@self']?.schema?.slug || !id) return;
+    if (!schemaSlug || !id) return;
     const items = makeActionsForContext(
       id,
       null,
       get_single,
       'voorzieningen',
-      get_single?.['@self']?.schema?.slug
+      schemaSlug
     ).map(({ key, label, onClick, schema, icon }) => ({
       key,
       label,
@@ -82,14 +89,14 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
       icon,
     }));
     setActionMenuItems(items);
-  }, [get_single?.['@self']?.schema?.slug, id, makeActionsForContext, get_single]);
+  }, [schemaSlug, id, makeActionsForContext, get_single]);
 
   const fetchUses = useCallback(async () => {
     if (!id) return;
     setUsesLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend[]=@self.schema`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses`,
         { method: 'GET', headers: { 'Content-Type': 'application/json' } }
       );
       if (!response.ok) return;
@@ -105,7 +112,7 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
     setUsedLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=@self.schema`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used`,
         { method: 'GET', headers: { 'Content-Type': 'application/json' } }
       );
       if (!response.ok) return;
@@ -158,18 +165,19 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
           <Heading className='con-beheer-details--title'>{title}</Heading>
 
           <Heading className='con-module-publication--header-type'>
-            {(() => {
-              const Icon = getTabHeaderIcon(get_single?.['@self'].schema.slug);
-              return <Icon />;
-            })()}
-            {getTabHeaderName(get_single?.['@self'].schema.slug, true)}
+            {schemaSlug &&
+              (() => {
+                const Icon = getTabHeaderIcon(schemaSlug);
+                return <Icon />;
+              })()}
+            {schemaSlug && getTabHeaderName(schemaSlug, true)}
           </Heading>
 
           {checkOrganizationPermissions(user, get_single).canEdit && (
             <ConDetailsActionsMenu
               user={user}
               id={id}
-              schemaSlug={get_single?.['@self']?.schema?.slug}
+              schemaSlug={schemaSlug}
               title={title}
               published={get_single?.['@self']?.published}
               object={get_single}
@@ -178,7 +186,6 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
               showPublishActions={true}
               onDelete={handleDelete}
               onEdit={() => {
-                const schemaSlug = get_single?.['@self']?.schema?.slug;
                 if (schemaSlug) {
                   const wizards = Object.values(DASHBOARD_WIZARDS);
                   const wizard = wizards.find((w) => w.schema === schemaSlug);

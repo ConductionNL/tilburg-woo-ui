@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import RelatedTabs from './con-related-tabs';
 import ConLogoPreview from '../ac-register/con-logo-preview';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
@@ -9,6 +9,7 @@ import { AcLoader } from '@components';
 import { withStore } from '@stores';
 import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
+import { schemaCache } from '@services/schemaCache.service';
 
 // Markdown Editor
 import remarkDefinitionList, { defListHastHandlers } from 'remark-definition-list';
@@ -28,6 +29,12 @@ const AcPublication = ({ store: { publications, object, user } }) => {
 
   const navigate = useNavigate();
 
+  const schemaId = get_single?.['@self']?.schema;
+  const schemaSlug = useMemo(
+    () => (schemaId ? schemaCache.get(schemaId) : null),
+    [schemaId]
+  );
+
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // Tabs
@@ -45,7 +52,7 @@ const AcPublication = ({ store: { publications, object, user } }) => {
     setUsesLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend[]=@self.schema`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses`,
         {
           method: 'GET',
           headers: {
@@ -71,7 +78,7 @@ const AcPublication = ({ store: { publications, object, user } }) => {
     setUsedLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=@self.schema`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used`,
         {
           method: 'GET',
           headers: {
@@ -141,11 +148,12 @@ const AcPublication = ({ store: { publications, object, user } }) => {
               className='con-product-publication--header-actions'
             >
               <Heading className='con-product-publication--header-type'>
-                {(() => {
-                  const Icon = getTabHeaderIcon(get_single?.['@self'].schema.slug);
-                  return <Icon />;
-                })()}
-                {getTabHeaderName(get_single?.['@self'].schema.slug, true)}
+                {schemaSlug &&
+                  (() => {
+                    const Icon = getTabHeaderIcon(schemaSlug);
+                    return <Icon />;
+                  })()}
+                {schemaSlug && getTabHeaderName(schemaSlug, true)}
               </Heading>
             </AcFlex>
           </AcFlex>

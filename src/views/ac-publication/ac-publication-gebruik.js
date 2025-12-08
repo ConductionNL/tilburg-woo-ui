@@ -7,6 +7,7 @@ import { AcLoader, ConDetailsActionsMenu } from '@components';
 import { VISUALS } from '@constants';
 import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
+import { schemaCache } from '@services/schemaCache.service';
 import RelatedTabs from '@views/ac-publication/con-related-tabs';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
@@ -23,6 +24,12 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { get_single, loading } = publications;
+
+  const schemaId = get_single?.['@self']?.schema;
+  const schemaSlug = useMemo(
+    () => (schemaId ? schemaCache.get(schemaId) : null),
+    [schemaId]
+  );
 
   // Delete modal state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -69,8 +76,8 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
   const { makeActionsForContext } = useRelatedCreateActions({
     object,
     user,
-    schemaRef: get_single?.['@self']?.schema?.slug,
-    currentType: get_single?.['@self']?.schema?.slug,
+    schemaRef: schemaSlug,
+    currentType: schemaSlug,
     openDynamicCreate,
     currentObject: get_single,
     excludeSchemas,
@@ -79,13 +86,13 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
   const [actionMenuItems, setActionMenuItems] = useState([]);
 
   useEffect(() => {
-    if (!get_single?.['@self']?.schema?.slug || !id) return;
+    if (!schemaSlug || !id) return;
     const items = makeActionsForContext(
       id,
       null,
       get_single,
       'voorzieningen',
-      get_single?.['@self']?.schema?.slug
+      schemaSlug
     ).map(({ key, label, onClick, schema, icon }) => ({
       key,
       label,
@@ -94,14 +101,14 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
       icon,
     }));
     setActionMenuItems(items);
-  }, [get_single?.['@self']?.schema?.slug, id, makeActionsForContext, get_single]);
+  }, [schemaSlug, id, makeActionsForContext, get_single]);
 
   const fetchUses = useCallback(async () => {
     if (!id) return;
     setUsesLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend[]=@self.schema`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses`,
         { method: 'GET', headers: { 'Content-Type': 'application/json' } }
       );
       if (!response.ok) return;
@@ -117,7 +124,7 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
     setUsedLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=@self.schema`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used`,
         { method: 'GET', headers: { 'Content-Type': 'application/json' } }
       );
       if (!response.ok) return;
@@ -187,16 +194,16 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
         <AcFlex spacing='sm' justifyContent='end' alignItems='center'>
           <Heading className='con-module-publication--header-type'>
             {(() => {
-              const Icon = getTabHeaderIcon(get_single?.['@self'].schema.slug);
-              return <Icon />;
+              const Icon = schemaSlug ? getTabHeaderIcon(schemaSlug) : null;
+              return Icon ? <Icon /> : null;
             })()}
-            {getTabHeaderName(get_single?.['@self'].schema.slug, true)}
+            {schemaSlug ? getTabHeaderName(schemaSlug, true) : null}
           </Heading>
           {checkOrganizationPermissions(user, get_single).canEdit && (
             <ConDetailsActionsMenu
               user={user}
               id={id}
-              schemaSlug={get_single?.['@self']?.schema?.slug}
+              schemaSlug={schemaSlug}
               title={get_single?.id}
               published={get_single?.['@self']?.published}
               object={get_single}
@@ -205,7 +212,6 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
               showPublishActions={true}
               onDelete={handleDelete}
               onEdit={() => {
-                const schemaSlug = get_single?.['@self']?.schema?.slug;
                 if (schemaSlug) {
                   const wizards = Object.values(DASHBOARD_WIZARDS);
                   const wizard = wizards.find((w) => w.schema === schemaSlug);

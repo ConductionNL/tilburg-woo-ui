@@ -9,6 +9,7 @@ import {
   AcFormatErrorMessage,
   normalizeLinkToSchemaSlug,
 } from '@src/utilities';
+import { schemaCache } from '@services/schemaCache.service';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 
 let app = {};
@@ -1457,12 +1458,23 @@ export class ObjectStore {
 
   /**
    * Sets schema data for a specific type
+   * Also populates the schema cache with id -> slug mapping for quick lookups
    * @param {string} type - The type identifier for the schema
    * @param {Object} schemaData - The schema data to set
    */
   @action
   setSchema = (type, schemaData) => {
     this.schemas[type] = schemaData;
+
+    // Populate schema cache with id -> slug mapping
+    // Schema data typically has id and slug properties from the API
+    const schemaId = schemaData?.id || schemaData?.['@self']?.id;
+    const schemaSlug =
+      schemaData?.slug || schemaData?.name || schemaData?.title?.toLowerCase();
+
+    if (schemaId && schemaSlug) {
+      schemaCache.set(schemaId, schemaSlug);
+    }
   };
 
   /**

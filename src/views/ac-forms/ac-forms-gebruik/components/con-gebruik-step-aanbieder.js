@@ -72,7 +72,7 @@ const ConGebruikStepAanbieder = memo(
     return (
       <div role='group' aria-labelledby='aanbieder-section-title'>
         <h2 id='aanbieder-section-title' className='sr-only'>
-          Aanbieder informatie
+          Afnemer informatie
         </h2>
 
         {/* Use the same container class as ConDynamicSchemaForm for consistency */}
@@ -81,8 +81,8 @@ const ConGebruikStepAanbieder = memo(
             {/* Choice between existing and new organization - using same styling as ProductOpbouw */}
             <h3 className='utrecht-heading-3' style={{ width: '100%' }}>
               {afnemerKeuze === 'bestaand'
-                ? 'Aanbieder selecteren'
-                : 'Aanbieder aanmaken'}
+                ? 'Afnemer selecteren'
+                : 'Afnemer aanmaken'}
             </h3>
 
             {/* Existing organization dropdown - using ConSchemaEnhancedField */}
@@ -117,7 +117,7 @@ const ConGebruikStepAanbieder = memo(
                 customProps={{
                   // placeholder will come from schema example
                   isClearable: true,
-                  placeholder: 'Zoek en selecteer aanbieder',
+                  placeholder: 'Zoek en selecteer afnemer',
                 }}
               />
             )}
