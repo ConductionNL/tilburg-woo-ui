@@ -57,6 +57,17 @@ export class AangebodenGebruikAPI {
   }
 
   /**
+   * Get koppelingen gebruiks where active organization is involved
+   * @param {Object} params - Query parameters (limit, offset, status, product, etc.)
+   * @returns {Promise} API response with koppelingen gebruiks data in standard format
+   */
+  getKoppelingenGebruiks(id) {
+    return this.Client.get(ENDPOINTS.AANGEBODEN_GEBRUIK.KOPPELING(id)).then(
+      (response) => response.data
+    );
+  }
+
+  /**
    * Get API documentation
    * @returns {Promise} API documentation
    */
