@@ -4,38 +4,13 @@ import { withStore } from '@stores';
 import ConTable from '@views/ac-beheer/shared/components/con-table';
 import { AcFlex } from '@atoms';
 import { AcButton } from '@molecules';
-import { ConUuidResolver } from '@components';
+import { ConUuidResolver, ConSchemaResolver } from '@components';
 import { VISUALS } from '@src/constants';
 import { Alert, Paragraph } from '@utrecht/component-library-react';
 import { Pagination } from '@amsterdam/design-system-react';
 import ConPaginationLimitSelector, {
   usePaginationLimit,
 } from '@src/components/con-pagination-limit-selector/con-pagination-limit-selector';
-
-/**
- * Suggestion types that can be displayed in this table
- */
-const SUGGESTION_TYPES = {
-  GEBRUIK: 'gebruik',
-  APPLICATIE: 'applicatie',
-  KOPPELING: 'koppeling',
-  DIENST: 'dienst',
-};
-
-/**
- * Human-readable labels for suggestion types (Dutch)
- */
-const SUGGESTION_TYPE_LABELS = {
-  [SUGGESTION_TYPES.GEBRUIK]: 'Gebruik',
-  [SUGGESTION_TYPES.APPLICATIE]: 'Applicatie',
-  [SUGGESTION_TYPES.KOPPELING]: 'Koppeling',
-  [SUGGESTION_TYPES.DIENST]: 'Dienst',
-};
-
-/**
- * API fetch limit - fetch more items at once to reduce API calls
- */
-const API_FETCH_LIMIT = 100;
 
 /**
  * Default client-side pagination limit - items shown per page
@@ -94,66 +69,32 @@ const ConAangebodenSuggestiesTable = ({ store, onDataChange, id }) => {
   }, [pageSize]);
 
   /**
-   * Fetches suggestions from multiple endpoints with limit of 100 each
-   * Each result is tagged with its suggestion type for display in the table
+   * Fetches suggestions from the koppelingen-gebruik endpoint
+   * This endpoint returns both gebruik and koppeling suggestions
+   * The type of each item is determined from @self.schema
    */
   const fetchSuggestions = useCallback(async () => {
-    if (!api?.aangebodenGebruik) {
-      console.error('AangebodenGebruik API not available');
+    if (!api?.aangebodenGebruik || !id) {
+      console.error('AangebodenGebruik API not available or no organization ID');
       return [];
     }
 
     try {
       setError(null);
 
-      const params = {
-        _limit: API_FETCH_LIMIT,
-        _offset: 0,
-      };
-
-      const allResults = [];
-
-      // Fetch gebruik suggestions (limit 100)
-      const gebruikResponse = await api.aangebodenGebruik
-        .getAfnemerGebruiks(params)
+      // Fetch both gebruik and koppeling from the koppelingen endpoint
+      const response = await api.aangebodenGebruik
+        .getKoppelingenGebruiks(id)
         .catch((fetchError) => {
-          console.warn('Error fetching gebruik suggestions:', fetchError);
+          console.warn('Error fetching suggestions:', fetchError);
           return { results: [] };
         });
 
-      // Tag gebruik results with their type
-      if (gebruikResponse?.results?.length > 0) {
-        const taggedGebruikResults = gebruikResponse.results.map((item) => ({
-          ...item,
-          _suggestionType: SUGGESTION_TYPES.GEBRUIK,
-        }));
-        allResults.push(...taggedGebruikResults);
-      }
+      const results = response?.results || [];
 
-      // Fetch koppeling suggestions if id is provided (limit 100)
-      if (id) {
-        const koppelingResponse = await api.aangebodenGebruik
-          .getKoppelingenGebruiks(id)
-          .catch((fetchError) => {
-            console.warn('Error fetching koppeling suggestions:', fetchError);
-            return { results: [] };
-          });
-
-        // Tag koppeling results with their type
-        if (koppelingResponse?.results?.length > 0) {
-          const taggedKoppelingResults = koppelingResponse.results.map((item) => ({
-            ...item,
-            _suggestionType: SUGGESTION_TYPES.KOPPELING,
-          }));
-          allResults.push(...taggedKoppelingResults);
-        }
-      }
-
-      // TODO: Add API calls for applicatie and dienst when endpoints are available
-
-      if (allResults.length > 0) {
+      if (results.length > 0) {
         onDataChangeRef.current?.(true);
-        return allResults;
+        return results;
       } else {
         onDataChangeRef.current?.(false);
         return [];
@@ -240,11 +181,11 @@ const ConAangebodenSuggestiesTable = ({ store, onDataChange, id }) => {
     {
       id: 'type',
       label: 'Type',
-      key: '_suggestionType',
+      key: '@self',
       customContent: (row) => {
-        const suggestionType = row?._suggestionType;
-        if (!suggestionType) return '-';
-        return SUGGESTION_TYPE_LABELS[suggestionType] || suggestionType;
+        const schemaId = row?.['@self']?.schema;
+        if (!schemaId) return '-';
+        return <ConSchemaResolver>{schemaId}</ConSchemaResolver>;
       },
     },
     {
@@ -385,5 +326,4 @@ const ConAangebodenSuggestiesTable = ({ store, onDataChange, id }) => {
   );
 };
 
-export { SUGGESTION_TYPES, SUGGESTION_TYPE_LABELS };
 export default withStore(observer(ConAangebodenSuggestiesTable));
