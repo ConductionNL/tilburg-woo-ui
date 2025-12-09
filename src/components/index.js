@@ -86,6 +86,10 @@ const ConSchemaResolver = loadable(() =>
   import('@src/components/con-schema-resolver/con-schema-resolver')
 );
 
+const ConRegisterResolver = loadable(() =>
+  import('@src/components/con-register-resolver/con-register-resolver')
+);
+
 const ConStandardsResolver = loadable(() =>
   import('@src/components/con-standards-resolver/con-standards-resolver')
 );
@@ -155,6 +159,7 @@ export {
   ConDetailsActionsMenu,
   ConUuidResolver,
   ConSchemaResolver,
+  ConRegisterResolver,
   ConStandardsResolver,
   ConStandardsTable,
   ConRelatedObjectsLinks,

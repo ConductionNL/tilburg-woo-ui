@@ -10,6 +10,7 @@ import {
   normalizeLinkToSchemaSlug,
 } from '@src/utilities';
 import { schemaCache } from '@services/schemaCache.service';
+import { registerCache } from '@services/registerCache.service';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 
 let app = {};
@@ -520,6 +521,13 @@ export class ObjectStore {
    * */
   @observable
   schemas = {}; // Schema definitions for different object types
+
+  /**
+   * Register definitions for different registers
+   * @type {{[slug: string]: Object}}
+   * */
+  @observable
+  registers = {}; // Register definitions
 
   /**
    * Loading states for schema fetching operations
@@ -1533,6 +1541,26 @@ export class ObjectStore {
   };
 
   /**
+   * Sets register data for a specific slug
+   * Also populates the register cache with id -> slug mapping for quick lookups
+   * @param {string} slug - The register slug identifier
+   * @param {Object} registerData - The register data to set
+   */
+  @action
+  setRegister = (slug, registerData) => {
+    this.registers[slug] = registerData;
+
+    // Populate register cache with id -> slug mapping
+    // Register data typically has id and slug properties from the API
+    const registerId = registerData?.id || registerData?.['@self']?.id;
+    const registerSlug = registerData?.slug || registerData?.name || slug;
+
+    if (registerId && registerSlug) {
+      registerCache.set(registerId, registerSlug);
+    }
+  };
+
+  /**
    * Fetches schemas related to a given schema
    * Stores the result under the schema key with a configurable suffix (defaults to 'related')
    * @param {string|Object} schema - Schema identifier or object
@@ -1603,6 +1631,13 @@ export class ObjectStore {
    * @returns {Object|null} The schema or null if not found
    */
   getSchema = (type) => this.schemas[type] || null;
+
+  /**
+   * Gets the register for a specific slug
+   * @param {string} slug - The register slug identifier
+   * @returns {Object|null} The register or null if not found
+   */
+  getRegister = (slug) => this.registers[slug] || null;
 
   /**
    * Gets the schema properties for a specific type
@@ -4117,6 +4152,38 @@ export class ObjectStore {
   initialCacheWarmingCompleted = false;
 
   /**
+   * Fetches all core registers and populates the registerCache
+   * Called during warmupBeheerData to ensure ConRegisterResolver works
+   */
+  @action
+  fetchRegisters = async () => {
+    console.info('📋 Fetching registers for cache...');
+
+    try {
+      const registerPromises = this.CORE_REGISTERS.map(async (registerSlug) => {
+        try {
+          await this.fetchRegister(registerSlug);
+          return { registerSlug, success: true };
+        } catch (error) {
+          console.warn(`⚠️ Failed to fetch register ${registerSlug}:`, error);
+          return { registerSlug, success: false, error: error.message };
+        }
+      });
+
+      const results = await Promise.allSettled(registerPromises);
+      const successful = results.filter(
+        (r) => r.status === 'fulfilled' && r.value.success
+      ).length;
+
+      console.info(
+        `✅ Fetched ${successful}/${this.CORE_REGISTERS.length} registers for cache`
+      );
+    } catch (error) {
+      console.error('❌ Error fetching registers:', error);
+    }
+  };
+
+  /**
    * Fetches register information including all schemas
    * @param {string} registerSlug - The register slug (e.g., 'voorzieningen', 'vng-gemma')
    * @returns {Object} Register data with schemas
@@ -4137,8 +4204,11 @@ export class ObjectStore {
         );
       }
 
-      console.info(`✅ Fetched register ${registerSlug}:`, response.data);
-      return response.data;
+      const registerData = response.data;
+      this.setRegister(registerSlug, registerData);
+
+      console.info(`✅ Fetched register ${registerSlug}:`, registerData);
+      return registerData;
     } catch (error) {
       console.error(`❌ Error fetching register ${registerSlug}:`, error);
       this.setError(requestType, error.message);
@@ -4625,6 +4695,10 @@ export class ObjectStore {
   @action
   warmupBeheerData = async () => {
     try {
+      // Fetch registers first to populate registerCache
+      // This ensures ConRegisterResolver works correctly
+      await this.fetchRegisters();
+
       // Get types from menu
       const types = await this.extractBeheerTypesFromMenu();
 
