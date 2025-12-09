@@ -282,6 +282,17 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
                 {get_single.status}
               </div>
             )}
+             {get_single?.standaardversies && (
+            <div style={{ marginBottom: '8px' }}>
+              <strong>Standaarden: </strong>
+              {get_single.standaardversies.map((s) => (
+                <div key={s}>
+                  <ConUuidResolver>{String(s)}</ConUuidResolver>
+                </div>
+              ))}
+            </div>
+          )}
+         
             {get_single?.dienst && (
               <div style={{ marginBottom: '8px' }}>
                 <strong>Dienst: </strong>
@@ -298,6 +309,9 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
             used={used}
             usesLoading={usesLoading}
             usedLoading={usedLoading}
+            gebruikId={id}
+            gebruikSchemaId={schemaId}
+            gebruikSchemaSlug={get_single?.['@self']?.schema?.slug}
             tabIndex={relatedTabIndex}
             setTabIndex={setRelatedTabIndex}
             object={object}
