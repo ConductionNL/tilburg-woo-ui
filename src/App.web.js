@@ -80,6 +80,25 @@ const App = ({ store }) => {
     });
   }, []);
 
+  // Warm up schema cache only when user is authenticated AND on public pages
+  // Skip on authenticated-only routes (/beheer, /forms, /account) since those pages already fetch schemas
+  useEffect(() => {
+    const pathname = window.location.pathname;
+    const isAuthenticatedRoute =
+      pathname.startsWith('/beheer') ||
+      pathname.startsWith('/forms') ||
+      pathname.startsWith('/account');
+
+    if (user.isAuthenticated && !isAuthenticatedRoute) {
+      store.object.warmupSchemaCache().catch((error) => {
+        console.warn(
+          '⚠️ Schema cache warmup failed during app initialization:',
+          error
+        );
+      });
+    }
+  }, [user.isAuthenticated]);
+
   useDocumentTitleFromPath();
 
   const getView = (page) => {

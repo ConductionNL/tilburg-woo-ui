@@ -353,6 +353,9 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
             used={used}
             usesLoading={usesLoading}
             usedLoading={usedLoading}
+            gebruikId={id}
+            gebruikSchemaId={schemaId}
+            gebruikSchemaSlug={get_single?.['@self']?.schema?.slug}
             tabIndex={tabIndex}
             setTabIndex={setTabIndex}
             object={object}
