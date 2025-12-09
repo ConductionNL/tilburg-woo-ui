@@ -101,25 +101,97 @@ const BeheerPageConfigFactory = {
             },
           },
           uniqueActions: [
-            // Commented out: Versie toevoegen action (not reliable yet)
-            //   {
-            //     key: 'addVersion',
-            //     label: 'Versie toevoegen',
-            //     icon: <VISUALS.PLUS />,
-            //     condition: (row) => true,
-            //     action: 'addModuleVersion',
-            //   },
             {
-              key: 'addKoppeling',
-              label: 'Koppeling toevoegen',
-              icon: <VISUALS.WAND_SPARKLES_SOLID />,
-              condition: (row) => row?.id,
-              action: 'wizard', // Special action type to indicate wizard navigation
-              wizardPath: '/forms/koppeling',
-              wizardParams: (row) => ({
-                type: 'aanbieden-koppeling',
-                applicatie: row.id,
-              }),
+              groupKey: 'dienst',
+              groupLabel: 'Dienst',
+              groupIcon: <VISUALS.HAND_SHAKE />,
+              actions: [
+                {
+                  key: 'addDienstGebruik',
+                  label: 'Dienst toevoegen',
+                  condition: (row) => row?.['@self']?.id || row?.id,
+                  action: 'wizard',
+                  wizardPath: '/forms/dienst',
+                  wizardParams: (row) => ({
+                    type: 'ontbrekend-dienst',
+                    applicatie: row['@self']?.id || row.id,
+                  }),
+                  userGroupFilter: ['gebruik-beheerder'],
+                },
+                {
+                  key: 'addDienstAanbod',
+                  label: 'Dienst publiceren',
+                  condition: (row) => row?.['@self']?.id || row?.id,
+                  action: 'wizard',
+                  wizardPath: '/forms/dienst',
+                  wizardParams: (row) => ({
+                    type: 'dienst',
+                    applicatie: row['@self']?.id || row.id,
+                  }),
+                  userGroupFilter: ['aanbod-beheerder'],
+                },
+              ],
+            },
+            {
+              groupKey: 'gebruik',
+              groupLabel: 'Gebruik',
+              groupIcon: <VISUALS.CLIPBOARD_CHECK />,
+              actions: [
+                {
+                  key: 'addGebruikGebruik',
+                  label: 'Applicatie toevoegen',
+                  condition: (row) => row?.['@self']?.id || row?.id,
+                  action: 'wizard',
+                  wizardPath: '/forms/gebruik',
+                  wizardParams: (row) => ({
+                    applicatie: row['@self']?.id || row.id,
+                  }),
+                  userGroupFilter: ['gebruik-beheerder'],
+                },
+                {
+                  key: 'addGebruikAanbod',
+                  label: 'Applicatiegebruik melden',
+                  condition: (row) => row?.['@self']?.id || row?.id,
+                  action: 'wizard',
+                  wizardPath: '/forms/gebruik',
+                  wizardParams: (row) => ({
+                    type: 'ontbrekend-organisatie',
+                    applicatie: row['@self']?.id || row.id,
+                  }),
+                  userGroupFilter: ['aanbod-beheerder'],
+                },
+              ],
+            },
+            {
+              groupKey: 'koppeling',
+              groupLabel: 'Koppeling',
+              groupIcon: <VISUALS.LINK />,
+              actions: [
+                {
+                  key: 'addKoppelingGebruik',
+                  label: 'Koppeling toevoegen',
+                  condition: (row) => row?.['@self']?.id || row?.id,
+                  action: 'wizard',
+                  wizardPath: '/forms/koppeling',
+                  wizardParams: (row) => ({
+                    type: 'aanbieden-koppeling',
+                    applicatie: row['@self']?.id || row.id,
+                  }),
+                  userGroupFilter: ['gebruik-beheerder'],
+                },
+                {
+                  key: 'addKoppelingAanbod',
+                  label: 'Koppeling publiceren',
+                  condition: (row) => row?.['@self']?.id || row?.id,
+                  action: 'wizard',
+                  wizardPath: '/forms/koppeling',
+                  wizardParams: (row) => ({
+                    type: 'eigen-organisatie',
+                    applicatie: row['@self']?.id || row.id,
+                  }),
+                  userGroupFilter: ['aanbod-beheerder'],
+                },
+              ],
             },
           ],
           modals: [...baseConfig.modals],
@@ -628,29 +700,7 @@ const BeheerPageConfigFactory = {
               },
             },
           },
-          uniqueActions: [
-            {
-              key: 'addAccount',
-              label: 'Account toevoegen',
-              icon: <VISUALS.USER_PLUS />,
-              condition: (row) => row.username === null,
-              action: 'addAccount',
-            },
-            {
-              key: 'enableAccount',
-              label: 'Account inschakelen',
-              icon: <VISUALS.USER_CHECK />,
-              condition: (row) => row?.enabled === false,
-              action: 'enableAccount',
-            },
-            {
-              key: 'disableAccount',
-              label: 'Account uitschakelen',
-              icon: <VISUALS.USER_XMARK />,
-              condition: (row) => row?.enabled === true,
-              action: 'disableAccount',
-            },
-          ],
+          uniqueActions: [],
           modals: [...baseConfig.modals, 'addAccount'],
         };
 

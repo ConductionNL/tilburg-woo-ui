@@ -5,7 +5,7 @@ import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-behe
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AcContainer, AcFlex } from '@atoms';
-import { AcLoader } from '@components';
+import { AcLoader, ConDetailsActionsMenu } from '@components';
 import { withStore } from '@stores';
 import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
@@ -22,6 +22,7 @@ import remarkSupersub from 'remark-supersub';
 import rehypeSlug from 'rehype-slug';
 import rehypeSanitize from 'rehype-sanitize';
 import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
+import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 
 const AcPublication = ({ store: { publications, object, user } }) => {
   const { id } = useParams();
@@ -29,13 +30,18 @@ const AcPublication = ({ store: { publications, object, user } }) => {
 
   const navigate = useNavigate();
 
-  const schemaId = get_single?.['@self']?.schema.id || get_single?.['@self']?.schema;
+  // Delete modal state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const handleDelete = useCallback(() => setShowDeleteModal(true), []);
+
+  const schemaId =
+    typeof get_single?.['@self']?.schema === 'object'
+      ? get_single?.['@self']?.schema.id
+      : get_single?.['@self']?.schema;
   const schemaSlug = useMemo(
     () => (schemaId ? schemaCache.get(schemaId) : null),
     [schemaId]
   );
-
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // Tabs
   const [uses, setUses] = useState([]);
@@ -155,6 +161,38 @@ const AcPublication = ({ store: { publications, object, user } }) => {
                   })()}
                 {schemaSlug && getTabHeaderName(schemaSlug, true)}
               </Heading>
+              {schemaSlug && (
+                <ConDetailsActionsMenu
+                  user={user}
+                  id={id}
+                  schemaSlug={schemaSlug}
+                  title={get_single?.['@self']?.name || get_single?.id}
+                  published={get_single?.['@self']?.published}
+                  object={get_single}
+                  showViewAction={false}
+                  showEditAction={true}
+                  showPublishActions={true}
+                  onDelete={handleDelete}
+                  onEdit={() => {
+                    if (schemaSlug) {
+                      const wizards = Object.values(DASHBOARD_WIZARDS);
+                      const wizard = wizards.find((w) => w.schema === schemaSlug);
+
+                      if (wizard) {
+                        const baseUrl = getWizardUrl(wizard);
+                        const url = new URL(baseUrl, window.location.origin);
+                        url.searchParams.set('id', id);
+                        navigate(url.pathname + url.search);
+                        return;
+                      }
+                    }
+                    // Fallback to beheer legacy edit page in new tab
+                    const beheerUrl = `/beheer/${schemaSlug}/${id}`;
+                    window.open(beheerUrl, '_blank');
+                  }}
+                  triggerStyle='button'
+                />
+              )}
             </AcFlex>
           </AcFlex>
           <AcFlex spacing='sm' justifyContent='between'>

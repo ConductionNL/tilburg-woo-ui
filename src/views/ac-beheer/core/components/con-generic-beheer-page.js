@@ -829,35 +829,141 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
       }
 
       // Add unique actions based on configuration
-      // const uniqueActions =
-      //   config.uniqueActions
-      //     ?.filter((action) => action.condition(row))
-      //     .map((action) => ({
-      //       key: action.key,
-      //       label: action.label,
-      //       icon: action.icon,
-      //       onClick: () => {
-      //         // Check if this is a wizard action
-      //         if (action.action === 'wizard' && action.wizardPath) {
-      //           // Navigate to wizard with params if provided
-      //           const params = action.wizardParams ? action.wizardParams(row) : {};
-      //           const searchParams = new URLSearchParams(params);
-      //           const queryString = searchParams.toString();
-      //           navigate(
-      //             `${action.wizardPath}${queryString ? '?' + queryString : ''}`
-      //           );
-      //         } else {
-      //           // Open modal for regular actions
-      //           setSingleSelectedRow(row);
-      //           setOpenModal(action.action);
-      //         }
-      //       },
-      //       disabled: !canEditRow,
-      //       tooltipId: !canEditRow ? TOOLTIP_ID : undefined,
-      //       tooltipContent: !canEditRow
-      //         ? getDisabledActionTooltip(action.key, reason)
-      //         : undefined,
-      //     })) || [];
+      const uniqueActions = (() => {
+        if (!config.uniqueActions || config.uniqueActions.length === 0) {
+          return [];
+        }
+
+        // Get user groups for filtering
+        const userGroups = user?.currentUser?.groups || user?.user?.groups || [];
+        const hasAanbodBeheerder = userGroups.includes('aanbod-beheerder');
+        const hasGebruikBeheerder = userGroups.includes('gebruik-beheerder');
+
+        return config.uniqueActions
+          .map((actionConfig) => {
+            // Check if this is a grouped action
+            if (actionConfig.groupKey) {
+              // Filter actions within the group based on user groups and conditions
+              const filteredActions = actionConfig.actions
+                .filter((action) => {
+                  // Check condition first
+                  if (action.condition && !action.condition(row)) {
+                    return false;
+                  }
+
+                  // Filter by user groups if userGroupFilter is specified
+                  if (
+                    action.userGroupFilter &&
+                    Array.isArray(action.userGroupFilter)
+                  ) {
+                    const hasRequiredGroup = action.userGroupFilter.some((group) => {
+                      if (group === 'aanbod-beheerder') return hasAanbodBeheerder;
+                      if (group === 'gebruik-beheerder') return hasGebruikBeheerder;
+                      return userGroups.includes(group);
+                    });
+                    if (!hasRequiredGroup) {
+                      return false;
+                    }
+                  }
+
+                  return true;
+                })
+                .map((action) => ({
+                  key: action.key,
+                  label: action.label,
+                  onClick: () => {
+                    // Check if this is a wizard action
+                    if (action.action === 'wizard' && action.wizardPath) {
+                      // Navigate to wizard with params if provided
+                      const params = action.wizardParams
+                        ? action.wizardParams(row)
+                        : {};
+                      const searchParams = new URLSearchParams(params);
+                      const queryString = searchParams.toString();
+                      navigate(
+                        `${action.wizardPath}${queryString ? '?' + queryString : ''}`
+                      );
+                    } else {
+                      // Open modal for regular actions
+                      setSingleSelectedRow(row);
+                      setOpenModal(action.action);
+                    }
+                  },
+                  disabled: !canEditRow,
+                  tooltipId: !canEditRow ? TOOLTIP_ID : undefined,
+                  tooltipContent: !canEditRow
+                    ? getDisabledActionTooltip(action.key, reason)
+                    : undefined,
+                }));
+
+              // Only return the group if it has at least one action
+              if (filteredActions.length === 0) {
+                return null;
+              }
+
+              return {
+                type: 'group',
+                groupKey: actionConfig.groupKey,
+                label: actionConfig.groupLabel,
+                icon: actionConfig.groupIcon,
+                children: filteredActions,
+              };
+            }
+
+            // Handle non-grouped actions (legacy support)
+            if (actionConfig.condition && !actionConfig.condition(row)) {
+              return null;
+            }
+
+            // Filter by user groups if userGroupFilter is specified
+            if (
+              actionConfig.userGroupFilter &&
+              Array.isArray(actionConfig.userGroupFilter)
+            ) {
+              const hasRequiredGroup = actionConfig.userGroupFilter.some((group) => {
+                if (group === 'aanbod-beheerder') return hasAanbodBeheerder;
+                if (group === 'gebruik-beheerder') return hasGebruikBeheerder;
+                return userGroups.includes(group);
+              });
+              if (!hasRequiredGroup) {
+                return null;
+              }
+            }
+
+            return {
+              type: 'action',
+              key: actionConfig.key,
+              label: actionConfig.label,
+              icon: actionConfig.icon,
+              onClick: () => {
+                // Check if this is a wizard action
+                if (actionConfig.action === 'wizard' && actionConfig.wizardPath) {
+                  // Navigate to wizard with params if provided
+                  const params = actionConfig.wizardParams
+                    ? actionConfig.wizardParams(row)
+                    : {};
+                  const searchParams = new URLSearchParams(params);
+                  const queryString = searchParams.toString();
+                  navigate(
+                    `${actionConfig.wizardPath}${
+                      queryString ? '?' + queryString : ''
+                    }`
+                  );
+                } else {
+                  // Open modal for regular actions
+                  setSingleSelectedRow(row);
+                  setOpenModal(actionConfig.action);
+                }
+              },
+              disabled: !canEditRow,
+              tooltipId: !canEditRow ? TOOLTIP_ID : undefined,
+              tooltipContent: !canEditRow
+                ? getDisabledActionTooltip(actionConfig.key, reason)
+                : undefined,
+            };
+          })
+          .filter(Boolean);
+      })();
 
       // Map related schemas user can create → dynamic create actions
       // Only include if not explicitly disabled in config
@@ -893,7 +999,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
       return [
         ...baseActions,
         ...publishActions,
-        // ...uniqueActions,
+        ...uniqueActions,
         // ...dynamicCreateActions,
         ...(config.disableDeleteAction ? [] : [deleteAction]),
       ];
@@ -1154,18 +1260,49 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
                     </ConActionMenu.Trigger>
 
                     <ConActionMenu.Menu position='right'>
-                      {generateActionButtons(row).map((action) => (
-                        <ConActionMenu.Button
-                          key={action.key}
-                          icon={action.icon}
-                          onClick={action.onClick}
-                          disabled={action.disabled}
-                          data-tooltip-id={action.tooltipId}
-                          data-tooltip-content={action.tooltipContent}
-                        >
-                          {action.label}
-                        </ConActionMenu.Button>
-                      ))}
+                      {generateActionButtons(row).map((action) => {
+                        if (action.type === 'group') {
+                          return (
+                            <ConActionMenu.SubMenu
+                              key={action.groupKey}
+                              label={action.label}
+                              icon={action.icon}
+                              position='left'
+                              disabled={
+                                action.disabled ||
+                                action.children.every(
+                                  (child) => child?.disabled ?? false
+                                )
+                              }
+                            >
+                              {action.children.map((childAction) => (
+                                <ConActionMenu.Button
+                                  key={childAction.key}
+                                  onClick={childAction.onClick}
+                                  disabled={childAction.disabled}
+                                  data-tooltip-id={childAction.tooltipId}
+                                  data-tooltip-content={childAction.tooltipContent}
+                                >
+                                  {childAction.label}
+                                </ConActionMenu.Button>
+                              ))}
+                            </ConActionMenu.SubMenu>
+                          );
+                        }
+
+                        return (
+                          <ConActionMenu.Button
+                            key={action.key}
+                            icon={action.icon}
+                            onClick={action.onClick}
+                            disabled={action.disabled}
+                            data-tooltip-id={action.tooltipId}
+                            data-tooltip-content={action.tooltipContent}
+                          >
+                            {action.label}
+                          </ConActionMenu.Button>
+                        );
+                      })}
                     </ConActionMenu.Menu>
                   </ConActionMenu>
                 ),

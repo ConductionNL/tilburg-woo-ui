@@ -313,16 +313,16 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
                 const beheerUrl = `/beheer/${schemaSlug}/${id}`;
                 window.open(beheerUrl, '_blank');
               }}
-              uniqueActions={[
-                {
-                  key: 'delete',
-                  label: 'Verwijderen',
-                  icon: VISUALS.TRASHCAN,
-                  onClick: handleDelete,
-                },
-              ]}
+              // uniqueActions={[
+              //   {
+              //     key: 'delete',
+              //     label: 'Verwijderen',
+              //     icon: VISUALS.TRASHCAN,
+              //     onClick: handleDelete,
+              //   },
+              // ]}
               triggerStyle='button'
-              relatedActions={actionMenuItems}
+              // relatedActions={actionMenuItems}
             />
           </AcFlex>
 
