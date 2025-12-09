@@ -21,6 +21,7 @@ const cache = {};
  */
 const set = (registerId, slug) => {
   if (!registerId || !slug) return;
+  registerId = String(registerId);
   cache[registerId] = slug.toLowerCase();
   console.info(`📋 Register cache: ${registerId} -> ${slug.toLowerCase()}`);
 };
@@ -32,6 +33,7 @@ const set = (registerId, slug) => {
  */
 const get = (registerId) => {
   if (!registerId) return null;
+  registerId = String(registerId);
   return cache[registerId] || null;
 };
 

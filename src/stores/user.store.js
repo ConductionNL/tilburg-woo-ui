@@ -333,6 +333,11 @@ export class UserStore {
           });
       }
 
+      // Warmup register cache (populates register ID -> slug mappings)
+      app.store.object.warmupRegisterCache().catch((error) => {
+        console.warn('⚠️ Register cache warmup failed during login:', error);
+      });
+
       this.setLoading(false);
       return { success: true, user: this.user };
     } catch (error) {
@@ -377,6 +382,7 @@ export class UserStore {
 
     try {
       // If we already have a user and are marked as authenticated, return true immediately
+      // Don't warmup cache here as session hasn't changed
       if (this.isAuthenticated && this.user) {
         this.setLoading(false);
         return true;
@@ -416,6 +422,17 @@ export class UserStore {
         }
 
         this.setLoading(false);
+
+        // Warmup register cache when new session is detected (user was not authenticated before)
+        if (app.store.object) {
+          app.store.object.warmupRegisterCache().catch((error) => {
+            console.warn(
+              '⚠️ Register cache warmup failed during session check:',
+              error
+            );
+          });
+        }
+
         return true;
       } else {
         throw new Error('Auth API not available');
@@ -427,6 +444,17 @@ export class UserStore {
       if (app.store.auth?.is_authorized) {
         this.setAuthMethod('oauth');
         this.setLoading(false);
+
+        // Warmup register cache when new session is detected (OAuth case)
+        if (app.store.object) {
+          app.store.object.warmupRegisterCache().catch((error) => {
+            console.warn(
+              '⚠️ Register cache warmup failed during OAuth session check:',
+              error
+            );
+          });
+        }
+
         return true;
       }
 

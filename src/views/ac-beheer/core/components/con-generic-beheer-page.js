@@ -126,7 +126,10 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
 
   // Get reactive data from object store (read directly to enable MobX tracking)
   // This reads all pre-fetched data from warmup (up to 10,000 items)
-  const allData = objectType ? object.getCollection(objectType).results || [] : [];
+  const allData = useMemo(
+    () => [...(object.getCollection(objectType)?.results || [])],
+    [object, objectType, object.COLLECTION_CHANGE_KEY]
+  );
 
   // Check warmup status for loading state (warmup state uses schemaSlug as key)
   const warmupLoading = config?.schemaSlug
@@ -826,47 +829,47 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
       }
 
       // Add unique actions based on configuration
-      const uniqueActions =
-        config.uniqueActions
-          ?.filter((action) => action.condition(row))
-          .map((action) => ({
-            key: action.key,
-            label: action.label,
-            icon: action.icon,
-            onClick: () => {
-              // Check if this is a wizard action
-              if (action.action === 'wizard' && action.wizardPath) {
-                // Navigate to wizard with params if provided
-                const params = action.wizardParams ? action.wizardParams(row) : {};
-                const searchParams = new URLSearchParams(params);
-                const queryString = searchParams.toString();
-                navigate(
-                  `${action.wizardPath}${queryString ? '?' + queryString : ''}`
-                );
-              } else {
-                // Open modal for regular actions
-                setSingleSelectedRow(row);
-                setOpenModal(action.action);
-              }
-            },
-            disabled: !canEditRow,
-            tooltipId: !canEditRow ? TOOLTIP_ID : undefined,
-            tooltipContent: !canEditRow
-              ? getDisabledActionTooltip(action.key, reason)
-              : undefined,
-          })) || [];
+      // const uniqueActions =
+      //   config.uniqueActions
+      //     ?.filter((action) => action.condition(row))
+      //     .map((action) => ({
+      //       key: action.key,
+      //       label: action.label,
+      //       icon: action.icon,
+      //       onClick: () => {
+      //         // Check if this is a wizard action
+      //         if (action.action === 'wizard' && action.wizardPath) {
+      //           // Navigate to wizard with params if provided
+      //           const params = action.wizardParams ? action.wizardParams(row) : {};
+      //           const searchParams = new URLSearchParams(params);
+      //           const queryString = searchParams.toString();
+      //           navigate(
+      //             `${action.wizardPath}${queryString ? '?' + queryString : ''}`
+      //           );
+      //         } else {
+      //           // Open modal for regular actions
+      //           setSingleSelectedRow(row);
+      //           setOpenModal(action.action);
+      //         }
+      //       },
+      //       disabled: !canEditRow,
+      //       tooltipId: !canEditRow ? TOOLTIP_ID : undefined,
+      //       tooltipContent: !canEditRow
+      //         ? getDisabledActionTooltip(action.key, reason)
+      //         : undefined,
+      //     })) || [];
 
       // Map related schemas user can create → dynamic create actions
       // Only include if not explicitly disabled in config
-      const dynamicCreateActions = config.disableRelatedCreateActions
-        ? []
-        : makeActionsForContext(
-            row.id,
-            config.dynamicActionFilter,
-            row,
-            config.registerSlug,
-            config.schemaSlug
-          );
+      // const dynamicCreateActions = config.disableRelatedCreateActions
+      //   ? []
+      //   : makeActionsForContext(
+      //       row.id,
+      //       config.dynamicActionFilter,
+      //       row,
+      //       config.registerSlug,
+      //       config.schemaSlug
+      //     );
 
       const deleteAction = {
         key: 'delete',
@@ -890,8 +893,8 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
       return [
         ...baseActions,
         ...publishActions,
-        ...uniqueActions,
-        ...dynamicCreateActions,
+        // ...uniqueActions,
+        // ...dynamicCreateActions,
         ...(config.disableDeleteAction ? [] : [deleteAction]),
       ];
     },

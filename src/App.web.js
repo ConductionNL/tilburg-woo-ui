@@ -71,6 +71,13 @@ const App = ({ store }) => {
     store.object.warmupNamesCache().catch((error) => {
       console.warn('⚠️ Names cache warmup failed during app initialization:', error);
     });
+    // Warm up register cache in background for better UX
+    store.object.warmupRegisterCache().catch((error) => {
+      console.warn(
+        '⚠️ Register cache warmup failed during app initialization:',
+        error
+      );
+    });
   }, []);
 
   useDocumentTitleFromPath();
