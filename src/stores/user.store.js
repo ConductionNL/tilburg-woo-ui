@@ -323,11 +323,14 @@ export class UserStore {
       // Pre-warm backend cache in background (non-blocking) - only once per session
       if (!app.store.object.initialCacheWarmingCompleted) {
         // Fire and forget - don't await, don't block login success
-        app.store.object.cacheLoad().then(() => {
-          console.info('✅ Background cache warming completed successfully');
-        }).catch((cacheError) => {
-          console.warn('⚠️ Background cache warming failed:', cacheError);
-        });
+        app.store.object
+          .cacheLoad()
+          .then(() => {
+            console.info('✅ Background cache warming completed successfully');
+          })
+          .catch((cacheError) => {
+            console.warn('⚠️ Background cache warming failed:', cacheError);
+          });
       }
 
       this.setLoading(false);
@@ -398,6 +401,20 @@ export class UserStore {
         const userData = await app.store.api.auth.getUserProfile();
         this.setUser(userData);
         this.setAuthMethod('session');
+
+        // Pre-warm backend cache in background (non-blocking) - only once per session
+        if (!app.store.object.initialCacheWarmingCompleted) {
+          // Fire and forget - don't await, don't block auth check
+          app.store.object
+            .cacheLoad()
+            .then(() => {
+              console.info('✅ Background cache warming completed successfully');
+            })
+            .catch((cacheError) => {
+              console.warn('⚠️ Background cache warming failed:', cacheError);
+            });
+        }
+
         this.setLoading(false);
         return true;
       } else {
