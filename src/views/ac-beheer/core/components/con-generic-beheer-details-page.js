@@ -370,15 +370,49 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
                       uniqueActions={[
                         ...(config.uniqueActions
                           ?.filter((action) => action.condition?.(data))
-                          .map((action) => ({
-                            key: action.key,
-                            label: action.label,
-                            icon: action.icon,
-                            onClick: () =>
-                              typeof action.onClick === 'function'
-                                ? action.onClick(data)
-                                : setOpenModal(action.action),
-                          })) || []),
+                          .map((action) => {
+                            // Get user groups for dynamic label/params
+                            const userGroups =
+                              user?.currentUser?.groups || user?.user?.groups || [];
+
+                            // Support dynamic label based on user role (like publish/depublish toggle)
+                            const label =
+                              typeof action.getLabel === 'function'
+                                ? action.getLabel(userGroups)
+                                : action.label;
+
+                            return {
+                              key: action.key,
+                              label,
+                              icon: action.icon,
+                              onClick: () => {
+                                // Check if this is a wizard action
+                                if (
+                                  action.action === 'wizard' &&
+                                  action.wizardPath
+                                ) {
+                                  // Support dynamic params based on user role
+                                  const params =
+                                    typeof action.getWizardParams === 'function'
+                                      ? action.getWizardParams(data, userGroups)
+                                      : action.wizardParams
+                                      ? action.wizardParams(data)
+                                      : {};
+                                  const searchParams = new URLSearchParams(params);
+                                  const queryString = searchParams.toString();
+                                  navigate(
+                                    `${action.wizardPath}${
+                                      queryString ? '?' + queryString : ''
+                                    }`
+                                  );
+                                } else if (typeof action.onClick === 'function') {
+                                  action.onClick(data);
+                                } else {
+                                  setOpenModal(action.action);
+                                }
+                              },
+                            };
+                          }) || []),
                         {
                           key: 'delete',
                           label: 'Verwijderen',

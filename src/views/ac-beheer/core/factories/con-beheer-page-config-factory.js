@@ -100,98 +100,82 @@ const BeheerPageConfigFactory = {
               },
             },
           },
+          // Unique actions that change based on user role (like publish/depublish toggle)
+          // Each action shows different label/params based on user group
           uniqueActions: [
+            // Dienst action - changes based on user role
             {
-              groupKey: 'dienst',
-              groupLabel: 'Dienst',
-              groupIcon: <VISUALS.HAND_SHAKE />,
-              actions: [
-                {
-                  key: 'addDienstGebruik',
-                  label: 'Dienst toevoegen',
-                  condition: (row) => row?.['@self']?.id || row?.id,
-                  action: 'wizard',
-                  wizardPath: '/forms/dienst',
-                  wizardParams: (row) => ({
-                    type: 'ontbrekend-dienst',
-                    applicatie: row['@self']?.id || row.id,
-                  }),
-                  userGroupFilter: ['gebruik-beheerder'],
-                },
-                {
-                  key: 'addDienstAanbod',
-                  label: 'Dienst publiceren',
-                  condition: (row) => row?.['@self']?.id || row?.id,
-                  action: 'wizard',
-                  wizardPath: '/forms/dienst',
-                  wizardParams: (row) => ({
-                    type: 'dienst',
-                    applicatie: row['@self']?.id || row.id,
-                  }),
-                  userGroupFilter: ['aanbod-beheerder'],
-                },
-              ],
+              key: 'addDienst',
+              icon: <VISUALS.HAND_SHAKE />,
+              condition: (row) => row?.['@self']?.id || row?.id,
+              action: 'wizard',
+              wizardPath: '/forms/dienst',
+              // Dynamic label and params based on user role
+              getLabel: (userGroups) =>
+                userGroups.includes('gebruik-beheerder')
+                  ? 'Dienst toevoegen'
+                  : 'Dienst publiceren',
+              getWizardParams: (row, userGroups) =>
+                userGroups.includes('gebruik-beheerder')
+                  ? {
+                      type: 'ontbrekend-dienst',
+                      applicatie: row['@self']?.id || row.id,
+                    }
+                  : {
+                      type: 'dienst',
+                      applicatie: row['@self']?.id || row.id,
+                    },
+              // Show for both user groups
+              userGroupFilter: ['gebruik-beheerder', 'aanbod-beheerder'],
             },
+            // Gebruik action - changes based on user role
             {
-              groupKey: 'gebruik',
-              groupLabel: 'Gebruik',
-              groupIcon: <VISUALS.CLIPBOARD_CHECK />,
-              actions: [
-                {
-                  key: 'addGebruikGebruik',
-                  label: 'Applicatie toevoegen',
-                  condition: (row) => row?.['@self']?.id || row?.id,
-                  action: 'wizard',
-                  wizardPath: '/forms/gebruik',
-                  wizardParams: (row) => ({
-                    applicatie: row['@self']?.id || row.id,
-                  }),
-                  userGroupFilter: ['gebruik-beheerder'],
-                },
-                {
-                  key: 'addGebruikAanbod',
-                  label: 'Applicatiegebruik melden',
-                  condition: (row) => row?.['@self']?.id || row?.id,
-                  action: 'wizard',
-                  wizardPath: '/forms/gebruik',
-                  wizardParams: (row) => ({
-                    type: 'ontbrekend-organisatie',
-                    applicatie: row['@self']?.id || row.id,
-                  }),
-                  userGroupFilter: ['aanbod-beheerder'],
-                },
-              ],
+              key: 'addGebruik',
+              icon: <VISUALS.CLIPBOARD_CHECK />,
+              condition: (row) => row?.['@self']?.id || row?.id,
+              action: 'wizard',
+              wizardPath: '/forms/gebruik',
+              // Dynamic label and params based on user role
+              getLabel: (userGroups) =>
+                userGroups.includes('gebruik-beheerder')
+                  ? 'Applicatie toevoegen'
+                  : 'Applicatiegebruik melden',
+              getWizardParams: (row, userGroups) =>
+                userGroups.includes('gebruik-beheerder')
+                  ? {
+                      applicatie: row['@self']?.id || row.id,
+                    }
+                  : {
+                      type: 'ontbrekend-organisatie',
+                      applicatie: row['@self']?.id || row.id,
+                    },
+              // Show for both user groups
+              userGroupFilter: ['gebruik-beheerder', 'aanbod-beheerder'],
             },
+            // Koppeling action - changes based on user role
             {
-              groupKey: 'koppeling',
-              groupLabel: 'Koppeling',
-              groupIcon: <VISUALS.LINK />,
-              actions: [
-                {
-                  key: 'addKoppelingGebruik',
-                  label: 'Koppeling toevoegen',
-                  condition: (row) => row?.['@self']?.id || row?.id,
-                  action: 'wizard',
-                  wizardPath: '/forms/koppeling',
-                  wizardParams: (row) => ({
-                    type: 'aanbieden-koppeling',
-                    applicatie: row['@self']?.id || row.id,
-                  }),
-                  userGroupFilter: ['gebruik-beheerder'],
-                },
-                {
-                  key: 'addKoppelingAanbod',
-                  label: 'Koppeling publiceren',
-                  condition: (row) => row?.['@self']?.id || row?.id,
-                  action: 'wizard',
-                  wizardPath: '/forms/koppeling',
-                  wizardParams: (row) => ({
-                    type: 'eigen-organisatie',
-                    applicatie: row['@self']?.id || row.id,
-                  }),
-                  userGroupFilter: ['aanbod-beheerder'],
-                },
-              ],
+              key: 'addKoppeling',
+              icon: <VISUALS.LINK />,
+              condition: (row) => row?.['@self']?.id || row?.id,
+              action: 'wizard',
+              wizardPath: '/forms/koppeling',
+              // Dynamic label and params based on user role
+              getLabel: (userGroups) =>
+                userGroups.includes('gebruik-beheerder')
+                  ? 'Koppeling toevoegen'
+                  : 'Koppeling publiceren',
+              getWizardParams: (row, userGroups) =>
+                userGroups.includes('gebruik-beheerder')
+                  ? {
+                      type: 'aanbieden-koppeling',
+                      applicatie: row['@self']?.id || row.id,
+                    }
+                  : {
+                      type: 'eigen-organisatie',
+                      applicatie: row['@self']?.id || row.id,
+                    },
+              // Show for both user groups
+              userGroupFilter: ['gebruik-beheerder', 'aanbod-beheerder'],
             },
           ],
           modals: [...baseConfig.modals],

@@ -72,6 +72,7 @@ const AcPublicationProduct = ({
   }, []);
 
   // Generate unique actions for applicaties (module) publication page
+  // These actions change based on user role (similar to publish/depublish toggle)
   const uniqueActions = useMemo(() => {
     // Only show actions for module/applicatie schema
     if (schemaSlug !== 'module') {
@@ -83,170 +84,114 @@ const AcPublicationProduct = ({
       return [];
     }
 
-    // Get user groups for filtering
+    // Only show if we have an id
+    if (!id) {
+      return [];
+    }
+
+    // Get user groups to determine which action variant to show
     const userGroups = user?.currentUser?.groups || user?.user?.groups || [];
     const hasAanbodBeheerder = userGroups.includes('aanbod-beheerder');
     const hasGebruikBeheerder = userGroups.includes('gebruik-beheerder');
 
     // Note: These actions (dienst, gebruik, koppeling) are available to all logged-in users
-    // regardless of organization. They allow users to add their own dienst/gebruik/koppeling
-    // related to this module/applicatie.
+    // regardless of organization. The label and wizard params change based on user role.
 
-    // Define action groups (same as beheer page)
-    const actionGroups = [
-      {
-        groupKey: 'dienst',
-        groupLabel: 'Dienst',
-        groupIcon: <VISUALS.HAND_SHAKE />,
-        actions: [
-          {
-            key: 'addDienstGebruik',
-            label: 'Dienst toevoegen',
-            condition: () => !!id,
-            action: 'wizard',
-            wizardPath: '/forms/dienst',
-            wizardParams: () => ({
-              type: 'ontbrekend-dienst',
-              applicatie: id,
-            }),
-            userGroupFilter: ['gebruik-beheerder'],
-          },
-          {
-            key: 'addDienstAanbod',
-            label: 'Dienst publiceren',
-            condition: () => !!id,
-            action: 'wizard',
-            wizardPath: '/forms/dienst',
-            wizardParams: () => ({
-              type: 'dienst',
-              applicatie: id,
-            }),
-            userGroupFilter: ['aanbod-beheerder'],
-          },
-        ],
-      },
-      {
-        groupKey: 'gebruik',
-        groupLabel: 'Gebruik',
-        groupIcon: <VISUALS.CLIPBOARD_CHECK />,
-        actions: [
-          {
-            key: 'addGebruikGebruik',
-            label: 'Applicatie toevoegen',
-            condition: () => !!id,
-            action: 'wizard',
-            wizardPath: '/forms/gebruik',
-            wizardParams: () => ({
-              applicatie: id,
-            }),
-            userGroupFilter: ['gebruik-beheerder'],
-          },
-          {
-            key: 'addGebruikAanbod',
-            label: 'Applicatiegebruik melden',
-            condition: () => !!id,
-            action: 'wizard',
-            wizardPath: '/forms/gebruik',
-            wizardParams: () => ({
-              type: 'ontbrekend-organisatie',
-              applicatie: id,
-            }),
-            userGroupFilter: ['aanbod-beheerder'],
-          },
-        ],
-      },
-      {
-        groupKey: 'koppeling',
-        groupLabel: 'Koppeling',
-        groupIcon: <VISUALS.LINK />,
-        actions: [
-          {
-            key: 'addKoppelingGebruik',
-            label: 'Koppeling toevoegen',
-            condition: () => !!id,
-            action: 'wizard',
-            wizardPath: '/forms/koppeling',
-            wizardParams: () => ({
-              type: 'aanbieden-koppeling',
-              applicatie: id,
-            }),
-            userGroupFilter: ['gebruik-beheerder'],
-          },
-          {
-            key: 'addKoppelingAanbod',
-            label: 'Koppeling publiceren',
-            condition: () => !!id,
-            action: 'wizard',
-            wizardPath: '/forms/koppeling',
-            wizardParams: () => ({
-              type: 'eigen-organisatie',
-              applicatie: id,
-            }),
-            userGroupFilter: ['aanbod-beheerder'],
-          },
-        ],
-      },
-    ];
+    const actions = [];
 
-    return actionGroups
-      .map((actionConfig) => {
-        // Filter actions within the group based on user groups and conditions
-        const filteredActions = actionConfig.actions
-          .filter((action) => {
-            // Check condition first
-            if (action.condition && !action.condition()) {
-              return false;
-            }
+    // Dienst action - changes based on user role
+    if (hasGebruikBeheerder) {
+      actions.push({
+        key: 'addDienst',
+        label: 'Dienst toevoegen',
+        icon: <VISUALS.HAND_SHAKE />,
+        onClick: () => {
+          const params = new URLSearchParams({
+            type: 'ontbrekend-dienst',
+            applicatie: id,
+          });
+          navigate(`/forms/dienst?${params.toString()}`);
+        },
+        disabled: false,
+      });
+    } else if (hasAanbodBeheerder) {
+      actions.push({
+        key: 'addDienst',
+        label: 'Dienst publiceren',
+        icon: <VISUALS.HAND_SHAKE />,
+        onClick: () => {
+          const params = new URLSearchParams({
+            type: 'dienst',
+            applicatie: id,
+          });
+          navigate(`/forms/dienst?${params.toString()}`);
+        },
+        disabled: false,
+      });
+    }
 
-            // Filter by user groups if userGroupFilter is specified
-            if (action.userGroupFilter && Array.isArray(action.userGroupFilter)) {
-              const hasRequiredGroup = action.userGroupFilter.some((group) => {
-                if (group === 'aanbod-beheerder') return hasAanbodBeheerder;
-                if (group === 'gebruik-beheerder') return hasGebruikBeheerder;
-                return userGroups.includes(group);
-              });
-              if (!hasRequiredGroup) {
-                return false;
-              }
-            }
+    // Gebruik action - changes based on user role
+    if (hasGebruikBeheerder) {
+      actions.push({
+        key: 'addGebruik',
+        label: 'Applicatie toevoegen',
+        icon: <VISUALS.CLIPBOARD_CHECK />,
+        onClick: () => {
+          const params = new URLSearchParams({
+            applicatie: id,
+          });
+          navigate(`/forms/gebruik?${params.toString()}`);
+        },
+        disabled: false,
+      });
+    } else if (hasAanbodBeheerder) {
+      actions.push({
+        key: 'addGebruik',
+        label: 'Applicatiegebruik melden',
+        icon: <VISUALS.CLIPBOARD_CHECK />,
+        onClick: () => {
+          const params = new URLSearchParams({
+            type: 'ontbrekend-organisatie',
+            applicatie: id,
+          });
+          navigate(`/forms/gebruik?${params.toString()}`);
+        },
+        disabled: false,
+      });
+    }
 
-            return true;
-          })
-          .map((action) => ({
-            key: action.key,
-            label: action.label,
-            onClick: () => {
-              // Check if this is a wizard action
-              if (action.action === 'wizard' && action.wizardPath) {
-                // Navigate to wizard with params if provided
-                const params = action.wizardParams ? action.wizardParams() : {};
-                const searchParams = new URLSearchParams(params);
-                const queryString = searchParams.toString();
-                navigate(
-                  `${action.wizardPath}${queryString ? '?' + queryString : ''}`
-                );
-              }
-            },
-            // These actions are enabled for all logged-in users
-            disabled: false,
-          }));
+    // Koppeling action - changes based on user role
+    if (hasGebruikBeheerder) {
+      actions.push({
+        key: 'addKoppeling',
+        label: 'Koppeling toevoegen',
+        icon: <VISUALS.LINK />,
+        onClick: () => {
+          const params = new URLSearchParams({
+            type: 'aanbieden-koppeling',
+            applicatie: id,
+          });
+          navigate(`/forms/koppeling?${params.toString()}`);
+        },
+        disabled: false,
+      });
+    } else if (hasAanbodBeheerder) {
+      actions.push({
+        key: 'addKoppeling',
+        label: 'Koppeling publiceren',
+        icon: <VISUALS.LINK />,
+        onClick: () => {
+          const params = new URLSearchParams({
+            type: 'eigen-organisatie',
+            applicatie: id,
+          });
+          navigate(`/forms/koppeling?${params.toString()}`);
+        },
+        disabled: false,
+      });
+    }
 
-        // Only return the group if it has at least one action
-        if (filteredActions.length === 0) {
-          return null;
-        }
-
-        return {
-          type: 'group',
-          groupKey: actionConfig.groupKey,
-          label: actionConfig.groupLabel,
-          icon: actionConfig.groupIcon,
-          children: filteredActions,
-          // Group is enabled if any child action is enabled
-          disabled: filteredActions.every((child) => child?.disabled ?? false),
-        };
-      })
-      .filter(Boolean);
+    return actions;
   }, [schemaSlug, id, user, navigate]);
 
   // Fetch referentieComponenten data with their standards

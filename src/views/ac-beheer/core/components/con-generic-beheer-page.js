@@ -910,7 +910,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
               };
             }
 
-            // Handle non-grouped actions (legacy support)
+            // Handle non-grouped actions (including dynamic label/params based on user role)
             if (actionConfig.condition && !actionConfig.condition(row)) {
               return null;
             }
@@ -930,18 +930,28 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
               }
             }
 
+            // Support dynamic label based on user role (like publish/depublish toggle)
+            const label =
+              typeof actionConfig.getLabel === 'function'
+                ? actionConfig.getLabel(userGroups)
+                : actionConfig.label;
+
             return {
               type: 'action',
               key: actionConfig.key,
-              label: actionConfig.label,
+              label,
               icon: actionConfig.icon,
               onClick: () => {
                 // Check if this is a wizard action
                 if (actionConfig.action === 'wizard' && actionConfig.wizardPath) {
                   // Navigate to wizard with params if provided
-                  const params = actionConfig.wizardParams
-                    ? actionConfig.wizardParams(row)
-                    : {};
+                  // Support dynamic params based on user role
+                  const params =
+                    typeof actionConfig.getWizardParams === 'function'
+                      ? actionConfig.getWizardParams(row, userGroups)
+                      : actionConfig.wizardParams
+                      ? actionConfig.wizardParams(row)
+                      : {};
                   const searchParams = new URLSearchParams(params);
                   const queryString = searchParams.toString();
                   navigate(
