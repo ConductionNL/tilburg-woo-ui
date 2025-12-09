@@ -2,7 +2,6 @@ import {
   Heading,
   Paragraph,
   Link,
-  Alert,
 } from '@utrecht/component-library-react/dist/css-module';
 import { AcColumn } from '@src/atoms';
 import { VISUALS } from '@src/constants';
@@ -18,9 +17,15 @@ import {
 } from '@utils/organization-permissions';
 import { TOOLTIP_ID } from '@src/index.web';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
+import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
+import { useNavigate } from 'react-router-dom';
 
 /**
  * Content for the dienst details page
+ *
+ * note:
+ * Restructured to match con-module-details-page-content layout with vertical content flow
+ * and integrated action menu with inline editing buttons.
  */
 const ConDienstDetailsPageContent = ({
   loading,
@@ -32,14 +37,18 @@ const ConDienstDetailsPageContent = ({
   canEdit = false,
   actionMenuProps,
 }) => {
+  // Related tabs state
   const [uses, setUses] = useState([]);
   const [used, setUsed] = useState([]);
   const [usesLoading, setUsesLoading] = useState(false);
   const [usedLoading, setUsedLoading] = useState(false);
   const [relatedTabIndex, setRelatedTabIndex] = useState(0);
 
+  // Editing state for inline editing
   const [editingSummary, setEditingSummary] = useState(false);
   const [editingDescription, setEditingDescription] = useState(false);
+
+  const navigate = useNavigate();
 
   const fetchUses = useCallback(async () => {
     if (!id) return;
@@ -129,10 +138,21 @@ const ConDienstDetailsPageContent = ({
                 <ConActionMenu.Button
                   icon={<VISUALS.PENCIL />}
                   onClick={() => {
+                    // Prefer wizard editing when available; fallback to legacy modal
                     if (config?.schemaSlug) {
-                      // Prefer wizard editing when available; fallback to legacy modal
-                      // Currently no dienst wizard; fallback to modal
+                      const wizards = Object.values(DASHBOARD_WIZARDS);
+                      const wizard = wizards.find((w) => w.schema === 'dienst');
+
+                      if (wizard) {
+                        const baseUrl = getWizardUrl(wizard);
+                        const url = new URL(baseUrl, window.location.origin);
+                        url.searchParams.set('id', id);
+                        navigate(url.pathname + url.search);
+                        return;
+                      }
                     }
+
+                    // Fallback to modal
                     actionMenuProps?.setOpenModal?.('edit');
                   }}
                   disabled={!actualCanEdit}
@@ -146,21 +166,33 @@ const ConDienstDetailsPageContent = ({
                   Bewerken
                 </ConActionMenu.Button>
 
-                {/* Inline editors toggles prepared for future enablement */}
-                {/* <ConActionMenu.Button
+                <ConActionMenu.Button
                   icon={<VISUALS.PENCIL />}
                   onClick={() => setEditingSummary(true)}
                   disabled={!actualCanEdit}
+                  data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
+                  data-tooltip-content={
+                    !actualCanEdit
+                      ? getDisabledActionTooltip('edit', reason)
+                      : undefined
+                  }
                 >
                   Bewerk samenvatting
-                </ConActionMenu.Button> */}
-                {/* <ConActionMenu.Button
+                </ConActionMenu.Button>
+
+                <ConActionMenu.Button
                   icon={<VISUALS.PENCIL />}
                   onClick={() => setEditingDescription(true)}
                   disabled={!actualCanEdit}
+                  data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
+                  data-tooltip-content={
+                    !actualCanEdit
+                      ? getDisabledActionTooltip('edit', reason)
+                      : undefined
+                  }
                 >
                   Bewerk beschrijving
-                </ConActionMenu.Button> */}
+                </ConActionMenu.Button>
 
                 {data && !data['@self']?.published && (
                   <ConActionMenu.Button
@@ -215,10 +247,11 @@ const ConDienstDetailsPageContent = ({
 
       <UnpublishedWarning data={data} />
 
+      {/* Short description */}
       <div style={{ flex: 2 }}>
         <ConEditableDescription
-          registerSlug={data['@self'].register.slug}
-          schemaSlug={data['@self'].schema.slug}
+          registerSlug={config?.registerSlug}
+          schemaSlug={config?.schemaSlug}
           objectId={data?.['@self']?.id}
           field='beschrijvingKort'
           label='Korte beschrijving'
@@ -230,18 +263,22 @@ const ConDienstDetailsPageContent = ({
           isEditingCustomTrigger={editingSummary}
           serialize={(v) => v}
           deserialize={(v) => v || ''}
-          onSuccess={() => setEditingSummary(false)}
+          onSuccess={(v) => {
+            setEditingSummary(false);
+            data.beschrijvingKort = v;
+            // No data refresh needed - data already updated locally
+          }}
           onCancel={() => setEditingSummary(false)}
-          canEdit={actualCanEdit}
         />
       </div>
 
+      {/* Long description */}
       <div>
         <br />
         <ConEditableDescription
           markdownPreviewClassName='con-my-account-description'
-          registerSlug={data['@self'].register.slug}
-          schemaSlug={data['@self'].schema.slug}
+          registerSlug={config?.registerSlug}
+          schemaSlug={config?.schemaSlug}
           objectId={data?.['@self']?.id}
           field='beschrijvingLang'
           label='Lange beschrijving'
@@ -261,8 +298,11 @@ const ConDienstDetailsPageContent = ({
             }
           }}
           onCancel={() => setEditingDescription(false)}
-          onSuccess={() => setEditingDescription(false)}
-          canEdit={actualCanEdit}
+          onSuccess={(v) => {
+            setEditingDescription(false);
+            data.beschrijvingLang = v;
+            // No data refresh needed - data already updated locally
+          }}
         />
       </div>
 
@@ -390,14 +430,14 @@ const UnpublishedWarning = ({ data }) => {
   const objectName = data?.['@self']?.name;
 
   return (
-    <Alert type='warning' style={{ marginBottom: '1rem' }}>
+    <div className='ac-alert ac-alert--warning' style={{ marginBottom: '1rem' }}>
       <Heading level={4}>{title} is nog niet gepubliceerd</Heading>
       <Paragraph>
         {objectName} is momenteel niet zichtbaar in de zoekfunctie van{' '}
         {schemaName || 'de catalogus'}. Gebruik de &quot;Publiceren&quot; actie om
         deze gegevens beschikbaar te maken voor bezoekers.
       </Paragraph>
-    </Alert>
+    </div>
   );
 };
 
