@@ -17,11 +17,6 @@ import { Heading, Link } from '@utrecht/component-library-react/dist/css-module'
 import { commongroundApiUrl } from '@config';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 import { schemaCache } from '@services/schemaCache.service';
-import {
-  checkOrganizationPermissions,
-  getDisabledActionTooltip,
-} from '@utils/organization-permissions';
-import { TOOLTIP_ID } from '@src/index.web';
 
 // Markdown Editor
 import remarkDefinitionList, { defListHastHandlers } from 'remark-definition-list';
@@ -83,13 +78,19 @@ const AcPublicationProduct = ({
       return [];
     }
 
+    // Only show actions for logged-in users
+    if (!user?.isAuthenticated) {
+      return [];
+    }
+
     // Get user groups for filtering
     const userGroups = user?.currentUser?.groups || user?.user?.groups || [];
     const hasAanbodBeheerder = userGroups.includes('aanbod-beheerder');
     const hasGebruikBeheerder = userGroups.includes('gebruik-beheerder');
 
-    // Check organization permissions
-    const { canEdit, reason } = checkOrganizationPermissions(user, get_single);
+    // Note: These actions (dienst, gebruik, koppeling) are available to all logged-in users
+    // regardless of organization. They allow users to add their own dienst/gebruik/koppeling
+    // related to this module/applicatie.
 
     // Define action groups (same as beheer page)
     const actionGroups = [
@@ -226,11 +227,8 @@ const AcPublicationProduct = ({
                 );
               }
             },
-            disabled: !canEdit,
-            tooltipId: !canEdit ? TOOLTIP_ID : undefined,
-            tooltipContent: !canEdit
-              ? getDisabledActionTooltip(action.key, reason)
-              : undefined,
+            // These actions are enabled for all logged-in users
+            disabled: false,
           }));
 
         // Only return the group if it has at least one action
@@ -244,12 +242,12 @@ const AcPublicationProduct = ({
           label: actionConfig.groupLabel,
           icon: actionConfig.groupIcon,
           children: filteredActions,
-          disabled:
-            filteredActions.every((child) => child?.disabled ?? false) || !canEdit,
+          // Group is enabled if any child action is enabled
+          disabled: filteredActions.every((child) => child?.disabled ?? false),
         };
       })
       .filter(Boolean);
-  }, [schemaSlug, id, user, get_single, navigate]);
+  }, [schemaSlug, id, user, navigate]);
 
   // Fetch referentieComponenten data with their standards
   const fetchReferentieComponentenWithStandards = useCallback(async () => {

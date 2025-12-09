@@ -69,8 +69,17 @@ const ConDetailsActionsMenu = ({
     [user?.isAuthenticated, userOrgId, objectOrgId]
   );
 
-  // Don't render if user is not authenticated or organizations don't match
-  if (!user?.isAuthenticated || !canEdit) {
+  // Don't render if user is not authenticated
+  if (!user?.isAuthenticated) {
+    return null;
+  }
+
+  // Check if there are any actions to show for non-owners
+  // Non-owners can still see uniqueActions (dienst, gebruik, koppeling buttons)
+  const hasUniqueActions = uniqueActions.length > 0;
+
+  // Don't render if user can't edit AND there are no unique actions to show
+  if (!canEdit && !hasUniqueActions) {
     return null;
   }
 
@@ -205,7 +214,8 @@ const ConDetailsActionsMenu = ({
           </>
         )}
         {/* Unique actions (type-specific) */}
-        {uniqueActions.length > 0 && <ConActionMenu.Divider />}
+        {/* Only show divider if there are unique actions AND there were standard actions above */}
+        {uniqueActions.length > 0 && canEdit && <ConActionMenu.Divider />}
         {uniqueActions.map((action) => {
           // Handle grouped actions (sub-menus)
           if (action.type === 'group') {
