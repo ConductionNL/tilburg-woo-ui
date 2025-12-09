@@ -368,6 +368,9 @@ const AcPublicationModuleVersie = ({ store: { publications, user, object } }) =>
         used={used}
         usesLoading={usesLoading}
         usedLoading={usedLoading}
+        gebruikId={id}
+        gebruikSchemaId={schemaId}
+        gebruikSchemaSlug={get_single?.['@self']?.schema?.slug}
         tabIndex={relatedTabIndex}
         setTabIndex={setRelatedTabIndex}
         object={object}

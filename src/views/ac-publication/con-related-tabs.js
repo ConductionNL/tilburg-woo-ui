@@ -472,49 +472,64 @@ const RelatedTabs = observer(
     customTabsBefore = [],
     customTabsAfter = [],
     user,
+    gebruikId,
+    gebruikSchemaId,
+    gebruikSchemaSlug,
   }) => {
     // Merge and deduplicate the data
     const mergedItems = mergeAndDeduplicateItems(uses, used);
 
     // Show loading if either is loading
     const isLoading = usesLoading || usedLoading;
-
     // Fetch ambtenaar gebruik for "Aangeboden gebruik" tab (optional, permission-based)
-    const [ambtenaarData, setAmbtenaarData] = useState(null);
     // Fetch gebruik data
     const [gebruikData, setGebruikData] = useState(null);
+    // Initialize to true if we have an activeObjectId, since we'll be fetching
+    const [gebruikLoading, setGebruikLoading] = useState(!!activeObjectId);
 
     useEffect(() => {
-      if (!activeObjectId) return;
+      if (!activeObjectId) {
+        setGebruikLoading(false);
+        return;
+      }
 
       let isMounted = true;
       const abortController = new AbortController();
 
-      const fetchAmbtenaarGebruik = async () => {
-        try {
-          const response = await fetch(
-            `${commongroundApiUrl()}/softwarecatalog/api/aangeboden-gebruik/ambtenaar/${activeObjectId}`,
-            {
-              method: 'GET',
-              signal: abortController.signal,
-              headers: { Accept: 'application/json' },
-            }
-          );
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-          const data = (await response.json()).results;
-
-          if (isMounted) setAmbtenaarData(data);
-        } catch (err) {
-          // Permission errors or fetch failures are non-blocking; omit the tab
-          if (isMounted && err.name === 'AbortError') return;
+      const getGebruikPropertyParam = (schemaSlug) => {
+        switch (schemaSlug) {
+          case 'organisatie':
+            return 'afnemer';
+          default:
+            return schemaSlug;
         }
       };
 
       const fetchGebruik = async () => {
+        setGebruikLoading(true);
         try {
+          // Wait for schemaCache to resolve the schema slug if gebruikSchema is provided
+          let gebruikParam = '';
+
+          if (gebruikSchemaSlug && gebruikId) {
+            gebruikParam = `&${getGebruikPropertyParam(
+              gebruikSchemaSlug
+            )}=${gebruikId}`;
+          }
+
+          if (!gebruikSchemaSlug && gebruikSchemaId && gebruikId) {
+            const schemaSlug = await schemaCache.waitFor(gebruikSchemaId.toString());
+
+            if (schemaSlug) {
+              gebruikParam = `&${getGebruikPropertyParam(schemaSlug)}=${gebruikId}`;
+            }
+          }
+
+          // Check if component is still mounted after async wait
+          if (!isMounted) return;
+
           const response = await fetch(
-            `${commongroundApiUrl()}/softwarecatalog/api/gebruik?_source=database`,
+            `${commongroundApiUrl()}/softwarecatalog/api/gebruik?_source=database&_limit=1000${gebruikParam}`,
             {
               method: 'GET',
               signal: abortController.signal,
@@ -525,29 +540,30 @@ const RelatedTabs = observer(
 
           const data = (await response.json()).results || [];
 
-          if (isMounted) setGebruikData(data);
+          if (isMounted) {
+            setGebruikData(data);
+          }
         } catch (err) {
-          // Fetch failures are non-blocking
+          // Fetch failures are non-blocking - data stays null but we still complete
           if (isMounted && err.name === 'AbortError') return;
+        } finally {
+          if (isMounted) {
+            setGebruikLoading(false);
+          }
         }
       };
 
-      fetchAmbtenaarGebruik();
       fetchGebruik();
 
       return () => {
         isMounted = false;
         abortController.abort();
       };
-    }, []);
+    }, [activeObjectId, gebruikSchemaSlug, gebruikId]);
 
     // Combine ambtenaar gebruik and database gebruik into the main items so there's a single 'gebruik' tab
-    const itemsWithAmbtenaarGebruik = mergeGebruiksIntoItems(
-      mergedItems,
-      ambtenaarData || []
-    );
     const itemsWithAllGebruik = mergeGebruiksIntoItems(
-      itemsWithAmbtenaarGebruik,
+      mergedItems,
       gebruikData || []
     );
 
@@ -557,11 +573,20 @@ const RelatedTabs = observer(
       ...(customTabsAfter || []),
     ].some((t) => isVisible(t?.visible));
 
-    // Show the tabs if we have data, custom tabs, or are loading
-    const shouldShow =
-      isLoading ||
-      (itemsWithAllGebruik && itemsWithAllGebruik.length > 0) ||
-      anyVisibleCustomTabs;
+    // Check if we have data from any source
+    const hasUsesData = Array.isArray(uses) && uses.length > 0;
+    const hasUsedData = Array.isArray(used) && used.length > 0;
+    const hasGebruikData = Array.isArray(gebruikData) && gebruikData.length > 0;
+    const hasAnyData = hasUsesData || hasUsedData || hasGebruikData;
+
+    // Check if any fetch is still loading
+    const anyLoading = isLoading || gebruikLoading;
+
+    // Show the tabs if:
+    // 1. Any fetch is still loading (show loader)
+    // 2. We have data from any of the three sources
+    // 3. There are visible custom tabs
+    const shouldShow = anyLoading || hasAnyData || anyVisibleCustomTabs;
 
     return (
       <>
@@ -569,7 +594,7 @@ const RelatedTabs = observer(
           <div>
             {renderRelatedTabs(
               itemsWithAllGebruik,
-              isLoading,
+              anyLoading,
               tabIndex,
               setTabIndex,
               object,
