@@ -29,7 +29,7 @@ const AcPublication = ({ store: { publications, object, user } }) => {
 
   const navigate = useNavigate();
 
-  const schemaId = get_single?.['@self']?.schema;
+  const schemaId = get_single?.['@self']?.schema.id || get_single?.['@self']?.schema;
   const schemaSlug = useMemo(
     () => (schemaId ? schemaCache.get(schemaId) : null),
     [schemaId]
@@ -52,7 +52,7 @@ const AcPublication = ({ store: { publications, object, user } }) => {
     setUsesLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_source=database`,
         {
           method: 'GET',
           headers: {
@@ -78,7 +78,7 @@ const AcPublication = ({ store: { publications, object, user } }) => {
     setUsedLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_source=database`,
         {
           method: 'GET',
           headers: {
@@ -246,6 +246,9 @@ const AcPublication = ({ store: { publications, object, user } }) => {
             used={used}
             usesLoading={usesLoading}
             usedLoading={usedLoading}
+            gebruikId={id}
+            gebruikSchemaId={schemaId}
+            gebruikSchemaSlug={get_single?.['@self']?.schema?.slug}
             tabIndex={tabIndex}
             setTabIndex={setTabIndex}
             object={object}

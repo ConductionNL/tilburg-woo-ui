@@ -4028,6 +4028,73 @@ export class ObjectStore {
   };
 
   /**
+   * Core schema slugs that should be warmed up for the schema cache
+   * These are the most commonly used schemas across the application
+   */
+  CORE_SCHEMA_SLUGS = [
+    'organisatie',
+    'module',
+    'moduleversie',
+    'product',
+    'dienst',
+    'gebruik',
+    'koppeling',
+    'contactpersoon',
+  ];
+
+  /**
+   * Warms up the schema cache by fetching all core schemas
+   * This ensures schema ID -> slug mappings are available for getSchemaSlug lookups
+   * @returns {Promise<number>} Number of schemas loaded into cache
+   */
+  @action
+  warmupSchemaCache = async () => {
+    const requestType = 'schema_warmup';
+    this.setLoading(requestType, true);
+    this.setError(requestType, null);
+
+    try {
+      console.info('🔥 Starting schema cache warmup for:', this.CORE_SCHEMA_SLUGS);
+
+      const schemaPromises = this.CORE_SCHEMA_SLUGS.map(async (schemaSlug) => {
+        try {
+          await this.fetchSchema(schemaSlug);
+          return { schemaSlug, success: true };
+        } catch (error) {
+          console.warn(
+            `⚠️ Failed to fetch schema for ${schemaSlug}:`,
+            error.message
+          );
+          return { schemaSlug, success: false, error: error.message };
+        }
+      });
+
+      const results = await Promise.allSettled(schemaPromises);
+
+      const successful = results.filter(
+        (result) => result.status === 'fulfilled' && result.value.success
+      ).length;
+
+      const failed = results.filter(
+        (result) =>
+          result.status === 'rejected' ||
+          (result.status === 'fulfilled' && !result.value.success)
+      ).length;
+
+      console.info(
+        `✅ Schema cache warmed up: ${successful} successful, ${failed} failed`
+      );
+      return successful;
+    } catch (error) {
+      console.error('❌ Schema cache warmup failed:', error);
+      this.setError(requestType, error.message);
+      throw error;
+    } finally {
+      this.setLoading(requestType, false);
+    }
+  };
+
+  /**
    * Clears all names from the cache
    */
   @action
