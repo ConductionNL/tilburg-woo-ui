@@ -28,6 +28,7 @@ import { AcButton } from '@src/molecules';
 import AcGemmaView from '@views/ac-gemma/ac-gemma-view';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 import { commongroundApiUrl } from '@src/config';
+import { useSearchParams } from 'react-router-dom';
 
 /**
  * Generic Beheer Details Page
@@ -41,6 +42,7 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
   const { object, user } = store;
   const navigate = useNavigate();
   const params = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const id = propId || params?.id;
   const isExtendView = type === 'extendview' || type === 'view';
 
@@ -196,6 +198,19 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
     if (!config || !data) return;
     object.setActiveObject(config.registerSlug, config.schemaSlug, data);
   }, [config?.schemaSlug, config?.registerSlug, data?.id, isExtendView]);
+
+  // Check for showEditModal query parameter and open edit modal
+  useEffect(() => {
+    if (isExtendView) return;
+    if (!data) return;
+    if (searchParams.get('showEditModal') === 'true') {
+      setOpenModal('edit');
+      // Remove the query parameter from URL
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.delete('showEditModal');
+      setSearchParams(newSearchParams, { replace: true });
+    }
+  }, [data, searchParams, setSearchParams, isExtendView]);
 
   // Tabs: Files always, plus dynamic Uses/Used
   const registerSlug = config?.registerSlug;
@@ -370,15 +385,49 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
                       uniqueActions={[
                         ...(config.uniqueActions
                           ?.filter((action) => action.condition?.(data))
-                          .map((action) => ({
-                            key: action.key,
-                            label: action.label,
-                            icon: action.icon,
-                            onClick: () =>
-                              typeof action.onClick === 'function'
-                                ? action.onClick(data)
-                                : setOpenModal(action.action),
-                          })) || []),
+                          .map((action) => {
+                            // Get user groups for dynamic label/params
+                            const userGroups =
+                              user?.currentUser?.groups || user?.user?.groups || [];
+
+                            // Support dynamic label based on user role (like publish/depublish toggle)
+                            const label =
+                              typeof action.getLabel === 'function'
+                                ? action.getLabel(userGroups)
+                                : action.label;
+
+                            return {
+                              key: action.key,
+                              label,
+                              icon: action.icon,
+                              onClick: () => {
+                                // Check if this is a wizard action
+                                if (
+                                  action.action === 'wizard' &&
+                                  action.wizardPath
+                                ) {
+                                  // Support dynamic params based on user role
+                                  const params =
+                                    typeof action.getWizardParams === 'function'
+                                      ? action.getWizardParams(data, userGroups)
+                                      : action.wizardParams
+                                      ? action.wizardParams(data)
+                                      : {};
+                                  const searchParams = new URLSearchParams(params);
+                                  const queryString = searchParams.toString();
+                                  navigate(
+                                    `${action.wizardPath}${
+                                      queryString ? '?' + queryString : ''
+                                    }`
+                                  );
+                                } else if (typeof action.onClick === 'function') {
+                                  action.onClick(data);
+                                } else {
+                                  setOpenModal(action.action);
+                                }
+                              },
+                            };
+                          }) || []),
                         {
                           key: 'delete',
                           label: 'Verwijderen',
