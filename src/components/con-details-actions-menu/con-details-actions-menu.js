@@ -23,11 +23,12 @@ import { useNavigate } from 'react-router';
  * @param {boolean} props.showViewAction - Whether to show "Bekijken" action
  * @param {boolean} props.showEditAction - Whether to show "Bewerken" action
  * @param {boolean} props.showPublishActions - Whether to show publish/depublish actions
- * @param {Array} props.uniqueActions - Array of unique actions specific to this object type
- * @param {Array} props.relatedActions - Array of related schema "toevoegen" actions
+ * @param {Array} props.uniqueActions - Array of unique actions specific to this object type (currently commented out)
+ * @param {Array} props.relatedActions - Array of related schema "toevoegen" actions (currently commented out)
  * @param {function} props.onPublish - Callback for publish action
  * @param {function} props.onDepublish - Callback for depublish action
  * @param {function} props.onEdit - Callback for edit action
+ * @param {function} props.onDelete - Callback for delete action
  */
 const ConDetailsActionsMenu = ({
   user,
@@ -45,6 +46,7 @@ const ConDetailsActionsMenu = ({
   onPublish,
   onDepublish,
   onEdit,
+  onDelete,
 }) => {
   const navigate = useNavigate();
 
@@ -69,6 +71,15 @@ const ConDetailsActionsMenu = ({
 
   // Don't render if user is not authenticated
   if (!user?.isAuthenticated) {
+    return null;
+  }
+
+  // Check if there are any actions to show for non-owners
+  // Non-owners can still see uniqueActions (dienst, gebruik, koppeling buttons)
+  const hasUniqueActions = uniqueActions.length > 0;
+
+  // Don't render if user can't edit AND there are no unique actions to show
+  if (!canEdit && !hasUniqueActions) {
     return null;
   }
 
@@ -193,10 +204,48 @@ const ConDetailsActionsMenu = ({
                 Depubliceren
               </ConActionMenu.Button>
             )}
+
+            {/* Delete action */}
+            {onDelete && (
+              <ConActionMenu.Button icon={<VISUALS.TRASHCAN />} onClick={onDelete}>
+                Verwijderen
+              </ConActionMenu.Button>
+            )}
           </>
         )}
         {/* Unique actions (type-specific) */}
+        {/* Only show divider if there are unique actions AND there were standard actions above */}
+        {uniqueActions.length > 0 && canEdit && <ConActionMenu.Divider />}
         {uniqueActions.map((action) => {
+          // Handle grouped actions (sub-menus)
+          if (action.type === 'group') {
+            return (
+              <ConActionMenu.SubMenu
+                key={action.groupKey}
+                label={action.label}
+                icon={action.icon}
+                position='left'
+                disabled={
+                  action.disabled ||
+                  action.children.every((child) => child?.disabled ?? false)
+                }
+              >
+                {action.children.map((childAction) => (
+                  <ConActionMenu.Button
+                    key={childAction.key}
+                    onClick={childAction.onClick}
+                    disabled={childAction.disabled}
+                    data-tooltip-id={childAction.tooltipId}
+                    data-tooltip-content={childAction.tooltipContent}
+                  >
+                    {childAction.label}
+                  </ConActionMenu.Button>
+                ))}
+              </ConActionMenu.SubMenu>
+            );
+          }
+
+          // Handle regular actions
           // Apply permission check for destructive actions (delete)
           const isDestructiveAction =
             action.key === 'delete' ||

@@ -100,26 +100,82 @@ const BeheerPageConfigFactory = {
               },
             },
           },
+          // Unique actions that change based on user role (like publish/depublish toggle)
+          // Each action shows different label/params based on user group
           uniqueActions: [
-            // Commented out: Versie toevoegen action (not reliable yet)
-            //   {
-            //     key: 'addVersion',
-            //     label: 'Versie toevoegen',
-            //     icon: <VISUALS.PLUS />,
-            //     condition: (row) => true,
-            //     action: 'addModuleVersion',
-            //   },
+            // Dienst action - changes based on user role
+            {
+              key: 'addDienst',
+              icon: <VISUALS.HAND_SHAKE />,
+              condition: (row) => row?.['@self']?.id || row?.id,
+              action: 'wizard',
+              wizardPath: '/forms/dienst',
+              // Dynamic label and params based on user role
+              getLabel: (userGroups) =>
+                userGroups.includes('gebruik-beheerder')
+                  ? 'Dienst toevoegen'
+                  : 'Dienst publiceren',
+              getWizardParams: (row, userGroups) =>
+                userGroups.includes('gebruik-beheerder')
+                  ? {
+                      type: 'ontbrekend-dienst',
+                      applicatie: row['@self']?.id || row.id,
+                    }
+                  : {
+                      type: 'dienst',
+                      applicatie: row['@self']?.id || row.id,
+                    },
+              // Show for both user groups
+              userGroupFilter: ['gebruik-beheerder', 'aanbod-beheerder'],
+            },
+            // Gebruik action - changes based on user role
+            {
+              key: 'addGebruik',
+              icon: <VISUALS.CLIPBOARD_CHECK />,
+              condition: (row) => row?.['@self']?.id || row?.id,
+              action: 'wizard',
+              wizardPath: '/forms/gebruik',
+              // Dynamic label and params based on user role
+              getLabel: (userGroups) =>
+                userGroups.includes('gebruik-beheerder')
+                  ? 'Applicatie toevoegen'
+                  : 'Applicatiegebruik melden',
+              getWizardParams: (row, userGroups) =>
+                userGroups.includes('gebruik-beheerder')
+                  ? {
+                      applicatie: row['@self']?.id || row.id,
+                    }
+                  : {
+                      type: 'ontbrekend-organisatie',
+                      applicatie: row['@self']?.id || row.id,
+                    },
+              // Show for both user groups
+              userGroupFilter: ['gebruik-beheerder', 'aanbod-beheerder'],
+            },
+            // Koppeling action - changes based on user role
             {
               key: 'addKoppeling',
-              label: 'Koppeling toevoegen',
-              icon: <VISUALS.WAND_SPARKLES_SOLID />,
-              condition: (row) => row?.id,
-              action: 'wizard', // Special action type to indicate wizard navigation
+              icon: <VISUALS.LINK />,
+              condition: (row) => row?.['@self']?.id || row?.id,
+              action: 'wizard',
               wizardPath: '/forms/koppeling',
-              wizardParams: (row) => ({
-                type: 'aanbieden-koppeling',
-                applicatie: row.id,
-              }),
+              // Dynamic label and params based on user role
+              getLabel: (userGroups) =>
+                userGroups.includes('gebruik-beheerder')
+                  ? 'Koppeling toevoegen'
+                  : 'Koppeling publiceren',
+              getWizardParams: (row, userGroups) =>
+                userGroups.includes('gebruik-beheerder')
+                  ? {
+                      type: 'aanbieden-koppeling',
+                      applicatie: row['@self']?.id || row.id,
+                    }
+                  : {
+                      type: 'eigen-organisatie',
+                      applicatie: row['@self']?.id || row.id,
+                    },
+              // Show for both user groups
+              userGroupFilter: ['gebruik-beheerder', 'aanbod-beheerder'],
             },
           ],
           modals: [...baseConfig.modals],
@@ -628,29 +684,7 @@ const BeheerPageConfigFactory = {
               },
             },
           },
-          uniqueActions: [
-            {
-              key: 'addAccount',
-              label: 'Account toevoegen',
-              icon: <VISUALS.USER_PLUS />,
-              condition: (row) => row.username === null,
-              action: 'addAccount',
-            },
-            {
-              key: 'enableAccount',
-              label: 'Account inschakelen',
-              icon: <VISUALS.USER_CHECK />,
-              condition: (row) => row?.enabled === false,
-              action: 'enableAccount',
-            },
-            {
-              key: 'disableAccount',
-              label: 'Account uitschakelen',
-              icon: <VISUALS.USER_XMARK />,
-              condition: (row) => row?.enabled === true,
-              action: 'disableAccount',
-            },
-          ],
+          uniqueActions: [],
           modals: [...baseConfig.modals, 'addAccount'],
         };
 

@@ -4,10 +4,7 @@ import ConLogoPreview from '../ac-register/con-logo-preview';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router-dom';
-import {
-  AcContainer,
-  AcFlex /*AcTab, AcTabList, AcTabPanel, AcTabs*/,
-} from '@atoms';
+import { AcContainer, AcFlex } from '@atoms';
 import {
   AcLoader,
   ConDetailsActionsMenu,
@@ -18,9 +15,9 @@ import { withStore } from '@stores';
 import { VISUALS } from '@constants';
 import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
-import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 import { schemaCache } from '@services/schemaCache.service';
+import { normalizeSchemaName } from '@src/utilities/con-normalize-schema-name';
 
 // Markdown Editor
 import remarkDefinitionList, { defListHastHandlers } from 'remark-definition-list';
@@ -49,79 +46,18 @@ const AcPublicationProduct = ({
   const { get_single, loading } = publications;
   const navigate = useNavigate();
 
-  const schemaId = get_single?.['@self']?.schema;
+  const schemaId =
+    typeof get_single?.['@self']?.schema === 'object'
+      ? get_single?.['@self']?.schema.id
+      : get_single?.['@self']?.schema;
   const schemaSlug = useMemo(
     () => (schemaId ? schemaCache.get(schemaId) : null),
     [schemaId]
   );
 
-  const openDynamicCreate = useCallback(
-    (targetType, preSelected, metadata = {}) => {
-      // For publication pages, we'll navigate to the beheer page with modal open
-      // TODO: Handle outgoing relationship metadata in beheer page URL params
-      if (metadata.isOutgoing) {
-        // handle outgoing relationship metadata
-      }
-      navigate(`/beheer/${targetType}?showCreateModal=true&voorzieningId=${id}`);
-    },
-    [navigate, id]
-  );
-
-  // Memoize configuration objects to prevent infinite loops
-  // Using whitelist mode: only show these specific actions for logged-in users
-  const onlyIncludeSchemas = useMemo(() => ['gebruik', 'dienst', 'koppeling'], []);
-
-  const excludeSchemas = useMemo(
-    () => [
-      'kwetsbaarheid',
-      'compliancy',
-      'beoordeeling',
-      'organisatie',
-      'contactpersoon',
-      'product',
-      'element',
-      'suite',
-    ],
-    []
-  );
-
-  const labelOverrides = useMemo(
-    () => ({
-      moduleversie: 'Applicatie Versie toevoegen',
-      gebruik: 'Gebruik publiceren',
-      dienst: 'Dienst publiceren',
-      koppeling: 'Koppeling publiceren',
-    }),
-    []
-  );
-
-  const wizardParams = useMemo(
-    () => ({
-      applicatie: id,
-    }),
-    [id]
-  );
-
-  const { makeActionsForContext } = useRelatedCreateActions({
-    object,
-    user,
-    schemaRef: schemaSlug,
-    currentType: schemaSlug, // Use schema slug as current type
-    openDynamicCreate,
-    currentObject: get_single, // Pass current object for ownership checks
-    onlyIncludeSchemas, // Whitelist mode: only these actions will show for non-owners
-    excludeSchemas, // Additional exclusions (applies to everyone)
-    labelOverrides,
-    wizardParams, // Pass applicatie ID to wizards
-    // Example: Custom icons for specific actions
-    // iconOverrides: {
-    //   'moduleversie': <VISUALS.PLUS />,
-    // },
-  });
-
   // Delete modal state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [actionMenuItems, setActionMenuItems] = useState([]);
+  // const [actionMenuItems, setActionMenuItems] = useState([]);
 
   // Standards state for resolving compliance standards
   const [standards, setStandards] = useState([]);
@@ -136,26 +72,128 @@ const AcPublicationProduct = ({
     setShowDeleteModal(true);
   }, []);
 
-  // Generate action menu items
-  useEffect(() => {
-    if (!schemaSlug || !id) return;
+  // Generate unique actions for applicaties (module) publication page
+  // These actions change based on user role (similar to publish/depublish toggle)
+  const uniqueActions = useMemo(() => {
+    // Only show actions for module/applicatie schema
+    if (schemaSlug !== 'module') {
+      return [];
+    }
 
-    const items = makeActionsForContext(
-      id,
-      null,
-      get_single,
-      'voorzieningen',
-      schemaSlug
-    ).map(({ key, label, onClick, schema, icon }) => ({
-      key,
-      label,
-      onClick,
-      schema,
-      icon,
-    }));
+    // Only show actions for logged-in users
+    if (!user?.isAuthenticated) {
+      return [];
+    }
 
-    setActionMenuItems(items);
-  }, [schemaSlug, id, makeActionsForContext, get_single]);
+    // Only show if we have an id
+    if (!id) {
+      return [];
+    }
+
+    // Get user groups to determine which action variant to show
+    const userGroups = user?.currentUser?.groups || user?.user?.groups || [];
+    const hasAanbodBeheerder = userGroups.includes('aanbod-beheerder');
+    const hasGebruikBeheerder = userGroups.includes('gebruik-beheerder');
+
+    // Note: These actions (dienst, gebruik, koppeling) are available to all logged-in users
+    // regardless of organization. The label and wizard params change based on user role.
+
+    const actions = [];
+
+    // Dienst action - changes based on user role
+    if (hasGebruikBeheerder) {
+      actions.push({
+        key: 'addDienst',
+        label: 'Dienst toevoegen',
+        icon: <VISUALS.HAND_SHAKE />,
+        onClick: () => {
+          const params = new URLSearchParams({
+            type: 'ontbrekend-dienst',
+            applicatie: id,
+          });
+          navigate(`/forms/dienst?${params.toString()}`);
+        },
+        disabled: false,
+      });
+    } else if (hasAanbodBeheerder) {
+      actions.push({
+        key: 'addDienst',
+        label: 'Dienst publiceren',
+        icon: <VISUALS.HAND_SHAKE />,
+        onClick: () => {
+          const params = new URLSearchParams({
+            type: 'dienst',
+            applicatie: id,
+          });
+          navigate(`/forms/dienst?${params.toString()}`);
+        },
+        disabled: false,
+      });
+    }
+
+    // Gebruik action - changes based on user role
+    if (hasGebruikBeheerder) {
+      actions.push({
+        key: 'addGebruik',
+        label: 'Applicatie toevoegen',
+        icon: <VISUALS.CLIPBOARD_CHECK />,
+        onClick: () => {
+          const params = new URLSearchParams({
+            applicatie: id,
+          });
+          navigate(`/forms/gebruik?${params.toString()}`);
+        },
+        disabled: false,
+      });
+    } else if (hasAanbodBeheerder) {
+      actions.push({
+        key: 'addGebruik',
+        label: 'Applicatiegebruik melden',
+        icon: <VISUALS.CLIPBOARD_CHECK />,
+        onClick: () => {
+          const params = new URLSearchParams({
+            type: 'ontbrekend-organisatie',
+            applicatie: id,
+          });
+          navigate(`/forms/gebruik?${params.toString()}`);
+        },
+        disabled: false,
+      });
+    }
+
+    // Koppeling action - changes based on user role
+    if (hasGebruikBeheerder) {
+      actions.push({
+        key: 'addKoppeling',
+        label: 'Koppeling toevoegen',
+        icon: <VISUALS.LINK />,
+        onClick: () => {
+          const params = new URLSearchParams({
+            type: 'aanbieden-koppeling',
+            applicatie: id,
+          });
+          navigate(`/forms/koppeling?${params.toString()}`);
+        },
+        disabled: false,
+      });
+    } else if (hasAanbodBeheerder) {
+      actions.push({
+        key: 'addKoppeling',
+        label: 'Koppeling publiceren',
+        icon: <VISUALS.LINK />,
+        onClick: () => {
+          const params = new URLSearchParams({
+            type: 'eigen-organisatie',
+            applicatie: id,
+          });
+          navigate(`/forms/koppeling?${params.toString()}`);
+        },
+        disabled: false,
+      });
+    }
+
+    return actions;
+  }, [schemaSlug, id, user, navigate]);
 
   // Fetch referentieComponenten data with their standards
   const fetchReferentieComponentenWithStandards = useCallback(async () => {
@@ -494,8 +532,12 @@ const AcPublicationProduct = ({
                 onDelete={handleDelete}
                 onEdit={() => {
                   if (schemaSlug) {
+                    const wizardSchemaName =
+                      normalizeSchemaName(schemaSlug).toLowerCase();
                     const wizards = Object.values(DASHBOARD_WIZARDS);
-                    const wizard = wizards.find((w) => w.schema === schemaSlug);
+                    const wizard = wizards.find(
+                      (w) => w.schema === wizardSchemaName
+                    );
 
                     if (wizard) {
                       const baseUrl = getWizardUrl(wizard);
@@ -504,30 +546,13 @@ const AcPublicationProduct = ({
                       navigate(url.pathname + url.search);
                       return;
                     }
-
-                    if (schemaSlug === 'module') {
-                      const beheerUrl = `/beheer/applicaties/${id}`;
-                      window.open(beheerUrl, '_blank');
-                    }
-                    if (schemaSlug === 'moduleversie') {
-                      const beheerUrl = `/beheer/applicatieversie/${id}`;
-                      window.open(beheerUrl, '_blank');
-                    }
                   }
-                  // Fallback to beheer legacy edit page in new tab
-                  const beheerUrl = `/beheer/${schemaSlug}/${id}`;
-                  window.open(beheerUrl, '_blank');
+                  // Fallback to beheer detail page in same tab with edit modal
+                  const beheerUrl = `/beheer/${schemaSlug}/${id}?showEditModal=true`;
+                  navigate(beheerUrl);
                 }}
-                uniqueActions={[
-                  {
-                    key: 'delete',
-                    label: 'Verwijderen',
-                    icon: VISUALS.TRASHCAN,
-                    onClick: handleDelete,
-                  },
-                ]}
+                uniqueActions={uniqueActions}
                 triggerStyle='button'
-                relatedActions={actionMenuItems}
               />
             )}
           </AcFlex>
