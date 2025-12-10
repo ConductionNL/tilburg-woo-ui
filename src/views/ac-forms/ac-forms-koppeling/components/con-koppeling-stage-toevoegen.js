@@ -11,6 +11,7 @@ import {
 import { VISUALS } from '@src/constants';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 import { TOOLTIP_ID } from '@src/index.web';
+import { commongroundApiUrl } from '@src/config';
 
 const ConKoppelingStageToevoegen = ({
   rows,
@@ -126,6 +127,46 @@ const ConKoppelingStageToevoegen = ({
     }
   };
 
+  const fetchBuitengemeentelijkeOptions = async (q, signal) => {
+    try {
+      const queryParams = new URLSearchParams({
+        _limit: '50',
+        _page: '1',
+        gemmaType: 'Buitengemeentelijke voorziening',
+        '_extend[]': '@self.schema',
+        _published: 'false',
+      });
+      if (q) queryParams.set('_search', q);
+      const endpoint = `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`;
+      const res = await fetch(endpoint, {
+        headers: { Accept: 'application/json' },
+        signal,
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
+      const list = Array.isArray(data?.results) ? data.results : [];
+      return list.map((item, index) => {
+        const label =
+          item?.xml?.name?._value ||
+          item?.naam ||
+          item?.name ||
+          item?.title ||
+          item?.label ||
+          `Facility ${index + 1}`;
+        const value = item?.value || item?.id || item?.slug || label;
+        return {
+          value: String(value),
+          label: String(label),
+          data: item,
+          type: 'buitengemeentelijke',
+        };
+      });
+    } catch (e) {
+      if (e?.name === 'AbortError') return null;
+      return [];
+    }
+  };
+
   const debounceFetchForRow = (rowId, which, q) => {
     const key = `${which}-${rowId}`;
     if (debounceTimersRef.current[key]) clearTimeout(debounceTimersRef.current[key]);
@@ -140,11 +181,25 @@ const ConKoppelingStageToevoegen = ({
       const controller = new AbortController();
       abortControllersRef.current[key] = controller;
       if (which === 'B') setAppBLoadingByRow((p) => ({ ...p, [rowId]: true }));
-      const opts = q
-        ? await fetchModuleOptions(q, controller.signal)
-        : which === 'B'
-        ? getMergedOptions()
-        : modulesOptions;
+
+      let opts;
+      if (q) {
+        // When searching, fetch both modules and external facilities in parallel
+        const [moduleResults, buitengemeentelijkeResults] = await Promise.all([
+          fetchModuleOptions(q, controller.signal),
+          fetchBuitengemeentelijkeOptions(q, controller.signal),
+        ]);
+        // Merge results from both searches
+        const merged = [];
+        if (Array.isArray(moduleResults)) merged.push(...moduleResults);
+        if (Array.isArray(buitengemeentelijkeResults))
+          merged.push(...buitengemeentelijkeResults);
+        opts = merged;
+      } else {
+        // When no query, use merged options from already loaded data
+        opts = which === 'B' ? getMergedOptions() : modulesOptions;
+      }
+
       // If another fetch started after this one, skip applying results
       if (abortControllersRef.current[key] !== controller) return;
       if (which === 'B') {
