@@ -48,6 +48,7 @@ const ConBeheerViews = loadable(() =>
 const ConPasswordReminder = loadable(() =>
   import('@views/ac-password-reminder/ac-password-reminder')
 );
+const AcChat = loadable(() => import('@views/ac-chat/ac-chat'));
 
 export {
   AcHome,
@@ -74,4 +75,5 @@ export {
   ConViewsList,
   ConBeheerViews,
   ConPasswordReminder,
+  AcChat,
 };

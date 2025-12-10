@@ -308,6 +308,9 @@ const getEnvConfig = () => {
 
     // Search Configuration
     DEFAULT_SEARCH_SCHEMA: getConfigValue(yamlConfig, 'DEFAULT_SEARCH_SCHEMA', ''),
+
+    // Chat Configuration
+    CHAT_ENDPOINT: getConfigValue(yamlConfig, 'CHAT_ENDPOINT', ''),
   };
 
   // Add any extra variables from values.yaml that aren't in the base config
@@ -401,6 +404,11 @@ export const getFooterLogoSubtitle = () => CONTAINER_CONFIG.FOOTER_LOGO_SUBTITLE
 export const getSupportEmailAddress = () => CONTAINER_CONFIG.SUPPORT_EMAIL_ADDRESS;
 // Search helper functions
 export const getDefaultSearchSchema = () => CONTAINER_CONFIG.DEFAULT_SEARCH_SCHEMA;
+// Chat helper functions
+export const getChatEndpoint = () => CONTAINER_CONFIG.CHAT_ENDPOINT;
+export const isChatEnabled = () => {
+  return CONTAINER_CONFIG.CHAT_ENDPOINT && CONTAINER_CONFIG.CHAT_ENDPOINT.trim() !== '';
+};
 export const getDefaultConfig = () => CONTAINER_CONFIG;
 `;
 };

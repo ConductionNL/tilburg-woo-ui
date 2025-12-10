@@ -4,7 +4,16 @@ import { Link, useLocation } from 'react-router-dom';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 
-const AcNavigation = ({ store: { menu, user } }) => {
+// Try to import container constants (generated at runtime)
+let containerConfig;
+try {
+  containerConfig = require('@constants/container.constants');
+} catch (error) {
+  console.warn('Container constants not available for navigation');
+  containerConfig = null;
+}
+
+const AcNavigation = ({ store: { menu, user, chat } }) => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
@@ -16,6 +25,9 @@ const AcNavigation = ({ store: { menu, user } }) => {
     user.isAuthenticated,
     user.userGroups || []
   );
+
+  // Check if chat is enabled
+  const isChatEnabled = chat?.isChatFeatureEnabled || false;
 
   // Icon component for finding icons based on a variable
   const Icon = ({ icon }) => {
@@ -59,6 +71,15 @@ const AcNavigation = ({ store: { menu, user } }) => {
                   </Link>
                 </li>
               ))}
+              {/* Conditionally render chat button if endpoint is configured */}
+              {isChatEnabled && (
+                <li key='chat'>
+                  <Link to='/chat'>
+                    <VISUALS.CONTACT />
+                    Chat
+                  </Link>
+                </li>
+              )}
             </ul>
           )}
       </nav>

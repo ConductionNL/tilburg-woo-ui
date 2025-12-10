@@ -82,6 +82,8 @@ services:
       - FOOTER_LOGO_SUBTITLE=Één plek voor alle software voor en door Gemeenten
       # Search Configuration
       - DEFAULT_SEARCH_SCHEMA=18
+      # Chat Configuration (test URL for development)
+      - CHAT_ENDPOINT=https://api.example.com/chat
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:81/api/status.php"]
       interval: 30s
@@ -164,6 +166,8 @@ services:
       - FOOTER_LOGO_SUBTITLE=Één plek voor alle publicaties van Gemeente Tilburg
       # Search Configuration
       - DEFAULT_SEARCH_SCHEMA=18
+      # Chat Configuration (test URL for development)
+      - CHAT_ENDPOINT=https://api.example.com/chat
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
     healthcheck:

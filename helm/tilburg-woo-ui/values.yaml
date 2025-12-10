@@ -163,6 +163,9 @@ env:
   # Search Configuration
   DEFAULT_SEARCH_SCHEMA: ""           # Optional: Default schema ID for search queries (e.g. "63" for producten)
 
+  # Chat Configuration
+  CHAT_ENDPOINT: ""                   # Optional: LLM endpoint URL for chat functionality (leave empty to disable, set URL to enable)
+
 
 # Health check configuration
 healthCheck:
