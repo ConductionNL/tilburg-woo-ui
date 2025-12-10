@@ -25,6 +25,8 @@ import remarkSupersub from 'remark-supersub';
 import rehypeSlug from 'rehype-slug';
 import rehypeSanitize from 'rehype-sanitize';
 import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
+import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
+import { normalizeSchemaName } from '@src/utilities/con-normalize-schema-name';
 
 /**
  * Module Version (Applicatie Versie) Publication Page
@@ -248,11 +250,22 @@ const AcPublicationModuleVersie = ({ store: { publications, user, object } }) =>
               showPublishActions={true}
               onDelete={handleDelete}
               onEdit={() => {
-                // Navigate to beheer edit page in new tab
                 if (schemaSlug) {
-                  const beheerUrl = `/beheer/${schemaSlug}/${id}`;
-                  window.open(beheerUrl, '_blank');
+                  const wizardSchemaName = normalizeSchemaName(schemaSlug).toLowerCase();
+                  const wizards = Object.values(DASHBOARD_WIZARDS);
+                  const wizard = wizards.find((w) => w.schema === wizardSchemaName);
+
+                  if (wizard) {
+                    const baseUrl = getWizardUrl(wizard);
+                    const url = new URL(baseUrl, window.location.origin);
+                    url.searchParams.set('id', id);
+                    navigate(url.pathname + url.search);
+                    return;
+                  }
                 }
+                // Fallback to beheer detail page in same tab with edit modal
+                const beheerUrl = `/beheer/${schemaSlug}/${id}?showEditModal=true`;
+                navigate(beheerUrl);
               }}
               // uniqueActions={[
               //   {

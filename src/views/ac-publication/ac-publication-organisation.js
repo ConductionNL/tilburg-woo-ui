@@ -23,6 +23,7 @@ import rehypeSlug from 'rehype-slug';
 import rehypeSanitize from 'rehype-sanitize';
 import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
+import { normalizeSchemaName } from '@src/utilities/con-normalize-schema-name';
 
 const AcPublication = ({ store: { publications, object, user } }) => {
   const { id } = useParams();
@@ -175,8 +176,9 @@ const AcPublication = ({ store: { publications, object, user } }) => {
                   onDelete={handleDelete}
                   onEdit={() => {
                     if (schemaSlug) {
+                      const wizardSchemaName = normalizeSchemaName(schemaSlug).toLowerCase();
                       const wizards = Object.values(DASHBOARD_WIZARDS);
-                      const wizard = wizards.find((w) => w.schema === schemaSlug);
+                      const wizard = wizards.find((w) => w.schema === wizardSchemaName);
 
                       if (wizard) {
                         const baseUrl = getWizardUrl(wizard);
@@ -186,9 +188,9 @@ const AcPublication = ({ store: { publications, object, user } }) => {
                         return;
                       }
                     }
-                    // Fallback to beheer legacy edit page in new tab
-                    const beheerUrl = `/beheer/${schemaSlug}/${id}`;
-                    window.open(beheerUrl, '_blank');
+                    // Fallback to beheer detail page in same tab with edit modal
+                    const beheerUrl = `/beheer/${schemaSlug}/${id}?showEditModal=true`;
+                    navigate(beheerUrl);
                   }}
                   triggerStyle='button'
                 />

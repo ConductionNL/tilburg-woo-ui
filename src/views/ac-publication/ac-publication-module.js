@@ -17,6 +17,7 @@ import { Heading, Link } from '@utrecht/component-library-react/dist/css-module'
 import { commongroundApiUrl } from '@config';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 import { schemaCache } from '@services/schemaCache.service';
+import { normalizeSchemaName } from '@src/utilities/con-normalize-schema-name';
 
 // Markdown Editor
 import remarkDefinitionList, { defListHastHandlers } from 'remark-definition-list';
@@ -531,8 +532,12 @@ const AcPublicationProduct = ({
                 onDelete={handleDelete}
                 onEdit={() => {
                   if (schemaSlug) {
+                    const wizardSchemaName =
+                      normalizeSchemaName(schemaSlug).toLowerCase();
                     const wizards = Object.values(DASHBOARD_WIZARDS);
-                    const wizard = wizards.find((w) => w.schema === schemaSlug);
+                    const wizard = wizards.find(
+                      (w) => w.schema === wizardSchemaName
+                    );
 
                     if (wizard) {
                       const baseUrl = getWizardUrl(wizard);
@@ -541,19 +546,10 @@ const AcPublicationProduct = ({
                       navigate(url.pathname + url.search);
                       return;
                     }
-
-                    if (schemaSlug === 'module') {
-                      const beheerUrl = `/beheer/applicaties/${id}`;
-                      window.open(beheerUrl, '_blank');
-                    }
-                    if (schemaSlug === 'moduleversie') {
-                      const beheerUrl = `/beheer/applicatieversie/${id}`;
-                      window.open(beheerUrl, '_blank');
-                    }
                   }
-                  // Fallback to beheer legacy edit page in new tab
-                  const beheerUrl = `/beheer/${schemaSlug}/${id}`;
-                  window.open(beheerUrl, '_blank');
+                  // Fallback to beheer detail page in same tab with edit modal
+                  const beheerUrl = `/beheer/${schemaSlug}/${id}?showEditModal=true`;
+                  navigate(beheerUrl);
                 }}
                 uniqueActions={uniqueActions}
                 triggerStyle='button'

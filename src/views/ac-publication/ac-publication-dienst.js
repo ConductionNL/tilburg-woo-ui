@@ -31,6 +31,7 @@ import remarkRehype from 'remark-rehype';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
+import { normalizeSchemaName } from '@src/utilities/con-normalize-schema-name';
 // import { checkOrganizationPermissions } from '@utils/organization-permissions';
 
 /**
@@ -207,8 +208,9 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
               onDelete={handleDelete}
               onEdit={() => {
                 if (schemaSlug) {
+                  const wizardSchemaName = normalizeSchemaName(schemaSlug).toLowerCase();
                   const wizards = Object.values(DASHBOARD_WIZARDS);
-                  const wizard = wizards.find((w) => w.schema === schemaSlug);
+                  const wizard = wizards.find((w) => w.schema === wizardSchemaName);
                   if (wizard) {
                     const baseUrl = getWizardUrl(wizard);
                     const url = new URL(baseUrl, window.location.origin);
@@ -216,9 +218,10 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
                     navigate(url.pathname + url.search);
                     return;
                   }
-                  const beheerUrl = `/beheer/${schemaSlug}/${id}`;
-                  window.open(beheerUrl, '_blank');
                 }
+                // Fallback to beheer detail page in same tab with edit modal
+                const beheerUrl = `/beheer/${schemaSlug}/${id}?showEditModal=true`;
+                navigate(beheerUrl);
               }}
               // uniqueActions={[
               //   {

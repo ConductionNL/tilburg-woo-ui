@@ -13,6 +13,7 @@ import { commongroundApiUrl } from '@config';
 // import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 import { schemaCache } from '@services/schemaCache.service';
+import { normalizeSchemaName } from '@src/utilities/con-normalize-schema-name';
 
 // Markdown Editor
 import remarkDefinitionList, { defListHastHandlers } from 'remark-definition-list';
@@ -253,8 +254,9 @@ const AcPublicationProduct = ({
                 onDelete={handleDelete}
                 onEdit={() => {
                   if (schemaSlug) {
+                    const wizardSchemaName = normalizeSchemaName(schemaSlug).toLowerCase();
                     const wizards = Object.values(DASHBOARD_WIZARDS);
-                    const wizard = wizards.find((w) => w.schema === schemaSlug);
+                    const wizard = wizards.find((w) => w.schema === wizardSchemaName);
 
                     if (wizard) {
                       const baseUrl = getWizardUrl(wizard);
@@ -264,9 +266,9 @@ const AcPublicationProduct = ({
                       return;
                     }
                   }
-                  // Fallback to beheer legacy edit page in new tab
-                  const beheerUrl = `/beheer/${schemaSlug}/${id}`;
-                  window.open(beheerUrl, '_blank');
+                  // Fallback to beheer detail page in same tab with edit modal
+                  const beheerUrl = `/beheer/${schemaSlug}/${id}?showEditModal=true`;
+                  navigate(beheerUrl);
                 }}
                 // uniqueActions={[
                 //   {

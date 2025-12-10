@@ -28,6 +28,7 @@ import { AcButton } from '@src/molecules';
 import AcGemmaView from '@views/ac-gemma/ac-gemma-view';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 import { commongroundApiUrl } from '@src/config';
+import { useSearchParams } from 'react-router-dom';
 
 /**
  * Generic Beheer Details Page
@@ -41,6 +42,7 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
   const { object, user } = store;
   const navigate = useNavigate();
   const params = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const id = propId || params?.id;
   const isExtendView = type === 'extendview' || type === 'view';
 
@@ -196,6 +198,19 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
     if (!config || !data) return;
     object.setActiveObject(config.registerSlug, config.schemaSlug, data);
   }, [config?.schemaSlug, config?.registerSlug, data?.id, isExtendView]);
+
+  // Check for showEditModal query parameter and open edit modal
+  useEffect(() => {
+    if (isExtendView) return;
+    if (!data) return;
+    if (searchParams.get('showEditModal') === 'true') {
+      setOpenModal('edit');
+      // Remove the query parameter from URL
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.delete('showEditModal');
+      setSearchParams(newSearchParams, { replace: true });
+    }
+  }, [data, searchParams, setSearchParams, isExtendView]);
 
   // Tabs: Files always, plus dynamic Uses/Used
   const registerSlug = config?.registerSlug;

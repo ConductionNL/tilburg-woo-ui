@@ -30,6 +30,7 @@ import { AcMappedAttachmentRow } from '@src/services/ac-mapped-attachmend-row';
 import { useParams, useNavigate } from 'react-router-dom';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
+import { normalizeSchemaName } from '@src/utilities/con-normalize-schema-name';
 
 const AcPublicationFormulier = ({ store: { publications, user } }) => {
   const {
@@ -132,8 +133,9 @@ const AcPublicationFormulier = ({ store: { publications, user } }) => {
                 onEdit={() => {
                   const schemaSlug = get_single?.['@self']?.schema?.slug;
                   if (schemaSlug) {
+                    const wizardSchemaName = normalizeSchemaName(schemaSlug).toLowerCase();
                     const wizards = Object.values(DASHBOARD_WIZARDS);
-                    const wizard = wizards.find((w) => w.schema === schemaSlug);
+                    const wizard = wizards.find((w) => w.schema === wizardSchemaName);
 
                     if (wizard) {
                       const baseUrl = getWizardUrl(wizard);
@@ -143,9 +145,9 @@ const AcPublicationFormulier = ({ store: { publications, user } }) => {
                       return;
                     }
                   }
-                  // Fallback to beheer legacy edit page in new tab
-                  const beheerUrl = `/beheer/${get_single?.['@self']?.schema?.slug}/${id}`;
-                  window.open(beheerUrl, '_blank');
+                  // Fallback to beheer detail page in same tab with edit modal
+                  const beheerUrl = `/beheer/${schemaSlug}/${id}?showEditModal=true`;
+                  navigate(beheerUrl);
                 }}
                 triggerStyle='button'
               />
