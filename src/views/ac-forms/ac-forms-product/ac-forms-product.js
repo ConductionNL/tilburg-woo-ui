@@ -910,13 +910,7 @@ const AcFormsProductInner = ({
       _source: 'index',
     };
 
-    if (queryParamsString) {
-      // // Parse the queryParams string: "gemmaType=Referentiecomponent&_extend=aanbevolenStandaarden,verplichteStandaarden"
-      // const urlParams = new URLSearchParams(queryParamsString);
-      // urlParams.forEach((value, key) => {
-      //   baseParams[key] = value;
-      // });
-    } else {
+    if (!queryParamsString) {
       // Fallback to hardcoded if schema doesn't have queryParams
       baseParams.gemmaType = 'Referentiecomponent';
       // Ensure standards are included with referentiecomponenten

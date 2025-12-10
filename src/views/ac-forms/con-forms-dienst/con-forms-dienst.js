@@ -27,9 +27,6 @@ import ConFormControlerenStage from './components/con-form-controleren-stage';
 import ConFormDienstAanbiederInformatieStage from './components/con-form-dienst-aanbieder-informatie-stage';
 import ConUnsavedChangesAlertModal from '@src/components/con-unsaved-changes-alert-modal/con-unsaved-changes-alert-modal';
 import { getActiveWizard } from '@src/constants/wizards.constants';
-// Legacy stages
-// import ConFormSoortDienstStage from './components/con-form-soort-dienst-stage';
-// import ConFormKoppelingenStage from './components/con-form-koppelingen-stage';
 
 const mapToOption = (item, index) => {
   const label =
@@ -1102,31 +1099,6 @@ const ConFormsDienst = ({ store, userStore }) => {
                           title: 'Aanbieder',
                         });
                       }
-
-                      // Legacy nested steps structure (commented out)
-                      // {
-                      //   id: 'p7r8o9d0-u1c2-t3e4-n5a6-p7p8l9i0c1a2',
-                      //   marker: 2,
-                      //   status:
-                      //     currentStep >= 1 && currentStep <= 2
-                      //       ? 'current'
-                      //       : currentStep < 1
-                      //       ? 'not-checked'
-                      //       : 'checked',
-                      //   title: 'Producten en applicaties',
-                      //   steps: [
-                      //     {
-                      //       id: 'p3r4o5d6-u7c8-t9e0-n1s2-t3a4g5e6f7g8',
-                      //       status: getStatus(currentStep, 1),
-                      //       title: 'Producten',
-                      //     },
-                      //     {
-                      //       id: 'a9p0p1l2-i3c4-a5t6-i7e8-s9t0a1g2e3f4',
-                      //       status: getStatus(currentStep, 2),
-                      //       title: 'Applicaties',
-                      //     },
-                      //   ],
-                      // },
 
                       baseSteps.push(
                         {

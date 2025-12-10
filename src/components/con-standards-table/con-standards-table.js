@@ -522,11 +522,6 @@ const ConStandardsTable = ({
   return (
     <div
       style={{
-        // maxHeight: shouldScroll ? '500px' : 'auto',
-        // overflowY: shouldScroll ? 'auto' : 'visible',
-        // overflowX: 'hidden',
-        // border: shouldScroll ? '1px solid #e9ecef' : 'none',
-        // borderRadius: shouldScroll ? '4px' : '0',
         width: '100%',
         ...containerStyle,
       }}
@@ -540,9 +535,6 @@ const ConStandardsTable = ({
                 backgroundColor: '#f8f9fa',
                 paddingLeft:
                   'var(--utrecht-table-cell-padding-inline-end) !important',
-                // position: shouldScroll ? 'sticky' : 'static',
-                // top: shouldScroll ? '0' : 'auto',
-                // zIndex: shouldScroll ? '10' : 'auto',
                 width: '50%',
               }}
             >
@@ -552,9 +544,6 @@ const ConStandardsTable = ({
               style={{
                 fontWeight: 'bold',
                 backgroundColor: '#f8f9fa',
-                // position: shouldScroll ? 'sticky' : 'static',
-                // top: shouldScroll ? '0' : 'auto',
-                // zIndex: shouldScroll ? '10' : 'auto',
                 width: '25%',
               }}
             >
@@ -564,9 +553,6 @@ const ConStandardsTable = ({
               style={{
                 fontWeight: 'bold',
                 backgroundColor: '#f8f9fa',
-                // position: shouldScroll ? 'sticky' : 'static',
-                // top: shouldScroll ? '0' : 'auto',
-                // zIndex: shouldScroll ? '10' : 'auto',
                 width: '25%',
               }}
             >

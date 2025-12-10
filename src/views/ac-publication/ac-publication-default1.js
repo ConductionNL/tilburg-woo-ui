@@ -26,11 +26,6 @@ const AcPublicationDefault = ({ store: { publications } }) => {
     getSearchPageURL,
     setAttachmentsPage,
     getFilteredAttachments,
-    // get_relations,
-    // resetRelations,
-    // resetPublication,
-    // fetchRelations,
-    // fetchPublication,
   } = publications;
 
   useEffect(() => {

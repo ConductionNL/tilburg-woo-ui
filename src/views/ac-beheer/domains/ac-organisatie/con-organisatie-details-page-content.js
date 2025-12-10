@@ -11,11 +11,6 @@ import { commongroundApiUrl } from '@src/config';
 import ConEditableDescription from '../../shared/components/con-editable-description/con-editable-description';
 // import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
 import RelatedTabs from '@views/ac-publication/con-related-tabs';
-// import {
-//   checkOrganizationPermissions,
-//   getDisabledActionTooltip,
-// } from '@utils/organization-permissions';
-// import { TOOLTIP_ID } from '@src/index.web';
 
 /**
  * Content for the organisation details page
@@ -98,15 +93,6 @@ const ConOrganisatieDetailsPageContent = ({
       setUsedLoading(false);
     }
   }, [id]);
-
-  // Check organization permissions for actions - commented out for now
-  // const { canEdit: hasEditPermission, reason } = data
-  //   ? checkOrganizationPermissions(user, data)
-  //   : {
-  //       canEdit: false,
-  //       reason: 'Kan niet bewerken omdat de organisatie niet gevonden is',
-  //     };
-  // const actualCanEdit = canEdit && hasEditPermission;
 
   useEffect(() => {
     fetchUses();

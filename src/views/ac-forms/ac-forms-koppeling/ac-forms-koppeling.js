@@ -13,9 +13,6 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@src/constants';
 import _ from 'lodash';
-// LEGACY: ConKoppelingStepSoort component no longer used - type selection removed
-// Type is now determined via URL parameter (?type=eigen-organisatie or ?type=aanbieden-koppeling)
-// import ConKoppelingStepSoort from './components/con-koppeling-step-soort';
 import ConKoppelingStageZoeken from './components/con-koppeling-stage-zoeken';
 import ConKoppelingStageToevoegen from './components/con-koppeling-stage-toevoegen';
 import ConKoppelingStageControleren from './components/con-koppeling-stage-controleren';
@@ -1634,14 +1631,6 @@ const AcFormsKoppeling = ({ store }) => {
                   <ProcessSteps
                     steps={(() => {
                       const steps = [];
-
-                      // LEGACY: Step 1 (Soort koppeling) - Type selection removed, now comes from URL
-                      // {
-                      //   id: 'grp-soort',
-                      //   marker: 1,
-                      //   status: getStatus(currentStep, 0),
-                      //   title: 'Soort koppeling',
-                      // },
 
                       // Conditionally include Aanbieder step (only for aanbieden-koppeling)
                       if (koppelingsType === 'aanbieden-koppeling') {

@@ -105,10 +105,6 @@ export class AcSliderInputInstance {
     $tracker.addEventListener('touchmove', this.handleMouseMove, false);
     $tracker.addEventListener('touchend', this.handleMouseUp, false);
 
-    // $tracker.addEventListener('mousedown', this.handleMouseDown, false);
-    // $tracker.addEventListener('mousemove', this.handleMouseMove, false);
-    // $tracker.addEventListener('mouseup', this.handleMouseUp, false);
-
     this.number_of_options = len;
     this.calculateKnobPosition(
       AcIsSet(this.value) && !AcIsEmptyString(this.value) ? this.value : 3
@@ -133,10 +129,6 @@ export class AcSliderInputInstance {
         $tracker.removeEventListener('touchstart', this.handleMouseDown, false);
         $tracker.removeEventListener('touchmove', this.handleMouseMove, false);
         $tracker.removeEventListener('touchend', this.handleMouseUp, false);
-
-        // $tracker.removeEventListener('mousedown', this.handleMouseDown, false);
-        // $tracker.removeEventListener('mousemove', this.handleMouseMove, false);
-        // $tracker.removeEventListener('mouseup', this.handleMouseUp, false);
 
         resolve();
       });

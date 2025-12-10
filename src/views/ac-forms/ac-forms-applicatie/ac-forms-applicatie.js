@@ -213,8 +213,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     mapping.push(getAdjustedStepIndex(4)); // Referentiecomponenten
     mapping.push(getAdjustedStepIndex(5)); // Standaarden
     mapping.push(getAdjustedStepIndex(6)); // Koppelingen
-    // Diensten step temporarily disabled - keeping code for later re-enabling
-    // mapping.push(getAdjustedStepIndex(7)); // Diensten (was step 7, now skipped)
 
     // Main step 3: Controleren
     mapping.push(getAdjustedStepIndex(7)); // Was step 8, now step 7 (Diensten disabled)
@@ -1658,17 +1656,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
             searchModules={searchModules}
           />
         );
-      // Diensten step temporarily disabled - keeping code for later re-enabling
-      // case 7: (was Diensten, now used for Controleren below)
-      //   return (
-      //     <ConFormApplicatieDienstenStage
-      //       applicatie={applicatie}
-      //       dienstOptions={dienstOptions}
-      //       setApplicatieData={setApplicatieData}
-      //       dienstenFormState={dienstenFormState}
-      //       setDienstenFormState={setDienstenFormState}
-      //     />
-      //   );
       case 7: // Was case 8 (Controleren) - renumbered due to Diensten being disabled
         return (
           <ConFormApplicatieControlerenStage
@@ -1709,9 +1696,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         return 'Selecteer de standaarden voor uw applicatie';
       case 6:
         return 'Koppelingen met andere applicaties';
-      // Diensten step temporarily disabled - keeping code for later re-enabling
-      // case 7: (was Diensten, now used for Controleren below)
-      //   return 'Diensten';
       case 7: // Was case 8 (Controleren) - renumbered due to Diensten being disabled
         return 'Controleer uw gegevens';
       default:
@@ -2063,15 +2047,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
                                     ),
                                     title: 'Koppelingen',
                                   },
-                                  // Diensten step temporarily disabled - keeping code for later re-enabling
-                                  // {
-                                  //   id: 'diensten-substep',
-                                  //   status: getStatus(
-                                  //     currentStep,
-                                  //     getAdjustedStepIndex(7)
-                                  //   ),
-                                  //   title: 'Diensten',
-                                  // },
                                 ],
                               },
                               {

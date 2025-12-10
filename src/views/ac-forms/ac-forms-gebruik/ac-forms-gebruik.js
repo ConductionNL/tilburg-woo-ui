@@ -559,9 +559,6 @@ const AcFormsGebruik = ({ store }) => {
   const [contactpersoonOptions, setContactpersoonOptions] = useState([]);
   const [contactpersoonLoading, setContactpersoonLoading] = useState(false);
 
-  // Unsaved changes alert - commented out, modal no longer used
-  // const [showUnsavedChangesAlert, setShowUnsavedChangesAlert] = useState(false);
-
   // Flow management state
   const [applicatieKeuze, setApplicatieKeuze] = useState('bestaand'); // 'bestaand' or 'nieuw'
   const [leverancierKeuze, setLeverancierKeuze] = useState('bestaand'); // 'bestaand' or 'nieuw'

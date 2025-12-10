@@ -95,19 +95,6 @@ const AcPublication = observer(({ store: { publications } }) => {
     },
   ];
 
-  // useEffect(() => {
-  //   fetchPublication(id);
-  //   fetchAttachments(id);
-  //   return () => {
-  //     resetPublication();
-  //     resetAttachments();
-  //   };
-  // }, []);
-
-  // useEffect(() => {
-  //   document.title = get_single?.title || 'Gemeente | Publicatie';
-  // }, [get_single]);
-
   if (loading.status || !get_single || !attachments) {
     return <AcLoader />;
   }

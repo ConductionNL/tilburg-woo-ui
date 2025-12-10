@@ -51,30 +51,6 @@ const AcPublicationProduct = ({
     [schemaId]
   );
 
-  // COMMENTED OUT: Only show standard actions (Bewerken, Publiceren/Depubliceren, Verwijderen)
-  // const openDynamicCreate = useCallback(
-  //   (targetType, preSelected, metadata = {}) => {
-  //     // For publication pages, we'll navigate to the beheer page with modal open
-  //     // TODO: Handle outgoing relationship metadata in beheer page URL params
-  //     if (metadata.isOutgoing) {
-  //       // handle outgoing relationship metadata
-  //     }
-  //     navigate(`/beheer/${targetType}?showCreateModal=true&voorzieningId=${id}`);
-  //   },
-  //   [navigate, id]
-  // );
-
-  // const { makeActionsForContext } = useRelatedCreateActions({
-  //   object,
-  //   user,
-  //   schemaRef: schemaSlug,
-  //   currentType: schemaSlug, // Use schema slug as current type
-  //   openDynamicCreate,
-  //   currentObject: get_single, // Pass current object for organization permission checks
-  //   currentObjectRegister: 'voorzieningen', // Pass current object register (for publication pages)
-  //   currentObjectSchema: schemaSlug, // Pass current object schema
-  // });
-
   // Delete modal state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   // const [actionMenuItems, setActionMenuItems] = useState([]);
@@ -83,27 +59,6 @@ const AcPublicationProduct = ({
   const handleDelete = useCallback(() => {
     setShowDeleteModal(true);
   }, []);
-
-  // Generate action menu items - COMMENTED OUT: Only show standard actions
-  // useEffect(() => {
-  //   if (!schemaSlug || !id) return;
-
-  //   const items = makeActionsForContext(
-  //     id,
-  //     null,
-  //     get_single,
-  //     'voorzieningen',
-  //     schemaSlug
-  //   ).map(({ key, label, onClick, schema, icon }) => ({
-  //     key,
-  //     label,
-  //     onClick,
-  //     schema,
-  //     icon,
-  //   }));
-
-  //   setActionMenuItems(items);
-  // }, [schemaSlug, id, makeActionsForContext, get_single]);
 
   // Tabs
   const [uses, setUses] = useState([]);
@@ -270,16 +225,7 @@ const AcPublicationProduct = ({
                   const beheerUrl = `/beheer/${schemaSlug}/${id}?showEditModal=true`;
                   navigate(beheerUrl);
                 }}
-                // uniqueActions={[
-                //   {
-                //     key: 'delete',
-                //     label: 'Verwijderen',
-                //     icon: VISUALS.TRASHCAN,
-                //     onClick: handleDelete,
-                //   },
-                // ]}
                 triggerStyle='button'
-                // relatedActions={actionMenuItems}
               />
             )}
           </AcFlex>
