@@ -3077,24 +3077,6 @@ export class ObjectStore {
   };
 
   /**
-   * Convenience method for fetching VNG-GEMMA elements with cache-first strategy
-   * @param {string} gemmaType - Type of GEMMA element ('Referentiecomponent', 'standaard', etc.)
-   * @param {Object} [params={}] - Additional query parameters
-   * @returns {Array} Array of GEMMA elements
-   */
-  @action
-  fetchGemmaElementsCacheFirst = async (gemmaType, params = {}) => {
-    const queryParams = {
-      _limit: params._limit || 500,
-      _page: params._page || 1,
-      gemmaType: gemmaType,
-      ...params,
-    };
-
-    return this.fetchListCacheFirst('vng-gemma', 'element', queryParams);
-  };
-
-  /**
    * Convenience method for fetching modules with cache-first strategy
    * @param {Object} [params={}] - Additional query parameters
    * @returns {Array} Array of modules
@@ -3780,8 +3762,7 @@ export class ObjectStore {
       // Populate register cache with id -> slug mapping
       // Register data typically has id and slug properties from the API
       const registerId = registerData?.id || registerData?.['@self']?.id;
-      const registerSlugFromData =
-        registerData?.slug || registerSlug;
+      const registerSlugFromData = registerData?.slug || registerSlug;
 
       this.setRegister(registerSlugFromData, registerData);
 
@@ -3801,44 +3782,64 @@ export class ObjectStore {
   };
 
   /**
-   * Triggers backend cache loading for a specific register/schema combination
-   * @param {string} registerId - The register ID
-   * @param {string} schemaId - The schema ID
-   * @returns {boolean} True if cache loading was successful
+   * Loads backend cache for all core registers (voorzieningen and vng-gemma)
+   * This function should be called during user login to pre-warm the backend cache
+   * @returns {Object} Combined results from all register cache loads
    */
   @action
-  triggerBackendCacheLoad = async (registerId, schemaId) => {
-    try {
-      const endpoint = `/openregister/api/objects/${registerId}/${schemaId}`;
-      const params = {
-        _limit: 20, // Load first 20 items to properly warm backend cache
-        _page: 1,
-        '_extend[]': '@self.schema',
-      };
+  cacheLoad = async () => {
+    console.info(
+      '🚀 Starting backend cache loading for core registers:',
+      this.CORE_REGISTERS
+    );
 
-      console.info(`🔥 Triggering backend cache load for ${registerId}/${schemaId}`);
+    const startTime = Date.now();
+    const allResults = {
+      successful: [],
+      failed: [],
+      registers: {},
+    };
 
-      const response = await nextcloudApi.get(endpoint, {
-        params: this._constructQueryParams(params),
-      });
-
-      if (response.ok) {
-        console.info(`✅ Backend cache loaded for ${registerId}/${schemaId}`);
-        return true;
-      } else {
-        console.warn(
-          `⚠️ Failed to load backend cache for ${registerId}/${schemaId}:`,
-          response.status
-        );
-        return false;
+    // Load cache for all core registers in parallel
+    const registerPromises = this.CORE_REGISTERS.map(async (registerSlug) => {
+      try {
+        const result = await this.cacheLoadRegister(registerSlug);
+        allResults.registers[registerSlug] = result;
+        allResults.successful.push(...result.successful);
+        allResults.failed.push(...result.failed);
+        return { registerSlug, success: true, result };
+      } catch (error) {
+        const failedResult = { success: false, error: error.message, registerSlug };
+        allResults.registers[registerSlug] = failedResult;
+        allResults.failed.push(failedResult);
+        return { registerSlug, success: false, error: error.message };
       }
-    } catch (error) {
-      console.warn(
-        `⚠️ Error loading backend cache for ${registerId}/${schemaId}:`,
-        error.message
-      );
-      return false;
-    }
+    });
+
+    const registerResults = await Promise.allSettled(registerPromises);
+    const duration = Date.now() - startTime;
+
+    const stats = {
+      duration,
+      totalSuccessful: allResults.successful.length,
+      totalFailed: allResults.failed.length,
+      registersProcessed: registerResults.length,
+      registersSuccessful: registerResults.filter(
+        (r) => r.status === 'fulfilled' && r.value.success
+      ).length,
+    };
+
+    console.info(`🎉 Backend cache loading completed in ${duration}ms:`, stats);
+
+    // Mark initial cache warming as completed to prevent redundant calls
+    runInAction(() => {
+      this.initialCacheWarmingCompleted = true;
+    });
+
+    return {
+      ...allResults,
+      stats,
+    };
   };
 
   /**
@@ -3929,64 +3930,44 @@ export class ObjectStore {
   };
 
   /**
-   * Loads backend cache for all core registers (voorzieningen and vng-gemma)
-   * This function should be called during user login to pre-warm the backend cache
-   * @returns {Object} Combined results from all register cache loads
+   * Triggers backend cache loading for a specific register/schema combination
+   * @param {string} registerId - The register ID
+   * @param {string} schemaId - The schema ID
+   * @returns {boolean} True if cache loading was successful
    */
   @action
-  cacheLoad = async () => {
-    console.info(
-      '🚀 Starting backend cache loading for core registers:',
-      this.CORE_REGISTERS
-    );
+  triggerBackendCacheLoad = async (registerId, schemaId) => {
+    try {
+      const endpoint = `/openregister/api/objects/${registerId}/${schemaId}`;
+      const params = {
+        _limit: 20, // Load first 20 items to properly warm backend cache
+        _page: 1,
+        '_extend[]': '@self.schema',
+      };
 
-    const startTime = Date.now();
-    const allResults = {
-      successful: [],
-      failed: [],
-      registers: {},
-    };
+      console.info(`🔥 Triggering backend cache load for ${registerId}/${schemaId}`);
 
-    // Load cache for all core registers in parallel
-    const registerPromises = this.CORE_REGISTERS.map(async (registerSlug) => {
-      try {
-        const result = await this.cacheLoadRegister(registerSlug);
-        allResults.registers[registerSlug] = result;
-        allResults.successful.push(...result.successful);
-        allResults.failed.push(...result.failed);
-        return { registerSlug, success: true, result };
-      } catch (error) {
-        const failedResult = { success: false, error: error.message, registerSlug };
-        allResults.registers[registerSlug] = failedResult;
-        allResults.failed.push(failedResult);
-        return { registerSlug, success: false, error: error.message };
+      const response = await nextcloudApi.get(endpoint, {
+        params: this._constructQueryParams(params),
+      });
+
+      if (response.ok) {
+        console.info(`✅ Backend cache loaded for ${registerId}/${schemaId}`);
+        return true;
+      } else {
+        console.warn(
+          `⚠️ Failed to load backend cache for ${registerId}/${schemaId}:`,
+          response.status
+        );
+        return false;
       }
-    });
-
-    const registerResults = await Promise.allSettled(registerPromises);
-    const duration = Date.now() - startTime;
-
-    const stats = {
-      duration,
-      totalSuccessful: allResults.successful.length,
-      totalFailed: allResults.failed.length,
-      registersProcessed: registerResults.length,
-      registersSuccessful: registerResults.filter(
-        (r) => r.status === 'fulfilled' && r.value.success
-      ).length,
-    };
-
-    console.info(`🎉 Backend cache loading completed in ${duration}ms:`, stats);
-
-    // Mark initial cache warming as completed to prevent redundant calls
-    runInAction(() => {
-      this.initialCacheWarmingCompleted = true;
-    });
-
-    return {
-      ...allResults,
-      stats,
-    };
+    } catch (error) {
+      console.warn(
+        `⚠️ Error loading backend cache for ${registerId}/${schemaId}:`,
+        error.message
+      );
+      return false;
+    }
   };
 
   /**
