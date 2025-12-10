@@ -333,12 +333,29 @@ const AcPublicationProduct = ({
   const [usedLoading, setUsedLoading] = useState(false);
   const [tabIndex, setTabIndex] = useState(0);
 
-  // Extract contactpersoon from uses data instead of get_single
+  // Extract contactpersoon from get_single (extended) or fallback to uses data
   const contact = useMemo(() => {
+    // First, check if contactpersoon is extended in get_single
+    const contactpersoon = get_single?.contactpersoon;
+
+    if (contactpersoon) {
+      // If contactpersoon is an array of objects, use the first one
+      if (Array.isArray(contactpersoon) && contactpersoon.length > 0) {
+        const firstContact = contactpersoon[0];
+        // Check if it's an object (extended) or just a string (UUID)
+        if (typeof firstContact === 'object' && firstContact !== null) {
+          return firstContact;
+        }
+      }
+      // If contactpersoon is a single object (not array, not string UUID)
+      if (typeof contactpersoon === 'object' && !Array.isArray(contactpersoon)) {
+        return contactpersoon;
+      }
+    }
+
+    // Fallback: Find contactpersoon in uses array
     if (!uses?.length) return null;
 
-    // Find the first contactpersoon object in the uses array
-    // (if multiple contactpersonen exist, we take the first one)
     const contactpersoonObject = uses.find((use) => {
       const useSchemaId = use?.['@self']?.schema;
       const useSchemaSlug = useSchemaId ? schemaCache.get(useSchemaId) : null;
@@ -348,7 +365,7 @@ const AcPublicationProduct = ({
     if (!contactpersoonObject) return null;
 
     return contactpersoonObject;
-  }, [uses]);
+  }, [get_single?.contactpersoon, uses]);
 
   const moduleVersies = useMemo(() => {
     if (!used?.length) return null;
