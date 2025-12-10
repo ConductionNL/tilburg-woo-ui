@@ -75,8 +75,8 @@ jobs:
           fi
           
           # Check if assets have hash in filename
-          JS_FILES=$(find public_html/static/js -name "*.js" | head -3)
-          CSS_FILES=$(find public_html/static/css -name "*.css" | head -3)
+          JS_FILES=$(find public_html/static/js -name "*.js" 2>/dev/null | head -3 || true)
+          CSS_FILES=$(find public_html/static/css -name "*.css" 2>/dev/null | head -3 || true)
           
           echo "📦 Sample JS files with hashes:"
           echo "$JS_FILES"
