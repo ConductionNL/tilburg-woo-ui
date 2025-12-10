@@ -124,6 +124,7 @@ const ConFormsDienst = ({ store, userStore }) => {
   const [searchLoading, setSearchLoading] = useState(false);
   const [applicatiePreloadLoading, setApplicatiePreloadLoading] = useState(false);
   const [moduleOptions, setModuleOptions] = useState([]);
+  const moduleOptionsRef = useRef([]);
 
   const [koppelingOptions, setKoppelingOptions] = useState([]);
   const [selectedKoppelingIds, setSelectedKoppelingIds] = useState([]);
@@ -168,6 +169,55 @@ const ConFormsDienst = ({ store, userStore }) => {
         const prefilledKoppelingIds = Array.isArray(fetched.koppelingen)
           ? fetched.koppelingen.map((k) => mapId(k)).filter(Boolean)
           : [];
+
+        // Fetch missing modules from edit data and add to options
+        if (prefilledModuleIds.length > 0) {
+          const currentModuleOptions = moduleOptionsRef.current;
+          const existingModuleIds = new Set(
+            currentModuleOptions.map((opt) => opt.value)
+          );
+          const missingModuleIds = prefilledModuleIds.filter(
+            (id) => !existingModuleIds.has(id)
+          );
+
+          if (missingModuleIds.length > 0 && !cancelled) {
+            const moduleFetches = missingModuleIds.map((id) =>
+              store.object
+                .fetchObject('voorzieningen', 'module', String(id), {
+                  '_extend[]': ['@self.schema'],
+                  _published: 'false',
+                  _source: 'index',
+                })
+                .then(() => {
+                  if (cancelled) return null;
+                  return store.object.getObject('voorzieningen_module', String(id));
+                })
+                .catch(() => null)
+            );
+
+            const moduleResults = await Promise.allSettled(moduleFetches);
+            if (!cancelled) {
+              const newOptions = moduleResults
+                .map((result, index) => {
+                  if (result.status === 'fulfilled' && result.value) {
+                    return mapToOption(result.value, index);
+                  }
+                  return null;
+                })
+                .filter(Boolean);
+
+              if (newOptions.length > 0) {
+                setModuleOptions((prev) => {
+                  const existingValues = new Set(prev.map((opt) => opt.value));
+                  const uniqueNewOptions = newOptions.filter(
+                    (opt) => !existingValues.has(opt.value)
+                  );
+                  return [...prev, ...uniqueNewOptions];
+                });
+              }
+            }
+          }
+        }
 
         // Update main dienst object
         setDienst((prev) => ({
@@ -292,9 +342,35 @@ const ConFormsDienst = ({ store, userStore }) => {
       );
       const list = collection?.results || collection || [];
       const options = list.map(mapToOption);
-      setModuleOptions(options);
-      // Store as a flat list for backward compatibility
-      setProductToModulesLookup({ all: options });
+
+      // Merge with existing options to preserve search results and manually fetched modules
+      setModuleOptions((prevOptions) => {
+        const existingOptionsMap = new Map(
+          prevOptions.map((opt) => [opt.value, opt])
+        );
+        const newOptionsMap = new Map(options.map((opt) => [opt.value, opt]));
+
+        // Start with existing options
+        const mergedOptions = [...prevOptions];
+
+        // Add new options that don't already exist
+        newOptionsMap.forEach((newOpt, value) => {
+          if (!existingOptionsMap.has(value)) {
+            mergedOptions.push(newOpt);
+          } else {
+            // Update existing option with new data (in case it changed)
+            const index = mergedOptions.findIndex((opt) => opt.value === value);
+            if (index !== -1) {
+              mergedOptions[index] = newOpt;
+            }
+          }
+        });
+
+        // Store as a flat list for backward compatibility
+        setProductToModulesLookup({ all: mergedOptions });
+
+        return mergedOptions;
+      });
     } catch {
       setModuleOptions([]);
       setProductToModulesLookup({ all: [] });
@@ -302,6 +378,11 @@ const ConFormsDienst = ({ store, userStore }) => {
       setModulesLoading(false);
     }
   };
+
+  // Keep ref in sync with moduleOptions state
+  useEffect(() => {
+    moduleOptionsRef.current = moduleOptions;
+  }, [moduleOptions]);
 
   // Load modules on mount (step 0 is now Applicaties)
   useEffect(() => {
@@ -406,18 +487,26 @@ const ConFormsDienst = ({ store, userStore }) => {
         const list = collection?.results || collection || [];
         const options = list.map(mapToOption);
 
-        // Merge with existing options to preserve selected items
+        // Add search results to existing options (don't replace, merge)
         setModuleOptions((prevOptions) => {
+          const existingOptionsMap = new Map(
+            prevOptions.map((opt) => [opt.value, opt])
+          );
           const newOptionsMap = new Map(options.map((opt) => [opt.value, opt]));
 
-          // Combine existing and new options, preferring new data for existing items
-          const mergedOptions = [...newOptionsMap.values()];
+          // Start with existing options
+          const mergedOptions = [...prevOptions];
 
-          // Add any existing options that aren't in the new results
-          // This preserves previously selected items that might not match the current search
-          prevOptions.forEach((opt) => {
-            if (!newOptionsMap.has(opt.value)) {
-              mergedOptions.push(opt);
+          // Add new search results that don't already exist
+          newOptionsMap.forEach((newOpt, value) => {
+            if (!existingOptionsMap.has(value)) {
+              mergedOptions.push(newOpt);
+            } else {
+              // Update existing option with new data (in case it changed)
+              const index = mergedOptions.findIndex((opt) => opt.value === value);
+              if (index !== -1) {
+                mergedOptions[index] = newOpt;
+              }
             }
           });
 
