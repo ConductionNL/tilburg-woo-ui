@@ -75,8 +75,8 @@ jobs:
           fi
           
           # Check if assets have hash in filename
-          JS_FILES=$(find public_html/static/js -name "*.js" 2>/dev/null | head -3 || true)
-          CSS_FILES=$(find public_html/static/css -name "*.css" 2>/dev/null | head -3 || true)
+          JS_FILES=$(find public_html/static/js -name "*.js" | head -3)
+          CSS_FILES=$(find public_html/static/css -name "*.css" | head -3)
           
           echo "📦 Sample JS files with hashes:"
           echo "$JS_FILES"
@@ -84,14 +84,14 @@ jobs:
           echo "$CSS_FILES"
           
           # Verify hash pattern exists
-          if echo "$JS_FILES" | grep -E '\.[a-f0-9]{8,13}\.js$'; then
+          if echo "$JS_FILES" | grep -E '\.[a-f0-9]{8,13}\.(chunk\.)?js$'; then
             echo "✅ JavaScript files have proper hash-based cache busting"
           else
             echo "❌ JavaScript files missing hash-based cache busting"
             exit 1
           fi
           
-          if echo "$CSS_FILES" | grep -E '\.[a-f0-9]{8,13}\.css$'; then
+          if echo "$CSS_FILES" | grep -E '\.[a-f0-9]{8,13}\.(chunk\.)?css$'; then
             echo "✅ CSS files have proper hash-based cache busting"
           else
             echo "❌ CSS files missing hash-based cache busting"  
