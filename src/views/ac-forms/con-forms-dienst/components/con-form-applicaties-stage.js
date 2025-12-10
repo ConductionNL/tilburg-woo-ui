@@ -8,12 +8,6 @@ import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
  */
 const ConFormApplicatiesStage = memo(
   ({
-    // Product-related props commented out
-    // productToModulesLookup,
-    // selectedProductIds,
-    // selectedProductOptions,
-    // productOptions,
-    // productLabels,
     selectedModuleIds,
     setSelectedModuleIds,
     loadingModules,
