@@ -1684,7 +1684,7 @@ const AcFormsGebruik = ({ store }) => {
 
     switch (logicalStep) {
       case -1:
-        return 'Aanbieder';
+        return 'Afnemer';
       case 0:
         return 'Applicatie';
       case 1:

@@ -77,7 +77,7 @@ const ConOrganisatieDetailsPage = ({ store }) => {
     if (!config || !id) return;
     const extendParams = Array.isArray(config.extend) ? config.extend : [];
     object.fetchObject(config.registerSlug, config.schemaSlug, id, {
-      '_extend[]': ['@self.schema', ...extendParams],
+      '_extend[]': [...extendParams],
       _related: true,
       _relatedNames: true,
       _published: 'false',
@@ -148,7 +148,7 @@ const ConOrganisatieDetailsPage = ({ store }) => {
                       ? config.extend
                       : [];
                     object.fetchObject(registerSlug, schemaSlug, id, {
-                      '_extend[]': ['@self.schema', ...extendParams],
+                      '_extend[]': [...extendParams],
                       _related: true,
                       _relatedNames: true,
                       _published: 'false',
@@ -180,7 +180,7 @@ const ConOrganisatieDetailsPage = ({ store }) => {
           }
           const extendParams = Array.isArray(config.extend) ? config.extend : [];
           return object.fetchObject(registerSlug, schemaSlug, id, {
-            '_extend[]': ['@self.schema', ...extendParams],
+            '_extend[]': [...extendParams],
             _published: 'false',
           });
         },

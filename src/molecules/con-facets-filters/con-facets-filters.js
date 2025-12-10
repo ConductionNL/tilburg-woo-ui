@@ -472,7 +472,9 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
                           {_value.buckets.length})
                         </Heading>
                       }
-                      defaultOpen={_value.toggle ?? true}
+                      defaultOpen={
+                        _value.buckets.length > 7 ? false : _value.toggle ?? true
+                      }
                     >
                       {ensureActiveBucketsIncluded(
                         _value.buckets,
@@ -536,7 +538,7 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
                   {value.title || _.upperFirst(key)} ({value.buckets.length})
                 </Heading>
               }
-              defaultOpen={value.toggle ?? true}
+              defaultOpen={value.buckets.length > 7 ? false : value.toggle ?? true}
             >
               {value.buckets && value.buckets.length > 0 ? (
                 ensureActiveBucketsIncluded(

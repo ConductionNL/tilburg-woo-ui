@@ -653,6 +653,10 @@ const ConMyOrganisationPage = ({ store }) => {
                       id={fullActiveOrganisation?.id}
                       uses={uses}
                       used={used}
+                      gebruikId={fullActiveOrganisation?.id}
+                      gebruikSchemaId={
+                        fullActiveOrganisation?.['@self']?.schema
+                      }
                       usesLoading={usesLoading}
                       usedLoading={usedLoading}
                       tabIndex={relatedTabIndex}
