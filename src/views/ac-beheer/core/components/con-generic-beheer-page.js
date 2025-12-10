@@ -124,6 +124,34 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     return object.getSchemaType(config.schemaSlug);
   }, [config, object]);
 
+  /* @TODO:
+  This code is essentially a massive hack
+  a collection is a MobX observed object
+  and when editing in-place updates are made
+  which are tracked by MobX, but not React reactivity
+  so a hacky piece of code called object.COLLECTION_CHANGE_KEY is made, which changes when a in-place update is made
+  triggering the useMemo to re-run and re-render the component.
+
+  the reason we cannot remove useMemo was because it also needs to track React reactivity.
+
+  However it turns out that `observer` CAN track React reactivity.
+  So we need to create a TableContainer component with `observer`,
+  put the table inside it, alongside the collection fetching, filtering and pagination (not in a useMemo).
+  You can use useMemo for fuse to improve performance.
+  ```
+  const fuse = useMemo(
+    () => new Fuse(data, fuseOptions),
+    [data]
+  )
+  ```
+  and then
+  ```
+  const filtered = searchQuery
+    ? fuse.search(searchQuery).map(r => r.item)
+    : data
+  ```
+  */
+
   // Get reactive data from object store (read directly to enable MobX tracking)
   // This reads all pre-fetched data from warmup (up to 10,000 items)
   const allData = useMemo(
