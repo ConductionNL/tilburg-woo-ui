@@ -229,24 +229,12 @@ const AcPublicationFormulier = ({ store: { publications, user } }) => {
             <AcTable rows={AcGetAdditionalInfoRow(get_single, getSearchPageURL)} />
           </div>
           <div className='ac-publication-three-column'>
-            {/* <div>
-              <Heading2>Applicatie</Heading2>
-              <div className='ac-publication-three-column-item'>
-                <span>Geen applicatie beschikbaar</span>
-              </div>
-            </div> */}
             <div>
               <Heading2>Organisatie</Heading2>
               <div className='ac-publication-three-column-item'>
                 <span>Geen organisatie beschikbaar</span>
               </div>
             </div>
-            {/* <div>
-              <Heading2>Beoordeling</Heading2>
-              <div className='ac-publication-three-column-item'>
-                <span>Geen beoordeling beschikbaar</span>
-              </div>
-            </div> */}
           </div>
           <AcTabs selectedIndex={tabIndex} onSelect={(index) => setTabIndex(index)}>
             <AcTabList>

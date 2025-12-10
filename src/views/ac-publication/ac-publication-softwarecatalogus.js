@@ -208,12 +208,6 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications, user, object } 
           </div>
 
           <div className='ac-publication-three-column'>
-            {/* <div>
-              <Heading2 className='ac-publication-three-column-item-heading'>Applicatie</Heading2>
-              <div className='ac-publication-three-column-item'>
-                <span>Geen applicatie beschikbaar</span>
-              </div>
-            </div> */}
             <div>
               <Heading2 className='ac-publication-three-column-item-heading'>
                 Organisatie
@@ -246,12 +240,6 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications, user, object } 
                 </div>
               )}
             </div>
-            {/* <div>
-              <Heading2 className='ac-publication-three-column-item-heading'>Beoordeling</Heading2>
-              <div className='ac-publication-three-column-item'>
-                <span>Geen beoordeling beschikbaar</span>
-              </div>
-            </div> */}
           </div>
 
           {uniquePublicationTypes && uniquePublicationTypes.length > 0 && (

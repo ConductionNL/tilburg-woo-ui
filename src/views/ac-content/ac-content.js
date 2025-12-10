@@ -44,8 +44,6 @@ const AcContent = ({ store: { pages, user } }) => {
     <AcContainer compact>
       <Heading level={1}>{get_single?.name}</Heading>
       <AcSectionsHandler contents={get_single?.contents} />
-      {/* TODO: needs to be fixed to NOT rely on AcAuthentication */}
-      {/* {get_single?.slug === 'login' ? <AcAuthentication /> : <></>} */}
     </AcContainer>
   );
 };

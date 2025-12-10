@@ -369,23 +369,6 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
                       </div>
                     </div>
                   )}
-
-                {/* {Array.isArray(get_single?.modules) &&
-                  get_single.modules.length > 0 && (
-                    <div style={{ marginBottom: '8px' }}>
-                      <strong>Modules: </strong>
-                      <div>
-                        {get_single.modules.map((mid, idx) => {
-                          const moduleId = typeof mid === 'object' ? mid.id : mid;
-                          return (
-                            <div key={`${moduleId}-${idx}`}>
-                              <ConUuidResolver>{String(moduleId)}</ConUuidResolver>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )} */}
               </div>
             </div>
           </>

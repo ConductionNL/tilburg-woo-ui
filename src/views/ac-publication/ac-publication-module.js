@@ -687,16 +687,6 @@ const AcPublicationProduct = ({
                   </div>
                 )}
             </AcFlex>
-
-            {/* <TabList
-              referentieComponenten={get_single.referentieComponenten}
-              complianceStandards={get_single.compliancy}
-              objectStore={object}
-              standards={standards}
-              standardsLoading={standardsLoading}
-              referentieComponentenWithStandards={referentieComponentenWithStandards}
-              className='con-product-details--content-side'
-            /> */}
           </AcFlex>
         </AcFlex>
       </AcFlex>

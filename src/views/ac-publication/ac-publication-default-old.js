@@ -305,12 +305,6 @@ const AcPublication = observer(({ store: { publications } }) => {
           </AcFlex>
 
           <div className='ac-publication-three-column'>
-            {/* <div>
-              <Heading2 className='ac-publication-three-column-item-heading'>Applicatie</Heading2>
-              <div className='ac-publication-three-column-item'>
-                <span>Geen applicatie beschikbaar</span>
-              </div>
-            </div> */}
             <div>
               <Heading2 className='ac-publication-three-column-item-heading'>
                 Organisatie
@@ -343,12 +337,6 @@ const AcPublication = observer(({ store: { publications } }) => {
                 </div>
               )}
             </div>
-            {/* <div>
-              <Heading2 className='ac-publication-three-column-item-heading'>Beoordeling</Heading2>
-              <div className='ac-publication-three-column-item'>
-                <span>Geen beoordeling beschikbaar</span>
-              </div>
-            </div> */}
           </div>
           <SecondaryActionButton style='button' onClick={openDialog}>
             <VISUALS.SHARE />

@@ -146,22 +146,6 @@ const ConDienstDetailsPageContent = ({
                   Bewerken
                 </ConActionMenu.Button>
 
-                {/* Inline editors toggles prepared for future enablement */}
-                {/* <ConActionMenu.Button
-                  icon={<VISUALS.PENCIL />}
-                  onClick={() => setEditingSummary(true)}
-                  disabled={!actualCanEdit}
-                >
-                  Bewerk samenvatting
-                </ConActionMenu.Button> */}
-                {/* <ConActionMenu.Button
-                  icon={<VISUALS.PENCIL />}
-                  onClick={() => setEditingDescription(true)}
-                  disabled={!actualCanEdit}
-                >
-                  Bewerk beschrijving
-                </ConActionMenu.Button> */}
-
                 {data && !data['@self']?.published && (
                   <ConActionMenu.Button
                     icon={<VISUALS.PUBLISH />}
