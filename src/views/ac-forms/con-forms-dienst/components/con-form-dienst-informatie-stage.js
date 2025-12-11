@@ -83,15 +83,15 @@ const ConFormDienstInformatieStage = memo(
           <br />
           {dienstType === 'eigen-organisatie' ? (
             <>
-              U gaat een dienst registreren voor uw eigen organisatie.
-              In de volgende stappen vult u de basisgegevens in en selecteert u
-              relevante applicaties.
+              U gaat een dienst registreren voor uw eigen organisatie. In de volgende
+              stappen vult u de basisgegevens in en selecteert u relevante
+              applicaties.
             </>
           ) : dienstType === 'andere-organisatie' ? (
             <>
-              U gaat een dienst registreren voor een andere organisatie.
-              In de volgende stappen vult u de basisgegevens in en selecteert u
-              relevante applicaties.
+              U gaat een dienst registreren voor een andere organisatie. In de
+              volgende stappen vult u de basisgegevens in en selecteert u relevante
+              applicaties.
             </>
           ) : (
             <>
@@ -218,13 +218,23 @@ const ConFormDienstInformatieStage = memo(
             <ConSchemaEnhancedField
               schemaType='dienst'
               schemaProperty='type'
-              value={dienst.type || ''}
-              onChange={(value) => setDienstData('type', value)}
+              value={
+                Array.isArray(dienst.type)
+                  ? dienst.type
+                  : dienst.type
+                  ? [dienst.type]
+                  : []
+              }
+              onChange={(value) =>
+                setDienstData('type', Array.isArray(value) ? value : [])
+              }
               isDisabled={loading}
               width='half'
               schemas={schemas}
               customProps={{
                 additionalQueryParams: { _published: 'false' },
+                isMulti: true,
+                closeMenuOnSelect: false,
               }}
             />
           </div>
