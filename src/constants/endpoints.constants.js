@@ -18,7 +18,7 @@ export const ENDPOINTS = AcLockObject({
   },
   PUBLICATIONS: {
     SEARCH: `/opencatalogi/api/publications`, // GET
-    SINGLE: (_id) => `/opencatalogi/api/publications/${_id}?_extend[]=themes`, // GET
+    SINGLE: (_id) => `/opencatalogi/api/publications/${_id}?_extend[]=themes&_extend[]=contactpersoon`, // GET
     RELATIONS: (_uri) =>
       `/opencatalogi/api/publications?_extend[]=publicationType&_extend[]=catalog&_relations=${_uri}`, // GET
     ATTACHMENTS: (_id) => `/opencatalogi/api/publications/${_id}/attachments`, // GET
