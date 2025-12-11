@@ -269,7 +269,7 @@ export class AuthStore {
       resolve();
 
       // clear collections on logout for cleanup
-      // also allows the user to re-fetch the data again on login
+      // also allows the warmup process to re-fetch the data again on login
       app.store.object.clearCollections();
     });
   };
