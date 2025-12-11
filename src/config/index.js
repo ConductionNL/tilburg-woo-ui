@@ -56,11 +56,6 @@ export const commongroundApiUrl = () => {
   return containerConfig.getCommongroundApiUrl();
 };
 
-// const _api_ = process.env.API_URL;
-// const _api_ = apiUrl();
-// const _api_commonground_ = process.env.API_URL_COMMONGROUND;
-// const _api_commonground_ = commongroundApiUrl();
-
 const _api_commonground_headers_ = {
   'Content-Type': 'application/json',
   Accept: 'application/json',

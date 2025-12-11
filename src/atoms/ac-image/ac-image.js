@@ -1,8 +1,4 @@
 const AcImage = ({
-  // file_name,
-  // id,
-  // mime_type,
-  // name,
   srcset,
   url,
 }) => {

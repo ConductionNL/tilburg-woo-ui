@@ -289,12 +289,6 @@ const ConFormApplicatieKoppelingenStage = memo(
       ),
     ]);
 
-    // // Handle opening applicatie form in new tab
-    // const handleOpenApplicatieForm = () => {
-    //   const applicatieFormUrl = `${window.location.origin}${PATHS.FORMS_APPLICATIE}?type=ontbrekend-applicatie`;
-    //   window.open(applicatieFormUrl, '_blank', 'noopener,noreferrer');
-    // };
-
     return (
       <div>
         <h2 id='koppelingen-section-title' className='sr-only'>

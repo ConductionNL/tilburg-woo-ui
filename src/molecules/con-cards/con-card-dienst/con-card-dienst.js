@@ -64,13 +64,6 @@ const ConCardDienst = ({
             <Paragraph small>(Aangeboden door {resolvedAanbieder})</Paragraph>
           )}
         </AcFlex>
-        {/* Turned off for now */}
-        {/* {updated && (
-          <Paragraph className='organisation-card__updated'>
-            Laatst bijgewerkt:{' '}
-            {acFormatDate(updated, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
-          </Paragraph>
-        )} */}
       </AcFlex>
       <Paragraph>{extractSummary(summary)}</Paragraph>
       <AcFlex justifyContent='between' className='meta'>

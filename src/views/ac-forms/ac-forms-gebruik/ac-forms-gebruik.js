@@ -559,9 +559,6 @@ const AcFormsGebruik = ({ store }) => {
   const [contactpersoonOptions, setContactpersoonOptions] = useState([]);
   const [contactpersoonLoading, setContactpersoonLoading] = useState(false);
 
-  // Unsaved changes alert - commented out, modal no longer used
-  // const [showUnsavedChangesAlert, setShowUnsavedChangesAlert] = useState(false);
-
   // Flow management state
   const [applicatieKeuze, setApplicatieKeuze] = useState('bestaand'); // 'bestaand' or 'nieuw'
   const [leverancierKeuze, setLeverancierKeuze] = useState('bestaand'); // 'bestaand' or 'nieuw'
@@ -1964,13 +1961,6 @@ const AcFormsGebruik = ({ store }) => {
   const capitalizedSchema = _.capitalize(wizardSchema);
   const editModeTitle = `${capitalizedSchema} updaten`;
 
-  // Commented out - wizardType no longer used (was used in commented modal)
-  // const wizardType = isEditMode
-  //   ? 'update'
-  //   : gebruikType === 'andere-organisatie'
-  //   ? 'toevoegen'
-  //   : 'registratie';
-
   return (
     <AcSection spacing>
       <AcContainer>
@@ -2452,26 +2442,6 @@ const AcFormsGebruik = ({ store }) => {
           )}
         </AcColumn>
       </AcContainer>
-
-      {/* Commented out - modal no longer used, button now switches internal state */}
-      {/* <ConUnsavedChangesAlertModal
-        key='unsaved-changes-alert-modal'
-        showModal={showUnsavedChangesAlert}
-        onClose={() => setShowUnsavedChangesAlert(false)}
-        onConfirm={() => {
-          const currentUrl = `${window.location.pathname}${window.location.search}`;
-          const encodedRedirect = encodeURIComponent(currentUrl);
-          navigate(
-            `/forms/applicatie?type=ontbrekend-applicatie&redirect=${encodedRedirect}`
-          );
-        }}
-        title='Waarschuwing'
-        message={`Je staat op het punt om de gebruik ${wizardType} wizard te verlaten om een applicatie aan te maken. Na het aanmaken van de applicatie word je teruggeleid naar dit formulier. Al je huidige wijzigingen zullen niet worden opgeslagen.`}
-        confirmLabel='Verlaten'
-        cancelLabel='Blijven'
-        confirmIcon={<VISUALS.ARROW_RIGHT />}
-        cancelIcon={<VISUALS.ARROW_LEFT />}
-      /> */}
     </AcSection>
   );
 };

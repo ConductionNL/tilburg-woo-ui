@@ -7,12 +7,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { AcContainer, AcFlex } from '@atoms';
 import { AcLoader, ConDetailsActionsMenu, ConUuidResolver } from '@components';
 import { withStore } from '@stores';
-// import { VISUALS } from '@constants';
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
 import { schemaCache } from '@services/schemaCache.service';
-// import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
-// import { checkOrganizationPermissions } from '@utils/organization-permissions';
 
 // Markdown Editor
 import remarkDefinitionList, { defListHastHandlers } from 'remark-definition-list';
@@ -48,31 +45,6 @@ const AcPublicationModuleVersie = ({ store: { publications, user, object } }) =>
     [schemaId]
   );
 
-  // COMMENTED OUT: Only show standard actions (Bewerken, Publiceren/Depubliceren, Verwijderen)
-  // const openDynamicCreate = useCallback(
-  //   (targetType, preSelected, metadata = {}) => {
-  //     // For publication pages, we'll navigate to the beheer page with modal open
-  //     if (metadata.isOutgoing) {
-  //       // handle outgoing relationship metadata
-  //     }
-  //     navigate(`/beheer/${targetType}?showCreateModal=true&moduleVersieId=${id}`);
-  //   },
-  //   [navigate, id]
-  // );
-
-  // Exclude specific schemas from actions
-  // const excludeSchemas = useMemo(() => ['gebruik', 'module'], []);
-
-  // const { makeActionsForContext } = useRelatedCreateActions({
-  //   object,
-  //   user,
-  //   schemaRef: schemaSlug,
-  //   currentType: schemaSlug,
-  //   openDynamicCreate,
-  //   currentObject: get_single,
-  //   excludeSchemas,
-  // });
-
   // Delete modal state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   // const [actionMenuItems, setActionMenuItems] = useState([]);
@@ -81,27 +53,6 @@ const AcPublicationModuleVersie = ({ store: { publications, user, object } }) =>
   const handleDelete = useCallback(() => {
     setShowDeleteModal(true);
   }, []);
-
-  // Generate action menu items - COMMENTED OUT: Only show standard actions
-  // useEffect(() => {
-  //   if (!schemaSlug || !id) return;
-
-  //   const items = makeActionsForContext(
-  //     id,
-  //     null,
-  //     get_single,
-  //     'voorzieningen',
-  //     schemaSlug
-  //   ).map(({ key, label, onClick, schema, icon }) => ({
-  //     key,
-  //     label,
-  //     onClick,
-  //     schema,
-  //     icon,
-  //   }));
-
-  //   setActionMenuItems(items);
-  // }, [schemaSlug, id, makeActionsForContext, get_single]);
 
   // Tabs
   const [uses, setUses] = useState([]);
@@ -267,16 +218,7 @@ const AcPublicationModuleVersie = ({ store: { publications, user, object } }) =>
                 const beheerUrl = `/beheer/${schemaSlug}/${id}?showEditModal=true`;
                 navigate(beheerUrl);
               }}
-              // uniqueActions={[
-              //   {
-              //     key: 'delete',
-              //     label: 'Verwijderen',
-              //     icon: VISUALS.TRASHCAN,
-              //     onClick: handleDelete,
-              //   },
-              // ]}
               triggerStyle='button'
-              // relatedActions={actionMenuItems}
             />
           </AcFlex>
         </AcFlex>

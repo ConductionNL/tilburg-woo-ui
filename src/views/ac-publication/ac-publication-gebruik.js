@@ -50,65 +50,6 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
   // Resolved names state for referentiecomponenten (needed for sorting and GEMMA links)
   const [sortedReferentiecomponenten, setSortedReferentiecomponenten] = useState([]);
 
-  // COMMENTED OUT: Only show standard actions (Bewerken, Publiceren/Depubliceren, Verwijderen)
-  // Related create actions (wizard-aware) like module/product pages
-  // const openDynamicCreate = useCallback(
-  //   (targetType, preSelected, metadata = {}) => {
-  //     if (metadata.isOutgoing) {
-  //       // reserved for future use
-  //     }
-  //     navigate(`/beheer/${targetType}?showCreateModal=true&voorzieningId=${id}`);
-  //   },
-  //   [navigate, id]
-  // );
-
-  // Exclude specific schemas from actions
-  // const excludeSchemas = useMemo(
-  //   () => [
-  //     'contract',
-  //     'beoordeeling',
-  //     'moduleversie',
-  //     'module',
-  //     'contactpersoon',
-  //     'organisatie',
-  //     'koppeling',
-  //     'element',
-  //     'dienst',
-  //   ],
-  //   []
-  // );
-
-  // const { makeActionsForContext } = useRelatedCreateActions({
-  //   object,
-  //   user,
-  //   schemaRef: schemaSlug,
-  //   currentType: schemaSlug,
-  //   openDynamicCreate,
-  //   currentObject: get_single,
-  //   excludeSchemas,
-  // });
-
-  // const [actionMenuItems, setActionMenuItems] = useState([]);
-
-  // Generate action menu items - COMMENTED OUT: Only show standard actions
-  // useEffect(() => {
-  //   if (!schemaSlug || !id) return;
-  //   const items = makeActionsForContext(
-  //     id,
-  //     null,
-  //     get_single,
-  //     'voorzieningen',
-  //     schemaSlug
-  //   ).map(({ key, label, onClick, schema, icon }) => ({
-  //     key,
-  //     label,
-  //     onClick,
-  //     schema,
-  //     icon,
-  //   }));
-  //   setActionMenuItems(items);
-  // }, [schemaSlug, id, makeActionsForContext, get_single]);
-
   const fetchUses = useCallback(async () => {
     if (!id) return;
     setUsesLoading(true);
@@ -233,16 +174,7 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
               const beheerUrl = `/beheer/${schemaSlug}/${id}?showEditModal=true`;
               navigate(beheerUrl);
             }}
-            // uniqueActions={[
-            //   {
-            //     key: 'delete',
-            //     label: 'Verwijderen',
-            //     icon: VISUALS.TRASHCAN,
-            //     onClick: handleDelete,
-            //   },
-            // ]}
             triggerStyle='button'
-            // relatedActions={actionMenuItems}
           />
         </AcFlex>
 

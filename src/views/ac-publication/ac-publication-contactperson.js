@@ -250,16 +250,7 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
                     const beheerUrl = `/beheer/${schemaSlug}/${id}?showEditModal=true`;
                     navigate(beheerUrl);
                   }}
-                  // uniqueActions={[
-                  //   {
-                  //     key: 'delete',
-                  //     label: 'Verwijderen',
-                  //     icon: VISUALS.TRASHCAN,
-                  //     onClick: handleDelete,
-                  //   },
-                  // ]}
                   triggerStyle='button'
-                  // relatedActions={actionMenuItems}
                 />
             </AcFlex>
           </AcFlex>

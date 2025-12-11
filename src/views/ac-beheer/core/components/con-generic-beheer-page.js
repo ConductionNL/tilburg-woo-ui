@@ -1003,18 +1003,6 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
           .filter(Boolean);
       })();
 
-      // Map related schemas user can create → dynamic create actions
-      // Only include if not explicitly disabled in config
-      // const dynamicCreateActions = config.disableRelatedCreateActions
-      //   ? []
-      //   : makeActionsForContext(
-      //       row.id,
-      //       config.dynamicActionFilter,
-      //       row,
-      //       config.registerSlug,
-      //       config.schemaSlug
-      //     );
-
       const deleteAction = {
         key: 'delete',
         label: 'Verwijderen',
@@ -1351,10 +1339,6 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
             ref={tableRef}
             truncateLines={3}
             showSortButtons
-            // LEGACY: Old field-specific search (commented out)
-            // onHeaderSearch={fetchData}
-            // dataProperties={dataProperties}
-            // showSearch={showSearch}
             loading={loading || schemaLoading || warmupLoading}
             // Names resolution props
             objectStore={object}

@@ -113,26 +113,6 @@ const ConKoppelingStageZoeken = ({
         </div>
       </div>
 
-      {/*
-        <div>
-          <AcButton style='button' onClick={handleSearch} disabled={loading}>
-            Zoeken
-          </AcButton>
-        </div>
-      */}
-
-      {/*
-        <AcFlex column style={{ gridColumn: 'span 2' }}>
-          <label className='utrecht-form-label'>Zoek op applicatienaam</label>
-          <Textbox
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e?.target?.value || '')}
-            placeholder='Bijv. OpenWoo'
-            id='koppeling-zoek-input'
-          />
-        </AcFlex>
-      */}
-
       <div style={{ marginTop: '1rem' }}>
         <h3 className='utrecht-heading-4' style={{ marginBottom: '0.5rem' }}>
           {isEditMode
