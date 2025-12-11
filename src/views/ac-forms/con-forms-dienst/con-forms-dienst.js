@@ -77,7 +77,7 @@ const ConFormsDienst = ({ store, userStore }) => {
     logo: '',
     contactpersoon: null,
     aanbieder: '',
-    type: '',
+    type: [],
     producten: [],
     modules: [],
     koppelingen: [],
@@ -219,6 +219,13 @@ const ConFormsDienst = ({ store, userStore }) => {
           }
         }
 
+        // Convert type to array if it comes as a string (for backward compatibility)
+        const prefilledType = Array.isArray(fetched.type)
+          ? fetched.type
+          : fetched.type
+          ? [fetched.type]
+          : [];
+
         // Update main dienst object
         setDienst((prev) => ({
           ...prev,
@@ -229,7 +236,7 @@ const ConFormsDienst = ({ store, userStore }) => {
           logo: fetched.logo || '',
           contactpersoon: fetched.contactpersoon || null,
           aanbieder: fetched.aanbieder || '',
-          type: fetched.type || '',
+          type: prefilledType,
           producten: [], // Producten prefill commented out
           modules: prefilledModuleIds,
           koppelingen: prefilledKoppelingIds,
@@ -811,7 +818,8 @@ const ConFormsDienst = ({ store, userStore }) => {
       const naamRequired = isSchemaFieldRequired('dienst', 'naam');
       const websiteRequired = isSchemaFieldRequired('dienst', 'website');
       const soortRequired = isSchemaFieldRequired('dienst', 'type');
-      const missingSoort = soortRequired && (!dienst.type || !dienst.type.trim());
+      const missingSoort =
+        soortRequired && (!Array.isArray(dienst.type) || dienst.type.length === 0);
 
       const missingNaam = naamRequired && (!dienst.naam || !dienst.naam.trim());
       const missingWebsite =
@@ -874,7 +882,10 @@ const ConFormsDienst = ({ store, userStore }) => {
       if (naamRequired && (!dienst.naam || !dienst.naam.trim())) {
         messages.push('Dienstnaam is verplicht');
       }
-      if (soortRequired && (!dienst.type || !dienst.type.trim())) {
+      if (
+        soortRequired &&
+        (!Array.isArray(dienst.type) || dienst.type.length === 0)
+      ) {
         messages.push('Soort dienst is verplicht');
       }
       if (websiteRequired && (!dienst.website || !dienst.website.trim())) {
@@ -1058,7 +1069,7 @@ const ConFormsDienst = ({ store, userStore }) => {
                       logo: '',
                       contactpersoon: null,
                       aanbieder: '',
-                      type: '',
+                      type: [],
                       producten: [],
                       modules: [],
                       koppelingen: [],

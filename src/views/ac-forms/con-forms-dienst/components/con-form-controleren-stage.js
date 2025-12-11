@@ -145,8 +145,18 @@ const ConFormControlerenStage = memo(
             <div className='ac-register-review__field'>
               <strong>Type:</strong>{' '}
               <span>
-                {dienst.type ? (
-                  <ConUuidResolver>{dienst.type}</ConUuidResolver>
+                {Array.isArray(dienst.type) && dienst.type.length > 0 ? (
+                  <span>
+                    {dienst.type.map((typeId, index) => (
+                      <React.Fragment key={index}>
+                        <ConUuidResolver>{String(typeId)}</ConUuidResolver>
+                        {index < dienst.type.length - 1 ? ', ' : ''}
+                      </React.Fragment>
+                    ))}
+                  </span>
+                ) : dienst.type && !Array.isArray(dienst.type) ? (
+                  // Backward compatibility: handle string type
+                  <ConUuidResolver>{String(dienst.type)}</ConUuidResolver>
                 ) : (
                   '-'
                 )}
