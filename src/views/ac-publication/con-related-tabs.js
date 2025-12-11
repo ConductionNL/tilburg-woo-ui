@@ -20,6 +20,7 @@ import {
   ConCardModuleVersie,
 } from '@molecules/con-cards';
 import { commongroundApiUrl } from '@src/config';
+import { schemaCache } from '@services/schemaCache.service';
 
 // Helper function to define the desired tab order
 const getTabOrder = (schemaSlug) => {
@@ -33,9 +34,21 @@ const getTabOrder = (schemaSlug) => {
   return order[schemaSlug] || 999; // Other relations get a high number to appear last
 };
 
+// Helper function to get schema slug - handles backend bug where schema might be extended
+// Only use for comparisons or display purposes
+const getSchemaSlug = (item) => {
+  // Check if schema is extended (backend bug workaround)
+  if (item?.['@self']?.schema?.slug) {
+    return item['@self'].schema.slug;
+  }
+  // Otherwise use schema cache
+  const schemaId = item?.['@self']?.schema;
+  return schemaId ? schemaCache.get(schemaId) : null;
+};
+
 // Helper function to render a card based on schema type
 const renderCard = (item, object, navigateTo, user) => {
-  const schemaSlug = item['@self']?.schema?.slug;
+  const schemaSlug = getSchemaSlug(item);
 
   switch (schemaSlug) {
     case 'product':
@@ -49,7 +62,7 @@ const renderCard = (item, object, navigateTo, user) => {
           summary={extractSummary(item['@self']?.summary || item?.beschrijvingKort)}
           logo={getImageFromPublication(item)}
           cardType={schemaSlug}
-          type={item['@self'].schema.title}
+          type={schemaSlug ? getTabHeaderName(schemaSlug, true) : null}
           referenceComponents={item.referentieComponenten}
           updated={item['@self'].updated}
           published={item['@self'].published}
@@ -95,7 +108,7 @@ const renderCard = (item, object, navigateTo, user) => {
           summary={item.beschrijving ?? item.beschrijvingKort ?? ''}
           updated={item['@self']?.updated}
           published={item['@self']?.published}
-          category={item['@self']?.schema?.title}
+          category={schemaSlug ? getTabHeaderName(schemaSlug, true) : null}
           themes={item.themes}
           aanbieder={item['@self']?.relations?.aanbieder || item.aanbieder}
           status={item.status}
@@ -149,7 +162,7 @@ const renderCard = (item, object, navigateTo, user) => {
               item['@self']?.name
           )}
           item={item}
-          category={item['@self']?.schema?.title}
+          category={schemaSlug ? getTabHeaderName(schemaSlug, true) : null}
           themes={item.themes}
           navigateTo={navigateTo}
         />
@@ -162,7 +175,7 @@ const renderCard = (item, object, navigateTo, user) => {
           title={item.title ?? item.titel ?? item.name ?? item.naam ?? item.id}
           summary={item.beschrijving ?? item.beschrijvingKort ?? ''}
           published={item['@self']?.published}
-          category={item['@self']?.schema?.title}
+          category={schemaSlug ? getTabHeaderName(schemaSlug, true) : null}
           themes={item.themes}
           navigateTo={navigateTo}
         />
@@ -175,12 +188,11 @@ const mergeAndDeduplicateItems = (uses = [], used = []) => {
   // Combine both arrays
   const allItems = [...uses, ...used];
 
-  // Remove duplicates based on item ID and filter out elements
-  return _.uniqBy(allItems, 'id').filter(
-    (item) =>
-      item['@self']?.schema?.slug !== 'element' &&
-      item['@self']?.schema?.slug !== 'compliancy'
-  );
+  // Remove duplicates based on item ID and filter out elements & compliancy
+  return _.uniqBy(allItems, 'id').filter((item) => {
+    const schemaSlug = getSchemaSlug(item);
+    return schemaSlug !== 'element' && schemaSlug !== 'compliancy';
+  });
 };
 
 // Helper function to merge ambtenaar gebruik items into the combined list so there's a single 'gebruik' tab
@@ -209,10 +221,14 @@ const mergeGebruiksIntoItems = (items = [], ambtenaarItems = []) => {
     return normalized;
   });
 
-  const nonGebruikItems = items.filter(
-    (i) => i?.['@self']?.schema?.slug !== 'gebruik'
-  );
-  const gebruikItems = items.filter((i) => i?.['@self']?.schema?.slug === 'gebruik');
+  const nonGebruikItems = items.filter((i) => {
+    const schemaSlug = getSchemaSlug(i);
+    return schemaSlug !== 'gebruik';
+  });
+  const gebruikItems = items.filter((i) => {
+    const schemaSlug = getSchemaSlug(i);
+    return schemaSlug === 'gebruik';
+  });
 
   const mergedGebruik = _.uniqBy([...gebruikItems, ...normalizedAmbtenaar], 'id');
 
@@ -248,7 +264,8 @@ const renderRelatedTabs = (
   customTabsBefore = [],
   customTabsAfter = [],
   user,
-  tabNameOverride = { schemaName: null, newTabName: null }
+  tabNameOverride = { schemaName: null, newTabName: null },
+  activeObjectId = null
 ) => {
   if (loading && (!items || items.length === 0)) {
     return (
@@ -268,29 +285,45 @@ const renderRelatedTabs = (
     return undefined;
   };
 
-  const uniqueSchemas = (items || []).length
-    ? _.uniqBy(items, (item) => item['@self'].schema.id).sort(
-        (a, b) =>
-          getTabOrder(a['@self'].schema.slug) - getTabOrder(b['@self'].schema.slug)
-      )
-    : [];
+  // Group items by schema slug (not schema ID) to ensure tabs with same slug are combined
+  const itemsBySlug = {};
+  (items || []).forEach((item) => {
+    const schemaSlug = getSchemaSlug(item);
+    if (!schemaSlug) return;
 
-  // Build schema-derived tabs
-  const schemaTabs = uniqueSchemas.map((schemaItem) => {
-    const schemaId = schemaItem['@self'].schema.id;
-    const schemaSlug = schemaItem['@self'].schema.slug;
-    const itemsWithThisSchema = (items || []).filter(
-      (u) => u['@self'].schema.id === schemaId
-    );
-    return {
-      kind: 'schema',
-      id: `schema-${schemaId}`,
-      schemaId,
-      schemaSlug,
-      items: itemsWithThisSchema,
-      count: itemsWithThisSchema.length,
-    };
+    if (!itemsBySlug[schemaSlug]) {
+      itemsBySlug[schemaSlug] = [];
+    }
+    itemsBySlug[schemaSlug].push(item);
   });
+
+  // Build schema-derived tabs, sorted by tab order
+  const schemaTabs = Object.keys(itemsBySlug)
+    .map((schemaSlug) => {
+      let itemsWithThisSchema = itemsBySlug[schemaSlug];
+
+      // Filter out items with matching ID for 'organisatie' schema
+      if (schemaSlug === 'organisatie' && activeObjectId) {
+        itemsWithThisSchema = itemsWithThisSchema.filter((item) => {
+          const itemId = item?.id || item['@self']?.id;
+          return itemId !== activeObjectId;
+        });
+      }
+
+      // Get a representative schema ID from the first item (for tab ID)
+      const representativeSchemaId = itemsWithThisSchema[0]?.['@self']?.schema;
+
+      return {
+        kind: 'schema',
+        id: `schema-${schemaSlug}`,
+        schemaId: representativeSchemaId,
+        schemaSlug,
+        items: itemsWithThisSchema,
+        count: itemsWithThisSchema.length,
+      };
+    })
+    .sort((a, b) => getTabOrder(a.schemaSlug) - getTabOrder(b.schemaSlug))
+    .filter((tab) => tab.count > 0); // Filter out tabs with 0 items
 
   // Normalize and filter custom tabs by visibility
   const normalizeCustomTabs = (tabs = []) =>
@@ -439,26 +472,64 @@ const RelatedTabs = observer(
     customTabsBefore = [],
     customTabsAfter = [],
     user,
+    gebruikId,
+    gebruikSchemaId,
+    gebruikSchemaSlug,
   }) => {
     // Merge and deduplicate the data
     const mergedItems = mergeAndDeduplicateItems(uses, used);
 
     // Show loading if either is loading
     const isLoading = usesLoading || usedLoading;
-
     // Fetch ambtenaar gebruik for "Aangeboden gebruik" tab (optional, permission-based)
-    const [ambtenaarData, setAmbtenaarData] = useState(null);
+    // Fetch gebruik data
+    const [gebruikData, setGebruikData] = useState(null);
+    // Initialize to true if we have an activeObjectId, since we'll be fetching
+    const [gebruikLoading, setGebruikLoading] = useState(!!activeObjectId);
 
     useEffect(() => {
-      if (!activeObjectId) return;
+      if (!activeObjectId) {
+        setGebruikLoading(false);
+        return;
+      }
 
       let isMounted = true;
       const abortController = new AbortController();
 
-      const fetchAmbtenaarGebruik = async () => {
+      const getGebruikPropertyParam = (schemaSlug) => {
+        switch (schemaSlug) {
+          case 'organisatie':
+            return 'afnemer';
+          default:
+            return schemaSlug;
+        }
+      };
+
+      const fetchGebruik = async () => {
+        setGebruikLoading(true);
         try {
+          // Wait for schemaCache to resolve the schema slug if gebruikSchema is provided
+          let gebruikParam = '';
+
+          if (gebruikSchemaSlug && gebruikId) {
+            gebruikParam = `&${getGebruikPropertyParam(
+              gebruikSchemaSlug
+            )}=${gebruikId}`;
+          }
+
+          if (!gebruikSchemaSlug && gebruikSchemaId && gebruikId) {
+            const schemaSlug = await schemaCache.waitFor(gebruikSchemaId.toString());
+
+            if (schemaSlug) {
+              gebruikParam = `&${getGebruikPropertyParam(schemaSlug)}=${gebruikId}`;
+            }
+          }
+
+          // Check if component is still mounted after async wait
+          if (!isMounted) return;
+
           const response = await fetch(
-            `${commongroundApiUrl()}/softwarecatalog/api/aangeboden-gebruik/ambtenaar/${activeObjectId}`,
+            `${commongroundApiUrl()}/softwarecatalog/api/gebruik?_source=database&_limit=1000${gebruikParam}`,
             {
               method: 'GET',
               signal: abortController.signal,
@@ -467,27 +538,33 @@ const RelatedTabs = observer(
           );
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-          const data = (await response.json()).results;
+          const data = (await response.json()).results || [];
 
-          if (isMounted) setAmbtenaarData(data);
+          if (isMounted) {
+            setGebruikData(data);
+          }
         } catch (err) {
-          // Permission errors or fetch failures are non-blocking; omit the tab
+          // Fetch failures are non-blocking - data stays null but we still complete
           if (isMounted && err.name === 'AbortError') return;
+        } finally {
+          if (isMounted) {
+            setGebruikLoading(false);
+          }
         }
       };
 
-      fetchAmbtenaarGebruik();
+      fetchGebruik();
 
       return () => {
         isMounted = false;
         abortController.abort();
       };
-    }, []);
+    }, [activeObjectId, gebruikSchemaSlug, gebruikId]);
 
-    // Combine ambtenaar gebruik into the main items so there's a single 'gebruik' tab
-    const itemsWithAmbtenaarGebruik = mergeGebruiksIntoItems(
+    // Combine ambtenaar gebruik and database gebruik into the main items so there's a single 'gebruik' tab
+    const itemsWithAllGebruik = mergeGebruiksIntoItems(
       mergedItems,
-      ambtenaarData || []
+      gebruikData || []
     );
 
     // Determine if there are any visible custom tabs
@@ -496,19 +573,28 @@ const RelatedTabs = observer(
       ...(customTabsAfter || []),
     ].some((t) => isVisible(t?.visible));
 
-    // Show the tabs if we have data, custom tabs, or are loading
-    const shouldShow =
-      isLoading ||
-      (itemsWithAmbtenaarGebruik && itemsWithAmbtenaarGebruik.length > 0) ||
-      anyVisibleCustomTabs;
+    // Check if we have data from any source
+    const hasUsesData = Array.isArray(uses) && uses.length > 0;
+    const hasUsedData = Array.isArray(used) && used.length > 0;
+    const hasGebruikData = Array.isArray(gebruikData) && gebruikData.length > 0;
+    const hasAnyData = hasUsesData || hasUsedData || hasGebruikData;
+
+    // Check if any fetch is still loading
+    const anyLoading = isLoading || gebruikLoading;
+
+    // Show the tabs if:
+    // 1. Any fetch is still loading (show loader)
+    // 2. We have data from any of the three sources
+    // 3. There are visible custom tabs
+    const shouldShow = anyLoading || hasAnyData || anyVisibleCustomTabs;
 
     return (
       <>
         {shouldShow && (
           <div>
             {renderRelatedTabs(
-              itemsWithAmbtenaarGebruik,
-              isLoading,
+              itemsWithAllGebruik,
+              anyLoading,
               tabIndex,
               setTabIndex,
               object,
@@ -516,7 +602,8 @@ const RelatedTabs = observer(
               customTabsBefore,
               customTabsAfter,
               user,
-              tabNameOverride
+              tabNameOverride,
+              activeObjectId
             )}
           </div>
         )}

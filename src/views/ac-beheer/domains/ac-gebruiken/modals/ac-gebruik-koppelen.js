@@ -42,6 +42,7 @@ const AcGebruikKoppelenModal = ({
       await object.fetchCollection('voorzieningen', 'voorzieninggebruik', {
         _limit: 500,
         _page: 1,
+        _published: 'false',
       });
       const col = object.getCollection(typeKey);
       setGebruiken(col.results || []);

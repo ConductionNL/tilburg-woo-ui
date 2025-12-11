@@ -96,6 +96,51 @@ const ConFormApplicatieKoppelingenStage = memo(
       return merged;
     };
 
+    // Helper function to create colored dot style
+    const dot = (color = 'transparent') => ({
+      alignItems: 'center',
+      display: 'flex',
+      ':before': {
+        backgroundColor: color,
+        borderRadius: 10,
+        content: '" "',
+        display: 'block',
+        marginRight: 8,
+        height: 10,
+        width: 10,
+        flex: 'none',
+      },
+    });
+
+    // Custom styles for ReactSelect with colored dots
+    const getSelectStyles = () => ({
+      option: (styles, { data }) => {
+        const color = data?.type === 'buitengemeentelijke' ? '#3b82f6' : '#10b981';
+        return {
+          ...styles,
+          ...dot(color),
+        };
+      },
+      singleValue: (styles, { data }) => {
+        const color = data?.type === 'buitengemeentelijke' ? '#3b82f6' : '#10b981';
+        return {
+          ...styles,
+          ...dot(color),
+        };
+      },
+      multiValue: (styles, { data }) => {
+        const color = data?.type === 'buitengemeentelijke' ? '#3b82f6' : '#10b981';
+        return {
+          ...styles,
+          ...dot(color),
+        };
+      },
+      placeholder: (styles) => ({
+        ...styles,
+        ...dot('#ccc'),
+      }),
+    });
+
     // Persist row data into applicatie object
     const persistRowIntoApplicatie = (rowId, overrides = {}) => {
       // Check if appBId was explicitly provided (even if null/undefined) vs not provided
@@ -244,12 +289,6 @@ const ConFormApplicatieKoppelingenStage = memo(
       ),
     ]);
 
-    // // Handle opening applicatie form in new tab
-    // const handleOpenApplicatieForm = () => {
-    //   const applicatieFormUrl = `${window.location.origin}${PATHS.FORMS_APPLICATIE}?type=ontbrekend-applicatie`;
-    //   window.open(applicatieFormUrl, '_blank', 'noopener,noreferrer');
-    // };
-
     return (
       <div>
         <h2 id='koppelingen-section-title' className='sr-only'>
@@ -260,12 +299,52 @@ const ConFormApplicatieKoppelingenStage = memo(
           Geef aan met welke andere applicaties uw oplossing gegevens uitwisselt. Zo
           kunnen gemeenten zien hoe uw applicatie past in hun applicatielandschap.
           Vul per koppeling in:
-          <ul style={{ marginInlineStart: '1rem' }}>
-            <li>met welke applicatie u koppelt,</li>
-            <li>de richting van de gegevensuitwisseling,</li>
-            <li>en het type koppeling (bijvoorbeeld API, bestand of bericht).</li>
-          </ul>
         </Paragraph>
+        <ul style={{ marginInlineStart: '1rem' }}>
+          <li>met welke applicatie u koppelt,</li>
+          <li>de richting van de gegevensuitwisseling,</li>
+          <li>en het type koppeling (bijvoorbeeld API, bestand of bericht).</li>
+        </ul>
+
+        {/* Legend */}
+        <div
+          style={{
+            display: 'flex',
+            gap: '1.5rem',
+            marginBlockStart: '1rem',
+            padding: '0.75rem',
+            backgroundColor: '#f9fafb',
+            borderRadius: '4px',
+            border: '1px solid #e5e7eb',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span
+              style={{
+                display: 'block',
+                width: '10px',
+                height: '10px',
+                borderRadius: '50%',
+                backgroundColor: '#10b981',
+              }}
+            />
+            <span style={{ fontSize: '0.875rem' }}>Applicatie</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span
+              style={{
+                display: 'block',
+                width: '10px',
+                height: '10px',
+                borderRadius: '50%',
+                backgroundColor: '#3b82f6',
+              }}
+            />
+            <span style={{ fontSize: '0.875rem' }}>
+              Buiten Gemeentelijke Voorziening
+            </span>
+          </div>
+        </div>
 
         {/* Closeable info alert about updating koppeling details later */}
         {showInfoAlert && (
@@ -309,7 +388,7 @@ const ConFormApplicatieKoppelingenStage = memo(
                   <b>Richting data-uitwisseling</b>
                 </TableCell>
                 <TableCell>
-                  <b>Applicatie B / Buiten Gemeentenlijke voorziening</b>
+                  <b>Applicatie B of BGV</b>
                 </TableCell>
                 <TableCell>
                   <b>Soort koppeling</b>
@@ -395,6 +474,7 @@ const ConFormApplicatieKoppelingenStage = memo(
                           appBId: opt?.value ?? null,
                         });
                       }}
+                      styles={getSelectStyles()}
                     />
                   </TableCell>
                   <TableCell>

@@ -194,7 +194,7 @@ const ConGenericFormModal = ({
           await object.fetchCollection(
             optionConfig.register,
             optionConfig.schema,
-            { ...optionConfig.params, page: 1, limit: 9999 },
+            { ...optionConfig.params, page: 1, limit: 9999, _published: 'false' },
             false,
             'form-options'
           );
@@ -370,7 +370,9 @@ const ConGenericFormModal = ({
       const orgId = user?.activeOrganization?.uuid;
       if (showModal && orgId) {
         try {
-          await object.fetchObject('voorzieningen', 'organisatie', orgId);
+          await object.fetchObject('voorzieningen', 'organisatie', orgId, {
+            _published: 'false',
+          });
           const fullOrg = object.getObject('voorzieningen_organisatie', orgId);
           if (fullOrg) {
             setFullOrganization(fullOrg);
@@ -633,7 +635,10 @@ const ConGenericFormModal = ({
               await object.fetchObject(
                 currentObjectRegister,
                 currentObjectSchema,
-                metadata.currentObjectId
+                metadata.currentObjectId,
+                {
+                  _published: 'false',
+                }
               );
               // Try to find it again after fetching
               for (const objectType of possibleTypes) {
@@ -698,7 +703,7 @@ const ConGenericFormModal = ({
               currentObjectRegister,
               currentObjectSchema,
               metadata.currentObjectId,
-              { _extend: '@self.schema' }
+              { '_extend[]': ['@self.schema'], _published: 'false' }
             );
 
             // Also refresh the related data (uses/used) to show the new item in tabs
@@ -801,6 +806,13 @@ const ConGenericFormModal = ({
   const handleModalClose = () => {
     if (!config) return;
 
+    // Manually remove overflow style from body as fallback
+    // The CSS selector body:has(.ac-modal[open]) should handle this, but sometimes it doesn't work
+    // this is just a dirty fix
+    if (document.body) {
+      document.body.style.overflow = '';
+    }
+
     setFormData(_.cloneDeep(config.initialData));
     setIsValid(false);
     setSubmitError(null);
@@ -813,10 +825,17 @@ const ConGenericFormModal = ({
     onClose?.();
   };
 
-  // Open modal when showModal prop changes
+  // Open/close modal when showModal prop changes
   useEffect(() => {
     if (showModal) {
       handleModalOpen();
+    } else {
+      // Manually remove overflow style from body when modal is closed
+      // This ensures cleanup even if the dialog gets unmounted quickly
+      // This is a dirty fix
+      if (document.body) {
+        document.body.style.overflow = '';
+      }
     }
   }, [showModal]);
 

@@ -1,11 +1,8 @@
 import React from 'react';
 import { AcColumn } from '@atoms';
 import { AcLink } from '@src/molecules';
-import { ConSorterLogic } from '@src/utilities/con-sorter';
-import { isJsonString } from '@src/utilities';
 import { TOOLTIP_ID } from '@src/index.web';
 import { VISUALS } from '@constants';
-import _ from 'lodash';
 import { byNested } from '../utils/sorters';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
 
@@ -67,6 +64,7 @@ const BeheerPageConfigFactory = {
         };
 
       // removed plural alias 'extendviews'
+      case 'module':
       case 'applicaties':
       case 'modules':
         return {
@@ -75,8 +73,9 @@ const BeheerPageConfigFactory = {
           paginationKey: 'applicaties',
           title: 'Applicaties',
           routeType: 'applicaties',
-          disableRelatedCreateActions: true, // Enable koppeling toevoegen for applicaties
-          disableDeleteAction: false, // Enable delete action for applicaties
+          disableRelatedCreateActions: true, // Enable koppeling toevoegen voor applicaties
+          disableDeleteAction: false, // Enable delete action voor applicaties
+          extend: ['moduleVersies'],
           defaultHeaders: [
             'naam',
             'referentieComponenten',
@@ -101,26 +100,82 @@ const BeheerPageConfigFactory = {
               },
             },
           },
+          // Unique actions that change based on user role (like publish/depublish toggle)
+          // Each action shows different label/params based on user group
           uniqueActions: [
-            // Commented out: Versie toevoegen action (not reliable yet)
-            //   {
-            //     key: 'addVersion',
-            //     label: 'Versie toevoegen',
-            //     icon: <VISUALS.PLUS />,
-            //     condition: (row) => true,
-            //     action: 'addModuleVersion',
-            //   },
+            // Dienst action - changes based on user role
+            {
+              key: 'addDienst',
+              icon: <VISUALS.HAND_SHAKE />,
+              condition: (row) => row?.['@self']?.id || row?.id,
+              action: 'wizard',
+              wizardPath: '/forms/dienst',
+              // Dynamic label and params based on user role
+              getLabel: (userGroups) =>
+                userGroups.includes('gebruik-beheerder')
+                  ? 'Dienst toevoegen'
+                  : 'Dienst publiceren',
+              getWizardParams: (row, userGroups) =>
+                userGroups.includes('gebruik-beheerder')
+                  ? {
+                      type: 'ontbrekend-dienst',
+                      applicatie: row['@self']?.id || row.id,
+                    }
+                  : {
+                      type: 'dienst',
+                      applicatie: row['@self']?.id || row.id,
+                    },
+              // Show for both user groups
+              userGroupFilter: ['gebruik-beheerder', 'aanbod-beheerder'],
+            },
+            // Gebruik action - changes based on user role
+            {
+              key: 'addGebruik',
+              icon: <VISUALS.CLIPBOARD_CHECK />,
+              condition: (row) => row?.['@self']?.id || row?.id,
+              action: 'wizard',
+              wizardPath: '/forms/gebruik',
+              // Dynamic label and params based on user role
+              getLabel: (userGroups) =>
+                userGroups.includes('gebruik-beheerder')
+                  ? 'Applicatie toevoegen'
+                  : 'Applicatiegebruik melden',
+              getWizardParams: (row, userGroups) =>
+                userGroups.includes('gebruik-beheerder')
+                  ? {
+                      applicatie: row['@self']?.id || row.id,
+                    }
+                  : {
+                      type: 'ontbrekend-organisatie',
+                      applicatie: row['@self']?.id || row.id,
+                    },
+              // Show for both user groups
+              userGroupFilter: ['gebruik-beheerder', 'aanbod-beheerder'],
+            },
+            // Koppeling action - changes based on user role
             {
               key: 'addKoppeling',
-              label: 'Koppeling toevoegen',
-              icon: <VISUALS.WAND_SPARKLES_SOLID />,
-              condition: (row) => row?.id,
-              action: 'wizard', // Special action type to indicate wizard navigation
+              icon: <VISUALS.LINK />,
+              condition: (row) => row?.['@self']?.id || row?.id,
+              action: 'wizard',
               wizardPath: '/forms/koppeling',
-              wizardParams: (row) => ({
-                type: 'aanbieden-koppeling',
-                applicatie: row.id,
-              }),
+              // Dynamic label and params based on user role
+              getLabel: (userGroups) =>
+                userGroups.includes('gebruik-beheerder')
+                  ? 'Koppeling toevoegen'
+                  : 'Koppeling publiceren',
+              getWizardParams: (row, userGroups) =>
+                userGroups.includes('gebruik-beheerder')
+                  ? {
+                      type: 'aanbieden-koppeling',
+                      applicatie: row['@self']?.id || row.id,
+                    }
+                  : {
+                      type: 'eigen-organisatie',
+                      applicatie: row['@self']?.id || row.id,
+                    },
+              // Show for both user groups
+              userGroupFilter: ['gebruik-beheerder', 'aanbod-beheerder'],
             },
           ],
           modals: [...baseConfig.modals],
@@ -399,102 +454,63 @@ const BeheerPageConfigFactory = {
         };
 
       case 'gebruiken':
+      case 'gebruik':
         return {
           ...baseConfig,
-          schemaSlug: 'voorzieninggebruik',
+          schemaSlug: 'gebruik',
           paginationKey: 'gebruiken',
-          title: 'Beheer Gebruiken',
-          routeType: 'gebruiken',
+          title: 'Gebruik',
+          routeType: 'gebruik',
+          disableRelatedCreateActions: true,
           defaultHeaders: ['voorzieningId', 'diensten', 'status', 'contact'],
+          // extend: ['contactpersoon'],
           customHeaders: {
-            versieId: {
-              id: 'versionId',
-              label: 'Versie ID',
-              key: 'versieId',
+            contactpersoon: {
+              id: 'contactpersoon',
+              label: 'Contactpersoon',
+              key: 'contactpersoon',
               customContent: (row) => {
-                return row?.versieId?.id ?? row?.versieId ?? '-';
-              },
-            },
-            organisatieId: {
-              id: 'organisatieId',
-              label: 'Organisatie',
-              key: 'organisatieId',
-              customContent: (row) => {
+                const fullName = `${row?.contactpersoon?.voornaam || ''} ${
+                  row?.contactpersoon?.tussenvoegsel || ''
+                } ${row?.contactpersoon?.achternaam || ''}`.trim();
                 return (
-                  <AcColumn key={row.id}>
-                    <span>{row?.organisatieId?.naam ?? '-'}</span>
-                  </AcColumn>
+                  fullName || (
+                    <ConUuidResolver>{row.contactpersoon}</ConUuidResolver>
+                  ) ||
+                  '-'
                 );
               },
             },
-            voorzieningId: {
-              id: 'voorzieningId',
+            module: {
+              id: 'module',
               label: 'Applicatie',
-              key: 'voorzieningId',
+              key: 'module',
               customContent: (row) => {
                 return (
-                  <AcColumn key={row.id}>
-                    <span>{row?.voorzieningId?.naam ?? '-'}</span>
-                  </AcColumn>
+                  (
+                    <ConUuidResolver>
+                      {row['@self'].relations.module}
+                    </ConUuidResolver>
+                  ) || '-'
                 );
               },
             },
-            beheerder: {
-              id: 'beheerderNaam',
-              label: 'Beheerder naam',
-              key: 'beheerder',
+            moduleVersie: {
+              id: 'moduleVersie',
+              label: 'Applicatie versie',
+              key: 'moduleVersie',
               customContent: (row) => {
-                if (
-                  typeof row.beheerder === 'string' &&
-                  isJsonString(row.beheerder)
-                ) {
-                  return JSON.parse(row.beheerder)?.naam || '-';
-                }
-                if (
-                  typeof row.beheerder === 'string' &&
-                  !isJsonString(row.beheerder)
-                ) {
-                  return row.beheerder || '-';
-                }
-                return row?.beheerder?.naam || '-';
-              },
-              sortComparator: (a, b, direction) => {
-                if (direction === null) return 0;
-
-                const newA = _.cloneDeep(a);
-                const newB = _.cloneDeep(b);
-
-                if (
-                  typeof newA.beheerder === 'string' &&
-                  isJsonString(newA.beheerder)
-                ) {
-                  newA.beheerder = JSON.parse(newA.beheerder);
-                }
-                if (
-                  typeof newB.beheerder === 'string' &&
-                  isJsonString(newB.beheerder)
-                ) {
-                  newB.beheerder = JSON.parse(newB.beheerder);
-                }
-
-                return ConSorterLogic(
-                  newA?.beheerder?.naam,
-                  newB?.beheerder?.naam,
-                  direction
+                return (
+                  (
+                    <ConUuidResolver>
+                      {row['@self'].relations.moduleVersie}
+                    </ConUuidResolver>
+                  ) || '-'
                 );
               },
             },
           },
-          uniqueActions: [
-            {
-              key: 'koppelen',
-              label: 'Koppelen',
-              icon: <VISUALS.LINK />,
-              condition: () => true,
-              action: 'koppelen',
-            },
-          ],
-          modals: [...baseConfig.modals, 'koppelen'],
+          modals: [...baseConfig.modals],
         };
 
       case 'overeenkomsten':
@@ -668,29 +684,7 @@ const BeheerPageConfigFactory = {
               },
             },
           },
-          uniqueActions: [
-            {
-              key: 'addAccount',
-              label: 'Account toevoegen',
-              icon: <VISUALS.USER_PLUS />,
-              condition: (row) => row.username === null,
-              action: 'addAccount',
-            },  
-            {
-              key: 'enableAccount',
-              label: 'Account inschakelen',
-              icon: <VISUALS.USER_CHECK />,
-              condition: (row) => row?.enabled === false,
-              action: 'enableAccount',
-            },
-            {
-              key: 'disableAccount',
-              label: 'Account uitschakelen',
-              icon: <VISUALS.USER_XMARK />,
-              condition: (row) => row?.enabled === true,
-              action: 'disableAccount',
-            },
-          ],
+          uniqueActions: [],
           modals: [...baseConfig.modals, 'addAccount'],
         };
 

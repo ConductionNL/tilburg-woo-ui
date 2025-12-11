@@ -244,7 +244,7 @@ const FormModalConfigFactory = {
                   await objectStore.fetchCollection(
                     'voorzieningen',
                     'voorziening',
-                    voorzieningParams
+                    { ...voorzieningParams, _published: 'false' }
                   );
 
                   const voorzieningType = objectStore.getTypeFromParams(
@@ -278,7 +278,7 @@ const FormModalConfigFactory = {
                   await objectStore.fetchCollection(
                     'voorzieningen',
                     'standaard',
-                    standaardenParams
+                    { ...standaardenParams, _published: 'false' }
                   );
 
                   const standaardenType = objectStore.getTypeFromParams(
@@ -315,7 +315,19 @@ const FormModalConfigFactory = {
         return {
           ...baseConfig,
           title: 'Applicatie versie', // Override the title to show "Applicatie versie"
-          initialData: {},
+          /**
+           * Initialize module field from relation data when editing
+           * Similar to how contactpersoon sets organisatie - we override the module field
+           * to use the value from @self.relations.module instead of the top-level module field
+           */
+          initialData: ({ data } = {}) => {
+            // Store both module for form and originalModule for submission
+            const moduleFromRelation = data?.['@self']?.relations?.module;
+            return {
+              ...(moduleFromRelation && { module: moduleFromRelation }),
+              ...(moduleFromRelation && { _originalModule: moduleFromRelation }),
+            };
+          },
           optionsProviders: {
             module: {
               type: 'collection',
@@ -329,6 +341,11 @@ const FormModalConfigFactory = {
             module: {
               label: 'Applicatie',
               placeholder: 'Selecteer applicatie',
+              disabled: true,
+              visible: false,
+            },
+            _originalModule: {
+              visible: false, // Hidden field for internal use
             },
             gebruiken: {
               visible: false,
@@ -340,6 +357,44 @@ const FormModalConfigFactory = {
             beschrijvingLang: {
               visible: false,
             },
+            // Show date fields conditionally based on selected status
+            datumInOntwikkeling: {
+              visible: (formData) => {
+                const status = String(formData.status || '').toLowerCase();
+                return status === 'in ontwikkeling' || status === 'ontwikkeling';
+              },
+            },
+            datumInGebruik: {
+              visible: (formData) => {
+                const status = String(formData.status || '').toLowerCase();
+                return status === 'actief' || status === 'in gebruik';
+              },
+            },
+            datumTeruggetrokken: {
+              visible: (formData) => {
+                const status = String(formData.status || '').toLowerCase();
+                return status === 'teruggetrokken';
+              },
+            },
+            datumEindeOndersteuning: {
+              visible: (formData) => {
+                const status = String(formData.status || '').toLowerCase();
+                return status === 'einde ondersteuning';
+              },
+            },
+          },
+          // Transform data before submission - ensure module is always from relation
+          transformSubmitData: (data) => {
+            const submitData = { ...data };
+
+            // If we have the original module from relation, use it
+            if (data._originalModule) {
+              submitData.module = data._originalModule;
+              // Remove the temporary field
+              delete submitData._originalModule;
+            }
+
+            return submitData;
           },
         };
 
@@ -617,7 +672,7 @@ const FormModalConfigFactory = {
                   await objectStore.fetchCollection(
                     'voorzieningen',
                     'voorzieningaanbod',
-                    aanbodParams
+                    { ...aanbodParams, _published: 'false' }
                   );
 
                   const aanbodType = objectStore.getTypeFromParams(
@@ -641,7 +696,7 @@ const FormModalConfigFactory = {
                   await objectStore.fetchCollection(
                     'voorzieningen',
                     'voorzieningversie',
-                    versieParams
+                    { ...versieParams, _published: 'false' }
                   );
 
                   const versieType = objectStore.getTypeFromParams(

@@ -12,11 +12,7 @@ import {
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@src/constants';
-import { useDebounce } from '@src/hooks/use-debounce.hook';
 import _ from 'lodash';
-// LEGACY: ConKoppelingStepSoort component no longer used - type selection removed
-// Type is now determined via URL parameter (?type=eigen-organisatie or ?type=aanbieden-koppeling)
-// import ConKoppelingStepSoort from './components/con-koppeling-step-soort';
 import ConKoppelingStageZoeken from './components/con-koppeling-stage-zoeken';
 import ConKoppelingStageToevoegen from './components/con-koppeling-stage-toevoegen';
 import ConKoppelingStageControleren from './components/con-koppeling-stage-controleren';
@@ -156,16 +152,12 @@ const AcFormsKoppeling = ({ store }) => {
   const [applicatiePreloadLoading, setApplicatiePreloadLoading] = useState(false);
 
   // Search state
-  const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [resolvedModulesFromResults, setResolvedModulesFromResults] = useState([]);
   const [resultsLoading, setResultsLoading] = useState(false);
 
   // "Your" application (optional anchor for adding/searching)
   const [ownApp, setOwnApp] = useState(null);
-  // Capture input typed into the select's search field (debounced)
-  const [ownAppInput, setOwnAppInput] = useState('');
-  const debouncedOwnAppInput = useDebounce(ownAppInput, 500);
 
   // Standaarden options (fetched similarly to referentiecomponenten)
   const [standaardenOptions, setStandaardenOptions] = useState([]);
@@ -307,7 +299,11 @@ const AcFormsKoppeling = ({ store }) => {
     const fetchModules = async () => {
       try {
         setOwnAppLoading(true);
-        const params = new URLSearchParams({ _limit: '20', _page: '1' });
+        const params = new URLSearchParams({
+          _limit: '20',
+          _page: '1',
+          _published: 'false',
+        });
         const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module?${params}`;
         const res = await fetch(endpoint, {
           headers: { Accept: 'application/json' },
@@ -337,7 +333,12 @@ const AcFormsKoppeling = ({ store }) => {
             item?.value ||
             item?.slug ||
             `Applicatie ${index + 1}`;
-          return { value: String(id), label: String(label), data: item };
+          return {
+            value: String(id),
+            label: String(label),
+            data: item,
+            type: 'applicatie',
+          };
         });
         if (isMounted) {
           setModulesOptions(options);
@@ -386,7 +387,8 @@ const AcFormsKoppeling = ({ store }) => {
               'module',
               String(applicatieFromUrl),
               {
-                _extend: ['@self.schema'],
+                '_extend[]': ['@self.schema'],
+                _published: 'false',
               }
             );
             const fetched = store.object.getObject(
@@ -405,6 +407,7 @@ const AcFormsKoppeling = ({ store }) => {
                 value: String(applicatieFromUrl),
                 label: String(label),
                 data: fetched,
+                type: 'applicatie',
               };
               // Add to both options lists first
               setModulesOptions((prev) => {
@@ -470,7 +473,7 @@ const AcFormsKoppeling = ({ store }) => {
       const res = await fetch(
         `/api/apps/openregister/api/objects/voorzieningen/module/${encodeURIComponent(
           String(id)
-        )}`,
+        )}?_published=false`,
         { headers: { Accept: 'application/json' } }
       );
       if (!res.ok) return String(id);
@@ -482,7 +485,12 @@ const AcFormsKoppeling = ({ store }) => {
         item?.label ||
         item?.['@self']?.name ||
         String(id);
-      const option = { value: String(id), label: String(label), data: item };
+      const option = {
+        value: String(id),
+        label: String(label),
+        data: item,
+        type: 'applicatie',
+      };
       setModulesOptions((prev) => {
         const exists = (prev || []).some((o) => String(o.value) === String(id));
         return exists ? prev : [...(prev || []), option];
@@ -508,7 +516,7 @@ const AcFormsKoppeling = ({ store }) => {
       try {
         const url = `/api/apps/openregister/api/objects/voorzieningen/koppeling/${encodeURIComponent(
           koppelingId
-        )}?_extend[]=@self.schema&_extend[]=@self.relations`;
+        )}?_extend[]=@self.schema&_extend[]=@self.relations&_published=false`;
         const res = await fetch(url, { headers: { Accept: 'application/json' } });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
@@ -571,68 +579,82 @@ const AcFormsKoppeling = ({ store }) => {
     };
   }, [isEditMode, koppelingId]);
 
-  // Search handler for modules (used by ConSchemaEnhancedField)
-  const handleSearchModules = useCallback((query) => {
-    setOwnAppInput(query || '');
+  // Helper function to map module items to option format
+  const mapModuleToOption = useCallback((item, index) => {
+    const label =
+      item?.['@self']?.name ||
+      item?.naam ||
+      item?.name ||
+      item?.title ||
+      item?.label ||
+      `Applicatie ${index + 1}`;
+    const value = item?.['@self']?.id || item?.id || item?.slug || label;
+    return { value: String(value), label: String(label), data: item };
   }, []);
 
-  // Debounced server-side search on modules for the own-app select only
-  useEffect(() => {
-    let cancelled = false;
-    const run = async () => {
-      const q = (debouncedOwnAppInput || '').trim();
-      if (!q) {
-        // Reset to base options when input is cleared
-        setOwnAppOptions(modulesOptions);
-        return;
-      }
-      setOwnAppLoading(true);
+  // Server-side search for modules (used by ConSchemaEnhancedField)
+  const searchModules = useCallback(
+    async (query) => {
       try {
-        const params = new URLSearchParams({ _limit: '20', _page: '1' });
-        params.set('_search', q);
-        const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module?${params}`;
-        const res = await fetch(endpoint, {
-          headers: { Accept: 'application/json' },
+        setOwnAppLoading(true);
+        const q = String(query || '').trim();
+
+        const queryParams = {
+          _limit: '50',
+          _page: '1',
+          _published: 'false',
+          _source: 'index',
+        };
+
+        // Add search parameter if provided
+        if (q) {
+          queryParams._search = q;
+        }
+
+        await store.object.fetchCollection(
+          'voorzieningen',
+          'module',
+          queryParams,
+          null,
+          'koppeling_form_search'
+        );
+        const collection = store.object.getCollection(
+          'voorzieningen_module_koppeling_form_search'
+        );
+        const list = collection?.results || collection || [];
+        const options = list.map(mapModuleToOption);
+
+        // Merge with existing options to preserve selected items
+        setOwnAppOptions((prevOptions) => {
+          const newOptionsMap = new Map(options.map((opt) => [opt.value, opt]));
+
+          // Combine existing and new options, preferring new data for existing items
+          const mergedOptions = [...newOptionsMap.values()];
+
+          // Add any existing options that aren't in the new results
+          // This preserves previously selected items that might not match the current search
+          prevOptions.forEach((opt) => {
+            if (!newOptionsMap.has(opt.value)) {
+              mergedOptions.push(opt);
+            }
+          });
+
+          return mergedOptions;
         });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        const list = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.results)
-          ? data.results
-          : [];
-        const options = list.map((item, index) => {
-          const id =
-            item?.id ||
-            item?.['@self']?.id ||
-            item?.uuid ||
-            item?.value ||
-            item?.slug ||
-            index;
-          const label =
-            item?.naam ||
-            item?.name ||
-            item?.title ||
-            item?.label ||
-            item?.uuid ||
-            item?.id ||
-            item?.value ||
-            item?.slug ||
-            `Applicatie ${index + 1}`;
-          return { value: String(id), label: String(label), data: item };
-        });
-        if (!cancelled) setOwnAppOptions(options);
-      } catch {
-        if (!cancelled) setOwnAppOptions([]);
+      } catch (e) {
+        // Don't clear options on error to preserve existing selections
+        console.error('Module search failed:', e);
       } finally {
-        if (!cancelled) setOwnAppLoading(false);
+        setOwnAppLoading(false);
       }
-    };
-    run();
-    return () => {
-      cancelled = true;
-    };
-  }, [debouncedOwnAppInput, modulesOptions]);
+    },
+    [store, mapModuleToOption]
+  );
+
+  // Debounced search function for modules
+  const debouncedSearchModules = useDebouncedInput(searchModules, 250, {
+    disableInstantValidation: true,
+  });
 
   // Helper: extract relation id from various shapes (mirrors example.js)
   const extractRelationId = (rel) => {
@@ -692,7 +714,11 @@ const AcFormsKoppeling = ({ store }) => {
         // Fetch missing module names in one batched call if any
         if (missingIds.length) {
           try {
-            const params = new URLSearchParams({ _limit: '100', _page: '1' });
+            const params = new URLSearchParams({
+              _limit: '100',
+              _page: '1',
+              _published: 'false',
+            });
             for (const id of missingIds) params.append('_search', id);
             const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module?${params}`;
             const res = await fetch(endpoint, {
@@ -763,15 +789,23 @@ const AcFormsKoppeling = ({ store }) => {
       setResultsLoading(true);
       try {
         // Fetch koppelingen where moduleA = moduleId
-        const paramsA = new URLSearchParams({ _limit: '20', _page: '1' });
+        const paramsA = new URLSearchParams({
+          _limit: '20',
+          _page: '1',
+          _published: 'false',
+        });
         paramsA.append('moduleA', moduleId);
-        paramsA.append('_source', 'database');
+        paramsA.append('_source', 'index');
         const endpointA = `${BASE_URL}/openregister/api/objects/voorzieningen/koppeling?${paramsA}`;
 
         // Fetch koppelingen where moduleB = moduleId
-        const paramsB = new URLSearchParams({ _limit: '20', _page: '1' });
+        const paramsB = new URLSearchParams({
+          _limit: '20',
+          _page: '1',
+          _published: 'false',
+        });
         paramsB.append('moduleB', moduleId);
-        paramsB.append('_source', 'database');
+        paramsB.append('_source', 'index');
         const endpointB = `${BASE_URL}/openregister/api/objects/voorzieningen/koppeling?${paramsB}`;
 
         // Execute both fetches in parallel
@@ -862,6 +896,7 @@ const AcFormsKoppeling = ({ store }) => {
           _page: '1',
           _source: 'index',
           '_extend[]': '@self.schema',
+          _published: 'false',
         };
 
         // Add search parameter if query is provided
@@ -1143,6 +1178,7 @@ const AcFormsKoppeling = ({ store }) => {
         _page: '1',
         gemmaType: 'Standaard',
         '_extend[]': '@self.schema',
+        _published: 'false',
       });
 
       console.info('📋 Fetching standards from openconnector endpoint...');
@@ -1195,6 +1231,7 @@ const AcFormsKoppeling = ({ store }) => {
         _page: '1',
         gemmaType: 'Buitengemeentelijke voorziening',
         '_extend[]': '@self.schema',
+        _published: 'false',
       });
 
       console.info('📋 Fetching external facilities from openconnector endpoint...');
@@ -1220,7 +1257,12 @@ const AcFormsKoppeling = ({ store }) => {
             item?.label ||
             `Facility ${index + 1}`;
           const value = item?.value || item?.id || item?.slug || label;
-          return { value: String(value), label: String(label), data: item };
+          return {
+            value: String(value),
+            label: String(label),
+            data: item,
+            type: 'buitengemeentelijke',
+          };
         })
         .filter((o) => o.label && o.value);
 
@@ -1245,11 +1287,9 @@ const AcFormsKoppeling = ({ store }) => {
     setCurrentStep(getInitialStep(koppelingsType));
     // LEGACY: setKoppelingsType(null); - Type now comes from URL, reset to default
     setKoppelingsType(typeFromUrl || 'eigen-organisatie');
-    setSearchQuery('');
     setSearchResults([]);
     setResolvedModulesFromResults([]);
     setOwnApp(null);
-    setOwnAppInput('');
     setRows([0]);
     setNextRowId(1);
     setSelectedAppAByRow({});
@@ -1428,15 +1468,13 @@ const AcFormsKoppeling = ({ store }) => {
             ownApp={ownApp}
             setOwnApp={setOwnApp}
             ownAppLoading={ownAppLoading || applicatiePreloadLoading}
-            setOwnAppInput={setOwnAppInput}
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
             searchResults={searchResults}
             resolvedModulesFromResults={resolvedModulesFromResults}
             resultsLoading={resultsLoading}
             getArrowForDirection={getArrowForDirection}
             isEditMode={isEditMode}
-            onSearchModules={handleSearchModules}
+            onSearchModules={debouncedSearchModules}
+            schemas={schemas}
           />
         );
 
@@ -1593,14 +1631,6 @@ const AcFormsKoppeling = ({ store }) => {
                   <ProcessSteps
                     steps={(() => {
                       const steps = [];
-
-                      // LEGACY: Step 1 (Soort koppeling) - Type selection removed, now comes from URL
-                      // {
-                      //   id: 'grp-soort',
-                      //   marker: 1,
-                      //   status: getStatus(currentStep, 0),
-                      //   title: 'Soort koppeling',
-                      // },
 
                       // Conditionally include Aanbieder step (only for aanbieden-koppeling)
                       if (koppelingsType === 'aanbieden-koppeling') {

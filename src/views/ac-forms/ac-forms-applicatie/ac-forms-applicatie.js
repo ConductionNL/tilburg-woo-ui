@@ -32,13 +32,14 @@ import ConFormApplicatieVersieStage from './components/con-form-applicatie-versi
 import ConFormApplicatieReferentiecomponentenStage from './components/con-form-applicatie-referentiecomponenten-stage';
 import ConFormApplicatieStandaardenStage from './components/con-form-applicatie-standaarden-stage';
 import ConFormApplicatieKoppelingenStage from './components/con-form-applicatie-koppelingen-stage';
-import ConFormApplicatieDienstenStage from './components/con-form-applicatie-diensten-stage';
+// import ConFormApplicatieDienstenStage from './components/con-form-applicatie-diensten-stage';
 import ConFormApplicatieControlerenStage from './components/con-form-applicatie-controleren-stage';
 import ConFormApplicatieAanbiederInformatieStage from './components/con-form-applicatie-aanbieder-informatie-stage';
 
 // Utils
 import { getStatusMultiStep } from './utils/steps.utils';
 import { getActiveWizard } from '@src/constants/wizards.constants';
+import { stripLocalIds } from './utils/serialization.utils';
 
 /**
  * Applicatie Aanmelden Wizard (AcFormsApplicatie)
@@ -54,16 +55,7 @@ import { getActiveWizard } from '@src/constants/wizards.constants';
  *   }
  */
 
-const AcFormsApplicatieInner = ({
-  userStore,
-  store,
-  formType,
-  applicatieId,
-  redirect,
-}) => {
-  //   TODO: Remove info log when userStore is fully implemented
-  console.info('userStore', userStore);
-
+const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => {
   // Determine edit mode from applicatieId
   const isEditMode = !!applicatieId;
   const navigate = useNavigate();
@@ -136,7 +128,8 @@ const AcFormsApplicatieInner = ({
    * and the optional Versies step (only shown for On-premises)
    * @param {number} logicalStep - The logical step number
    * Logical steps: 0=Aanbieder, 1=Applicatie info, 2=Licentie, 3=Versies, 4=Referentiecomponenten,
-   *                5=Standaarden, 6=Koppelingen, 7=Diensten, 8=Controleren
+   *                5=Standaarden, 6=Koppelingen, 7=Controleren
+   * (Note: Diensten step temporarily disabled - was previously step 7, Controleren was step 8)
    * @returns {number} The adjusted physical step index
    */
   const getAdjustedStepIndex = useCallback(
@@ -220,10 +213,9 @@ const AcFormsApplicatieInner = ({
     mapping.push(getAdjustedStepIndex(4)); // Referentiecomponenten
     mapping.push(getAdjustedStepIndex(5)); // Standaarden
     mapping.push(getAdjustedStepIndex(6)); // Koppelingen
-    mapping.push(getAdjustedStepIndex(7)); // Diensten
 
     // Main step 3: Controleren
-    mapping.push(getAdjustedStepIndex(8));
+    mapping.push(getAdjustedStepIndex(7)); // Was step 8, now step 7 (Diensten disabled)
 
     return mapping;
   }, [formType, getAdjustedStepIndex, shouldShowVersiesStep]);
@@ -279,6 +271,8 @@ const AcFormsApplicatieInner = ({
   // Modules options with search functionality for koppelingen
   const [modulesOptions, setModulesOptions] = useState([]);
   const [modulesLoading, setModulesLoading] = useState(false);
+  // Ref to track which moduleB IDs we've already fetched (to avoid duplicate fetches)
+  const fetchedModuleBIdsRef = useRef(new Set());
 
   // Add state for external facilities options
   const [buitengemeentelijkeOptions, setBuitengemeentelijkeOptions] = useState([]);
@@ -439,13 +433,19 @@ const AcFormsApplicatieInner = ({
       setPrefillLoading(true);
       setPrefillError(null);
       try {
-        // Fetch the applicatie object with extended koppelingen and diensten
+        // Fetch the applicatie object with extended koppelingen, diensten, and moduleVersies
         await store.object.fetchObject(
           'voorzieningen',
           'module',
           String(applicatieId),
           {
-            _extend: ['@self.schema', 'koppelingen', 'diensten'],
+            '_extend[]': [
+              '@self.schema',
+              'koppelingen',
+              'diensten',
+              'moduleVersies',
+            ],
+            _published: 'false',
           }
         );
         if (cancelled) return;
@@ -600,6 +600,7 @@ const AcFormsApplicatieInner = ({
         _page: '1',
         gemmaType: 'Referentiecomponent',
         '_extend[]': '@self.schema',
+        _published: 'false',
       });
 
       // Fetch referentiecomponenten from openconnector endpoint
@@ -670,6 +671,7 @@ const AcFormsApplicatieInner = ({
         _page: '1',
         gemmaType: 'Standaard',
         '_extend[]': '@self.schema',
+        _published: 'false',
       });
 
       // Fetch standards from openconnector endpoint
@@ -804,6 +806,7 @@ const AcFormsApplicatieInner = ({
         const queryParams = {
           _limit: '20',
           _page: '1',
+          _published: 'false',
         };
 
         // Add search parameter if provided
@@ -831,15 +834,36 @@ const AcFormsApplicatieInner = ({
             value: String(value),
             label: String(label),
             data: item, // Store the full API data for later access
+            type: 'applicatie',
           };
         };
 
-        const options = list.map(mapToOption).filter((o) => o.label && o.value);
-        setModulesOptions(options);
-        console.info(`✅ Loaded ${options.length} modules (cache-first)`);
+        const newOptions = list.map(mapToOption).filter((o) => o.label && o.value);
+
+        // Append new results to existing options, checking by ID to avoid duplicates
+        setModulesOptions((prevOptions) => {
+          // Create a Set of existing option values for quick lookup
+          const existingValues = new Set(
+            prevOptions.map((opt) => String(opt.value))
+          );
+
+          // Keep all existing options, then append new ones that aren't already present
+          const mergedOptions = [...prevOptions];
+
+          newOptions.forEach((newOpt) => {
+            const newValue = String(newOpt.value);
+            if (!existingValues.has(newValue)) {
+              mergedOptions.push(newOpt);
+              existingValues.add(newValue); // Track it to avoid duplicates in the same batch
+            }
+          });
+
+          return mergedOptions;
+        });
+        console.info(`✅ Loaded ${newOptions.length} modules (cache-first)`);
       } catch (e) {
         console.error('Failed to fetch modules:', e);
-        setModulesOptions([]);
+        // Don't clear options on error to preserve existing selections
       } finally {
         setModulesLoading(false);
       }
@@ -876,6 +900,7 @@ const AcFormsApplicatieInner = ({
           _limit: '50',
           _page: '1',
           _source: 'database',
+          _published: 'false',
         };
 
         // Add search parameter if provided
@@ -962,6 +987,7 @@ const AcFormsApplicatieInner = ({
           _page: '1',
           _source: 'index',
           '_extend[]': '@self.schema',
+          _published: 'false',
         };
 
         // Add search parameter if provided
@@ -1045,6 +1071,7 @@ const AcFormsApplicatieInner = ({
         _page: '1',
         gemmaType: 'Buitengemeentelijke voorziening',
         '_extend[]': '@self.schema',
+        _published: 'false',
       });
 
       console.info('📋 Fetching external facilities from openconnector endpoint...');
@@ -1070,7 +1097,7 @@ const AcFormsApplicatieInner = ({
             item?.label ||
             `Facility ${index + 1}`;
           const value = item?.value || item?.id || item?.slug || label;
-          return { value: String(value), label: String(label), data: item };
+          return { value: String(value), label: String(label), data: item, type: 'buitengemeentelijke' };
         })
         .filter((o) => o.label && o.value);
 
@@ -1116,16 +1143,18 @@ const AcFormsApplicatieInner = ({
         // Try to prefill Applicatie B by id when present in API data
         const moduleBId = (() => {
           if (!kpl) return null;
-          // Check @self.relations first, then fall back to direct properties
-          const relationsModuleB = kpl?.['@self']?.relations?.moduleB;
-          if (relationsModuleB != null) return String(relationsModuleB);
-          if (kpl.moduleBId != null) return String(kpl.moduleBId);
+          // Check moduleB first (direct property)
           if (kpl.moduleB != null) {
             // Accept both object reference and primitive id
             return String(
               typeof kpl.moduleB === 'object' ? kpl.moduleB?.id : kpl.moduleB
             );
           }
+          // Then check moduleBId
+          if (kpl.moduleBId != null) return String(kpl.moduleBId);
+          // Finally check @self.relations as last case scenario
+          const relationsModuleB = kpl?.['@self']?.relations?.moduleB;
+          if (relationsModuleB != null) return String(relationsModuleB);
           return null;
         })();
 
@@ -1169,6 +1198,111 @@ const AcFormsApplicatieInner = ({
       }
     }
   }, [applicatie?.koppelingen, koppelingenFormState.rows.length]);
+
+  // Fetch missing selected moduleB IDs and add them to modulesOptions (for edit mode)
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      // Only run if we have koppelingen form state initialized
+      const selectedModuleBIds = Object.values(
+        koppelingenFormState.selectedAppBByRow || {}
+      ).filter(Boolean);
+
+      if (selectedModuleBIds.length === 0) return;
+
+      // Find which moduleB IDs are missing from modulesOptions and haven't been fetched yet
+      const existingValues = new Set(modulesOptions.map((opt) => String(opt.value)));
+      const missingIds = selectedModuleBIds.filter(
+        (id) =>
+          !existingValues.has(String(id)) &&
+          !fetchedModuleBIdsRef.current.has(String(id))
+      );
+
+      if (missingIds.length === 0) return;
+
+      // Mark these IDs as being fetched
+      missingIds.forEach((id) => fetchedModuleBIdsRef.current.add(String(id)));
+
+      // Fetch missing modules individually
+      const fetchPromises = missingIds.map(async (moduleId) => {
+        try {
+          await store.object.fetchObject(
+            'voorzieningen',
+            'module',
+            String(moduleId),
+            {
+              _extend: '@self.schema',
+              _published: 'false',
+            }
+          );
+          if (cancelled) return null;
+
+          const moduleData = store.object.getObject(
+            'voorzieningen_module',
+            String(moduleId)
+          );
+          return moduleData;
+        } catch (error) {
+          console.error(`Failed to fetch module ${moduleId}:`, error);
+          // Remove from fetched set on error so we can retry later if needed
+          fetchedModuleBIdsRef.current.delete(String(moduleId));
+          return null;
+        }
+      });
+
+      const fetchedModules = await Promise.all(fetchPromises);
+      if (cancelled) return;
+
+      // Map fetched modules to options format (matching performModulesSearch format)
+      const mapToOption = (item, index) => {
+        if (!item) return null;
+        const label =
+          item?.naam ||
+          item?.['@self']?.name ||
+          item?.name ||
+          item?.title ||
+          item?.label ||
+          (item?.id ? String(item.id) : `Applicatie ${index + 1}`);
+        const value = item?.value || item?.id || item?.slug || label;
+        return {
+          value: String(value),
+          label: String(label),
+          data: item,
+          type: 'applicatie',
+        };
+      };
+
+      const newOptions = fetchedModules
+        .map(mapToOption)
+        .filter(Boolean)
+        .filter((o) => o.label && o.value);
+
+      // Add missing modules to modulesOptions
+      if (newOptions.length > 0) {
+        setModulesOptions((prevOptions) => {
+          const existingValuesSet = new Set(
+            prevOptions.map((opt) => String(opt.value))
+          );
+
+          const mergedOptions = [...prevOptions];
+          newOptions.forEach((newOpt) => {
+            const newValue = String(newOpt.value);
+            if (!existingValuesSet.has(newValue)) {
+              mergedOptions.push(newOpt);
+              existingValuesSet.add(newValue);
+            }
+          });
+
+          return mergedOptions;
+        });
+      }
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [koppelingenFormState.selectedAppBByRow, modulesOptions, store.object]);
 
   // Initialize diensten form state from applicatie.diensten (for edit mode)
   useEffect(() => {
@@ -1337,6 +1471,7 @@ const AcFormsApplicatieInner = ({
         ...applicatie,
         aanbieder: finalAanbieder,
       };
+      const sanitized = stripLocalIds(applicatieData);
 
       let createdApplicatie = null;
       if (applicatieId) {
@@ -1345,7 +1480,7 @@ const AcFormsApplicatieInner = ({
           'voorzieningen',
           'module',
           String(applicatieId),
-          applicatieData
+          sanitized
         );
         // For edit mode, use the existing applicatieId
         createdApplicatie = { id: applicatieId };
@@ -1354,7 +1489,7 @@ const AcFormsApplicatieInner = ({
         createdApplicatie = await store.object.createObject(
           'voorzieningen',
           'module',
-          applicatieData
+          sanitized
         );
       }
 
@@ -1434,7 +1569,7 @@ const AcFormsApplicatieInner = ({
             setApplicatieData={setApplicatieData}
             aanbiederOrganisatie={aanbiederOrganisatie}
             setAanbiederOrganisatieData={setAanbiederOrganisatieData}
-            loading={loading}
+            loading={loading || prefillLoading}
             schemas={schemas}
             aanbiederKeuze={aanbiederKeuze}
             setAanbiederKeuze={setAanbiederKeuze}
@@ -1450,7 +1585,7 @@ const AcFormsApplicatieInner = ({
           <ConFormApplicatieInformatieStage
             applicatie={applicatie}
             setApplicatieData={setApplicatieData}
-            loading={loading}
+            loading={loading || prefillLoading}
             touched={touched}
             schemas={schemas}
             contactpersoonOptions={contactpersoonOptions}
@@ -1521,17 +1656,7 @@ const AcFormsApplicatieInner = ({
             searchModules={searchModules}
           />
         );
-      case 7:
-        return (
-          <ConFormApplicatieDienstenStage
-            applicatie={applicatie}
-            dienstOptions={dienstOptions}
-            setApplicatieData={setApplicatieData}
-            dienstenFormState={dienstenFormState}
-            setDienstenFormState={setDienstenFormState}
-          />
-        );
-      case 8:
+      case 7: // Was case 8 (Controleren) - renumbered due to Diensten being disabled
         return (
           <ConFormApplicatieControlerenStage
             applicatie={applicatie}
@@ -1571,9 +1696,7 @@ const AcFormsApplicatieInner = ({
         return 'Selecteer de standaarden voor uw applicatie';
       case 6:
         return 'Koppelingen met andere applicaties';
-      case 7:
-        return 'Diensten';
-      case 8:
+      case 7: // Was case 8 (Controleren) - renumbered due to Diensten being disabled
         return 'Controleer uw gegevens';
       default:
         return '';
@@ -1789,8 +1912,8 @@ const AcFormsApplicatieInner = ({
                 </Alert>
               )}
 
-              {/* Only show form if not loading and no error */}
-              {!prefillLoading && !prefillError && (
+              {/* Show form always (even during loading), hide only on error */}
+              {!prefillError && (
                 <>
                   <div>
                     <h3
@@ -1875,7 +1998,7 @@ const AcFormsApplicatieInner = ({
                                   currentStep,
                                   getAdjustedStepIndex(2),
                                   getAdjustedStepIndex(2),
-                                  getAdjustedStepIndex(8)
+                                  getAdjustedStepIndex(7) // Was 8, now 7 (Diensten disabled)
                                 ),
                                 title: 'Applicatie configuratie',
                                 steps: [
@@ -1924,14 +2047,6 @@ const AcFormsApplicatieInner = ({
                                     ),
                                     title: 'Koppelingen',
                                   },
-                                  {
-                                    id: 'diensten-substep',
-                                    status: getStatus(
-                                      currentStep,
-                                      getAdjustedStepIndex(7)
-                                    ),
-                                    title: 'Diensten',
-                                  },
                                 ],
                               },
                               {
@@ -1939,7 +2054,7 @@ const AcFormsApplicatieInner = ({
                                 marker: 3,
                                 status: getStatus(
                                   currentStep,
-                                  getAdjustedStepIndex(8)
+                                  getAdjustedStepIndex(7) // Was 8, now 7 (Diensten disabled)
                                 ),
                                 title: 'Controleren',
                               },
@@ -2044,7 +2159,7 @@ const AcFormsApplicatieInner = ({
                                     : 'Bestaande leverancier selecteren'}
                                 </AcButton>
                               )}
-                            {getLogicalStepFromPhysical(currentStep) !== 8 && (
+                            {getLogicalStepFromPhysical(currentStep) !== 7 && ( // Was 8, now 7 (Diensten disabled)
                               <AcButton
                                 style='button'
                                 className={clsx(
@@ -2071,7 +2186,7 @@ const AcFormsApplicatieInner = ({
                               </AcButton>
                             )}
 
-                            {getLogicalStepFromPhysical(currentStep) === 8 && (
+                            {getLogicalStepFromPhysical(currentStep) === 7 && ( // Was 8, now 7 (Diensten disabled)
                               <AcButton
                                 style='button'
                                 icon={

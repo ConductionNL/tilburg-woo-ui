@@ -21,43 +21,7 @@ const AcGemmaView = ({ store: { gemma }, viewId }) => {
   const [viewNodesData, setViewNodesData] = useState(null);
   const [viewRelationsData, setViewRelationsData] = useState(null);
   const [viewIsDoneLoading, setViewIsDoneLoading] = useState(false);
-  // Removed voorzieningenGebruik state and usage
-  // Legacy property definitions (no longer used with new viewNodes/viewRelationships API)
-  // const [propertyDefinitions, setPropertyDefinitions] = useState([
-  //   { name: 'Titel view SWC', identifier: 'propid-title' },
-  //   { name: 'Verbindingsrol', identifier: 'propid-verbinding' },
-  // ]);
   const [filters, setFilters] = useState({ gebruik: false, product: false });
-
-  // const _propertyDefinitions = [
-  //   { name: 'Titel view SWC', identifier: 'propid-title' },
-  //   { name: 'Verbindingsrol', identifier: 'propid-verbinding' },
-  // ];
-
-  // const getPropertyDefinitions = async () => {
-  //   try {
-  //     const response = await fetch(
-  //       `${BASE_URL}/openconnector/api/endpoint/models?_fields[]=propertyDefinitions`
-  //     );
-  //     await response.json();
-  //
-  //     setPropertyDefinitions(_propertyDefinitions);
-  //   } catch (error) {
-  //     console.error(`Error fetching node data: ${error}`);
-  //     return null;
-  //   }
-  // };
-
-  // const getViewName = (view) => {
-  //   const propertyDefinitionRef = propertyDefinitions.find(
-  //     (property) => property.name === 'Titel view SWC'
-  //   )?.identifier;
-  //   return (
-  //     view.properties.find(
-  //       (property) => property.propertyDefinitionRef === propertyDefinitionRef
-  //     )?.value || view.name
-  //   );
-  // };
 
   useEffect(() => {
     // Property definitions are not needed for the new API; directly load views when no viewId is provided
@@ -101,8 +65,6 @@ const AcGemmaView = ({ store: { gemma }, viewId }) => {
     if (!gemma.get_view) return;
     // New view object may not contain nodes/relationships; render empty graph in that case
     if (Array.isArray(gemma.get_view.viewNodes)) {
-      // New API: viewNodes/viewRelationships provided directly
-      // setViewNodesData(gemma.get_view.viewNodes || []);
       // Sanitize nodes to ensure minimal required fields
       const sanitizedNodes = (gemma.get_view.viewNodes || []).map((node) => ({
         ...node,
@@ -426,10 +388,6 @@ const AcGemmaView = ({ store: { gemma }, viewId }) => {
     }
     */
 
-    // const addSuffix = (id, suffix = '-sc') => {
-    //   return id.endsWith(suffix) ? id : `${id}${suffix}`;
-    // };
-
     // Example nodes removed
 
     // Example relationships removed
@@ -438,11 +396,6 @@ const AcGemmaView = ({ store: { gemma }, viewId }) => {
     ViewRenderer.renderToGraph(
       outputGraph,
       viewNodes,
-      // viewRelationships.map((rel) => ({
-      //   ...rel,
-      //   sourceId: addSuffix(rel.sourceId),
-      //   targetId: addSuffix(rel.targetId),
-      // })),
       viewRelationships,
       new ViewSettings({
         archimateVersion: '<=3.1',

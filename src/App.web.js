@@ -71,7 +71,33 @@ const App = ({ store }) => {
     store.object.warmupNamesCache().catch((error) => {
       console.warn('⚠️ Names cache warmup failed during app initialization:', error);
     });
+    // Warm up register cache in background for better UX
+    store.object.warmupRegisterCache().catch((error) => {
+      console.warn(
+        '⚠️ Register cache warmup failed during app initialization:',
+        error
+      );
+    });
   }, []);
+
+  // Warm up schema cache only when user is authenticated AND on public pages
+  // Skip on authenticated-only routes (/beheer, /forms, /account) since those pages already fetch schemas
+  useEffect(() => {
+    const pathname = window.location.pathname;
+    const isAuthenticatedRoute =
+      pathname.startsWith('/beheer') ||
+      pathname.startsWith('/forms') ||
+      pathname.startsWith('/account');
+
+    if (user.isAuthenticated && !isAuthenticatedRoute) {
+      store.object.warmupSchemaCache().catch((error) => {
+        console.warn(
+          '⚠️ Schema cache warmup failed during app initialization:',
+          error
+        );
+      });
+    }
+  }, [user.isAuthenticated]);
 
   useDocumentTitleFromPath();
 

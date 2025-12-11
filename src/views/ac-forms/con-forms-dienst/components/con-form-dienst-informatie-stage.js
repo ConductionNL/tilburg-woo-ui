@@ -124,8 +124,6 @@ const ConFormDienstInformatieStage = memo(
               schemas={schemas}
             />
 
-            {/* Aanbieder field removed from UI */}
-
             <ConSchemaEnhancedField
               schemaType='dienst'
               schemaProperty='website'
@@ -213,10 +211,9 @@ const ConFormDienstInformatieStage = memo(
                   );
                 },
                 isClearable: true,
+                additionalQueryParams: { _published: 'false' },
               }}
             />
-
-            {/* Aanbieder field removed from UI */}
 
             <ConSchemaEnhancedField
               schemaType='dienst'
@@ -226,6 +223,9 @@ const ConFormDienstInformatieStage = memo(
               isDisabled={loading}
               width='half'
               schemas={schemas}
+              customProps={{
+                additionalQueryParams: { _published: 'false' },
+              }}
             />
           </div>
         </div>

@@ -24,6 +24,7 @@ import ConLogoPreview from '../ac-register/con-logo-preview';
 import { canReadField } from '@utils/field-authorization';
 import { TOOLTIP_ID } from '@src/index.web';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
+import { normalizeSchemaName } from '@src/utilities/con-normalize-schema-name';
 
 // Markdown Editor
 import MDEditor from '@uiw/react-md-editor';
@@ -298,8 +299,9 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
               onEdit={() => {
                 const schemaSlug = get_single?.['@self']?.schema?.slug;
                 if (schemaSlug) {
+                  const wizardSchemaName = normalizeSchemaName(schemaSlug).toLowerCase();
                   const wizards = Object.values(DASHBOARD_WIZARDS);
-                  const wizard = wizards.find((w) => w.schema === schemaSlug);
+                  const wizard = wizards.find((w) => w.schema === wizardSchemaName);
 
                   if (wizard) {
                     const baseUrl = getWizardUrl(wizard);
@@ -309,20 +311,11 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
                     return;
                   }
                 }
-                // Fallback to beheer legacy edit page in new tab
-                const beheerUrl = `/beheer/${schemaSlug}/${id}`;
-                window.open(beheerUrl, '_blank');
+                // Fallback to beheer detail page in same tab with edit modal
+                const beheerUrl = `/beheer/${schemaSlug}/${id}?showEditModal=true`;
+                navigate(beheerUrl);
               }}
-              uniqueActions={[
-                {
-                  key: 'delete',
-                  label: 'Verwijderen',
-                  icon: VISUALS.TRASHCAN,
-                  onClick: handleDelete,
-                },
-              ]}
               triggerStyle='button'
-              relatedActions={actionMenuItems}
             />
           </AcFlex>
 

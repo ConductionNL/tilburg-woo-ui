@@ -287,6 +287,7 @@ export const useRefOptions = (
           _limit: 50,
           _page: 1, // Always start from page 1 for form field options
           ...schemaQueryParams, // Add schema-defined query parameters
+          ...(optimizations?.additionalQueryParams || {}), // Add additional query params from optimizations
         };
 
         await object.fetchCollection(
@@ -488,36 +489,6 @@ export const useRefOptions = (
       fetchingFieldsRef.current.clear();
     };
   }, []); // Empty dependency array - only run on mount/unmount
-
-  // Debug effect disabled to prevent infinite loops
-  // const prevRefOptionsKeysRef = useRef([]);
-  // useEffect(() => {
-  //   if (process.env.NODE_ENV === 'development') {
-  //     const currentKeys = Object.keys(optionsProviders).sort();
-  //     const prevKeys = prevRefOptionsKeysRef.current;
-
-  //     // Only log if keys actually changed or if any array has items
-  //     const hasData = Object.values(optionsProviders).some(arr => Array.isArray(arr) && arr.length > 0);
-  //     if (JSON.stringify(currentKeys) !== JSON.stringify(prevKeys) || hasData) {
-  //       console.log('🔍 useRefOptions: optionsProviders updated:', currentKeys);
-  //       if (hasData) {
-  //         console.log('🔍 useRefOptions: Data loaded for fields:',
-  //           Object.entries(optionsProviders)
-  //             .filter(([, arr]) => Array.isArray(arr) && arr.length > 0)
-  //             .map(([key]) => key)
-  //         );
-  //         console.log('🔍 useRefOptions: Final options for aanbieder:', optionsProviders.aanbieder);
-  //         console.log('🔍 useRefOptions: All final options:', optionsProviders);
-  //       }
-  //       prevRefOptionsKeysRef.current = currentKeys;
-  //     }
-  //   }
-  // }, [optionsProviders]);
-
-  // Debug logging disabled to prevent loops
-  // if (optionsProviders.aanbieder && optionsProviders.aanbieder.length > 0) {
-  //   console.log('🔍 Hook: Returning optionsProviders.aanbieder:', optionsProviders.aanbieder);
-  // }
 
   return {
     optionsProviders,

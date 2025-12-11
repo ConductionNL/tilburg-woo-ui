@@ -205,9 +205,6 @@ export class AcAsideNavigation {
   scrollSpy = (
     event,
     scrollClient
-    // scrollTop,
-    // containerClient,
-    // containerTop
   ) => {
     let activeAnchor = false;
     const len = this.anchors.length;

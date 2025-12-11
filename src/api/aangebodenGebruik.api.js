@@ -51,11 +51,54 @@ export class AangebodenGebruikAPI {
    * @returns {Promise} API response confirming deletion
    */
   denyGebruik(gebruikId) {
-    return this.Client.delete(ENDPOINTS.AANGEBODEN_GEBRUIK.DENY(gebruikId)).then(
+    return this.Client.delete(ENDPOINTS.AANGEBODEN_GEBRUIK.DENY_OLD(gebruikId)).then(
       (response) => response.data
     );
   }
 
+  /**
+   * Get koppelingen gebruiks where active organization is involved
+   * @param {Object} params - Query parameters (limit, offset, status, product, etc.)
+   * @returns {Promise} API response with koppelingen gebruiks data in standard format
+   */
+  getKoppelingenGebruiks(id) {
+    return this.Client.get(ENDPOINTS.AANGEBODEN_GEBRUIK.KOPPELING(id)).then(
+      (response) => response.data
+    );
+  }
+
+  /**
+   * Get aanbod where active organization is involved
+   * @param {string} id - UUID of the aanbod to get
+   * @returns {Promise} API response with aanbod data in standard format
+   */
+  getAanbod() {
+    return this.Client.get(ENDPOINTS.AANGEBODEN_GEBRUIK.AANBOD).then(
+      (response) => response.data
+    );
+  }
+
+  /**
+   * Accept a aanbod suggestion by setting @self.organisation to active organization
+   * @param {string} aanbodId - UUID of the aanbod to accept
+   * @returns {Promise} API response with updated aanbod
+   */
+  acceptAanbod(aanbodId) {
+    return this.Client.put(ENDPOINTS.AANGEBODEN_GEBRUIK.ACCEPT(aanbodId)).then(
+      (response) => response.data
+    );
+  }
+
+  /**
+   * Deny a aanbod suggestion by deleting it
+   * @param {string} aanbodId - UUID of the aanbod to deny
+   * @returns {Promise} API response confirming deletion
+   */
+  denyAanbod(aanbodId) {
+    return this.Client.delete(ENDPOINTS.AANGEBODEN_GEBRUIK.DENY(aanbodId)).then(
+      (response) => response.data
+    );
+  }
   /**
    * Get API documentation
    * @returns {Promise} API documentation

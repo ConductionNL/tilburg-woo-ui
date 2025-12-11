@@ -27,9 +27,6 @@ import ConFormControlerenStage from './components/con-form-controleren-stage';
 import ConFormDienstAanbiederInformatieStage from './components/con-form-dienst-aanbieder-informatie-stage';
 import ConUnsavedChangesAlertModal from '@src/components/con-unsaved-changes-alert-modal/con-unsaved-changes-alert-modal';
 import { getActiveWizard } from '@src/constants/wizards.constants';
-// Legacy stages
-// import ConFormSoortDienstStage from './components/con-form-soort-dienst-stage';
-// import ConFormKoppelingenStage from './components/con-form-koppelingen-stage';
 
 const mapToOption = (item, index) => {
   const label =
@@ -117,14 +114,6 @@ const ConFormsDienst = ({ store, userStore }) => {
     setAanbiederOrganisatie((prev) => ({ ...prev, [key]: value }));
   }, []);
 
-  // Options/state
-  // Product-related states commented out
-  // const [productOptions, setProductOptions] = useState([]);
-  // const [selectedProductOptions, setSelectedProductOptions] = useState([]);
-  // const [productsLoading, setProductsLoading] = useState(false);
-  // const [selectedProductIds, setSelectedProductIds] = useState([]);
-  // const [productLabels, setProductLabels] = useState({});
-
   // productId -> module options derived from product details
   const [productToModulesLookup, setProductToModulesLookup] = useState({});
   const [selectedModuleIds, setSelectedModuleIds] = useState([]);
@@ -132,6 +121,7 @@ const ConFormsDienst = ({ store, userStore }) => {
   const [searchLoading, setSearchLoading] = useState(false);
   const [applicatiePreloadLoading, setApplicatiePreloadLoading] = useState(false);
   const [moduleOptions, setModuleOptions] = useState([]);
+  const moduleOptionsRef = useRef([]);
 
   const [koppelingOptions, setKoppelingOptions] = useState([]);
   const [selectedKoppelingIds, setSelectedKoppelingIds] = useState([]);
@@ -153,7 +143,8 @@ const ConFormsDienst = ({ store, userStore }) => {
         // Skip to step 0 in edit mode (Applicaties)
         setCurrentStep(0);
         await store.object.fetchObject('voorzieningen', 'dienst', String(dienstId), {
-          _extend: ['@self.schema'],
+          '_extend[]': ['@self.schema'],
+          _published: 'false',
         });
         if (cancelled) return;
 
@@ -168,24 +159,62 @@ const ConFormsDienst = ({ store, userStore }) => {
           item && typeof item === 'object'
             ? String(item.id || item.value || item.uuid || item.slug || '')
             : String(item || '');
-        // mapLabel commented out - only used in product prefill code
-        // const mapLabel = (item, fallback) => {
-        //   if (!item || typeof item !== 'object') return fallback || '';
-        //   return String(
-        //     item.naam || item.name || item.title || item.label || fallback || ''
-        //   );
-        // };
 
-        // Product-related prefill commented out
-        // const prefilledProductIds = Array.isArray(fetched.producten)
-        //   ? fetched.producten.map((p) => mapId(p)).filter(Boolean)
-        //   : [];
         const prefilledModuleIds = Array.isArray(fetched.modules)
           ? fetched.modules.map((m) => mapId(m)).filter(Boolean)
           : [];
         const prefilledKoppelingIds = Array.isArray(fetched.koppelingen)
           ? fetched.koppelingen.map((k) => mapId(k)).filter(Boolean)
           : [];
+
+        // Fetch missing modules from edit data and add to options
+        if (prefilledModuleIds.length > 0) {
+          const currentModuleOptions = moduleOptionsRef.current;
+          const existingModuleIds = new Set(
+            currentModuleOptions.map((opt) => opt.value)
+          );
+          const missingModuleIds = prefilledModuleIds.filter(
+            (id) => !existingModuleIds.has(id)
+          );
+
+          if (missingModuleIds.length > 0 && !cancelled) {
+            const moduleFetches = missingModuleIds.map((id) =>
+              store.object
+                .fetchObject('voorzieningen', 'module', String(id), {
+                  '_extend[]': ['@self.schema'],
+                  _published: 'false',
+                  _source: 'index',
+                })
+                .then(() => {
+                  if (cancelled) return null;
+                  return store.object.getObject('voorzieningen_module', String(id));
+                })
+                .catch(() => null)
+            );
+
+            const moduleResults = await Promise.allSettled(moduleFetches);
+            if (!cancelled) {
+              const newOptions = moduleResults
+                .map((result, index) => {
+                  if (result.status === 'fulfilled' && result.value) {
+                    return mapToOption(result.value, index);
+                  }
+                  return null;
+                })
+                .filter(Boolean);
+
+              if (newOptions.length > 0) {
+                setModuleOptions((prev) => {
+                  const existingValues = new Set(prev.map((opt) => opt.value));
+                  const uniqueNewOptions = newOptions.filter(
+                    (opt) => !existingValues.has(opt.value)
+                  );
+                  return [...prev, ...uniqueNewOptions];
+                });
+              }
+            }
+          }
+        }
 
         // Update main dienst object
         setDienst((prev) => ({
@@ -209,31 +238,8 @@ const ConFormsDienst = ({ store, userStore }) => {
             'eigen-organisatie'
         );
 
-        // Prefill selections and labels/options for UI components
-        // Product-related prefill commented out
-        // setSelectedProductIds(prefilledProductIds);
         setSelectedModuleIds(prefilledModuleIds);
         setSelectedKoppelingIds(prefilledKoppelingIds);
-
-        // Product options prefill commented out
-        // // Ensure selected product options exist so chips/inputs can render labels
-        // const productOptionsFromFetched = (
-        //   Array.isArray(fetched.producten) ? fetched.producten : []
-        // )
-        //   .map((p, idx) => ({
-        //     value: mapId(p),
-        //     label: mapLabel(p, `Product ${idx + 1}`),
-        //     data: p,
-        //   }))
-        //   .filter((o) => o.value && o.label);
-        // if (productOptionsFromFetched.length > 0) {
-        //   setSelectedProductOptions(productOptionsFromFetched);
-        //   const labels = {};
-        //   productOptionsFromFetched.forEach((o) => {
-        //     labels[o.value] = o.label;
-        //   });
-        //   setProductLabels((prev) => ({ ...prev, ...labels }));
-        // }
       } catch (e) {
         setPrefillError(
           'Het laden van de dienst is mislukt. Probeer het opnieuw of start een nieuwe dienst.'
@@ -312,93 +318,6 @@ const ConFormsDienst = ({ store, userStore }) => {
     load();
   }, [store]);
 
-  // Auto-set aanbieder from active org
-  // TODO: Initialize aanbieder to active organization ID
-  // useEffect(() => {
-  //   const actualUserStore = userStore || store?.user;
-  //   if (actualUserStore?.activeOrganization && !dienst.aanbieder) {
-  //     const orgId = actualUserStore.activeOrganization.uuid ||
-  //                  actualUserStore.activeOrganization.id ||
-  //                  actualUserStore.activeOrganization.slug;
-  //     setDienstData('aanbieder', orgId || '');
-  //   }
-  // }, [userStore, store?.user, dienst.aanbieder]);
-
-  // Product-related search and ref commented out
-  // // Use ref to avoid dependency issues
-  // const selectedProductOptionsRef = useRef(selectedProductOptions);
-  // selectedProductOptionsRef.current = selectedProductOptions;
-
-  // // Search/fetch products
-  // const performProductsSearch = useCallback(async (term = '') => {
-  //   setProductsLoading(true);
-  //   try {
-  //     const params = new URLSearchParams({ _limit: '20', _page: '1' });
-  //     if (term && term.trim()) params.set('_search', term.trim());
-
-  //     // TODO: Filter by own organization when dienst type is 'eigen-organisatie'
-  //     // Use @self[organisation] parameter to filter products by organization
-  //     // const actualUserStore = userStore || store?.user;
-  //     // if (dienstType === 'eigen-organisatie' && actualUserStore?.activeOrganization) {
-  //     //   const orgId = actualUserStore.activeOrganization.uuid ||
-  //     //                actualUserStore.activeOrganization.id ||
-  //     //                actualUserStore.activeOrganization.slug;
-  //     //   if (orgId) {
-  //     //     params.set('@self[organisation]', String(orgId));
-  //     //   }
-  //     // }
-
-  //     const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/product?${params}`;
-  //     const res = await fetch(endpoint, { headers: { Accept: 'application/json' } });
-  //     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  //     const data = await res.json();
-  //     const list = Array.isArray(data)
-  //       ? data
-  //       : Array.isArray(data?.results)
-  //       ? data.results
-  //       : [];
-  //     const mapped = list.map((item, index) => ({
-  //       value: String(
-  //         item?.id || item?.['@self']?.id || item?.value || item?.slug || index
-  //       ),
-  //       label: String(
-  //         item?.naam || item?.name || item?.title || `Product ${index + 1}`
-  //       ),
-  //       data: item,
-  //     }));
-  //     // Always include currently selected options so selected values remain available
-  //     const currentSelectedOptions = selectedProductOptionsRef.current || [];
-  //     const selectedById = new Set(currentSelectedOptions.map((o) => o.value));
-  //     const merged = [
-  //       ...currentSelectedOptions,
-  //       ...mapped.filter((o) => !selectedById.has(o.value)),
-  //     ];
-  //     setProductOptions(merged);
-  //   } catch {
-  //     setProductOptions([]);
-  //   } finally {
-  //     setProductsLoading(false);
-  //   }
-  // }, []);
-
-  // // Initial load of products
-  // useEffect(() => {
-  //   performProductsSearch('');
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, []);
-
-  // // TODO: Reload products when dienst type changes to apply organization filtering
-  // // useEffect(() => {
-  // //   if (dienstType) {
-  // //     // Clear current selections as available products will change
-  // //     setSelectedProductIds([]);
-  // //     setSelectedProductOptions([]);
-  // //     setSelectedModuleIds([]);
-  // //     // Reload products with new filtering
-  // //     performProductsSearch('');
-  // //   }
-  // // }, [dienstType]);
-
   // Fetch all modules (not product-based anymore)
   const loadAllModules = async () => {
     setModulesLoading(true);
@@ -409,6 +328,8 @@ const ConFormsDienst = ({ store, userStore }) => {
         {
           _limit: '50',
           _page: '1',
+          _published: 'false',
+          _source: 'index',
         },
         null,
         'dienst_form'
@@ -418,9 +339,35 @@ const ConFormsDienst = ({ store, userStore }) => {
       );
       const list = collection?.results || collection || [];
       const options = list.map(mapToOption);
-      setModuleOptions(options);
-      // Store as a flat list for backward compatibility
-      setProductToModulesLookup({ all: options });
+
+      // Merge with existing options to preserve search results and manually fetched modules
+      setModuleOptions((prevOptions) => {
+        const existingOptionsMap = new Map(
+          prevOptions.map((opt) => [opt.value, opt])
+        );
+        const newOptionsMap = new Map(options.map((opt) => [opt.value, opt]));
+
+        // Start with existing options
+        const mergedOptions = [...prevOptions];
+
+        // Add new options that don't already exist
+        newOptionsMap.forEach((newOpt, value) => {
+          if (!existingOptionsMap.has(value)) {
+            mergedOptions.push(newOpt);
+          } else {
+            // Update existing option with new data (in case it changed)
+            const index = mergedOptions.findIndex((opt) => opt.value === value);
+            if (index !== -1) {
+              mergedOptions[index] = newOpt;
+            }
+          }
+        });
+
+        // Store as a flat list for backward compatibility
+        setProductToModulesLookup({ all: mergedOptions });
+
+        return mergedOptions;
+      });
     } catch {
       setModuleOptions([]);
       setProductToModulesLookup({ all: [] });
@@ -428,6 +375,11 @@ const ConFormsDienst = ({ store, userStore }) => {
       setModulesLoading(false);
     }
   };
+
+  // Keep ref in sync with moduleOptions state
+  useEffect(() => {
+    moduleOptionsRef.current = moduleOptions;
+  }, [moduleOptions]);
 
   // Load modules on mount (step 0 is now Applicaties)
   useEffect(() => {
@@ -464,7 +416,9 @@ const ConFormsDienst = ({ store, userStore }) => {
               'module',
               String(applicatieFromUrl),
               {
-                _extend: ['@self.schema'],
+                '_extend[]': ['@self.schema'],
+                _published: 'false',
+                _source: 'index',
               }
             );
             const fetched = store.object.getObject(
@@ -508,6 +462,8 @@ const ConFormsDienst = ({ store, userStore }) => {
         const queryParams = {
           _limit: '50',
           _page: '1',
+          _published: 'false',
+          _source: 'index',
         };
 
         // Add search parameter if provided
@@ -528,18 +484,26 @@ const ConFormsDienst = ({ store, userStore }) => {
         const list = collection?.results || collection || [];
         const options = list.map(mapToOption);
 
-        // Merge with existing options to preserve selected items
+        // Add search results to existing options (don't replace, merge)
         setModuleOptions((prevOptions) => {
+          const existingOptionsMap = new Map(
+            prevOptions.map((opt) => [opt.value, opt])
+          );
           const newOptionsMap = new Map(options.map((opt) => [opt.value, opt]));
 
-          // Combine existing and new options, preferring new data for existing items
-          const mergedOptions = [...newOptionsMap.values()];
+          // Start with existing options
+          const mergedOptions = [...prevOptions];
 
-          // Add any existing options that aren't in the new results
-          // This preserves previously selected items that might not match the current search
-          prevOptions.forEach((opt) => {
-            if (!newOptionsMap.has(opt.value)) {
-              mergedOptions.push(opt);
+          // Add new search results that don't already exist
+          newOptionsMap.forEach((newOpt, value) => {
+            if (!existingOptionsMap.has(value)) {
+              mergedOptions.push(newOpt);
+            } else {
+              // Update existing option with new data (in case it changed)
+              const index = mergedOptions.findIndex((opt) => opt.value === value);
+              if (index !== -1) {
+                mergedOptions[index] = newOpt;
+              }
             }
           });
 
@@ -559,112 +523,6 @@ const ConFormsDienst = ({ store, userStore }) => {
   const debouncedSearchModules = useDebouncedInput(searchModules, 250, {
     disableInstantValidation: true,
   });
-
-  // Legacy: Fetch helpers that can be invoked when transitioning to the next step (commented out)
-  // const loadModulesForProducts = async () => {
-  //   setModulesLoading(true);
-  //   try {
-  //     if (!selectedProductIds || selectedProductIds.length === 0) {
-  //       setProductToModulesLookup({});
-  //       return;
-  //     }
-
-  //     const perProductTasks = selectedProductIds.map(async (prodId) => {
-  //       const productEndpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/product/${prodId}`;
-
-  //       const productItem = await fetch(productEndpoint, {
-  //         headers: { Accept: 'application/json' },
-  //       })
-  //         .then((r) => (r.ok ? r.json() : null))
-  //         .catch(() => null);
-
-  //       // Determine label using multiple fallbacks
-  //       const fromDetail = productItem
-  //         ? String(
-  //             productItem?.naam ||
-  //               productItem?.name ||
-  //               productItem?.title ||
-  //               productItem?.label ||
-  //               ''
-  //           )
-  //         : '';
-  //       const fromSelected =
-  //         (selectedProductOptions || []).find((p) => p.value === prodId)?.label ||
-  //         '';
-  //       const fromOptions =
-  //         (productOptions || []).find((p) => p.value === prodId)?.label || '';
-  //       const label = fromDetail || fromSelected || fromOptions || String(prodId);
-
-  //       // Use modules array on product to fetch each module individually
-  //       // The modules array contains UUID strings directly, not objects
-  //       const moduleIds = Array.isArray(productItem?.modules)
-  //         ? productItem.modules
-  //             .map((m) => {
-  //               // Handle both string UUIDs and object formats
-  //               if (typeof m === 'string' && m.trim()) {
-  //                 return m.trim();
-  //               } else if (typeof m === 'object' && m !== null) {
-  //                 return String(
-  //                   m?.id || m?.value || m?.uuid || m?.slug || m?.['@self']?.id || ''
-  //                 );
-  //               }
-  //               return '';
-  //             })
-  //             .filter(Boolean)
-  //         : [];
-
-  //       const moduleFetches = moduleIds.map((id) =>
-  //         fetch(`${BASE_URL}/openregister/api/objects/voorzieningen/module/${id}`, {
-  //           headers: { Accept: 'application/json' },
-  //         })
-  //           .then((r) => (r.ok ? r.json() : null))
-  //           .catch(() => null)
-  //       );
-
-  //       const moduleResults = await Promise.allSettled(moduleFetches);
-
-  //       const normalized = moduleResults
-  //         .map((res, idx) => {
-  //           if (res.status !== 'fulfilled' || !res.value) return null;
-  //           const m = res.value;
-  //           const id = String(
-  //             m?.id || m?.value || m?.uuid || m?.slug || moduleIds[idx] || ''
-  //           );
-  //           if (!id) return null;
-  //           const mLabel = String(
-  //             m?.naam || m?.name || m?.title || `Applicatie ${idx + 1}`
-  //           );
-  //           return { value: id, label: mLabel, data: m };
-  //         })
-  //         .filter(Boolean);
-
-  //       return { prodId, label, normalized };
-  //     });
-
-  //     const settled = await Promise.allSettled(perProductTasks);
-  //     const lookup = {};
-  //     const labels = {};
-  //     settled.forEach((res) => {
-  //       if (res.status !== 'fulfilled') return;
-  //       const { prodId, label, normalized } = res.value || {};
-  //       if (!prodId) return;
-  //       lookup[prodId] = Array.isArray(normalized) ? normalized : [];
-  //       if (label) labels[prodId] = label;
-  //     });
-
-  //     setProductToModulesLookup(lookup);
-  //     setProductLabels((prev) => ({ ...prev, ...labels }));
-  //   } finally {
-  //     setModulesLoading(false);
-  //   }
-  // };
-
-  // Product-related sync commented out
-  // // Keep dienst.producten in sync with current selection
-  // useEffect(() => {
-  //   setDienstData('producten', selectedProductIds);
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [selectedProductIds]);
 
   // Keep dienst.modules in sync with current selection
   useEffect(() => {
@@ -689,9 +547,12 @@ const ConFormsDienst = ({ store, userStore }) => {
 
       // Fetch each selected module to read its koppelingen array
       const moduleFetches = selectedModuleIds.map((id) =>
-        fetch(`${BASE_URL}/openregister/api/objects/voorzieningen/module/${id}`, {
-          headers: { Accept: 'application/json' },
-        })
+        fetch(
+          `${BASE_URL}/openregister/api/objects/voorzieningen/module/${id}?_published=false`,
+          {
+            headers: { Accept: 'application/json' },
+          }
+        )
           .then((r) => (r.ok ? r.json() : null))
           .catch(() => null)
       );
@@ -724,9 +585,12 @@ const ConFormsDienst = ({ store, userStore }) => {
       // Deduplicate and fetch each koppeling by ID
       const uniqueKoppelingIds = Array.from(new Set(collectedKoppelingIds));
       const koppelingFetches = uniqueKoppelingIds.map((id) =>
-        fetch(`${BASE_URL}/openregister/api/objects/voorzieningen/koppeling/${id}`, {
-          headers: { Accept: 'application/json' },
-        })
+        fetch(
+          `${BASE_URL}/openregister/api/objects/voorzieningen/koppeling/${id}?_published=false`,
+          {
+            headers: { Accept: 'application/json' },
+          }
+        )
           .then((r) => (r.ok ? r.json() : null))
           .catch(() => null)
       );
@@ -813,25 +677,9 @@ const ConFormsDienst = ({ store, userStore }) => {
     const logicalStep = getLogicalStepFromPhysical(step);
 
     switch (logicalStep) {
-      // Legacy step 0 - ConFormSoortDienstStage (commented out)
-      // case 0:
-      //   return (
-      //     <ConFormSoortDienstStage
-      //       dienstType={dienstType}
-      //       setDienstType={setDienstType}
-      //       loading={schemasLoading}
-      //       dienst={dienst}
-      //     />
-      //   );
       case 0:
         return (
           <ConFormApplicatiesStage
-            // Product-related props commented out
-            // productToModulesLookup={productToModulesLookup}
-            // selectedProductIds={selectedProductIds}
-            // selectedProductOptions={selectedProductOptions}
-            // productOptions={productOptions}
-            // productLabels={productLabels}
             selectedModuleIds={selectedModuleIds}
             setSelectedModuleIds={setSelectedModuleIds}
             loadingModules={modulesLoading || applicatiePreloadLoading}
@@ -855,19 +703,6 @@ const ConFormsDienst = ({ store, userStore }) => {
             aanbiederKeuze={aanbiederKeuze}
           />
         );
-      // Producten stage commented out
-      // case 1:
-      //   return (
-      //     <ConFormProductenStage
-      //       selectedProductIds={selectedProductIds}
-      //       setSelectedProductIds={setSelectedProductIds}
-      //       setSelectedProductOptions={setSelectedProductOptions}
-      //       productOptions={productOptions}
-      //       productsLoading={productsLoading}
-      //       searchProducts={performProductsSearch}
-      //       dienstType={dienstType}
-      //     />
-      //   );
       case 2:
         return (
           <ConFormDienstInformatieStage
@@ -880,25 +715,10 @@ const ConFormsDienst = ({ store, userStore }) => {
             dienstType={dienstType}
           />
         );
-      // Legacy step - ConFormKoppelingenStage (commented out)
-      // case 4:
-      //   return (
-      //     <ConFormKoppelingenStage
-      //       selectedModuleIds={selectedModuleIds}
-      //       productToModulesLookup={productToModulesLookup}
-      //       koppelingOptions={koppelingOptions}
-      //       selectedKoppelingIds={selectedKoppelingIds}
-      //       setSelectedKoppelingIds={setSelectedKoppelingIds}
-      //       dienstType={dienstType}
-      //     />
-      //   );
       case 3:
         return (
           <ConFormControlerenStage
             dienst={dienst}
-            // Product-related props commented out
-            // selectedProductIds={selectedProductIds}
-            // productOptions={productOptions}
             selectedModuleIds={selectedModuleIds}
             moduleOptionsByProduct={productToModulesLookup}
             selectedKoppelingIds={selectedKoppelingIds}
@@ -924,16 +744,10 @@ const ConFormsDienst = ({ store, userStore }) => {
         return 'Applicaties';
       case 1:
         return 'Aanbieder';
-      // Producten step commented out
-      // case 1:
-      //   return 'Producten';
       case 2:
         return 'Dienst informatie';
       case 3:
         return 'Controleer uw gegevens';
-      // Legacy step names (commented out)
-      // case 0: return 'Soort dienst';
-      // case 4: return 'Koppelingen';
       default:
         return '';
     }
@@ -989,11 +803,6 @@ const ConFormsDienst = ({ store, userStore }) => {
 
       return missingNewOrgFields.length > 0;
     }
-    // Producten step validation commented out
-    // if (logicalStep === 1) {
-    //   // Producten: at least one product selected
-    //   return selectedProductIds.length === 0;
-    // }
     if (logicalStep === 2) {
       // Dienst informatie: Respect schema requiredness
       const naamRequired = isSchemaFieldRequired('dienst', 'naam');
@@ -1013,12 +822,6 @@ const ConFormsDienst = ({ store, userStore }) => {
       }
       return false;
     }
-    // Legacy validation (commented out)
-
-    // if (logicalStep === 4) {
-    //   // Koppelingen: no strict validation (optional)
-    //   return false;
-    // }
     // Controleren: no strict validation
     return false;
   };
@@ -1058,10 +861,6 @@ const ConFormsDienst = ({ store, userStore }) => {
         return messages.join('\n');
       }
     }
-    // Producten step tooltip commented out
-    // if (logicalStep === 1) {
-    //   return selectedProductIds.length === 0 ? 'Selecteer minimaal één product' : '';
-    // }
     if (logicalStep === 2) {
       // Dienst informatie validation messages
       const messages = [];
@@ -1300,31 +1099,6 @@ const ConFormsDienst = ({ store, userStore }) => {
                           title: 'Aanbieder',
                         });
                       }
-
-                      // Legacy nested steps structure (commented out)
-                      // {
-                      //   id: 'p7r8o9d0-u1c2-t3e4-n5a6-p7p8l9i0c1a2',
-                      //   marker: 2,
-                      //   status:
-                      //     currentStep >= 1 && currentStep <= 2
-                      //       ? 'current'
-                      //       : currentStep < 1
-                      //       ? 'not-checked'
-                      //       : 'checked',
-                      //   title: 'Producten en applicaties',
-                      //   steps: [
-                      //     {
-                      //       id: 'p3r4o5d6-u7c8-t9e0-n1s2-t3a4g5e6f7g8',
-                      //       status: getStatus(currentStep, 1),
-                      //       title: 'Producten',
-                      //     },
-                      //     {
-                      //       id: 'a9p0p1l2-i3c4-a5t6-i7e8-s9t0a1g2e3f4',
-                      //       status: getStatus(currentStep, 2),
-                      //       title: 'Applicaties',
-                      //     },
-                      //   ],
-                      // },
 
                       baseSteps.push(
                         {

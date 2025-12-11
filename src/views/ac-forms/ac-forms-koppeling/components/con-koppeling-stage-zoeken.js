@@ -13,13 +13,13 @@ const ConKoppelingStageZoeken = ({
   ownApp,
   setOwnApp,
   ownAppLoading,
-  setOwnAppInput,
   searchResults,
   resolvedModulesFromResults = [],
   resultsLoading = false,
   getArrowForDirection,
   isEditMode,
   onSearchModules,
+  schemas = {},
 }) => {
   const idToLabel = Object.fromEntries(
     (resolvedModulesFromResults || []).map((o) => [String(o.value), String(o.label)])
@@ -76,12 +76,8 @@ const ConKoppelingStageZoeken = ({
       <div className='ac-register-form-grid'>
         <div style={{ gridColumn: 'span 2', maxWidth: '640px' }}>
           <ConSchemaEnhancedField
-            schemaType='module'
-            schemaProperty={{
-              type: 'string',
-              title: 'Applicatie',
-              $ref: '#/definitions/module',
-            }}
+            schemaType='koppeling'
+            schemaProperty='moduleA'
             value={ownApp?.value || null}
             onChange={(value) => {
               // ConSchemaEnhancedField returns the option object directly when using optionsProvider
@@ -100,22 +96,13 @@ const ConKoppelingStageZoeken = ({
               } else {
                 setOwnApp(null);
               }
-              // Clear the search input so the selected value renders
-              setOwnAppInput('');
             }}
             isDisabled={loading || isEditMode}
             isLoading={ownAppLoading}
             width='full'
-            schemas={{}}
+            schemas={schemas}
             optionsProvider={ownAppOptions}
-            onSearch={
-              onSearchModules
-                ? (_path, _refSlug, q) => {
-                    setOwnAppInput(q || '');
-                    onSearchModules(q);
-                  }
-                : null
-            }
+            onSearch={(_path, _refSlug, q) => onSearchModules && onSearchModules(q)}
             customProps={{
               label: 'Applicatie',
               placeholder: 'Selecteer een applicatie',
@@ -125,26 +112,6 @@ const ConKoppelingStageZoeken = ({
           />
         </div>
       </div>
-
-      {/*
-        <div>
-          <AcButton style='button' onClick={handleSearch} disabled={loading}>
-            Zoeken
-          </AcButton>
-        </div>
-      */}
-
-      {/*
-        <AcFlex column style={{ gridColumn: 'span 2' }}>
-          <label className='utrecht-form-label'>Zoek op applicatienaam</label>
-          <Textbox
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e?.target?.value || '')}
-            placeholder='Bijv. OpenWoo'
-            id='koppeling-zoek-input'
-          />
-        </AcFlex>
-      */}
 
       <div style={{ marginTop: '1rem' }}>
         <h3 className='utrecht-heading-4' style={{ marginBottom: '0.5rem' }}>

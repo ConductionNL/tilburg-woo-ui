@@ -10,9 +10,11 @@ import { withStore } from '@stores';
 import { VISUALS } from '@constants';
 import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
+import { schemaCache } from '@services/schemaCache.service';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
-import { checkOrganizationPermissions } from '@utils/organization-permissions';
+import { normalizeSchemaName } from '@src/utilities/con-normalize-schema-name';
+// import { checkOrganizationPermissions } from '@utils/organization-permissions';
 
 // Markdown Editor
 import remarkDefinitionList, { defListHastHandlers } from 'remark-definition-list';
@@ -32,6 +34,15 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
   const { get_single, loading, attachments } = publications;
 
   const navigate = useNavigate();
+
+  const schemaId =
+    typeof get_single?.['@self']?.schema === 'object'
+      ? get_single?.['@self']?.schema.id
+      : get_single?.['@self']?.schema;
+  const schemaSlug = useMemo(
+    () => (schemaId ? schemaCache.get(schemaId) : null),
+    [schemaId]
+  );
 
   // Use the same related actions hook as beheer pages
   const openDynamicCreate = useCallback(
@@ -55,8 +66,8 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
   const { makeActionsForContext } = useRelatedCreateActions({
     object,
     user,
-    schemaRef: get_single?.['@self']?.schema?.slug,
-    currentType: get_single?.['@self']?.schema?.slug, // Use schema slug as current type
+    schemaRef: schemaSlug,
+    currentType: schemaSlug, // Use schema slug as current type
     openDynamicCreate,
     currentObject: get_single,
     excludeSchemas,
@@ -74,14 +85,14 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
   }, []);
 
   useEffect(() => {
-    if (!get_single?.['@self']?.schema?.slug || !id) return;
+    if (!schemaSlug || !id) return;
 
     const items = makeActionsForContext(
       id,
       null,
       get_single,
       'voorzieningen',
-      get_single?.['@self']?.schema?.slug
+      schemaSlug
     ).map(({ key, label, onClick, schema, icon }) => ({
       key,
       label,
@@ -91,7 +102,7 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
     }));
 
     setActionMenuItems(items);
-  }, [get_single?.['@self']?.schema?.slug, id, makeActionsForContext, get_single]);
+  }, [schemaSlug, id, makeActionsForContext, get_single]);
 
   // Tabs
   const [uses, setUses] = useState([]);
@@ -108,7 +119,7 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
     setUsesLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend[]=@self.schema`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses`,
         {
           method: 'GET',
           headers: {
@@ -134,7 +145,7 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
     setUsedLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=@self.schema`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used`,
         {
           method: 'GET',
           headers: {
@@ -202,18 +213,18 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
               className='con-product-publication--header-actions'
             >
               <Heading className='con-product-publication--header-type'>
-                {(() => {
-                  const Icon = getTabHeaderIcon(get_single?.['@self'].schema.slug);
-                  return <Icon />;
-                })()}
-                {getTabHeaderName(get_single?.['@self'].schema.slug, true)}
+                {schemaSlug &&
+                  (() => {
+                    const Icon = getTabHeaderIcon(schemaSlug);
+                    return <Icon />;
+                  })()}
+                {schemaSlug && getTabHeaderName(schemaSlug, true)}
               </Heading>
 
-              {checkOrganizationPermissions(user, get_single).canEdit && (
-                <ConDetailsActionsMenu
+              <ConDetailsActionsMenu
                   user={user}
                   id={id}
-                  schemaSlug={get_single?.['@self']?.schema?.slug}
+                  schemaSlug={schemaSlug}
                   title={get_single?.['@self']?.name || get_single?.id}
                   published={get_single?.['@self']?.published}
                   object={get_single}
@@ -222,10 +233,10 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
                   showPublishActions={true}
                   onDelete={handleDelete}
                   onEdit={() => {
-                    const schemaSlug = get_single?.['@self']?.schema?.slug;
                     if (schemaSlug) {
+                      const wizardSchemaName = normalizeSchemaName(schemaSlug).toLowerCase();
                       const wizards = Object.values(DASHBOARD_WIZARDS);
-                      const wizard = wizards.find((w) => w.schema === schemaSlug);
+                      const wizard = wizards.find((w) => w.schema === wizardSchemaName);
 
                       if (wizard) {
                         const baseUrl = getWizardUrl(wizard);
@@ -235,22 +246,12 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
                         return;
                       }
                     }
-                    // Fallback to beheer legacy edit page in new tab
-                    const beheerUrl = `/beheer/${schemaSlug}/${id}`;
-                    window.open(beheerUrl, '_blank');
+                    // Fallback to beheer detail page in same tab with edit modal
+                    const beheerUrl = `/beheer/${schemaSlug}/${id}?showEditModal=true`;
+                    navigate(beheerUrl);
                   }}
-                  uniqueActions={[
-                    {
-                      key: 'delete',
-                      label: 'Verwijderen',
-                      icon: VISUALS.TRASHCAN,
-                      onClick: handleDelete,
-                    },
-                  ]}
                   triggerStyle='button'
-                  relatedActions={actionMenuItems}
                 />
-              )}
             </AcFlex>
           </AcFlex>
           <AcFlex spacing='sm' justifyContent='between'>
@@ -346,6 +347,9 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
             used={used}
             usesLoading={usesLoading}
             usedLoading={usedLoading}
+            gebruikId={id}
+            gebruikSchemaId={schemaId}
+            gebruikSchemaSlug={get_single?.['@self']?.schema?.slug}
             tabIndex={tabIndex}
             setTabIndex={setTabIndex}
             object={object}

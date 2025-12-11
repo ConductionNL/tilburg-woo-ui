@@ -20,7 +20,7 @@ import ConModuleVersieDetailsPage from '../../domains/con-module-version/con-mod
 
 const AcBeheer = ({ store }) => {
   const navigate = useNavigate();
-  const { user } = store;
+  const { user, object } = store;
 
   // Check authentication using the new UserStore
   useEffect(() => {
@@ -48,6 +48,11 @@ const AcBeheer = ({ store }) => {
     checkAuth();
   }, [user, navigate]);
 
+  // Trigger beheer data warmup when component mounts
+  useEffect(() => {
+    object.warmupBeheerData();
+  }, [object]);
+
   const { type, id } = useParams();
 
   if (window.location.pathname === '/beheer') {
@@ -70,7 +75,7 @@ const AcBeheer = ({ store }) => {
     return <ConBeheerPageWrapper type={type} />;
   }
 
-  if (type === 'organisaties') {
+  if (type === 'organisaties' || type === 'organisatie') {
     return <ConOrganisatieDetailsPage />;
   }
   if (type === 'product') {

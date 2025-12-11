@@ -11,6 +11,7 @@ import {
 import { VISUALS } from '@src/constants';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 import { TOOLTIP_ID } from '@src/index.web';
+import { commongroundApiUrl } from '@src/config';
 
 const ConKoppelingStageToevoegen = ({
   rows,
@@ -74,7 +75,11 @@ const ConKoppelingStageToevoegen = ({
 
   const fetchModuleOptions = async (q, signal) => {
     try {
-      const params = new URLSearchParams({ _limit: '20', _page: '1' });
+      const params = new URLSearchParams({
+        _limit: '20',
+        _page: '1',
+        _published: 'false',
+      });
       if (q) params.set('_search', q);
       const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module?${params}`;
       const res = await fetch(endpoint, {
@@ -106,11 +111,56 @@ const ConKoppelingStageToevoegen = ({
           item?.value ||
           item?.slug ||
           `Applicatie ${index + 1}`;
-        return { value: String(id), label: String(label), data: item };
+        return {
+          value: String(id),
+          label: String(label),
+          data: item,
+          type: 'applicatie',
+        };
       });
       // also upsert into shared pools for persistence
       mapped.forEach((o) => upsertModuleOption(o));
       return mapped;
+    } catch (e) {
+      if (e?.name === 'AbortError') return null;
+      return [];
+    }
+  };
+
+  const fetchBuitengemeentelijkeOptions = async (q, signal) => {
+    try {
+      const queryParams = new URLSearchParams({
+        _limit: '50',
+        _page: '1',
+        gemmaType: 'Buitengemeentelijke voorziening',
+        '_extend[]': '@self.schema',
+        _published: 'false',
+      });
+      if (q) queryParams.set('_search', q);
+      const endpoint = `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`;
+      const res = await fetch(endpoint, {
+        headers: { Accept: 'application/json' },
+        signal,
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
+      const list = Array.isArray(data?.results) ? data.results : [];
+      return list.map((item, index) => {
+        const label =
+          item?.xml?.name?._value ||
+          item?.naam ||
+          item?.name ||
+          item?.title ||
+          item?.label ||
+          `Facility ${index + 1}`;
+        const value = item?.value || item?.id || item?.slug || label;
+        return {
+          value: String(value),
+          label: String(label),
+          data: item,
+          type: 'buitengemeentelijke',
+        };
+      });
     } catch (e) {
       if (e?.name === 'AbortError') return null;
       return [];
@@ -131,11 +181,25 @@ const ConKoppelingStageToevoegen = ({
       const controller = new AbortController();
       abortControllersRef.current[key] = controller;
       if (which === 'B') setAppBLoadingByRow((p) => ({ ...p, [rowId]: true }));
-      const opts = q
-        ? await fetchModuleOptions(q, controller.signal)
-        : which === 'B'
-        ? getMergedOptions()
-        : modulesOptions;
+
+      let opts;
+      if (q) {
+        // When searching, fetch both modules and external facilities in parallel
+        const [moduleResults, buitengemeentelijkeResults] = await Promise.all([
+          fetchModuleOptions(q, controller.signal),
+          fetchBuitengemeentelijkeOptions(q, controller.signal),
+        ]);
+        // Merge results from both searches
+        const merged = [];
+        if (Array.isArray(moduleResults)) merged.push(...moduleResults);
+        if (Array.isArray(buitengemeentelijkeResults))
+          merged.push(...buitengemeentelijkeResults);
+        opts = merged;
+      } else {
+        // When no query, use merged options from already loaded data
+        opts = which === 'B' ? getMergedOptions() : modulesOptions;
+      }
+
       // If another fetch started after this one, skip applying results
       if (abortControllersRef.current[key] !== controller) return;
       if (which === 'B') {
@@ -159,6 +223,51 @@ const ConKoppelingStageToevoegen = ({
     };
   }, []);
 
+  // Helper function to create colored dot style
+  const dot = (color = 'transparent') => ({
+    alignItems: 'center',
+    display: 'flex',
+    ':before': {
+      backgroundColor: color,
+      borderRadius: 10,
+      content: '" "',
+      display: 'block',
+      marginRight: 8,
+      height: 10,
+      width: 10,
+      flex: 'none',
+    },
+  });
+
+  // Custom styles for ReactSelect with colored dots
+  const getSelectStyles = () => ({
+    option: (styles, { data }) => {
+      const color = data?.type === 'buitengemeentelijke' ? '#3b82f6' : '#10b981';
+      return {
+        ...styles,
+        ...dot(color),
+      };
+    },
+    singleValue: (styles, { data }) => {
+      const color = data?.type === 'buitengemeentelijke' ? '#3b82f6' : '#10b981';
+      return {
+        ...styles,
+        ...dot(color),
+      };
+    },
+    multiValue: (styles, { data }) => {
+      const color = data?.type === 'buitengemeentelijke' ? '#3b82f6' : '#10b981';
+      return {
+        ...styles,
+        ...dot(color),
+      };
+    },
+    placeholder: (styles) => ({
+      ...styles,
+      ...dot('#ccc'),
+    }),
+  });
+
   return (
     <div
       className='ac-register-form-section'
@@ -168,6 +277,46 @@ const ConKoppelingStageToevoegen = ({
       <h2 id='koppeling-toevoegen-title' className='sr-only'>
         Toevoegen
       </h2>
+
+      {/* Legend */}
+      <div
+        style={{
+          display: 'flex',
+          gap: '1.5rem',
+          marginBottom: '1rem',
+          padding: '0.75rem',
+          backgroundColor: '#f9fafb',
+          borderRadius: '4px',
+          border: '1px solid #e5e7eb',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span
+            style={{
+              display: 'block',
+              width: '10px',
+              height: '10px',
+              borderRadius: '50%',
+              backgroundColor: '#10b981',
+            }}
+          />
+          <span style={{ fontSize: '0.875rem' }}>Applicatie</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span
+            style={{
+              display: 'block',
+              width: '10px',
+              height: '10px',
+              borderRadius: '50%',
+              backgroundColor: '#3b82f6',
+            }}
+          />
+          <span style={{ fontSize: '0.875rem' }}>
+            Buiten Gemeentelijke Voorziening
+          </span>
+        </div>
+      </div>
 
       <div className='con-form-wizard-rows'>
         {rows.map((rowId) => {
@@ -264,7 +413,7 @@ const ConKoppelingStageToevoegen = ({
                     htmlFor={appBId}
                     style={{ display: 'flex', alignItems: 'center' }}
                   >
-                    Applicatie B
+                    Applicatie B of BGV
                     <span className='required-indicator' aria-hidden='true'>
                       *
                     </span>
@@ -300,7 +449,6 @@ const ConKoppelingStageToevoegen = ({
                       }));
                       if (opt) upsertModuleOption(opt);
                     }}
-                    placeholder='Selecteer applicatie B'
                     inputId={appBId}
                     aria-required='true'
                     isOptionDisabled={(opt) =>
@@ -321,6 +469,7 @@ const ConKoppelingStageToevoegen = ({
                         ? `${base} (al gekozen bij A)`
                         : base;
                     }}
+                    styles={getSelectStyles()}
                   />
                 </div>
               </div>

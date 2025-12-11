@@ -4,10 +4,7 @@ import ConLogoPreview from '../ac-register/con-logo-preview';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router-dom';
-import {
-  AcContainer,
-  AcFlex /*AcTab, AcTabList, AcTabPanel, AcTabs*/,
-} from '@atoms';
+import { AcContainer, AcFlex } from '@atoms';
 import {
   AcLoader,
   ConDetailsActionsMenu,
@@ -18,8 +15,9 @@ import { withStore } from '@stores';
 import { VISUALS } from '@constants';
 import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
-import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
+import { schemaCache } from '@services/schemaCache.service';
+import { normalizeSchemaName } from '@src/utilities/con-normalize-schema-name';
 
 // Markdown Editor
 import remarkDefinitionList, { defListHastHandlers } from 'remark-definition-list';
@@ -48,73 +46,18 @@ const AcPublicationProduct = ({
   const { get_single, loading } = publications;
   const navigate = useNavigate();
 
-  const openDynamicCreate = useCallback(
-    (targetType, preSelected, metadata = {}) => {
-      // For publication pages, we'll navigate to the beheer page with modal open
-      // TODO: Handle outgoing relationship metadata in beheer page URL params
-      if (metadata.isOutgoing) {
-        // handle outgoing relationship metadata
-      }
-      navigate(`/beheer/${targetType}?showCreateModal=true&voorzieningId=${id}`);
-    },
-    [navigate, id]
+  const schemaId =
+    typeof get_single?.['@self']?.schema === 'object'
+      ? get_single?.['@self']?.schema.id
+      : get_single?.['@self']?.schema;
+  const schemaSlug = useMemo(
+    () => (schemaId ? schemaCache.get(schemaId) : null),
+    [schemaId]
   );
-
-  // Memoize configuration objects to prevent infinite loops
-  // Using whitelist mode: only show these specific actions for logged-in users
-  const onlyIncludeSchemas = useMemo(() => ['gebruik', 'dienst', 'koppeling'], []);
-
-  const excludeSchemas = useMemo(
-    () => [
-      'kwetsbaarheid',
-      'compliancy',
-      'beoordeeling',
-      'organisatie',
-      'contactpersoon',
-      'product',
-      'element',
-      'suite',
-    ],
-    []
-  );
-
-  const labelOverrides = useMemo(
-    () => ({
-      moduleversie: 'Applicatie Versie toevoegen',
-      gebruik: 'Gebruik publiceren',
-      dienst: 'Dienst publiceren',
-      koppeling: 'Koppeling publiceren',
-    }),
-    []
-  );
-
-  const wizardParams = useMemo(
-    () => ({
-      applicatie: id,
-    }),
-    [id]
-  );
-
-  const { makeActionsForContext } = useRelatedCreateActions({
-    object,
-    user,
-    schemaRef: get_single?.['@self']?.schema?.slug,
-    currentType: get_single?.['@self']?.schema?.slug, // Use schema slug as current type
-    openDynamicCreate,
-    currentObject: get_single, // Pass current object for ownership checks
-    onlyIncludeSchemas, // Whitelist mode: only these actions will show for non-owners
-    excludeSchemas, // Additional exclusions (applies to everyone)
-    labelOverrides,
-    wizardParams, // Pass applicatie ID to wizards
-    // Example: Custom icons for specific actions
-    // iconOverrides: {
-    //   'moduleversie': <VISUALS.PLUS />,
-    // },
-  });
 
   // Delete modal state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [actionMenuItems, setActionMenuItems] = useState([]);
+  // const [actionMenuItems, setActionMenuItems] = useState([]);
 
   // Standards state for resolving compliance standards
   const [standards, setStandards] = useState([]);
@@ -129,26 +72,128 @@ const AcPublicationProduct = ({
     setShowDeleteModal(true);
   }, []);
 
-  // Generate action menu items
-  useEffect(() => {
-    if (!get_single?.['@self']?.schema?.slug || !id) return;
+  // Generate unique actions for applicaties (module) publication page
+  // These actions change based on user role (similar to publish/depublish toggle)
+  const uniqueActions = useMemo(() => {
+    // Only show actions for module/applicatie schema
+    if (schemaSlug !== 'module') {
+      return [];
+    }
 
-    const items = makeActionsForContext(
-      id,
-      null,
-      get_single,
-      'voorzieningen',
-      get_single?.['@self']?.schema?.slug
-    ).map(({ key, label, onClick, schema, icon }) => ({
-      key,
-      label,
-      onClick,
-      schema,
-      icon,
-    }));
+    // Only show actions for logged-in users
+    if (!user?.isAuthenticated) {
+      return [];
+    }
 
-    setActionMenuItems(items);
-  }, [get_single?.['@self']?.schema?.slug, id, makeActionsForContext, get_single]);
+    // Only show if we have an id
+    if (!id) {
+      return [];
+    }
+
+    // Get user groups to determine which action variant to show
+    const userGroups = user?.currentUser?.groups || user?.user?.groups || [];
+    const hasAanbodBeheerder = userGroups.includes('aanbod-beheerder');
+    const hasGebruikBeheerder = userGroups.includes('gebruik-beheerder');
+
+    // Note: These actions (dienst, gebruik, koppeling) are available to all logged-in users
+    // regardless of organization. The label and wizard params change based on user role.
+
+    const actions = [];
+
+    // Dienst action - changes based on user role
+    if (hasGebruikBeheerder) {
+      actions.push({
+        key: 'addDienst',
+        label: 'Dienst toevoegen',
+        icon: <VISUALS.HAND_SHAKE />,
+        onClick: () => {
+          const params = new URLSearchParams({
+            type: 'ontbrekend-dienst',
+            applicatie: id,
+          });
+          navigate(`/forms/dienst?${params.toString()}`);
+        },
+        disabled: false,
+      });
+    } else if (hasAanbodBeheerder) {
+      actions.push({
+        key: 'addDienst',
+        label: 'Dienst publiceren',
+        icon: <VISUALS.HAND_SHAKE />,
+        onClick: () => {
+          const params = new URLSearchParams({
+            type: 'dienst',
+            applicatie: id,
+          });
+          navigate(`/forms/dienst?${params.toString()}`);
+        },
+        disabled: false,
+      });
+    }
+
+    // Gebruik action - changes based on user role
+    if (hasGebruikBeheerder) {
+      actions.push({
+        key: 'addGebruik',
+        label: 'Applicatie toevoegen',
+        icon: <VISUALS.CLIPBOARD_CHECK />,
+        onClick: () => {
+          const params = new URLSearchParams({
+            applicatie: id,
+          });
+          navigate(`/forms/gebruik?${params.toString()}`);
+        },
+        disabled: false,
+      });
+    } else if (hasAanbodBeheerder) {
+      actions.push({
+        key: 'addGebruik',
+        label: 'Applicatiegebruik melden',
+        icon: <VISUALS.CLIPBOARD_CHECK />,
+        onClick: () => {
+          const params = new URLSearchParams({
+            type: 'ontbrekend-organisatie',
+            applicatie: id,
+          });
+          navigate(`/forms/gebruik?${params.toString()}`);
+        },
+        disabled: false,
+      });
+    }
+
+    // Koppeling action - changes based on user role
+    if (hasGebruikBeheerder) {
+      actions.push({
+        key: 'addKoppeling',
+        label: 'Koppeling toevoegen',
+        icon: <VISUALS.LINK />,
+        onClick: () => {
+          const params = new URLSearchParams({
+            type: 'aanbieden-koppeling',
+            applicatie: id,
+          });
+          navigate(`/forms/koppeling?${params.toString()}`);
+        },
+        disabled: false,
+      });
+    } else if (hasAanbodBeheerder) {
+      actions.push({
+        key: 'addKoppeling',
+        label: 'Koppeling publiceren',
+        icon: <VISUALS.LINK />,
+        onClick: () => {
+          const params = new URLSearchParams({
+            type: 'eigen-organisatie',
+            applicatie: id,
+          });
+          navigate(`/forms/koppeling?${params.toString()}`);
+        },
+        disabled: false,
+      });
+    }
+
+    return actions;
+  }, [schemaSlug, id, user, navigate]);
 
   // Fetch referentieComponenten data with their standards
   const fetchReferentieComponentenWithStandards = useCallback(async () => {
@@ -164,7 +209,6 @@ const AcPublicationProduct = ({
         _limit: '500',
         _page: '1',
         gemmaType: 'Referentiecomponent',
-        '_extend[]': '@self.schema',
       });
 
       // Fetch referentieComponenten from openconnector endpoint
@@ -289,20 +333,55 @@ const AcPublicationProduct = ({
   const [usedLoading, setUsedLoading] = useState(false);
   const [tabIndex, setTabIndex] = useState(0);
 
-  // Extract contactpersoon from uses data instead of get_single
+  // Extract contactpersoon from get_single (extended) or fallback to uses data
   const contact = useMemo(() => {
+    // First, check if contactpersoon is extended in get_single
+    const contactpersoon = get_single?.contactpersoon;
+
+    if (contactpersoon) {
+      // If contactpersoon is an array of objects, use the first one
+      if (Array.isArray(contactpersoon) && contactpersoon.length > 0) {
+        const firstContact = contactpersoon[0];
+        // Check if it's an object (extended) or just a string (UUID)
+        if (typeof firstContact === 'object' && firstContact !== null) {
+          return firstContact;
+        }
+      }
+      // If contactpersoon is a single object (not array, not string UUID)
+      if (typeof contactpersoon === 'object' && !Array.isArray(contactpersoon)) {
+        return contactpersoon;
+      }
+    }
+
+    // Fallback: Find contactpersoon in uses array
     if (!uses?.length) return null;
 
-    // Find the first contactpersoon object in the uses array
-    // (if multiple contactpersonen exist, we take the first one)
-    const contactpersoonObject = uses.find(
-      (use) => use?.['@self']?.schema?.slug === 'contactpersoon'
-    );
+    const contactpersoonObject = uses.find((use) => {
+      const useSchemaId = use?.['@self']?.schema;
+      const useSchemaSlug = useSchemaId ? schemaCache.get(useSchemaId) : null;
+      return useSchemaSlug === 'contactpersoon';
+    });
 
     if (!contactpersoonObject) return null;
 
     return contactpersoonObject;
-  }, [uses]);
+  }, [get_single?.contactpersoon, uses]);
+
+  const moduleVersies = useMemo(() => {
+    if (!used?.length) return null;
+
+    // Find the first contactpersoon object in the uses array
+    // (if multiple contactpersonen exist, we take the first one)
+    const moduleVersiesObjects = used.filter((use) => {
+      const useSchemaId = use?.['@self']?.schema;
+      const useSchemaSlug = useSchemaId ? schemaCache.get(useSchemaId) : null;
+      return useSchemaSlug === 'moduleversie';
+    });
+
+    if (!moduleVersiesObjects.length) return null;
+
+    return moduleVersiesObjects;
+  }, [used]);
 
   // Resolved referentieComponenten names for custom tab rendering
   const [resolvedReferentieComponenten, setResolvedReferentieComponenten] = useState(
@@ -353,7 +432,7 @@ const AcPublicationProduct = ({
     setUsesLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend[]=@self.schema`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses`,
         {
           method: 'GET',
           headers: {
@@ -379,7 +458,7 @@ const AcPublicationProduct = ({
     setUsedLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=@self.schema`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used`,
         {
           method: 'GET',
           headers: {
@@ -449,61 +528,50 @@ const AcPublicationProduct = ({
             className='con-module-publication--header-actions'
           >
             <Heading className='con-module-publication--header-type'>
-              {(() => {
-                const Icon = getTabHeaderIcon(get_single?.['@self'].schema.slug);
-                return <Icon />;
-              })()}
-              {getTabHeaderName(get_single?.['@self'].schema.slug, true)}
+              {schemaSlug &&
+                (() => {
+                  const Icon = getTabHeaderIcon(schemaSlug);
+                  return <Icon />;
+                })()}
+              {schemaSlug && getTabHeaderName(schemaSlug, true)}
             </Heading>
-            <ConDetailsActionsMenu
-              user={user}
-              id={id}
-              schemaSlug={get_single?.['@self']?.schema?.slug}
-              title={get_single?.['@self']?.name || get_single?.id}
-              published={get_single?.['@self']?.published}
-              object={get_single}
-              showViewAction={false}
-              showEditAction={true}
-              showPublishActions={true}
-              onDelete={handleDelete}
-              onEdit={() => {
-                const schemaSlug = get_single?.['@self']?.schema?.slug;
-                if (schemaSlug) {
-                  const wizards = Object.values(DASHBOARD_WIZARDS);
-                  const wizard = wizards.find((w) => w.schema === schemaSlug);
+            {schemaSlug && (
+              <ConDetailsActionsMenu
+                user={user}
+                id={id}
+                schemaSlug={schemaSlug}
+                title={get_single?.['@self']?.name || get_single?.id}
+                published={get_single?.['@self']?.published}
+                object={get_single}
+                showViewAction={false}
+                showEditAction={true}
+                showPublishActions={true}
+                onDelete={handleDelete}
+                onEdit={() => {
+                  if (schemaSlug) {
+                    const wizardSchemaName =
+                      normalizeSchemaName(schemaSlug).toLowerCase();
+                    const wizards = Object.values(DASHBOARD_WIZARDS);
+                    const wizard = wizards.find(
+                      (w) => w.schema === wizardSchemaName
+                    );
 
-                  if (wizard) {
-                    const baseUrl = getWizardUrl(wizard);
-                    const url = new URL(baseUrl, window.location.origin);
-                    url.searchParams.set('id', id);
-                    navigate(url.pathname + url.search);
-                    return;
+                    if (wizard) {
+                      const baseUrl = getWizardUrl(wizard);
+                      const url = new URL(baseUrl, window.location.origin);
+                      url.searchParams.set('id', id);
+                      navigate(url.pathname + url.search);
+                      return;
+                    }
                   }
-
-                  if (schemaSlug === 'module') {
-                    const beheerUrl = `/beheer/applicaties/${id}`;
-                    window.open(beheerUrl, '_blank');
-                  }
-                  if (schemaSlug === 'moduleversie') {
-                    const beheerUrl = `/beheer/applicatieversie/${id}`;
-                    window.open(beheerUrl, '_blank');
-                  }
-                }
-                // Fallback to beheer legacy edit page in new tab
-                const beheerUrl = `/beheer/${schemaSlug}/${id}`;
-                window.open(beheerUrl, '_blank');
-              }}
-              uniqueActions={[
-                {
-                  key: 'delete',
-                  label: 'Verwijderen',
-                  icon: VISUALS.TRASHCAN,
-                  onClick: handleDelete,
-                },
-              ]}
-              triggerStyle='button'
-              relatedActions={actionMenuItems}
-            />
+                  // Fallback to beheer detail page in same tab with edit modal
+                  const beheerUrl = `/beheer/${schemaSlug}/${id}?showEditModal=true`;
+                  navigate(beheerUrl);
+                }}
+                uniqueActions={uniqueActions}
+                triggerStyle='button'
+              />
+            )}
           </AcFlex>
         </AcFlex>
         <AcFlex spacing='sm' justifyContent='between'>
@@ -602,13 +670,13 @@ const AcPublicationProduct = ({
                   <p>{get_single?.licentie}</p>
                 </div>
               )}
-              {get_single?.moduleVersies && (
+
+              {Array.isArray(moduleVersies) && moduleVersies.length > 0 && (
                 <div>
                   <b>Huidige versie:</b>
                   <p>
-                    {get_single.moduleVersies.find(
-                      (versie) => versie.status === 'in gebruik'
-                    )?.versie || 'Geen versie in gebruik'}
+                    {moduleVersies?.find((versie) => versie.status === 'in gebruik')
+                      ?.versie || 'Geen versie in gebruik'}
                   </p>
                 </div>
               )}
@@ -636,16 +704,6 @@ const AcPublicationProduct = ({
                   </div>
                 )}
             </AcFlex>
-
-            {/* <TabList
-              referentieComponenten={get_single.referentieComponenten}
-              complianceStandards={get_single.compliancy}
-              objectStore={object}
-              standards={standards}
-              standardsLoading={standardsLoading}
-              referentieComponentenWithStandards={referentieComponentenWithStandards}
-              className='con-product-details--content-side'
-            /> */}
           </AcFlex>
         </AcFlex>
       </AcFlex>
@@ -663,15 +721,14 @@ const AcPublicationProduct = ({
         used={used}
         usesLoading={usesLoading}
         usedLoading={usedLoading}
+        gebruikId={id}
+        gebruikSchemaId={schemaId}
+        gebruikSchemaSlug={get_single?.['@self']?.schema?.slug}
         tabIndex={tabIndex}
         setTabIndex={setTabIndex}
         object={object}
         navigateTo='publication'
         user={user}
-        // tabNameOverride={{
-        //   schemaName: 'product',
-        //   newTabName: 'Onderdeel van product(en)',
-        // }}
         customTabsBefore={[
           {
             id: 'standaarden',
@@ -728,188 +785,5 @@ const AcPublicationProduct = ({
     </AcContainer>
   );
 };
-
-// // Helper function to get all standards from referentieComponenten data
-// const getAllStandardsFromReferentieComponenten = (
-//   referentieComponentenWithStandards
-// ) => {
-//   if (!referentieComponentenWithStandards?.length) return [];
-
-//   const allStandards = [];
-
-//   referentieComponentenWithStandards.forEach((refComp) => {
-//     // Add verplichte standaarden
-//     if (
-//       refComp.verplichteStandaarden &&
-//       Array.isArray(refComp.verplichteStandaarden)
-//     ) {
-//       refComp.verplichteStandaarden.forEach((standard) => {
-//         const standardId =
-//           typeof standard === 'string'
-//             ? standard
-//             : standard?.id ||
-//               standard?.value ||
-//               standard?.slug ||
-//               standard?.naam ||
-//               standard?.name;
-
-//         if (standardId && !allStandards.find((s) => s.id === standardId)) {
-//           allStandards.push({
-//             id: standardId,
-//             type: 'VERPLICHT',
-//             referentieComponent: refComp.naam || `Component ${refComp.id}`,
-//           });
-//         }
-//       });
-//     }
-
-//     // Add aanbevolen standaarden
-//     if (
-//       refComp.aanbevolenStandaarden &&
-//       Array.isArray(refComp.aanbevolenStandaarden)
-//     ) {
-//       refComp.aanbevolenStandaarden.forEach((standard) => {
-//         const standardId =
-//           typeof standard === 'string'
-//             ? standard
-//             : standard?.id ||
-//               standard?.value ||
-//               standard?.slug ||
-//               standard?.naam ||
-//               standard?.name;
-
-//         if (standardId) {
-//           const existingStandard = allStandards.find((s) => s.id === standardId);
-//           if (existingStandard) {
-//             // If already exists as VERPLICHT, keep it as VERPLICHT
-//             if (existingStandard.type !== 'VERPLICHT') {
-//               existingStandard.type = 'AANBEVOLEN';
-//             }
-//           } else {
-//             allStandards.push({
-//               id: standardId,
-//               type: 'AANBEVOLEN',
-//               referentieComponent: refComp.naam || `Component ${refComp.id}`,
-//             });
-//           }
-//         }
-//       });
-//     }
-//   });
-
-//   return allStandards;
-// };
-
-// const TabList = ({
-//   referentieComponenten,
-//   complianceStandards,
-//   objectStore,
-//   standards,
-//   standardsLoading,
-//   referentieComponentenWithStandards,
-// }) => {
-//   // Get all standards from referentieComponenten using the helper function
-//   const allReferentieStandards = getAllStandardsFromReferentieComponenten(
-//     referentieComponentenWithStandards
-//   );
-
-//   // Set default tab index based on whether we have standards from referentieComponenten
-//   const hasStandards = allReferentieStandards && allReferentieStandards.length > 0;
-//   const [tabIndex, setTabIndex] = useState(0);
-
-//   // Update tab index when standards data becomes available
-//   useEffect(() => {
-//     if (hasStandards) {
-//       setTabIndex(0); // Show standards tab
-//     } else {
-//       setTabIndex(1); // Show "Geschikt voor" tab
-//     }
-//   }, [hasStandards]);
-
-//   // Custom hook to resolve UUIDs while keeping original IDs
-//   const [resolvedReferentieComponenten, setResolvedReferentieComponenten] = useState(
-//     []
-//   );
-
-//   useEffect(() => {
-//     const resolveWithIds = async () => {
-//       if (!referentieComponenten?.length || !objectStore) {
-//         setResolvedReferentieComponenten([]);
-//         return;
-//       }
-
-//       try {
-//         const resolved = await Promise.all(
-//           referentieComponenten.map(async (id) => {
-//             try {
-//               const name = await objectStore.getNamesForSingleId(id);
-//               return { id, name };
-//             } catch (error) {
-//               return { id, name: id }; // Fallback to ID if resolution fails
-//             }
-//           })
-//         );
-//         setResolvedReferentieComponenten(resolved);
-//       } catch (error) {
-//         console.error('Error resolving referentie componenten:', error);
-//         // Fallback to just IDs
-//         setResolvedReferentieComponenten(
-//           referentieComponenten.map((id) => ({ id, name: id }))
-//         );
-//       }
-//     };
-
-//     resolveWithIds();
-//   }, [referentieComponenten, objectStore]);
-
-//   return (
-//     <div className='con-product-details--side-content-tabs'>
-//       <AcTabs selectedIndex={tabIndex} onSelect={(index) => setTabIndex(index)}>
-//         <AcTabList>
-//           <AcTab
-//             selected={tabIndex === 0}
-//           >{`Standaarden (${allReferentieStandards.length})`}</AcTab>
-//           <AcTab
-//             selected={tabIndex === 1}
-//           >{`Geschikt voor (${referentieComponenten.length})`}</AcTab>
-//         </AcTabList>
-//         <AcTabPanel selected={tabIndex === 0} style={{ paddingInline: '0px' }}>
-//           <ConStandardsTable
-//             referentieComponenten={referentieComponenten}
-//             complianceStandards={complianceStandards}
-//             enableScrolling={true}
-//             standards={standards}
-//             referentieComponentenWithStandards={referentieComponentenWithStandards}
-//             loading={standardsLoading}
-//           />
-//         </AcTabPanel>
-//         <AcTabPanel selected={tabIndex === 1}>
-//           {resolvedReferentieComponenten.map((item, idx) => {
-//             // Find the actual referentieComponent object to get its real ID
-//             const actualRefComponent = referentieComponentenWithStandards?.find(
-//               (refComp) =>
-//                 refComp.id === item.id ||
-//                 refComp.fullData?.identifier === item.id ||
-//                 refComp.fullData?.id === item.id
-//             );
-
-//             // Use the actual referentieComponent's ID, fallback to item.id if not found
-//             const refComponentObjectId = actualRefComponent?.fullData?.id || item.id;
-
-//             return (
-//               <Link
-//                 key={idx}
-//                 href={`https://www.gemmaonline.nl/wiki/GEMMA/id-${refComponentObjectId}`}
-//                 target='_blank'
-//               >
-//                 {item.name}
-//               </Link>
-//             );
-//           })}
-//         </AcTabPanel>
-//       </AcTabs>
-//     </div>
-//   );
-// };
 
 export default withStore(observer(AcPublicationProduct));

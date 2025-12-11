@@ -96,8 +96,9 @@ export const DASHBOARD_WIZARDS = {
   },
   GEBRUIK: {
     id: 'gebruik',
-    name: 'Gebruik registreren',
-    description: 'Registreer het gebruik van een product of dienst',
+    name: 'Nieuwe applicatie toevoegen',
+    description:
+      'Voeg een nieuwe applicatie toe aan uw applicatielandschap én aan de softwarecatalogus',
     icon: VISUALS.CLIPBOARD_CHECK,
     path: PATHS.FORMS_GEBRUIK,
     requiresAuth: true,
@@ -109,8 +110,9 @@ export const DASHBOARD_WIZARDS = {
   },
   GEBRUIK_TOEVOEGEN: {
     id: 'gebruik-ontbrekend',
-    name: 'Gebruik toevoegen',
-    description: 'Meld een gebruik dat nog niet in de catalogus staat',
+    name: 'Applicatiegebruik melden',
+    description:
+      'Meld bij welke klant uw applicatie wordt gebruikt, zodat de klant deze eenvoudig in het eigen applicatielandschap kan opnemen.',
     icon: VISUALS.CLIPBOARD_CHECK,
     path: PATHS.FORMS_GEBRUIK,
     requiresAuth: true,

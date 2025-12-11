@@ -262,10 +262,6 @@ export class MijnOmgevingStore {
   @action
   getSearchPageURL = (params = null) => {
     const urlParams = AcBuildURLSearchParams(params ?? this.query);
-    // console.group('GET SEARCH PAGE URL');
-    // console.log('BUILDING URL, CURRENT QUERY:', toJS(this.query));
-    // console.log(urlParams);
-    // console.groupEnd();
     if (!urlParams) {
       return '/mijn-omgeving';
     }

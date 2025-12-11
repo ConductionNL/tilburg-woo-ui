@@ -12,6 +12,7 @@ import {
   Alert,
 } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
+import { schemaCache } from '@services/schemaCache.service';
 import RelatedTabs from '@views/ac-publication/con-related-tabs';
 import ConLogoPreview from '../ac-register/con-logo-preview';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
@@ -30,7 +31,8 @@ import remarkRehype from 'remark-rehype';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
-import { checkOrganizationPermissions } from '@utils/organization-permissions';
+import { normalizeSchemaName } from '@src/utilities/con-normalize-schema-name';
+// import { checkOrganizationPermissions } from '@utils/organization-permissions';
 
 /**
  * Publication page for schema slug 'dienst'.
@@ -40,6 +42,15 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { get_single, loading } = publications;
+
+  const schemaId =
+    typeof get_single?.['@self']?.schema === 'object'
+      ? get_single?.['@self']?.schema.id
+      : get_single?.['@self']?.schema;
+  const schemaSlug = useMemo(
+    () => (schemaId ? schemaCache.get(schemaId) : null),
+    [schemaId]
+  );
 
   // Delete modal state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -81,8 +92,8 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
   const { makeActionsForContext } = useRelatedCreateActions({
     object,
     user,
-    schemaRef: get_single?.['@self']?.schema?.slug,
-    currentType: get_single?.['@self']?.schema?.slug,
+    schemaRef: schemaSlug,
+    currentType: schemaSlug,
     openDynamicCreate,
     currentObject: get_single,
     excludeSchemas,
@@ -91,13 +102,13 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
   const [actionMenuItems, setActionMenuItems] = useState([]);
 
   useEffect(() => {
-    if (!get_single?.['@self']?.schema?.slug || !id) return;
+    if (!schemaSlug || !id) return;
     const items = makeActionsForContext(
       id,
       null,
       get_single,
       'voorzieningen',
-      get_single?.['@self']?.schema?.slug
+      schemaSlug
     ).map(({ key, label, onClick, schema, icon }) => ({
       key,
       label,
@@ -106,14 +117,14 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
       icon,
     }));
     setActionMenuItems(items);
-  }, [get_single?.['@self']?.schema?.slug, id, makeActionsForContext, get_single]);
+  }, [schemaSlug, id, makeActionsForContext, get_single]);
 
   const fetchUses = useCallback(async () => {
     if (!id) return;
     setUsesLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend[]=@self.schema`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses`,
         { method: 'GET', headers: { 'Content-Type': 'application/json' } }
       );
       if (!response.ok) return;
@@ -129,7 +140,7 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
     setUsedLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=@self.schema`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used`,
         { method: 'GET', headers: { 'Content-Type': 'application/json' } }
       );
       if (!response.ok) return;
@@ -147,11 +158,51 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
     fetchUsed();
   }, [id, fetchUses, fetchUsed]);
 
+  // Extract contactpersoon from get_single (extended) or fallback to uses data
+  const contact = useMemo(() => {
+    const contactpersoon = get_single?.contactpersoon;
+
+    if (contactpersoon) {
+      // If contactpersoon is an array of objects, use the first one
+      if (Array.isArray(contactpersoon) && contactpersoon.length > 0) {
+        const firstContact = contactpersoon[0];
+        // Check if it's an object (extended) or just a string (UUID)
+        if (typeof firstContact === 'object' && firstContact !== null) {
+          return firstContact;
+        }
+      }
+      // If contactpersoon is a single object (not array, not string UUID)
+      if (typeof contactpersoon === 'object' && !Array.isArray(contactpersoon)) {
+        return contactpersoon;
+      }
+    }
+
+    // Fallback: Find contactpersoon in uses array
+    if (!uses?.length) return null;
+
+    const contactpersoonObject = uses.find((use) => {
+      const useSchemaId = use?.['@self']?.schema;
+      const useSchemaSlug = useSchemaId ? schemaCache.get(useSchemaId) : null;
+      return useSchemaSlug === 'contactpersoon';
+    });
+
+    return contactpersoonObject || null;
+  }, [get_single?.contactpersoon, uses]);
+
+  // For backward compatibility - get contactId for cases where we only have a UUID string
   const contactId = useMemo(() => {
-    if (Array.isArray(get_single?.contactpersoon))
-      return get_single.contactpersoon[0];
-    return get_single?.contactpersoon;
-  }, [get_single]);
+    const contactpersoon = get_single?.contactpersoon;
+    if (Array.isArray(contactpersoon) && contactpersoon.length > 0) {
+      const firstContact = contactpersoon[0];
+      if (typeof firstContact === 'string') {
+        return firstContact;
+      }
+    }
+    if (typeof contactpersoon === 'string') {
+      return contactpersoon;
+    }
+    return null;
+  }, [get_single?.contactpersoon]);
 
   if (loading.status || !get_single) {
     return <AcLoader />;
@@ -176,17 +227,18 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
           </div>
 
           <Heading className='con-module-publication--header-type'>
-            {(() => {
-              const Icon = getTabHeaderIcon(get_single?.['@self'].schema.slug);
-              return <Icon />;
-            })()}
-            {getTabHeaderName(get_single?.['@self'].schema.slug, true)}
+            {schemaSlug &&
+              (() => {
+                const Icon = getTabHeaderIcon(schemaSlug);
+                return <Icon />;
+              })()}
+            {schemaSlug && getTabHeaderName(schemaSlug, true)}
           </Heading>
-          {checkOrganizationPermissions(user, get_single).canEdit && (
+          {schemaSlug && (
             <ConDetailsActionsMenu
               user={user}
               id={id}
-              schemaSlug={get_single?.['@self']?.schema?.slug}
+              schemaSlug={schemaSlug}
               title={get_single?.['@self']?.name || get_single?.id}
               published={get_single?.['@self']?.published}
               object={get_single}
@@ -195,10 +247,11 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
               showPublishActions={true}
               onDelete={handleDelete}
               onEdit={() => {
-                const schemaSlug = get_single?.['@self']?.schema?.slug;
                 if (schemaSlug) {
+                  const wizardSchemaName =
+                    normalizeSchemaName(schemaSlug).toLowerCase();
                   const wizards = Object.values(DASHBOARD_WIZARDS);
-                  const wizard = wizards.find((w) => w.schema === schemaSlug);
+                  const wizard = wizards.find((w) => w.schema === wizardSchemaName);
                   if (wizard) {
                     const baseUrl = getWizardUrl(wizard);
                     const url = new URL(baseUrl, window.location.origin);
@@ -206,20 +259,12 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
                     navigate(url.pathname + url.search);
                     return;
                   }
-                  const beheerUrl = `/beheer/${schemaSlug}/${id}`;
-                  window.open(beheerUrl, '_blank');
                 }
+                // Fallback to beheer detail page in same tab with edit modal
+                const beheerUrl = `/beheer/${schemaSlug}/${id}?showEditModal=true`;
+                navigate(beheerUrl);
               }}
-              uniqueActions={[
-                {
-                  key: 'delete',
-                  label: 'Verwijderen',
-                  icon: VISUALS.TRASHCAN,
-                  onClick: handleDelete,
-                },
-              ]}
               triggerStyle='button'
-              relatedActions={actionMenuItems}
             />
           )}
         </AcFlex>
@@ -262,7 +307,7 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
           )}
         </div>
 
-        {(contactId || get_single?.website) && (
+        {(contact || contactId || get_single?.website) && (
           <>
             <Heading level={3} style={{ marginBlockStart: '1rem' }}>
               Contact informatie
@@ -285,12 +330,40 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
                     </Link>
                   </div>
                 )}
-                {contactId && (
+                {contact && typeof contact === 'object' ? (
+                  <div style={{ marginBottom: '8px' }}>
+                    <strong>Contactpersoon: </strong>
+                    <div>
+                      {[contact.voornaam, contact.tussenvoegsel, contact.achternaam]
+                        .filter(Boolean)
+                        .join(' ')}
+                    </div>
+                    {contact['e-mailadres'] && (
+                      <div>
+                        <Link href={`mailto:${contact['e-mailadres']}`}>
+                          {contact['e-mailadres']}
+                        </Link>
+                      </div>
+                    )}
+                    {contact.telefoonnummer && (
+                      <div>
+                        <Link
+                          href={`tel:${String(contact.telefoonnummer)
+                            .split('')
+                            .filter((character) => character !== ' ')
+                            .join('')}`}
+                        >
+                          {contact.telefoonnummer}
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                ) : contactId ? (
                   <div style={{ marginBottom: '8px' }}>
                     <strong>Contactpersoon: </strong>
                     <ConUuidResolver>{String(contactId)}</ConUuidResolver>
                   </div>
-                )}
+                ) : null}
               </div>
             </div>
           </>
@@ -356,23 +429,6 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
                       </div>
                     </div>
                   )}
-
-                {/* {Array.isArray(get_single?.modules) &&
-                  get_single.modules.length > 0 && (
-                    <div style={{ marginBottom: '8px' }}>
-                      <strong>Modules: </strong>
-                      <div>
-                        {get_single.modules.map((mid, idx) => {
-                          const moduleId = typeof mid === 'object' ? mid.id : mid;
-                          return (
-                            <div key={`${moduleId}-${idx}`}>
-                              <ConUuidResolver>{String(moduleId)}</ConUuidResolver>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )} */}
               </div>
             </div>
           </>
@@ -385,6 +441,9 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
             used={used}
             usesLoading={usesLoading}
             usedLoading={usedLoading}
+            gebruikId={id}
+            gebruikSchemaId={schemaId}
+            gebruikSchemaSlug={get_single?.['@self']?.schema?.slug}
             tabIndex={relatedTabIndex}
             setTabIndex={setRelatedTabIndex}
             object={object}

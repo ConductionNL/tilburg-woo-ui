@@ -7,7 +7,10 @@ import {
   getCookie,
   sortPropertiesByOrder,
   AcFormatErrorMessage,
+  normalizeLinkToSchemaSlug,
 } from '@src/utilities';
+import { schemaCache } from '@services/schemaCache.service';
+import { registerCache } from '@services/registerCache.service';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 
 let app = {};
@@ -97,8 +100,6 @@ nextcloudApi.interceptors.response.use(
  *
  * #### Collection Operations
  * - `fetchCollection(register, schema, params, append)` - Fetches paginated collections of objects with cancellation support
- * - `loadMore(type)` - Loads next page of results
- * - `loadPrevious(type)` - Loads previous page of results
  * - `exportObjects(register, schema, type)` - Exports a collection as CSV or Excel
  *
  * #### Schema Operations
@@ -107,7 +108,6 @@ nextcloudApi.interceptors.response.use(
  * - `getSchemaProperties(type)` - Gets sorted schema properties for specific type
  * - `isSchemaLoading(type)` - Checks if schema is loading for specific type
  * - `getSchemaError(type)` - Gets schema error for specific type
- * - `clearSchema(type)` - Clears schema data for specific type
  *
  * #### Individual Object Operations
  * - `fetchObject(register, schema, id, params)` - Fetches single object with related data and cancellation support
@@ -119,32 +119,21 @@ nextcloudApi.interceptors.response.use(
  * #### Object Lifecycle Operations
  * - `publishObject(objectItem)` - Publishes object with operation-specific state tracking
  * - `depublishObject(objectItem)` - Depublishes object with operation-specific state tracking
- * - `lockObject(objectItem, process, duration)` - Locks object for editing with operation-specific state tracking
- * - `unlockObject(objectItem)` - Unlocks object with operation-specific state tracking
  *
  * #### Mass Operations (Parallel Processing)
  * - `massDeleteObjects(objects, onProgress)` - Deletes multiple objects in parallel
  * - `massPublishObjects(objects, onProgress)` - Publishes multiple objects in parallel
  * - `massDepublishObjects(objects, onProgress)` - Depublishes multiple objects in parallel
- * - `massLockObjects(objects, process, duration, onProgress)` - Locks multiple objects in parallel
- * - `massUnlockObjects(objects, onProgress)` - Unlocks multiple objects in parallel
  *
  * ### Related Data Management
  * - `fetchRelatedData(register, schema, id, dataType, params)` - Fetches logs, uses, used, files with cancellation support
  * - `setActiveObject(register, schema, object)` - Sets active object and fetches related data
- * - `clearActiveObject(register, schema)` - Clears active object and related data
  *
  * ### Search and Filtering
- * - `setSearchTerm(type, term)` - Sets search term with debouncing
- * - `clearSearchTerm(type)` - Clears search term
  * - `initializeSchemaProperties(type, schema)` - Initializes schema properties for filtering
- * - `initializeColumnFilters(type)` - Sets up column filters based on schema
- * - `updateColumnFilter(type, id, enabled)` - Updates column filter state
  *
  * ### Selection Management
  * - `setSelectedObjects(objects)` - Sets selected objects for bulk operations
- * - `toggleSelectAllObjects(type)` - Toggles selection of all objects of a type
- * - `isAllSelectedForType(type)` - Checks if all objects of a type are selected
  *
  * ### Request Cancellation
  * - `cancelRequest(type)` - Cancels ongoing request for specific operation type
@@ -164,7 +153,6 @@ nextcloudApi.interceptors.response.use(
  * - `clearAllObjectErrors()` - Clears all object errors
  * - `setSchemaLoading(type, isLoading)` - Sets schema loading state
  * - `setSchemaError(type, error)` - Sets schema error state
- * - `clearSchema(type)` - Clears schema data
  *
  * #### State Getters
  * - `getCollection(type)` - Gets collection data
@@ -172,12 +160,7 @@ nextcloudApi.interceptors.response.use(
  * - `getActiveObject(type)` - Gets active object
  * - `getRelatedData(type, dataType)` - Gets related data (logs, uses, used, files)
  * - `getPagination(type)` - Gets pagination info
- * - `getSearchTerm(type)` - Gets current search term
  * - `getError(type)` - Gets error state for operation-specific tracking
- * - `getObjectError(objectId)` - Gets error for specific object
- * - `getState(type)` - Gets success/error state for operation-specific tracking
- * - `getEnabledSchemaProperties(type)` - Gets enabled schema properties
- * - `getColumnFilters(type)` - Gets column filters
  * - `getSchemaPropertiesForType(type)` - Gets all schema properties
  * - `getSchema(type)` - Gets schema for specific type
  * - `getSchemaProperties(type)` - Gets sorted schema properties
@@ -186,16 +169,14 @@ nextcloudApi.interceptors.response.use(
  *
  * #### Utility Getters
  * - `isLoading(type)` - Checks if specific operation type is loading
- * - `hasMorePages(type)` - Checks if more pages available
- * - `hasPreviousPages(type)` - Checks if previous pages available
- * - `getAuditTrails(type)` - Gets audit trails
  *
  * ### Helper Methods
  * - `_constructApiUrl(register, schema, id, action)` - Constructs API URLs
  * - `_constructQueryParams(params)` - Constructs query parameters
  * - `extractId(value)` - Extracts ID from various formats
- * - `getTypeFromObject(objectItem)` - Gets object type from item
- * - `getTypeFromParams(register, schema, id, suffix)` - Gets object type from register, schema, id, suffic
+ * - `_createType(register, schema)` - Creates unified type by resolving IDs to slugs using caches
+ * - `getTypeFromObject(objectItem)` - Gets object type from item (uses unified type creation)
+ * - `getTypeFromParams(register, schema, id, suffix)` - Gets object type from register, schema, id, suffix (uses unified type creation)
  *
  * ### Names Cache System for UUID → Name Resolution
  * - `getNamesForSingleId(id)` - Gets single name from cache or backend fallback
@@ -210,31 +191,30 @@ nextcloudApi.interceptors.response.use(
  * - `getNamesStats()` - Gets frontend cache statistics
  * - `cleanExpiredNamesCache()` - Cleans expired entries from cache
  *
+ * ### Register Cache System for UUID → Slug Resolution
+ * - `warmupRegisterCache()` - Warms up register cache by fetching all core registers
+ * - Automatically called on session changes and app initialization
+ *
  * ### Backend Cache Loading System
  * - `cacheLoad()` - Pre-warms backend cache for all core registers (voorzieningen, vng-gemma)
  * - `cacheLoadRegister(registerSlug)` - Cache loads all schemas in a specific register
  * - `fetchRegister(registerSlug)` - Fetches register information including schemas
  * - `triggerBackendCacheLoad(registerId, schemaId)` - Triggers cache load for specific register/schema
- * - `isCacheLoading(registerSlug)` - Checks if cache loading is in progress for a register
- * - `getCacheLoadingError(registerSlug)` - Gets cache loading error for a register
- * - `isFullyCacheLoaded()` - Checks if all core registers are fully cache loaded
- * - `clearCacheLoadingState()` - Clears cache loading state and errors
  *
  * ## Operation-Specific State Tracking
  *
- * All operations now use operation-specific identifiers for loading, error, and success states:
- * - `fetchCollection` → `register_schema`
- * - `fetchObject` → `register_schema_objectId`
- * - `fetchRelatedData` → `register_schema_objectId_dataType`
- * - `fetchSchema` → `schema_register_schema`
- * - `createObject` → `register_schema_create`
- * - `saveObject` → `register_schema_save`
- * - `updateObject` → `register_schema_objectId`
+ * All operations now use operation-specific identifiers for loading, error, and success states.
+ * Types are created using unified type creation that resolves register/schema IDs to slugs via caches:
+ * - `fetchCollection` → `registerSlug_schemaSlug`
+ * - `fetchObject` → `registerSlug_schemaSlug_objectId`
+ * - `fetchRelatedData` → `registerSlug_schemaSlug_objectId_dataType`
+ * - `fetchSchema` → `schema_schemaSlug`
+ * - `createObject` → `registerSlug_schemaSlug_create`
+ * - `saveObject` → `registerSlug_schemaSlug_save`
+ * - `updateObject` → `registerSlug_schemaSlug_objectId`
  * - `deleteObject` → `delete_objectId`
  * - `publishObject` → `publish_objectId`
  * - `depublishObject` → `depublish_objectId`
- * - `lockObject` → `lock_objectId`
- * - `unlockObject` → `unlock_objectId`
  *
  * ## Function Relationships and Workflows
  *
@@ -251,8 +231,6 @@ nextcloudApi.interceptors.response.use(
  * 3. `getSchemaProperties()` → Returns sorted properties using `sortPropertiesByOrder`
  *
  * ### Search and Filtering Workflow
- * 1. `setSearchTerm()` → Debounced → `fetchCollection()` with search params and cancellation
- * 2. `initializeSchemaProperties()` → `initializeColumnFilters()` → `updateColumnFilter()`
  *
  * ### Bulk Operations Workflow
  * 1. `setSelectedObjects()` → `massDeleteObjects()` → Operation-specific error tracking → Update selections
@@ -264,7 +242,6 @@ nextcloudApi.interceptors.response.use(
  *
  * ### Pagination Workflow
  * 1. `fetchCollection()` → `setPagination()` → `getPagination()`
- * 2. `loadMore()` / `loadPrevious()` → `fetchCollection()` with append flag
  *
  * ## Error Handling (Enhanced)
  * - **Operation-Specific Errors**: Each operation has its own error/success state preventing conflicts
@@ -324,37 +301,19 @@ nextcloudApi.interceptors.response.use(
  * await store.object.depublishObject(objectItem);
  *
  * // Lock/Unlock objects
- * await store.object.lockObject(objectItem, 'process-name', 3600);
- * await store.object.unlockObject(objectItem);
  *
  * // Mass operations
  * const results = await store.object.massDeleteObjects(selectedObjects);
  * const results = await store.object.massPublishObjects(selectedObjects);
  *
- * // Search functionality
- * store.object.setSearchTerm('register-slug_schema-slug', 'search term');
- *
- * // Pagination
- * await store.object.loadMore('register-slug_schema-slug');
- * await store.object.loadPrevious('register-slug_schema-slug');
- *
  * // Initialize schema properties for column filtering
  * store.object.initializeSchemaProperties('object-type', schemaData);
- * store.object.initializeColumnFilters('object-type');
  *
  * // Set active object and fetch related data
  * await store.object.setActiveObject('register-slug', 'schema-slug', object);
  *
- * // Clear active object
- * store.object.clearActiveObject('register-slug', 'schema-slug');
- *
  * // Backend cache loading (call during login)
  * await store.object.cacheLoad();
- *
- * // Check cache loading status
- * const isLoading = store.object.isCacheLoading('voorzieningen');
- * const error = store.object.getCacheLoadingError('voorzieningen');
- * const fullyLoaded = store.object.isFullyCacheLoaded();
  *
  * // Names cache system for UUID to name resolution
  * const name = await store.object.getNamesForSingleId('uuid-123');
@@ -364,6 +323,9 @@ nextcloudApi.interceptors.response.use(
  * await store.object.warmupNamesCache();
  * await store.object.triggerNamesWarmup();
  * const backendStats = await store.object.getNamesStatsFromBackend();
+ *
+ * // Register cache system for UUID to slug resolution
+ * await store.object.warmupRegisterCache();
  */
 export class ObjectStore {
   constructor(store) {
@@ -373,6 +335,11 @@ export class ObjectStore {
     // Request cancellation infrastructure
     this.abortControllers = new Map();
   }
+
+  // IMPORTANT
+  // this key is used to track changes to the collection
+  // which is then used to trigger a re-render on a component (or on a useMemo)
+  COLLECTION_CHANGE_KEY = Symbol('collectionChangeKey');
 
   // Observable state
   /**
@@ -423,6 +390,12 @@ export class ObjectStore {
   };
 
   /**
+   * Track pending name fetch requests to prevent duplicate calls for the same ID
+   * @type {{[id: string]: Promise<string>}}
+   */
+  pendingNameRequests = {};
+
+  /**
    * Loading states for different operations (fetch, create, update, etc.)
    * @type {{[type: string]: boolean}}
    * */
@@ -456,13 +429,6 @@ export class ObjectStore {
    * */
   @observable
   relatedData = {};
-
-  /**
-   * Current search terms for different object types
-   * @type {{[type: string]: string}}
-   * */
-  @observable
-  searchTerms = {};
 
   /**
    * Debounce timers for search operations
@@ -514,6 +480,13 @@ export class ObjectStore {
   schemas = {}; // Schema definitions for different object types
 
   /**
+   * Register definitions for different registers
+   * @type {{[slug: string]: Object}}
+   * */
+  @observable
+  registers = {}; // Register definitions
+
+  /**
    * Loading states for schema fetching operations
    * @type {{[type: string]: boolean}}
    * */
@@ -526,6 +499,27 @@ export class ObjectStore {
    * */
   @observable
   schemaErrors = {}; // Error states for schema fetching
+
+  /**
+   * Warmup in progress state per type
+   * @type {{[type: string]: boolean}}
+   * */
+  @observable
+  warmupInProgress = {}; // Warmup in progress state per type
+
+  /**
+   * Warmup completed state per type
+   * @type {{[type: string]: boolean}}
+   * */
+  @observable
+  warmupCompleted = {}; // Warmup completed state per type
+
+  /**
+   * Warmup errors per type
+   * @type {{[type: string]: string}}
+   * */
+  @observable
+  warmupErrors = {}; // Warmup errors per type
 
   // Request cancellation methods
   /**
@@ -622,23 +616,6 @@ export class ObjectStore {
 
   // Actions
   /**
-   * Gets enabled schema properties for a specific object type
-   * @param {string} type - The object type identifier
-   * @returns {Array<Object>} Array of enabled schema properties with id, key, and other properties
-   */
-  @action
-  getEnabledSchemaPropertiesForType = (type) => {
-    const typeProperties = this.schemaProperties[type] || {};
-    return Object.entries(typeProperties)
-      .filter(([, prop]) => prop.enabled)
-      .map(([key, prop]) => ({
-        id: `prop_${key}`,
-        key,
-        ...prop,
-      }));
-  };
-
-  /**
    * Gets all schema properties for a specific object type
    * @param {string} type - The object type identifier
    * @returns {Object} Object containing all schema properties for the type
@@ -646,20 +623,6 @@ export class ObjectStore {
   @action
   getSchemaPropertiesForType = (type) => {
     return this.schemaProperties[type] || {};
-  };
-
-  /**
-   * Checks if all objects of a specific type are selected
-   * @param {string} type - The object type to check
-   * @returns {boolean} True if all objects of the type are selected, false otherwise
-   */
-  @action
-  isAllSelectedForType = (type) => {
-    const collection = this.collections[type];
-    if (!collection?.results?.length) return false;
-    return collection.results.every((obj) =>
-      this.selectedObjects.includes(obj['@self']?.id || obj.id)
-    );
   };
 
   /**
@@ -671,16 +634,20 @@ export class ObjectStore {
   @action
   setCollection = (type, results, append = false) => {
     if (!this.collections[type]) {
-      this.collections[type] = { results: [] };
+      // Create observable collection with observable array
+      this.collections[type] = observable({
+        results: observable([]),
+      });
     }
 
     const newResults = append
       ? [...(this.collections[type].results || []), ...results]
       : results;
 
-    this.collections[type] = {
-      results: newResults,
-    };
+    // Replace the array contents - MobX will track this change
+    this.collections[type].results.replace(newResults);
+
+    this.COLLECTION_CHANGE_KEY = Symbol('collectionChangeKey');
   };
 
   /**
@@ -724,7 +691,11 @@ export class ObjectStore {
    */
   @action
   setActiveObject = async (register, schema, object) => {
-    const type = `${register}_${schema}`;
+    const type = this.getTypeFromParams(register, schema);
+    if (!type) {
+      console.error('Could not create type for setActiveObject');
+      return;
+    }
     this.activeObjects[type] = object;
 
     this.relatedData[type] = {
@@ -774,23 +745,6 @@ export class ObjectStore {
   };
 
   /**
-   * Clears the active object and its related data
-   * @param {string|Object} register - Register identifier or object
-   * @param {string|Object} schema - Schema identifier or object
-   */
-  @action
-  clearActiveObject = (register, schema) => {
-    const type = `${register}_${schema}`;
-    this.activeObjects[type] = null;
-    this.relatedData[type] = {
-      logs: null,
-      uses: null,
-      used: null,
-      files: null,
-    };
-  };
-
-  /**
    * Sets pagination information for a specific type
    * @param {string} type - The type identifier for pagination
    * @param {Object} pagination - Pagination object with total, page, pages, limit, next, prev
@@ -837,45 +791,6 @@ export class ObjectStore {
   };
 
   /**
-   * Toggles selection of all objects of a specific type
-   * @param {string} type - The object type to toggle selection for
-   */
-  @action
-  toggleSelectAllObjects = (type) => {
-    const collection = this.collections[type];
-    if (!collection?.results?.length) return;
-
-    if (this.isAllSelectedForType(type)) {
-      this.selectedObjects = [];
-    } else {
-      this.selectedObjects = collection.results.map(
-        (obj) => obj['@self']?.id || obj.id
-      );
-    }
-  };
-
-  /**
-   * Updates the column filter state for a specific property
-   * @param {string} type - The object type identifier
-   * @param {string} id - The column filter ID (e.g., 'prop_name')
-   * @param {boolean} enabled - Whether the column should be enabled
-   */
-  @action
-  updateColumnFilter = (type, id, enabled) => {
-    if (!this.columnFilters[type]) {
-      this.columnFilters[type] = {};
-    }
-    this.columnFilters[type][id] = enabled;
-
-    if (id.startsWith('prop_')) {
-      const propKey = id.replace('prop_', '');
-      if (this.schemaProperties[type]?.[propKey]) {
-        this.schemaProperties[type][propKey].enabled = enabled;
-      }
-    }
-  };
-
-  /**
    * Initializes schema properties from a schema object for a specific type
    * @param {string} type - The object type identifier
    * @param {Object} schema - Schema object containing properties
@@ -901,23 +816,6 @@ export class ObjectStore {
     });
 
     this.schemaProperties[type] = properties;
-  };
-
-  /**
-   * Initializes column filters based on current schema properties for a specific type
-   * @param {string} type - The object type identifier
-   */
-  @action
-  initializeColumnFilters = (type) => {
-    const filters = {};
-
-    if (this.schemaProperties[type]) {
-      Object.keys(this.schemaProperties[type]).forEach((key) => {
-        filters[`prop_${key}`] = this.schemaProperties[type][key].enabled;
-      });
-    }
-
-    this.columnFilters[type] = filters;
   };
 
   /**
@@ -960,22 +858,28 @@ export class ObjectStore {
     const queryParams = {
       _limit: params._limit || params.limit || 20,
       _page: params._page || params.page || 1,
-      '_extend[]': '@self.schema',
       _source: 'database', // Always use database as source
       ...params,
     };
 
-    if (
-      Array.isArray(queryParams._extend) &&
-      !queryParams._extend.includes('@self.schema')
-    ) {
-      queryParams._extend.push('@self.schema');
+    // Handle _extend[] - only include if explicitly provided
+    if (params['_extend[]']) {
+      if (Array.isArray(params['_extend[]'])) {
+        queryParams['_extend[]'] = params['_extend[]'];
+      } else if (typeof params['_extend[]'] === 'string') {
+        queryParams['_extend[]'] = params['_extend[]']
+          .split(',')
+          .map((s) => s.trim());
+      } else {
+        queryParams['_extend[]'] = params['_extend[]'];
+      }
     }
 
     // Remove internal parameters (but keep _source)
     delete queryParams._schema;
     delete queryParams._register;
     delete queryParams.extend;
+    delete queryParams._extend;
     delete queryParams.page;
     delete queryParams.limit;
 
@@ -1000,6 +904,41 @@ export class ObjectStore {
   };
 
   /**
+   * Creates a unified type string by resolving register and schema IDs to slugs using caches.
+   * This ensures consistent type creation regardless of whether IDs or slugs are provided.
+   * @param {string|Object} register - Register identifier (ID, slug, or object)
+   * @param {string|Object} schema - Schema identifier (ID, slug, or object)
+   * @returns {Object} Object with registerSlug and schemaSlug properties, or null if missing
+   */
+  _createType = (register, schema) => {
+    const registerId = this.extractId(register);
+    const schemaId = this.extractId(schema);
+
+    if (!registerId || !schemaId) {
+      return null;
+    }
+
+    // Try to resolve register ID to slug using cache
+    let registerSlug = registerCache.get(registerId);
+    if (!registerSlug) {
+      // Not in cache - assume it's already a slug
+      registerSlug = registerId;
+    }
+
+    // Try to resolve schema ID to slug using cache
+    let schemaSlug = schemaCache.get(schemaId);
+    if (!schemaSlug) {
+      // Not in cache - assume it's already a slug
+      schemaSlug = schemaId;
+    }
+
+    return {
+      registerSlug,
+      schemaSlug,
+    };
+  };
+
+  /**
    * Gets the object type from an object item
    * @param {Object} objectItem - The object item
    * @returns {string} The object type
@@ -1009,9 +948,9 @@ export class ObjectStore {
     const schema = objectItem['@self']?.schema || objectItem.schema;
 
     if (register && schema) {
-      const registerId = this.extractId(register);
-      const schemaId = this.extractId(schema);
-      return `${registerId}_${schemaId}`;
+      const resolved = this._createType(register, schema);
+      if (!resolved) return null;
+      return `${resolved.registerSlug}_${resolved.schemaSlug}`;
     }
 
     return null;
@@ -1019,6 +958,7 @@ export class ObjectStore {
 
   /**
    * Builds an operation key from register and schema with optional id and suffix.
+   * Resolves IDs to slugs using register and schema caches to ensure consistent type creation.
    * - Backwards compatible: without id/suffix → 'register_schema'
    * - With id → 'register_schema_id'
    * - With id and suffix → 'register_schema_id_suffix'
@@ -1030,10 +970,9 @@ export class ObjectStore {
    * @returns {string|null} The built key or null if ids missing
    */
   getTypeFromParams = (register, schema, id = null, suffix = null) => {
-    const registerId = this.extractId(register);
-    const schemaId = this.extractId(schema);
-    if (!registerId || !schemaId) return null;
-    const base = `${registerId}_${schemaId}`;
+    const resolved = this._createType(register, schema);
+    if (!resolved) return null;
+    const base = `${resolved.registerSlug}_${resolved.schemaSlug}`;
     if (id && suffix) return `${base}_${id}_${suffix}`;
     if (id) return `${base}_${id}`;
     if (suffix) return `${base}_${suffix}`;
@@ -1158,8 +1097,17 @@ export class ObjectStore {
         page: pagination.page,
         limit: pagination.limit,
         ...params,
-        '_extend[]': params._extend || params.extend || '@self.schema',
       };
+
+      // Support legacy _extend or extend params by converting to _extend[]
+      if (!params['_extend[]'] && (params._extend || params.extend)) {
+        const extendValue = params._extend || params.extend;
+        queryParams['_extend[]'] = Array.isArray(extendValue)
+          ? extendValue
+          : typeof extendValue === 'string'
+          ? extendValue.split(',').map((s) => s.trim())
+          : [extendValue];
+      }
 
       const response = await nextcloudApi.get(
         this._constructApiUrl(register, schema),
@@ -1231,7 +1179,10 @@ export class ObjectStore {
    */
   @action
   fetchObject = async (register, schema, id, params = {}) => {
-    const type = `${register}_${schema}`;
+    const type = this.getTypeFromParams(register, schema);
+    if (!type) {
+      throw new Error('Could not create type for fetchObject');
+    }
     const requestType = `${type}_${id}`;
     this.setLoading(requestType, true);
     this.setError(type, null);
@@ -1243,8 +1194,17 @@ export class ObjectStore {
     try {
       const queryParams = {
         ...params,
-        _extend: params._extend || params.extend || '@self.schema',
       };
+
+      // Support legacy _extend or extend params by converting to _extend[]
+      if (!params['_extend[]'] && (params._extend || params.extend)) {
+        const extendValue = params._extend || params.extend;
+        queryParams['_extend[]'] = Array.isArray(extendValue)
+          ? extendValue
+          : typeof extendValue === 'string'
+          ? extendValue.split(',').map((s) => s.trim())
+          : [extendValue];
+      }
 
       const response = await nextcloudApi.get(
         this._constructApiUrl(register, schema, id),
@@ -1295,7 +1255,10 @@ export class ObjectStore {
    */
   @action
   fetchRelatedData = async (register, schema, id, dataType, params = {}) => {
-    const type = `${register}_${schema}`;
+    const type = this.getTypeFromParams(register, schema);
+    if (!type) {
+      throw new Error('Could not create type for fetchRelatedData');
+    }
     const requestType = `${type}_${id}_${dataType}`;
     this.setLoading(requestType, true);
     this.setError(requestType, null);
@@ -1460,12 +1423,43 @@ export class ObjectStore {
 
   /**
    * Sets schema data for a specific type
+   * Also populates the schema cache with id -> slug mapping for quick lookups
    * @param {string} type - The type identifier for the schema
    * @param {Object} schemaData - The schema data to set
    */
   @action
   setSchema = (type, schemaData) => {
     this.schemas[type] = schemaData;
+
+    // Populate schema cache with id -> slug mapping
+    // Schema data typically has id and slug properties from the API
+    const schemaId = schemaData?.id || schemaData?.['@self']?.id;
+    const schemaSlug =
+      schemaData?.slug || schemaData?.name || schemaData?.title?.toLowerCase();
+
+    if (schemaId && schemaSlug) {
+      schemaCache.set(schemaId, schemaSlug);
+    }
+  };
+
+  /**
+   * Sets register data for a specific slug
+   * Also populates the register cache with id -> slug mapping for quick lookups
+   * @param {string} slug - The register slug identifier
+   * @param {Object} registerData - The register data to set
+   */
+  @action
+  setRegister = (slug, registerData) => {
+    this.registers[slug] = registerData;
+
+    // Populate register cache with id -> slug mapping
+    // Register data typically has id and slug properties from the API
+    const registerId = registerData?.id || registerData?.['@self']?.id;
+    const registerSlug = registerData?.slug || registerData?.name || slug;
+
+    if (registerId && registerSlug) {
+      registerCache.set(registerId, registerSlug);
+    }
   };
 
   /**
@@ -1541,6 +1535,13 @@ export class ObjectStore {
   getSchema = (type) => this.schemas[type] || null;
 
   /**
+   * Gets the register for a specific slug
+   * @param {string} slug - The register slug identifier
+   * @returns {Object|null} The register or null if not found
+   */
+  getRegister = (slug) => this.registers[slug] || null;
+
+  /**
    * Gets the schema properties for a specific type
    * @param {string} type - The type identifier
    * @returns {Object} The schema properties sorted by order
@@ -1567,20 +1568,71 @@ export class ObjectStore {
   getSchemaError = (type) => this.schemaErrors[type] || null;
 
   /**
-   * Clears schema data for a specific type
-   * @param {string} type - The type identifier
+   * Updates a collection in-place with new/updated object data
+   * @param {string} type - The collection type identifier
+   * @param {Object} objectData - The object data to update/add
+   * @param {boolean} isNew - Whether this is a new object (add) or existing (update)
    */
   @action
-  clearSchema = (type) => {
-    if (this.schemas[type]) {
-      delete this.schemas[type];
+  _updateCollectionInPlace = (type, objectData, isNew = false) => {
+    const collection = this.collections[type];
+    if (!collection || !collection.results) {
+      console.error(
+        'Collection not found for type:',
+        type,
+        'available collections:',
+        Object.keys(this.collections)
+      );
+      return;
     }
-    if (this.schemaLoading[type]) {
-      delete this.schemaLoading[type];
+
+    const objectId = objectData.id || objectData['@self']?.id;
+    if (!objectId) {
+      return;
     }
-    if (this.schemaErrors[type]) {
-      delete this.schemaErrors[type];
+
+    const index = collection.results.findIndex(
+      (obj) => (obj.id || obj['@self']?.id) === objectId
+    );
+
+    if (index !== -1) {
+      // Update existing object by creating a new object with spread
+      // This ensures MobX sees the assignment and triggers reactivity
+      collection.results[index] = {
+        ...collection.results[index],
+        ...objectData,
+      };
+    } else if (isNew) {
+      // Add new object to collection
+      collection.results.push(objectData);
     }
+
+    this.COLLECTION_CHANGE_KEY = Symbol('collectionChangeKey');
+  };
+
+  /**
+   * Removes an object from a collection in-place
+   * @param {string} type - The collection type identifier
+   * @param {string} objectId - The object ID to remove
+   */
+  @action
+  _removeFromCollectionInPlace = (type, objectId) => {
+    const collection = this.collections[type];
+    if (!collection || !collection.results) {
+      return;
+    }
+
+    runInAction(() => {
+      const index = collection.results.findIndex(
+        (obj) => (obj.id || obj['@self']?.id) === objectId
+      );
+
+      if (index !== -1) {
+        collection.results.splice(index, 1);
+      }
+    });
+
+    this.COLLECTION_CHANGE_KEY = Symbol('collectionChangeKey');
   };
 
   /**
@@ -1592,7 +1644,10 @@ export class ObjectStore {
    */
   @action
   createObject = async (register, schema, data) => {
-    const type = `${register}_${schema}`;
+    const type = this.getTypeFromParams(register, schema);
+    if (!type) {
+      throw new Error('Could not create type for createObject');
+    }
     this.setLoading(`${type}_create`, true);
     this.setError(`${type}_create`, null);
     this.setSuccess(type, null);
@@ -1611,9 +1666,10 @@ export class ObjectStore {
         this.objects[type][newObject.id] = newObject;
       });
 
-      await this.fetchCollection(register, schema);
+      // Update collection in-place instead of refetching
+      this._updateCollectionInPlace(type, newObject, true);
       console.info(
-        `✅ Collection refreshed after creating ${type} object:`,
+        `✅ Collection updated in-place after creating ${type} object:`,
         newObject.id
       );
 
@@ -1651,7 +1707,10 @@ export class ObjectStore {
       throw new Error('Object item, register and schema are required');
     }
 
-    const type = `${registerId}_${schemaId}`;
+    const type = this.getTypeFromParams(registerId, schemaId);
+    if (!type) {
+      throw new Error('Could not create type for saveObject');
+    }
     const isNewObject = !objectItem['@self']?.id;
     const objectId = objectItem['@self']?.id;
 
@@ -1694,14 +1753,17 @@ export class ObjectStore {
         }
       });
 
-      // Refresh the entire collection to ensure data consistency
-      await this.fetchCollection(registerId, schemaId);
+      // Update collection in-place instead of refetching
+      this._updateCollectionInPlace(type, data, isNewObject);
+      console.info(
+        `✅ Collection updated in-place after saving ${type} object:`,
+        data.id
+      );
 
       // Clear list cache since object was saved
       this.clearListCache(registerId, schemaId);
       console.info(`🗑️ Cleared list cache for ${registerId}/${schemaId} after save`);
 
-      console.info(`✅ Collection refreshed after saving ${type} object:`, data.id);
       this.setSuccess(type, true);
       return { response, data };
     } catch (error) {
@@ -1731,7 +1793,10 @@ export class ObjectStore {
       throw new Error('Could not extract register or schema ID');
     }
 
-    const type = `${registerId}_${schemaId}`;
+    const type = this.getTypeFromParams(registerId, schemaId);
+    if (!type) {
+      throw new Error('Could not create type for updateObject');
+    }
     const requestType = `${type}_${id}`;
     this.setLoading(requestType, true);
     this.setError(requestType, null);
@@ -1749,21 +1814,23 @@ export class ObjectStore {
         // run in action to avoid Strict MobX warnings
         if (!this.objects[type]) this.objects[type] = {};
         this.objects[type][id] = updatedObject;
-      });
 
-      await this.fetchCollection(register, schema);
-      console.info(`✅ Collection refreshed after updating ${type} object:`, id);
-
-      // Clear list cache since object was updated
-      this.clearListCache(register, schema);
-      console.info(`🗑️ Cleared list cache for ${register}/${schema} after update`);
-
-      runInAction(() => {
-        // run in action to avoid Strict MobX warnings
+        // Update active object if it matches
         if (this.activeObjects[type]?.id === id) {
           this.activeObjects[type] = updatedObject;
         }
       });
+
+      // Update collection in-place instead of refetching
+      this._updateCollectionInPlace(type, updatedObject, false);
+      console.info(
+        `✅ Collection updated in-place after updating ${type} object:`,
+        id
+      );
+
+      // Clear list cache since object was updated
+      this.clearListCache(register, schema);
+      console.info(`🗑️ Cleared list cache for ${register}/${schema} after update`);
 
       this.setSuccess(requestType, true);
 
@@ -1795,7 +1862,10 @@ export class ObjectStore {
       throw new Error('Could not extract register or schema ID');
     }
 
-    const type = `${registerId}_${schemaId}`;
+    const type = this.getTypeFromParams(registerId, schemaId);
+    if (!type) {
+      throw new Error('Could not create type for patchObject');
+    }
     const requestType = `${type}_${id}`;
     this.setLoading(requestType, true);
     this.setError(requestType, null);
@@ -1825,17 +1895,19 @@ export class ObjectStore {
         // run in action to avoid Strict MobX warnings
         if (!this.objects[type]) this.objects[type] = {};
         this.objects[type][id] = updatedObject;
-      });
 
-      await this.fetchCollection(register, schema);
-      console.info(`✅ Collection refreshed after patching ${type} object:`, id);
-
-      runInAction(() => {
-        // run in action to avoid Strict MobX warnings
+        // Update active object if it matches
         if (this.activeObjects[type]?.id === id) {
           this.activeObjects[type] = updatedObject;
         }
       });
+
+      // Update collection in-place instead of refetching
+      this._updateCollectionInPlace(type, updatedObject, false);
+      console.info(
+        `✅ Collection updated in-place after patching ${type} object:`,
+        id
+      );
 
       this.setSuccess(requestType, true);
 
@@ -1898,6 +1970,30 @@ export class ObjectStore {
         this.setSelectedObjects(remainingSelected);
       }
 
+      // Remove from collection in-place instead of refetching
+      const type = this.getTypeFromParams(registerId, schemaId);
+      if (type) {
+        this._removeFromCollectionInPlace(type, objectId);
+      }
+      console.info(
+        `✅ Collection updated in-place after deleting ${type} object:`,
+        objectId
+      );
+
+      // Also remove from objects cache
+      runInAction(() => {
+        if (this.objects[type]?.[objectId]) {
+          delete this.objects[type][objectId];
+        }
+        // Clear active object if it matches
+        if (
+          this.activeObjects[type]?.id === objectId ||
+          this.activeObjects[type]?.['@self']?.id === objectId
+        ) {
+          this.activeObjects[type] = null;
+        }
+      });
+
       // Clear list cache since object was deleted
       this.clearListCache(registerId, schemaId);
       console.info(
@@ -1955,10 +2051,18 @@ export class ObjectStore {
       }
 
       const updatedObject = response.data;
+      const type = this.getTypeFromParams(registerId, schemaId);
+      if (!type) {
+        throw new Error('Could not create type for publishObject');
+      }
 
-      // Update active object if it matches the published object
+      // Update store state after successful publish
       runInAction(() => {
         // run in action to avoid Strict MobX warnings
+        if (!this.objects[type]) this.objects[type] = {};
+        this.objects[type][objectId] = updatedObject;
+
+        // Update active object if it matches
         const objectType = this.getTypeFromObject(objectItem);
         const activeObject = this.activeObjects[objectType];
         if (
@@ -1969,6 +2073,13 @@ export class ObjectStore {
         }
       });
 
+      // Update collection in-place instead of refetching
+      this._updateCollectionInPlace(type, updatedObject, false);
+      console.info(
+        `✅ Collection updated in-place after publishing ${type} object:`,
+        objectId
+      );
+
       const isSelected = this.selectedObjects.some(
         (obj) => (obj.id || obj['@self']?.id) === objectId
       );
@@ -1978,6 +2089,12 @@ export class ObjectStore {
         );
         this.setSelectedObjects(remainingSelected);
       }
+
+      // Clear list cache since object was published
+      this.clearListCache(registerId, schemaId);
+      console.info(
+        `🗑️ Cleared list cache for ${registerId}/${schemaId} after publish`
+      );
 
       this.setSuccess(requestType, true);
       return updatedObject;
@@ -2030,10 +2147,18 @@ export class ObjectStore {
       }
 
       const updatedObject = response.data;
+      const type = this.getTypeFromParams(registerId, schemaId);
+      if (!type) {
+        throw new Error('Could not create type for depublishObject');
+      }
 
-      // Update active object if it matches the depublished object
+      // Update store state after successful depublish
       runInAction(() => {
         // run in action to avoid Strict MobX warnings
+        if (!this.objects[type]) this.objects[type] = {};
+        this.objects[type][objectId] = updatedObject;
+
+        // Update active object if it matches
         const objectType = this.getTypeFromObject(objectItem);
         const activeObject = this.activeObjects[objectType];
         if (
@@ -2044,6 +2169,13 @@ export class ObjectStore {
         }
       });
 
+      // Update collection in-place instead of refetching
+      this._updateCollectionInPlace(type, updatedObject, false);
+      console.info(
+        `✅ Collection updated in-place after depublishing ${type} object:`,
+        objectId
+      );
+
       const isSelected = this.selectedObjects.some(
         (obj) => (obj.id || obj['@self']?.id) === objectId
       );
@@ -2053,6 +2185,12 @@ export class ObjectStore {
         );
         this.setSelectedObjects(remainingSelected);
       }
+
+      // Clear list cache since object was depublished
+      this.clearListCache(registerId, schemaId);
+      console.info(
+        `🗑️ Cleared list cache for ${registerId}/${schemaId} after depublish`
+      );
 
       this.setSuccess(requestType, true);
       return updatedObject;
@@ -2109,234 +2247,6 @@ export class ObjectStore {
       throw error;
     } finally {
       this.setLoading(requestType, false);
-    }
-  };
-
-  /**
-   * Locks an object
-   * @param {Object} objectItem - The object to lock with id, register, and schema information
-   * @param {string|null} [process=null] - The process name for locking
-   * @param {number|null} [duration=null] - Lock duration in seconds
-   * @returns {Object} The updated object with lock status
-   */
-  @action
-  lockObject = async (objectItem, process = null, duration = null) => {
-    const objectId = objectItem.id || objectItem['@self']?.id;
-    const register = objectItem['@self']?.register || objectItem.register;
-    const schema = objectItem['@self']?.schema || objectItem.schema;
-
-    if (!objectId || !register || !schema) {
-      throw new Error('Object must have id, register, and schema information');
-    }
-
-    const registerId = this.extractId(register);
-    const schemaId = this.extractId(schema);
-
-    if (!registerId || !schemaId) {
-      throw new Error('Could not extract register or schema ID');
-    }
-
-    const requestType = `lock_${objectId}`;
-    this.setLoading(requestType, true);
-    this.setError(requestType, null);
-    this.setSuccess(requestType, null);
-
-    try {
-      const endpoint = `/openregister/api/objects/${registerId}/${schemaId}/${objectId}/lock`;
-
-      const body = {};
-      if (process) body.process = process;
-      if (duration) body.duration = duration;
-
-      const response = await nextcloudApi.post(endpoint, body);
-
-      if (!response.ok) {
-        throw new Error(
-          `Failed to lock object: ${response.status} ${response.statusText}`
-        );
-      }
-
-      const updatedObject = response.data;
-
-      // Update active object if it matches the locked object
-      runInAction(() => {
-        // run in action to avoid Strict MobX warnings
-        const objectType = this.getTypeFromObject(objectItem);
-        const activeObject = this.activeObjects[objectType];
-        if (
-          activeObject &&
-          (activeObject.id === objectId || activeObject['@self']?.id === objectId)
-        ) {
-          this.activeObjects[objectType] = updatedObject;
-        }
-      });
-
-      this.setSuccess(requestType, true);
-      return updatedObject;
-    } catch (error) {
-      console.error('Error locking object:', error);
-      this.setError(requestType, error.message);
-      this.setSuccess(requestType, false);
-      throw error;
-    } finally {
-      this.setLoading(requestType, false);
-    }
-  };
-
-  /**
-   * Unlocks an object
-   * @param {Object} objectItem - The object to unlock with id, register, and schema information
-   * @returns {Object} The updated object with lock status
-   */
-  @action
-  unlockObject = async (objectItem) => {
-    const objectId = objectItem.id || objectItem['@self']?.id;
-    const register = objectItem['@self']?.register || objectItem.register;
-    const schema = objectItem['@self']?.schema || objectItem.schema;
-
-    if (!objectId || !register || !schema) {
-      throw new Error('Object must have id, register, and schema information');
-    }
-
-    const registerId = this.extractId(register);
-    const schemaId = this.extractId(schema);
-
-    if (!registerId || !schemaId) {
-      throw new Error('Could not extract register or schema ID');
-    }
-
-    const requestType = `unlock_${objectId}`;
-    this.setLoading(requestType, true);
-    this.setError(requestType, null);
-    this.setSuccess(requestType, null);
-
-    try {
-      const endpoint = `/openregister/api/objects/${registerId}/${schemaId}/${objectId}/unlock`;
-
-      const response = await nextcloudApi.post(endpoint);
-
-      if (!response.ok) {
-        throw new Error(
-          `Failed to unlock object: ${response.status} ${response.statusText}`
-        );
-      }
-
-      const updatedObject = response.data;
-
-      // Update active object if it matches the unlocked object
-      runInAction(() => {
-        // run in action to avoid Strict MobX warnings
-        const objectType = this.getTypeFromObject(objectItem);
-        const activeObject = this.activeObjects[objectType];
-        if (
-          activeObject &&
-          (activeObject.id === objectId || activeObject['@self']?.id === objectId)
-        ) {
-          this.activeObjects[objectType] = updatedObject;
-        }
-      });
-
-      this.setSuccess(requestType, true);
-      return updatedObject;
-    } catch (error) {
-      console.error('Error unlocking object:', error);
-      this.setError(requestType, error.message);
-      this.setSuccess(requestType, false);
-      throw error;
-    } finally {
-      this.setLoading(requestType, false);
-    }
-  };
-
-  /**
-   * Sets search term for a specific type with debouncing
-   * @param {string} type - The type identifier for search
-   * @param {string} term - The search term
-   */
-  @action
-  setSearchTerm = (type, term) => {
-    if (!this.searchTerms[type]) {
-      this.searchTerms[type] = '';
-    }
-
-    this.searchTerms[type] = term;
-
-    if (this.searchDebounceTimers[type]) {
-      clearTimeout(this.searchDebounceTimers[type]);
-    }
-
-    this.searchDebounceTimers[type] = setTimeout(() => {
-      const [register, schema] = type.split('_');
-      this.fetchCollection(register, schema, term ? { _search: term } : {});
-    }, 500);
-  };
-
-  /**
-   * Clears search term for a specific type
-   * @param {string} type - The type identifier for search
-   */
-  @action
-  clearSearchTerm = (type) => {
-    this.searchTerms[type] = '';
-
-    if (this.searchDebounceTimers[type]) {
-      clearTimeout(this.searchDebounceTimers[type]);
-      this.searchDebounceTimers[type] = null;
-    }
-
-    const [register, schema] = type.split('_');
-    this.fetchCollection(register, schema);
-  };
-
-  /**
-   * Loads the next page of results for a collection
-   * @param {string} type - The type identifier for the collection
-   */
-  @action
-  loadMore = async (type) => {
-    const pagination = this.pagination[type];
-    const [register, schema] = type.split('_');
-
-    if (pagination.next) {
-      const url = new URL(pagination.next);
-      const params = Object.fromEntries(url.searchParams);
-      await this.fetchCollection(register, schema, params, true);
-    } else if (pagination.page < pagination.pages) {
-      await this.fetchCollection(
-        register,
-        schema,
-        {
-          _page: pagination.page + 1,
-          _limit: pagination.limit,
-        },
-        true
-      );
-    }
-  };
-
-  /**
-   * Loads the previous page of results for a collection
-   * @param {string} type - The type identifier for the collection
-   */
-  @action
-  loadPrevious = async (type) => {
-    const pagination = this.pagination[type];
-    const [register, schema] = type.split('_');
-
-    if (pagination.prev) {
-      const url = new URL(pagination.prev);
-      const params = Object.fromEntries(url.searchParams);
-      await this.fetchCollection(register, schema, params, false);
-    } else if (pagination.page > 1) {
-      await this.fetchCollection(
-        register,
-        schema,
-        {
-          _page: pagination.page - 1,
-          _limit: pagination.limit,
-        },
-        false
-      );
     }
   };
 
@@ -2475,129 +2385,6 @@ export class ObjectStore {
         try {
           const objectId = obj.id || obj['@self']?.id;
           await this.depublishObject(obj);
-          this.clearObjectError(objectId);
-
-          if (onProgress) {
-            onProgress(obj, true);
-          }
-
-          return { success: true, id: objectId, object: obj };
-        } catch (error) {
-          const objectId = obj.id || obj['@self']?.id;
-          const errorMessage = error.message || 'Unknown error';
-
-          this.setObjectError(objectId, errorMessage);
-
-          if (onProgress) {
-            onProgress(obj, false, errorMessage);
-          }
-
-          return { success: false, id: objectId, object: obj, error: errorMessage };
-        }
-      })
-    );
-
-    const successful = results
-      .filter((r) => r.status === 'fulfilled' && r.value.success)
-      .map((r) => r.value);
-    const failed = results
-      .filter(
-        (r) =>
-          r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)
-      )
-      .map((r) => r.value || { success: false, error: 'Unknown error' });
-
-    if (successful.length > 0) {
-      const successfulIds = successful.map((r) => r.id);
-      const remainingSelected = this.selectedObjects.filter(
-        (id) => !successfulIds.includes(id)
-      );
-      this.setSelectedObjects(remainingSelected);
-    }
-
-    return { successful, failed };
-  };
-
-  /**
-   * Locks multiple objects in parallel
-   * @param {Array<Object>} objects - Array of objects to lock
-   * @param {string|null} [process=null] - The process name for locking
-   * @param {number|null} [duration=null] - Lock duration in seconds
-   * @param {Function|null} [onProgress=null] - Progress callback function
-   * @returns {Object} Object with successful and failed operations
-   */
-  @action
-  massLockObjects = async (
-    objects,
-    process = null,
-    duration = null,
-    onProgress = null
-  ) => {
-    this.clearAllObjectErrors();
-
-    const results = await Promise.allSettled(
-      objects.map(async (obj) => {
-        try {
-          const objectId = obj.id || obj['@self']?.id;
-          await this.lockObject(obj, process, duration);
-          this.clearObjectError(objectId);
-
-          if (onProgress) {
-            onProgress(obj, true);
-          }
-
-          return { success: true, id: objectId, object: obj };
-        } catch (error) {
-          const objectId = obj.id || obj['@self']?.id;
-          const errorMessage = error.message || 'Unknown error';
-
-          this.setObjectError(objectId, errorMessage);
-
-          if (onProgress) {
-            onProgress(obj, false, errorMessage);
-          }
-
-          return { success: false, id: objectId, object: obj, error: errorMessage };
-        }
-      })
-    );
-
-    const successful = results
-      .filter((r) => r.status === 'fulfilled' && r.value.success)
-      .map((r) => r.value);
-    const failed = results
-      .filter(
-        (r) =>
-          r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)
-      )
-      .map((r) => r.value || { success: false, error: 'Unknown error' });
-
-    if (successful.length > 0) {
-      const successfulIds = successful.map((r) => r.id);
-      const remainingSelected = this.selectedObjects.filter(
-        (id) => !successfulIds.includes(id)
-      );
-      this.setSelectedObjects(remainingSelected);
-    }
-
-    return { successful, failed };
-  };
-
-  /**
-   * Unlocks multiple objects in parallel
-   * @param {Array<Object>} objects - Array of objects to unlock
-   * @param {Function|null} [onProgress=null] - Progress callback function
-   * @returns {Object} Object with successful and failed operations
-   */
-  @action
-  massUnlockObjects = async (objects, onProgress = null) => {
-    this.clearAllObjectErrors();
-
-    const results = await Promise.allSettled(
-      objects.map(async (obj) => {
-        try {
-          const objectId = obj.id || obj['@self']?.id;
-          await this.unlockObject(obj);
           this.clearObjectError(objectId);
 
           if (onProgress) {
@@ -2849,33 +2636,6 @@ export class ObjectStore {
   };
 
   /**
-   * Fetch tags for attachments
-   * @returns {Array} Array of tag values
-   */
-  @action
-  fetchTags = async () => {
-    const requestType = `tags_fetch`;
-    this.setLoading(requestType, true);
-    this.setError(requestType, null);
-
-    try {
-      const response = await nextcloudApi.get('/openregister/api/tags');
-      if (!response.ok) {
-        throw new Error(
-          `Failed to fetch tags: ${response.status} ${response.statusText}`
-        );
-      }
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching tags:', error);
-      this.setError(requestType, error.message);
-      throw error;
-    } finally {
-      this.setLoading(requestType, false);
-    }
-  };
-
-  /**
    * Convenience wrapper to fetch files related data
    * @param {string|Object} register
    * @param {string|Object} schema
@@ -2917,13 +2677,6 @@ export class ObjectStore {
   };
 
   /**
-   * Gets the search term for a specific type
-   * @param {string} type - The type identifier
-   * @returns {string} Current search term or empty string
-   */
-  getSearchTerm = (type) => this.searchTerms[type] || '';
-
-  /**
    * Gets a specific object by type and ID
    * @param {string} type - The type identifier
    * @param {string} id - The object ID
@@ -2957,81 +2710,6 @@ export class ObjectStore {
     }
     const defaultLimit = type.includes('files') ? 500 : 20;
     return { total: 0, page: 1, pages: 1, limit: defaultLimit };
-  };
-
-  /**
-   * Checks if there are more pages available for a collection
-   * @param {string} type - The type identifier
-   * @returns {boolean} True if more pages are available
-   */
-  hasMorePages = (type) => {
-    const pagination = this.pagination[type];
-    return pagination
-      ? pagination.next !== null || pagination.page < pagination.pages
-      : false;
-  };
-
-  /**
-   * Checks if there are previous pages available for a collection
-   * @param {string} type - The type identifier
-   * @returns {boolean} True if previous pages are available
-   */
-  hasPreviousPages = (type) => {
-    const pagination = this.pagination[type];
-    return pagination ? pagination.prev !== null || pagination.page > 1 : false;
-  };
-
-  /**
-   * Gets audit trails for a specific type
-   * @param {string} type - The type identifier
-   * @returns {Array} Array of audit trail entries
-   */
-  getAuditTrails = (type) => this.relatedData[type]?.logs || [];
-
-  /**
-   * Gets the current state (success/error) for a specific type
-   * @param {string} type - The type identifier
-   * @returns {Object} Object with success and error properties
-   */
-  getState = (type) => ({
-    success: this.success[type] || null,
-    error: this.errors[type] || null,
-  });
-
-  /**
-   * Gets the error for a specific object
-   * @param {string} objectId - The object ID
-   * @returns {string|null} Error message or null if no error
-   */
-  getObjectError = (objectId) => this.objectErrors[objectId] || null;
-
-  /**
-   * Gets enabled schema properties for column filtering for a specific type
-   * @param {string} type - The object type identifier
-   * @returns {Array<Object>} Array of enabled schema properties
-   */
-  getEnabledSchemaProperties = (type) =>
-    this.getEnabledSchemaPropertiesForType(type);
-
-  /**
-   * Gets column filters for a specific type
-   * @param {string} type - The object type identifier
-   * @returns {Object} Object containing column filters for the type
-   */
-  getColumnFilters = (type) => this.columnFilters[type] || {};
-
-  /**
-   * Clears schema properties for a specific type
-   * @param {string} type - The object type identifier
-   */
-  @action
-  clearSchemaProperties = (type) => {
-    if (this.schemaProperties[type]) {
-      delete this.schemaProperties[type];
-    }
-    if (this.columnFilters[type]) {
-      delete this.columnFilters[type];
-    }
   };
 
   /**
@@ -3399,24 +3077,6 @@ export class ObjectStore {
   };
 
   /**
-   * Convenience method for fetching VNG-GEMMA elements with cache-first strategy
-   * @param {string} gemmaType - Type of GEMMA element ('Referentiecomponent', 'standaard', etc.)
-   * @param {Object} [params={}] - Additional query parameters
-   * @returns {Array} Array of GEMMA elements
-   */
-  @action
-  fetchGemmaElementsCacheFirst = async (gemmaType, params = {}) => {
-    const queryParams = {
-      _limit: params._limit || 500,
-      _page: params._page || 1,
-      gemmaType: gemmaType,
-      ...params,
-    };
-
-    return this.fetchListCacheFirst('vng-gemma', 'element', queryParams);
-  };
-
-  /**
    * Convenience method for fetching modules with cache-first strategy
    * @param {Object} [params={}] - Additional query parameters
    * @returns {Array} Array of modules
@@ -3435,6 +3095,37 @@ export class ObjectStore {
   // ===============================
   // NAMES CACHE SYSTEM FOR UUID → NAME RESOLUTION
   // ===============================
+
+  /**
+   * Waits for names cache warmup to complete if it's in progress
+   * @returns {Promise<void>}
+   */
+  async waitForNamesWarmup() {
+    const warmupTypes = ['names_warmup', 'names_trigger_warmup'];
+    const isWarmingUp = warmupTypes.some((type) => this.isLoading(type));
+
+    if (!isWarmingUp) {
+      return;
+    }
+
+    console.info('⏳ Names cache warmup in progress, waiting...');
+
+    // Poll until warmup completes (with timeout)
+    const maxWaitTime = 30000; // 30 seconds max wait
+    const pollInterval = 100; // Check every 100ms
+    const startTime = Date.now();
+
+    while (Date.now() - startTime < maxWaitTime) {
+      const stillWarmingUp = warmupTypes.some((type) => this.isLoading(type));
+      if (!stillWarmingUp) {
+        console.info('✅ Names cache warmup completed');
+        return;
+      }
+      await new Promise((resolve) => setTimeout(resolve, pollInterval));
+    }
+
+    console.warn('⚠️ Names cache warmup wait timeout, proceeding anyway');
+  }
 
   /**
    * Gets a single name from cache, falls back to backend if not found
@@ -3457,46 +3148,77 @@ export class ObjectStore {
       delete this.namesCache[id];
     }
 
-    // Fallback to backend
-    try {
-      console.info(`🌐 Fetching name for ${id} from backend`);
-      const response = await nextcloudApi.get(`/openregister/api/names/${id}`);
+    // Wait for warmup to complete before making API calls
+    await this.waitForNamesWarmup();
 
-      if (response.ok && response.data?.names?.[id]) {
-        const name = response.data.names[id];
-        this.setNamesInCache({ [id]: name });
-        console.info(`✅ Single name fetched for ${id}: ${name}`);
-        return name;
-      } else if (response.ok && response.data?.name) {
-        // Fallback for different response format
-        const name = response.data.name;
-        this.setNamesInCache({ [id]: name });
-        console.info(`✅ Single name fetched (alt format) for ${id}: ${name}`);
-        return name;
-      } else if (response.ok) {
-        // API responded OK but no name found - cache the UUID to prevent future calls
+    // Check cache again after warmup (it might have been populated)
+    const cachedAfterWarmup = this.namesCache[id];
+    if (cachedAfterWarmup) {
+      const age = Date.now() - cachedAfterWarmup.timestamp;
+      if (age < this.namesCacheConfig.maxAge) {
         console.info(
-          `📝 No name found for ${id}, caching UUID to prevent future API calls`
+          `📋 Name cache hit after warmup for ${id}: ${cachedAfterWarmup.name}`
         );
-        this.setNamesInCache({ [id]: id });
-        return id;
+        return cachedAfterWarmup.name;
       }
-    } catch (error) {
-      // Handle 404 and other HTTP errors by caching the UUID to prevent repeated calls
-      if (error.response?.status === 404 || error.response?.status >= 400) {
-        console.info(
-          `🚫 Name not found (${
-            error.response?.status || 'error'
-          }) for ${id}, caching UUID to prevent future API calls`
-        );
-        this.setNamesInCache({ [id]: id });
-        return id;
-      }
-      console.warn(`⚠️ Failed to fetch name for ${id}:`, error.message);
     }
 
-    // Return ID as fallback if no name found
-    return id;
+    // Check if there's already a pending request for this ID to prevent duplicate calls
+    if (this.pendingNameRequests[id]) {
+      console.info(`⏳ Reusing pending request for ${id}`);
+      return this.pendingNameRequests[id];
+    }
+
+    // Create and store the pending request promise
+    const fetchPromise = (async () => {
+      try {
+        console.info(`🌐 Fetching name for ${id} from backend`);
+        const response = await nextcloudApi.get(`/openregister/api/names/${id}`);
+
+        if (response.ok && response.data?.names?.[id]) {
+          const name = response.data.names[id];
+          this.setNamesInCache({ [id]: name });
+          console.info(`✅ Single name fetched for ${id}: ${name}`);
+          return name;
+        } else if (response.ok && response.data?.name) {
+          // Fallback for different response format
+          const name = response.data.name;
+          this.setNamesInCache({ [id]: name });
+          console.info(`✅ Single name fetched (alt format) for ${id}: ${name}`);
+          return name;
+        } else if (response.ok) {
+          // API responded OK but no name found - cache the UUID to prevent future calls
+          console.info(
+            `📝 No name found for ${id}, caching UUID to prevent future API calls`
+          );
+          this.setNamesInCache({ [id]: id });
+          return id;
+        }
+      } catch (error) {
+        // Handle 404 and other HTTP errors by caching the UUID to prevent repeated calls
+        if (error.response?.status === 404 || error.response?.status >= 400) {
+          console.info(
+            `🚫 Name not found (${
+              error.response?.status || 'error'
+            }) for ${id}, caching UUID to prevent future API calls`
+          );
+          this.setNamesInCache({ [id]: id });
+          return id;
+        }
+        console.warn(`⚠️ Failed to fetch name for ${id}:`, error.message);
+      } finally {
+        // Clean up pending request after completion
+        delete this.pendingNameRequests[id];
+      }
+
+      // Return ID as fallback if no name found
+      return id;
+    })();
+
+    // Store the pending request
+    this.pendingNameRequests[id] = fetchPromise;
+
+    return fetchPromise;
   };
 
   /**
@@ -3538,12 +3260,31 @@ export class ObjectStore {
       }`
     );
 
+    // Wait for warmup to complete before making API calls
+    await this.waitForNamesWarmup();
+
+    // Check cache again after warmup (it might have been populated)
+    const stillMissingIds = [];
+    missingIds.forEach((id) => {
+      const cachedAfterWarmup = this.namesCache[id];
+      if (cachedAfterWarmup) {
+        const age = Date.now() - cachedAfterWarmup.timestamp;
+        if (age < this.namesCacheConfig.maxAge) {
+          results[id] = cachedAfterWarmup.name;
+          return;
+        }
+      }
+      stillMissingIds.push(id);
+    });
+
     // Fetch missing names from backend
-    if (missingIds.length > 0) {
+    if (stillMissingIds.length > 0) {
       try {
-        console.info(`🌐 Fetching names for ${missingIds.length} IDs from backend`);
+        console.info(
+          `🌐 Fetching names for ${stillMissingIds.length} IDs from backend`
+        );
         const response = await nextcloudApi.post('/openregister/api/names', {
-          ids: missingIds,
+          ids: stillMissingIds,
         });
 
         if (response.ok && response.data?.names) {
@@ -3573,7 +3314,7 @@ export class ObjectStore {
             }), caching UUIDs to prevent future API calls`
           );
           const failedLookups = {};
-          missingIds.forEach((id) => {
+          stillMissingIds.forEach((id) => {
             failedLookups[id] = id;
           });
           this.setNamesInCache(failedLookups);
@@ -3583,7 +3324,7 @@ export class ObjectStore {
 
     // Fill in missing names with IDs as fallback and cache them
     const uncachedFallbacks = {};
-    missingIds.forEach((id) => {
+    stillMissingIds.forEach((id) => {
       if (!results[id]) {
         results[id] = id;
         uncachedFallbacks[id] = id;
@@ -3761,6 +3502,73 @@ export class ObjectStore {
   };
 
   /**
+   * Core schema slugs that should be warmed up for the schema cache
+   * These are the most commonly used schemas across the application
+   */
+  CORE_SCHEMA_SLUGS = [
+    'organisatie',
+    'module',
+    'moduleversie',
+    'product',
+    'dienst',
+    'gebruik',
+    'koppeling',
+    'contactpersoon',
+  ];
+
+  /**
+   * Warms up the schema cache by fetching all core schemas
+   * This ensures schema ID -> slug mappings are available for getSchemaSlug lookups
+   * @returns {Promise<number>} Number of schemas loaded into cache
+   */
+  @action
+  warmupSchemaCache = async () => {
+    const requestType = 'schema_warmup';
+    this.setLoading(requestType, true);
+    this.setError(requestType, null);
+
+    try {
+      console.info('🔥 Starting schema cache warmup for:', this.CORE_SCHEMA_SLUGS);
+
+      const schemaPromises = this.CORE_SCHEMA_SLUGS.map(async (schemaSlug) => {
+        try {
+          await this.fetchSchema(schemaSlug);
+          return { schemaSlug, success: true };
+        } catch (error) {
+          console.warn(
+            `⚠️ Failed to fetch schema for ${schemaSlug}:`,
+            error.message
+          );
+          return { schemaSlug, success: false, error: error.message };
+        }
+      });
+
+      const results = await Promise.allSettled(schemaPromises);
+
+      const successful = results.filter(
+        (result) => result.status === 'fulfilled' && result.value.success
+      ).length;
+
+      const failed = results.filter(
+        (result) =>
+          result.status === 'rejected' ||
+          (result.status === 'fulfilled' && !result.value.success)
+      ).length;
+
+      console.info(
+        `✅ Schema cache warmed up: ${successful} successful, ${failed} failed`
+      );
+      return successful;
+    } catch (error) {
+      console.error('❌ Schema cache warmup failed:', error);
+      this.setError(requestType, error.message);
+      throw error;
+    } finally {
+      this.setLoading(requestType, false);
+    }
+  };
+
+  /**
    * Clears all names from the cache
    */
   @action
@@ -3768,6 +3576,52 @@ export class ObjectStore {
     const count = Object.keys(this.namesCache).length;
     this.namesCache = {};
     console.info(`🗑️ Cleared ${count} names from cache`);
+  };
+
+  /**
+   * Warms up the register cache by fetching all core registers
+   * This populates the register cache with ID -> slug mappings
+   * @returns {Promise<number>} Number of registers loaded into cache
+   */
+  @action
+  warmupRegisterCache = async () => {
+    const requestType = 'register_warmup';
+    this.setLoading(requestType, true);
+    this.setError(requestType, null);
+
+    try {
+      console.info('🔥 Starting register cache warmup');
+
+      // Fetch all core registers in parallel to populate the cache
+      const registerPromises = this.CORE_REGISTERS.map(async (registerSlug) => {
+        try {
+          await this.fetchRegister(registerSlug);
+          return { registerSlug, success: true };
+        } catch (error) {
+          console.warn(
+            `⚠️ Failed to warmup register ${registerSlug}:`,
+            error.message
+          );
+          return { registerSlug, success: false, error: error.message };
+        }
+      });
+
+      const results = await Promise.allSettled(registerPromises);
+      const successful = results.filter(
+        (r) => r.status === 'fulfilled' && r.value.success
+      ).length;
+
+      console.info(
+        `✅ Register cache warmed up: ${successful}/${this.CORE_REGISTERS.length} registers`
+      );
+      return successful;
+    } catch (error) {
+      console.error('❌ Register cache warmup failed:', error);
+      this.setError(requestType, error.message);
+      throw error;
+    } finally {
+      this.setLoading(requestType, false);
+    }
   };
 
   /**
@@ -3850,7 +3704,40 @@ export class ObjectStore {
   initialCacheWarmingCompleted = false;
 
   /**
+   * Fetches all core registers and populates the registerCache
+   * Called during warmupBeheerData to ensure ConRegisterResolver works
+   */
+  @action
+  fetchRegisters = async () => {
+    console.info('📋 Fetching registers for cache...');
+
+    try {
+      const registerPromises = this.CORE_REGISTERS.map(async (registerSlug) => {
+        try {
+          await this.fetchRegister(registerSlug);
+          return { registerSlug, success: true };
+        } catch (error) {
+          console.warn(`⚠️ Failed to fetch register ${registerSlug}:`, error);
+          return { registerSlug, success: false, error: error.message };
+        }
+      });
+
+      const results = await Promise.allSettled(registerPromises);
+      const successful = results.filter(
+        (r) => r.status === 'fulfilled' && r.value.success
+      ).length;
+
+      console.info(
+        `✅ Fetched ${successful}/${this.CORE_REGISTERS.length} registers for cache`
+      );
+    } catch (error) {
+      console.error('❌ Error fetching registers:', error);
+    }
+  };
+
+  /**
    * Fetches register information including all schemas
+   * Also populates the register cache with id -> slug mapping for quick lookups
    * @param {string} registerSlug - The register slug (e.g., 'voorzieningen', 'vng-gemma')
    * @returns {Object} Register data with schemas
    */
@@ -3870,8 +3757,21 @@ export class ObjectStore {
         );
       }
 
-      console.info(`✅ Fetched register ${registerSlug}:`, response.data);
-      return response.data;
+      const registerData = response.data;
+
+      // Populate register cache with id -> slug mapping
+      // Register data typically has id and slug properties from the API
+      const registerId = registerData?.id || registerData?.['@self']?.id;
+      const registerSlugFromData = registerData?.slug || registerSlug;
+
+      this.setRegister(registerSlugFromData, registerData);
+
+      if (registerId && registerSlugFromData) {
+        registerCache.set(registerId, registerSlugFromData);
+      }
+
+      console.info(`✅ Fetched register ${registerSlug}:`, registerData);
+      return registerData;
     } catch (error) {
       console.error(`❌ Error fetching register ${registerSlug}:`, error);
       this.setError(requestType, error.message);
@@ -3882,44 +3782,64 @@ export class ObjectStore {
   };
 
   /**
-   * Triggers backend cache loading for a specific register/schema combination
-   * @param {string} registerId - The register ID
-   * @param {string} schemaId - The schema ID
-   * @returns {boolean} True if cache loading was successful
+   * Loads backend cache for all core registers (voorzieningen and vng-gemma)
+   * This function should be called during user login to pre-warm the backend cache
+   * @returns {Object} Combined results from all register cache loads
    */
   @action
-  triggerBackendCacheLoad = async (registerId, schemaId) => {
-    try {
-      const endpoint = `/openregister/api/objects/${registerId}/${schemaId}`;
-      const params = {
-        _limit: 20, // Load first 20 items to properly warm backend cache
-        _page: 1,
-        '_extend[]': '@self.schema',
-      };
+  cacheLoad = async () => {
+    console.info(
+      '🚀 Starting backend cache loading for core registers:',
+      this.CORE_REGISTERS
+    );
 
-      console.info(`🔥 Triggering backend cache load for ${registerId}/${schemaId}`);
+    const startTime = Date.now();
+    const allResults = {
+      successful: [],
+      failed: [],
+      registers: {},
+    };
 
-      const response = await nextcloudApi.get(endpoint, {
-        params: this._constructQueryParams(params),
-      });
-
-      if (response.ok) {
-        console.info(`✅ Backend cache loaded for ${registerId}/${schemaId}`);
-        return true;
-      } else {
-        console.warn(
-          `⚠️ Failed to load backend cache for ${registerId}/${schemaId}:`,
-          response.status
-        );
-        return false;
+    // Load cache for all core registers in parallel
+    const registerPromises = this.CORE_REGISTERS.map(async (registerSlug) => {
+      try {
+        const result = await this.cacheLoadRegister(registerSlug);
+        allResults.registers[registerSlug] = result;
+        allResults.successful.push(...result.successful);
+        allResults.failed.push(...result.failed);
+        return { registerSlug, success: true, result };
+      } catch (error) {
+        const failedResult = { success: false, error: error.message, registerSlug };
+        allResults.registers[registerSlug] = failedResult;
+        allResults.failed.push(failedResult);
+        return { registerSlug, success: false, error: error.message };
       }
-    } catch (error) {
-      console.warn(
-        `⚠️ Error loading backend cache for ${registerId}/${schemaId}:`,
-        error.message
-      );
-      return false;
-    }
+    });
+
+    const registerResults = await Promise.allSettled(registerPromises);
+    const duration = Date.now() - startTime;
+
+    const stats = {
+      duration,
+      totalSuccessful: allResults.successful.length,
+      totalFailed: allResults.failed.length,
+      registersProcessed: registerResults.length,
+      registersSuccessful: registerResults.filter(
+        (r) => r.status === 'fulfilled' && r.value.success
+      ).length,
+    };
+
+    console.info(`🎉 Backend cache loading completed in ${duration}ms:`, stats);
+
+    // Mark initial cache warming as completed to prevent redundant calls
+    runInAction(() => {
+      this.initialCacheWarmingCompleted = true;
+    });
+
+    return {
+      ...allResults,
+      stats,
+    };
   };
 
   /**
@@ -4010,101 +3930,44 @@ export class ObjectStore {
   };
 
   /**
-   * Loads backend cache for all core registers (voorzieningen and vng-gemma)
-   * This function should be called during user login to pre-warm the backend cache
-   * @returns {Object} Combined results from all register cache loads
+   * Triggers backend cache loading for a specific register/schema combination
+   * @param {string} registerId - The register ID
+   * @param {string} schemaId - The schema ID
+   * @returns {boolean} True if cache loading was successful
    */
   @action
-  cacheLoad = async () => {
-    console.info(
-      '🚀 Starting backend cache loading for core registers:',
-      this.CORE_REGISTERS
-    );
+  triggerBackendCacheLoad = async (registerId, schemaId) => {
+    try {
+      const endpoint = `/openregister/api/objects/${registerId}/${schemaId}`;
+      const params = {
+        _limit: 20, // Load first 20 items to properly warm backend cache
+        _page: 1,
+        '_extend[]': '@self.schema',
+      };
 
-    const startTime = Date.now();
-    const allResults = {
-      successful: [],
-      failed: [],
-      registers: {},
-    };
+      console.info(`🔥 Triggering backend cache load for ${registerId}/${schemaId}`);
 
-    // Load cache for all core registers in parallel
-    const registerPromises = this.CORE_REGISTERS.map(async (registerSlug) => {
-      try {
-        const result = await this.cacheLoadRegister(registerSlug);
-        allResults.registers[registerSlug] = result;
-        allResults.successful.push(...result.successful);
-        allResults.failed.push(...result.failed);
-        return { registerSlug, success: true, result };
-      } catch (error) {
-        const failedResult = { success: false, error: error.message, registerSlug };
-        allResults.registers[registerSlug] = failedResult;
-        allResults.failed.push(failedResult);
-        return { registerSlug, success: false, error: error.message };
+      const response = await nextcloudApi.get(endpoint, {
+        params: this._constructQueryParams(params),
+      });
+
+      if (response.ok) {
+        console.info(`✅ Backend cache loaded for ${registerId}/${schemaId}`);
+        return true;
+      } else {
+        console.warn(
+          `⚠️ Failed to load backend cache for ${registerId}/${schemaId}:`,
+          response.status
+        );
+        return false;
       }
-    });
-
-    const registerResults = await Promise.allSettled(registerPromises);
-    const duration = Date.now() - startTime;
-
-    const stats = {
-      duration,
-      totalSuccessful: allResults.successful.length,
-      totalFailed: allResults.failed.length,
-      registersProcessed: registerResults.length,
-      registersSuccessful: registerResults.filter(
-        (r) => r.status === 'fulfilled' && r.value.success
-      ).length,
-    };
-
-    console.info(`🎉 Backend cache loading completed in ${duration}ms:`, stats);
-
-    // Mark initial cache warming as completed to prevent redundant calls
-    runInAction(() => {
-      this.initialCacheWarmingCompleted = true;
-    });
-
-    return {
-      ...allResults,
-      stats,
-    };
-  };
-
-  /**
-   * Gets cache loading state for a specific register
-   * @param {string} registerSlug - The register slug
-   * @returns {boolean} True if cache loading is in progress
-   */
-  isCacheLoading = (registerSlug) => {
-    return this.cacheLoadingState[registerSlug] || false;
-  };
-
-  /**
-   * Gets cache loading error for a specific register
-   * @param {string} registerSlug - The register slug
-   * @returns {string|null} Error message or null if no error
-   */
-  getCacheLoadingError = (registerSlug) => {
-    return this.cacheLoadingErrors[registerSlug] || null;
-  };
-
-  /**
-   * Checks if all core registers have been successfully cache loaded
-   * @returns {boolean} True if all core registers are cache loaded
-   */
-  isFullyCacheLoaded = () => {
-    return this.CORE_REGISTERS.every((register) => {
-      return !this.isCacheLoading(register) && !this.getCacheLoadingError(register);
-    });
-  };
-
-  /**
-   * Clears cache loading state and errors
-   */
-  @action
-  clearCacheLoadingState = () => {
-    this.cacheLoadingState = {};
-    this.cacheLoadingErrors = {};
+    } catch (error) {
+      console.warn(
+        `⚠️ Error loading backend cache for ${registerId}/${schemaId}:`,
+        error.message
+      );
+      return false;
+    }
   };
 
   /**
@@ -4113,6 +3976,559 @@ export class ObjectStore {
   @action
   resetCacheWarmingFlag = () => {
     this.initialCacheWarmingCompleted = false;
+  };
+
+  /**
+   * Checks if warmup is in progress for a specific type
+   * @param {string} type - The schema slug (e.g., 'module')
+   * @returns {boolean} True if warmup is in progress
+   */
+  isWarmupInProgress = (type) => {
+    return this.warmupInProgress[type] || false;
+  };
+
+  /**
+   * Checks if warmup is completed for a specific type
+   * @param {string} type - The schema slug (e.g., 'module')
+   * @returns {boolean} True if warmup is completed
+   */
+  isWarmupCompleted = (type) => {
+    return this.warmupCompleted[type] || false;
+  };
+
+  /**
+   * Gets warmup error for a specific type
+   * @param {string} type - The schema slug (e.g., 'module')
+   * @returns {string|null} Error message or null if no error
+   */
+  getWarmupError = (type) => {
+    return this.warmupErrors[type] || null;
+  };
+
+  /**
+   * Checks if a string matches any UUID format
+   * Supports:
+   * 1. Standard UUID: c903efd8-fa52-486d-b775-96063d93c039
+   * 2. UUID with id- prefix: id-b86c1b61-8db0-11e3-67ab-0050568a6153
+   * 3. Weird format: id-92b166c588a842c480782e483ecd8a3a
+   * @param {string} str - String to check
+   * @returns {boolean} True if string matches a UUID pattern
+   */
+  _isUUID = (str) => {
+    if (typeof str !== 'string' || str.length === 0) {
+      return false;
+    }
+
+    // Standard UUID format: 8-4-4-4-12 hex digits
+    const standardUUIDRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+    // UUID with id- prefix: id-8-4-4-4-12 hex digits
+    const idPrefixedUUIDRegex =
+      /^id-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+    // Weird format: id-32 hex digits (no dashes)
+    const weirdUUIDRegex = /^id-[0-9a-f]{32}$/i;
+
+    return (
+      standardUUIDRegex.test(str) ||
+      idPrefixedUUIDRegex.test(str) ||
+      weirdUUIDRegex.test(str)
+    );
+  };
+
+  /**
+   * Recursively finds all UUID strings in an object/array/value
+   * @param {any} value - Value to scan for UUIDs
+   * @param {Set<string>} uuids - Set to collect UUIDs in
+   */
+  _collectUUIDs = (value, uuids) => {
+    if (value === null || value === undefined) {
+      return;
+    }
+
+    if (typeof value === 'string') {
+      if (this._isUUID(value)) {
+        uuids.add(value);
+      }
+      return;
+    }
+
+    if (Array.isArray(value)) {
+      value.forEach((item) => {
+        if (typeof item === 'string' && this._isUUID(item)) {
+          uuids.add(item);
+        } else {
+          this._collectUUIDs(item, uuids);
+        }
+      });
+      return;
+    }
+
+    if (typeof value === 'object') {
+      Object.entries(value).forEach(([key, val]) => {
+        // Skip certain keys that shouldn't be resolved
+        if (key === '@self' || key === '@id' || key === 'id') {
+          return;
+        }
+
+        if (typeof val === 'string' && this._isUUID(val)) {
+          uuids.add(val);
+        } else {
+          this._collectUUIDs(val, uuids);
+        }
+      });
+    }
+  };
+
+  /**
+   * Recursively replaces UUIDs with resolved names in an object/array/value
+   * @param {any} value - Value to update
+   * @param {Object} resolvedNames - Map of UUID to resolved name
+   * @returns {any} Updated value
+   */
+  _replaceUUIDsWithNames = (value, resolvedNames) => {
+    if (value === null || value === undefined) {
+      return value;
+    }
+
+    if (typeof value === 'string') {
+      if (this._isUUID(value) && resolvedNames[value]) {
+        return resolvedNames[value];
+      }
+      return value;
+    }
+
+    if (Array.isArray(value)) {
+      return value.map((item) => this._replaceUUIDsWithNames(item, resolvedNames));
+    }
+
+    if (typeof value === 'object') {
+      const updated = { ...value };
+      Object.entries(updated).forEach(([key, val]) => {
+        // Skip certain keys that shouldn't be resolved
+        if (key === '@self' || key === '@id' || key === 'id') {
+          return;
+        }
+
+        if (typeof val === 'string' && this._isUUID(val) && resolvedNames[val]) {
+          updated[key] = resolvedNames[val];
+        } else {
+          updated[key] = this._replaceUUIDsWithNames(val, resolvedNames);
+        }
+      });
+      return updated;
+    }
+
+    return value;
+  };
+
+  /**
+   * Resolves UUID strings in a collection using the name cache system
+   * Checks all string fields for UUID patterns and resolves them to names
+   * @param {string} register - The register slug (e.g., 'voorzieningen')
+   * @param {string} schemaSlug - The schema slug (e.g., 'module')
+   */
+  @action
+  resolveRefsInCollection = async (register, schemaSlug) => {
+    const collectionType = this.getTypeFromParams(register, schemaSlug);
+    const collection = this.getCollection(collectionType);
+
+    if (!collection || !collection.results || collection.results.length === 0) {
+      return;
+    }
+
+    // Collect all UUIDs that need resolution
+    const uuidsToResolve = new Set();
+
+    // Scan all objects for UUIDs
+    collection.results.forEach((obj) => {
+      this._collectUUIDs(obj, uuidsToResolve);
+    });
+
+    if (uuidsToResolve.size === 0) {
+      return;
+    }
+
+    // Resolve all UUIDs in batch
+    const uuidArray = Array.from(uuidsToResolve);
+    const resolvedNames = await this.getNamesForMultipleIds(uuidArray);
+
+    // Update objects in store with resolved names
+    runInAction(() => {
+      const updatedResults = collection.results.map((obj) => {
+        return this._replaceUUIDsWithNames(obj, resolvedNames);
+      });
+
+      // Update the collection in store - ensure it's observable
+      if (!this.collections[collectionType]) {
+        this.collections[collectionType] = observable({
+          results: observable([]),
+        });
+      }
+      // Replace the array contents
+      this.collections[collectionType].results.replace(updatedResults);
+
+      this.COLLECTION_CHANGE_KEY = Symbol('collectionChangeKey');
+    });
+  };
+
+  /**
+   * Waits for names cache warmup to complete
+   * If warmup is in progress, waits for it. If not started, triggers it.
+   * @returns {Promise<void>}
+   */
+  waitForNamesCacheWarmup = async () => {
+    const warmupType = 'names_warmup';
+
+    // Check if warmup is already in progress
+    if (this.isLoading(warmupType)) {
+      console.info('Names cache warmup in progress, waiting...');
+      // Poll until warmup completes, max 30 seconds
+      let c = 0;
+      while (this.isLoading(warmupType)) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        c++;
+        if (c >= 300) {
+          console.warn(
+            'Names cache warmup timed out (30 seconds), continuing anyway'
+          );
+          break;
+        }
+      }
+      console.info('Names cache warmup completed');
+      return;
+    }
+
+    // Check if names cache has data (warmup might have completed already)
+    const cacheStats = this.getNamesStats();
+    if (cacheStats.totalNames > 0) {
+      console.info(
+        `Names cache already has ${cacheStats.totalNames} names, skipping warmup`
+      );
+      return;
+    }
+
+    // Trigger warmup if not started
+    console.info('Starting names cache warmup...');
+    try {
+      await this.warmupNamesCache();
+      console.info('Names cache warmup completed successfully');
+    } catch (error) {
+      console.warn('Names cache warmup failed, continuing anyway:', error);
+      // Continue even if warmup fails - getNamesForMultipleIds will fallback to backend
+    }
+  };
+
+  /**
+   * Warms up beheer data by pre-fetching all object types and their schemas
+   * Only fetches types that don't already have data in the store
+   */
+  @action
+  warmupBeheerData = async () => {
+    try {
+      // Fetch registers first to populate registerCache
+      // This ensures ConRegisterResolver works correctly
+      await this.fetchRegisters();
+
+      // Get types from menu
+      const types = await this.extractBeheerTypesFromMenu();
+
+      if (types.length === 0) {
+        console.warn('No beheer types found in menu');
+        return;
+      }
+
+      const register = 'voorzieningen'; // Standard register for beheer objects
+
+      // Identify types that need warmup and set their state
+      const typesToWarmup = [];
+      for (const schemaSlug of types) {
+        const collectionType = this.getTypeFromParams(register, schemaSlug);
+        const collection = this.getCollection(collectionType);
+
+        // Check if collection exists and has data
+        const needsWarmup =
+          !collection || !collection.results || collection.results.length === 0;
+
+        if (!needsWarmup) {
+          console.info(`Skipping warmup for ${schemaSlug} - data already exists`);
+          continue;
+        }
+
+        // Set warmup in progress
+        runInAction(() => {
+          this.warmupInProgress[schemaSlug] = true;
+          this.warmupErrors[schemaSlug] = null;
+        });
+
+        typesToWarmup.push(schemaSlug);
+      }
+
+      // Fetch schemas and collections in parallel
+      const warmupPromises = typesToWarmup.map(async (schemaSlug) => {
+        try {
+          // Fetch schema if not already cached
+          const schemaType = this.getSchemaType(schemaSlug);
+          const existingSchema = this.getSchema(schemaType);
+          if (!existingSchema) {
+            await this.fetchSchema(schemaSlug);
+          }
+
+          // Fetch objects with limit 10000 and _published: false
+          await this.fetchCollection(register, schemaSlug, {
+            _limit: 10000,
+            _published: 'false',
+          });
+        } catch (error) {
+          console.error(`Error fetching data for ${schemaSlug}:`, error);
+          const errorMessage =
+            AcFormatErrorMessage(error) || error.message || 'Unknown error';
+          runInAction(() => {
+            this.warmupErrors[schemaSlug] = errorMessage;
+            this.warmupInProgress[schemaSlug] = false;
+          });
+          throw error;
+        }
+      });
+
+      // Wait for all parallel fetches to complete
+      await Promise.allSettled(warmupPromises);
+
+      // Wait for names cache warmup to complete before resolving refs
+      await this.waitForNamesCacheWarmup();
+
+      // Now resolve $ref properties for all types that were fetched
+      for (const schemaSlug of typesToWarmup) {
+        // Skip if warmup failed for this type
+        if (this.warmupErrors[schemaSlug]) {
+          continue;
+        }
+
+        const collectionType = this.getTypeFromParams(register, schemaSlug);
+        const collection = this.getCollection(collectionType);
+
+        // Check if fetch returned data
+        if (collection?.results?.length > 0) {
+          try {
+            // Resolve $ref properties using name cache
+            await this.resolveRefsInCollection(register, schemaSlug);
+
+            // Mark as completed
+            runInAction(() => {
+              this.warmupCompleted[schemaSlug] = true;
+              this.warmupInProgress[schemaSlug] = false;
+              this.warmupErrors[schemaSlug] = null;
+            });
+
+            console.info(`Warmup completed for ${schemaSlug}`);
+          } catch (error) {
+            console.error(`Error resolving refs for ${schemaSlug}:`, error);
+            const errorMessage =
+              AcFormatErrorMessage(error) || error.message || 'Unknown error';
+            runInAction(() => {
+              this.warmupErrors[schemaSlug] = errorMessage;
+              this.warmupInProgress[schemaSlug] = false;
+            });
+          }
+        } else {
+          // Collection fetched but has no data - mark as completed anyway
+          runInAction(() => {
+            this.warmupCompleted[schemaSlug] = true;
+            this.warmupInProgress[schemaSlug] = false;
+            this.warmupErrors[schemaSlug] = null;
+          });
+
+          console.info(`Warmup completed for ${schemaSlug} (no data)`);
+        }
+      }
+
+      // Mark types that were skipped (already had data) as completed
+      for (const schemaSlug of types) {
+        const collectionType = this.getTypeFromParams(register, schemaSlug);
+        const collection = this.getCollection(collectionType);
+        const hasData =
+          collection && collection.results && collection.results.length > 0;
+        const wasSkipped =
+          hasData &&
+          !this.warmupInProgress[schemaSlug] &&
+          !this.warmupCompleted[schemaSlug];
+
+        if (wasSkipped) {
+          runInAction(() => {
+            this.warmupCompleted[schemaSlug] = true;
+            this.warmupInProgress[schemaSlug] = false;
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error in warmupBeheerData:', error);
+      AcFormatErrorMessage(error);
+    }
+  };
+
+  /**
+   * Refreshes warmup data for a single specific type.
+   * This bypasses the security check that prevents warmup from running multiple times.
+   * Useful for manual refresh operations.
+   * @param {string} schemaSlug - The schema slug to refresh (e.g., 'module')
+   * @param {string} register - Optional register slug (defaults to 'voorzieningen')
+   */
+  @action
+  refreshWarmupDataForType = async (schemaSlug, register = 'voorzieningen') => {
+    if (!schemaSlug) {
+      console.error('refreshWarmupDataForType: schemaSlug is required');
+      return;
+    }
+
+    try {
+      const collectionType = this.getTypeFromParams(register, schemaSlug);
+
+      // Reset warmup state for this type to force refresh
+      runInAction(() => {
+        this.warmupInProgress[schemaSlug] = true;
+        this.warmupCompleted[schemaSlug] = false;
+        this.warmupErrors[schemaSlug] = null;
+      });
+
+      try {
+        // Fetch schema if not already cached
+        const schemaType = this.getSchemaType(schemaSlug);
+        const existingSchema = this.getSchema(schemaType);
+        if (!existingSchema) {
+          await this.fetchSchema(schemaSlug);
+        }
+
+        // Fetch objects with limit 10000 and _published: false
+        await this.fetchCollection(register, schemaSlug, {
+          _limit: 10000,
+          _published: 'false',
+        });
+
+        // Wait for names cache warmup to complete before resolving refs
+        await this.waitForNamesCacheWarmup();
+
+        // Resolve $ref properties using name cache
+        const collection = this.getCollection(collectionType);
+        if (collection && collection.results && collection.results.length > 0) {
+          await this.resolveRefsInCollection(register, schemaSlug);
+
+          // Mark as completed
+          runInAction(() => {
+            this.warmupCompleted[schemaSlug] = true;
+            this.warmupInProgress[schemaSlug] = false;
+            this.warmupErrors[schemaSlug] = null;
+          });
+
+          console.info(`Warmup refresh completed for ${schemaSlug}`);
+        } else {
+          // No data fetched, but mark as completed anyway
+          runInAction(() => {
+            this.warmupCompleted[schemaSlug] = true;
+            this.warmupInProgress[schemaSlug] = false;
+          });
+        }
+      } catch (error) {
+        console.error(`Error refreshing warmup data for ${schemaSlug}:`, error);
+        const errorMessage =
+          AcFormatErrorMessage(error) || error.message || 'Unknown error';
+        runInAction(() => {
+          this.warmupErrors[schemaSlug] = errorMessage;
+          this.warmupInProgress[schemaSlug] = false;
+        });
+        throw error;
+      }
+    } catch (error) {
+      console.error(`Error in refreshWarmupDataForType for ${schemaSlug}:`, error);
+      AcFormatErrorMessage(error);
+      throw error;
+    }
+  };
+
+  /**
+   * Extracts beheer object types from the menu API.
+   * Fetches menu list, finds menu with position 7, extracts items,
+   * filters beheer links, and normalizes them to schema slugs.
+   * @returns {Promise<string[]>} Array of normalized schema type slugs
+   */
+  @action
+  extractBeheerTypesFromMenu = async () => {
+    /**
+     * Links that should be excluded from beheer type extraction
+     * These are non-object-type pages like dashboard, account settings, etc.
+     */
+    const ExcludedBeheerLinks = [
+      '/beheer',
+      '/beheer/my-account',
+      '/beheer/my-organisation',
+    ];
+
+    try {
+      // Fetch menu list via MenuAPI
+      const menuList = await app.store.api.menu.list();
+
+      // Find menu with position: 7
+      const beheerMenu = Array.isArray(menuList.results)
+        ? menuList.results.find((menu) => menu.position === 7)
+        : Array.isArray(menuList)
+        ? menuList.find((menu) => menu.position === 7)
+        : null;
+
+      if (!beheerMenu || !beheerMenu.items || !Array.isArray(beheerMenu.items)) {
+        console.warn('Beheer menu (position 7) not found or has no items');
+        return [];
+      }
+
+      // Extract and normalize types from menu items
+      const types = new Set();
+
+      for (const item of beheerMenu.items) {
+        if (!item.link || typeof item.link !== 'string') {
+          continue;
+        }
+
+        const link = item.link.trim();
+
+        // Filter out non-beheer links (must start with /beheer/)
+        if (!link.startsWith('/beheer/')) {
+          continue;
+        }
+
+        // Filter out excluded links
+        if (ExcludedBeheerLinks.includes(link)) {
+          continue;
+        }
+
+        // Extract slug from link (e.g., "/beheer/applicaties" => "applicaties")
+        const slug = link.replace(/^\/beheer\//, '').split('/')[0];
+
+        if (!slug) {
+          continue;
+        }
+
+        // Normalize slug to schema name (e.g., "applicaties" => "module")
+        const schemaSlug = normalizeLinkToSchemaSlug(slug);
+
+        // Skip if normalization returned empty
+        if (!schemaSlug) {
+          continue;
+        }
+
+        // Use normalized schema slug (normalizeLinkToSchemaSlug returns original if no mapping found)
+        const finalSchemaSlug = schemaSlug;
+
+        // Avoid duplicates
+        if (!types.has(finalSchemaSlug)) {
+          types.add(finalSchemaSlug);
+        }
+      }
+
+      return [...types];
+    } catch (error) {
+      console.error('Error extracting beheer types from menu:', error);
+      AcFormatErrorMessage(error);
+      return [];
+    }
   };
 }
 

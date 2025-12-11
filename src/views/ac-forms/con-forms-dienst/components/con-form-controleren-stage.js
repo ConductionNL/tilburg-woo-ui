@@ -22,33 +22,12 @@ import rehypeSanitize from 'rehype-sanitize';
 const ConFormControlerenStage = memo(
   ({
     dienst,
-    // Product-related props commented out
-    // selectedProductIds,
-    // productOptions,
     selectedModuleIds,
     moduleOptionsByProduct,
-    // productLabels,
-    // Legacy koppelingen props (commented out)
-    // selectedKoppelingIds,
-    // koppelingOptions,
     formType,
     aanbiederKeuze,
     aanbiederOrganisatie,
   }) => {
-    // Product helper commented out
-    // // Helper to get product information with additional details
-    // const getProductsWithDetails = () => {
-    //   return (selectedProductIds || []).map((id) => {
-    //     const option = (productOptions || []).find((o) => o.value === id);
-    //     const label = productLabels?.[id] || option?.label || id;
-    //     return {
-    //       id,
-    //       label,
-    //       data: option?.data || null,
-    //     };
-    //   });
-    // };
-
     // Helper to get module information with additional details
     const getModulesWithDetails = () => {
       return (selectedModuleIds || []).map((id) => {
@@ -65,11 +44,6 @@ const ConFormControlerenStage = memo(
 
     // const productsWithDetails = getProductsWithDetails();
     const modulesWithDetails = getModulesWithDetails();
-
-    // Legacy koppelingen logic (commented out)
-    // const koppelingLabels = (selectedKoppelingIds || [])
-    //   .map((id) => (koppelingOptions || []).find((o) => o.value === id)?.label || id)
-    //   .filter(Boolean);
 
     return (
       <div>
@@ -217,65 +191,6 @@ const ConFormControlerenStage = memo(
             )}
           </div>
         </div>
-
-        {/* Producten section commented out */}
-        {/* 
-        <h3 className='con-form-wizard-review-heading-header'>Producten</h3>
-        <div className='ac-register-review'>
-          <div className='ac-register-review__section'>
-            {productsWithDetails.length > 0 ? (
-              <div className='ac-register-review__field'>
-                <UnorderedList>
-                  {productsWithDetails.map((product, i) => (
-                    <UnorderedListItem key={`prod-${product.id}-${i}`}>
-                      <div>
-                        <strong>
-                          <ConUuidResolver>{product.label}</ConUuidResolver>
-                        </strong>
-                        {product.data?.website && (
-                          <div
-                            style={{
-                              fontSize: '0.875rem',
-                              color: '#666',
-                              marginTop: '0.25rem',
-                            }}
-                          >
-                            Website:{' '}
-                            <AcLink
-                              href={product.data.website}
-                              target='_blank'
-                              rel='noopener noreferrer'
-                            >
-                              {product.data.website}
-                            </AcLink>
-                          </div>
-                        )}
-                        {product.data?.beschrijvingKort && (
-                          <div
-                            style={{
-                              fontSize: '0.875rem',
-                              color: '#666',
-                              marginTop: '0.25rem',
-                            }}
-                          >
-                            {product.data.beschrijvingKort}
-                          </div>
-                        )}
-                      </div>
-                    </UnorderedListItem>
-                  ))}
-                </UnorderedList>
-              </div>
-            ) : (
-              <div className='ac-register-review__field'>
-                <Paragraph style={{ fontStyle: 'italic', color: '#666' }}>
-                  Geen producten geselecteerd
-                </Paragraph>
-              </div>
-            )}
-          </div>
-        </div>
-        */}
 
         <div className='con-form-wizard-review-heading-container'>
           <h3 className='con-form-wizard-review-heading-header'>Applicaties</h3>
@@ -457,26 +372,6 @@ const ConFormControlerenStage = memo(
             </div>
           </div>
         )}
-
-        {/* Legacy Koppelingen section (commented out) */}
-        {/* 
-        <h3 className='con-form-wizard-review-heading-header'>Koppelingen</h3>
-        <div className='ac-register-review'>
-          <div className='ac-register-review__section'>
-            <div className='ac-register-review__field'>
-              <UnorderedList>
-                {(koppelingLabels.length ? koppelingLabels : ['-']).map(
-                  (label, i) => (
-                    <UnorderedListItem key={`kp-${i}`}>
-                      <ConUuidResolver>{label}</ConUuidResolver>
-                    </UnorderedListItem>
-                  )
-                )}
-              </UnorderedList>
-            </div>
-          </div>
-        </div>
-        */}
       </div>
     );
   }

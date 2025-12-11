@@ -112,7 +112,7 @@ const AcMyAccount = ({ store }) => {
       try {
         // Fetch the full organization data using the object store
         await object.fetchObject('voorzieningen', 'organisatie', organisationId, {
-          _extend: ['@self.schema', 'contactpersonen'],
+          '_extend[]': ['@self.schema', 'contactpersonen'],
           _related: true,
           _relatedNames: true,
         });
