@@ -117,9 +117,9 @@ const ConFormApplicatieVersieStage = memo(
           Laat weten welke versies er zijn
         </h2>
         <Paragraph className='con-form-wizard-paragraph'>
-          Versie-informatie laat zien hoe actueel is. Gemeenten gebruiken deze
-          informatie planning en impactanalyses. Vermeld het en de status. uw
-          applicatie voor beheer, versienummer.
+          Versie-informatie laat zien hoe actueel uw applicatie is. Gemeenten
+          gebruiken deze informatie voor beheer, planning en impactanalyses. Vermeld
+          het versienummer en de status.
         </Paragraph>
 
         {/* Closeable info alert about updating versie details later */}
