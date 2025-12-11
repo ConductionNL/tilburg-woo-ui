@@ -267,6 +267,10 @@ export class AuthStore {
       this.clearAuthentication();
 
       resolve();
+
+      // clear collections on logout for cleanup
+      // also allows the user to re-fetch the data again on login
+      app.store.object.clearCollections();
     });
   };
 
