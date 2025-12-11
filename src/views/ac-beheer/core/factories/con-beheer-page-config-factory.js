@@ -182,11 +182,12 @@ const BeheerPageConfigFactory = {
         };
 
       case 'diensten':
+      case 'dienst':
         return {
           ...baseConfig,
-          schemaSlug: 'voorzieningaanbod',
+          schemaSlug: 'dienst',
           paginationKey: 'diensten',
-          title: 'Beheer Dienst',
+          title: 'Diensten',
           routeType: 'diensten',
           defaultHeaders: ['name', 'voorzieningName', 'email'],
           customHeaders: {
