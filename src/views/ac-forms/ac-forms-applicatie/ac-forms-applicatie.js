@@ -1097,7 +1097,12 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
             item?.label ||
             `Facility ${index + 1}`;
           const value = item?.value || item?.id || item?.slug || label;
-          return { value: String(value), label: String(label), data: item, type: 'buitengemeentelijke' };
+          return {
+            value: String(value),
+            label: String(label),
+            data: item,
+            type: 'buitengemeentelijke',
+          };
         })
         .filter((o) => o.label && o.value);
 
@@ -1135,10 +1140,28 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       const nextDirectionByRow = {};
       const nextTypeByRow = {};
       const nextKoppelingIdByRow = {};
+      const updatedKoppelingen = [];
 
       koppelingen.forEach((kpl) => {
         const rowId = rowCounter++;
         nextRows.push(rowId);
+
+        // Use existing _localId if present, otherwise generate one
+        const localId =
+          kpl && kpl._localId
+            ? kpl._localId
+            : kpl?.id
+            ? `existing_${kpl.id}`
+            : `kpl_${Date.now().toString(36)}_${Math.random()
+                .toString(36)
+                .slice(2, 8)}`;
+        nextKoppelingIdByRow[rowId] = localId;
+
+        // Ensure the koppeling has _localId set for proper data retrieval
+        updatedKoppelingen.push({
+          ...kpl,
+          _localId: localId,
+        });
 
         // Try to prefill Applicatie B by id when present in API data
         const moduleBId = (() => {
@@ -1169,20 +1192,12 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         if (kpl && kpl.soortKoppeling) {
           nextTypeByRow[rowId] = kpl.soortKoppeling;
         }
-
-        // Use existing _localId if present, otherwise generate one
-        const localId =
-          kpl && kpl._localId
-            ? kpl._localId
-            : kpl?.id
-            ? `existing_${kpl.id}`
-            : `kpl_${Date.now().toString(36)}_${Math.random()
-                .toString(36)
-                .slice(2, 8)}`;
-        nextKoppelingIdByRow[rowId] = localId;
       });
 
       if (nextRows.length > 0) {
+        // Update applicatie.koppelingen to ensure all have _localId
+        setApplicatieData('koppelingen', updatedKoppelingen);
+
         setKoppelingenFormState((prev) => ({
           ...prev,
           rows: nextRows,
@@ -1654,6 +1669,8 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
             koppelingenFormState={koppelingenFormState}
             setKoppelingenFormState={setKoppelingenFormState}
             searchModules={searchModules}
+            standaardenOptions={standaardenOptions}
+            standaardenOptionsLoading={standaardenOptionsLoading}
           />
         );
       case 7: // Was case 8 (Controleren) - renumbered due to Diensten being disabled
