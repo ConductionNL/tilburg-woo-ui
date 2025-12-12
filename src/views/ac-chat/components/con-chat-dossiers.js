@@ -33,7 +33,7 @@ const ConChatDossiers = observer(({ store }) => {
             <p>Laden...</p>
           ) : dossiers.length === 0 ? (
             <div className='con-chat-dossiers-empty'>
-              <VISUALS.FOLDER style={{ width: '32px', height: '32px', opacity: 0.3 }} />
+              <VISUALS.DOCUMENT style={{ width: '32px', height: '32px', opacity: 0.3 }} />
               <p>Geen dossiers beschikbaar</p>
             </div>
           ) : (
@@ -41,7 +41,7 @@ const ConChatDossiers = observer(({ store }) => {
               {dossiers.map((dossier) => (
                 <li key={dossier.id} className='con-chat-dossier-item'>
                   <AcFlex alignItems='center' spacing='sm'>
-                    <VISUALS.FOLDER style={{ width: '24px', height: '24px' }} />
+                    <VISUALS.DOCUMENT style={{ width: '24px', height: '24px' }} />
                     <div>
                       <div className='con-chat-dossier-name'>{dossier.name}</div>
                       {dossier.description && (

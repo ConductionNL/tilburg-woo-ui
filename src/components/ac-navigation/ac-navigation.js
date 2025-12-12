@@ -58,12 +58,16 @@ const AcNavigation = ({ store: { menu, user, chat } }) => {
         {isMenuOpen ? LABELS.CLOSE_SINGULAR : LABELS.MENU}
       </button>
       <nav aria-label='Hoofd'>
-        {activeMenu &&
+        {((activeMenu &&
           activeMenu.items &&
           Array.isArray(activeMenu.items) &&
-          activeMenu.items.length > 0 && (
-            <ul>
-              {activeMenu.items.map((menuItem) => (
+          activeMenu.items.length > 0) ||
+          isChatEnabled) && (
+          <ul>
+            {activeMenu &&
+              activeMenu.items &&
+              Array.isArray(activeMenu.items) &&
+              activeMenu.items.map((menuItem) => (
                 <li key={menuItem.name || menuItem.link}>
                   <Link to={menuItem.link}>
                     <Icon icon={menuItem.icon} />
@@ -71,17 +75,17 @@ const AcNavigation = ({ store: { menu, user, chat } }) => {
                   </Link>
                 </li>
               ))}
-              {/* Conditionally render chat button if endpoint is configured */}
-              {isChatEnabled && (
-                <li key='chat'>
-                  <Link to='/chat'>
-                    <VISUALS.CONTACT />
-                    Chat
-                  </Link>
-                </li>
-              )}
-            </ul>
-          )}
+            {/* Conditionally render chat button if endpoint is configured */}
+            {isChatEnabled && (
+              <li key='chat'>
+                <Link to='/chat'>
+                  <VISUALS.CONTACT />
+                  Chat
+                </Link>
+              </li>
+            )}
+          </ul>
+        )}
       </nav>
     </div>
   );

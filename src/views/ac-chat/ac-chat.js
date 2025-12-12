@@ -15,7 +15,16 @@ import { AcContainer, AcCard } from '@atoms';
 import { LABELS } from '@constants';
 import { ConChatSidebar, ConChatArea, ConChatDossiers } from './components';
 
-import { Heading } from '@utrecht/component-library-react/dist/css-module';
+import { Heading, Paragraph } from '@utrecht/component-library-react/dist/css-module';
+
+// Try to import container constants for chat configuration
+let containerConfig;
+try {
+  containerConfig = require('@constants/container.constants');
+} catch (error) {
+  console.warn('Container constants not available for chat view');
+  containerConfig = null;
+}
 
 /**
  * Chat View Component
@@ -53,15 +62,23 @@ const AcChat = ({ store: { chat, user } }) => {
     );
   }
 
+  // Get configurable chat title and description
+  const chatTitle = containerConfig?.getChatTitle 
+    ? containerConfig.getChatTitle() 
+    : 'Chat met Open Registers';
+  const chatDescription = containerConfig?.getChatDescription 
+    ? containerConfig.getChatDescription() 
+    : 'Stel vragen over data en bestanden in open registers en krijg direct antwoord.';
+
   return (
     <>
       <AcContainer spacing='lg'>
-        <AcCard blue padding='md'>
-          <Heading level={1}>Chat met Open Registers</Heading>
-          <p>
-            Stel vragen over data en bestanden in open registers en krijg direct antwoord.
-          </p>
-        </AcCard>
+        <div className='ac-chat-header'>
+          <Heading level={1}>{chatTitle}</Heading>
+          <Paragraph className='ac-chat-header-description'>
+            {chatDescription}
+          </Paragraph>
+        </div>
       </AcContainer>
 
       <AcContainer spacing='sm' margin='xl'>

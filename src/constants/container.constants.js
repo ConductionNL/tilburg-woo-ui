@@ -40,7 +40,9 @@ export const CONTAINER_CONFIG = AcLockObject({
   FOOTER_LOGO_SUBTITLE: 'Één plek voor alle publicaties van Gemeente Tilburg',
   SUPPORT_EMAIL_ADDRESS: 'info@conduction.nl',
   DEFAULT_SEARCH_SCHEMA: '',
-  CHAT_ENDPOINT: '',
+  CHAT_ENDPOINT: 'https://api.example.com/chat',
+  CHAT_TITLE: 'Chat met Open Registers',
+  CHAT_DESCRIPTION: 'Stel vragen over data en bestanden in open registers en krijg direct antwoord.',
   NODE_ENV: 'development',
   BASE_URL_COMMONGROUND: '/api/apps',
   NGINX_ROOT_DIR: '/usr/share/nginx/html',
@@ -107,6 +109,8 @@ export const getSupportEmailAddress = () => CONTAINER_CONFIG.SUPPORT_EMAIL_ADDRE
 export const getDefaultSearchSchema = () => CONTAINER_CONFIG.DEFAULT_SEARCH_SCHEMA;
 // Chat helper functions
 export const getChatEndpoint = () => CONTAINER_CONFIG.CHAT_ENDPOINT;
+export const getChatTitle = () => CONTAINER_CONFIG.CHAT_TITLE;
+export const getChatDescription = () => CONTAINER_CONFIG.CHAT_DESCRIPTION;
 export const isChatEnabled = () => {
   return CONTAINER_CONFIG.CHAT_ENDPOINT && CONTAINER_CONFIG.CHAT_ENDPOINT.trim() !== '';
 };

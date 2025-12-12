@@ -311,6 +311,12 @@ const getEnvConfig = () => {
 
     // Chat Configuration
     CHAT_ENDPOINT: getConfigValue(yamlConfig, 'CHAT_ENDPOINT', ''),
+    CHAT_TITLE: getConfigValue(yamlConfig, 'CHAT_TITLE', 'Chat met Open Registers'),
+    CHAT_DESCRIPTION: getConfigValue(
+      yamlConfig,
+      'CHAT_DESCRIPTION',
+      'Stel vragen over data en bestanden in open registers en krijg direct antwoord.'
+    ),
   };
 
   // Add any extra variables from values.yaml that aren't in the base config
@@ -406,6 +412,8 @@ export const getSupportEmailAddress = () => CONTAINER_CONFIG.SUPPORT_EMAIL_ADDRE
 export const getDefaultSearchSchema = () => CONTAINER_CONFIG.DEFAULT_SEARCH_SCHEMA;
 // Chat helper functions
 export const getChatEndpoint = () => CONTAINER_CONFIG.CHAT_ENDPOINT;
+export const getChatTitle = () => CONTAINER_CONFIG.CHAT_TITLE;
+export const getChatDescription = () => CONTAINER_CONFIG.CHAT_DESCRIPTION;
 export const isChatEnabled = () => {
   return CONTAINER_CONFIG.CHAT_ENDPOINT && CONTAINER_CONFIG.CHAT_ENDPOINT.trim() !== '';
 };

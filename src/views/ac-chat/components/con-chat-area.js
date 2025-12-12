@@ -29,7 +29,7 @@ const formatTime = (timestamp) => {
 };
 
 /**
- * Chat Message Component
+ * Chat Message Component - ChatGPT style
  * 
  * @param {Object} props - Component props
  * @param {Object} props.message - Message object
@@ -40,17 +40,37 @@ const ChatMessage = ({ message }) => {
 
   return (
     <div className={`con-chat-message ${isUser ? 'user' : 'assistant'}`}>
-      <div className='con-chat-message-header'>
-        <span className='con-chat-message-sender'>
-          {isUser ? 'U' : 'Assistent'}
-        </span>
-        <span className='con-chat-message-time'>
-          {formatTime(message.timestamp)}
-        </span>
-      </div>
-      <div className='con-chat-message-content'>
-        {message.content}
-      </div>
+      {isUser ? (
+        // User message: light gray bubble on right
+        <>
+          <span className='con-chat-message-sender'>
+            U
+          </span>
+          <div className='con-chat-message-bubble'>
+            <div className='con-chat-message-content'>
+              {message.content}
+            </div>
+          </div>
+          <span className='con-chat-message-time'>
+            {formatTime(message.timestamp)}
+          </span>
+        </>
+      ) : (
+        // Assistant message: plain text on left
+        <>
+          <div className='con-chat-message-sender'>
+            Assistent
+          </div>
+          <div className='con-chat-message-bubble'>
+            <div className='con-chat-message-content'>
+              {message.content}
+            </div>
+          </div>
+          <span className='con-chat-message-time'>
+            {formatTime(message.timestamp)}
+          </span>
+        </>
+      )}
     </div>
   );
 };
@@ -143,7 +163,7 @@ const ConChatArea = observer(({ store }) => {
         <div className='con-chat-messages-container'>
           {messages.length === 0 ? (
             <div className='con-chat-empty-state'>
-              <VISUALS.CHAT style={{ width: '64px', height: '64px', opacity: 0.3 }} />
+              <VISUALS.CONTACT style={{ width: '64px', height: '64px', opacity: 0.3 }} />
               <p>
                 Nog geen berichten in deze conversatie.
                 <br />
@@ -160,9 +180,9 @@ const ConChatArea = observer(({ store }) => {
           )}
         </div>
 
-        {/* Input area */}
+        {/* ChatGPT-style input area */}
         <div className='con-chat-input-container'>
-          <AcFlex spacing='sm' alignItems='end'>
+          <div className='con-chat-input-wrapper'>
             <div className='con-chat-textarea-wrapper'>
               <Textarea
                 ref={textareaRef}
@@ -174,27 +194,19 @@ const ConChatArea = observer(({ store }) => {
                 rows={1}
                 className='con-chat-textarea'
               />
+              <button
+                onClick={handleSendMessage}
+                disabled={!inputMessage.trim() || isSendingMessage}
+                aria-label='Verstuur bericht'
+                className='con-chat-send-button'
+              >
+                <VISUALS.PAPER_PLANE />
+              </button>
             </div>
-            <Button
-              appearance='primary-action-button'
-              onClick={handleSendMessage}
-              disabled={!inputMessage.trim() || isSendingMessage}
-              aria-label='Verstuur bericht'
-              className='con-chat-send-button'
-            >
-              {isSendingMessage ? (
-                <span>Verzenden...</span>
-              ) : (
-                <AcFlex alignItems='center' spacing='xs'>
-                  <VISUALS.SEND style={{ width: '20px', height: '20px' }} />
-                  <span>Verstuur</span>
-                </AcFlex>
-              )}
-            </Button>
-          </AcFlex>
-          <p className='con-chat-input-hint'>
-            Druk op Enter om te verzenden, Shift+Enter voor een nieuwe regel
-          </p>
+            <p className='con-chat-input-hint'>
+              Druk op Enter om te verzenden, Shift+Enter voor een nieuwe regel
+            </p>
+          </div>
         </div>
       </AcFlex>
     </AcCard>

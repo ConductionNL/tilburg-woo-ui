@@ -83,7 +83,7 @@ const ConChatSidebar = observer(({ store }) => {
             aria-label='Nieuwe conversatie starten'
           >
             <AcFlex alignItems='center' spacing='xs'>
-              <VISUALS.ADD_CIRCLE style={{ width: '20px', height: '20px' }} />
+              <VISUALS.PLUS style={{ width: '20px', height: '20px' }} />
               <span>Nieuw</span>
             </AcFlex>
           </Button>
@@ -130,7 +130,7 @@ const ConChatSidebar = observer(({ store }) => {
                     aria-label={`Verwijder conversatie ${conversation.title}`}
                     title='Verwijder conversatie'
                   >
-                    <VISUALS.DELETE style={{ width: '18px', height: '18px' }} />
+                    <VISUALS.TRASHCAN style={{ width: '18px', height: '18px' }} />
                   </button>
                 </li>
               ))}
