@@ -71,13 +71,6 @@ const App = ({ store }) => {
     store.object.warmupNamesCache().catch((error) => {
       console.warn('⚠️ Names cache warmup failed during app initialization:', error);
     });
-    // Warm up register cache in background for better UX
-    store.object.warmupRegisterCache().catch((error) => {
-      console.warn(
-        '⚠️ Register cache warmup failed during app initialization:',
-        error
-      );
-    });
   }, []);
 
   // Warm up schema cache only when user is authenticated AND on public pages
@@ -93,6 +86,14 @@ const App = ({ store }) => {
       store.object.warmupSchemaCache().catch((error) => {
         console.warn(
           '⚠️ Schema cache warmup failed during app initialization:',
+          error
+        );
+      });
+
+      // Warm up register cache in background for better UX
+      store.object.warmupRegisterCache().catch((error) => {
+        console.warn(
+          '⚠️ Register cache warmup failed during app initialization:',
           error
         );
       });
