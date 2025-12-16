@@ -1,7 +1,8 @@
 import React, { memo } from 'react';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
-import { AcCheckbox } from '@src/molecules';
+import { AcCheckbox, AcButton } from '@src/molecules';
 import AcLoader from '@components/ac-loader/ac-loader';
+import { AcFlex } from '@src/atoms';
 
 /**
  * Deelnemers Stage Component for Gebruik Form
@@ -44,6 +45,17 @@ const ConGebruikStepDeelnemers = memo(
       }
     };
 
+    // Handle selecting all deelnemers
+    const handleSelectAll = () => {
+      const allValues = deelnemerOptions.map((option) => option.value);
+      setGebruikData('deelnemers', allValues);
+    };
+
+    // Handle deselecting all deelnemers
+    const handleDeselectAll = () => {
+      setGebruikData('deelnemers', []);
+    };
+
     return (
       <div
         className='ac-register-form-section'
@@ -60,6 +72,32 @@ const ConGebruikStepDeelnemers = memo(
           Selecteer de organisaties die deelnemen aan dit gebruik binnen uw
           samenwerkingsverband of community.
         </Paragraph>
+
+        {deelnemerOptions.length > 0 && (
+          <AcFlex
+            spacing='xs'
+            style={{
+              marginBottom: '1rem',
+            }}
+          >
+            <AcButton
+              style='button'
+              buttonType='secondary'
+              onClick={handleSelectAll}
+              disabled={loading || deelnemersLoading}
+            >
+              Selecteer alle
+            </AcButton>
+            <AcButton
+              style='button'
+              buttonType='secondary'
+              onClick={handleDeselectAll}
+              disabled={loading || deelnemersLoading}
+            >
+              Deselecteer alle
+            </AcButton>
+          </AcFlex>
+        )}
 
         <div className='ac-register-form-grid'>
           <div style={{ gridColumn: 'span 2' }}>
