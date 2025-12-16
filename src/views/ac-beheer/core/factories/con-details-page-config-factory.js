@@ -96,6 +96,7 @@ const DetailsPageConfigFactory = {
       case 'dienst':
         return {
           ...baseDetailsConfig,
+          extend: [...detailsExtend, 'contactpersoon'],
           excludedProperties: [
             'id',
             'naam',
