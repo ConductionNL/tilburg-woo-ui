@@ -87,7 +87,7 @@ const AcBeheer = ({ store }) => {
   if (type === 'moduleversie' || type === 'applicatieversie') {
     return <ConModuleVersieDetailsPage />;
   }
-  if (type === 'dienst') {
+  if (type === 'dienst' || type === 'diensten') {
     return <ConDienstDetailsPage />;
   }
   if (type === 'gebruik') {
