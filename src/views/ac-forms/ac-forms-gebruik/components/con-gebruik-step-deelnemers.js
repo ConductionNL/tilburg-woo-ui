@@ -1,8 +1,9 @@
 import React, { memo } from 'react';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
-import { AcCheckbox, AcButton } from '@src/molecules';
+import { AcButton } from '@src/molecules';
 import AcLoader from '@components/ac-loader/ac-loader';
 import { AcFlex } from '@src/atoms';
+import ReactSelect from 'react-select';
 
 /**
  * Deelnemers Stage Component for Gebruik Form
@@ -26,23 +27,19 @@ const ConGebruikStepDeelnemers = memo(
     deelnemerOptions = [],
     deelnemersLoading = false,
   }) => {
-    const handleDeelnemerChange = (deelnemerValue, isChecked) => {
-      const currentDeelnemers = Array.isArray(gebruik?.deelnemers)
-        ? gebruik.deelnemers
-        : [];
+    // Get current selected options for ReactSelect
+    const currentSelectedOptions = deelnemerOptions.filter((option) =>
+      Array.isArray(gebruik?.deelnemers)
+        ? gebruik.deelnemers.includes(option.value)
+        : false
+    );
 
-      if (isChecked) {
-        // Add deelnemer if not already present
-        if (!currentDeelnemers.includes(deelnemerValue)) {
-          setGebruikData('deelnemers', [...currentDeelnemers, deelnemerValue]);
-        }
-      } else {
-        // Remove deelnemer
-        setGebruikData(
-          'deelnemers',
-          currentDeelnemers.filter((deelnemer) => deelnemer !== deelnemerValue)
-        );
-      }
+    // Handle multi-select change
+    const handleMultiSelectChange = (selectedOptions) => {
+      const selectedValues = selectedOptions
+        ? selectedOptions.map((option) => option.value)
+        : [];
+      setGebruikData('deelnemers', selectedValues);
     };
 
     // Handle selecting all deelnemers
@@ -108,28 +105,17 @@ const ConGebruikStepDeelnemers = memo(
                 Er zijn geen deelnemers gevonden voor uw organisatie.
               </Paragraph>
             ) : (
-              <div
-                style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}
-              >
-                {deelnemerOptions.map((option) => {
-                  const isChecked = Array.isArray(gebruik?.deelnemers)
-                    ? gebruik.deelnemers.includes(option.value)
-                    : false;
-
-                  return (
-                    <AcCheckbox
-                      key={option.value}
-                      label={option.label}
-                      value={option.value}
-                      checked={isChecked}
-                      onChange={(checked) =>
-                        handleDeelnemerChange(option.value, checked)
-                      }
-                      disabled={loading}
-                    />
-                  );
-                })}
-              </div>
+              <ReactSelect
+                isMulti
+                className='ac-beheer-select'
+                options={deelnemerOptions}
+                value={currentSelectedOptions}
+                onChange={handleMultiSelectChange}
+                isLoading={deelnemersLoading}
+                isDisabled={loading}
+                closeMenuOnSelect={false}
+                placeholder='Selecteer deelnemers...'
+              />
             )}
           </div>
         </div>
