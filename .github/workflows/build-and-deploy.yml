@@ -5,10 +5,12 @@ on:
     branches:
       - softwarecatalogus
       - development
+      - softwarecatalog-gebruik
   pull_request:
     branches:
       - softwarecatalogus
       - development
+      - softwarecatalog-gebruik
 
 env:
   REGISTRY: ghcr.io
@@ -117,6 +119,7 @@ jobs:
             type=ref,event=pr
             type=sha,prefix=commit-
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/softwarecatalogus' }}
+            type=raw,value=gebruik,enable=${{ github.ref == 'refs/heads/softwarecatalog-gebruik' }}
             type=raw,value=dev,enable=${{ github.ref == 'refs/heads/development' }}
 
       - name: Build and push Docker image
