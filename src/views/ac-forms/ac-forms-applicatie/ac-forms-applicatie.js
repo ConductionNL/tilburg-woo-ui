@@ -297,7 +297,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     selectedAppAByRow: {},
     selectedAppBByRow: {},
     directionByRow: {},
-    typeByRow: {},
     koppelingIdByRow: {},
   });
 
@@ -1138,7 +1137,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       const nextRows = [];
       const nextSelectedAppBByRow = {};
       const nextDirectionByRow = {};
-      const nextTypeByRow = {};
       const nextKoppelingIdByRow = {};
       const updatedKoppelingen = [];
 
@@ -1185,12 +1183,8 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
           nextSelectedAppBByRow[rowId] = moduleBId;
         }
 
-        if (kpl && kpl.richtingDataUitwisseling) {
-          nextDirectionByRow[rowId] = kpl.richtingDataUitwisseling;
-        }
-
-        if (kpl && kpl.soortKoppeling) {
-          nextTypeByRow[rowId] = kpl.soortKoppeling;
+        if (kpl && kpl.gegevensuitwisselingRichting) {
+          nextDirectionByRow[rowId] = kpl.gegevensuitwisselingRichting;
         }
       });
 
@@ -1204,7 +1198,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
           nextRowId: nextRows.length,
           selectedAppBByRow: { ...prev.selectedAppBByRow, ...nextSelectedAppBByRow },
           directionByRow: { ...prev.directionByRow, ...nextDirectionByRow },
-          typeByRow: { ...prev.typeByRow, ...nextTypeByRow },
           koppelingIdByRow: {
             ...prev.koppelingIdByRow,
             ...nextKoppelingIdByRow,
@@ -1669,8 +1662,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
             koppelingenFormState={koppelingenFormState}
             setKoppelingenFormState={setKoppelingenFormState}
             searchModules={searchModules}
-            standaardenOptions={standaardenOptions}
-            standaardenOptionsLoading={standaardenOptionsLoading}
           />
         );
       case 7: // Was case 8 (Controleren) - renumbered due to Diensten being disabled
@@ -1803,6 +1794,18 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       }
     }
 
+    // Koppelingen step: validate that all koppelingen have a naam
+    if (logicalStep === 6) {
+      if (Array.isArray(applicatie.koppelingen)) {
+        const koppelingenWithoutNaam = applicatie.koppelingen.filter(
+          (kp) => !kp.naam || !String(kp.naam).trim()
+        );
+        if (koppelingenWithoutNaam.length > 0) {
+          return true;
+        }
+      }
+    }
+
     return false;
   };
 
@@ -1866,6 +1869,17 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         );
         if (invalidUrl) {
           return 'Een of meer URLs in de compliancy hebben een ongeldig formaat';
+        }
+      }
+    }
+
+    if (logicalStep === 6) {
+      if (Array.isArray(applicatie.koppelingen)) {
+        const koppelingWithoutNaam = applicatie.koppelingen.find(
+          (kp) => !kp.naam || !String(kp.naam).trim()
+        );
+        if (koppelingWithoutNaam) {
+          return 'Vul voor alle koppelingen de naam in';
         }
       }
     }
