@@ -30,6 +30,7 @@ const ConGebruikStepProductApplicatie = ({
   leverancierLoading,
   searchLeveranciers,
   loading,
+  isEditMode = false,
 }) => {
   // Manage visibility state of info alerts for application flows.
   // Alert persists as closed for the session after user closes it (via sessionStorage).
@@ -236,16 +237,18 @@ const ConGebruikStepProductApplicatie = ({
                 }}
               />
 
-              <div style={{ alignSelf: 'end' }}>
-                <AcButton
-                  style='button'
-                  buttonType='secondary'
-                  icon={<VISUALS.BUILDING />}
-                  onClick={() => setLeverancierKeuze('nieuw')}
-                >
-                  Ik kan de gewenste leverancier niet vinden
-                </AcButton>
-              </div>
+              {!isEditMode && (
+                <div style={{ alignSelf: 'end' }}>
+                  <AcButton
+                    style='button'
+                    buttonType='secondary'
+                    icon={<VISUALS.BUILDING />}
+                    onClick={() => setLeverancierKeuze('nieuw')}
+                  >
+                    Ik kan de gewenste leverancier niet vinden
+                  </AcButton>
+                </div>
+              )}
             </>
           )}
 

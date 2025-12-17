@@ -1828,6 +1828,7 @@ const AcFormsGebruik = ({ store }) => {
             leverancierLoading={leverancierLoading}
             searchLeveranciers={debouncedSearchLeveranciers}
             loading={loading}
+            isEditMode={isEditMode}
           />
         );
       case 1:
@@ -2126,7 +2127,8 @@ const AcFormsGebruik = ({ store }) => {
 
                         {/* Show this button when aanBieder step is NOT shown, so that its on the left */}
                         {getLogicalStepFromPhysical(currentStep) === 0 &&
-                          applicatieKeuze === 'bestaand' && (
+                          applicatieKeuze === 'bestaand' &&
+                          !isEditMode && (
                             <AcButton
                               style='button'
                               buttonType='secondary'
