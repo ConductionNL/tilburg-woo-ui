@@ -22,7 +22,7 @@ const ConCardContactpersoon = ({
   navigateTo = 'publication',
 }) => {
   // Use generic UUID resolver for organisation name
-  const resolvedOrganisation = useResolvedText(
+  const { resolvedText: resolvedOrganisation } = useResolvedText(
     typeof organisation === 'object' ? organisation.value : organisation,
     objectStore
   );
