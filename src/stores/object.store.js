@@ -144,6 +144,7 @@ nextcloudApi.interceptors.response.use(
  *
  * #### State Setters
  * - `setCollection(type, results, append)` - Sets collection data
+ * - `clearCollections()` - Clears all collections
  * - `setLoading(type, isLoading)` - Sets loading state for operation-specific tracking
  * - `setError(type, error)` - Sets error state for operation-specific tracking
  * - `setSuccess(type, success)` - Sets success state for operation-specific tracking
@@ -623,6 +624,14 @@ export class ObjectStore {
   @action
   getSchemaPropertiesForType = (type) => {
     return this.schemaProperties[type] || {};
+  };
+
+  /**
+   * Clears all collections
+   */
+  @action
+  clearCollections = () => {
+    this.collections = {};
   };
 
   /**
