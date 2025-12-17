@@ -76,10 +76,12 @@ const ConGebruikStepDeelnemers = memo(
         </h2>
 
         <Paragraph className='con-form-wizard-paragraph'>
-          <strong>Selecteer de deelnemers</strong>
+          Selecteer de deelnemers van de samenwerking, die gebruik maken van deze
+          applicatie.
           <br />
-          Selecteer de organisaties die deelnemen aan dit gebruik binnen uw
-          samenwerkingsverband of community.
+          <br />
+          De applicatie wordt getoond in het applicatielandschap van de geselecteerde
+          deelnemer(s).
         </Paragraph>
 
         {deelnemerOptions.length > 0 && (

@@ -1678,11 +1678,11 @@ const AcFormsGebruik = ({ store }) => {
       case 1:
         return 'Gebruiksinformatie';
       case 2:
-        return 'Referentiecomponenten';
+        return 'Koppel de applicatie aan referentiecomponenten';
       case 3:
         // If Deelnemers step is shown, logical step 3 is Deelnemers
         // Otherwise, logical step 3 is Controleren
-        return needsDeelnemersStep ? 'Deelnemers' : 'Controleren';
+        return needsDeelnemersStep ? 'Deelnemers toevoegen' : 'Controleren';
       case 4:
         return 'Controleren';
       default:
@@ -2000,7 +2000,7 @@ const AcFormsGebruik = ({ store }) => {
                                 currentStep,
                                 getAdjustedStepIndex(1)
                               ),
-                              title: 'Gebruik informatie',
+                              title: 'Gebruikinformatie',
                             },
                             {
                               id: 'referentiecomponenten-substep',
