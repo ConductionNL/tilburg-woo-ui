@@ -4,6 +4,7 @@ import { AcButton } from '@src/molecules';
 import AcLoader from '@components/ac-loader/ac-loader';
 import { AcFlex } from '@src/atoms';
 import ReactSelect from 'react-select';
+import { VISUALS } from '@src/constants';
 
 /**
  * Deelnemers Stage Component for Gebruik Form
@@ -33,6 +34,17 @@ const ConGebruikStepDeelnemers = memo(
         ? gebruik.deelnemers.includes(option.value)
         : false
     );
+
+    // Check if all deelnemers are selected
+    const allSelected =
+      deelnemerOptions.length > 0 &&
+      Array.isArray(gebruik?.deelnemers) &&
+      gebruik.deelnemers.length === deelnemerOptions.length &&
+      deelnemerOptions.every((option) => gebruik.deelnemers.includes(option.value));
+
+    // Check if none are selected
+    const noneSelected =
+      !Array.isArray(gebruik?.deelnemers) || gebruik.deelnemers.length === 0;
 
     // Handle multi-select change
     const handleMultiSelectChange = (selectedOptions) => {
@@ -81,7 +93,8 @@ const ConGebruikStepDeelnemers = memo(
               style='buttonSlim'
               buttonType='secondary'
               onClick={handleSelectAll}
-              disabled={loading || deelnemersLoading}
+              disabled={loading || deelnemersLoading || allSelected}
+              icon={<VISUALS.CHECK style={{ width: '16px', height: '16px' }} />}
             >
               Selecteer alle
             </AcButton>
@@ -89,7 +102,10 @@ const ConGebruikStepDeelnemers = memo(
               style='buttonSlim'
               buttonType='secondary'
               onClick={handleDeselectAll}
-              disabled={loading || deelnemersLoading}
+              disabled={loading || deelnemersLoading || noneSelected}
+              icon={
+                <VISUALS.CIRCLE_XMARK style={{ width: '16px', height: '16px' }} />
+              }
             >
               Deselecteer alle
             </AcButton>
