@@ -14,8 +14,6 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 import ConGebruikStepInformatie from './components/con-gebruik-step-informatie';
 import ConGebruikStepProductApplicatie from './components/con-gebruik-step-product-applicatie';
-import ConGebruikStepVersie from './components/con-gebruik-step-versie';
-import ConGebruikStepVersieCreate from './components/con-gebruik-step-versie-create';
 import ConGebruikStepReferentiecomponenten from './components/con-gebruik-step-referentiecomponenten';
 import ConGebruikStepDeelnemers from './components/con-gebruik-step-deelnemers';
 import ConGebruikStepReview from './components/con-gebruik-step-review';
@@ -50,7 +48,7 @@ const AcFormsGebruik = ({ store }) => {
   const typeFromUrl = searchParams.get('type') || '';
   const applicatieFromUrl = searchParams.get('applicatie') || '';
   const isEditMode = !!gebruikId;
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [prefillLoading, setPrefillLoading] = useState(false);
   const [prefillError, setPrefillError] = useState(null);
@@ -671,7 +669,10 @@ const AcFormsGebruik = ({ store }) => {
             store,
             gebruikSchema,
             'gebruik',
-            { status: 'Verwerving' }
+            {
+              status: 'Verwerving',
+              startDatumVerwerving: new Date().toISOString().split('T')[0],
+            }
           );
           if (!isEditMode) setGebruik((prev) => ({ ...defaultGebruik, ...prev }));
         }
@@ -1658,12 +1659,7 @@ const AcFormsGebruik = ({ store }) => {
   const stepsList = (() => {
     const base = [];
     if (needsAanbiederStep) base.push('Aanbieder');
-    base.push(
-      'Applicatie',
-      'Gebruik informatie',
-      'Applicatie versie',
-      'Referentiecomponenten'
-    );
+    base.push('Applicatie', 'Gebruiksinformatie', 'Referentiecomponenten');
     if (needsDeelnemersStep) base.push('Deelnemers');
     base.push('Controleren');
     return base;
@@ -1681,16 +1677,14 @@ const AcFormsGebruik = ({ store }) => {
           ? 'Toevoegen applicatie'
           : 'Publiceren applicatie';
       case 1:
-        return 'Gebruik informatie';
+        return 'Gebruiksinformatie';
       case 2:
-        return 'Versie';
-      case 3:
         return 'Referentiecomponenten';
-      case 4:
-        // If Deelnemers step is shown, logical step 4 is Deelnemers
-        // Otherwise, logical step 4 is Controleren
+      case 3:
+        // If Deelnemers step is shown, logical step 3 is Deelnemers
+        // Otherwise, logical step 3 is Controleren
         return needsDeelnemersStep ? 'Deelnemers' : 'Controleren';
-      case 5:
+      case 4:
         return 'Controleren';
       default:
         return stepsList[step] || '';
@@ -1780,17 +1774,14 @@ const AcFormsGebruik = ({ store }) => {
       return !!gebruik?.status;
     }
     if (logicalStep === 2) {
-      return true; // Versie step
-    }
-    if (logicalStep === 3) {
       return true; // Referentiecomponenten optional
     }
-    if (logicalStep === 4) {
+    if (logicalStep === 3) {
       // If Deelnemers step is shown, this is the Deelnemers step (optional)
       // Otherwise, this is the Controleren step
       return true;
     }
-    if (logicalStep === 5) {
+    if (logicalStep === 4) {
       return true; // Controleren step (when Deelnemers is shown)
     }
     return false;
@@ -1853,31 +1844,13 @@ const AcFormsGebruik = ({ store }) => {
             applicatieKeuze={applicatieKeuze}
             selectedApplicatieData={selectedApplicatieData}
             setNieuweApplicatieData={setNieuweApplicatieData}
+            isEditMode={isEditMode}
+            versionOptions={versionOptions}
+            versionsLoading={versionsLoading}
+            nieuweApplicatie={nieuweApplicatie}
           />
         );
       case 2:
-        // Versie step - show selection for existing, creation for new
-        if (applicatieKeuze === 'bestaand') {
-          return (
-            <ConGebruikStepVersie
-              gebruik={gebruik}
-              setGebruikData={setGebruikData}
-              versionOptions={versionOptions}
-              versionsLoading={versionsLoading}
-              schemas={schemas}
-            />
-          );
-        } else {
-          return (
-            <ConGebruikStepVersieCreate
-              nieuweApplicatie={nieuweApplicatie}
-              setNieuweApplicatieData={setNieuweApplicatieData}
-              loading={loading}
-              schemas={schemas}
-            />
-          );
-        }
-      case 3:
         return (
           <ConGebruikStepReferentiecomponenten
             gebruik={gebruik}
@@ -1890,7 +1863,7 @@ const AcFormsGebruik = ({ store }) => {
             selectedApplicatieData={selectedApplicatieData}
           />
         );
-      case 4:
+      case 3:
         // If Deelnemers step is shown, render it; otherwise fall through to review
         if (needsDeelnemersStep) {
           return (
@@ -1924,7 +1897,7 @@ const AcFormsGebruik = ({ store }) => {
             deelnemerOptions={deelnemerOptions}
           />
         );
-      case 5:
+      case 4:
       default:
         return (
           <ConGebruikStepReview
@@ -2204,7 +2177,7 @@ const AcFormsGebruik = ({ store }) => {
                         )}
                       >
                         {(() => {
-                          const finalLogicalStep = needsDeelnemersStep ? 5 : 4;
+                          const finalLogicalStep = needsDeelnemersStep ? 4 : 3;
                           return (
                             getLogicalStepFromPhysical(currentStep) !==
                               finalLogicalStep && (
@@ -2229,7 +2202,7 @@ const AcFormsGebruik = ({ store }) => {
                       </AcFlex>
 
                       {(() => {
-                        const finalLogicalStep = needsDeelnemersStep ? 5 : 4;
+                        const finalLogicalStep = needsDeelnemersStep ? 4 : 3;
                         return (
                           getLogicalStepFromPhysical(currentStep) ===
                             finalLogicalStep && (
@@ -2392,7 +2365,7 @@ const AcFormsGebruik = ({ store }) => {
                       deelnemers: [],
                       koppelingen: [],
                       diensten: [],
-                      startDatumVerwerving: '',
+                      startDatumVerwerving: new Date().toISOString().split('T')[0],
                       startDatumGepland: '',
                       startDatumInProductie: '',
                       startDatumUitTeFaseren: '',
