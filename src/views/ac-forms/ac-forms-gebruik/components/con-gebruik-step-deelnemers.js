@@ -78,7 +78,7 @@ const ConGebruikStepDeelnemers = memo(
             }}
           >
             <AcButton
-              style='button'
+              style='buttonSlim'
               buttonType='secondary'
               onClick={handleSelectAll}
               disabled={loading || deelnemersLoading}
@@ -86,7 +86,7 @@ const ConGebruikStepDeelnemers = memo(
               Selecteer alle
             </AcButton>
             <AcButton
-              style='button'
+              style='buttonSlim'
               buttonType='secondary'
               onClick={handleDeselectAll}
               disabled={loading || deelnemersLoading}
