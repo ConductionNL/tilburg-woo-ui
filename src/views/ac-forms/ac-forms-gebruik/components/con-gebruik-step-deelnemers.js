@@ -1,7 +1,10 @@
 import React, { memo } from 'react';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
-import { AcCheckbox } from '@src/molecules';
+import { AcButton } from '@src/molecules';
 import AcLoader from '@components/ac-loader/ac-loader';
+import { AcFlex } from '@src/atoms';
+import ReactSelect from 'react-select';
+import { VISUALS } from '@src/constants';
 
 /**
  * Deelnemers Stage Component for Gebruik Form
@@ -25,23 +28,41 @@ const ConGebruikStepDeelnemers = memo(
     deelnemerOptions = [],
     deelnemersLoading = false,
   }) => {
-    const handleDeelnemerChange = (deelnemerValue, isChecked) => {
-      const currentDeelnemers = Array.isArray(gebruik?.deelnemers)
-        ? gebruik.deelnemers
-        : [];
+    // Get current selected options for ReactSelect
+    const currentSelectedOptions = deelnemerOptions.filter((option) =>
+      Array.isArray(gebruik?.deelnemers)
+        ? gebruik.deelnemers.includes(option.value)
+        : false
+    );
 
-      if (isChecked) {
-        // Add deelnemer if not already present
-        if (!currentDeelnemers.includes(deelnemerValue)) {
-          setGebruikData('deelnemers', [...currentDeelnemers, deelnemerValue]);
-        }
-      } else {
-        // Remove deelnemer
-        setGebruikData(
-          'deelnemers',
-          currentDeelnemers.filter((deelnemer) => deelnemer !== deelnemerValue)
-        );
-      }
+    // Check if all deelnemers are selected
+    const allSelected =
+      deelnemerOptions.length > 0 &&
+      Array.isArray(gebruik?.deelnemers) &&
+      gebruik.deelnemers.length === deelnemerOptions.length &&
+      deelnemerOptions.every((option) => gebruik.deelnemers.includes(option.value));
+
+    // Check if none are selected
+    const noneSelected =
+      !Array.isArray(gebruik?.deelnemers) || gebruik.deelnemers.length === 0;
+
+    // Handle multi-select change
+    const handleMultiSelectChange = (selectedOptions) => {
+      const selectedValues = selectedOptions
+        ? selectedOptions.map((option) => option.value)
+        : [];
+      setGebruikData('deelnemers', selectedValues);
+    };
+
+    // Handle selecting all deelnemers
+    const handleSelectAll = () => {
+      const allValues = deelnemerOptions.map((option) => option.value);
+      setGebruikData('deelnemers', allValues);
+    };
+
+    // Handle deselecting all deelnemers
+    const handleDeselectAll = () => {
+      setGebruikData('deelnemers', []);
     };
 
     return (
@@ -61,6 +82,36 @@ const ConGebruikStepDeelnemers = memo(
           samenwerkingsverband of community.
         </Paragraph>
 
+        {deelnemerOptions.length > 0 && (
+          <AcFlex
+            spacing='xs'
+            style={{
+              marginBottom: '1rem',
+            }}
+          >
+            <AcButton
+              style='buttonSlim'
+              buttonType='secondary'
+              onClick={handleSelectAll}
+              disabled={loading || deelnemersLoading || allSelected}
+              icon={<VISUALS.CHECK style={{ width: '16px', height: '16px' }} />}
+            >
+              Selecteer alle
+            </AcButton>
+            <AcButton
+              style='buttonSlim'
+              buttonType='secondary'
+              onClick={handleDeselectAll}
+              disabled={loading || deelnemersLoading || noneSelected}
+              icon={
+                <VISUALS.CIRCLE_XMARK style={{ width: '16px', height: '16px' }} />
+              }
+            >
+              Deselecteer alle
+            </AcButton>
+          </AcFlex>
+        )}
+
         <div className='ac-register-form-grid'>
           <div style={{ gridColumn: 'span 2' }}>
             {deelnemersLoading ? (
@@ -70,28 +121,17 @@ const ConGebruikStepDeelnemers = memo(
                 Er zijn geen deelnemers gevonden voor uw organisatie.
               </Paragraph>
             ) : (
-              <div
-                style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}
-              >
-                {deelnemerOptions.map((option) => {
-                  const isChecked = Array.isArray(gebruik?.deelnemers)
-                    ? gebruik.deelnemers.includes(option.value)
-                    : false;
-
-                  return (
-                    <AcCheckbox
-                      key={option.value}
-                      label={option.label}
-                      value={option.value}
-                      checked={isChecked}
-                      onChange={(checked) =>
-                        handleDeelnemerChange(option.value, checked)
-                      }
-                      disabled={loading}
-                    />
-                  );
-                })}
-              </div>
+              <ReactSelect
+                isMulti
+                className='ac-beheer-select'
+                options={deelnemerOptions}
+                value={currentSelectedOptions}
+                onChange={handleMultiSelectChange}
+                isLoading={deelnemersLoading}
+                isDisabled={loading}
+                closeMenuOnSelect={false}
+                placeholder='Selecteer deelnemers...'
+              />
             )}
           </div>
         </div>
