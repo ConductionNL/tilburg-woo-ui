@@ -48,7 +48,7 @@ const AcFormsGebruik = ({ store }) => {
   const typeFromUrl = searchParams.get('type') || '';
   const applicatieFromUrl = searchParams.get('applicatie') || '';
   const isEditMode = !!gebruikId;
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(2);
   const [loading, setLoading] = useState(false);
   const [prefillLoading, setPrefillLoading] = useState(false);
   const [prefillError, setPrefillError] = useState(null);
@@ -345,9 +345,9 @@ const AcFormsGebruik = ({ store }) => {
    * Accounts for the optional Deelnemers step (only shown for Samenwerking/Community)
    * @param {number} logicalStep - The logical step number
    * When Deelnemers is NOT shown:
-   *   Logical steps: -1=Aanbieder (optional), 0=Applicatie, 1=Informatie, 2=Versie, 3=Referentiecomponenten, 4=Controleren
+   *   Logical steps: -1=Aanbieder (optional), 0=Applicatie, 1=Informatie, 2=Referentiecomponenten, 3=Controleren
    * When Deelnemers IS shown:
-   *   Logical steps: -1=Aanbieder (optional), 0=Applicatie, 1=Informatie, 2=Versie, 3=Referentiecomponenten, 4=Deelnemers, 5=Controleren
+   *   Logical steps: -1=Aanbieder (optional), 0=Applicatie, 1=Informatie, 2=Referentiecomponenten, 3=Deelnemers, 4=Controleren
    * @returns {number} The adjusted physical step index
    */
   const getAdjustedStepIndex = useCallback(
@@ -384,7 +384,7 @@ const AcFormsGebruik = ({ store }) => {
       const adjustedStep = needsAanbiederStep ? physicalStep - 1 : physicalStep;
 
       // The logical step is the same as adjusted step
-      // Deelnemers (if shown) is logical step 4, Controleren is logical step 4 or 5
+      // Deelnemers (if shown) is logical step 3, Controleren is logical step 3 or 4
       return adjustedStep;
     },
     [needsAanbiederStep]
@@ -411,16 +411,15 @@ const AcFormsGebruik = ({ store }) => {
     mapping.push(getAdjustedStepIndex(1));
     // Sub-steps under Gebruik configuratie
     mapping.push(getAdjustedStepIndex(1)); // Gebruik informatie
-    mapping.push(getAdjustedStepIndex(2)); // Applicatie versie
-    mapping.push(getAdjustedStepIndex(3)); // Referentiecomponenten
+    mapping.push(getAdjustedStepIndex(2)); // Referentiecomponenten
 
     // Conditionally include Deelnemers step (only for Samenwerking/Community)
     if (needsDeelnemersStep) {
-      mapping.push(getAdjustedStepIndex(4)); // Deelnemers
+      mapping.push(getAdjustedStepIndex(3)); // Deelnemers
     }
 
-    // Main step 3: Controleren (logical step 5 if Deelnemers shown, 4 otherwise)
-    const controlerenLogicalStep = needsDeelnemersStep ? 5 : 4;
+    // Main step 3: Controleren (logical step 4 if Deelnemers shown, 3 otherwise)
+    const controlerenLogicalStep = needsDeelnemersStep ? 4 : 3;
     mapping.push(getAdjustedStepIndex(controlerenLogicalStep));
 
     return mapping;
@@ -1990,8 +1989,8 @@ const AcFormsGebruik = ({ store }) => {
                             getAdjustedStepIndex(1),
                             getAdjustedStepIndex(1),
                             needsDeelnemersStep
-                              ? getAdjustedStepIndex(4)
-                              : getAdjustedStepIndex(3)
+                              ? getAdjustedStepIndex(3)
+                              : getAdjustedStepIndex(2)
                           ),
                           title: 'Gebruik configuratie',
                           steps: [
@@ -2004,18 +2003,10 @@ const AcFormsGebruik = ({ store }) => {
                               title: 'Gebruik informatie',
                             },
                             {
-                              id: 'versie-substep',
-                              status: getStatus(
-                                currentStep,
-                                getAdjustedStepIndex(2)
-                              ),
-                              title: 'Versie',
-                            },
-                            {
                               id: 'referentiecomponenten-substep',
                               status: getStatus(
                                 currentStep,
-                                getAdjustedStepIndex(3)
+                                getAdjustedStepIndex(2)
                               ),
                               title: 'Referentiecomponenten',
                             },
@@ -2026,7 +2017,7 @@ const AcFormsGebruik = ({ store }) => {
                                     id: 'deelnemers-substep',
                                     status: getStatus(
                                       currentStep,
-                                      getAdjustedStepIndex(4)
+                                      getAdjustedStepIndex(3)
                                     ),
                                     title: 'Deelnemers',
                                   },
@@ -2043,7 +2034,7 @@ const AcFormsGebruik = ({ store }) => {
                           })(),
                           status: getStatus(
                             currentStep,
-                            getAdjustedStepIndex(needsDeelnemersStep ? 5 : 4)
+                            getAdjustedStepIndex(needsDeelnemersStep ? 4 : 3)
                           ),
                           title: 'Controleren',
                         },
