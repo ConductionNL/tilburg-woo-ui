@@ -336,6 +336,11 @@ export class ObjectStore {
     this.abortControllers = new Map();
   }
 
+  // IMPORTANT
+  // this key is used to track changes to the collection
+  // which is then used to trigger a re-render on a component (or on a useMemo)
+  COLLECTION_CHANGE_KEY = Symbol('collectionChangeKey');
+
   // Observable state
   /**
    * Cache of individual objects by type and ID
@@ -641,6 +646,8 @@ export class ObjectStore {
 
     // Replace the array contents - MobX will track this change
     this.collections[type].results.replace(newResults);
+
+    this.COLLECTION_CHANGE_KEY = Symbol('collectionChangeKey');
   };
 
   /**
@@ -1599,6 +1606,8 @@ export class ObjectStore {
       // Add new object to collection
       collection.results.push(objectData);
     }
+
+    this.COLLECTION_CHANGE_KEY = Symbol('collectionChangeKey');
   };
 
   /**
@@ -1622,6 +1631,8 @@ export class ObjectStore {
         collection.results.splice(index, 1);
       }
     });
+
+    this.COLLECTION_CHANGE_KEY = Symbol('collectionChangeKey');
   };
 
   /**
@@ -4157,67 +4168,9 @@ export class ObjectStore {
       }
       // Replace the array contents
       this.collections[collectionType].results.replace(updatedResults);
+
+      this.COLLECTION_CHANGE_KEY = Symbol('collectionChangeKey');
     });
-  };
-
-  /**
-   * Starts background resolution of UUID strings in a collection
-   * Returns immediately after collecting UUIDs, resolution happens asynchronously
-   * When names arrive, updates the data in place
-   * @param {string} register - The register slug (e.g., 'voorzieningen')
-   * @param {string} schemaSlug - The schema slug (e.g., 'module')
-   */
-  resolveRefsInCollectionBackground = (register, schemaSlug) => {
-    const collectionType = this.getTypeFromParams(register, schemaSlug);
-    const collection = this.getCollection(collectionType);
-
-    if (!collection || !collection.results || collection.results.length === 0) {
-      return;
-    }
-
-    // Collect all UUIDs that need resolution
-    const uuidsToResolve = new Set();
-
-    // Scan all objects for UUIDs
-    collection.results.forEach((obj) => {
-      this._collectUUIDs(obj, uuidsToResolve);
-    });
-
-    if (uuidsToResolve.size === 0) {
-      return;
-    }
-
-    // Start resolution in background - don't await
-    const uuidArray = Array.from(uuidsToResolve);
-    this.getNamesForMultipleIds(uuidArray)
-      .then((resolvedNames) => {
-        // Update objects in store with resolved names when they arrive
-        runInAction(() => {
-          const currentCollection = this.getCollection(collectionType);
-          if (!currentCollection || !currentCollection.results) {
-            return;
-          }
-
-          const updatedResults = currentCollection.results.map((obj) => {
-            return this._replaceUUIDsWithNames(obj, resolvedNames);
-          });
-
-          // Update the collection in store - ensure it's observable
-          if (!this.collections[collectionType]) {
-            this.collections[collectionType] = observable({
-              results: observable([]),
-            });
-          }
-          // Replace the array contents
-          this.collections[collectionType].results.replace(updatedResults);
-        });
-      })
-      .catch((error) => {
-        console.error(
-          `Error resolving refs in background for ${schemaSlug}:`,
-          error
-        );
-      });
   };
 
   /**
@@ -4342,7 +4295,10 @@ export class ObjectStore {
       // Wait for all parallel fetches to complete
       await Promise.allSettled(warmupPromises);
 
-      // Mark completion for all successfully fetched types (data has arrived)
+      // Wait for names cache warmup to complete before resolving refs
+      await this.waitForNamesCacheWarmup();
+
+      // Now resolve $ref properties for all types that were fetched
       for (const schemaSlug of typesToWarmup) {
         // Skip if warmup failed for this type
         if (this.warmupErrors[schemaSlug]) {
@@ -4352,19 +4308,38 @@ export class ObjectStore {
         const collectionType = this.getTypeFromParams(register, schemaSlug);
         const collection = this.getCollection(collectionType);
 
-        // Mark as completed now that data has arrived
-        runInAction(() => {
-          this.warmupCompleted[schemaSlug] = true;
-          this.warmupInProgress[schemaSlug] = false;
-          this.warmupErrors[schemaSlug] = null;
-        });
-
-        console.info(`Warmup completed for ${schemaSlug} (data loaded)`);
-
-        // Start background name resolution (non-blocking)
+        // Check if fetch returned data
         if (collection?.results?.length > 0) {
-          // Trigger background resolution - will update data in place when names arrive
-          this.resolveRefsInCollectionBackground(register, schemaSlug);
+          try {
+            // Resolve $ref properties using name cache
+            await this.resolveRefsInCollection(register, schemaSlug);
+
+            // Mark as completed
+            runInAction(() => {
+              this.warmupCompleted[schemaSlug] = true;
+              this.warmupInProgress[schemaSlug] = false;
+              this.warmupErrors[schemaSlug] = null;
+            });
+
+            console.info(`Warmup completed for ${schemaSlug}`);
+          } catch (error) {
+            console.error(`Error resolving refs for ${schemaSlug}:`, error);
+            const errorMessage =
+              AcFormatErrorMessage(error) || error.message || 'Unknown error';
+            runInAction(() => {
+              this.warmupErrors[schemaSlug] = errorMessage;
+              this.warmupInProgress[schemaSlug] = false;
+            });
+          }
+        } else {
+          // Collection fetched but has no data - mark as completed anyway
+          runInAction(() => {
+            this.warmupCompleted[schemaSlug] = true;
+            this.warmupInProgress[schemaSlug] = false;
+            this.warmupErrors[schemaSlug] = null;
+          });
+
+          console.info(`Warmup completed for ${schemaSlug} (no data)`);
         }
       }
 
@@ -4430,20 +4405,28 @@ export class ObjectStore {
           _published: 'false',
         });
 
-        // Mark as completed now that data has arrived
+        // Wait for names cache warmup to complete before resolving refs
+        await this.waitForNamesCacheWarmup();
+
+        // Resolve $ref properties using name cache
         const collection = this.getCollection(collectionType);
-        runInAction(() => {
-          this.warmupCompleted[schemaSlug] = true;
-          this.warmupInProgress[schemaSlug] = false;
-          this.warmupErrors[schemaSlug] = null;
-        });
-
-        console.info(`Warmup refresh completed for ${schemaSlug} (data loaded)`);
-
-        // Start background name resolution (non-blocking)
         if (collection && collection.results && collection.results.length > 0) {
-          // Trigger background resolution - will update data in place when names arrive
-          this.resolveRefsInCollectionBackground(register, schemaSlug);
+          await this.resolveRefsInCollection(register, schemaSlug);
+
+          // Mark as completed
+          runInAction(() => {
+            this.warmupCompleted[schemaSlug] = true;
+            this.warmupInProgress[schemaSlug] = false;
+            this.warmupErrors[schemaSlug] = null;
+          });
+
+          console.info(`Warmup refresh completed for ${schemaSlug}`);
+        } else {
+          // No data fetched, but mark as completed anyway
+          runInAction(() => {
+            this.warmupCompleted[schemaSlug] = true;
+            this.warmupInProgress[schemaSlug] = false;
+          });
         }
       } catch (error) {
         console.error(`Error refreshing warmup data for ${schemaSlug}:`, error);

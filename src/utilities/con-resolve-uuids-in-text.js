@@ -160,32 +160,22 @@ export const resolveUUIDsInObject = async (
  * React hook for resolving UUIDs in text with state management
  * @param {string} text - Text that may contain UUIDs
  * @param {Object} objectStore - ObjectStore instance for names resolution
- * @returns {{resolvedText: string, isLoading: boolean}} Object with resolved text and loading state
+ * @returns {string} Text with UUIDs resolved to names
  */
 export const useResolvedText = (text, objectStore) => {
   const [resolvedText, setResolvedText] = React.useState(text);
-  const [isResolving, setIsResolving] = React.useState(false);
-
-  // Check if the names cache is still warming up
-  const isNamesCacheLoading = objectStore?.isLoading?.('names_warmup') ?? false;
 
   React.useEffect(() => {
     if (text && objectStore) {
-      setIsResolving(true);
       resolveUUIDsInText(text, objectStore)
         .then(setResolvedText)
-        .catch(() => setResolvedText(text))
-        .finally(() => setIsResolving(false));
+        .catch(() => setResolvedText(text));
     } else {
       setResolvedText(text);
-      setIsResolving(false);
     }
   }, [text, objectStore]);
 
-  return {
-    resolvedText,
-    isLoading: isNamesCacheLoading || isResolving,
-  };
+  return resolvedText;
 };
 
 /**
