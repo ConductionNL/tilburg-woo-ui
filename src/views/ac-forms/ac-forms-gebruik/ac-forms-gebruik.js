@@ -604,14 +604,8 @@ const AcFormsGebruik = ({ store }) => {
   // Leverancier Organization State Object - for nieuwe-applicatie
   const [leverancierOrganisatie, setLeverancierOrganisatie] = useState({
     naam: '',
-    type: '',
+    type: 'Leverancier',
     website: '',
-    beschrijvingKort: '',
-    beschrijvingLang: '',
-    'e-mailadres': '',
-    telefoonnummer: '',
-    kvkNummer: '',
-    logo: '',
   });
 
   // Update function for leverancier organization data
@@ -1683,7 +1677,9 @@ const AcFormsGebruik = ({ store }) => {
       case -1:
         return 'Afnemer';
       case 0:
-        return 'Applicatie';
+        return applicatieKeuze === 'bestaand'
+          ? 'Toevoegen applicatie'
+          : 'Publiceren applicatie';
       case 1:
         return 'Gebruik informatie';
       case 2:
@@ -1953,11 +1949,10 @@ const AcFormsGebruik = ({ store }) => {
     }
   };
 
-  const {
-    icon: Icon,
-    name: wizardName,
-    schema: wizardSchema,
-  } = useMemo(() => getActiveWizard() || {}, [gebruikType]);
+  const { icon: Icon, schema: wizardSchema } = useMemo(
+    () => getActiveWizard() || {},
+    [gebruikType]
+  );
   const capitalizedSchema = _.capitalize(wizardSchema);
   const editModeTitle = `${capitalizedSchema} updaten`;
 
@@ -1973,11 +1968,16 @@ const AcFormsGebruik = ({ store }) => {
                   style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                 >
                   <Icon style={{ width: '1em', height: '1em' }} />
-                  {isEditMode ? editModeTitle : wizardName}
+                  {isEditMode
+                    ? editModeTitle
+                    : applicatieKeuze === 'bestaand'
+                    ? 'Een applicatie toevoegen'
+                    : 'Een nieuwe applicatie toevoegen'}
                 </Heading1>
                 <Paragraph>
-                  Selecteer een applicatie, vul aanvullende informatie aan en
-                  controleer uw invoer.
+                  {applicatieKeuze === 'bestaand'
+                    ? 'Vul dit formulier in om de applicatie toe te voegen aan uw applicatielandschap'
+                    : 'Vul dit formulier in om applicaties op te voeren die nog niet bestaan in de softwarecatalogus, maar u wel in gebruik heeft. Dit waren voorheen de “externe pakketten”'}
                 </Paragraph>
               </div>
 
