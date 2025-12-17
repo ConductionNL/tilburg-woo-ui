@@ -1,6 +1,6 @@
 /**
  * ConUuidResolver - A wrapper component that automatically resolves UUIDs in text content
- * 
+ *
  * This component can wrap any text content and will automatically detect and resolve
  * UUIDs to human-readable names using the names cache system.
  */
@@ -18,28 +18,34 @@ import { observer } from 'mobx-react-lite';
  * @param {string} props.as - HTML element to render as (default: 'span')
  * @param {Object} props.style - CSS styles to apply
  * @param {string} props.className - CSS class name
+ * @param {React.ReactNode} props.loadingPlaceholder - Content to show while loading (default: '...')
  * @returns {React.ReactElement}
  */
-const ConUuidResolver = ({ 
-  children, 
-  store: { object }, 
+const ConUuidResolver = ({
+  children,
+  store: { object },
   as: Component = 'span',
   style,
   className,
-  ...props 
+  loadingPlaceholder = 'Loading...',
+  ...props
 }) => {
-  // Only resolve if children is a string
-  const resolvedText = typeof children === 'string' 
-    ? useResolvedText(children, object)
+  const isStringChild = typeof children === 'string';
+
+  // Always call the hook with a string value to satisfy React's rules of hooks
+  const textToResolve = isStringChild ? children : '';
+  const { resolvedText, isLoading } = useResolvedText(textToResolve, object);
+
+  // Determine what to display
+  const displayContent = isStringChild
+    ? isLoading
+      ? loadingPlaceholder
+      : resolvedText
     : children;
 
   return (
-    <Component 
-      style={style} 
-      className={className}
-      {...props}
-    >
-      {resolvedText}
+    <Component style={style} className={className} {...props}>
+      {displayContent}
     </Component>
   );
 };
