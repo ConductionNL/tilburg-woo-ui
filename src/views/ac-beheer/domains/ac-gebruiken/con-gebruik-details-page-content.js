@@ -13,6 +13,7 @@ import {
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
 import { useNavigate } from 'react-router-dom';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
+import { AcFormatDate } from '@src/utilities/ac-format-date';
 
 /**
  * Content for the gebruik details page
@@ -111,6 +112,40 @@ const ConGebruikDetailsPageContent = ({
   }, [data?.gebruiktVoorReferentiecomponenten, object]);
 
   const status = data?.status || '-';
+
+  // Get all status dates that are set
+  const statusDates = [
+    {
+      label: 'Startdatum Verwerving',
+      value: data?.startDatumVerwerving
+        ? AcFormatDate(data.startDatumVerwerving, 'YYYY-MM-DD', 'D MMMM YYYY')
+        : null,
+    },
+    {
+      label: 'Startdatum Gepland',
+      value: data?.startDatumGepland
+        ? AcFormatDate(data.startDatumGepland, 'YYYY-MM-DD', 'D MMMM YYYY')
+        : null,
+    },
+    {
+      label: 'Startdatum In productie',
+      value: data?.startDatumInProductie
+        ? AcFormatDate(data.startDatumInProductie, 'YYYY-MM-DD', 'D MMMM YYYY')
+        : null,
+    },
+    {
+      label: 'Startdatum Uit te faseren',
+      value: data?.startDatumUitTeFaseren
+        ? AcFormatDate(data.startDatumUitTeFaseren, 'YYYY-MM-DD', 'D MMMM YYYY')
+        : null,
+    },
+    {
+      label: 'Startdatum Uitgefaseerd',
+      value: data?.startDatumUitGefaseerd
+        ? AcFormatDate(data.startDatumUitGefaseerd, 'YYYY-MM-DD', 'D MMMM YYYY')
+        : null,
+    },
+  ].filter((item) => item.value);
 
   // Extract deelnemer IDs from the data (always an array of UUID strings or empty)
   const deelnemerIds = data?.deelnemers || [];
@@ -231,6 +266,13 @@ const ConGebruikDetailsPageContent = ({
             <strong>Status: </strong>
             {status}
           </div>
+
+          {statusDates.map((dateItem) => (
+            <div key={dateItem.label} style={{ marginBottom: '8px' }}>
+              <strong>{dateItem.label}: </strong>
+              {dateItem.value}
+            </div>
+          ))}
         </div>
 
         {sortedReferentiecomponenten.length > 0 && (

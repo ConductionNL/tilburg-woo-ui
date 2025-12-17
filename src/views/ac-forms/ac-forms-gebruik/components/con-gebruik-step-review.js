@@ -11,6 +11,7 @@ import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver
 import { handleFileClick } from '@utils';
 import { AcFlex } from '@src/atoms';
 import { VISUALS } from '@src/constants';
+import { AcFormatDate } from '@src/utilities/ac-format-date';
 
 /**
  * ConGebruikStepReview
@@ -76,22 +77,6 @@ const ConGebruikStepReview = ({
     return <ConUuidResolver>{afnemer}</ConUuidResolver>;
   };
 
-  // Helper function to format date in Dutch locale (e.g., "17 december 2025")
-  const formatDateDutch = (dateString) => {
-    if (!dateString) return null;
-    try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) return dateString;
-      return date.toLocaleDateString('nl-NL', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      });
-    } catch {
-      return dateString;
-    }
-  };
-
   // Helper function to get the relevant start date based on status
   const getRelevantStartDate = () => {
     const status = gebruik?.status;
@@ -99,27 +84,49 @@ const ConGebruikStepReview = ({
       case 'Verwerving':
         return {
           label: 'Startdatum Verwerving',
-          value: formatDateDutch(gebruik?.startDatumVerwerving),
+          value: gebruik?.startDatumVerwerving
+            ? AcFormatDate(gebruik.startDatumVerwerving, 'YYYY-MM-DD', 'D MMMM YYYY')
+            : null,
         };
       case 'Gepland':
         return {
-          label: 'Geplande Startdatum',
-          value: formatDateDutch(gebruik?.startDatumGepland),
+          label: 'Startdatum Gepland',
+          value: gebruik?.startDatumGepland
+            ? AcFormatDate(gebruik.startDatumGepland, 'YYYY-MM-DD', 'D MMMM YYYY')
+            : null,
         };
       case 'In productie':
         return {
-          label: 'Startdatum In Productie',
-          value: formatDateDutch(gebruik?.startDatumInProductie),
+          label: 'Startdatum In productie',
+          value: gebruik?.startDatumInProductie
+            ? AcFormatDate(
+                gebruik.startDatumInProductie,
+                'YYYY-MM-DD',
+                'D MMMM YYYY'
+              )
+            : null,
         };
       case 'Uit te faseren':
         return {
-          label: 'Startdatum Uit Te Faseren',
-          value: formatDateDutch(gebruik?.startDatumUitTeFaseren),
+          label: 'Startdatum Uit te faseren',
+          value: gebruik?.startDatumUitTeFaseren
+            ? AcFormatDate(
+                gebruik.startDatumUitTeFaseren,
+                'YYYY-MM-DD',
+                'D MMMM YYYY'
+              )
+            : null,
         };
       case 'Uitgefaseerd':
         return {
-          label: 'Startdatum Uit Gefaseerd',
-          value: formatDateDutch(gebruik?.startDatumUitGefaseerd),
+          label: 'Startdatum Uitgefaseerd',
+          value: gebruik?.startDatumUitGefaseerd
+            ? AcFormatDate(
+                gebruik.startDatumUitGefaseerd,
+                'YYYY-MM-DD',
+                'D MMMM YYYY'
+              )
+            : null,
         };
       default:
         return null;
