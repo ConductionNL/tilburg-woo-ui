@@ -4,6 +4,7 @@ import {
   UnorderedListItem,
   Separator,
   Link,
+  Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
 import { handleFileClick } from '@utils';
@@ -154,6 +155,15 @@ const ConGebruikStepReview = ({
       <h2 id='review-title' className='sr-only'>
         Controleren
       </h2>
+
+      <Paragraph>
+        Controleer of het overzicht van de applicatiegebruik melding volledig en
+        juist is voordat u verder gaat.
+        <br />
+        U kunt met Vorige terug naar de eerdere stappen.
+        <br />
+        Met de knop verzenden kunt u de melding aan de klant sturen
+      </Paragraph>
 
       <div className='ac-register-review'>
         <div className='ac-register-review__section'>

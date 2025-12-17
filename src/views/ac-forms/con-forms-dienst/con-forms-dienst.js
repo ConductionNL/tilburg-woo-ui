@@ -742,24 +742,6 @@ const ConFormsDienst = ({ store, userStore }) => {
     }
   };
 
-  const currentStepName = (step) => {
-    // Convert physical step to logical step using helper function
-    const logicalStep = getLogicalStepFromPhysical(step);
-
-    switch (logicalStep) {
-      case 0:
-        return 'Applicaties';
-      case 1:
-        return 'Aanbieder';
-      case 2:
-        return 'Dienst informatie';
-      case 3:
-        return 'Controleer uw gegevens';
-      default:
-        return '';
-    }
-  };
-
   // Check if a field is required according to loaded schema
   const isSchemaFieldRequired = (schemaType, fieldName) => {
     const schema = schemas?.[schemaType];
@@ -970,6 +952,24 @@ const ConFormsDienst = ({ store, userStore }) => {
     }
   };
 
+  const currentStepName = (step) => {
+    // Convert physical step to logical step using helper function
+    const logicalStep = getLogicalStepFromPhysical(step);
+
+    switch (logicalStep) {
+      case 0:
+        return 'Zoek de applicatie voor uw diensten';
+      case 1:
+        return 'Aanbieder';
+      case 2:
+        return 'Dienstverlening op uw applicaties';
+      case 3:
+        return 'Controleer uw gegevens';
+      default:
+        return '';
+    }
+  };
+
   const {
     icon: Icon,
     name: wizardName,
@@ -977,6 +977,12 @@ const ConFormsDienst = ({ store, userStore }) => {
   } = useMemo(() => getActiveWizard() || {}, [dienstType]);
   const capitalizedSchema = _.capitalize(wizardSchema);
   const editModeTitle = `${capitalizedSchema} updaten`;
+
+  const newWizardName = (() => {
+    var a = wizardName.split(' ');
+    a[0] += '(en)';
+    return a.join(' ');
+  })();
 
   const wizardType = isEditMode
     ? 'update'
@@ -993,12 +999,12 @@ const ConFormsDienst = ({ store, userStore }) => {
               style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
             >
               <Icon style={{ width: '1em', height: '1em' }} />
-              {isEditMode ? editModeTitle : wizardName}
+              Uw {isEditMode ? editModeTitle : newWizardName}
             </Heading1>
             <Paragraph>
               {isEditMode
                 ? 'Werk uw dienstgegevens bij in onze catalogus.'
-                : 'Voer de gegevens van de dienst in, selecteer relevante applicaties en controleer uw invoer.'}
+                : 'Vul dit formulier in om een dienst voor uw en andere applicaties te registreren en vindbaar te maken in de softwarecatalogus.'}
             </Paragraph>
           </div>
 

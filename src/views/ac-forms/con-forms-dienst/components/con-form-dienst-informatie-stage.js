@@ -79,14 +79,8 @@ const ConFormDienstInformatieStage = memo(
         </h2>
 
         <Paragraph style={{ marginBottom: '1.5rem' }}>
-          <strong>Registreer uw dienst</strong>
-          <br />
           {dienstType === 'eigen-organisatie' ? (
-            <>
-              U gaat een dienst registreren voor uw eigen organisatie. In de volgende
-              stappen vult u de basisgegevens in en selecteert u relevante
-              applicaties.
-            </>
+            <>Geef aan welke dienstverlening u verleent op uw applicatie.</>
           ) : dienstType === 'andere-organisatie' ? (
             <>
               U gaat een dienst registreren voor een andere organisatie. In de
@@ -99,9 +93,6 @@ const ConFormDienstInformatieStage = memo(
               relevante applicaties.
             </>
           )}
-          <br />
-          Deze informatie helpt organisaties om snel te begrijpen welk aanbod uw
-          dienst omvat en hoe die binnen hun landschap past.
         </Paragraph>
 
         <Paragraph style={{ marginBottom: '2rem' }}>

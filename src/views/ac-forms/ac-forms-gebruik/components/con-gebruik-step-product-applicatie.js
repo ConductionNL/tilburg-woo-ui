@@ -47,6 +47,11 @@ const ConGebruikStepProductApplicatie = ({
           Applicatie
         </h2>
 
+        <Paragraph>
+          Selecteer de applicatie(s) waarvan u het gebruik aan uw klanten wilt
+          melden.
+        </Paragraph>
+
         <div className='ac-register-form-grid'>
           <div style={{ gridColumn: 'span 2', maxWidth: '640px' }}>
             <ConSchemaEnhancedField

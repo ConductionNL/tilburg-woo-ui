@@ -1675,32 +1675,6 @@ const AcFormsGebruik = ({ store }) => {
     return base;
   })();
 
-  const currentStepName = (step) => {
-    // Convert physical step to logical step using helper function
-    const logicalStep = getLogicalStepFromPhysical(step);
-
-    switch (logicalStep) {
-      case -1:
-        return 'Afnemer';
-      case 0:
-        return 'Applicatie';
-      case 1:
-        return 'Gebruik informatie';
-      case 2:
-        return 'Versie';
-      case 3:
-        return 'Referentiecomponenten';
-      case 4:
-        // If Deelnemers step is shown, logical step 4 is Deelnemers
-        // Otherwise, logical step 4 is Controleren
-        return needsDeelnemersStep ? 'Deelnemers' : 'Controleren';
-      case 5:
-        return 'Controleren';
-      default:
-        return stepsList[step] || '';
-    }
-  };
-
   const canGoNext = () => {
     const logicalStep = getLogicalStepFromPhysical(currentStep);
 
@@ -1953,6 +1927,32 @@ const AcFormsGebruik = ({ store }) => {
     }
   };
 
+  const currentStepName = (step) => {
+    // Convert physical step to logical step using helper function
+    const logicalStep = getLogicalStepFromPhysical(step);
+
+    switch (logicalStep) {
+      case -1:
+        return 'Afnemer';
+      case 0:
+        return 'Selecteer de applicatie en klanten';
+      case 1:
+        return 'Gebruik informatie';
+      case 2:
+        return 'Versie';
+      case 3:
+        return 'Referentiecomponenten';
+      case 4:
+        // If Deelnemers step is shown, logical step 4 is Deelnemers
+        // Otherwise, logical step 4 is Controleren
+        return needsDeelnemersStep ? 'Deelnemers' : 'Controleren';
+      case 5:
+        return 'Controleer uw gegevens';
+      default:
+        return stepsList[step] || '';
+    }
+  };
+
   const {
     icon: Icon,
     name: wizardName,
@@ -1973,11 +1973,11 @@ const AcFormsGebruik = ({ store }) => {
                   style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                 >
                   <Icon style={{ width: '1em', height: '1em' }} />
-                  {isEditMode ? editModeTitle : wizardName}
+                  Uw {isEditMode ? editModeTitle : wizardName}
                 </Heading1>
                 <Paragraph>
-                  Selecteer een applicatie, vul aanvullende informatie aan en
-                  controleer uw invoer.
+                  Vul het formulier in om inzicht te geven in het gebruik van uw
+                  applicaties bij klanten.
                 </Paragraph>
               </div>
 
