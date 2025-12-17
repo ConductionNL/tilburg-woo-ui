@@ -48,7 +48,7 @@ const AcFormsGebruik = ({ store }) => {
   const typeFromUrl = searchParams.get('type') || '';
   const applicatieFromUrl = searchParams.get('applicatie') || '';
   const isEditMode = !!gebruikId;
-  const [currentStep, setCurrentStep] = useState(2);
+  const [currentStep, setCurrentStep] = useState(4);
   const [loading, setLoading] = useState(false);
   const [prefillLoading, setPrefillLoading] = useState(false);
   const [prefillError, setPrefillError] = useState(null);
@@ -671,6 +671,24 @@ const AcFormsGebruik = ({ store }) => {
             {
               status: 'Verwerving',
               startDatumVerwerving: new Date().toISOString().split('T')[0],
+              // DEBUG: Pre-select application for testing
+              module: '307864ed-abe8-40b5-9edd-22d7b7d5d41f',
+              deelnemers: ['aa3c2329-8993-451e-be7d-d79ae4647df3'],
+              startDatumGepland: new Date(Date.now() - Math.floor(Math.random() * 1000 * 60 * 60 * 24 * 365)).toISOString().split('T')[0],
+              startDatumInProductie: new Date(Date.now() - Math.floor(Math.random() * 1000 * 60 * 60 * 24 * 365)).toISOString().split('T')[0],
+              startDatumUitTeFaseren: new Date(Date.now() - Math.floor(Math.random() * 1000 * 60 * 60 * 24 * 365)).toISOString().split('T')[0],
+              startDatumUitGefaseerd: new Date(Date.now() - Math.floor(Math.random() * 1000 * 60 * 60 * 24 * 365)).toISOString().split('T')[0],
+              interneAantekening: 'afaefa',
+              moduleVersie: 'd17169a5-4a65-466d-bd1f-c3ac3565535a',
+              gebruiktVoorReferentiecomponenten: [
+                '5f236166-7794-4cfa-9ff8-740ca549c130',
+                '640c8ef1-9ca3-4efe-b3e8-ec978f89aba3',
+                'e3a3a9b3-b778-4e12-a6a3-f72384a7fac7',
+              ],
+              amefElements: [],
+              koppelingen: [],
+              diensten: [],
+              cloudDienstverleningsmodel: ['PaaS', 'On-premises (self-managed)'],
             }
           );
           if (!isEditMode) setGebruik((prev) => ({ ...defaultGebruik, ...prev }));
@@ -1682,9 +1700,9 @@ const AcFormsGebruik = ({ store }) => {
       case 3:
         // If Deelnemers step is shown, logical step 3 is Deelnemers
         // Otherwise, logical step 3 is Controleren
-        return needsDeelnemersStep ? 'Deelnemers toevoegen' : 'Controleren';
+        return needsDeelnemersStep ? 'Deelnemers toevoegen' : 'Controleer uw gegevens';
       case 4:
-        return 'Controleren';
+        return 'Controleer uw gegevens';
       default:
         return stepsList[step] || '';
     }

@@ -1,13 +1,16 @@
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import {
+  Alert,
+  Link,
+  Paragraph,
+  Separator,
   UnorderedList,
   UnorderedListItem,
-  Separator,
-  Link,
 } from '@utrecht/component-library-react/dist/css-module';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
 import { handleFileClick } from '@utils';
 import { AcFlex } from '@src/atoms';
+import { VISUALS } from '@src/constants';
 
 /**
  * ConGebruikStepReview
@@ -73,6 +76,22 @@ const ConGebruikStepReview = ({
     return <ConUuidResolver>{afnemer}</ConUuidResolver>;
   };
 
+  // Helper function to format date in Dutch locale (e.g., "17 december 2025")
+  const formatDateDutch = (dateString) => {
+    if (!dateString) return null;
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return dateString;
+      return date.toLocaleDateString('nl-NL', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
   // Helper function to get the relevant start date based on status
   const getRelevantStartDate = () => {
     const status = gebruik?.status;
@@ -80,27 +99,27 @@ const ConGebruikStepReview = ({
       case 'Verwerving':
         return {
           label: 'Startdatum Verwerving',
-          value: gebruik?.startDatumVerwerving,
+          value: formatDateDutch(gebruik?.startDatumVerwerving),
         };
       case 'Gepland':
         return {
           label: 'Geplande Startdatum',
-          value: gebruik?.startDatumGepland,
+          value: formatDateDutch(gebruik?.startDatumGepland),
         };
       case 'In productie':
         return {
           label: 'Startdatum In Productie',
-          value: gebruik?.startDatumInProductie,
+          value: formatDateDutch(gebruik?.startDatumInProductie),
         };
       case 'Uit te faseren':
         return {
           label: 'Startdatum Uit Te Faseren',
-          value: gebruik?.startDatumUitTeFaseren,
+          value: formatDateDutch(gebruik?.startDatumUitTeFaseren),
         };
       case 'Uitgefaseerd':
         return {
           label: 'Startdatum Uit Gefaseerd',
-          value: gebruik?.startDatumUitGefaseerd,
+          value: formatDateDutch(gebruik?.startDatumUitGefaseerd),
         };
       default:
         return null;
@@ -145,6 +164,19 @@ const ConGebruikStepReview = ({
     return startPart + '...' + endPart + extension;
   };
 
+  // Manage visibility state of info alerts for application flows.
+  // Alert persists as closed for the session after user closes it (via sessionStorage).
+  const [showInfoAlert, setShowInfoAlert] = useState(() => {
+    // Return true (show) if the alert has not been closed in this session, otherwise false.
+    return !sessionStorage.getItem('gebruik-review-info-alert-closed');
+  });
+
+  // Mark the 'bestaand' alert as closed for the session and update state.
+  const handleCloseAlert = () => {
+    setShowInfoAlert(false);
+    sessionStorage.setItem('gebruik-review-info-alert-closed', 'true');
+  };
+
   return (
     <div
       className='ac-register-form-section'
@@ -154,6 +186,44 @@ const ConGebruikStepReview = ({
       <h2 id='review-title' className='sr-only'>
         Controleren
       </h2>
+
+      <Paragraph>
+        Controleer of het overzicht van de applicatie volledig en juist is voordat u
+        verder gaat.
+        <br />
+        U kunt met Vorige terug naar de eerdere stappen.
+        <br />
+        Na het registreren van de applicatie kunt u via uw &ldquo;Dashboard&rdquo; de
+        applicatie opzoeken en indien gewenst aanpassen.
+      </Paragraph>
+
+      {/* Closeable info alert about adding an existing application */}
+      {showInfoAlert && (
+        <Alert severity='info' className='ac-forms-info-alert'>
+          <button
+            onClick={handleCloseAlert}
+            className='ac-forms-product-info-alert__close-button'
+            title='Sluiten'
+            aria-label='Alert sluiten'
+          >
+            <VISUALS.CLOSE />
+          </button>
+          <div className='ac-forms-product-info-alert__content'>
+            <VISUALS.INFO className='ac-forms-product-info-alert__icon' />
+            <div>
+              <span className='ac-forms-product-info-alert__text'>
+                De applicatie wordt toegevoegd aan uw applicatielandschap.
+                <br />
+                Uw gebruiksinformatie is zichtbaar voor andere gemeenten en
+                samenwerkingen om kennisdeling te bevorderen. Daarnaast kan de
+                leverancier zien dat u hun applicatie gebruikt.
+                <br />
+                De interne notitie is uitsluitend voor intern gebruik.
+              </span>
+            </div>
+          </div>
+        </Alert>
+      )}
 
       <div className='ac-register-review'>
         <div className='ac-register-review__section'>
