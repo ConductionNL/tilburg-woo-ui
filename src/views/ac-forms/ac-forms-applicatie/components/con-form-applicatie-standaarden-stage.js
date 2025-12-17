@@ -1119,8 +1119,6 @@ const ConFormApplicatieStandaardenStage = ({
         </h2>
 
         <Paragraph className='con-form-wizard-paragraph'>
-          <strong>Selecteer de standaarden voor uw applicatie</strong>
-          <br />
           Geef voor uw applicatie aan welke standaarden worden ondersteund en of een
           testrapport beschikbaar is. Er worden de standaarden getoond die verplicht
           of aanbevolen zijn voor de in de vorige stap geselecteerde
