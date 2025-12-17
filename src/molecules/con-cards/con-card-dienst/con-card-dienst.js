@@ -27,7 +27,7 @@ const ConCardDienst = ({
   navigateTo = 'publication',
 }) => {
   // Resolve aanbieder (organisatie) name if UUID provided
-  const resolvedAanbieder = useResolvedText(
+  const { resolvedText: resolvedAanbieder } = useResolvedText(
     typeof aanbieder === 'object' ? aanbieder?.value : aanbieder,
     objectStore
   );
