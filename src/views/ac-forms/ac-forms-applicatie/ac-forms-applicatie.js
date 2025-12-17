@@ -297,7 +297,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     selectedAppAByRow: {},
     selectedAppBByRow: {},
     directionByRow: {},
-    typeByRow: {},
     koppelingIdByRow: {},
   });
 
@@ -1097,7 +1096,12 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
             item?.label ||
             `Facility ${index + 1}`;
           const value = item?.value || item?.id || item?.slug || label;
-          return { value: String(value), label: String(label), data: item, type: 'buitengemeentelijke' };
+          return {
+            value: String(value),
+            label: String(label),
+            data: item,
+            type: 'buitengemeentelijke',
+          };
         })
         .filter((o) => o.label && o.value);
 
@@ -1133,12 +1137,29 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       const nextRows = [];
       const nextSelectedAppBByRow = {};
       const nextDirectionByRow = {};
-      const nextTypeByRow = {};
       const nextKoppelingIdByRow = {};
+      const updatedKoppelingen = [];
 
       koppelingen.forEach((kpl) => {
         const rowId = rowCounter++;
         nextRows.push(rowId);
+
+        // Use existing _localId if present, otherwise generate one
+        const localId =
+          kpl && kpl._localId
+            ? kpl._localId
+            : kpl?.id
+            ? `existing_${kpl.id}`
+            : `kpl_${Date.now().toString(36)}_${Math.random()
+                .toString(36)
+                .slice(2, 8)}`;
+        nextKoppelingIdByRow[rowId] = localId;
+
+        // Ensure the koppeling has _localId set for proper data retrieval
+        updatedKoppelingen.push({
+          ...kpl,
+          _localId: localId,
+        });
 
         // Try to prefill Applicatie B by id when present in API data
         const moduleBId = (() => {
@@ -1162,34 +1183,21 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
           nextSelectedAppBByRow[rowId] = moduleBId;
         }
 
-        if (kpl && kpl.richtingDataUitwisseling) {
-          nextDirectionByRow[rowId] = kpl.richtingDataUitwisseling;
+        if (kpl && kpl.gegevensuitwisselingRichting) {
+          nextDirectionByRow[rowId] = kpl.gegevensuitwisselingRichting;
         }
-
-        if (kpl && kpl.soortKoppeling) {
-          nextTypeByRow[rowId] = kpl.soortKoppeling;
-        }
-
-        // Use existing _localId if present, otherwise generate one
-        const localId =
-          kpl && kpl._localId
-            ? kpl._localId
-            : kpl?.id
-            ? `existing_${kpl.id}`
-            : `kpl_${Date.now().toString(36)}_${Math.random()
-                .toString(36)
-                .slice(2, 8)}`;
-        nextKoppelingIdByRow[rowId] = localId;
       });
 
       if (nextRows.length > 0) {
+        // Update applicatie.koppelingen to ensure all have _localId
+        setApplicatieData('koppelingen', updatedKoppelingen);
+
         setKoppelingenFormState((prev) => ({
           ...prev,
           rows: nextRows,
           nextRowId: nextRows.length,
           selectedAppBByRow: { ...prev.selectedAppBByRow, ...nextSelectedAppBByRow },
           directionByRow: { ...prev.directionByRow, ...nextDirectionByRow },
-          typeByRow: { ...prev.typeByRow, ...nextTypeByRow },
           koppelingIdByRow: {
             ...prev.koppelingIdByRow,
             ...nextKoppelingIdByRow,
@@ -1786,6 +1794,18 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       }
     }
 
+    // Koppelingen step: validate that all koppelingen have a naam
+    if (logicalStep === 6) {
+      if (Array.isArray(applicatie.koppelingen)) {
+        const koppelingenWithoutNaam = applicatie.koppelingen.filter(
+          (kp) => !kp.naam || !String(kp.naam).trim()
+        );
+        if (koppelingenWithoutNaam.length > 0) {
+          return true;
+        }
+      }
+    }
+
     return false;
   };
 
@@ -1849,6 +1869,17 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         );
         if (invalidUrl) {
           return 'Een of meer URLs in de compliancy hebben een ongeldig formaat';
+        }
+      }
+    }
+
+    if (logicalStep === 6) {
+      if (Array.isArray(applicatie.koppelingen)) {
+        const koppelingWithoutNaam = applicatie.koppelingen.find(
+          (kp) => !kp.naam || !String(kp.naam).trim()
+        );
+        if (koppelingWithoutNaam) {
+          return 'Vul voor alle koppelingen de naam in';
         }
       }
     }
