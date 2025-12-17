@@ -1,16 +1,14 @@
 import React, { memo, useState, useEffect } from 'react';
+import clsx from 'clsx';
+import ReactSelect from 'react-select';
 import { VISUALS } from '@src/constants';
 import { AcButton } from '@src/molecules';
 import {
   Paragraph,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableRow,
+  Textbox,
   Alert,
 } from '@utrecht/component-library-react/dist/css-module';
-import ReactSelect from 'react-select';
+import { AcFlex } from '@src/atoms';
 
 /**
  * Koppelingen Stage Component for Applicatie Form
@@ -55,7 +53,6 @@ const ConFormApplicatieKoppelingenStage = memo(
       rows,
       selectedAppBByRow,
       directionByRow,
-      typeByRow,
       koppelingIdByRow = {},
     } = koppelingenFormState;
 
@@ -63,16 +60,6 @@ const ConFormApplicatieKoppelingenStage = memo(
       { value: 'AnaarB', label: 'A → B' },
       { value: 'BnaarA', label: 'B → A' },
       { value: 'bi-directioneel', label: '↔ Bi-directioneel' },
-    ];
-
-    const typeOptions = [
-      { value: 'n.v.t', label: 'N.v.t' },
-      { value: 'bestandsoverdracht', label: 'Bestandsoverdracht' },
-      { value: 'digikoppeling', label: 'Digikoppeling' },
-      { value: 'message que', label: 'Message queue' },
-      { value: 'upload naar portaal', label: 'Upload naar portaal' },
-      { value: 'webservices', label: 'Webservices' },
-      { value: 'api', label: 'API' },
     ];
 
     const setKoppelingValue = (rowId, updater) => {
@@ -141,6 +128,25 @@ const ConFormApplicatieKoppelingenStage = memo(
       }),
     });
 
+    // Helper function to get koppeling data from applicatie.koppelingen array
+    const getKoppelingData = (rowId) => {
+      const localId = koppelingIdByRow[rowId];
+      if (!localId) return null;
+      const koppelingen = Array.isArray(applicatie?.koppelingen)
+        ? applicatie.koppelingen
+        : [];
+      // First try to find by _localId
+      let found = koppelingen.find((k) => k?._localId === localId);
+      // If not found and localId starts with "existing_", try to find by id
+      if (!found && localId.startsWith('existing_')) {
+        const id = localId.replace('existing_', '');
+        found = koppelingen.find(
+          (k) => String(k?.id || '') === id || String(k?._localId || '') === localId
+        );
+      }
+      return found || null;
+    };
+
     // Persist row data into applicatie object
     const persistRowIntoApplicatie = (rowId, overrides = {}) => {
       // Check if appBId was explicitly provided (even if null/undefined) vs not provided
@@ -148,7 +154,8 @@ const ConFormApplicatieKoppelingenStage = memo(
       const appBId = appBIdProvided ? overrides.appBId : selectedAppBByRow[rowId];
       const richting =
         'richting' in overrides ? overrides.richting : directionByRow[rowId];
-      const soort = 'soort' in overrides ? overrides.soort : typeByRow[rowId];
+      const naam =
+        'naam' in overrides ? overrides.naam : getKoppelingData(rowId)?.naam;
 
       let localId = koppelingIdByRow[rowId];
 
@@ -190,8 +197,9 @@ const ConFormApplicatieKoppelingenStage = memo(
           _localId: localId, // Ensure local ID is preserved
           moduleA: applicatie.naam || 'Deze applicatie', // Current applicatie name
           moduleB: appBId, // Store as ID for edit mode preselection
-          richtingDataUitwisseling: richting,
-          soortKoppeling: soort,
+          gegevensuitwisselingRichting: richting,
+          // Only set these fields if they're explicitly provided or already exist
+          ...(naam !== undefined ? { naam } : {}),
         };
 
         const idx = list.findIndex((k) => k?._localId === localId);
@@ -208,7 +216,6 @@ const ConFormApplicatieKoppelingenStage = memo(
       persistRowIntoApplicatie(rowId, {
         appBId: null,
         richting: null,
-        soort: null,
       });
 
       // Clear UI state for this row
@@ -219,9 +226,6 @@ const ConFormApplicatieKoppelingenStage = memo(
         ),
         directionByRow: Object.fromEntries(
           Object.entries(prev.directionByRow).filter(([k]) => Number(k) !== rowId)
-        ),
-        typeByRow: Object.fromEntries(
-          Object.entries(prev.typeByRow).filter(([k]) => Number(k) !== rowId)
         ),
       }));
     };
@@ -248,9 +252,6 @@ const ConFormApplicatieKoppelingenStage = memo(
         directionByRow: Object.fromEntries(
           Object.entries(prev.directionByRow).filter(([k]) => Number(k) !== rowId)
         ),
-        typeByRow: Object.fromEntries(
-          Object.entries(prev.typeByRow).filter(([k]) => Number(k) !== rowId)
-        ),
         koppelingIdByRow: Object.fromEntries(
           Object.entries(prev.koppelingIdByRow || {}).filter(
             ([k]) => Number(k) !== rowId
@@ -262,19 +263,35 @@ const ConFormApplicatieKoppelingenStage = memo(
     useEffect(() => {
       // Initialize koppelingen data when form state is prefilled in edit mode
       // This ensures that prefilled koppelingen are actually persisted to the applicatie
+      // Only update fields that are in UI state, preserving existing data from applicatie.koppelingen
       if (rows.length > 0) {
         rows.forEach((rowId) => {
           const appBId = selectedAppBByRow[rowId];
           const richting = directionByRow[rowId];
-          const soort = typeByRow[rowId];
+          const localId = koppelingIdByRow[rowId];
 
-          // Only persist if we have the minimum required data (appB)
-          if (appBId != null) {
-            persistRowIntoApplicatie(rowId, {
-              appBId,
-              richting,
-              soort,
-            });
+          // Only persist if we have the minimum required data (appB) and a localId
+          // Skip if koppeling already exists with all data (to avoid overwriting on initial load)
+          if (appBId != null && localId) {
+            const existingKoppeling = getKoppelingData(rowId);
+            // Only update if this is a new koppeling or if UI state differs from stored data
+            // Compare moduleB as strings to handle type differences
+            const moduleBMatches =
+              existingKoppeling &&
+              String(
+                existingKoppeling.moduleB || existingKoppeling.moduleBId || ''
+              ) === String(appBId);
+            const needsUpdate =
+              !existingKoppeling ||
+              !moduleBMatches ||
+              existingKoppeling.gegevensuitwisselingRichting !== richting;
+
+            if (needsUpdate) {
+              persistRowIntoApplicatie(rowId, {
+                appBId,
+                richting,
+              });
+            }
           }
         });
       }
@@ -284,34 +301,35 @@ const ConFormApplicatieKoppelingenStage = memo(
         rows.map((rowId) => ({
           appB: selectedAppBByRow[rowId],
           richting: directionByRow[rowId],
-          soort: typeByRow[rowId],
+          localId: koppelingIdByRow[rowId],
         }))
       ),
     ]);
 
     return (
-      <div>
+      <AcFlex column spacing='sm'>
         <h2 id='koppelingen-section-title' className='sr-only'>
           Koppelingen met andere applicaties
         </h2>
 
-        <Paragraph className='con-form-wizard-paragraph'>
-          Geef aan met welke andere applicaties uw oplossing gegevens uitwisselt. Zo
-          kunnen gemeenten zien hoe uw applicatie past in hun applicatielandschap.
-          Vul per koppeling in:
-        </Paragraph>
-        <ul style={{ marginInlineStart: '1rem' }}>
-          <li>met welke applicatie u koppelt,</li>
-          <li>de richting van de gegevensuitwisseling,</li>
-          <li>en het type koppeling (bijvoorbeeld API, bestand of bericht).</li>
-        </ul>
+        <div>
+          <Paragraph className='con-form-wizard-paragraph'>
+            Geef aan met welke andere applicaties uw oplossing gegevens uitwisselt.
+            Zo kunnen gemeenten zien hoe uw applicatie past in hun
+            applicatielandschap. Vul per koppeling in:
+          </Paragraph>
+          <ul style={{ marginInlineStart: '1rem' }}>
+            <li>met welke applicatie u koppelt,</li>
+            <li>de richting van de gegevensuitwisseling,</li>
+            <li>en het type koppeling (bijvoorbeeld API, bestand of bericht).</li>
+          </ul>
+        </div>
 
         {/* Legend */}
         <div
           style={{
             display: 'flex',
             gap: '1.5rem',
-            marginBlockStart: '1rem',
             padding: '0.75rem',
             backgroundColor: '#f9fafb',
             borderRadius: '4px',
@@ -377,44 +395,78 @@ const ConFormApplicatieKoppelingenStage = memo(
           </Alert>
         )}
 
-        <TableContainer className='con-form-wizard-table-container'>
-          <Table>
-            <thead>
-              <TableRow>
-                <TableCell>
-                  <b>Applicatie A</b>
-                </TableCell>
-                <TableCell>
-                  <b>Richting data-uitwisseling</b>
-                </TableCell>
-                <TableCell>
-                  <b>Applicatie B of BGV</b>
-                </TableCell>
-                <TableCell>
-                  <b>Soort koppeling</b>
-                </TableCell>
-                <TableCell>
-                  <b>Acties</b>
-                </TableCell>
-              </TableRow>
-            </thead>
-            <TableBody>
-              {rows.map((rowId) => (
-                <TableRow key={rowId}>
-                  <TableCell>
-                    <div
-                      style={{
-                        padding: '8px 12px',
-                        backgroundColor: '#f5f5f5',
-                        borderRadius: '4px',
-                        border: '1px solid #ccc',
-                      }}
+        <AcFlex column spacing='sm' className='con-form-wizard-rows'>
+          {rows.map((rowId) => {
+            const koppelingData = getKoppelingData(rowId);
+
+            const appAId = `koppeling-appA-${rowId}`;
+            const appBId = `koppeling-appB-${rowId}`;
+            const richtingId = `koppeling-richting-${rowId}`;
+
+            return (
+              <div
+                key={`row-${rowId}`}
+                className='ac-register-form-section'
+                style={{
+                  padding: '1rem',
+                  border: '1px solid #e5e5e5',
+                  borderRadius: '6px',
+                }}
+              >
+                {/* Grid: Applicatie A - Richting - Applicatie B - Naam */}
+                <div
+                  className='ac-register-form-grid'
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+                    gap: '1rem',
+                  }}
+                >
+                  <div>
+                    <label
+                      className='utrecht-form-label'
+                      htmlFor={appAId}
+                      style={{ display: 'block' }}
                     >
-                      {applicatie.naam || 'Deze applicatie'}
-                    </div>
-                  </TableCell>
-                  <TableCell>
+                      Applicatie A
+                      <span className='required-indicator' aria-hidden='true'>
+                        *
+                      </span>
+                      <span className='sr-only'>(verplicht)</span>
+                    </label>
                     <ReactSelect
+                      isDisabled
+                      className={clsx(
+                        'ac-beheer-select',
+                        'ac-beheer-select--disabled'
+                      )}
+                      value={{
+                        value: applicatie.naam || 'Deze applicatie',
+                        label: applicatie.naam || 'Deze applicatie',
+                      }}
+                      placeholder='Selecteer applicatie A'
+                      inputId={appAId}
+                      aria-required='true'
+                    />
+                  </div>
+                  <div>
+                    <label
+                      className='utrecht-form-label'
+                      htmlFor={richtingId}
+                      style={{ display: 'block' }}
+                    >
+                      Richting
+                      <span className='required-indicator' aria-hidden='true'>
+                        *
+                      </span>
+                      <span className='sr-only'>(verplicht)</span>
+                    </label>
+                    <ReactSelect
+                      className={clsx(
+                        'ac-beheer-select',
+                        (modulesLoading || buitengemeentelijkeOptionsLoading) &&
+                          'ac-beheer-select--disabled'
+                      )}
                       options={directionOptions}
                       value={
                         directionByRow[rowId]
@@ -434,10 +486,30 @@ const ConFormApplicatieKoppelingenStage = memo(
                           },
                         }));
                       }}
+                      placeholder='Richting'
+                      inputId={richtingId}
+                      aria-required='true'
                     />
-                  </TableCell>
-                  <TableCell>
+                  </div>
+                  <div>
+                    <label
+                      className='utrecht-form-label'
+                      htmlFor={appBId}
+                      style={{ display: 'flex', alignItems: 'center' }}
+                    >
+                      Applicatie B of BGV
+                      <span className='required-indicator' aria-hidden='true'>
+                        *
+                      </span>
+                      <span className='sr-only'>(verplicht)</span>
+                    </label>
                     <ReactSelect
+                      className={clsx(
+                        'ac-beheer-select',
+                        (modulesLoading || buitengemeentelijkeOptionsLoading) &&
+                          'ac-beheer-select--disabled'
+                      )}
+                      isClearable
                       options={getMergedOptions()}
                       value={(() => {
                         const selected = selectedAppBByRow[rowId];
@@ -453,14 +525,6 @@ const ConFormApplicatieKoppelingenStage = memo(
                         }
                         return found || null;
                       })()}
-                      onInputChange={(inputValue, meta) => {
-                        if (meta && meta.action === 'input-change') {
-                          searchModules(inputValue || '');
-                        }
-                        return inputValue;
-                      }}
-                      isLoading={modulesLoading || buitengemeentelijkeOptionsLoading}
-                      isClearable={true}
                       onChange={(opt) => {
                         // Update UI state first
                         setKoppelingValue(rowId, (prev) => ({
@@ -474,62 +538,81 @@ const ConFormApplicatieKoppelingenStage = memo(
                           appBId: opt?.value ?? null,
                         });
                       }}
+                      onInputChange={(inputValue, meta) => {
+                        if (meta && meta.action === 'input-change') {
+                          searchModules(inputValue || '');
+                        }
+                        return inputValue;
+                      }}
+                      isLoading={modulesLoading || buitengemeentelijkeOptionsLoading}
+                      inputId={appBId}
+                      aria-required='true'
                       styles={getSelectStyles()}
                     />
-                  </TableCell>
-                  <TableCell>
-                    <ReactSelect
-                      options={typeOptions}
-                      value={
-                        typeByRow[rowId]
-                          ? typeOptions.find((o) => o.value === typeByRow[rowId])
-                          : null
+                  </div>
+                  <div>
+                    <label
+                      className='utrecht-form-label'
+                      htmlFor={`koppeling-naam-${rowId}`}
+                      style={{ display: 'block' }}
+                    >
+                      Naam
+                      <span className='required-indicator' aria-hidden='true'>
+                        *
+                      </span>
+                      <span className='sr-only'>(verplicht)</span>
+                    </label>
+                    <Textbox
+                      id={`koppeling-naam-${rowId}`}
+                      value={koppelingData?.naam || ''}
+                      onChange={(e) =>
+                        persistRowIntoApplicatie(rowId, {
+                          naam: e?.target?.value || '',
+                        })
                       }
-                      onChange={(opt) => {
-                        // Persist immediately with the fresh value
-                        persistRowIntoApplicatie(rowId, { soort: opt?.value });
-                        // Keep UI state in sync
-                        setKoppelingValue(rowId, (prev) => ({
-                          typeByRow: { ...prev.typeByRow, [rowId]: opt?.value },
-                        }));
-                      }}
+                      placeholder='Naam van de koppeling'
+                      aria-required='true'
                     />
-                  </TableCell>
-                  <TableCell>
-                    <div style={{ display: 'flex', justifyContent: 'center' }}>
-                      <AcButton
-                        style='button'
-                        buttonType='secondary'
-                        icon={<VISUALS.TRASHCAN />}
-                        onClick={() => {
-                          rows.length === 1 ? clearRow(rowId) : removeRow(rowId);
-                        }}
-                        title='Rij verwijderen'
-                      ></AcButton>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-
-              <div style={{ marginTop: '1rem' }}>
-                <AcButton
-                  style='button'
-                  icon={<VISUALS.PLUS />}
-                  onClick={() =>
-                    setKoppelingenFormState((prev) => ({
-                      ...prev,
-                      rows: [...prev.rows, prev.nextRowId],
-                      nextRowId: prev.nextRowId + 1,
-                    }))
-                  }
-                >
-                  Nieuwe koppeling toevoegen
-                </AcButton>
+                  </div>
+                  <div></div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-end',
+                      justifyContent: 'flex-end',
+                    }}
+                  >
+                    <AcButton
+                      style='button'
+                      buttonType='secondary'
+                      onClick={() => {
+                        rows.length === 1 ? clearRow(rowId) : removeRow(rowId);
+                      }}
+                      disabled={rows.length === 1}
+                      icon={<VISUALS.TRASHCAN />}
+                      title='Rij verwijderen'
+                    />
+                  </div>
+                </div>
               </div>
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </div>
+            );
+          })}
+        </AcFlex>
+
+        <AcButton
+          style='button'
+          icon={<VISUALS.PLUS />}
+          onClick={() =>
+            setKoppelingenFormState((prev) => ({
+              ...prev,
+              rows: [...prev.rows, prev.nextRowId],
+              nextRowId: prev.nextRowId + 1,
+            }))
+          }
+        >
+          Nieuwe koppeling toevoegen
+        </AcButton>
+      </AcFlex>
     );
   }
 );

@@ -569,9 +569,7 @@ const ConFormApplicatieControlerenStage = memo(
                   <div>
                     <UnorderedList>
                       {applicatie.koppelingen.map((kp, kIdx) => {
-                        const richting = kp.richtingDataUitwisseling;
-                        const soortVal = kp.soortKoppeling;
-                        const soortLabel = soortVal || '';
+                        const richting = kp.gegevensuitwisselingRichting;
                         const arrow =
                           richting === 'AnaarB'
                             ? '→'
@@ -586,14 +584,20 @@ const ConFormApplicatieControlerenStage = memo(
                           kp.moduleBId;
                         const moduleBDisplayName = getModuleBDisplayName(moduleBId);
 
+                        // Get koppeling name (required field)
+                        const koppelingNaam = kp.naam;
+
                         return (
                           <UnorderedListItem
                             key={`${
                               kp.moduleA || applicatie.naam
                             }-${moduleBId}-${kIdx}`}
                           >
-                            {applicatie.naam} {arrow} {moduleBDisplayName}
-                            {soortLabel ? ` (${soortLabel})` : ''}
+                            <strong>{koppelingNaam}</strong>
+                            <br />
+                            <span style={{ fontSize: '0.875rem', color: '#666' }}>
+                              {applicatie.naam} {arrow} {moduleBDisplayName}
+                            </span>
                           </UnorderedListItem>
                         );
                       })}
