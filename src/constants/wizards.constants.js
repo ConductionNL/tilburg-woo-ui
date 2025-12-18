@@ -16,32 +16,6 @@ import { PATHS } from './routes.constants';
  */
 
 export const DASHBOARD_WIZARDS = {
-  // EIGEN_PRODUCT: {
-  //   id: 'eigen-product',
-  //   name: 'Product aanbieden',
-  //   description: 'Voeg een product van uw eigen organisatie toe aan de catalogus',
-  //   icon: VISUALS.CUBES,
-  //   path: PATHS.FORMS_PRODUCT,
-  //   requiresAuth: true,
-  //   requiresOrganization: true,
-  //   groupTypes: ['leverancier', 'gemeente', 'samenwerking'],
-  //   params: { type: 'eigen' },
-  //   color: 'blue',
-  //   schema: 'product',
-  // },
-  // ONTBREKEND_PRODUCT: {
-  //   id: 'ontbrekend-product',
-  //   name: 'Product melden en registreren',
-  //   description: 'Meld een product dat nog niet in de catalogus staat',
-  //   icon: VISUALS.PLUS,
-  //   path: PATHS.FORMS_PRODUCT,
-  //   requiresAuth: true,
-  //   requiresOrganization: false,
-  //   groupTypes: ['leverancier', 'gemeente', 'samenwerking', 'community'],
-  //   params: { type: 'ontbrekend' },
-  //   color: 'blue',
-  //   schema: 'product',
-  // },
   EIGEN_APPLICATIE: {
     id: 'eigen-applicatie',
     name: 'Applicatie publiceren',
@@ -55,19 +29,19 @@ export const DASHBOARD_WIZARDS = {
     color: 'blue',
     schema: 'applicatie',
   },
-  ONTBREKEND_APPLICATIE: {
-    id: 'ontbrekend-applicatie',
-    name: 'Applicatie toevoegen',
-    description: 'Meld een applicatie dat nog niet in de catalogus staat',
-    icon: VISUALS.CUBE,
-    path: PATHS.FORMS_APPLICATIE,
-    requiresAuth: true,
-    requiresOrganization: false,
-    groupTypes: ['leverancier', 'gemeente', 'samenwerking', 'community'],
-    params: { type: 'ontbrekend-applicatie' },
-    color: 'blue',
-    schema: 'applicatie',
-  },
+  // ONTBREKEND_APPLICATIE: {
+  //   id: 'ontbrekend-applicatie',
+  //   name: 'Applicatie toevoegen',
+  //   description: 'Meld een applicatie dat nog niet in de catalogus staat',
+  //   icon: VISUALS.CUBE,
+  //   path: PATHS.FORMS_APPLICATIE,
+  //   requiresAuth: true,
+  //   requiresOrganization: false,
+  //   groupTypes: ['leverancier', 'gemeente', 'samenwerking', 'community'],
+  //   params: { type: 'ontbrekend-applicatie' },
+  //   color: 'blue',
+  //   schema: 'applicatie',
+  // },
   DIENST: {
     id: 'dienst',
     name: 'Dienst publiceren',
@@ -96,9 +70,9 @@ export const DASHBOARD_WIZARDS = {
   },
   GEBRUIK: {
     id: 'gebruik',
-    name: 'Nieuwe applicatie toevoegen',
+    name: 'Applicatie toevoegen',
     description:
-      'Voeg een nieuwe applicatie toe aan uw applicatielandschap én aan de softwarecatalogus',
+      'Voeg een applicatie toe aan uw applicatielandschap.',
     icon: VISUALS.CLIPBOARD_CHECK,
     path: PATHS.FORMS_GEBRUIK,
     requiresAuth: true,
@@ -167,9 +141,8 @@ export const getDashboardWizards = (user = null) => {
   ];
 
   const gebruikBeheerderWizards = [
-    DASHBOARD_WIZARDS.ONTBREKEND_APPLICATIE,
-    DASHBOARD_WIZARDS.DIENST_TOEVOEGEN,
     DASHBOARD_WIZARDS.GEBRUIK,
+    DASHBOARD_WIZARDS.DIENST_TOEVOEGEN,
     DASHBOARD_WIZARDS.KOPPELING_TOEVOEGEN,
   ];
 

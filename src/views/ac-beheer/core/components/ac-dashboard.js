@@ -142,7 +142,13 @@ const AcDashboard = ({ store }) => {
                   <ConSpinLoader />
                 </AcFlex>
               ) : availableWizards.length > 0 ? (
-                <AcGrid columns={4} gap='xl' className='ac-dashboard-wizard-grid'>
+                <AcGrid
+                  columns={
+                    availableWizards.length >= 4 ? 4 : availableWizards.length
+                  }
+                  gap='xl'
+                  className='ac-dashboard-wizard-grid'
+                >
                   {availableWizards.map((wizard) => (
                     <AcTile
                       key={wizard.id}
