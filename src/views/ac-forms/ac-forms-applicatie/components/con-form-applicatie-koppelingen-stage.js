@@ -326,6 +326,37 @@ const ConFormApplicatieKoppelingenStage = memo(
           </Paragraph>
         </div>
 
+        {/* Closeable info alert about updating koppeling details later */}
+        {showInfoAlert && (
+          <Alert severity='info' className='ac-forms-info-alert'>
+            <button
+              onClick={handleCloseAlert}
+              className='ac-forms-product-info-alert__close-button'
+              title='Sluiten'
+              aria-label='Alert sluiten'
+            >
+              <VISUALS.CLOSE />
+            </button>
+            <div className='ac-forms-product-info-alert__content'>
+              <VISUALS.INFO className='ac-forms-product-info-alert__icon' />
+              <div>
+                <strong>Koppeling informatie aanpassen</strong>
+                <br />
+                <span className='ac-forms-product-info-alert__text'>
+                  U definieert hier basisinformatie van koppelingen tussen uw
+                  applicatie en die van anderen. Na het opslaan van uw registratie
+                  van de applicatie kunt u op de detailpagina van elke koppeling
+                  aanvullende technische details toevoegen.
+                  <br />
+                  Als de applicatie waarmee uw wilt koppelen nog niet bestaat, dan
+                  kunt u de leverancier vragen zich ook aan te melden bij de
+                  softwarecatalogus.
+                </span>
+              </div>
+            </div>
+          </Alert>
+        )}
+
         {/* Legend */}
         <div
           style={{
@@ -364,37 +395,6 @@ const ConFormApplicatieKoppelingenStage = memo(
             </span>
           </div>
         </div>
-
-        {/* Closeable info alert about updating koppeling details later */}
-        {showInfoAlert && (
-          <Alert severity='info' className='ac-forms-product-info-alert'>
-            <button
-              onClick={handleCloseAlert}
-              className='ac-forms-product-info-alert__close-button'
-              title='Sluiten'
-              aria-label='Alert sluiten'
-            >
-              <VISUALS.CLOSE />
-            </button>
-            <div className='ac-forms-product-info-alert__content'>
-              <VISUALS.INFO className='ac-forms-product-info-alert__icon' />
-              <div>
-                <strong>Koppeling informatie aanpassen</strong>
-                <br />
-                <span className='ac-forms-product-info-alert__text'>
-                  U definieert hier basisinformatie van koppelingen tussen uw
-                  applicatie en die van anderen. Na het opslaan van uw registratie
-                  van de applicatie kunt u op de detailpagina van elke koppeling
-                  aanvullende technische details toevoegen.
-                  <br />
-                  Als de applicatie waarmee uw wilt koppelen nog niet bestaat, dan
-                  kunt u de leverancier vragen zich ook aan te melden bij de
-                  softwarecatalogus.
-                </span>
-              </div>
-            </div>
-          </Alert>
-        )}
 
         <AcFlex column spacing='sm' className='con-form-wizard-rows'>
           {rows.map((rowId) => {

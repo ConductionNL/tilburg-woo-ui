@@ -1,11 +1,7 @@
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import { ConSchemaEnhancedField } from '@src/components';
-import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
-import {
-  validateWebsite,
-  validateEmail,
-  validatePhone,
-} from '@views/ac-forms/validation/form-validations';
+import { Alert, Paragraph } from '@utrecht/component-library-react/dist/css-module';
+import { validateWebsite } from '@views/ac-forms/validation/form-validations';
 import { AcButton } from '@src/molecules';
 import { VISUALS } from '@src/constants';
 
@@ -34,7 +30,42 @@ const ConGebruikStepProductApplicatie = ({
   leverancierLoading,
   searchLeveranciers,
   loading,
+  isEditMode = false,
 }) => {
+  // Manage visibility state of info alerts for application flows.
+  // Alert persists as closed for the session after user closes it (via sessionStorage).
+  const [showInfoAlertBestaand, setShowInfoAlertBestaand] = useState(() => {
+    // Return true (show) if the alert has not been closed in this session, otherwise false.
+    return !sessionStorage.getItem(
+      'gebruik-applicatie-toevoegen-bestaand-info-alert-closed'
+    );
+  });
+
+  const [showInfoAlertNieuw, setShowInfoAlertNieuw] = useState(() => {
+    // Return true (show) if the alert has not been closed in this session, otherwise false.
+    return !sessionStorage.getItem(
+      'gebruik-applicatie-toevoegen-nieuw-info-alert-closed'
+    );
+  });
+
+  // Mark the 'bestaand' alert as closed for the session and update state.
+  const handleCloseAlertBestaand = () => {
+    setShowInfoAlertBestaand(false);
+    sessionStorage.setItem(
+      'gebruik-applicatie-toevoegen-bestaand-info-alert-closed',
+      'true'
+    );
+  };
+
+  // Mark the 'nieuw' alert as closed for the session and update state.
+  const handleCloseAlertNieuw = () => {
+    setShowInfoAlertNieuw(false);
+    sessionStorage.setItem(
+      'gebruik-applicatie-toevoegen-nieuw-info-alert-closed',
+      'true'
+    );
+  };
+
   // Existing application flow
   if (applicatieKeuze === 'bestaand') {
     return (
@@ -44,8 +75,39 @@ const ConGebruikStepProductApplicatie = ({
         aria-labelledby='applicatie-title'
       >
         <h2 id='applicatie-title' className='sr-only'>
-          Applicatie
+          Toevoegen applicatie
         </h2>
+        <Paragraph className='con-form-wizard-paragraph'>
+          Selecteer de applicatie door te zoeken op de applicatie- en
+          leveranciersnaam. Als u de applicatie niet vind, dan kan deze worden
+          toegevoegd aan de centrale lijst
+        </Paragraph>
+
+        {/* Closeable info alert about adding an existing application */}
+        {showInfoAlertBestaand && (
+          <Alert severity='info' className='ac-forms-product-info-alert'>
+            <button
+              onClick={handleCloseAlertBestaand}
+              className='ac-forms-product-info-alert__close-button'
+              title='Sluiten'
+              aria-label='Alert sluiten'
+            >
+              <VISUALS.CLOSE />
+            </button>
+            <div className='ac-forms-product-info-alert__content'>
+              <VISUALS.INFO className='ac-forms-product-info-alert__icon' />
+              <div>
+                <strong>Zoekpagina</strong>
+                <br />
+                <span className='ac-forms-product-info-alert__text'>
+                  U kunt ook de zoekpagina gebruiken. Open de detailpagina van de
+                  gevonden applicatie en klik op{' '}
+                  <strong>‘Applicatie toevoegen’</strong>.
+                </span>
+              </div>
+            </div>
+          </Alert>
+        )}
 
         <Paragraph>
           Selecteer de applicatie(s) waarvan u het gebruik aan uw klanten wilt
@@ -91,11 +153,39 @@ const ConGebruikStepProductApplicatie = ({
       aria-labelledby='applicatie-creation-title'
     >
       <h2 id='applicatie-creation-title' className='sr-only'>
-        Applicatie aanmaken
+        Publiceren applicatie
       </h2>
       <Paragraph className='con-form-wizard-paragraph'>
-        Maak een nieuwe applicatie aan voor dit gebruik.
+        Vul de gegevens in voor de applicatie. Na het opvoeren van de applicatie is
+        deze ook zichtbaar voor andere gemeenten, zodat zij deze ook kunnen opnemen
+        in hun applicatielandschap. Hiermee worden dubbele registraties voorkomen.
       </Paragraph>
+
+      {/* Closeable info alert about adding an existing application */}
+      {showInfoAlertNieuw && (
+        <Alert severity='info' className='ac-forms-product-info-alert'>
+          <button
+            onClick={handleCloseAlertNieuw}
+            className='ac-forms-product-info-alert__close-button'
+            title='Sluiten'
+            aria-label='Alert sluiten'
+          >
+            <VISUALS.CLOSE />
+          </button>
+          <div className='ac-forms-product-info-alert__content'>
+            <VISUALS.INFO className='ac-forms-product-info-alert__icon' />
+            <div>
+              <strong>Applicatie zoeken</strong>
+              <br />
+              <span className='ac-forms-product-info-alert__text'>
+                Weet je zeker dat de applicatie niet al bestaat? Ga naar de
+                zoekpagina en zoek op de naam van applicatie of leverancier. Zoek ook
+                op andere schrijfwijzen.
+              </span>
+            </div>
+          </div>
+        </Alert>
+      )}
 
       <div className='con-dynamic-form-container'>
         <div className='con-form-fields-container'>
@@ -152,16 +242,18 @@ const ConGebruikStepProductApplicatie = ({
                 }}
               />
 
-              <div style={{ alignSelf: 'end' }}>
-                <AcButton
-                  style='button'
-                  buttonType='secondary'
-                  icon={<VISUALS.BUILDING />}
-                  onClick={() => setLeverancierKeuze('nieuw')}
-                >
-                  Ik kan de gewenste leverancier niet vinden
-                </AcButton>
-              </div>
+              {!isEditMode && (
+                <div style={{ alignSelf: 'end' }}>
+                  <AcButton
+                    style='button'
+                    buttonType='secondary'
+                    icon={<VISUALS.BUILDING />}
+                    onClick={() => setLeverancierKeuze('nieuw')}
+                  >
+                    Ik kan de gewenste leverancier niet vinden
+                  </AcButton>
+                </div>
+              )}
             </>
           )}
 
@@ -173,19 +265,6 @@ const ConGebruikStepProductApplicatie = ({
                 schemaProperty='naam'
                 value={leverancierOrganisatie.naam || ''}
                 onChange={(value) => setLeverancierOrganisatieData('naam', value)}
-                isDisabled={loading}
-                width='full'
-                schemas={schemas}
-                customProps={{
-                  required: true,
-                }}
-              />
-
-              <ConSchemaEnhancedField
-                schemaType='organisatie'
-                schemaProperty='type'
-                value={leverancierOrganisatie.type || ''}
-                onChange={(value) => setLeverancierOrganisatieData('type', value)}
                 isDisabled={loading}
                 width='half'
                 schemas={schemas}
@@ -212,49 +291,6 @@ const ConGebruikStepProductApplicatie = ({
                     },
                     customErrorMessage:
                       'Website heeft een ongeldig formaat (bijv. conduction.nl, www.conduction.nl of https://conduction.nl)',
-                  },
-                }}
-                schemas={schemas}
-              />
-
-              <ConSchemaEnhancedField
-                schemaType='organisatie'
-                schemaProperty='e-mailadres'
-                value={leverancierOrganisatie['e-mailadres'] || ''}
-                onChange={(value) =>
-                  setLeverancierOrganisatieData('e-mailadres', value)
-                }
-                isDisabled={loading}
-                width='half'
-                customProps={{
-                  inputType: 'text',
-                  validation: {
-                    custom: (value) => {
-                      if (!value || value.trim() === '') return true;
-                      return !!validateEmail(value.trim());
-                    },
-                    customErrorMessage: 'Ongeldig e-mailadres',
-                  },
-                }}
-                schemas={schemas}
-              />
-
-              <ConSchemaEnhancedField
-                schemaType='organisatie'
-                schemaProperty='telefoonnummer'
-                value={leverancierOrganisatie.telefoonnummer || ''}
-                onChange={(value) =>
-                  setLeverancierOrganisatieData('telefoonnummer', value)
-                }
-                isDisabled={loading}
-                width='half'
-                customProps={{
-                  validation: {
-                    custom: (value) => {
-                      if (!value || value.trim() === '') return true;
-                      return validatePhone(value.trim());
-                    },
-                    customErrorMessage: 'Ongeldig telefoonnummer. (+31 6 1234 5678)',
                   },
                 }}
                 schemas={schemas}

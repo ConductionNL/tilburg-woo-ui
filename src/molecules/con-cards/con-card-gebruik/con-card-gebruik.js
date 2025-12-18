@@ -20,10 +20,10 @@ const ConCardGebruik = ({
   navigateTo = 'publication',
 }) => {
   // Use generic UUID resolver for organisation name
-  const resolvedOrganisation = useResolvedText(organisation, objectStore);
+  const { resolvedText: resolvedOrganisation } = useResolvedText(organisation, objectStore);
 
   // Resolve the module (applicatie) name
-  const resolvedModule = useResolvedText(module, objectStore);
+  const { resolvedText: resolvedModule } = useResolvedText(module, objectStore);
 
   // Title is always "applicatie name - gebruik"
   const resolvedTitle = resolvedModule

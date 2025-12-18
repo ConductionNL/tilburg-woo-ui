@@ -25,7 +25,7 @@ const ConCardModuleVersie = ({
   objectStore,
   navigateTo = 'publication',
 }) => {
-  const resolvedModule = useResolvedText(moduleUuid, objectStore);
+  const { resolvedText: resolvedModule } = useResolvedText(moduleUuid, objectStore);
 
   const title = versie || '';
 

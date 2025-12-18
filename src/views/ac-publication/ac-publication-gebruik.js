@@ -15,6 +15,7 @@ import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-behe
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
 import { normalizeSchemaName } from '@src/utilities/con-normalize-schema-name';
+import { AcFormatDate } from '@src/utilities/ac-format-date';
 // import { checkOrganizationPermissions } from '@utils/organization-permissions';
 
 /**
@@ -121,6 +122,48 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
 
   const status = get_single?.status || '-';
 
+  // Get all status dates that are set
+  const statusDates = [
+    {
+      label: 'Startdatum Verwerving',
+      value: get_single?.startDatumVerwerving
+        ? AcFormatDate(get_single.startDatumVerwerving, 'YYYY-MM-DD', 'D MMMM YYYY')
+        : null,
+    },
+    {
+      label: 'Startdatum Gepland',
+      value: get_single?.startDatumGepland
+        ? AcFormatDate(get_single.startDatumGepland, 'YYYY-MM-DD', 'D MMMM YYYY')
+        : null,
+    },
+    {
+      label: 'Startdatum In productie',
+      value: get_single?.startDatumInProductie
+        ? AcFormatDate(get_single.startDatumInProductie, 'YYYY-MM-DD', 'D MMMM YYYY')
+        : null,
+    },
+    {
+      label: 'Startdatum Uit te faseren',
+      value: get_single?.startDatumUitTeFaseren
+        ? AcFormatDate(
+            get_single.startDatumUitTeFaseren,
+            'YYYY-MM-DD',
+            'D MMMM YYYY'
+          )
+        : null,
+    },
+    {
+      label: 'Startdatum Uitgefaseerd',
+      value: get_single?.startDatumUitGefaseerd
+        ? AcFormatDate(
+            get_single.startDatumUitGefaseerd,
+            'YYYY-MM-DD',
+            'D MMMM YYYY'
+          )
+        : null,
+    },
+  ].filter((item) => item.value);
+
   // Extract deelnemer IDs from the data
   const deelnemerIds = Array.isArray(get_single?.deelnemers)
     ? get_single.deelnemers.map((deelnemer) => {
@@ -159,7 +202,8 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
             onDelete={handleDelete}
             onEdit={() => {
               if (schemaSlug) {
-                const wizardSchemaName = normalizeSchemaName(schemaSlug).toLowerCase();
+                const wizardSchemaName =
+                  normalizeSchemaName(schemaSlug).toLowerCase();
                 const wizards = Object.values(DASHBOARD_WIZARDS);
                 const wizard = wizards.find((w) => w.schema === wizardSchemaName);
                 if (wizard) {
@@ -187,6 +231,13 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
               <strong>Status: </strong>
               {status}
             </div>
+
+            {statusDates.map((dateItem) => (
+              <div key={dateItem.label} style={{ marginBottom: '8px' }}>
+                <strong>{dateItem.label}: </strong>
+                {dateItem.value}
+              </div>
+            ))}
           </div>
 
           {sortedReferentiecomponenten.length > 0 && (

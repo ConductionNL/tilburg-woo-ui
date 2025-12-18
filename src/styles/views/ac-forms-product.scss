@@ -23,9 +23,9 @@
 
         // Force proper flexbox behavior with maximum specificity
         &.field-size-full {
-        // commented out because it caused issues regarding height
-        //   flex: 0 0 100% !important;
-        //   flex-basis: 100% !important;
+          // commented out because it caused issues regarding height
+          //   flex: 0 0 100% !important;
+          //   flex-basis: 100% !important;
           width: 100% !important;
           max-width: 100% !important;
         }
@@ -142,9 +142,14 @@
   }
 }
 
+.ac-forms-info-alert {
+  margin-block-start: 1rem !important;
+}
+
 // Info alert styles for diensten and koppelingen stages
-.ac-forms-product-info-alert {
-  margin-bottom: 1.5rem;
+.ac-forms-product-info-alert,
+.ac-forms-info-alert {
+  margin-bottom: 1.5rem !important;
   background-color: #e3f2fd !important;
   border: 1px solid #bbdefb;
   border-radius: 8px !important;
