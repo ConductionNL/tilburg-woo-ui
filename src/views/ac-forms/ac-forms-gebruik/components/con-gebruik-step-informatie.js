@@ -90,7 +90,7 @@ const ConGebruikStepInformatie = ({
           defaults[key] = property.default;
         }
         // Also check for examples as fallback defaults
-        if (property.example !== undefined && defaults[key] === undefined) {
+        else if (property.example !== undefined) {
           defaults[key] = property.example;
         }
       });
