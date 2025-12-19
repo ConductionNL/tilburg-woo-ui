@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { AcFlex } from '@src/atoms';
 import { AcCheckbox } from '@src/molecules';
-import { ConSchemaEnhancedField } from '@src/components';
+import { ConSchemaEnhancedField, ConUuidResolver } from '@src/components';
 import { Paragraph, Alert } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@src/constants';
 
@@ -269,11 +269,13 @@ const ConKoppelingStageZoeken = ({
                         <div>
                           {dir === 'BnaarA' ? (
                             <>
-                              {bLabel} {dirArrow} {aLabel}
+                              <ConUuidResolver>{bLabel}</ConUuidResolver> {dirArrow}{' '}
+                              <ConUuidResolver>{aLabel}</ConUuidResolver>
                             </>
                           ) : (
                             <>
-                              {aLabel} {dirArrow} {bLabel}
+                              <ConUuidResolver>{aLabel}</ConUuidResolver> {dirArrow}{' '}
+                              <ConUuidResolver>{bLabel}</ConUuidResolver>
                             </>
                           )}
                           {soortLabel ? ` (${soortLabel})` : ''}

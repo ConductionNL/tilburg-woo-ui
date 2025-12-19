@@ -17,6 +17,7 @@ import ConKoppelingStageZoeken from './components/con-koppeling-stage-zoeken';
 import ConKoppelingStageToevoegen from './components/con-koppeling-stage-toevoegen';
 import ConKoppelingStageControleren from './components/con-koppeling-stage-controleren';
 import ConKoppelingStepGebruiksinformatie from './components/con-koppeling-step-gebruiksinformatie';
+import ConKoppelingStepDeelnemers from './components/con-koppeling-step-deelnemers';
 import { commongroundApiUrl } from '@src/config';
 import { getActiveWizard } from '@src/constants/wizards.constants';
 import ConUnsavedChangesAlertModal from '@src/components/con-unsaved-changes-alert-modal/con-unsaved-changes-alert-modal';
@@ -177,6 +178,11 @@ const AcFormsKoppeling = ({ store }) => {
   const [datumEindeOndersteuning, setDatumEindeOndersteuning] = useState('');
   const [datumTeruggetrokken, setDatumTeruggetrokken] = useState('');
   const [interneAantekening, setInterneAantekening] = useState('');
+
+  // Deelnemers step state (for gebruik beheerder flow - aanbieden-koppeling)
+  const [deelnemers, setDeelnemers] = useState([]);
+  const [deelnemerOptions, setDeelnemerOptions] = useState([]);
+  const [deelnemersLoading, setDeelnemersLoading] = useState(false);
 
   // Confirmation modal state for "cannot find koppeling" button
   // This button switches from gebruik beheerder flow (aanbieden-koppeling) to aanbod beheerder flow (eigen-organisatie)
@@ -492,6 +498,21 @@ const AcFormsKoppeling = ({ store }) => {
         setDatumEindeOndersteuning(data?.datumEindeOndersteuning || '');
         setDatumTeruggetrokken(data?.datumTeruggetrokken || '');
         setInterneAantekening(data?.interneAantekening || '');
+
+        // Prefill deelnemers
+        const deelnemersData = data?.deelnemers || [];
+        const deelnemersIds = Array.isArray(deelnemersData)
+          ? deelnemersData.map((deelnemer) => {
+              // Handle both object format and string (UUID) format
+              if (typeof deelnemer === 'object') {
+                return String(deelnemer?.id || deelnemer?.['@self']?.id || '');
+              }
+              return String(deelnemer || '');
+            })
+          : [];
+        setDeelnemers(
+          deelnemersIds.filter((id) => id && id !== 'undefined' && id !== 'null')
+        );
 
         // Default koppelings type so step 0 isn't blocking
         setKoppelingsType('aanbieden-koppeling');
@@ -897,6 +918,82 @@ const AcFormsKoppeling = ({ store }) => {
     };
   }, [selectedKoppelingId, koppelingsType, isEditMode]);
 
+  // Fetch deelnemers from current logged-in organization (for gebruik beheerder flow)
+  useEffect(() => {
+    const fetchDeelnemers = async () => {
+      const activeOrg = store?.user?.activeOrganization;
+      const organisationId = activeOrg?.uuid || activeOrg?.id;
+
+      if (!organisationId) return;
+
+      try {
+        setDeelnemersLoading(true);
+        await store.object.fetchObject(
+          'voorzieningen',
+          'organisatie',
+          organisationId,
+          {
+            '_extend[]': ['@self.schema', 'deelnemers'],
+          }
+        );
+
+        const fullOrgData = store.object.getObject(
+          'voorzieningen_organisatie',
+          organisationId
+        );
+
+        if (fullOrgData) {
+          // Process deelnemers into options format
+          const deelnemers = Array.isArray(fullOrgData?.deelnemers)
+            ? fullOrgData.deelnemers
+            : [];
+
+          // Map deelnemers to options format
+          const options = deelnemers
+            .filter((deelnemer) => {
+              // Filter out invalid deelnemers
+              const id =
+                typeof deelnemer === 'object'
+                  ? deelnemer?.id || deelnemer?.['@self']?.id
+                  : deelnemer;
+              return id && id !== 'undefined' && id !== 'null';
+            })
+            .map((deelnemer) => {
+              // Handle both object format and string (UUID) format
+              if (typeof deelnemer === 'object') {
+                const id = deelnemer?.id || deelnemer?.['@self']?.id;
+                const label =
+                  deelnemer?.naam ||
+                  deelnemer?.['@self']?.name ||
+                  deelnemer?.name ||
+                  id;
+                return {
+                  value: String(id),
+                  label: String(label),
+                  data: deelnemer,
+                };
+              }
+              // If it's just a string (UUID), use it as both value and label
+              return {
+                value: String(deelnemer),
+                label: String(deelnemer),
+                data: null,
+              };
+            });
+
+          setDeelnemerOptions(options);
+        }
+      } catch (error) {
+        console.error('Error fetching deelnemers from organization:', error);
+        setDeelnemerOptions([]);
+      } finally {
+        setDeelnemersLoading(false);
+      }
+    };
+
+    fetchDeelnemers();
+  }, [store?.user?.activeOrganization?.uuid, store?.user?.activeOrganization?.id]);
+
   useEffect(() => {
     const shouldLoadStandards =
       standaardenOptions.length === 0 && !standaardenOptionsLoading;
@@ -1051,7 +1148,7 @@ const AcFormsKoppeling = ({ store }) => {
         };
 
         // If this row matches selectedKoppelingId (gebruik beheerder flow),
-        // add gebruiksinformatie fields
+        // add gebruiksinformatie fields and deelnemers
         if (
           selectedKoppelingId &&
           koppelingId === selectedKoppelingId &&
@@ -1063,6 +1160,7 @@ const AcFormsKoppeling = ({ store }) => {
           payload.datumEindeOndersteuning = datumEindeOndersteuning;
           payload.datumTeruggetrokken = datumTeruggetrokken;
           payload.interneAantekening = interneAantekening;
+          payload.deelnemers = Array.isArray(deelnemers) ? deelnemers : [];
         }
 
         return payload;
@@ -1070,7 +1168,7 @@ const AcFormsKoppeling = ({ store }) => {
       .filter(Boolean);
 
     // If we have selectedKoppelingId but no matching row (gebruik beheerder flow),
-    // add a payload for the selected koppeling with gebruiksinformatie fields
+    // add a payload for the selected koppeling with gebruiksinformatie fields and deelnemers
     if (
       selectedKoppelingId &&
       koppelingsType === 'aanbieden-koppeling' &&
@@ -1085,6 +1183,7 @@ const AcFormsKoppeling = ({ store }) => {
         datumEindeOndersteuning: datumEindeOndersteuning,
         datumTeruggetrokken: datumTeruggetrokken,
         interneAantekening: interneAantekening,
+        deelnemers: Array.isArray(deelnemers) ? deelnemers : [],
       });
     }
 
@@ -1257,6 +1356,8 @@ const AcFormsKoppeling = ({ store }) => {
     setDatumEindeOndersteuning('');
     setDatumTeruggetrokken('');
     setInterneAantekening('');
+    // Reset deelnemers
+    setDeelnemers([]);
   };
 
   const handleSave = async () => {
@@ -1422,6 +1523,17 @@ const AcFormsKoppeling = ({ store }) => {
           />
         );
 
+      case 'deelnemers':
+        return (
+          <ConKoppelingStepDeelnemers
+            deelnemers={deelnemers}
+            setDeelnemers={setDeelnemers}
+            loading={loading}
+            deelnemerOptions={deelnemerOptions}
+            deelnemersLoading={deelnemersLoading}
+          />
+        );
+
       case 'controleren':
         return (
           <ConKoppelingStageControleren
@@ -1474,7 +1586,7 @@ const AcFormsKoppeling = ({ store }) => {
           // get process step status index + define multi step label
           stepper.defineStep('process-steps-status', 'firstMultiStep'),
           // get the index of the labeled step + [amount of sub-steps]
-          stepper.getStepFromLabel('firstMultiStep') + 1
+          stepper.getStepFromLabel('firstMultiStep') + 2
         ),
         title: 'Een koppeling zoeken',
         steps: [
@@ -1486,6 +1598,15 @@ const AcFormsKoppeling = ({ store }) => {
               stepper.defineStep('process-steps-status')
             ),
             title: 'Gebruiksinformatie',
+          },
+          {
+            id: 'sub-deelnemers',
+            marker: stepper.defineStep('process-steps', 'deelnemers'),
+            status: getStatus(
+              stepper.getCurrentStep(),
+              stepper.defineStep('process-steps-status')
+            ),
+            title: 'Deelnemers toevoegen',
           },
         ],
       });
@@ -1539,6 +1660,8 @@ const AcFormsKoppeling = ({ store }) => {
         return isEditMode ? 'Bewerken' : 'Toevoegen';
       case 'gebruiksinformatie':
         return 'Gebruiksinformatie';
+      case 'deelnemers':
+        return 'Deelnemers toevoegen';
       case 'controleren':
         return 'Controleren';
       default:
