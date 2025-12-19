@@ -19,6 +19,7 @@ import clsx from 'clsx';
  * @param {Object} props - Component props
  * @param {Array<{id: string, label?: string, key?: string}>} props.headers - Array of header objects
  * @param {string[]} props.defaultHeaders - Array of header IDs that should be checked by default
+ * @param {string} props.type - Type identifier for session storage key
  * @param {(selected: Array<Object>) => void} props.onChange - Callback when selection changes
  * @param {React.Ref} ref - Forwarded ref to control the drawer
  */
@@ -30,19 +31,78 @@ const OrganisatieFilterHeadersDrawer = forwardRef(
       onChange,
       loading = false,
       getBeoordeling = () => {},
+      type,
     },
     ref
   ) => {
     const drawerRef = useRef(null);
     const touchedRef = useRef(false);
-    const [checkedIds, setCheckedIds] = useState(() => new Set(defaultHeaders));
+    const storageKey = type ? `filter-headers-${type}` : 'filter-headers-default';
+
+    // Load from session storage or use defaultHeaders
+    const getInitialCheckedIds = (
+      currentType,
+      currentDefaultHeaders,
+      currentStorageKey
+    ) => {
+      if (!currentType) return new Set(currentDefaultHeaders);
+
+      try {
+        const stored = sessionStorage.getItem(currentStorageKey);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          return new Set(parsed);
+        }
+      } catch (error) {
+        // If parsing fails, fall back to defaultHeaders
+      }
+
+      return new Set(currentDefaultHeaders);
+    };
+
+    const [checkedIds, setCheckedIds] = useState(() =>
+      getInitialCheckedIds(type, defaultHeaders, storageKey)
+    );
     const [selectedBeoordeling, setSelectedBeoordeling] = useState(null);
     const isInitialMount = useRef(true);
+    const isSavingToStorage = useRef(false);
+
+    // Notify parent component with initial checked headers from session storage
+    useEffect(() => {
+      if (isInitialMount.current && headers.length > 0) {
+        isInitialMount.current = false;
+        onChange?.(headers.filter((h) => checkedIds.has(h.id)));
+      }
+    }, [headers]);
+
+    // Save to session storage whenever checkedIds changes
+    useEffect(() => {
+      if (isInitialMount.current) {
+        return;
+      }
+
+      if (isSavingToStorage.current) {
+        isSavingToStorage.current = false;
+        return;
+      }
+
+      if (type) {
+        try {
+          sessionStorage.setItem(storageKey, JSON.stringify(Array.from(checkedIds)));
+        } catch (error) {
+          // Session storage might be disabled or full
+        }
+      }
+    }, [checkedIds, type, storageKey]);
 
     // Update checkedIds when defaultHeaders changes and component hasn't been touched
     useEffect(() => {
-      if (!touchedRef.current) setCheckedIds(new Set(defaultHeaders));
-    }, [defaultHeaders]);
+      if (!touchedRef.current) {
+        isSavingToStorage.current = true;
+        const initialIds = getInitialCheckedIds(type, defaultHeaders, storageKey);
+        setCheckedIds(initialIds);
+      }
+    }, [defaultHeaders, type, storageKey]);
 
     useImperativeHandle(
       ref,
@@ -67,7 +127,6 @@ const OrganisatieFilterHeadersDrawer = forwardRef(
 
     useEffect(() => {
       if (isInitialMount.current) {
-        isInitialMount.current = false;
         return;
       }
       onChange?.(headers.filter((h) => checkedIds.has(h.id)));
