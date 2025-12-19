@@ -66,6 +66,25 @@ const OrganisatieFilterHeadersDrawer = forwardRef(
     const [selectedBeoordeling, setSelectedBeoordeling] = useState(null);
     const isInitialMount = useRef(true);
     const isSavingToStorage = useRef(false);
+    const previousTypeRef = useRef(type);
+
+    // Reload from session storage when type changes
+    useEffect(() => {
+      if (previousTypeRef.current !== type) {
+        previousTypeRef.current = type;
+        touchedRef.current = false;
+        isSavingToStorage.current = true;
+        const newStorageKey = type
+          ? `filter-headers-${type}`
+          : 'filter-headers-default';
+        const initialIds = getInitialCheckedIds(type, defaultHeaders, newStorageKey);
+        setCheckedIds(initialIds);
+
+        if (headers.length > 0) {
+          onChange?.(headers.filter((h) => initialIds.has(h.id)));
+        }
+      }
+    }, [type, defaultHeaders, headers, onChange]);
 
     // Notify parent component with initial checked headers from session storage
     useEffect(() => {
@@ -97,12 +116,12 @@ const OrganisatieFilterHeadersDrawer = forwardRef(
 
     // Update checkedIds when defaultHeaders changes and component hasn't been touched
     useEffect(() => {
-      if (!touchedRef.current) {
+      if (!touchedRef.current && previousTypeRef.current === type) {
         isSavingToStorage.current = true;
         const initialIds = getInitialCheckedIds(type, defaultHeaders, storageKey);
         setCheckedIds(initialIds);
       }
-    }, [defaultHeaders, type, storageKey]);
+    }, [defaultHeaders]);
 
     useImperativeHandle(
       ref,
