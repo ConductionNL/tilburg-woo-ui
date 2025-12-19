@@ -33,7 +33,9 @@ const ConFilterHeadersDrawer = forwardRef(
       currentDefaultHeaders,
       currentStorageKey
     ) => {
-      if (!currentType) return new Set(currentDefaultHeaders);
+      if (!currentType) {
+        return new Set(currentDefaultHeaders);
+      }
 
       try {
         const stored = sessionStorage.getItem(currentStorageKey);
@@ -77,7 +79,8 @@ const ConFilterHeadersDrawer = forwardRef(
     useEffect(() => {
       if (isInitialMount.current && headers.length > 0) {
         isInitialMount.current = false;
-        onChange?.(headers.filter((h) => checkedIds.has(h.id)));
+        const selectedHeaders = headers.filter((h) => checkedIds.has(h.id));
+        onChange?.(selectedHeaders);
       }
     }, [headers]);
 
@@ -94,7 +97,8 @@ const ConFilterHeadersDrawer = forwardRef(
 
       if (type) {
         try {
-          sessionStorage.setItem(storageKey, JSON.stringify(Array.from(checkedIds)));
+          const valueToSave = JSON.stringify(Array.from(checkedIds));
+          sessionStorage.setItem(storageKey, valueToSave);
         } catch (error) {
           // Session storage might be disabled or full
         }
@@ -135,7 +139,8 @@ const ConFilterHeadersDrawer = forwardRef(
       if (isInitialMount.current) {
         return;
       }
-      onChange?.(headers.filter((h) => checkedIds.has(h.id)));
+      const selectedHeaders = headers.filter((h) => checkedIds.has(h.id));
+      onChange?.(selectedHeaders);
     }, [Array.from(checkedIds).join(',')]);
 
     if (loading)

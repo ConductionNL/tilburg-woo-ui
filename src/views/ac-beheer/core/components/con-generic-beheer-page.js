@@ -231,6 +231,9 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
   // Debounced search query ref for URL updates
   const searchDebounceTimerRef = useRef(null);
 
+  // Track if filter drawer has set headers from session storage
+  const filterDrawerHasSetHeadersRef = useRef(false);
+
   // Get base configuration for this type
   const baseConfig = useMemo(() => {
     try {
@@ -401,6 +404,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     setTableHeaders([]);
     setShowSearch(false);
     setLocalSearchInput('');
+    filterDrawerHasSetHeadersRef.current = false; // Reset so drawer can set headers from session storage
 
     // Reset URL query params (keep only non-SPOT params like showCreateModal)
     const params = new URLSearchParams(window.location.search);
@@ -713,8 +717,19 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     [shouldShowAllHeaders, defaultHeaderIds]
   );
 
+  // Wrap setTableHeaders to track when drawer sets headers from session storage
+  const handleSetTableHeaders = useCallback((newHeaders) => {
+    filterDrawerHasSetHeadersRef.current = true;
+    setTableHeaders(newHeaders);
+  }, []);
+
   useEffect(() => {
     if (!config || headers.length === 0) return;
+
+    // If the filter drawer has already set headers from session storage, don't override
+    if (filterDrawerHasSetHeadersRef.current) {
+      return;
+    }
 
     const next = shouldShowAllHeaders
       ? headers
@@ -1426,7 +1441,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
             defaultHeaders: shouldShowAllHeaders
               ? headers.map((h) => h.id)
               : defaultHeaderIds,
-            setTableHeaders,
+            setTableHeaders: handleSetTableHeaders,
             loading,
             setBeoordelingFilter,
           })}
