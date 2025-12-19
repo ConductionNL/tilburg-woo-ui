@@ -277,7 +277,7 @@ const BeheerPageConfigFactory = {
                 return (
                   (
                     <ConUuidResolver>
-                      {row['@self'].relations.module}
+                      {row['@self']?.relations?.module || '-'}
                     </ConUuidResolver>
                   ) || '-'
                 );
@@ -291,7 +291,7 @@ const BeheerPageConfigFactory = {
                 return (
                   (
                     <ConUuidResolver>
-                      {row['@self'].relations.moduleVersie}
+                      {row['@self']?.relations?.moduleVersie || '-'}
                     </ConUuidResolver>
                   ) || '-'
                 );
