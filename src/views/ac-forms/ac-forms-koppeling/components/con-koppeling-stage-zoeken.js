@@ -237,9 +237,14 @@ const ConKoppelingStageZoeken = ({
                         alignItems: 'flex-start',
                         gap: '0.75rem',
                         padding: '0.75rem',
-                        border: isSelected ? '2px solid #0063e5' : '1px solid #ddd',
+                        outline: isSelected ? '2px solid #0063e5' : '1px solid #ddd',
                         borderRadius: '4px',
                         backgroundColor: isSelected ? '#f0f7ff' : 'transparent',
+                      }}
+                      onClick={() => {
+                        if (!isEditMode && !loading) {
+                          setSelectedKoppelingId(isSelected ? null : koppelingId);
+                        }
                       }}
                     >
                       <div style={{ marginTop: '0.25rem' }}>

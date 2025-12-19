@@ -20,6 +20,7 @@ import { commongroundApiUrl } from '@src/config';
 import { getActiveWizard } from '@src/constants/wizards.constants';
 import ConUnsavedChangesAlertModal from '@src/components/con-unsaved-changes-alert-modal/con-unsaved-changes-alert-modal';
 import { useDebouncedInput } from '@src/hooks';
+import useStepper from '../con-stepper';
 
 /**
  * Koppeling Wizard (AcFormsKoppeling)
@@ -51,19 +52,8 @@ const AcFormsKoppeling = ({ store }) => {
   const validTypes = ['eigen-organisatie', 'aanbieden-koppeling'];
   const initialType = validTypes.includes(typeFromUrl) ? typeFromUrl : null;
 
-  // LEGACY: Type selection step removed - type is now required via URL parameter
-  // If type is not provided, default to 'aanbieden-koppeling' (gebruik beheerder flow)
-  // For gebruik beheerder flow (aanbieden-koppeling), always start at step 0 (Koppeling zoeken)
-  const getInitialStep = () => {
-    if (isEditMode) {
-      // In edit mode, skip zoeken step and go directly to Toevoegen/Bewerken
-      return 1;
-    }
-    // For new koppelingen, always start at step 0 (Koppeling zoeken)
-    return 0;
-  };
+  const stepper = useStepper();
 
-  const [currentStep, setCurrentStep] = useState(getInitialStep());
   const [loading, setLoading] = useState(false);
   const [koppelingsType, setKoppelingsType] = useState(
     initialType || 'aanbieden-koppeling'
@@ -82,15 +72,17 @@ const AcFormsKoppeling = ({ store }) => {
       );
 
       stepElements.forEach((stepEl, index) => {
+        index++;
+
         stepEl.style.cursor = '';
         stepEl.onclick = null;
         stepEl.classList.remove('ac-step-clickable');
 
-        if (index < currentStep) {
+        if (index < stepper.getCurrentStep()) {
           stepEl.classList.add('ac-step-clickable');
           stepEl.onclick = (e) => {
             e.preventDefault();
-            setCurrentStep(index);
+            stepper.setCurrentStep(index);
           };
         }
       });
@@ -98,7 +90,7 @@ const AcFormsKoppeling = ({ store }) => {
 
     const timeoutId = setTimeout(addClickHandlers, 100);
     return () => clearTimeout(timeoutId);
-  }, [currentStep]);
+  }, [stepper.getCurrentStep()]);
 
   // Schema management state
   const [schemas, setSchemas] = useState({});
@@ -211,17 +203,6 @@ const AcFormsKoppeling = ({ store }) => {
     if (dir === 'bi-directioneel') return '↔';
     return '↔';
   };
-
-  /**
-   * Convert physical step index to logical step number
-   * For gebruik beheerder flow (aanbieden-koppeling): physical steps map directly to logical steps
-   * Logical steps: 0=Zoeken, 1=Toevoegen, 2=Controleren
-   * @param {number} physicalStep - The physical step index
-   * @returns {number} The logical step number
-   */
-  const getLogicalStepFromPhysical = useCallback((physicalStep) => {
-    return physicalStep;
-  }, []);
 
   // Fetch modules (applications) options on mount
   useEffect(() => {
@@ -441,7 +422,7 @@ const AcFormsKoppeling = ({ store }) => {
     const run = async () => {
       if (!isEditMode) return;
       // Jump to edit step (was step 2, now step 1 after removing type selection)
-      setCurrentStep(1);
+      stepper.setCurrentStepByLabel('toevoegen');
       setPrefillLoading(true);
       try {
         const url = `/api/apps/openregister/api/objects/voorzieningen/koppeling/${encodeURIComponent(
@@ -882,16 +863,18 @@ const AcFormsKoppeling = ({ store }) => {
 
   // Build a detailed tooltip similar to ac-register when Next is disabled
   const getNextDisabledTooltip = () => {
-    const logicalStep = getLogicalStepFromPhysical(currentStep);
+    const logicalStep = stepper.getLabelFromStep(stepper.getCurrentStep());
 
-    if (logicalStep === 0) {
+    if (logicalStep === 'koppeling-zoeken') {
       // Step 0: Koppeling zoeken - Applicatie selectie is verplicht
       if (!ownApp?.value) {
         return 'Selecteer eerst een applicatie om door te gaan.';
       }
       return '';
     }
-    if (logicalStep !== 1) return ''; // Step 1 is Toevoegen/Bewerken
+
+    if (logicalStep !== 'toevoegen') return ''; // Step 1 is Toevoegen/Bewerken
+
     const messages = [];
     const missing = [];
     let missingA = false;
@@ -916,17 +899,17 @@ const AcFormsKoppeling = ({ store }) => {
   };
 
   const canGoNext = () => {
-    const logicalStep = getLogicalStepFromPhysical(currentStep);
+    const logicalStep = stepper.getLabelFromStep(stepper.getCurrentStep());
 
     // Zoeken step (logical step 0)
-    if (logicalStep === 0) {
+    if (logicalStep === 'koppeling-zoeken') {
       // Applicatie selectie is verplicht
       // User can proceed even without selecting a koppeling (to add new one)
-      return !!ownApp?.value;
+      return !!ownApp?.value && selectedKoppelingId;
     }
 
     // Toevoegen step (logical step 1)
-    if (logicalStep === 1) {
+    if (logicalStep === 'toevoegen') {
       if (!rows.length) return false;
       // Require Applicatie A, Applicatie B and Richting for all rows
       for (const rowId of rows) {
@@ -1142,7 +1125,7 @@ const AcFormsKoppeling = ({ store }) => {
 
   const handleResetForm = () => {
     // Reset all form state to initial values
-    setCurrentStep(getInitialStep());
+    stepper.resetCurrentStep(); // reset the stepper to the first step
     // LEGACY: setKoppelingsType(null); - Type now comes from URL, reset to default
     setKoppelingsType(typeFromUrl || 'aanbieden-koppeling');
     setSearchResults([]);
@@ -1236,10 +1219,10 @@ const AcFormsKoppeling = ({ store }) => {
   }, [saveResult]);
 
   const renderStep = (step) => {
-    const logicalStep = getLogicalStepFromPhysical(step);
+    const logicalStep = stepper.getLabelFromStep(step);
 
     switch (logicalStep) {
-      case 0: // Koppeling zoeken
+      case 'koppeling-zoeken':
         return (
           <ConKoppelingStageZoeken
             loading={loading}
@@ -1259,7 +1242,7 @@ const AcFormsKoppeling = ({ store }) => {
           />
         );
 
-      case 1: // Toevoegen/Bewerken
+      case 'toevoegen':
         return (
           <ConKoppelingStageToevoegen
             rows={rows}
@@ -1301,7 +1284,7 @@ const AcFormsKoppeling = ({ store }) => {
           />
         );
 
-      case 2: // Controleren
+      case 'controleren':
         return (
           <ConKoppelingStageControleren
             rows={rows}
@@ -1336,15 +1319,60 @@ const AcFormsKoppeling = ({ store }) => {
     }
   };
 
+  // steps configuration for the process steps component
+  const processStepsConfig = useMemo(() => {
+    const steps = [];
+
+    stepper.resetStepDefinitions('process-steps');
+    stepper.resetStepDefinitions('process-steps-status');
+
+    steps.push({
+      id: 'grp-koppeling',
+      marker: stepper.defineStep('process-steps', 'koppeling-zoeken'),
+      status: getStatusMulti(
+        // get the current step from the stepper
+        stepper.getCurrentStep(),
+        // get process step status index + define multi step label
+        stepper.defineStep('process-steps-status', 'firstMultiStep'),
+        // get the index of the labeled step + [amount of sub-steps]
+        stepper.getStepFromLabel('firstMultiStep') + 1
+      ),
+      title: 'Een koppeling zoeken',
+      steps: [
+        {
+          id: 'sub-toevoegen',
+          marker: stepper.defineStep('process-steps', 'toevoegen'),
+          status: getStatus(
+            stepper.getCurrentStep(),
+            stepper.defineStep('process-steps-status')
+          ),
+          title: isEditMode ? 'Bewerken' : 'Toevoegen',
+        },
+      ],
+    });
+
+    steps.push({
+      id: 'grp-review',
+      marker: stepper.defineStep('process-steps', 'controleren'),
+      status: getStatus(
+        stepper.getCurrentStep(),
+        stepper.defineStep('process-steps-status')
+      ),
+      title: 'Controleren',
+    });
+
+    return steps;
+  }, [isEditMode, stepper]);
+
   const currentStepName = (step) => {
-    const logicalStep = getLogicalStepFromPhysical(step);
+    const logicalStep = stepper.getLabelFromStep(step);
 
     switch (logicalStep) {
-      case 0:
+      case 'koppeling-zoeken':
         return 'Een koppeling zoeken';
-      case 1:
+      case 'toevoegen':
         return isEditMode ? 'Bewerken' : 'Toevoegen';
-      case 2:
+      case 'controleren':
         return 'Controleren';
       default:
         return '';
@@ -1396,41 +1424,14 @@ const AcFormsKoppeling = ({ store }) => {
           <div>
             {saveResult !== 'success' && saveResult !== 'error' && (
               <h3 className={clsx('utrecht-heading-3', 'ac-register-form-heading')}>
-                {currentStepName(currentStep)}
+                {currentStepName(stepper.getCurrentStep())}
               </h3>
             )}
 
             <div className='ac-register-container ac-forms-product'>
               {saveResult !== 'success' && saveResult !== 'error' && (
                 <div ref={processStepsRef} className='ac-register-process-steps'>
-                  <ProcessSteps
-                    steps={(() => {
-                      const steps = [];
-
-                      steps.push({
-                        id: 'grp-koppeling',
-                        marker: 1,
-                        status: getStatusMulti(currentStep, 0, 1),
-                        title: 'Een koppeling zoeken',
-                        steps: [
-                          {
-                            id: 'sub-toevoegen',
-                            status: getStatus(currentStep, 1),
-                            title: isEditMode ? 'Bewerken' : 'Toevoegen',
-                          },
-                        ],
-                      });
-
-                      steps.push({
-                        id: 'grp-review',
-                        marker: 2,
-                        status: getStatus(currentStep, 2),
-                        title: 'Controleren',
-                      });
-
-                      return steps;
-                    })()}
-                  />
+                  <ProcessSteps steps={processStepsConfig} />
                 </div>
               )}
 
@@ -1441,7 +1442,7 @@ const AcFormsKoppeling = ({ store }) => {
                   aria-live='polite'
                   id='form-status'
                 >
-                  {currentStepName(currentStep)}
+                  {currentStepName(stepper.getCurrentStep())}
                 </div>
 
                 {process.env.NODE_ENV === 'development' && (
@@ -1497,7 +1498,7 @@ const AcFormsKoppeling = ({ store }) => {
                   </div>
                 )}
 
-                {renderStep(currentStep)}
+                {renderStep(stepper.getCurrentStep())}
 
                 {saveResult !== 'success' && saveResult !== 'error' && (
                   <div
@@ -1508,19 +1509,22 @@ const AcFormsKoppeling = ({ store }) => {
                     }}
                   >
                     <AcFlex spacing='xs' style={{ width: 'fit-content' }}>
-                      {currentStep !== 0 && (
+                      {/* show previous button on all steps except first step */}
+                      {stepper.getCurrentStep() > 1 && (
                         <AcButton
                           style='button'
                           buttonType='secondary'
                           icon={<VISUALS.ARROW_LEFT />}
-                          onClick={() => setCurrentStep(currentStep - 1)}
+                          onClick={() => stepper.previous()}
                           disabled={loading || saveLoading || prefillLoading}
                         >
                           Vorige
                         </AcButton>
                       )}
 
-                      {getLogicalStepFromPhysical(currentStep) === 0 && (
+                      {/* show koppeling button on koppeling zoeken step */}
+                      {stepper.getStepFromLabel('koppeling-zoeken') ===
+                        stepper.getCurrentStep() && (
                         <>
                           {/* <AcButton
                             style='button'
@@ -1547,15 +1551,18 @@ const AcFormsKoppeling = ({ store }) => {
                       spacing='xs'
                       style={{ width: 'fit-content' }}
                       className={clsx(
-                        currentStep === 0 && 'ac-register-form-next-button'
+                        stepper.getCurrentStep() === 1 &&
+                          'ac-register-form-next-button'
                       )}
                     >
-                      {getLogicalStepFromPhysical(currentStep) !== 2 && (
+                      {/* show next button on all steps except controleren (last step) */}
+                      {stepper.getHighestStep('process-steps') !==
+                        stepper.getCurrentStep() && (
                         <div className='ac-register-button-wrapper'>
                           <AcButton
                             style='button'
                             icon={<VISUALS.ARROW_RIGHT />}
-                            onClick={() => setCurrentStep(currentStep + 1)}
+                            onClick={() => stepper.next()}
                             disabled={
                               !canGoNext() ||
                               loading ||
@@ -1570,7 +1577,9 @@ const AcFormsKoppeling = ({ store }) => {
                       )}
                     </AcFlex>
 
-                    {getLogicalStepFromPhysical(currentStep) === 2 && (
+                    {/* show save button on controleren step (last step) */}
+                    {stepper.getHighestStep('process-steps') ===
+                      stepper.getCurrentStep() && (
                       <AcButton
                         style='button'
                         buttonType='primary'
