@@ -327,6 +327,21 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     }
   }, [baseConfig, dataProperties, schemaData, schemaLoading, schemaError, type]);
 
+  // Refresh warmup data when type changes
+  useEffect(() => {
+    if (!config) {
+      return;
+    }
+
+    // Prioritize schemaSlug/id from config, otherwise use type
+    const schemaSlug = config.schemaSlug || type;
+    const register = config.registerSlug || 'voorzieningen';
+
+    if (schemaSlug) {
+      object.refreshWarmupDataForType(schemaSlug, register);
+    }
+  }, [type, config, object]);
+
   // Use custom hook for pagination limit with URL + backwards compatibility
   const [limit, setLimit] = useLimitWithBackwardsCompat(config?.paginationKey, 20);
 
