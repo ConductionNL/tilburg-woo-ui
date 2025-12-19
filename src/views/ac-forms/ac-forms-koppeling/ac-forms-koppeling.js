@@ -110,8 +110,18 @@ const AcFormsKoppeling = ({ store }) => {
           console.error('Failed to fetch koppeling schema:', koppelingError);
         }
 
+        // Fetch gebruik schema (for gebruik-beheerders flow)
+        let gebruikSchema = null;
+        try {
+          await store.object.fetchSchema('gebruik');
+          gebruikSchema = store.object.getSchema('schema_gebruik');
+        } catch (gebruikError) {
+          console.error('Failed to fetch gebruik schema:', gebruikError);
+        }
+
         setSchemas({
           koppeling: koppelingSchema,
+          gebruik: gebruikSchema,
         });
       } catch (error) {
         console.error('Failed to fetch schemas for koppeling form:', error);
@@ -168,19 +178,23 @@ const AcFormsKoppeling = ({ store }) => {
   const [buitengemeentelijkeOptionsLoading, setBuitengemeentelijkeOptionsLoading] =
     useState(false);
 
-  // Selected koppeling ID from zoeken step (gebruik beheerder flow - aanbieden-koppeling)
-  const [selectedKoppelingId, setSelectedKoppelingId] = useState(null);
+  // Gebruik state (for gebruik beheerder flow - aanbieden-koppeling)
+  const [gebruik, setGebruik] = useState({
+    selectedKoppelingId: null,
+    status: '',
+    startDatumInProductie: '',
+    startDatumGepland: '',
+    startDatumUitTeFaseren: '',
+    startDatumUitGefaseerd: '',
+    startDatumVerwerving: '',
+    interneAantekening: '',
+    deelnemers: [],
+  });
 
-  // Gebruiksinformatie step state (for gebruik beheerder flow - aanbieden-koppeling)
-  const [statusGebruiksinformatie, setStatusGebruiksinformatie] = useState('');
-  const [datumInGebruik, setDatumInGebruik] = useState('');
-  const [datumInOntwikkeling, setDatumInOntwikkeling] = useState('');
-  const [datumEindeOndersteuning, setDatumEindeOndersteuning] = useState('');
-  const [datumTeruggetrokken, setDatumTeruggetrokken] = useState('');
-  const [interneAantekening, setInterneAantekening] = useState('');
-
-  // Deelnemers step state (for gebruik beheerder flow - aanbieden-koppeling)
-  const [deelnemers, setDeelnemers] = useState([]);
+  // Helper function to update gebruik state
+  const setGebruikData = (key, value) => {
+    setGebruik((prev) => ({ ...prev, [key]: value }));
+  };
   const [deelnemerOptions, setDeelnemerOptions] = useState([]);
   const [deelnemersLoading, setDeelnemersLoading] = useState(false);
 
@@ -492,27 +506,8 @@ const AcFormsKoppeling = ({ store }) => {
         setKoppelingIdByRow({ 0: String(koppelingId) });
 
         // Prefill gebruiksinformatie fields
-        setStatusGebruiksinformatie(status);
-        setDatumInGebruik(data?.datumInGebruik || '');
-        setDatumInOntwikkeling(data?.datumInOntwikkeling || '');
-        setDatumEindeOndersteuning(data?.datumEindeOndersteuning || '');
-        setDatumTeruggetrokken(data?.datumTeruggetrokken || '');
-        setInterneAantekening(data?.interneAantekening || '');
-
-        // Prefill deelnemers
-        const deelnemersData = data?.deelnemers || [];
-        const deelnemersIds = Array.isArray(deelnemersData)
-          ? deelnemersData.map((deelnemer) => {
-              // Handle both object format and string (UUID) format
-              if (typeof deelnemer === 'object') {
-                return String(deelnemer?.id || deelnemer?.['@self']?.id || '');
-              }
-              return String(deelnemer || '');
-            })
-          : [];
-        setDeelnemers(
-          deelnemersIds.filter((id) => id && id !== 'undefined' && id !== 'null')
-        );
+        // Note: In edit mode, we're editing a koppeling, not a gebruik
+        // So we don't prefill gebruik fields here
 
         // Default koppelings type so step 0 isn't blocking
         setKoppelingsType('aanbieden-koppeling');
@@ -835,7 +830,7 @@ const AcFormsKoppeling = ({ store }) => {
   // Preselect koppeling from URL parameter (when coming from details page)
   useEffect(() => {
     if (koppelingIdFromUrl && !isEditMode) {
-      setSelectedKoppelingId(koppelingIdFromUrl);
+      setGebruikData('selectedKoppelingId', koppelingIdFromUrl);
 
       // Fetch the koppeling to get its applicaties and ensure it's in search results
       const fetchKoppelingForPreselection = async () => {
@@ -875,48 +870,6 @@ const AcFormsKoppeling = ({ store }) => {
       fetchKoppelingForPreselection();
     }
   }, [koppelingIdFromUrl, isEditMode]);
-
-  // Prefill gebruiksinformatie fields when selectedKoppelingId changes (for gebruik beheerder flow)
-  useEffect(() => {
-    if (
-      !selectedKoppelingId ||
-      koppelingsType !== 'aanbieden-koppeling' ||
-      isEditMode
-    )
-      return;
-
-    let cancelled = false;
-    const fetchKoppelingData = async () => {
-      try {
-        const url = `/api/apps/openregister/api/objects/voorzieningen/koppeling/${encodeURIComponent(
-          selectedKoppelingId
-        )}?_extend[]=@self.schema&_extend[]=@self.relations&_published=false`;
-        const res = await fetch(url, { headers: { Accept: 'application/json' } });
-        if (!res.ok) return;
-        const data = await res.json();
-
-        if (cancelled) return;
-
-        // Prefill gebruiksinformatie fields
-        setStatusGebruiksinformatie(data?.status || '');
-        setDatumInGebruik(data?.datumInGebruik || '');
-        setDatumInOntwikkeling(data?.datumInOntwikkeling || '');
-        setDatumEindeOndersteuning(data?.datumEindeOndersteuning || '');
-        setDatumTeruggetrokken(data?.datumTeruggetrokken || '');
-        setInterneAantekening(data?.interneAantekening || '');
-      } catch (error) {
-        console.error(
-          'Failed to fetch koppeling data for gebruiksinformatie:',
-          error
-        );
-      }
-    };
-
-    fetchKoppelingData();
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedKoppelingId, koppelingsType, isEditMode]);
 
   // Fetch deelnemers from current logged-in organization (for gebruik beheerder flow)
   useEffect(() => {
@@ -1061,13 +1014,13 @@ const AcFormsKoppeling = ({ store }) => {
     if (logicalStep === 'koppeling-zoeken') {
       // Applicatie selectie is verplicht
       // User can proceed even without selecting a koppeling (to add new one)
-      return !!ownApp?.value && selectedKoppelingId;
+      return !!ownApp?.value && gebruik.selectedKoppelingId;
     }
 
     // Gebruiksinformatie step (for gebruik beheerder flow)
     if (logicalStep === 'gebruiksinformatie') {
       // Require status to be selected
-      return !!statusGebruiksinformatie;
+      return !!gebruik.status;
     }
 
     // Toevoegen step (logical step 1)
@@ -1134,7 +1087,6 @@ const AcFormsKoppeling = ({ store }) => {
         const beschrijving = beschrijvingByRow[rowId] || '';
         const status = statusByRow[rowId] || '';
         const standaarden = standaardenByRow[rowId] || [];
-        const koppelingId = koppelingIdByRow[rowId];
 
         const payload = {
           naam,
@@ -1147,45 +1099,9 @@ const AcFormsKoppeling = ({ store }) => {
           standaardversies: standaarden,
         };
 
-        // If this row matches selectedKoppelingId (gebruik beheerder flow),
-        // add gebruiksinformatie fields and deelnemers
-        if (
-          selectedKoppelingId &&
-          koppelingId === selectedKoppelingId &&
-          koppelingsType === 'aanbieden-koppeling'
-        ) {
-          payload.status = statusGebruiksinformatie;
-          payload.datumInGebruik = datumInGebruik;
-          payload.datumInOntwikkeling = datumInOntwikkeling;
-          payload.datumEindeOndersteuning = datumEindeOndersteuning;
-          payload.datumTeruggetrokken = datumTeruggetrokken;
-          payload.interneAantekening = interneAantekening;
-          payload.deelnemers = Array.isArray(deelnemers) ? deelnemers : [];
-        }
-
         return payload;
       })
       .filter(Boolean);
-
-    // If we have selectedKoppelingId but no matching row (gebruik beheerder flow),
-    // add a payload for the selected koppeling with gebruiksinformatie fields and deelnemers
-    if (
-      selectedKoppelingId &&
-      koppelingsType === 'aanbieden-koppeling' &&
-      !payloads.some(
-        (p, index) => koppelingIdByRow[rows[index]] === selectedKoppelingId
-      )
-    ) {
-      payloads.push({
-        status: statusGebruiksinformatie,
-        datumInGebruik: datumInGebruik,
-        datumInOntwikkeling: datumInOntwikkeling,
-        datumEindeOndersteuning: datumEindeOndersteuning,
-        datumTeruggetrokken: datumTeruggetrokken,
-        interneAantekening: interneAantekening,
-        deelnemers: Array.isArray(deelnemers) ? deelnemers : [],
-      });
-    }
 
     return payloads;
   };
@@ -1347,20 +1263,131 @@ const AcFormsKoppeling = ({ store }) => {
     setKoppelingIdByRow({});
     setSaveResult(null);
     setSaveErrors([]);
-    // Reset selected koppeling
-    setSelectedKoppelingId(null);
-    // Reset gebruiksinformatie fields
-    setStatusGebruiksinformatie('');
-    setDatumInGebruik('');
-    setDatumInOntwikkeling('');
-    setDatumEindeOndersteuning('');
-    setDatumTeruggetrokken('');
-    setInterneAantekening('');
-    // Reset deelnemers
-    setDeelnemers([]);
+    // Reset gebruik state
+    setGebruik({
+      selectedKoppelingId: null,
+      status: '',
+      startDatumInProductie: '',
+      startDatumGepland: '',
+      startDatumUitTeFaseren: '',
+      startDatumUitGefaseerd: '',
+      startDatumVerwerving: '',
+      interneAantekening: '',
+      deelnemers: [],
+    });
+  };
+
+  // Save function for gebruik-beheerders flow (aanbieden-koppeling)
+  const handleSaveGebruik = async () => {
+    // Validation
+    if (!gebruik.selectedKoppelingId) {
+      setSaveResult('error');
+      setSaveErrors(['Geen koppeling geselecteerd']);
+      return;
+    }
+
+    if (!gebruik.status) {
+      setSaveResult('error');
+      setSaveErrors(['Status is verplicht']);
+      return;
+    }
+
+    const activeOrg = store?.user?.activeOrganization;
+    const afnemerId = activeOrg?.uuid || activeOrg?.id;
+    if (!afnemerId) {
+      setSaveResult('error');
+      setSaveErrors(['Geen actieve organisatie gevonden']);
+      return;
+    }
+
+    if (!ownApp?.value) {
+      setSaveResult('error');
+      setSaveErrors(['Geen applicatie geselecteerd']);
+      return;
+    }
+
+    setSaveLoading(true);
+    setSaveResult(null);
+    setSaveErrors([]);
+
+    try {
+      // Build payload with gebruik field names directly
+      const payload = {
+        koppelingen: [gebruik.selectedKoppelingId],
+        status: gebruik.status,
+        interneAantekening: gebruik.interneAantekening || '',
+        deelnemers: Array.isArray(gebruik.deelnemers) ? gebruik.deelnemers : [],
+        afnemer: afnemerId,
+        module: ownApp.value,
+      };
+
+      // Add the relevant date field based on status
+      switch (gebruik.status) {
+        case 'In productie':
+          if (gebruik.startDatumInProductie) {
+            payload.startDatumInProductie = gebruik.startDatumInProductie;
+          }
+          break;
+        case 'Gepland':
+          if (gebruik.startDatumGepland) {
+            payload.startDatumGepland = gebruik.startDatumGepland;
+          }
+          break;
+        case 'Uit te faseren':
+          if (gebruik.startDatumUitTeFaseren) {
+            payload.startDatumUitTeFaseren = gebruik.startDatumUitTeFaseren;
+          }
+          break;
+        case 'Uitgefaseerd':
+          if (gebruik.startDatumUitGefaseerd) {
+            payload.startDatumUitGefaseerd = gebruik.startDatumUitGefaseerd;
+          }
+          break;
+        case 'Verwerving':
+          if (gebruik.startDatumVerwerving) {
+            payload.startDatumVerwerving = gebruik.startDatumVerwerving;
+          }
+          break;
+      }
+
+      const endpoint = '/api/apps/openregister/api/objects/voorzieningen/gebruik';
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        try {
+          const data = await response.json();
+          setSaveResult('error');
+          setSaveErrors([data?.message || `Request failed (${response.status})`]);
+        } catch {
+          setSaveResult('error');
+          setSaveErrors([`Request failed (${response.status})`]);
+        }
+      } else {
+        setSaveResult('success');
+      }
+    } catch (e) {
+      setSaveResult('error');
+      setSaveErrors([e?.message || 'Onbekende fout bij opslaan']);
+    } finally {
+      setSaveLoading(false);
+    }
   };
 
   const handleSave = async () => {
+    // Route to gebruik save for gebruik-beheerders flow
+    if (koppelingsType === 'aanbieden-koppeling') {
+      handleSaveGebruik();
+      return;
+    }
+
+    // Existing logic for aanbod-beheerders flow
     const payloads = serializeRowsToPayload();
     if (!payloads.length) return;
 
@@ -1374,15 +1401,12 @@ const AcFormsKoppeling = ({ store }) => {
       const requests = payloads.map((body, index) => {
         if (!body) return null;
 
-        // Determine koppeling ID: use row-based ID or selectedKoppelingId
+        // Determine koppeling ID: use row-based ID
         const rowId = rows[index];
         const existingId =
-          (rowId !== undefined && koppelingIdByRow[rowId]) ||
-          (index >= rows.length &&
-          selectedKoppelingId &&
-          koppelingsType === 'aanbieden-koppeling'
-            ? selectedKoppelingId
-            : null);
+          rowId !== undefined && koppelingIdByRow[rowId]
+            ? koppelingIdByRow[rowId]
+            : null;
 
         const url = existingId
           ? `${endpoint}/${encodeURIComponent(String(existingId))}`
@@ -1455,8 +1479,10 @@ const AcFormsKoppeling = ({ store }) => {
             isEditMode={isEditMode}
             onSearchModules={debouncedSearchModules}
             schemas={schemas}
-            selectedKoppelingId={selectedKoppelingId}
-            setSelectedKoppelingId={setSelectedKoppelingId}
+            selectedKoppelingId={gebruik.selectedKoppelingId}
+            setSelectedKoppelingId={(id) =>
+              setGebruikData('selectedKoppelingId', id)
+            }
           />
         );
 
@@ -1505,18 +1531,32 @@ const AcFormsKoppeling = ({ store }) => {
       case 'gebruiksinformatie':
         return (
           <ConKoppelingStepGebruiksinformatie
-            status={statusGebruiksinformatie}
-            setStatus={setStatusGebruiksinformatie}
-            datumInGebruik={datumInGebruik}
-            setDatumInGebruik={setDatumInGebruik}
-            datumInOntwikkeling={datumInOntwikkeling}
-            setDatumInOntwikkeling={setDatumInOntwikkeling}
-            datumEindeOndersteuning={datumEindeOndersteuning}
-            setDatumEindeOndersteuning={setDatumEindeOndersteuning}
-            datumTeruggetrokken={datumTeruggetrokken}
-            setDatumTeruggetrokken={setDatumTeruggetrokken}
-            interneAantekening={interneAantekening}
-            setInterneAantekening={setInterneAantekening}
+            status={gebruik.status}
+            setStatus={(value) => setGebruikData('status', value)}
+            startDatumInProductie={gebruik.startDatumInProductie}
+            setStartDatumInProductie={(value) =>
+              setGebruikData('startDatumInProductie', value)
+            }
+            startDatumGepland={gebruik.startDatumGepland}
+            setStartDatumGepland={(value) =>
+              setGebruikData('startDatumGepland', value)
+            }
+            startDatumUitTeFaseren={gebruik.startDatumUitTeFaseren}
+            setStartDatumUitTeFaseren={(value) =>
+              setGebruikData('startDatumUitTeFaseren', value)
+            }
+            startDatumUitGefaseerd={gebruik.startDatumUitGefaseerd}
+            setStartDatumUitGefaseerd={(value) =>
+              setGebruikData('startDatumUitGefaseerd', value)
+            }
+            startDatumVerwerving={gebruik.startDatumVerwerving}
+            setStartDatumVerwerving={(value) =>
+              setGebruikData('startDatumVerwerving', value)
+            }
+            interneAantekening={gebruik.interneAantekening}
+            setInterneAantekening={(value) =>
+              setGebruikData('interneAantekening', value)
+            }
             loading={loading}
             schemas={schemas}
             isEditMode={isEditMode}
@@ -1526,8 +1566,8 @@ const AcFormsKoppeling = ({ store }) => {
       case 'deelnemers':
         return (
           <ConKoppelingStepDeelnemers
-            deelnemers={deelnemers}
-            setDeelnemers={setDeelnemers}
+            deelnemers={gebruik.deelnemers}
+            setDeelnemers={(value) => setGebruikData('deelnemers', value)}
             loading={loading}
             deelnemerOptions={deelnemerOptions}
             deelnemersLoading={deelnemersLoading}
@@ -1561,14 +1601,14 @@ const AcFormsKoppeling = ({ store }) => {
             onRetryForm={handleRetryForm}
             onResetForm={handleResetForm}
             koppelingsType={koppelingsType}
-            selectedKoppelingId={selectedKoppelingId}
-            statusGebruiksinformatie={statusGebruiksinformatie}
-            datumInGebruik={datumInGebruik}
-            datumInOntwikkeling={datumInOntwikkeling}
-            datumEindeOndersteuning={datumEindeOndersteuning}
-            datumTeruggetrokken={datumTeruggetrokken}
-            interneAantekening={interneAantekening}
-            deelnemers={deelnemers}
+            selectedKoppelingId={gebruik.selectedKoppelingId}
+            statusGebruiksinformatie={gebruik.status}
+            datumInGebruik={gebruik.startDatumInProductie}
+            datumInOntwikkeling={gebruik.startDatumGepland}
+            datumEindeOndersteuning={gebruik.startDatumUitTeFaseren}
+            datumTeruggetrokken={gebruik.startDatumUitGefaseerd}
+            interneAantekening={gebruik.interneAantekening}
+            deelnemers={gebruik.deelnemers}
             deelnemerOptions={deelnemerOptions}
             searchResults={searchResults}
           />
@@ -1680,6 +1720,17 @@ const AcFormsKoppeling = ({ store }) => {
   };
 
   const canSave = () => {
+    // For gebruik-beheerders flow, validate gebruik-specific fields
+    if (koppelingsType === 'aanbieden-koppeling') {
+      if (!gebruik.selectedKoppelingId) return false;
+      if (!gebruik.status) return false;
+      if (!ownApp?.value) return false;
+      const activeOrg = store?.user?.activeOrganization;
+      if (!activeOrg?.uuid && !activeOrg?.id) return false;
+      return true;
+    }
+
+    // For aanbod-beheerders flow, validate koppeling rows
     if (!rows.length) return false;
     // Require at least app A and app B for all rows
     for (const rowId of rows) {

@@ -7,23 +7,25 @@ import { VISUALS } from '@src/constants';
  * All date property names for clearing purposes.
  */
 const ALL_START_DATUM_PROPERTIES = [
-  'datumInGebruik',
-  'datumInOntwikkeling',
-  'datumEindeOndersteuning',
-  'datumTeruggetrokken',
+  'startDatumInProductie',
+  'startDatumGepland',
+  'startDatumUitTeFaseren',
+  'startDatumUitGefaseerd',
+  'startDatumVerwerving',
 ];
 
 /**
  * Maps status value to corresponding date property name.
- * @param {string} status - The status value (e.g., 'in gebruik', 'in ontwikkeling', etc.)
- * @returns {string|null} - The property name (e.g., 'datumInGebruik') or null if no mapping exists
+ * @param {string} status - The status value (e.g., 'In productie', 'Gepland', etc.)
+ * @returns {string|null} - The property name (e.g., 'startDatumInProductie') or null if no mapping exists
  */
 const getStartDatumPropertyName = (status) => {
   const statusToPropertyMap = {
-    'in gebruik': 'datumInGebruik',
-    'in ontwikkeling': 'datumInOntwikkeling',
-    'einde ondersteuning': 'datumEindeOndersteuning',
-    teruggetrokken: 'datumTeruggetrokken',
+    'In productie': 'startDatumInProductie',
+    Gepland: 'startDatumGepland',
+    'Uit te faseren': 'startDatumUitTeFaseren',
+    Uitgefaseerd: 'startDatumUitGefaseerd',
+    Verwerving: 'startDatumVerwerving',
   };
   return statusToPropertyMap[status] || null;
 };
@@ -57,14 +59,16 @@ const getTodayDateString = () => new Date().toISOString().split('T')[0];
 const ConKoppelingStepGebruiksinformatie = ({
   status,
   setStatus,
-  datumInGebruik,
-  setDatumInGebruik,
-  datumInOntwikkeling,
-  setDatumInOntwikkeling,
-  datumEindeOndersteuning,
-  setDatumEindeOndersteuning,
-  datumTeruggetrokken,
-  setDatumTeruggetrokken,
+  startDatumInProductie,
+  setStartDatumInProductie,
+  startDatumGepland,
+  setStartDatumGepland,
+  startDatumUitTeFaseren,
+  setStartDatumUitTeFaseren,
+  startDatumUitGefaseerd,
+  setStartDatumUitGefaseerd,
+  startDatumVerwerving,
+  setStartDatumVerwerving,
   interneAantekening,
   setInterneAantekening,
   loading,
@@ -73,27 +77,28 @@ const ConKoppelingStepGebruiksinformatie = ({
 }) => {
   // Derive status options from schema enum
   const statusOptions = useMemo(() => {
-    const koppelingSchema = schemas?.koppeling;
-    const statusProperty = koppelingSchema?.properties?.status;
+    const gebruikSchema = schemas?.gebruik;
+    const statusProperty = gebruikSchema?.properties?.status;
     if (statusProperty?.enum && Array.isArray(statusProperty.enum)) {
       return statusProperty.enum.map((value) => ({
         value,
         label: value,
       }));
     }
-    // Fallback to hardcoded options
+    // Fallback to hardcoded options (gebruik status values)
     return [
-      { value: 'in ontwikkeling', label: 'In ontwikkeling' },
-      { value: 'in gebruik', label: 'In gebruik' },
-      { value: 'einde ondersteuning', label: 'Einde ondersteuning' },
-      { value: 'teruggetrokken', label: 'Teruggetrokken' },
+      { value: 'Verwerving', label: 'Verwerving' },
+      { value: 'Gepland', label: 'Gepland' },
+      { value: 'In productie', label: 'In productie' },
+      { value: 'Uit te faseren', label: 'Uit te faseren' },
+      { value: 'Uitgefaseerd', label: 'Uitgefaseerd' },
     ];
-  }, [schemas?.koppeling]);
+  }, [schemas?.gebruik]);
 
-  // Set default status to "in gebruik" if not set
+  // Set default status to "In productie" if not set
   useEffect(() => {
     if (!status && !isEditMode) {
-      setStatus('in gebruik');
+      setStatus('In productie');
     }
   }, [status, isEditMode, setStatus]);
 
@@ -114,14 +119,16 @@ const ConKoppelingStepGebruiksinformatie = ({
     const propertyName = getStartDatumPropertyName(status);
     if (!propertyName) return '';
     switch (propertyName) {
-      case 'datumInGebruik':
-        return datumInGebruik || '';
-      case 'datumInOntwikkeling':
-        return datumInOntwikkeling || '';
-      case 'datumEindeOndersteuning':
-        return datumEindeOndersteuning || '';
-      case 'datumTeruggetrokken':
-        return datumTeruggetrokken || '';
+      case 'startDatumInProductie':
+        return startDatumInProductie || '';
+      case 'startDatumGepland':
+        return startDatumGepland || '';
+      case 'startDatumUitTeFaseren':
+        return startDatumUitTeFaseren || '';
+      case 'startDatumUitGefaseerd':
+        return startDatumUitGefaseerd || '';
+      case 'startDatumVerwerving':
+        return startDatumVerwerving || '';
       default:
         return '';
     }
@@ -132,17 +139,20 @@ const ConKoppelingStepGebruiksinformatie = ({
     const propertyName = getStartDatumPropertyName(status);
     if (!propertyName) return;
     switch (propertyName) {
-      case 'datumInGebruik':
-        setDatumInGebruik(value);
+      case 'startDatumInProductie':
+        setStartDatumInProductie(value);
         break;
-      case 'datumInOntwikkeling':
-        setDatumInOntwikkeling(value);
+      case 'startDatumGepland':
+        setStartDatumGepland(value);
         break;
-      case 'datumEindeOndersteuning':
-        setDatumEindeOndersteuning(value);
+      case 'startDatumUitTeFaseren':
+        setStartDatumUitTeFaseren(value);
         break;
-      case 'datumTeruggetrokken':
-        setDatumTeruggetrokken(value);
+      case 'startDatumUitGefaseerd':
+        setStartDatumUitGefaseerd(value);
+        break;
+      case 'startDatumVerwerving':
+        setStartDatumVerwerving(value);
         break;
     }
   };
@@ -155,17 +165,20 @@ const ConKoppelingStepGebruiksinformatie = ({
     let currentDateValue = '';
     if (newStartDatumProperty) {
       switch (newStartDatumProperty) {
-        case 'datumInGebruik':
-          currentDateValue = datumInGebruik || '';
+        case 'startDatumInProductie':
+          currentDateValue = startDatumInProductie || '';
           break;
-        case 'datumInOntwikkeling':
-          currentDateValue = datumInOntwikkeling || '';
+        case 'startDatumGepland':
+          currentDateValue = startDatumGepland || '';
           break;
-        case 'datumEindeOndersteuning':
-          currentDateValue = datumEindeOndersteuning || '';
+        case 'startDatumUitTeFaseren':
+          currentDateValue = startDatumUitTeFaseren || '';
           break;
-        case 'datumTeruggetrokken':
-          currentDateValue = datumTeruggetrokken || '';
+        case 'startDatumUitGefaseerd':
+          currentDateValue = startDatumUitGefaseerd || '';
+          break;
+        case 'startDatumVerwerving':
+          currentDateValue = startDatumVerwerving || '';
           break;
       }
     }
@@ -177,17 +190,20 @@ const ConKoppelingStepGebruiksinformatie = ({
       ALL_START_DATUM_PROPERTIES.forEach((property) => {
         if (property !== newStartDatumProperty) {
           switch (property) {
-            case 'datumInGebruik':
-              setDatumInGebruik('');
+            case 'startDatumInProductie':
+              setStartDatumInProductie('');
               break;
-            case 'datumInOntwikkeling':
-              setDatumInOntwikkeling('');
+            case 'startDatumGepland':
+              setStartDatumGepland('');
               break;
-            case 'datumEindeOndersteuning':
-              setDatumEindeOndersteuning('');
+            case 'startDatumUitTeFaseren':
+              setStartDatumUitTeFaseren('');
               break;
-            case 'datumTeruggetrokken':
-              setDatumTeruggetrokken('');
+            case 'startDatumUitGefaseerd':
+              setStartDatumUitGefaseerd('');
+              break;
+            case 'startDatumVerwerving':
+              setStartDatumVerwerving('');
               break;
           }
         }
@@ -197,17 +213,20 @@ const ConKoppelingStepGebruiksinformatie = ({
     // Set the corresponding date to today if not already set
     if (newStartDatumProperty && !currentDateValue) {
       switch (newStartDatumProperty) {
-        case 'datumInGebruik':
-          setDatumInGebruik(getTodayDateString());
+        case 'startDatumInProductie':
+          setStartDatumInProductie(getTodayDateString());
           break;
-        case 'datumInOntwikkeling':
-          setDatumInOntwikkeling(getTodayDateString());
+        case 'startDatumGepland':
+          setStartDatumGepland(getTodayDateString());
           break;
-        case 'datumEindeOndersteuning':
-          setDatumEindeOndersteuning(getTodayDateString());
+        case 'startDatumUitTeFaseren':
+          setStartDatumUitTeFaseren(getTodayDateString());
           break;
-        case 'datumTeruggetrokken':
-          setDatumTeruggetrokken(getTodayDateString());
+        case 'startDatumUitGefaseerd':
+          setStartDatumUitGefaseerd(getTodayDateString());
+          break;
+        case 'startDatumVerwerving':
+          setStartDatumVerwerving(getTodayDateString());
           break;
       }
     }
@@ -225,7 +244,7 @@ const ConKoppelingStepGebruiksinformatie = ({
 
       <Paragraph className='con-form-wizard-paragraph'>
         Selecteer de status. Ook kunt u een interne notitie toevoegen voor uw
-        collega's.
+        collega&apos;s.
       </Paragraph>
 
       {/* Closeable info alert about interne notitie */}
@@ -257,7 +276,7 @@ const ConKoppelingStepGebruiksinformatie = ({
         {/* Status field */}
         <div style={{ gridColumn: 'span 2' }}>
           <ConSchemaEnhancedField
-            schemaType='koppeling'
+            schemaType='gebruik'
             schemaProperty='status'
             value={status || ''}
             onChange={handleStatusChange}
@@ -276,7 +295,7 @@ const ConKoppelingStepGebruiksinformatie = ({
         {status && getStartDatumPropertyName(status) && (
           <div style={{ gridColumn: 'span 2' }}>
             <ConSchemaEnhancedField
-              schemaType='koppeling'
+              schemaType='gebruik'
               schemaProperty={getStartDatumPropertyName(status)}
               value={getCurrentDateValue() || getTodayDateString()}
               onChange={(value) => setCurrentDateValue(value)}
@@ -294,7 +313,7 @@ const ConKoppelingStepGebruiksinformatie = ({
         {/* Interne notitie field */}
         <div style={{ gridColumn: 'span 2' }}>
           <ConSchemaEnhancedField
-            schemaType='koppeling'
+            schemaType='gebruik'
             schemaProperty='interneAantekening'
             value={interneAantekening || ''}
             onChange={(value) => setInterneAantekening(value)}
