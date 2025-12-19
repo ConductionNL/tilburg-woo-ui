@@ -61,6 +61,21 @@ const BeheerPageConfigFactory = {
           modals: [...baseConfig.modals],
         };
 
+      case 'moduleversie':
+      case 'applicatieversie':
+      case 'applicatiesversie':
+        return {
+          ...baseConfig,
+          schemaSlug: 'moduleversie',
+          paginationKey: 'applicatiesversie',
+          title: 'Applicatie Versies',
+          routeType: 'applicatiesversie',
+          defaultHeaders: ['naam', 'versie', 'status', 'releaseDatum'],
+          customHeaders: {},
+          dynamicActionFilter: ({ slug }) => !['module'].includes(slug),
+          modals: [...baseConfig.modals],
+        };
+
       // removed plural alias 'extendviews'
       case 'module':
       case 'applicaties':
