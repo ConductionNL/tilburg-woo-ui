@@ -30,7 +30,7 @@ const ConCardOrganisationApplication = ({
   user,
 }) => {
   // Use generic UUID resolver for organisation name
-  const resolvedOrganisation = useResolvedText(organisation, objectStore);
+  const { resolvedText: resolvedOrganisation } = useResolvedText(organisation, objectStore);
 
   // Use generic UUID resolver for reference components
   const resolvedReferenceComponents = useResolvedArray(
