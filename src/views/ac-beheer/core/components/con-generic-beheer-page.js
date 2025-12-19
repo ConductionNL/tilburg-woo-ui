@@ -329,7 +329,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
 
   // Refresh warmup data when type changes
   useEffect(() => {
-    if (!baseConfig) {
+    if (!baseConfig || baseConfig.isDynamicEntry) {
       return;
     }
 
@@ -338,7 +338,11 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     const register = baseConfig.registerSlug || 'voorzieningen';
 
     if (schemaSlug) {
-      object.refreshWarmupDataForType(schemaSlug, register);
+      try {
+        object.refreshWarmupDataForType(schemaSlug, register);
+      } catch (error) {
+        console.error('Failed to refresh warmup data for type:', error);
+      }
     }
   }, [type, baseConfig, object]);
 
