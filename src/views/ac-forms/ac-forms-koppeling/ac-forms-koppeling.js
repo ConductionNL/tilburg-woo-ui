@@ -1629,9 +1629,7 @@ const AcFormsKoppeling = ({ store }) => {
           if (ownApp?.value) {
             params.set('applicatie', ownApp.value);
           }
-          if (selectedKoppelingId) {
-            params.set('koppelingId', selectedKoppelingId);
-          }
+          params.set('redirect', window.location.pathname);
           navigate(`/forms/koppeling?${params.toString()}`);
         }}
         title='Waarschuwing'
