@@ -1561,6 +1561,16 @@ const AcFormsKoppeling = ({ store }) => {
             onRetryForm={handleRetryForm}
             onResetForm={handleResetForm}
             koppelingsType={koppelingsType}
+            selectedKoppelingId={selectedKoppelingId}
+            statusGebruiksinformatie={statusGebruiksinformatie}
+            datumInGebruik={datumInGebruik}
+            datumInOntwikkeling={datumInOntwikkeling}
+            datumEindeOndersteuning={datumEindeOndersteuning}
+            datumTeruggetrokken={datumTeruggetrokken}
+            interneAantekening={interneAantekening}
+            deelnemers={deelnemers}
+            deelnemerOptions={deelnemerOptions}
+            searchResults={searchResults}
           />
         );
 
