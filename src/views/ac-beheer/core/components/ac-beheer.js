@@ -63,6 +63,11 @@ const AcBeheer = ({ store }) => {
       return;
     }
 
+    // Skip validation for detail pages (they have an id)
+    if (id) {
+      return;
+    }
+
     // Skip validation for special routes
     if (type === 'my-account' || type === 'my-organisation' || type === 'element') {
       return;
@@ -128,7 +133,7 @@ const AcBeheer = ({ store }) => {
     if (!validTypes.has(type) && !hasFactoryEntry) {
       navigate('/beheer');
     }
-  }, [type, menu, user.isAuthenticated, user.userGroups, navigate]);
+  }, [type, id, menu, user.isAuthenticated, user.userGroups, navigate]);
 
   if (window.location.pathname === '/beheer') {
     return <AcDashboard store={store} />;
