@@ -164,7 +164,11 @@ const AcBeheer = ({ store }) => {
   if (type === 'module' || type === 'applicaties') {
     return <ConModuleDetailsPage />;
   }
-  if (type === 'moduleversie' || type === 'applicatieversie') {
+  if (
+    type === 'moduleversie' ||
+    type === 'applicatieversie' ||
+    type === 'applicatiesversie'
+  ) {
     return <ConModuleVersieDetailsPage />;
   }
   if (type === 'dienst' || type === 'diensten') {
