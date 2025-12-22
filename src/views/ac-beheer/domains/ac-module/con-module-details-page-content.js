@@ -547,6 +547,7 @@ const ConModuleDetailsPageContent = ({
           objectId={data?.['@self']?.id}
           referentieComponenten={data.referentieComponenten}
           complianceStandards={data.compliancy}
+          compliantVersieIds={data.standaardVersies || data.standaardversies || []}
           referentieComponentenWithStandards={
             referentieComponentenWithStandards?.length > 0
               ? referentieComponentenWithStandards
