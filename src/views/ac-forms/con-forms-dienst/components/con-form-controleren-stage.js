@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import { ConUuidResolver } from '@components';
 import { AcLink } from '@src/molecules';
 import {
@@ -6,7 +6,9 @@ import {
   UnorderedListItem,
   Separator,
   Paragraph,
+  Alert,
 } from '@utrecht/component-library-react/dist/css-module';
+import { VISUALS } from '@src/constants';
 import ConLogoPreview from '@views/ac-register/con-logo-preview';
 // Import MDEditor for markdown rendering
 import MDEditor from '@uiw/react-md-editor';
@@ -104,15 +106,55 @@ const ConFormControlerenStage = memo(
     const selectedDienstenWithDetails = getSelectedDienstenWithDetails();
     const selectedDeelnemersWithLabels = getSelectedDeelnemersWithLabels();
 
+    // Manage visibility state of info alert
+    const [showInfoAlert, setShowInfoAlert] = useState(() => {
+      return !sessionStorage.getItem('interne-notitie-info-alert-closed');
+    });
+
+    const handleCloseAlert = () => {
+      setShowInfoAlert(false);
+      sessionStorage.setItem('interne-notitie-info-alert-closed', 'true');
+    };
+
     // Render Gebruik-beheerders flow sections
     if (isGebruikBeheerdersFlow) {
       return (
         <div>
           <Paragraph>
-            Bekijk hieronder de ingevulde gegevens. Controleer of alle informatie
-            klopt voordat u uw gebruik registreert. U kunt velden nog aanpassen via
-            de &apos;Vorige&apos; knop of op een later moment via uw eigen omgeving.
+            Controleer of het overzicht van de dienst volledig en juist is voordat u
+            verder gaat.
+            <br />
+            U kunt met Vorige terug naar de eerdere stappen.
+            <br />
+            Na het registreren van de koppeling kunt u via uw &quot;Dashboard&quot;
+            de koppeling opzoeken en indien gewenst aanpassen.
           </Paragraph>
+          <br />
+
+          {/* Closeable info alert */}
+          {showInfoAlert && (
+            <Alert severity='info' className='ac-forms-product-info-alert'>
+              <button
+                onClick={handleCloseAlert}
+                className='ac-forms-product-info-alert__close-button'
+                title='Sluiten'
+                aria-label='Alert sluiten'
+              >
+                <VISUALS.CLOSE />
+              </button>
+              <div className='ac-forms-product-info-alert__content'>
+                <VISUALS.INFO className='ac-forms-product-info-alert__icon' />
+                <div>
+                  <strong>Interne notitie</strong>
+                  <br />
+                  <span className='ac-forms-product-info-alert__text'>
+                    De interne notitie is alleen te lezen door gebruikers binnen uw
+                    organisatie.
+                  </span>
+                </div>
+              </div>
+            </Alert>
+          )}
           <br />
 
           {/* Diensten section */}
