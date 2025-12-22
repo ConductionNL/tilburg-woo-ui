@@ -28,8 +28,10 @@ import ConFormControlerenStage from './components/con-form-controleren-stage';
 // eslint-disable-next-line no-unused-vars
 import ConFormDienstAanbiederInformatieStage from './components/con-form-dienst-aanbieder-informatie-stage';
 import ConFormDienstZoekenStage from './components/con-form-dienst-zoeken-stage';
+import ConFormGebruiksinformatieStage from './components/con-form-gebruiksinformatie-stage';
 import ConUnsavedChangesAlertModal from '@src/components/con-unsaved-changes-alert-modal/con-unsaved-changes-alert-modal';
 import { getActiveWizard } from '@src/constants/wizards.constants';
+import { ConDebugViewer } from '@src/components';
 
 const mapToOption = (item, index) => {
   const label =
@@ -117,7 +119,6 @@ const ConFormsDienst = ({ store, userStore }) => {
 
   // Gebruik-beheerders flow state (ontbrekend-dienst)
   const [selectedApplicatie, setSelectedApplicatie] = useState(null); // Single applicatie option object
-  const [selectedDienstId, setSelectedDienstId] = useState(null); // Single dienst ID
   const [dienstenResults, setDienstenResults] = useState([]); // Array of dienst objects
   const [dienstenResultsLoading, setDienstenResultsLoading] = useState(false);
   const [resolvedModulesFromDiensten, setResolvedModulesFromDiensten] = useState([]);
@@ -126,6 +127,18 @@ const ConFormsDienst = ({ store, userStore }) => {
 
   // State for full organization data (to check type for conditional Deelnemers step)
   const [fullActiveOrganisation, setFullActiveOrganisation] = useState(null);
+
+  // Gebruik state (for gebruik beheerder flow - ontbrekend-dienst)
+  const [gebruik, setGebruik] = useState({
+    diensten: [],
+    status: '',
+    interneAantekening: '',
+  });
+
+  // Helper function to update gebruik state
+  const setGebruikData = (key, value) => {
+    setGebruik((prev) => ({ ...prev, [key]: value }));
+  };
 
   // Prefill dienst data when editing
   useEffect(() => {
@@ -304,7 +317,14 @@ const ConFormsDienst = ({ store, userStore }) => {
   useEffect(() => {
     const load = async () => {
       setSchemasLoading(true);
-      const types = ['dienst', 'product', 'module', 'koppeling', 'organisatie'];
+      const types = [
+        'dienst',
+        'product',
+        'module',
+        'koppeling',
+        'organisatie',
+        'gebruik',
+      ];
       const fetched = {};
       try {
         await Promise.all(
@@ -797,7 +817,7 @@ const ConFormsDienst = ({ store, userStore }) => {
           }
 
           // Auto-select the dienst
-          setSelectedDienstId(String(dienstFromUrl));
+          setGebruikData('diensten', [String(dienstFromUrl)]);
 
           // Auto-advance to next step (Gebruiksinformatie)
           stepper.setCurrentStepByLabel('gebruiksinformatie');
@@ -928,13 +948,24 @@ const ConFormsDienst = ({ store, userStore }) => {
               isEditMode={isEditMode}
               onSearchModules={debouncedSearchModulesForDienstZoeken}
               schemas={schemas}
-              selectedDienstId={selectedDienstId}
-              setSelectedDienstId={setSelectedDienstId}
+              selectedDienstIds={gebruik.diensten}
+              setSelectedDienstIds={(ids) => setGebruikData('diensten', ids)}
             />
           );
         case 'gebruiksinformatie':
-          // TODO: Create ConFormGebruiksinformatieStage component
-          return <div>Gebruiksinformatie stage (to be implemented)</div>;
+          return (
+            <ConFormGebruiksinformatieStage
+              status={gebruik.status}
+              setStatus={(value) => setGebruikData('status', value)}
+              interneAantekening={gebruik.interneAantekening}
+              setInterneAantekening={(value) =>
+                setGebruikData('interneAantekening', value)
+              }
+              loading={prefillLoading || schemasLoading}
+              schemas={schemas}
+              isEditMode={isEditMode}
+            />
+          );
         case 'deelnemers':
           // TODO: Create ConFormDeelnemersStage component
           return <div>Deelnemers stage (to be implemented)</div>;
@@ -1136,8 +1167,12 @@ const ConFormsDienst = ({ store, userStore }) => {
 
     switch (stepLabel) {
       case 'dienst-zoeken':
-        // Require applicatie and dienst selection
-        return !selectedApplicatie?.value || !selectedDienstId;
+        // Require applicatie and at least one dienst selection
+        return (
+          !selectedApplicatie?.value ||
+          !gebruik.diensten ||
+          gebruik.diensten.length === 0
+        );
       case 'applicaties':
         // Applicaties: at least one applicatie selected
         return selectedModuleIds.length === 0;
@@ -1162,6 +1197,8 @@ const ConFormsDienst = ({ store, userStore }) => {
         return false;
       }
       case 'gebruiksinformatie':
+        // Require status to be selected
+        return !gebruik.status;
       case 'deelnemers':
       case 'controleren':
         // Other steps validation to be added when stages are implemented
@@ -1180,8 +1217,8 @@ const ConFormsDienst = ({ store, userStore }) => {
         if (!selectedApplicatie?.value) {
           messages.push('Selecteer een applicatie');
         }
-        if (!selectedDienstId) {
-          messages.push('Selecteer een dienst');
+        if (!gebruik.diensten || gebruik.diensten.length === 0) {
+          messages.push('Selecteer minimaal één dienst');
         }
         return messages.join('\n');
       }
@@ -1216,7 +1253,13 @@ const ConFormsDienst = ({ store, userStore }) => {
         }
         return messages.join('\n');
       }
-      case 'gebruiksinformatie':
+      case 'gebruiksinformatie': {
+        const messages = [];
+        if (!gebruik.status) {
+          messages.push('Status is verplicht');
+        }
+        return messages.join('\n');
+      }
       case 'deelnemers':
       case 'controleren':
         // Other steps validation messages to be added when stages are implemented
@@ -1388,43 +1431,11 @@ const ConFormsDienst = ({ store, userStore }) => {
                 </div>
 
                 <div className='ac-register-form-container'>
-                  {process.env.NODE_ENV === 'development' && (
-                    <div
-                      style={{
-                        marginBottom: '2rem',
-                        padding: '1rem',
-                        backgroundColor: '#f8f9fa',
-                        border: '1px solid #dee2e6',
-                        borderRadius: '4px',
-                        fontSize: '0.8rem',
-                      }}
-                    >
-                      <details>
-                        <summary
-                          style={{
-                            cursor: 'pointer',
-                            fontWeight: 'bold',
-                            marginBottom: '0.5rem',
-                          }}
-                        >
-                          🐛 Debug: Dienst Object (Click to expand)
-                        </summary>
-                        <pre
-                          style={{
-                            whiteSpace: 'pre-wrap',
-                            wordBreak: 'break-word',
-                            maxHeight: '300px',
-                            overflow: 'auto',
-                            backgroundColor: '#ffffff',
-                            padding: '0.5rem',
-                            border: '1px solid #ccc',
-                            borderRadius: '2px',
-                          }}
-                        >
-                          {JSON.stringify(dienst, null, 2)}
-                        </pre>
-                      </details>
-                    </div>
+                  {!isGebruikBeheerdersFlow && (
+                    <ConDebugViewer data={dienst} title='Dienst object' />
+                  )}
+                  {isGebruikBeheerdersFlow && (
+                    <ConDebugViewer data={gebruik} title='Gebruik object' />
                   )}
 
                   {saveResult === 'error' && (

@@ -17,8 +17,8 @@ const ConFormDienstZoekenStage = ({
   isEditMode,
   onSearchModules,
   schemas = {},
-  selectedDienstId,
-  setSelectedDienstId,
+  selectedDienstIds = [],
+  setSelectedDienstIds,
 }) => {
   const idToLabel = Object.fromEntries(
     (resolvedModulesFromResults || []).map((o) => [String(o.value), String(o.label)])
@@ -171,7 +171,9 @@ const ConFormDienstZoekenStage = ({
               >
                 {searchResults.map((d, i) => {
                   const dienstId = d?.id || d?.['@self']?.id || String(i);
-                  const isSelected = selectedDienstId === dienstId;
+                  const isSelected =
+                    Array.isArray(selectedDienstIds) &&
+                    selectedDienstIds.includes(dienstId);
 
                   const naam = String(
                     (d?.naam || d?.name || d?.title || d?.label || '').toString()
@@ -223,7 +225,18 @@ const ConFormDienstZoekenStage = ({
                       }}
                       onClick={() => {
                         if (!isEditMode && !loading) {
-                          setSelectedDienstId(isSelected ? null : dienstId);
+                          const currentIds = Array.isArray(selectedDienstIds)
+                            ? [...selectedDienstIds]
+                            : [];
+                          if (isSelected) {
+                            // Remove from selection
+                            setSelectedDienstIds(
+                              currentIds.filter((id) => id !== dienstId)
+                            );
+                          } else {
+                            // Add to selection
+                            setSelectedDienstIds([...currentIds, dienstId]);
+                          }
                         }
                       }}
                     >
@@ -234,7 +247,20 @@ const ConFormDienstZoekenStage = ({
                           checked={isSelected}
                           onChange={(checked) => {
                             if (!isEditMode && !loading) {
-                              setSelectedDienstId(checked ? dienstId : null);
+                              const currentIds = Array.isArray(selectedDienstIds)
+                                ? [...selectedDienstIds]
+                                : [];
+                              if (checked) {
+                                // Add to selection
+                                if (!currentIds.includes(dienstId)) {
+                                  setSelectedDienstIds([...currentIds, dienstId]);
+                                }
+                              } else {
+                                // Remove from selection
+                                setSelectedDienstIds(
+                                  currentIds.filter((id) => id !== dienstId)
+                                );
+                              }
                             }
                           }}
                           disabled={isEditMode || loading}
