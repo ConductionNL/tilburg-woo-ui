@@ -25,10 +25,9 @@ import ConFormDienstInformatieStage from './components/con-form-dienst-informati
 // import ConFormProductenStage from './components/con-form-producten-stage';
 import ConFormApplicatiesStage from './components/con-form-applicaties-stage';
 import ConFormControlerenStage from './components/con-form-controleren-stage';
-// eslint-disable-next-line no-unused-vars
-import ConFormDienstAanbiederInformatieStage from './components/con-form-dienst-aanbieder-informatie-stage';
 import ConFormDienstZoekenStage from './components/con-form-dienst-zoeken-stage';
 import ConFormGebruiksinformatieStage from './components/con-form-gebruiksinformatie-stage';
+import ConFormDeelnemersStage from './components/con-form-deelnemers-stage';
 import ConUnsavedChangesAlertModal from '@src/components/con-unsaved-changes-alert-modal/con-unsaved-changes-alert-modal';
 import { getActiveWizard } from '@src/constants/wizards.constants';
 import { ConDebugViewer } from '@src/components';
@@ -128,11 +127,16 @@ const ConFormsDienst = ({ store, userStore }) => {
   // State for full organization data (to check type for conditional Deelnemers step)
   const [fullActiveOrganisation, setFullActiveOrganisation] = useState(null);
 
+  // Deelnemers options and loading state
+  const [deelnemerOptions, setDeelnemerOptions] = useState([]);
+  const [deelnemersLoading, setDeelnemersLoading] = useState(false);
+
   // Gebruik state (for gebruik beheerder flow - ontbrekend-dienst)
   const [gebruik, setGebruik] = useState({
     diensten: [],
     status: '',
     interneAantekening: '',
+    deelnemers: [],
   });
 
   // Helper function to update gebruik state
@@ -734,6 +738,87 @@ const ConFormsDienst = ({ store, userStore }) => {
     isGebruikBeheerdersFlow,
   ]);
 
+  // Fetch deelnemers from current logged-in organization (for gebruik beheerder flow)
+  useEffect(() => {
+    const fetchDeelnemers = async () => {
+      const activeOrg = userStore?.activeOrganization;
+      const organisationId = activeOrg?.uuid || activeOrg?.id;
+
+      if (!organisationId || !isGebruikBeheerdersFlow) return;
+
+      try {
+        setDeelnemersLoading(true);
+        await store.object.fetchObject(
+          'voorzieningen',
+          'organisatie',
+          organisationId,
+          {
+            '_extend[]': ['@self.schema', 'deelnemers'],
+          }
+        );
+
+        const fullOrgData = store.object.getObject(
+          'voorzieningen_organisatie',
+          organisationId
+        );
+
+        if (fullOrgData) {
+          // Process deelnemers into options format
+          const deelnemers = Array.isArray(fullOrgData?.deelnemers)
+            ? fullOrgData.deelnemers
+            : [];
+
+          // Map deelnemers to options format
+          const options = deelnemers
+            .filter((deelnemer) => {
+              // Filter out invalid deelnemers
+              const id =
+                typeof deelnemer === 'object'
+                  ? deelnemer?.id || deelnemer?.['@self']?.id
+                  : deelnemer;
+              return id && id !== 'undefined' && id !== 'null';
+            })
+            .map((deelnemer) => {
+              // Handle both object format and string (UUID) format
+              if (typeof deelnemer === 'object') {
+                const id = deelnemer?.id || deelnemer?.['@self']?.id;
+                const label =
+                  deelnemer?.naam ||
+                  deelnemer?.['@self']?.name ||
+                  deelnemer?.name ||
+                  id;
+                return {
+                  value: String(id),
+                  label: String(label),
+                  data: deelnemer,
+                };
+              }
+              // If it's just a string (UUID), use it as both value and label
+              return {
+                value: String(deelnemer),
+                label: String(deelnemer),
+                data: null,
+              };
+            });
+
+          setDeelnemerOptions(options);
+        }
+      } catch (error) {
+        console.error('Error fetching deelnemers from organization:', error);
+        setDeelnemerOptions([]);
+      } finally {
+        setDeelnemersLoading(false);
+      }
+    };
+
+    fetchDeelnemers();
+  }, [
+    userStore?.activeOrganization?.uuid,
+    userStore?.activeOrganization?.id,
+    store,
+    isGebruikBeheerdersFlow,
+  ]);
+
   // Fetch diensten when applicatie is selected (Gebruik-beheerders flow)
   useEffect(() => {
     if (!isGebruikBeheerdersFlow) return;
@@ -967,8 +1052,15 @@ const ConFormsDienst = ({ store, userStore }) => {
             />
           );
         case 'deelnemers':
-          // TODO: Create ConFormDeelnemersStage component
-          return <div>Deelnemers stage (to be implemented)</div>;
+          return (
+            <ConFormDeelnemersStage
+              deelnemers={gebruik.deelnemers}
+              setDeelnemers={(value) => setGebruikData('deelnemers', value)}
+              loading={prefillLoading || schemasLoading}
+              deelnemerOptions={deelnemerOptions}
+              deelnemersLoading={deelnemersLoading}
+            />
+          );
         case 'controleren':
           return (
             <ConFormControlerenStage
@@ -1273,6 +1365,47 @@ const ConFormsDienst = ({ store, userStore }) => {
     setSaving(true);
     setSaveResult(null);
     try {
+      // Handle Gebruik-beheerders flow (save gebruik object)
+      if (isGebruikBeheerdersFlow) {
+        // Validation
+        if (!gebruik.diensten || gebruik.diensten.length === 0) {
+          setSaveResult('error');
+          return;
+        }
+
+        if (!gebruik.status) {
+          setSaveResult('error');
+          return;
+        }
+
+        const activeOrg = userStore?.activeOrganization;
+        const afnemerId = activeOrg?.uuid || activeOrg?.id;
+        if (!afnemerId) {
+          setSaveResult('error');
+          return;
+        }
+
+        if (!selectedApplicatie?.value) {
+          setSaveResult('error');
+          return;
+        }
+
+        // Build payload with gebruik field names directly
+        const payload = {
+          diensten: gebruik.diensten,
+          status: gebruik.status,
+          interneAantekening: gebruik.interneAantekening || '',
+          deelnemers: Array.isArray(gebruik.deelnemers) ? gebruik.deelnemers : [],
+          afnemer: afnemerId,
+          module: selectedApplicatie.value,
+        };
+
+        await store.object.createObject('voorzieningen', 'gebruik', payload);
+        setSaveResult('success');
+        return;
+      }
+
+      // Handle Aanbod-beheerders flow (save dienst object)
       let finalAanbieder = dienst.aanbieder;
 
       const payload = {
