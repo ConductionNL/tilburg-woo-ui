@@ -1064,6 +1064,10 @@ const ConFormsDienst = ({ store, userStore }) => {
         case 'controleren':
           return (
             <ConFormControlerenStage
+              isGebruikBeheerdersFlow={true}
+              gebruik={gebruik}
+              dienstenResults={dienstenResults}
+              deelnemerOptions={deelnemerOptions}
               dienst={dienst}
               selectedModuleIds={selectedModuleIds}
               moduleOptionsByProduct={productToModulesLookup}

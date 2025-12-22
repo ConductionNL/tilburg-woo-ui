@@ -27,6 +27,11 @@ const ConFormControlerenStage = memo(
     formType,
     aanbiederKeuze,
     aanbiederOrganisatie,
+    // Gebruik-beheerders flow props
+    isGebruikBeheerdersFlow = false,
+    gebruik,
+    dienstenResults = [],
+    deelnemerOptions = [],
   }) => {
     // Helper to get module information with additional details
     const getModulesWithDetails = () => {
@@ -42,9 +47,214 @@ const ConFormControlerenStage = memo(
       });
     };
 
+    // Helper to get selected diensten with details for Gebruik-beheerders flow
+    const getSelectedDienstenWithDetails = () => {
+      if (
+        !isGebruikBeheerdersFlow ||
+        !gebruik?.diensten ||
+        !Array.isArray(gebruik.diensten)
+      ) {
+        return [];
+      }
+
+      const selectedDienstIds = gebruik.diensten.map((id) => String(id));
+      return dienstenResults
+        .filter((dienst) => {
+          const dienstId = String(dienst?.id || dienst?.['@self']?.id || '');
+          return selectedDienstIds.includes(dienstId);
+        })
+        .map((dienst) => ({
+          id: dienst?.id || dienst?.['@self']?.id || '',
+          naam: String(
+            dienst?.naam || dienst?.name || dienst?.title || dienst?.label || ''
+          ),
+          beschrijvingKort: String(
+            dienst?.beschrijvingKort ||
+              dienst?.beschrijving ||
+              dienst?.omschrijving ||
+              ''
+          ),
+          website: String(dienst?.website || ''),
+          type: String(dienst?.type || ''),
+          aanbieder: dienst?.aanbieder ? String(dienst.aanbieder) : null,
+        }));
+    };
+
+    // Helper to get selected deelnemers with labels
+    const getSelectedDeelnemersWithLabels = () => {
+      if (
+        !isGebruikBeheerdersFlow ||
+        !gebruik?.deelnemers ||
+        !Array.isArray(gebruik.deelnemers)
+      ) {
+        return [];
+      }
+
+      const selectedDeelnemerIds = gebruik.deelnemers.map((id) => String(id));
+      return deelnemerOptions
+        .filter((option) => selectedDeelnemerIds.includes(String(option.value)))
+        .map((option) => ({
+          id: option.value,
+          label: option.label,
+        }));
+    };
+
     // const productsWithDetails = getProductsWithDetails();
     const modulesWithDetails = getModulesWithDetails();
+    const selectedDienstenWithDetails = getSelectedDienstenWithDetails();
+    const selectedDeelnemersWithLabels = getSelectedDeelnemersWithLabels();
 
+    // Render Gebruik-beheerders flow sections
+    if (isGebruikBeheerdersFlow) {
+      return (
+        <div>
+          <Paragraph>
+            Bekijk hieronder de ingevulde gegevens. Controleer of alle informatie
+            klopt voordat u uw gebruik registreert. U kunt velden nog aanpassen via
+            de &apos;Vorige&apos; knop of op een later moment via uw eigen omgeving.
+          </Paragraph>
+          <br />
+
+          {/* Diensten section */}
+          <div className='con-form-wizard-review-heading-container'>
+            <h3 className='con-form-wizard-review-heading-header'>Diensten</h3>
+            <div className='ac-register-review'>
+              <div className='ac-register-review__section'>
+                {selectedDienstenWithDetails.length > 0 ? (
+                  <UnorderedList>
+                    {selectedDienstenWithDetails.map((dienst, i) => (
+                      <UnorderedListItem key={`dienst-${dienst.id}-${i}`}>
+                        <div>
+                          <strong>
+                            {dienst.naam ? (
+                              <ConUuidResolver>{dienst.naam}</ConUuidResolver>
+                            ) : (
+                              'Onbekende dienst'
+                            )}
+                          </strong>
+                          {dienst.beschrijvingKort && (
+                            <div
+                              style={{
+                                fontSize: '0.875rem',
+                                color: '#666',
+                                marginTop: '0.25rem',
+                              }}
+                            >
+                              {dienst.beschrijvingKort}
+                            </div>
+                          )}
+                          <div
+                            style={{
+                              fontSize: '0.875rem',
+                              color: '#666',
+                              marginTop: '0.25rem',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '0.25rem',
+                            }}
+                          >
+                            {dienst.type && (
+                              <div>
+                                <span style={{ fontWeight: '500' }}>Type:</span>{' '}
+                                <ConUuidResolver>{dienst.type}</ConUuidResolver>
+                              </div>
+                            )}
+                            {dienst.aanbieder && (
+                              <div>
+                                <span style={{ fontWeight: '500' }}>Aanbieder:</span>{' '}
+                                <ConUuidResolver>{dienst.aanbieder}</ConUuidResolver>
+                              </div>
+                            )}
+                            {dienst.website && (
+                              <div>
+                                <span style={{ fontWeight: '500' }}>Website:</span>{' '}
+                                <AcLink
+                                  href={
+                                    dienst.website.startsWith('http')
+                                      ? dienst.website
+                                      : `https://${dienst.website}`
+                                  }
+                                  target='_blank'
+                                  rel='noopener noreferrer'
+                                >
+                                  {dienst.website}
+                                </AcLink>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </UnorderedListItem>
+                    ))}
+                  </UnorderedList>
+                ) : (
+                  <div className='ac-register-review__field'>
+                    <Paragraph style={{ fontStyle: 'italic', color: '#666' }}>
+                      Geen diensten geselecteerd
+                    </Paragraph>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Gebruiksinformatie section */}
+          <div className='con-form-wizard-review-heading-container'>
+            <h3 className='con-form-wizard-review-heading-header'>
+              Gebruiksinformatie
+            </h3>
+            <div className='ac-register-review__section'>
+              <div className='ac-register-review__field'>
+                <strong>Status:</strong>{' '}
+                {gebruik?.status ? (
+                  <span>
+                    <ConUuidResolver>{gebruik.status}</ConUuidResolver>
+                  </span>
+                ) : (
+                  <span style={{ fontStyle: 'italic', color: '#666' }}>-</span>
+                )}
+              </div>
+              {gebruik?.interneAantekening && (
+                <div className='ac-register-review__field'>
+                  <strong>Interne aantekening:</strong>
+                  <div
+                    style={{
+                      wordBreak: 'break-word',
+                      overflowWrap: 'break-word',
+                      hyphens: 'auto',
+                      marginTop: '0.25rem',
+                    }}
+                  >
+                    {gebruik.interneAantekening}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Deelnemers section - only show if deelnemers were selected */}
+          {selectedDeelnemersWithLabels.length > 0 && (
+            <div className='con-form-wizard-review-heading-container'>
+              <h3 className='con-form-wizard-review-heading-header'>Deelnemers</h3>
+              <div className='ac-register-review'>
+                <div className='ac-register-review__section'>
+                  <div className='ac-register-review__field'>
+                    <UnorderedList>
+                      {selectedDeelnemersWithLabels.map((deelnemer, i) => (
+                        <UnorderedListItem key={`deelnemer-${deelnemer.id}-${i}`}>
+                          <ConUuidResolver>{deelnemer.label}</ConUuidResolver>
+                        </UnorderedListItem>
+                      ))}
+                    </UnorderedList>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Render Aanbod-beheerders flow sections (existing code)
     return (
       <div>
         <Paragraph>
