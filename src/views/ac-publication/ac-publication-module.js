@@ -63,6 +63,10 @@ const AcPublicationProduct = ({
   const [standards, setStandards] = useState([]);
   const [standardsLoading, setStandardsLoading] = useState(false);
 
+  // Standaardversies state for resolving version names
+  const [standaardversies, setStandaardversies] = useState([]);
+  const [standaardversiesLoading, setStandaardversiesLoading] = useState(false);
+
   // State for referentieComponenten data with standards
   const [referentieComponentenWithStandards, setReferentieComponentenWithStandards] =
     useState([]);
@@ -286,8 +290,6 @@ const AcPublicationProduct = ({
         gemmaType: 'Standaard',
       });
 
-      console.info('📋 Fetching standards from openconnector endpoint...');
-
       // Fetch standards from openconnector endpoint using normal fetch
       const response = await fetch(
         `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
@@ -311,9 +313,6 @@ const AcPublicationProduct = ({
       const fetchedStandards = data.results || data;
 
       setStandards(fetchedStandards);
-      console.info(
-        `✅ Loaded ${fetchedStandards?.length} standards for publication page`
-      );
     } catch (error) {
       console.warn('⚠️ Failed to fetch standards:', error);
       setStandards([]);
@@ -322,10 +321,51 @@ const AcPublicationProduct = ({
     }
   }, []);
 
+  // Fetch standaardversies from openconnector endpoint
+  const fetchStandaardversies = useCallback(async () => {
+    setStandaardversiesLoading(true);
+    try {
+      const queryParams = new URLSearchParams({
+        _limit: '500',
+        _page: '1',
+        gemmaType: 'Standaardversie',
+      });
+
+      const response = await fetch(
+        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        console.error(
+          'Error fetching openconnector standaardversies:',
+          response.statusText
+        );
+        return;
+      }
+
+      const data = await response.json();
+      const fetchedStandaardversies = data.results || data;
+
+      setStandaardversies(fetchedStandaardversies);
+    } catch (error) {
+      console.warn('⚠️ Failed to fetch standaardversies:', error);
+      setStandaardversies([]);
+    } finally {
+      setStandaardversiesLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchStandards();
+    fetchStandaardversies();
     fetchReferentieComponentenWithStandards();
-  }, [fetchStandards, fetchReferentieComponentenWithStandards]);
+  }, [fetchStandards, fetchStandaardversies, fetchReferentieComponentenWithStandards]);
 
   const [uses, setUses] = useState([]);
   const [used, setUsed] = useState([]);
@@ -740,12 +780,14 @@ const AcPublicationProduct = ({
               <ConStandardsTable
                 referentieComponenten={get_single.referentieComponenten}
                 complianceStandards={get_single.compliancy}
+                compliantVersieIds={get_single.standaardVersies || get_single.standaardversies || []}
                 enableScrolling={true}
                 standards={standards}
+                standaardversies={standaardversies}
                 referentieComponentenWithStandards={
                   referentieComponentenWithStandards
                 }
-                loading={standardsLoading}
+                loading={standardsLoading || standaardversiesLoading}
                 onStandardsCountChange={(n) => setStandardsCount(n)}
               />
             ),

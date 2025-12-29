@@ -1,7 +1,5 @@
 import React from 'react';
 import { AcColumn } from '@atoms';
-import { AcLink } from '@src/molecules';
-import { TOOLTIP_ID } from '@src/index.web';
 import { VISUALS } from '@constants';
 import { byNested } from '../utils/sorters';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
@@ -60,6 +58,21 @@ const BeheerPageConfigFactory = {
           routeType: 'extendview',
           defaultHeaders: [],
           customHeaders: {},
+          modals: [...baseConfig.modals],
+        };
+
+      case 'moduleversie':
+      case 'applicatieversie':
+      case 'applicatiesversie':
+        return {
+          ...baseConfig,
+          schemaSlug: 'moduleversie',
+          paginationKey: 'applicatiesversie',
+          title: 'Applicatie Versies',
+          routeType: 'applicatiesversie',
+          defaultHeaders: ['naam', 'versie', 'status', 'releaseDatum'],
+          customHeaders: {},
+          dynamicActionFilter: ({ slug }) => !['module'].includes(slug),
           modals: [...baseConfig.modals],
         };
 
@@ -228,232 +241,6 @@ const BeheerPageConfigFactory = {
           modals: [...baseConfig.modals],
         };
 
-      case 'voorzieningen-versie':
-        return {
-          ...baseConfig,
-          schemaSlug: 'voorzieningversie',
-          paginationKey: 'voorzieningen-versie',
-          title: 'Beheer Voorzieningen Versie',
-          routeType: 'voorzieningen-versie',
-          defaultHeaders: ['name', 'versienummer', 'releaseDatum', 'status'],
-          customHeaders: {
-            kwetsbaarheden: {
-              id: 'kwetsbaarheden',
-              label: 'Kwetsbaarheden',
-              key: '',
-              customContent: (row) => {
-                return (
-                  row?.kwetsbaarheden
-                    ?.map((kwetsbaarheid) => kwetsbaarheid.titel)
-                    .join(', ') || '-'
-                );
-              },
-              sortComparator: byNested((r) => r?.kwetsbaarheden?.[0]?.titel),
-            },
-            voorzieningName: {
-              id: 'voorzieningName',
-              label: 'Applicatie',
-              key: '',
-              customContent: (row) => {
-                return row?.voorziening?.naam || '-';
-              },
-              sortComparator: byNested((r) => r?.voorziening?.naam),
-            },
-          },
-          modals: [...baseConfig.modals],
-        };
-
-      case 'moduleversie':
-      case 'applicatieversie':
-      case 'applicatiesversie':
-        return {
-          ...baseConfig,
-          schemaSlug: 'moduleversie',
-          paginationKey: 'applicatiesversie',
-          title: 'Applicatie Versies',
-          routeType: 'applicatiesversie',
-          defaultHeaders: ['naam', 'versie', 'status', 'releaseDatum'],
-          customHeaders: {},
-          dynamicActionFilter: ({ slug }) => !['module'].includes(slug),
-          modals: [...baseConfig.modals],
-        };
-
-      case 'organisaties':
-        return {
-          ...baseConfig,
-          schemaSlug: 'organisatie',
-          paginationKey: 'organisaties',
-          title: 'Beheer Organisaties',
-          routeType: 'organisaties',
-          defaultHeaders: [
-            'organizationName',
-            'website',
-            'beoordeling',
-            'e-mailadres',
-            'type',
-          ],
-          customHeaders: {
-            naam: {
-              id: 'organizationName',
-              label: 'Naam',
-              key: 'naam',
-              customContent: (row) => {
-                return row.naam || row.naam || '-';
-              },
-              sortComparator: byNested((r) => r?.naam),
-            },
-            contactgegevens: {
-              id: 'contactDetails',
-              label: 'Contactgegevens',
-              key: 'contactgegevens',
-              customContent: (row) => {
-                if (!row?.contactgegevens) return '-';
-                return (
-                  <AcColumn key={row.id}>
-                    <span>
-                      {row.contactgegevens.voornaam}{' '}
-                      {row.contactgegevens.tussenvoegsel}{' '}
-                      {row.contactgegevens.achternaam} / {row.contactgegevens.email}{' '}
-                      / {row.contactgegevens.telefoon}
-                    </span>
-                  </AcColumn>
-                );
-              },
-              sortComparator: byNested((r) => r?.contactgegevens?.voornaam),
-            },
-            website: {
-              id: 'website',
-              label: 'Website',
-              key: 'website',
-              customContent: (row) => {
-                if (!row.website) {
-                  return '-';
-                }
-
-                try {
-                  const url = new URL(row.website);
-                  return (
-                    <AcLink href={url.href} target='_blank'>
-                      {url.href}
-                    </AcLink>
-                  );
-                } catch {
-                  return row.website;
-                }
-              },
-            },
-          },
-          statusIcon: {
-            customContent: (row) => (
-              <div className='ac-beheer-organisaties-name-container'>
-                <div
-                  className='ac-beheer-organisaties-name-container__icon'
-                  data-tooltip-id={TOOLTIP_ID}
-                  data-tooltip-content={
-                    row['@self'].published ? 'Gepubliceerd' : 'Niet gepubliceerd'
-                  }
-                >
-                  {row['@self'].published ? (
-                    <VISUALS.CIRCLE_CHECK className='ac-beheer-publish-icon__check' />
-                  ) : (
-                    <VISUALS.CIRCLE_EXCLAMATION className='ac-beheer-publish-icon__exclamation' />
-                  )}
-                </div>
-              </div>
-            ),
-            customHeader: (
-              <div className='ac-beheer-organisaties-name-container__icon'></div>
-            ),
-          },
-          uniqueActions: [
-            {
-              key: 'activate',
-              label: 'Activeren',
-              icon: <VISUALS.CHECK />,
-              condition: (row) => row.beoordeling?.toLowerCase?.() !== 'actief',
-              action: 'activate',
-            },
-            {
-              key: 'deactivate',
-              label: 'Deactiveren',
-              icon: <VISUALS.CLOSE />,
-              condition: (row) => row.beoordeling?.toLowerCase?.() === 'actief',
-              action: 'deactivate',
-            },
-            {
-              key: 'depublish',
-              label: 'Depubliceren',
-              icon: <VISUALS.PUBLISH_OFF />,
-              condition: (row) =>
-                row['@self'].published &&
-                row?.beoordeling?.toLowerCase?.() !== 'concept',
-              action: 'depublish',
-            },
-            {
-              key: 'addDeelname',
-              label: 'Deelname toevoegen',
-              icon: <VISUALS.PLUS />,
-              condition: (row) => row?.beoordeling?.toLowerCase?.() !== 'concept',
-              action: 'addDeelname',
-            },
-            {
-              key: 'removeDeelname',
-              label: 'Deelname verlaten',
-              icon: <VISUALS.MINUS />,
-              condition: (row) =>
-                row?.beoordeling?.toLowerCase?.() !== 'concept' &&
-                row?.deelnames &&
-                row?.deelnames?.length > 0,
-              action: 'removeDeelname',
-            },
-          ],
-          modals: [
-            ...baseConfig.modals,
-            'activate',
-            'deactivate',
-            'publish',
-            'depublish',
-            'addDeelname',
-            'removeDeelname',
-          ],
-          customFilterDrawer: 'organisaties',
-        };
-
-      case 'kwetsbaarheden':
-        return {
-          ...baseConfig,
-          schemaSlug: 'kwetsbaarheid',
-          paginationKey: 'kwetsbaarheden',
-          title: 'Beheer Kwetsbaarheden',
-          routeType: 'kwetsbaarheden',
-          defaultHeaders: ['titel', 'ernst', 'detectedOn', 'status'],
-          customHeaders: {
-            ontdektOp: {
-              id: 'detectedOn',
-              label: 'Ontdekt op',
-              key: 'ontdektOp',
-              customContent: (row) =>
-                row.ontdektOp
-                  ? !isNaN(new Date(row.ontdektOp).getTime())
-                    ? new Date(row.ontdektOp).toLocaleDateString()
-                    : row.ontdektOp
-                  : '-',
-            },
-            gepubliceerdOp: {
-              id: 'publishedOn',
-              label: 'Gepubliceerd op',
-              key: 'gepubliceerdOp',
-              customContent: (row) =>
-                row.gepubliceerdOp
-                  ? !isNaN(new Date(row.gepubliceerdOp).getTime())
-                    ? new Date(row.gepubliceerdOp).toLocaleDateString()
-                    : row.gepubliceerdOp
-                  : '-',
-            },
-          },
-          modals: [...baseConfig.modals],
-        };
-
       case 'gebruiken':
       case 'gebruik':
         return {
@@ -490,7 +277,7 @@ const BeheerPageConfigFactory = {
                 return (
                   (
                     <ConUuidResolver>
-                      {row['@self'].relations.module}
+                      {row['@self']?.relations?.module || '-'}
                     </ConUuidResolver>
                   ) || '-'
                 );
@@ -504,67 +291,11 @@ const BeheerPageConfigFactory = {
                 return (
                   (
                     <ConUuidResolver>
-                      {row['@self'].relations.moduleVersie}
+                      {row['@self']?.relations?.moduleVersie || '-'}
                     </ConUuidResolver>
                   ) || '-'
                 );
               },
-            },
-          },
-          modals: [...baseConfig.modals],
-        };
-
-      case 'overeenkomsten':
-        return {
-          ...baseConfig,
-          schemaSlug: 'contract',
-          paginationKey: 'overeenkomsten',
-          title: 'Beheer Overeenkomsten',
-          routeType: 'overeenkomsten',
-          defaultHeaders: [
-            'name',
-            'startDatum',
-            'eindDatum',
-            'contactPersonProvider',
-          ],
-          customHeaders: {
-            voorzieningAanbod: {
-              id: 'voorzieningAanbodNaam',
-              label: 'Voorziening aanbod naam',
-              key: 'voorzieningAanbod',
-              customContent: (row) => {
-                return row?.voorzieningAanbod?.naam || '-';
-              },
-              sortComparator: byNested((r) => r?.voorzieningAanbod?.naam),
-            },
-            voorzieningGebruik: {
-              id: 'voorzieningGebruikId',
-              label: 'Voorziening gebruik ID',
-              key: 'voorzieningGebruikId',
-              customContent: (row) => {
-                return row?.voorzieningGebruik?.id || '-';
-              },
-              sortComparator: byNested((r) => r?.voorzieningGebruik?.id),
-            },
-            contactpersoonAanbieder: {
-              id: 'contactPersonProvider',
-              label: 'contactpersoon Aanbieder',
-              key: 'contactpersoonAanbieder',
-              customContent: (row) => {
-                if (!row?.contactpersoonAanbieder) return 'N/A';
-                return row.contactpersoonAanbieder.naam;
-              },
-              sortComparator: byNested((r) => r?.contactpersoonAanbieder?.naam),
-            },
-            contactpersoonGebruiker: {
-              id: 'contactPersonUser',
-              label: 'contactpersoon Gebruiker',
-              key: 'contactpersoonGebruiker',
-              customContent: (row) => {
-                if (!row?.contactpersoonGebruiker) return 'N/A';
-                return row.contactpersoonGebruiker.naam;
-              },
-              sortComparator: byNested((r) => r?.contactpersoonGebruiker?.naam),
             },
           },
           modals: [...baseConfig.modals],
@@ -702,6 +433,7 @@ const BeheerPageConfigFactory = {
           extend: [...baseConfig.extend],
           defaultHeaders: [],
           customHeaders: {},
+          isDynamicEntry: true,
         };
     }
   },

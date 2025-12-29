@@ -517,6 +517,16 @@ const ConKoppelingStageControleren = ({
         Controleren
       </h2>
 
+      <Paragraph>
+        Controleer of het overzicht van de koppeling volledig en juist is voordat u
+        verder gaat.
+        <br />
+        U kunt met Vorige terug naar de eerdere stappen.
+        <br />
+        Na het registreren van de koppeling kunt u via uw “Dashboard” de koppeling
+        opzoeken en indien gewenst aanpassen.
+      </Paragraph>
+
       {saveResult === 'error' && (
         <Alert type='error'>
           <Paragraph>Opslaan mislukt:</Paragraph>

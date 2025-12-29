@@ -71,20 +71,22 @@ const ConKoppelingStageZoeken = ({
       aria-labelledby='koppeling-zoek-title'
     >
       <h2 id='koppeling-zoek-title' className='sr-only'>
-        {isEditMode ? 'Koppeling bekijken' : 'Koppeling zoeken'}
+        {isEditMode ? 'Koppeling bekijken' : 'Controleren op bestaande koppeling'}
       </h2>
 
       {!isEditMode && (
         <Paragraph>
-          Zoek naar koppelingen die door de applicaties in uw applicatielandschap
-          worden ondersteund. Zoek op de naam van één van de betrokken applicaties.
-          <br />
-          Alle koppelingen die relevant zijn voor uw eigen applicaties en voor
-          buitengemeentelijke voorzieningen worden weergegeven.
-          <br />
-          Bestaat de koppeling nog niet, dan kunt u deze toevoegen.
-          <br />
-          Selecteer de gewenste koppeling door deze in de lijst aan te vinken.
+          Controleer eerst of de koppeling al bestaat. Dit kan op twee manieren:
+          <ul style={{ marginInlineStart: '1rem' }}>
+            <li>
+              Ga naar de betreffende applicatie en kijk onder het tabblad
+              “Koppelingen” of de koppeling al aanwezig is.
+            </li>
+            <li>
+              Ga naar de zoekpagina, zoek op de applicatie en gebruik de filter
+              “Koppelingen” om te controleren of de koppeling daar al staat.
+            </li>
+          </ul>
         </Paragraph>
       )}
 

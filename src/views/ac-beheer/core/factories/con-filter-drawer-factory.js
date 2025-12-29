@@ -50,6 +50,7 @@ const FilterDrawerFactory = {
       headers,
       defaultHeaders,
       onChange: setTableHeaders,
+      type,
     };
 
     switch (type) {
