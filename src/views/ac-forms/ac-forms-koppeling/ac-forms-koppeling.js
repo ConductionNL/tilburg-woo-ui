@@ -1766,8 +1766,8 @@ const AcFormsKoppeling = ({ store }) => {
             </Heading1>
             <Paragraph>
               {(() => {
-                switch (getAdjustedStepIndex(currentStep)) {
-                  case 0:
+                switch (getLogicalStepFromPhysical(currentStep)) {
+                  case 1:
                     return 'Selecteer een applicatie uit uw eigen aanbod waarvoor u een koppeling wilt publiceren.';
                   default:
                     return 'Vul dit formulier in om uw koppeling te registreren in de softwarecatalogus.';
