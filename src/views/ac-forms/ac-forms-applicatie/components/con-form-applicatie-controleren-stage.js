@@ -304,13 +304,12 @@ const ConFormApplicatieControlerenStage = memo(
     return (
       <div>
         <Paragraph>
-          Hieronder staat een overzicht van de opgevoerde gegevens van uw applicatie.
-          Controleer of dit klopt, voordat u de registratie van de applicatie afrond.
+          Controleer of het overzicht van de applicatie volledig en juist is voordat
+          u verder gaat.
           <br />
-          Via de &quot;Vorige&quot; knop kunt u terug bladeren naar de verschillende
-          stappen.
+          U kunt met Vorige terug naar de eerdere stappen.
           <br />
-          Na het registreren van de applicatie kunt u via uw &quot;Dashboard&quot; de
+          Na het registreren van de applicatie kunt u via uw “Dashboard” de
           applicatie opzoeken en indien gewenst aanpassen.
         </Paragraph>
         <br />

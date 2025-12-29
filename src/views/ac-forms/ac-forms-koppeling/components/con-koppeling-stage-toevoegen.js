@@ -7,6 +7,7 @@ import {
   Textbox,
   Textarea,
   Separator,
+  Alert,
 } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@src/constants';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
@@ -49,6 +50,17 @@ const ConKoppelingStageToevoegen = ({
   const [appBLoadingByRow, setAppBLoadingByRow] = useState({});
   const debounceTimersRef = useRef({});
   const abortControllersRef = useRef({});
+
+  const [showInfoAlert, setShowInfoAlert] = useState(() => {
+    // Check if alert was previously closed in this session
+    return !sessionStorage.getItem('koppeling-toevoegen-info-alert-closed');
+  });
+
+  // Handle closing the alert and remember the choice
+  const handleCloseAlert = () => {
+    setShowInfoAlert(false);
+    sessionStorage.setItem('koppeling-toevoegen-info-alert-closed', 'true');
+  };
 
   const upsertModuleOption = (opt) => {
     if (!opt) return;
@@ -277,6 +289,43 @@ const ConKoppelingStageToevoegen = ({
       <h2 id='koppeling-toevoegen-title' className='sr-only'>
         Toevoegen
       </h2>
+
+      <Paragraph>
+        Geef aan met welke applicaties uw oplossing gegevens kan uitwisselen en
+        beschrijf de koppeling. Zo kunnen gemeenten zien hoe uw applicatie past in
+        hun applicatielandschap.
+      </Paragraph>
+
+      {/* Closeable info alert about updating koppeling details later */}
+      {showInfoAlert && (
+        <Alert severity='info' className='ac-forms-product-info-alert'>
+          <button
+            onClick={handleCloseAlert}
+            className='ac-forms-product-info-alert__close-button'
+            title='Sluiten'
+            aria-label='Alert sluiten'
+          >
+            <VISUALS.CLOSE />
+          </button>
+          <div className='ac-forms-product-info-alert__content'>
+            <VISUALS.INFO className='ac-forms-product-info-alert__icon' />
+            <div>
+              <strong>Koppeling informatie aanpassen</strong>
+              <br />
+              <span className='ac-forms-product-info-alert__text'>
+                Vul per koppeling in met welke applicaties u koppelt en welke
+                applicatie de gegevens verzendt en welke deze ontvangt.
+                <br />
+                Vervolgens kunt u aanvullende informatie invullen, zoals het
+                transportprotocol (bijvoorbeeld API, bestand of bericht).
+                <br />
+                Bestaat de applicatie waarmee u wilt koppelen nog niet, dan kunt u de
+                leverancier vragen zich aan te melden bij de softwarecatalogus.
+              </span>
+            </div>
+          </div>
+        </Alert>
+      )}
 
       {/* Legend */}
       <div

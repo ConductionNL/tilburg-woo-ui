@@ -34,8 +34,11 @@ const ConFormApplicatiesStage = memo(
         <h2 id='dienst-applicaties-section-title' className='sr-only'>
           Applicaties selecteren
         </h2>
+
         <Paragraph style={{ marginBottom: '1rem' }}>
-          Selecteer de applicaties die onderdeel zijn van deze dienst.
+          Zoek de applicatie(s) waarop u de dienst aanbiedt. Veelal is dat op de
+          eigen applicaties, maar u kunt ook diensten op applicaties van andere
+          leveranciers aanbieden.
         </Paragraph>
 
         <div className='ac-register-form-grid'>

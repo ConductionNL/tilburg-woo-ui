@@ -1566,11 +1566,11 @@ const AcFormsKoppeling = ({ store }) => {
       case 0:
         return 'Aanbieder';
       case 1:
-        return 'Koppeling zoeken';
+        return 'Controleren op bestaande koppeling';
       case 2:
-        return isEditMode ? 'Bewerken' : 'Toevoegen';
+        return isEditMode ? 'Bewerken' : 'Koppelingen met andere applicaties';
       case 3:
-        return 'Controleren';
+        return 'Controleer uw gegevens';
       default:
         return '';
     }
@@ -1610,11 +1610,17 @@ const AcFormsKoppeling = ({ store }) => {
               style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
             >
               <Icon style={{ width: '1em', height: '1em' }} />
-              {isEditMode ? editModeTitle : wizardName}
+              Uw {isEditMode ? editModeTitle : wizardName}
             </Heading1>
             <Paragraph>
-              Zoek naar bestaande koppelingen, voeg nieuwe koppelingen toe en
-              controleer uw invoer.
+              {(() => {
+                switch (getAdjustedStepIndex(currentStep)) {
+                  case 0:
+                    return 'Selecteer een applicatie uit uw eigen aanbod waarvoor u een koppeling wilt publiceren.';
+                  default:
+                    return 'Vul dit formulier in om uw koppeling te registreren in de softwarecatalogus.';
+                }
+              })()}
             </Paragraph>
           </div>
 

@@ -195,13 +195,12 @@ const ConGebruikStepReview = ({
       </h2>
 
       <Paragraph>
-        Controleer of het overzicht van de applicatie volledig en juist is voordat u
-        verder gaat.
+        Controleer of het overzicht van de applicatiegebruik melding volledig en
+        juist is voordat u verder gaat.
         <br />
         U kunt met Vorige terug naar de eerdere stappen.
         <br />
-        Na het registreren van de applicatie kunt u via uw &ldquo;Dashboard&rdquo; de
-        applicatie opzoeken en indien gewenst aanpassen.
+        Met de knop verzenden kunt u de melding aan de klant sturen
       </Paragraph>
 
       {/* Closeable info alert about adding an existing application */}
