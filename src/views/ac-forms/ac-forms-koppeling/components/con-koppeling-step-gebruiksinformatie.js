@@ -95,12 +95,16 @@ const ConKoppelingStepGebruiksinformatie = ({
     ];
   }, [schemas?.gebruik]);
 
-  // Set default status to "In productie" if not set
+  // Set default status to "In productie" and corresponding date if not set
   useEffect(() => {
     if (!status && !isEditMode) {
       setStatus('In productie');
+      // Also set the corresponding start date to today
+      if (!startDatumInProductie) {
+        setStartDatumInProductie(getTodayDateString());
+      }
     }
-  }, [status, isEditMode, setStatus]);
+  }, [status, isEditMode, startDatumInProductie]);
 
   // Manage visibility state of info alert
   // Alert persists as closed for the session after user closes it (via sessionStorage).
@@ -274,7 +278,7 @@ const ConKoppelingStepGebruiksinformatie = ({
 
       <div className='ac-register-form-grid'>
         {/* Status field */}
-        <div style={{ gridColumn: 'span 2' }}>
+        <div>
           <ConSchemaEnhancedField
             schemaType='gebruik'
             schemaProperty='status'
@@ -293,9 +297,10 @@ const ConKoppelingStepGebruiksinformatie = ({
 
         {/* Startdatum Status field - shown when a status is selected */}
         {status && getStartDatumPropertyName(status) && (
-          <div style={{ gridColumn: 'span 2' }}>
+          <div>
             <ConSchemaEnhancedField
               schemaType='gebruik'
+              inputStyle={{ height: '40px', minHeight: '40px' }}
               schemaProperty={getStartDatumPropertyName(status)}
               value={getCurrentDateValue() || getTodayDateString()}
               onChange={(value) => setCurrentDateValue(value)}

@@ -11,6 +11,7 @@ import {
   UnorderedListItem,
   Heading1,
 } from '@utrecht/component-library-react/dist/css-module';
+import { AcFormatDate } from '@src/utilities/ac-format-date';
 
 const ConKoppelingStageControleren = ({
   rows,
@@ -47,6 +48,7 @@ const ConKoppelingStageControleren = ({
   datumInOntwikkeling,
   datumEindeOndersteuning,
   datumTeruggetrokken,
+  datumVerwerving,
   interneAantekening,
   deelnemers,
   deelnemerOptions,
@@ -117,28 +119,53 @@ const ConKoppelingStageControleren = ({
     };
   }, [selectedKoppelingId, koppelingsType, isEditMode, searchResults]);
 
-  // Helper function to get the relevant date field label/value based on status
-  const getDateFieldForStatus = () => {
-    if (!statusGebruiksinformatie) return { label: '', value: '' };
+  // Helper function to get the relevant start date based on status
+  const getRelevantStartDate = () => {
+    const status = statusGebruiksinformatie;
+    if (!status) return null;
 
-    const statusToDateMap = {
-      'in gebruik': { label: 'Startdatum Status', value: datumInGebruik },
-      'in ontwikkeling': {
-        label: 'Startdatum Status',
-        value: datumInOntwikkeling,
-      },
-      'einde ondersteuning': {
-        label: 'Startdatum Status',
-        value: datumEindeOndersteuning,
-      },
-      teruggetrokken: {
-        label: 'Startdatum Status',
-        value: datumTeruggetrokken,
-      },
-    };
-
-    return statusToDateMap[statusGebruiksinformatie] || { label: '', value: '' };
+    switch (status) {
+      case 'Verwerving':
+        return {
+          label: 'Startdatum Verwerving',
+          value: datumVerwerving
+            ? AcFormatDate(datumVerwerving, 'YYYY-MM-DD', 'D MMMM YYYY')
+            : null,
+        };
+      case 'Gepland':
+        return {
+          label: 'Startdatum Gepland',
+          value: datumInOntwikkeling
+            ? AcFormatDate(datumInOntwikkeling, 'YYYY-MM-DD', 'D MMMM YYYY')
+            : null,
+        };
+      case 'In productie':
+        return {
+          label: 'Startdatum In productie',
+          value: datumInGebruik
+            ? AcFormatDate(datumInGebruik, 'YYYY-MM-DD', 'D MMMM YYYY')
+            : null,
+        };
+      case 'Uit te faseren':
+        return {
+          label: 'Startdatum Uit te faseren',
+          value: datumEindeOndersteuning
+            ? AcFormatDate(datumEindeOndersteuning, 'YYYY-MM-DD', 'D MMMM YYYY')
+            : null,
+        };
+      case 'Uitgefaseerd':
+        return {
+          label: 'Startdatum Uitgefaseerd',
+          value: datumTeruggetrokken
+            ? AcFormatDate(datumTeruggetrokken, 'YYYY-MM-DD', 'D MMMM YYYY')
+            : null,
+        };
+      default:
+        return null;
+    }
   };
+
+  const relevantStartDate = getRelevantStartDate();
 
   // Helper function to resolve deelnemer names from IDs
   const getDeelnemerLabel = (deelnemerId) => {
@@ -293,7 +320,6 @@ const ConKoppelingStageControleren = ({
     const koppelingType = koppeling?.type || '';
     const koppelingBeschrijving = koppeling?.beschrijvingKort || '';
     const koppelingStandaarden = koppeling?.standaardversies || [];
-    const dateField = getDateFieldForStatus();
 
     return (
       <div
@@ -424,10 +450,11 @@ const ConKoppelingStageControleren = ({
                 </div>
               )}
 
-              {dateField.value && (
+              {/* Only show the relevant start date based on selected status */}
+              {relevantStartDate && relevantStartDate.value && (
                 <div className='ac-register-review__field'>
-                  <strong>{dateField.label}:</strong>
-                  <div>{dateField.value}</div>
+                  <strong>{relevantStartDate.label}:</strong>
+                  <div>{relevantStartDate.value}</div>
                 </div>
               )}
 
