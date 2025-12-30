@@ -44,7 +44,7 @@ const mapToOption = (item, index) => {
   return { value: String(value), label: String(label), data: item };
 };
 
-const ConFormsDienst = ({ store, userStore }) => {
+const ConFormsDienst = ({ store }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const dienstId = searchParams.get('id') || '';
@@ -111,6 +111,7 @@ const ConFormsDienst = ({ store, userStore }) => {
 
   const [saving, setSaving] = useState(false);
   const [saveResult, setSaveResult] = useState(null);
+  const [saveErrorMessage, setSaveErrorMessage] = useState('');
 
   // Unsaved changes alert
   const [showUnsavedChangesAlert, setShowUnsavedChangesAlert] = useState(false);
@@ -306,16 +307,16 @@ const ConFormsDienst = ({ store, userStore }) => {
 
   // Ensure /me is refreshed when the wizard mounts (so stages can read active organisation)
   useEffect(() => {
-    if (typeof userStore?.fetchUserProfile === 'function') {
+    if (typeof store?.user?.fetchUserProfile === 'function') {
       if (process.env.NODE_ENV === 'development') {
         // eslint-disable-next-line no-console
         console.log(
-          'ConFormsDienst - refreshing /me via userStore.fetchUserProfile'
+          'ConFormsDienst - refreshing /me via store.user.fetchUserProfile'
         );
       }
-      userStore.fetchUserProfile();
+      store.user.fetchUserProfile();
     }
-  }, [userStore]);
+  }, [store]);
 
   // Load schemas through object store (auth-aware)
   useEffect(() => {
@@ -696,13 +697,9 @@ const ConFormsDienst = ({ store, userStore }) => {
   );
 
   // Fetch full organisation data to check type (for conditional Deelnemers step)
-  // TODO: During testing, userStore?.activeOrganization was found to be empty/undefined.
-  // This appears to be a fundamental issue (or temporary / local bug) in the app where the user profile data
-  // is not properly loaded or accessible. The organization type check for the
-  // conditional Deelnemers step may not work until this is resolved.
   useEffect(() => {
     const fetchFullOrganisationData = async () => {
-      const activeOrg = userStore?.activeOrganization;
+      const activeOrg = store?.user?.activeOrganization;
       const organisationId = activeOrg?.uuid || activeOrg?.id;
 
       if (!organisationId || !isGebruikBeheerdersFlow) return;
@@ -732,8 +729,8 @@ const ConFormsDienst = ({ store, userStore }) => {
 
     fetchFullOrganisationData();
   }, [
-    userStore?.activeOrganization?.uuid,
-    userStore?.activeOrganization?.id,
+    store?.user?.activeOrganization?.uuid,
+    store?.user?.activeOrganization?.id,
     store,
     isGebruikBeheerdersFlow,
   ]);
@@ -741,7 +738,7 @@ const ConFormsDienst = ({ store, userStore }) => {
   // Fetch deelnemers from current logged-in organization (for gebruik beheerder flow)
   useEffect(() => {
     const fetchDeelnemers = async () => {
-      const activeOrg = userStore?.activeOrganization;
+      const activeOrg = store?.user?.activeOrganization;
       const organisationId = activeOrg?.uuid || activeOrg?.id;
 
       if (!organisationId || !isGebruikBeheerdersFlow) return;
@@ -813,8 +810,8 @@ const ConFormsDienst = ({ store, userStore }) => {
 
     fetchDeelnemers();
   }, [
-    userStore?.activeOrganization?.uuid,
-    userStore?.activeOrganization?.id,
+    store?.user?.activeOrganization?.uuid,
+    store?.user?.activeOrganization?.id,
     store,
     isGebruikBeheerdersFlow,
   ]);
@@ -1073,7 +1070,7 @@ const ConFormsDienst = ({ store, userStore }) => {
               moduleOptionsByProduct={productToModulesLookup}
               selectedKoppelingIds={selectedKoppelingIds}
               koppelingOptions={koppelingOptions}
-              userStore={userStore}
+              userStore={store.user}
               dienstType={dienstType}
               formType={formType}
             />
@@ -1106,7 +1103,7 @@ const ConFormsDienst = ({ store, userStore }) => {
             loading={schemasLoading}
             touched={touched}
             schemas={schemas}
-            userStore={userStore}
+            userStore={store.user}
             dienstType={dienstType}
           />
         );
@@ -1118,7 +1115,7 @@ const ConFormsDienst = ({ store, userStore }) => {
             moduleOptionsByProduct={productToModulesLookup}
             selectedKoppelingIds={selectedKoppelingIds}
             koppelingOptions={koppelingOptions}
-            userStore={userStore}
+            userStore={store.user}
             dienstType={dienstType}
             formType={formType}
           />
@@ -1368,28 +1365,33 @@ const ConFormsDienst = ({ store, userStore }) => {
   const handleSaveDienst = async () => {
     setSaving(true);
     setSaveResult(null);
+    setSaveErrorMessage('');
     try {
       // Handle Gebruik-beheerders flow (save gebruik object)
       if (isGebruikBeheerdersFlow) {
         // Validation
         if (!gebruik.diensten || gebruik.diensten.length === 0) {
+          setSaveErrorMessage('Selecteer minimaal één dienst.');
           setSaveResult('error');
           return;
         }
 
         if (!gebruik.status) {
+          setSaveErrorMessage('Status is verplicht.');
           setSaveResult('error');
           return;
         }
 
-        const activeOrg = userStore?.activeOrganization;
+        const activeOrg = store?.user?.activeOrganization;
         const afnemerId = activeOrg?.uuid || activeOrg?.id;
         if (!afnemerId) {
+          setSaveErrorMessage('Geen actieve organisatie gevonden. Log opnieuw in.');
           setSaveResult('error');
           return;
         }
 
         if (!selectedApplicatie?.value) {
+          setSaveErrorMessage('Selecteer een applicatie.');
           setSaveResult('error');
           return;
         }
@@ -1433,28 +1435,18 @@ const ConFormsDienst = ({ store, userStore }) => {
         await store.object.createObject('voorzieningen', 'dienst', payload);
       }
       setSaveResult('success');
-    } catch (e) {
+    } catch (error) {
+      console.error('Error saving dienst:', error);
+      // Extract error message from the error object
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        'Onbekende fout bij het opslaan.';
+      setSaveErrorMessage(errorMessage);
       setSaveResult('error');
     } finally {
       setSaving(false);
-    }
-  };
-
-  const currentStepName = (step) => {
-    // Convert physical step to logical step using helper function
-    const logicalStep = getLogicalStepFromPhysical(step);
-
-    switch (logicalStep) {
-      case 0:
-        return 'Zoek de applicatie voor uw diensten';
-      case 1:
-        return 'Aanbieder';
-      case 2:
-        return 'Dienstverlening op uw applicaties';
-      case 3:
-        return 'Controleer uw gegevens';
-      default:
-        return '';
     }
   };
 
@@ -1465,12 +1457,6 @@ const ConFormsDienst = ({ store, userStore }) => {
   } = useMemo(() => getActiveWizard() || {}, [dienstType]);
   const capitalizedSchema = _.capitalize(wizardSchema);
   const editModeTitle = `${capitalizedSchema} updaten`;
-
-  const newWizardName = (() => {
-    var a = wizardName.split(' ');
-    a[0] += '(en)';
-    return a.join(' ');
-  })();
 
   const wizardType = isEditMode
     ? 'update'
@@ -1602,6 +1588,11 @@ const ConFormsDienst = ({ store, userStore }) => {
                   {saveResult === 'error' && (
                     <Alert type='error'>
                       Er is een fout opgetreden bij het opslaan.
+                      {saveErrorMessage && (
+                        <Paragraph style={{ marginTop: '0.5rem' }}>
+                          <strong>Details:</strong> {saveErrorMessage}
+                        </Paragraph>
+                      )}
                     </Alert>
                   )}
 
