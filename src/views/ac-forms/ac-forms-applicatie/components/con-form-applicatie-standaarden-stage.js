@@ -1332,9 +1332,9 @@ const ConFormApplicatieStandaardenStage = ({
         <Paragraph className='con-form-wizard-paragraph'>
           <strong>Selecteer de standaardversies voor uw applicatie</strong>
           <br />
-          Geef voor uw applicatie aan welke standaardversies worden ondersteund en of
-          een testrapport beschikbaar is. Er worden de standaardversies getoond die
-          verplicht of aanbevolen zijn voor de in de vorige stap geselecteerde
+          Geef voor uw applicatie aan welke standaarden worden ondersteund en of een
+          testrapport beschikbaar is. Er worden de standaarden getoond die verplicht
+          of aanbevolen zijn voor de in de vorige stap geselecteerde
           referentiecomponenten. Dit helpt gemeenten te beoordelen hoe uw software
           past in hun architectuur en vergemakkelijkt integraties. Voor{' '}
           <Link

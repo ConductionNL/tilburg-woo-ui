@@ -300,9 +300,13 @@ const ConFormControlerenStage = memo(
     return (
       <div>
         <Paragraph>
-          Bekijk hieronder de ingevulde gegevens. Controleer of alle informatie klopt
-          voordat u uw dienst aanmeldt. U kunt velden nog aanpassen via de
-          &apos;Vorige&apos; knop of op een later moment via uw eigen omgeving.
+          Controleer of het overzicht van de dienst volledig en juist is voordat u
+          verder gaat.
+          <br />
+          U kunt met Vorige terug naar de eerdere stappen.
+          <br />
+          Na het registreren van de dienst kunt u via uw “Dashboard” de dienst
+          opzoeken en indien gewenst aanpassen.
         </Paragraph>
         <br />
 

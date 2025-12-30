@@ -1664,34 +1664,6 @@ const AcFormsGebruik = ({ store }) => {
     return base;
   })();
 
-  const currentStepName = (step) => {
-    // Convert physical step to logical step using helper function
-    const logicalStep = getLogicalStepFromPhysical(step);
-
-    switch (logicalStep) {
-      case -1:
-        return 'Afnemer';
-      case 0:
-        return applicatieKeuze === 'bestaand'
-          ? 'Toevoegen applicatie'
-          : 'Publiceren applicatie';
-      case 1:
-        return 'Gebruiksinformatie';
-      case 2:
-        return 'Koppel de applicatie aan referentiecomponenten';
-      case 3:
-        // If Deelnemers step is shown, logical step 3 is Deelnemers
-        // Otherwise, logical step 3 is Controleren
-        return needsDeelnemersStep
-          ? 'Deelnemers toevoegen'
-          : 'Controleer uw gegevens';
-      case 4:
-        return 'Controleer uw gegevens';
-      default:
-        return stepsList[step] || '';
-    }
-  };
-
   const canGoNext = () => {
     const logicalStep = getLogicalStepFromPhysical(currentStep);
 
@@ -1924,10 +1896,39 @@ const AcFormsGebruik = ({ store }) => {
     }
   };
 
+  const currentStepName = (step) => {
+    // Convert physical step to logical step using helper function
+    const logicalStep = getLogicalStepFromPhysical(step);
+
+    switch (logicalStep) {
+      case -1:
+        return 'Afnemer';
+      case 0:
+        return applicatieKeuze === 'bestaand'
+          ? 'Toevoegen applicatie'
+          : 'Publiceren applicatie';
+      case 1:
+        return 'Gebruiksinformatie';
+      case 2:
+        return 'Koppel de applicatie aan referentiecomponenten';
+      case 3:
+        // If Deelnemers step is shown, logical step 3 is Deelnemers
+        // Otherwise, logical step 3 is Controleren
+        return needsDeelnemersStep
+          ? 'Deelnemers toevoegen'
+          : 'Controleer uw gegevens';
+      case 4:
+        return 'Controleer uw gegevens';
+      default:
+        return stepsList[step] || '';
+    }
+  };
+
   const { icon: Icon, schema: wizardSchema } = useMemo(
     () => getActiveWizard() || {},
     [gebruikType]
   );
+
   const capitalizedSchema = _.capitalize(wizardSchema);
   const editModeTitle = `${capitalizedSchema} updaten`;
 

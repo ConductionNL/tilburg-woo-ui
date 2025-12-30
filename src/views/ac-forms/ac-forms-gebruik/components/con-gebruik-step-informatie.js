@@ -185,7 +185,7 @@ const ConGebruikStepInformatie = ({
 
       <div className='ac-register-form-grid'>
         {/* Hosting field - filtered from applicatie's cloudDienstverleningsmodel */}
-        <div style={{ gridColumn: 'span 2' }}>
+        <div>
           {(() => {
             // Get hosting options from selected applicatie or module schema enum
             const hostingOptions = [];
@@ -250,7 +250,7 @@ const ConGebruikStepInformatie = ({
 
         {/* Applicatie versie field - select for existing applicatie, input for new applicatie */}
         {applicatieKeuze === 'bestaand' && (
-          <div style={{ gridColumn: 'span 2' }}>
+          <div>
             <ConSchemaEnhancedField
               schemaType='gebruik'
               schemaProperty='moduleVersie'
@@ -272,7 +272,7 @@ const ConGebruikStepInformatie = ({
 
         {/* Versie creation for new applicatie */}
         {applicatieKeuze === 'nieuw' && nieuweApplicatie && (
-          <div style={{ gridColumn: 'span 2' }}>
+          <div>
             <div>
               <h3>Versie informatie</h3>
               <Table>
@@ -313,7 +313,7 @@ const ConGebruikStepInformatie = ({
         )}
 
         {/* Status field */}
-        <div style={{ gridColumn: 'span 2' }}>
+        <div>
           <ConSchemaEnhancedField
             schemaType='gebruik'
             schemaProperty='status'
@@ -345,9 +345,10 @@ const ConGebruikStepInformatie = ({
 
         {/* Startdatum field - shown when a status is selected */}
         {gebruik?.status && getStartDatumPropertyName(gebruik.status) && (
-          <div style={{ gridColumn: 'span 2' }}>
+          <div>
             <ConSchemaEnhancedField
               schemaType='gebruik'
+              inputStyle={{ height: '40px', minHeight: '40px' }}
               schemaProperty={getStartDatumPropertyName(gebruik.status)}
               value={
                 gebruik?.[getStartDatumPropertyName(gebruik.status)] ||
@@ -371,7 +372,7 @@ const ConGebruikStepInformatie = ({
         )}
 
         {/* Interne notitie field */}
-        <div style={{ gridColumn: 'span 2' }}>
+        <div>
           <ConSchemaEnhancedField
             schemaType='gebruik'
             schemaProperty='interneAantekening'

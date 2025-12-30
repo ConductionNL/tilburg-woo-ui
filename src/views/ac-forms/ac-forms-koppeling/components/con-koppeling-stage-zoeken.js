@@ -1,11 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { AcFlex } from '@src/atoms';
-import { ConSchemaEnhancedField } from '@src/components';
-import {
-  Paragraph,
-  UnorderedList,
-  UnorderedListItem,
-} from '@utrecht/component-library-react/dist/css-module';
+import { AcCheckbox } from '@src/molecules';
+import { ConSchemaEnhancedField, ConUuidResolver } from '@src/components';
+import { Paragraph, Alert } from '@utrecht/component-library-react/dist/css-module';
+import { VISUALS } from '@src/constants';
 
 const ConKoppelingStageZoeken = ({
   loading,
@@ -20,6 +18,8 @@ const ConKoppelingStageZoeken = ({
   isEditMode,
   onSearchModules,
   schemas = {},
+  selectedKoppelingId,
+  setSelectedKoppelingId,
 }) => {
   const idToLabel = Object.fromEntries(
     (resolvedModulesFromResults || []).map((o) => [String(o.value), String(o.label)])
@@ -52,6 +52,16 @@ const ConKoppelingStageZoeken = ({
     return '↔';
   };
 
+  // Manage visibility state of info alert
+  const [showInfoAlert, setShowInfoAlert] = useState(() => {
+    return !sessionStorage.getItem('koppeling-zoeken-info-alert-closed');
+  });
+
+  const handleCloseAlert = () => {
+    setShowInfoAlert(false);
+    sessionStorage.setItem('koppeling-zoeken-info-alert-closed', 'true');
+  };
+
   return (
     <AcFlex
       column
@@ -61,16 +71,48 @@ const ConKoppelingStageZoeken = ({
       aria-labelledby='koppeling-zoek-title'
     >
       <h2 id='koppeling-zoek-title' className='sr-only'>
-        {isEditMode ? 'Koppeling bekijken' : 'Koppeling zoeken'}
+        {isEditMode ? 'Koppeling bekijken' : 'Controleren op bestaande koppeling'}
       </h2>
 
       {!isEditMode && (
         <Paragraph>
-          Leveranciers hebben vaak al opgegeven met welke applicaties of
-          voorzieningen hun product kan koppelen. Zoek hieronder of de gewenste
-          koppeling al bestaat. Als deze nog niet is opgevoerd, kunt u de koppeling
-          zelf toevoegen in de volgende stap.
+          Controleer eerst of de koppeling al bestaat. Dit kan op twee manieren:
+          <ul style={{ marginInlineStart: '1rem' }}>
+            <li>
+              Ga naar de betreffende applicatie en kijk onder het tabblad
+              “Koppelingen” of de koppeling al aanwezig is.
+            </li>
+            <li>
+              Ga naar de zoekpagina, zoek op de applicatie en gebruik de filter
+              “Koppelingen” om te controleren of de koppeling daar al staat.
+            </li>
+          </ul>
         </Paragraph>
+      )}
+
+      {/* Closeable info alert */}
+      {!isEditMode && showInfoAlert && (
+        <Alert severity='info' className='ac-forms-product-info-alert'>
+          <button
+            onClick={handleCloseAlert}
+            className='ac-forms-product-info-alert__close-button'
+            title='Sluiten'
+            aria-label='Alert sluiten'
+          >
+            <VISUALS.CLOSE />
+          </button>
+          <div className='ac-forms-product-info-alert__content'>
+            <VISUALS.INFO className='ac-forms-product-info-alert__icon' />
+            <div>
+              <strong>Zoekpagina</strong>
+              <br />
+              <span className='ac-forms-product-info-alert__text'>
+                U kunt ook starten vanaf de zoekpagina. Open de detailpagina van de
+                gevonden koppeling en kies &apos;Koppeling toevoegen&apos;.
+              </span>
+            </div>
+          </div>
+        </Alert>
       )}
 
       <div className='ac-register-form-grid'>
@@ -132,8 +174,12 @@ const ConKoppelingStageZoeken = ({
         {!resultsLoading && searchResults.length ? (
           <div className='ac-register-review'>
             <div className='ac-register-review__section'>
-              <UnorderedList>
+              <div
+                style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}
+              >
                 {searchResults.map((k, i) => {
+                  const koppelingId = k?.id || k?.['@self']?.id || String(i);
+                  const isSelected = selectedKoppelingId === koppelingId;
                   const rels = k?.['@self']?.relations || {};
                   const aRel =
                     rels.moduleA ??
@@ -186,34 +232,73 @@ const ConKoppelingStageZoeken = ({
                   ).trim();
 
                   return (
-                    <UnorderedListItem key={k?.id || i}>
-                      {naam && (
-                        <div style={{ marginBottom: '0.25rem' }}>
-                          <strong>{naam}</strong>
-                        </div>
-                      )}
-                      <div>
-                        {dir === 'BnaarA' ? (
-                          <>
-                            {bLabel} {dirArrow} {aLabel}
-                          </>
-                        ) : (
-                          <>
-                            {aLabel} {dirArrow} {bLabel}
-                          </>
-                        )}
-                        {soortLabel ? ` (${soortLabel})` : ''}
+                    <div
+                      key={koppelingId}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '0.75rem',
+                        padding: '0.75rem',
+                        outline: isSelected ? '2px solid #0063e5' : '1px solid #ddd',
+                        borderRadius: '4px',
+                        backgroundColor: isSelected ? '#f0f7ff' : 'transparent',
+                      }}
+                      onClick={() => {
+                        if (!isEditMode && !loading) {
+                          setSelectedKoppelingId(isSelected ? null : koppelingId);
+                        }
+                      }}
+                    >
+                      <div style={{ marginTop: '0.25rem' }}>
+                        <AcCheckbox
+                          id={`koppeling-${koppelingId}`}
+                          value={koppelingId}
+                          checked={isSelected}
+                          onChange={(checked) => {
+                            if (!isEditMode && !loading) {
+                              setSelectedKoppelingId(checked ? koppelingId : null);
+                            }
+                          }}
+                          disabled={isEditMode || loading}
+                        />
                       </div>
-                      {(statusLabel || beschrijving) && (
-                        <div style={{ color: '#666', fontSize: '0.9rem' }}>
-                          {statusLabel && <div>Status: {statusLabel}</div>}
-                          {beschrijving && <div>Beschrijving: {beschrijving}</div>}
+                      <div style={{ flex: 1, marginLeft: '0.5rem' }}>
+                        {naam && (
+                          <div style={{ marginBottom: '0.25rem' }}>
+                            <strong>{naam}</strong>
+                          </div>
+                        )}
+                        <div>
+                          {dir === 'BnaarA' ? (
+                            <>
+                              <ConUuidResolver>{bLabel}</ConUuidResolver> {dirArrow}{' '}
+                              <ConUuidResolver>{aLabel}</ConUuidResolver>
+                            </>
+                          ) : (
+                            <>
+                              <ConUuidResolver>{aLabel}</ConUuidResolver> {dirArrow}{' '}
+                              <ConUuidResolver>{bLabel}</ConUuidResolver>
+                            </>
+                          )}
+                          {soortLabel ? ` (${soortLabel})` : ''}
                         </div>
-                      )}
-                    </UnorderedListItem>
+                        {(statusLabel || beschrijving) && (
+                          <div
+                            style={{
+                              color: '#666',
+                              fontSize: '0.9rem',
+                              marginTop: '0.25rem',
+                            }}
+                          >
+                            {statusLabel && <div>Status: {statusLabel}</div>}
+                            {beschrijving && <div>Beschrijving: {beschrijving}</div>}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   );
                 })}
-              </UnorderedList>
+              </div>
             </div>
           </div>
         ) : resultsLoading ? (

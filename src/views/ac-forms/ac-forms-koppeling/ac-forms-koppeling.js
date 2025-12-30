@@ -16,12 +16,13 @@ import _ from 'lodash';
 import ConKoppelingStageZoeken from './components/con-koppeling-stage-zoeken';
 import ConKoppelingStageToevoegen from './components/con-koppeling-stage-toevoegen';
 import ConKoppelingStageControleren from './components/con-koppeling-stage-controleren';
-import ConKoppelingStageAanbieder from './components/con-koppeling-stage-aanbieder';
+import ConKoppelingStepGebruiksinformatie from './components/con-koppeling-step-gebruiksinformatie';
+import ConKoppelingStepDeelnemers from './components/con-koppeling-step-deelnemers';
 import { commongroundApiUrl } from '@src/config';
 import { getActiveWizard } from '@src/constants/wizards.constants';
 import ConUnsavedChangesAlertModal from '@src/components/con-unsaved-changes-alert-modal/con-unsaved-changes-alert-modal';
-import { validateWebsite } from '@views/ac-forms/validation/form-validations';
 import { useDebouncedInput } from '@src/hooks';
+import useStepper from '../con-stepper';
 
 /**
  * Koppeling Wizard (AcFormsKoppeling)
@@ -30,21 +31,21 @@ import { useDebouncedInput } from '@src/hooks';
  *
  * LEGACY NOTE: The initial "Soort koppeling" (type selection) step has been removed.
  * The koppeling type is now determined via URL parameter:
- * - ?type=eigen-organisatie - For registering connections within own organization
- * - ?type=aanbieden-koppeling - For offering connections to other organizations
- *   → Automatically sets the user's organization as 'aanbieder'
+ * - ?type=aanbieden-koppeling - Gebruik beheerder flow (current implementation)
+ * - ?type=eigen-organisatie - Aanbod beheerder flow (future implementation)
  *
- * If no type is provided, defaults to 'eigen-organisatie'.
+ * If no type is provided, defaults to 'aanbieden-koppeling' (gebruik beheerder flow).
  *
- * Current steps:
- * - Step 0: Koppeling zoeken (Search for existing connections)
+ * Current steps (gebruik beheerder flow - aanbieden-koppeling):
+ * - Step 0: Een koppeling zoeken (Search for existing connections)
  * - Step 1: Toevoegen/Bewerken (Add/Edit connection details)
  * - Step 2: Controleren (Review and submit)
  */
 const AcFormsKoppeling = ({ store }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const koppelingId = searchParams.get('id') || '';
+  const koppelingId = searchParams.get('id') || ''; // For edit mode only
+  const koppelingIdFromUrl = searchParams.get('koppelingId') || ''; // For preselection
   const typeFromUrl = searchParams.get('type') || '';
   const applicatieFromUrl = searchParams.get('applicatie') || ''; // Read applicatie parameter from URL
   const isEditMode = !!koppelingId;
@@ -53,24 +54,12 @@ const AcFormsKoppeling = ({ store }) => {
   const validTypes = ['eigen-organisatie', 'aanbieden-koppeling'];
   const initialType = validTypes.includes(typeFromUrl) ? typeFromUrl : null;
 
-  // LEGACY: Type selection step removed - type is now required via URL parameter
-  // If type is not provided, default to 'eigen-organisatie'
-  // When aanbieden-koppeling, add aanbieder step as step 0
-  const getInitialStep = (type) => {
-    const koppelingType = type || initialType || 'eigen-organisatie';
-    if (isEditMode) {
-      // In edit mode, skip aanbieder step (it's already set)
-      return koppelingType === 'aanbieden-koppeling' ? 1 : 1;
-    }
-    // For new koppelingen, start at aanbieder step if type is aanbieden-koppeling
-    return koppelingType === 'aanbieden-koppeling' ? 0 : 0;
-  };
+  const stepper = useStepper();
 
-  const [currentStep, setCurrentStep] = useState(getInitialStep(initialType));
   const [loading, setLoading] = useState(false);
   const [koppelingsType, setKoppelingsType] = useState(
-    initialType || 'eigen-organisatie'
-  ); // Default to 'eigen-organisatie' if not specified
+    initialType || 'aanbieden-koppeling'
+  ); // Default to 'aanbieden-koppeling' (gebruik beheerder flow) if not specified
 
   // Ref for ProcessSteps to add click handlers
   const processStepsRef = useRef(null);
@@ -81,19 +70,21 @@ const AcFormsKoppeling = ({ store }) => {
 
     const addClickHandlers = () => {
       const stepElements = processStepsRef.current.querySelectorAll(
-        '.denhaag-process-steps .denhaag-process-steps__step'
+        '.denhaag-process-steps .denhaag-process-steps__step-header, .denhaag-process-steps .denhaag-process-steps__sub-step'
       );
 
       stepElements.forEach((stepEl, index) => {
+        index++;
+
         stepEl.style.cursor = '';
         stepEl.onclick = null;
         stepEl.classList.remove('ac-step-clickable');
 
-        if (index < currentStep) {
+        if (index < stepper.getCurrentStep()) {
           stepEl.classList.add('ac-step-clickable');
           stepEl.onclick = (e) => {
             e.preventDefault();
-            setCurrentStep(index);
+            stepper.setCurrentStep(index);
           };
         }
       });
@@ -101,16 +92,14 @@ const AcFormsKoppeling = ({ store }) => {
 
     const timeoutId = setTimeout(addClickHandlers, 100);
     return () => clearTimeout(timeoutId);
-  }, [currentStep]);
+  }, [stepper.getCurrentStep()]);
 
   // Schema management state
   const [schemas, setSchemas] = useState({});
-  const [schemasLoading, setSchemasLoading] = useState(true);
 
   // Fetch schemas on component mount
   useEffect(() => {
     const fetchSchemas = async () => {
-      setSchemasLoading(true);
       try {
         // Fetch koppeling schema
         let koppelingSchema = null;
@@ -121,24 +110,22 @@ const AcFormsKoppeling = ({ store }) => {
           console.error('Failed to fetch koppeling schema:', koppelingError);
         }
 
-        // Fetch organisatie schema for organization form
-        let organisatieSchema = null;
+        // Fetch gebruik schema (for gebruik-beheerders flow)
+        let gebruikSchema = null;
         try {
-          await store.object.fetchSchema('organisatie');
-          organisatieSchema = store.object.getSchema('schema_organisatie');
-        } catch (orgError) {
-          console.error('Failed to fetch organisatie schema:', orgError);
+          await store.object.fetchSchema('gebruik');
+          gebruikSchema = store.object.getSchema('schema_gebruik');
+        } catch (gebruikError) {
+          console.error('Failed to fetch gebruik schema:', gebruikError);
         }
 
         setSchemas({
           koppeling: koppelingSchema,
-          organisatie: organisatieSchema,
+          gebruik: gebruikSchema,
         });
       } catch (error) {
         console.error('Failed to fetch schemas for koppeling form:', error);
         setSchemas({});
-      } finally {
-        setSchemasLoading(false);
       }
     };
     fetchSchemas();
@@ -191,24 +178,33 @@ const AcFormsKoppeling = ({ store }) => {
   const [buitengemeentelijkeOptionsLoading, setBuitengemeentelijkeOptionsLoading] =
     useState(false);
 
-  // Aanbieder state (only for aanbieden-koppeling type)
-  const [aanbieder, setAanbieder] = useState(null);
-  const [aanbiederKeuze, setAanbiederKeuze] = useState('bestaand'); // 'bestaand' or 'nieuw'
-  const [aanbiederOrganisatie, setAanbiederOrganisatie] = useState({
-    naam: '',
-    type: '',
-    website: '',
-    beschrijvingKort: '',
-    beschrijvingLang: '',
-    'e-mailadres': '',
-    telefoonnummer: '',
-    kvkNummer: '',
-    logo: '',
+  // Gebruik state (for gebruik beheerder flow - aanbieden-koppeling)
+  const [gebruik, setGebruik] = useState({
+    selectedKoppelingId: null,
+    status: '',
+    startDatumInProductie: '',
+    startDatumGepland: '',
+    startDatumUitTeFaseren: '',
+    startDatumUitGefaseerd: '',
+    startDatumVerwerving: '',
+    interneAantekening: '',
+    deelnemers: [],
   });
 
-  // Organisatie options for aanbieder selection
-  const [organisatieOptions, setOrganisatieOptions] = useState([]);
-  const [organisatieLoading, setOrganisatieLoading] = useState(false);
+  // Helper function to update gebruik state
+  const setGebruikData = (key, value) => {
+    setGebruik((prev) => ({ ...prev, [key]: value }));
+  };
+  const [deelnemerOptions, setDeelnemerOptions] = useState([]);
+  const [deelnemersLoading, setDeelnemersLoading] = useState(false);
+
+  // State for the full organization data (needed to get the type for deelnemers step visibility)
+  const [fullActiveOrganisation, setFullActiveOrganisation] = useState(null);
+
+  // Confirmation modal state for "cannot find koppeling" button
+  // This button switches from gebruik beheerder flow (aanbieden-koppeling) to aanbod beheerder flow (eigen-organisatie)
+  const [showCannotFindKoppelingAlert, setShowCannotFindKoppelingAlert] =
+    useState(false);
 
   const directionOptions = [
     { value: 'AnaarB', label: 'A → B' },
@@ -239,59 +235,6 @@ const AcFormsKoppeling = ({ store }) => {
     if (dir === 'bi-directioneel') return '↔';
     return '↔';
   };
-
-  /**
-   * Helper function to get the correct step index accounting for optional steps
-   * Accounts for the optional Aanbieder step (only shown for aanbieden-koppeling)
-   * @param {number} logicalStep - The logical step number
-   * Logical steps: 0=Aanbieder, 1=Zoeken, 2=Toevoegen, 3=Controleren
-   * @returns {number} The adjusted physical step index
-   */
-  const getAdjustedStepIndex = useCallback(
-    (logicalStep) => {
-      let index = logicalStep;
-
-      // If Aanbieder step is not shown (not aanbieden-koppeling), adjust steps after it
-      if (koppelingsType !== 'aanbieden-koppeling' && logicalStep > 0) {
-        index -= 1;
-      }
-
-      return index;
-    },
-    [koppelingsType]
-  );
-
-  /**
-   * Convert physical step index to logical step number
-   * Accounts for optional Aanbieder step
-   * @param {number} physicalStep - The physical step index
-   * @returns {number} The logical step number
-   */
-  const getLogicalStepFromPhysical = useCallback(
-    (physicalStep) => {
-      // Start with physical step
-      let logicalStep = physicalStep;
-
-      // If Aanbieder step is not shown (not aanbieden-koppeling), skip logical step 0
-      if (koppelingsType !== 'aanbieden-koppeling') {
-        // If we're at or past where Aanbieder would be (logical step 0), add 1 to skip it
-        if (logicalStep >= 0) {
-          logicalStep += 1;
-        }
-      }
-
-      return logicalStep;
-    },
-    [koppelingsType]
-  );
-
-  /**
-   * Update function for aanbieder organization data
-   * Used when creating a new organization for aanbieden-koppeling
-   */
-  const setAanbiederOrganisatieData = useCallback((key, value) => {
-    setAanbiederOrganisatie((prev) => ({ ...prev, [key]: value }));
-  }, []);
 
   // Fetch modules (applications) options on mount
   useEffect(() => {
@@ -511,7 +454,7 @@ const AcFormsKoppeling = ({ store }) => {
     const run = async () => {
       if (!isEditMode) return;
       // Jump to edit step (was step 2, now step 1 after removing type selection)
-      setCurrentStep(1);
+      stepper.setCurrentStepByLabel('toevoegen');
       setPrefillLoading(true);
       try {
         const url = `/api/apps/openregister/api/objects/voorzieningen/koppeling/${encodeURIComponent(
@@ -565,8 +508,12 @@ const AcFormsKoppeling = ({ store }) => {
         setNameByRow({ 0: naam });
         setKoppelingIdByRow({ 0: String(koppelingId) });
 
+        // Prefill gebruiksinformatie fields
+        // Note: In edit mode, we're editing a koppeling, not a gebruik
+        // So we don't prefill gebruik fields here
+
         // Default koppelings type so step 0 isn't blocking
-        setKoppelingsType('eigen-organisatie');
+        setKoppelingsType('aanbieden-koppeling');
       } catch (e) {
         if (!cancelled) console.error('Het laden van de koppeling is mislukt.');
       } finally {
@@ -883,63 +830,134 @@ const AcFormsKoppeling = ({ store }) => {
     loadBuitengemeentelijkeVoorzieningen();
   }, []);
 
-  // Server-side search for organisaties
-  const searchOrganisaties = useCallback(
-    async (query) => {
-      try {
-        setOrganisatieLoading(true);
-        const q = String(query || '').trim();
-
-        // Always fetch organizations - either with search query or initial load
-        const params = {
-          _limit: '50',
-          _page: '1',
-          _source: 'index',
-          '_extend[]': '@self.schema',
-          _published: 'false',
-        };
-
-        // Add search parameter if query is provided
-        if (q) {
-          params._search = q;
-        }
-
-        await store.object.fetchCollection('voorzieningen', 'organisatie', params);
-        const collection = store.object.getCollection('voorzieningen_organisatie');
-        const list = collection?.results || collection || [];
-
-        const options = list.map((item, index) => {
-          const label =
-            item?.['@self']?.name ||
-            item?.naam ||
-            item?.name ||
-            item?.title ||
-            `Organisatie ${index + 1}`;
-          const value = item?.['@self']?.id || item?.id || item?.slug || label;
-          return { value: String(value), label: String(label), data: item };
-        });
-        setOrganisatieOptions(options);
-      } catch (e) {
-        setOrganisatieOptions([]);
-      } finally {
-        setOrganisatieLoading(false);
-      }
-    },
-    [store]
-  );
-
-  // Debounced search function for organisaties
-  const debouncedSearchOrganisaties = useDebouncedInput(searchOrganisaties, 500, {
-    disableInstantValidation: true,
-  });
-
-  // Trigger initial organization search when switching to 'aanbieden-koppeling'
+  // Preselect koppeling from URL parameter (when coming from details page)
   useEffect(() => {
-    if (koppelingsType === 'aanbieden-koppeling') {
-      // Load initial organizations when switching to aanbieden-koppeling mode
-      searchOrganisaties('');
+    if (koppelingIdFromUrl && !isEditMode) {
+      setGebruikData('selectedKoppelingId', koppelingIdFromUrl);
+
+      // Fetch the koppeling to get its applicaties and ensure it's in search results
+      const fetchKoppelingForPreselection = async () => {
+        try {
+          const url = `/api/apps/openregister/api/objects/voorzieningen/koppeling/${encodeURIComponent(
+            koppelingIdFromUrl
+          )}?_extend[]=@self.schema&_extend[]=@self.relations&_published=false`;
+          const res = await fetch(url, { headers: { Accept: 'application/json' } });
+          if (!res.ok) return;
+          const data = await res.json();
+
+          const rels = data?.['@self']?.relations || {};
+          const moduleAIdRaw = rels?.moduleA ?? data?.moduleA;
+          const moduleAId = String(extractRelationId(moduleAIdRaw) || '');
+
+          // If ownApp is not set, set it to moduleA
+          if (!ownApp?.value && moduleAId) {
+            const labelA = await ensureModuleOptionAndGetLabel(moduleAId);
+            setOwnApp({ value: moduleAId, label: labelA || moduleAId });
+          }
+
+          // Add koppeling to search results if not already present
+          setSearchResults((prev) => {
+            const exists = prev.some(
+              (k) =>
+                String(k?.id || k?.['@self']?.id || '') ===
+                String(koppelingIdFromUrl)
+            );
+            if (exists) return prev;
+            return [data, ...prev];
+          });
+        } catch (error) {
+          console.error('Failed to fetch koppeling for preselection:', error);
+        }
+      };
+
+      fetchKoppelingForPreselection();
     }
-  }, [koppelingsType, searchOrganisaties]);
+  }, [koppelingIdFromUrl, isEditMode]);
+
+  // Fetch full organization data to get the type and deelnemers (for gebruik beheerder flow)
+  useEffect(() => {
+    const fetchFullOrganisationData = async () => {
+      const activeOrg = store?.user?.activeOrganization;
+      const organisationId = activeOrg?.uuid || activeOrg?.id;
+
+      if (!organisationId) return;
+
+      try {
+        setDeelnemersLoading(true);
+        await store.object.fetchObject(
+          'voorzieningen',
+          'organisatie',
+          organisationId,
+          {
+            '_extend[]': ['@self.schema', 'deelnemers'],
+          }
+        );
+
+        const fullOrgData = store.object.getObject(
+          'voorzieningen_organisatie',
+          organisationId
+        );
+
+        if (fullOrgData) {
+          setFullActiveOrganisation(fullOrgData);
+
+          // Process deelnemers into options if organization is Samenwerking
+          const orgType = fullOrgData?.type || '';
+          if (orgType === 'Samenwerking') {
+            const deelnemers = Array.isArray(fullOrgData?.deelnemers)
+              ? fullOrgData.deelnemers
+              : [];
+
+            // Map deelnemers to options format
+            const options = deelnemers
+              .filter((deelnemer) => {
+                // Filter out invalid deelnemers
+                const id =
+                  typeof deelnemer === 'object'
+                    ? deelnemer?.id || deelnemer?.['@self']?.id
+                    : deelnemer;
+                return id && id !== 'undefined' && id !== 'null';
+              })
+              .map((deelnemer) => {
+                // Handle both object format and string (UUID) format
+                if (typeof deelnemer === 'object') {
+                  const id = deelnemer?.id || deelnemer?.['@self']?.id;
+                  const label =
+                    deelnemer?.naam ||
+                    deelnemer?.['@self']?.name ||
+                    deelnemer?.name ||
+                    id;
+                  return {
+                    value: String(id),
+                    label: String(label),
+                    data: deelnemer,
+                  };
+                }
+                // If it's just a string (UUID), use it as both value and label
+                return {
+                  value: String(deelnemer),
+                  label: String(deelnemer),
+                  data: null,
+                };
+              });
+
+            setDeelnemerOptions(options);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching full organization data:', error);
+        setDeelnemerOptions([]);
+      } finally {
+        setDeelnemersLoading(false);
+      }
+    };
+
+    fetchFullOrganisationData();
+  }, [store?.user?.activeOrganization?.uuid, store?.user?.activeOrganization?.id]);
+
+  // Check if we need to show the deelnemers step (only when organization type is Samenwerking)
+  const organizationType = fullActiveOrganisation?.type || '';
+  const needsDeelnemersStep = organizationType === 'Samenwerking';
 
   useEffect(() => {
     const shouldLoadStandards =
@@ -966,42 +984,18 @@ const AcFormsKoppeling = ({ store }) => {
 
   // Build a detailed tooltip similar to ac-register when Next is disabled
   const getNextDisabledTooltip = () => {
-    const logicalStep = getLogicalStepFromPhysical(currentStep);
+    const logicalStep = stepper.getLabelFromStep(stepper.getCurrentStep());
 
-    if (logicalStep === 0 && koppelingsType === 'aanbieden-koppeling') {
-      // Aanbieder step validation
-      if (aanbiederKeuze === 'bestaand') {
-        if (!aanbieder) {
-          return 'Selecteer een aanbieder';
-        }
-      } else {
-        if (!aanbiederOrganisatie.naam || !aanbiederOrganisatie.naam.trim()) {
-          return 'Vul de naam van de organisatie in';
-        }
-        if (!aanbiederOrganisatie.type || !aanbiederOrganisatie.type.trim()) {
-          return 'Selecteer het type organisatie';
-        }
-        if (!aanbiederOrganisatie.website || !aanbiederOrganisatie.website.trim()) {
-          return 'Vul de website van de organisatie in';
-        }
-        if (
-          aanbiederOrganisatie.website &&
-          !validateWebsite(String(aanbiederOrganisatie.website).trim())
-        ) {
-          return 'Website heeft een ongeldig formaat';
-        }
-      }
-      return '';
-    }
-
-    if (logicalStep === 1) {
-      // Step 1: Applicatie selectie is verplicht
+    if (logicalStep === 'koppeling-zoeken') {
+      // Step 0: Koppeling zoeken - Applicatie selectie is verplicht
       if (!ownApp?.value) {
         return 'Selecteer eerst een applicatie om door te gaan.';
       }
       return '';
     }
-    if (logicalStep !== 2) return ''; // Updated: step 2 is now Toevoegen
+
+    if (logicalStep !== 'toevoegen') return ''; // Step 1 is Toevoegen/Bewerken
+
     const messages = [];
     const missing = [];
     let missingA = false;
@@ -1026,44 +1020,23 @@ const AcFormsKoppeling = ({ store }) => {
   };
 
   const canGoNext = () => {
-    const logicalStep = getLogicalStepFromPhysical(currentStep);
+    const logicalStep = stepper.getLabelFromStep(stepper.getCurrentStep());
 
-    // Aanbieder step (logical step 0) - only for 'aanbieden-koppeling' type
-    if (logicalStep === 0 && koppelingsType === 'aanbieden-koppeling') {
-      // If user selected "bestaand", check if aanbieder is selected
-      if (aanbiederKeuze === 'bestaand') {
-        return !!aanbieder && String(aanbieder).trim() !== '';
-      }
-
-      // If user selected "nieuw", check if all required fields are filled
-      const requiredNewOrgFields = ['naam', 'type', 'website'];
-      const missingNewOrgFields = requiredNewOrgFields.filter(
-        (field) =>
-          !aanbiederOrganisatie[field] || !String(aanbiederOrganisatie[field]).trim()
-      );
-
-      // Validate website format if provided
-      if (
-        aanbiederOrganisatie.website &&
-        String(aanbiederOrganisatie.website).trim()
-      ) {
-        const website = String(aanbiederOrganisatie.website).trim();
-        if (!validateWebsite(website)) {
-          return false;
-        }
-      }
-
-      // All required fields must be filled
-      return missingNewOrgFields.length === 0;
+    // Zoeken step (logical step 0)
+    if (logicalStep === 'koppeling-zoeken') {
+      // Applicatie selectie is verplicht
+      // User can proceed even without selecting a koppeling (to add new one)
+      return !!ownApp?.value && gebruik.selectedKoppelingId;
     }
 
-    // Zoeken step (logical step 1)
-    if (logicalStep === 1) {
-      return !!ownApp?.value; // Applicatie selectie is verplicht
+    // Gebruiksinformatie step (for gebruik beheerder flow)
+    if (logicalStep === 'gebruiksinformatie') {
+      // Require status to be selected
+      return !!gebruik.status;
     }
 
-    // Toevoegen step (logical step 2)
-    if (logicalStep === 2) {
+    // Toevoegen step (logical step 1)
+    if (logicalStep === 'toevoegen') {
       if (!rows.length) return false;
       // Require Applicatie A, Applicatie B and Richting for all rows
       for (const rowId of rows) {
@@ -1115,7 +1088,7 @@ const AcFormsKoppeling = ({ store }) => {
   };
 
   const serializeRowsToPayload = () => {
-    return rows
+    const payloads = rows
       .map((rowId) => {
         const naam = (nameByRow[rowId] || '').trim();
         const appAId = selectedAppAByRow[rowId] || ownApp?.value;
@@ -1126,6 +1099,7 @@ const AcFormsKoppeling = ({ store }) => {
         const beschrijving = beschrijvingByRow[rowId] || '';
         const status = statusByRow[rowId] || '';
         const standaarden = standaardenByRow[rowId] || [];
+
         const payload = {
           naam,
           moduleA: appAId,
@@ -1137,14 +1111,11 @@ const AcFormsKoppeling = ({ store }) => {
           standaardversies: standaarden,
         };
 
-        // For 'aanbieden-koppeling' type, use the selected aanbieder
-        if (koppelingsType === 'aanbieden-koppeling' && aanbieder) {
-          payload.aanbieder = String(aanbieder);
-        }
-
         return payload;
       })
       .filter(Boolean);
+
+    return payloads;
   };
 
   const getStandaardenQueryParams = useCallback(() => {
@@ -1284,9 +1255,9 @@ const AcFormsKoppeling = ({ store }) => {
 
   const handleResetForm = () => {
     // Reset all form state to initial values
-    setCurrentStep(getInitialStep(koppelingsType));
+    stepper.resetCurrentStep(); // reset the stepper to the first step
     // LEGACY: setKoppelingsType(null); - Type now comes from URL, reset to default
-    setKoppelingsType(typeFromUrl || 'eigen-organisatie');
+    setKoppelingsType(typeFromUrl || 'aanbieden-koppeling');
     setSearchResults([]);
     setResolvedModulesFromResults([]);
     setOwnApp(null);
@@ -1304,23 +1275,131 @@ const AcFormsKoppeling = ({ store }) => {
     setKoppelingIdByRow({});
     setSaveResult(null);
     setSaveErrors([]);
-    // Reset aanbieder state
-    setAanbieder(null);
-    setAanbiederKeuze('bestaand');
-    setAanbiederOrganisatie({
-      naam: '',
-      type: '',
-      website: '',
-      beschrijvingKort: '',
-      beschrijvingLang: '',
-      'e-mailadres': '',
-      telefoonnummer: '',
-      kvkNummer: '',
-      logo: '',
+    // Reset gebruik state
+    setGebruik({
+      selectedKoppelingId: null,
+      status: '',
+      startDatumInProductie: '',
+      startDatumGepland: '',
+      startDatumUitTeFaseren: '',
+      startDatumUitGefaseerd: '',
+      startDatumVerwerving: '',
+      interneAantekening: '',
+      deelnemers: [],
     });
   };
 
+  // Save function for gebruik-beheerders flow (aanbieden-koppeling)
+  const handleSaveGebruik = async () => {
+    // Validation
+    if (!gebruik.selectedKoppelingId) {
+      setSaveResult('error');
+      setSaveErrors(['Geen koppeling geselecteerd']);
+      return;
+    }
+
+    if (!gebruik.status) {
+      setSaveResult('error');
+      setSaveErrors(['Status is verplicht']);
+      return;
+    }
+
+    const activeOrg = store?.user?.activeOrganization;
+    const afnemerId = activeOrg?.uuid || activeOrg?.id;
+    if (!afnemerId) {
+      setSaveResult('error');
+      setSaveErrors(['Geen actieve organisatie gevonden']);
+      return;
+    }
+
+    if (!ownApp?.value) {
+      setSaveResult('error');
+      setSaveErrors(['Geen applicatie geselecteerd']);
+      return;
+    }
+
+    setSaveLoading(true);
+    setSaveResult(null);
+    setSaveErrors([]);
+
+    try {
+      // Build payload with gebruik field names directly
+      const payload = {
+        koppelingen: [gebruik.selectedKoppelingId],
+        status: gebruik.status,
+        interneAantekening: gebruik.interneAantekening || '',
+        deelnemers: Array.isArray(gebruik.deelnemers) ? gebruik.deelnemers : [],
+        afnemer: afnemerId,
+        module: ownApp.value,
+      };
+
+      // Add the relevant date field based on status
+      switch (gebruik.status) {
+        case 'In productie':
+          if (gebruik.startDatumInProductie) {
+            payload.startDatumInProductie = gebruik.startDatumInProductie;
+          }
+          break;
+        case 'Gepland':
+          if (gebruik.startDatumGepland) {
+            payload.startDatumGepland = gebruik.startDatumGepland;
+          }
+          break;
+        case 'Uit te faseren':
+          if (gebruik.startDatumUitTeFaseren) {
+            payload.startDatumUitTeFaseren = gebruik.startDatumUitTeFaseren;
+          }
+          break;
+        case 'Uitgefaseerd':
+          if (gebruik.startDatumUitGefaseerd) {
+            payload.startDatumUitGefaseerd = gebruik.startDatumUitGefaseerd;
+          }
+          break;
+        case 'Verwerving':
+          if (gebruik.startDatumVerwerving) {
+            payload.startDatumVerwerving = gebruik.startDatumVerwerving;
+          }
+          break;
+      }
+
+      const endpoint = '/api/apps/openregister/api/objects/voorzieningen/gebruik';
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        try {
+          const data = await response.json();
+          setSaveResult('error');
+          setSaveErrors([data?.message || `Request failed (${response.status})`]);
+        } catch {
+          setSaveResult('error');
+          setSaveErrors([`Request failed (${response.status})`]);
+        }
+      } else {
+        setSaveResult('success');
+      }
+    } catch (e) {
+      setSaveResult('error');
+      setSaveErrors([e?.message || 'Onbekende fout bij opslaan']);
+    } finally {
+      setSaveLoading(false);
+    }
+  };
+
   const handleSave = async () => {
+    // Route to gebruik save for gebruik-beheerders flow
+    if (koppelingsType === 'aanbieden-koppeling') {
+      handleSaveGebruik();
+      return;
+    }
+
+    // Existing logic for aanbod-beheerders flow
     const payloads = serializeRowsToPayload();
     if (!payloads.length) return;
 
@@ -1329,76 +1408,31 @@ const AcFormsKoppeling = ({ store }) => {
     setSaveErrors([]);
 
     try {
-      let finalAanbieder = aanbieder;
-
-      // ✅ For aanbieden-koppeling with new organization, create the organization first
-      if (koppelingsType === 'aanbieden-koppeling' && aanbiederKeuze === 'nieuw') {
-        try {
-          const newOrganizationData = {
-            naam: aanbiederOrganisatie.naam,
-            type: aanbiederOrganisatie.type,
-            website: aanbiederOrganisatie.website,
-            beschrijvingKort: aanbiederOrganisatie.beschrijvingKort,
-            beschrijvingLang: aanbiederOrganisatie.beschrijvingLang,
-            'e-mailadres': aanbiederOrganisatie['e-mailadres'],
-            telefoonnummer: aanbiederOrganisatie.telefoonnummer,
-            kvkNummer: aanbiederOrganisatie.kvkNummer,
-            logo: aanbiederOrganisatie.logo,
-          };
-
-          // Create the organization and get its ID
-          const createdOrganization = await store.object.createObject(
-            'voorzieningen',
-            'organisatie',
-            newOrganizationData
-          );
-
-          // Use the newly created organization ID as aanbieder
-          finalAanbieder =
-            createdOrganization?.id || createdOrganization?.['@self']?.id;
-
-          if (!finalAanbieder) {
-            throw new Error('Organisatie aangemaakt maar geen ID ontvangen');
-          }
-        } catch (orgError) {
-          console.error('Failed to create organization:', orgError);
-          setSaveResult('error');
-          setSaveErrors([
-            'Er is een fout opgetreden bij het aanmaken van de organisatie. Probeer het opnieuw.',
-          ]);
-          setSaveLoading(false);
-          return;
-        }
-      }
-
-      // Update payloads with final aanbieder
-      if (koppelingsType === 'aanbieden-koppeling' && finalAanbieder) {
-        payloads.forEach((payload) => {
-          payload.aanbieder = String(finalAanbieder);
-        });
-      }
-
       const endpoint = '/api/apps/openregister/api/objects/voorzieningen/koppeling';
-      // Align payloads with rows to decide POST vs PUT per row
-      const requests = rows
-        .map((rowId, index) => {
-          const body = payloads[index];
-          if (!body) return null;
-          const existingId = koppelingIdByRow[rowId];
-          const url = existingId
-            ? `${endpoint}/${encodeURIComponent(String(existingId))}`
-            : endpoint;
-          const method = existingId ? 'PUT' : 'POST';
-          return fetch(url, {
-            method,
-            headers: {
-              'Content-Type': 'application/json',
-              Accept: 'application/json',
-            },
-            body: JSON.stringify(body),
-          });
-        })
-        .filter(Boolean);
+      // Build requests for all payloads
+      const requests = payloads.map((body, index) => {
+        if (!body) return null;
+
+        // Determine koppeling ID: use row-based ID
+        const rowId = rows[index];
+        const existingId =
+          rowId !== undefined && koppelingIdByRow[rowId]
+            ? koppelingIdByRow[rowId]
+            : null;
+
+        const url = existingId
+          ? `${endpoint}/${encodeURIComponent(String(existingId))}`
+          : endpoint;
+        const method = existingId ? 'PUT' : 'POST';
+        return fetch(url, {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify(body),
+        });
+      });
 
       const responses = await Promise.all(requests);
       const failures = [];
@@ -1439,28 +1473,10 @@ const AcFormsKoppeling = ({ store }) => {
   }, [saveResult]);
 
   const renderStep = (step) => {
-    const logicalStep = getLogicalStepFromPhysical(step);
+    const logicalStep = stepper.getLabelFromStep(step);
 
     switch (logicalStep) {
-      case 0:
-        // Aanbieder step - only for aanbieden-koppeling
-        return (
-          <ConKoppelingStageAanbieder
-            aanbieder={aanbieder}
-            setAanbieder={setAanbieder}
-            aanbiederOrganisatie={aanbiederOrganisatie}
-            setAanbiederOrganisatieData={setAanbiederOrganisatieData}
-            loading={loading || saveLoading || prefillLoading}
-            schemas={schemas}
-            schemasLoading={schemasLoading}
-            aanbiederKeuze={aanbiederKeuze}
-            setAanbiederKeuze={setAanbiederKeuze}
-            organisatieOptions={organisatieOptions}
-            organisatieLoading={organisatieLoading}
-            searchOrganisaties={debouncedSearchOrganisaties}
-          />
-        );
-      case 1: // Koppeling zoeken
+      case 'koppeling-zoeken':
         return (
           <ConKoppelingStageZoeken
             loading={loading}
@@ -1475,10 +1491,14 @@ const AcFormsKoppeling = ({ store }) => {
             isEditMode={isEditMode}
             onSearchModules={debouncedSearchModules}
             schemas={schemas}
+            selectedKoppelingId={gebruik.selectedKoppelingId}
+            setSelectedKoppelingId={(id) =>
+              setGebruikData('selectedKoppelingId', id)
+            }
           />
         );
 
-      case 2: // Toevoegen
+      case 'toevoegen':
         return (
           <ConKoppelingStageToevoegen
             rows={rows}
@@ -1520,7 +1540,53 @@ const AcFormsKoppeling = ({ store }) => {
           />
         );
 
-      case 3: // Controleren
+      case 'gebruiksinformatie':
+        return (
+          <ConKoppelingStepGebruiksinformatie
+            status={gebruik.status}
+            setStatus={(value) => setGebruikData('status', value)}
+            startDatumInProductie={gebruik.startDatumInProductie}
+            setStartDatumInProductie={(value) =>
+              setGebruikData('startDatumInProductie', value)
+            }
+            startDatumGepland={gebruik.startDatumGepland}
+            setStartDatumGepland={(value) =>
+              setGebruikData('startDatumGepland', value)
+            }
+            startDatumUitTeFaseren={gebruik.startDatumUitTeFaseren}
+            setStartDatumUitTeFaseren={(value) =>
+              setGebruikData('startDatumUitTeFaseren', value)
+            }
+            startDatumUitGefaseerd={gebruik.startDatumUitGefaseerd}
+            setStartDatumUitGefaseerd={(value) =>
+              setGebruikData('startDatumUitGefaseerd', value)
+            }
+            startDatumVerwerving={gebruik.startDatumVerwerving}
+            setStartDatumVerwerving={(value) =>
+              setGebruikData('startDatumVerwerving', value)
+            }
+            interneAantekening={gebruik.interneAantekening}
+            setInterneAantekening={(value) =>
+              setGebruikData('interneAantekening', value)
+            }
+            loading={loading}
+            schemas={schemas}
+            isEditMode={isEditMode}
+          />
+        );
+
+      case 'deelnemers':
+        return (
+          <ConKoppelingStepDeelnemers
+            deelnemers={gebruik.deelnemers}
+            setDeelnemers={(value) => setGebruikData('deelnemers', value)}
+            loading={loading}
+            deelnemerOptions={deelnemerOptions}
+            deelnemersLoading={deelnemersLoading}
+          />
+        );
+
+      case 'controleren':
         return (
           <ConKoppelingStageControleren
             rows={rows}
@@ -1547,10 +1613,17 @@ const AcFormsKoppeling = ({ store }) => {
             onRetryForm={handleRetryForm}
             onResetForm={handleResetForm}
             koppelingsType={koppelingsType}
-            aanbieder={aanbieder}
-            organisatieOptions={organisatieOptions}
-            aanbiederKeuze={aanbiederKeuze}
-            aanbiederOrganisatie={aanbiederOrganisatie}
+            selectedKoppelingId={gebruik.selectedKoppelingId}
+            statusGebruiksinformatie={gebruik.status}
+            datumInGebruik={gebruik.startDatumInProductie}
+            datumInOntwikkeling={gebruik.startDatumGepland}
+            datumEindeOndersteuning={gebruik.startDatumUitTeFaseren}
+            datumTeruggetrokken={gebruik.startDatumUitGefaseerd}
+            datumVerwerving={gebruik.startDatumVerwerving}
+            interneAantekening={gebruik.interneAantekening}
+            deelnemers={gebruik.deelnemers}
+            deelnemerOptions={deelnemerOptions}
+            searchResults={searchResults}
           />
         );
 
@@ -1559,24 +1632,133 @@ const AcFormsKoppeling = ({ store }) => {
     }
   };
 
+  // steps configuration for the process steps component
+  const processStepsConfig = useMemo(() => {
+    const steps = [];
+
+    stepper.resetStepDefinitions('process-steps');
+    stepper.resetStepDefinitions('process-steps-status');
+
+    if (koppelingsType === 'aanbieden-koppeling') {
+      // Define the main step first (koppeling-zoeken)
+      const koppelingZoekenMarker = stepper.defineStep(
+        'process-steps',
+        'koppeling-zoeken'
+      );
+      const firstMultiStepStatus = stepper.defineStep(
+        'process-steps-status',
+        'firstMultiStep'
+      );
+
+      // Build sub-steps for aanbieden-koppeling flow (define after main step)
+      const subSteps = [
+        {
+          id: 'sub-gebruiksinformatie',
+          marker: stepper.defineStep('process-steps', 'gebruiksinformatie'),
+          status: getStatus(
+            stepper.getCurrentStep(),
+            stepper.defineStep('process-steps-status')
+          ),
+          title: 'Gebruiksinformatie',
+        },
+      ];
+
+      // Only add deelnemers step if organization type is Samenwerking
+      if (needsDeelnemersStep) {
+        subSteps.push({
+          id: 'sub-deelnemers',
+          marker: stepper.defineStep('process-steps', 'deelnemers'),
+          status: getStatus(
+            stepper.getCurrentStep(),
+            stepper.defineStep('process-steps-status')
+          ),
+          title: 'Deelnemers toevoegen',
+        });
+      }
+
+      steps.push({
+        id: 'grp-koppeling',
+        marker: koppelingZoekenMarker,
+        status: getStatusMulti(
+          // get the current step from the stepper
+          stepper.getCurrentStep(),
+          // get process step status index
+          firstMultiStepStatus,
+          // get the index of the labeled step + [amount of sub-steps]
+          stepper.getStepFromLabel('firstMultiStep') + subSteps.length
+        ),
+        title: 'Een koppeling zoeken',
+        steps: subSteps,
+      });
+    } else if (koppelingsType === 'eigen-organisatie') {
+      steps.push({
+        id: 'grp-koppeling',
+        marker: stepper.defineStep('process-steps', 'koppeling-zoeken'),
+        status: getStatusMulti(
+          // get the current step from the stepper
+          stepper.getCurrentStep(),
+          // get process step status index + define multi step label
+          stepper.defineStep('process-steps-status', 'firstMultiStep'),
+          // get the index of the labeled step + [amount of sub-steps]
+          stepper.getStepFromLabel('firstMultiStep') + 1
+        ),
+        title: 'Een koppeling zoeken',
+        steps: [
+          {
+            id: 'sub-toevoegen',
+            marker: stepper.defineStep('process-steps', 'toevoegen'),
+            status: getStatus(
+              stepper.getCurrentStep(),
+              stepper.defineStep('process-steps-status')
+            ),
+            title: isEditMode ? 'Bewerken' : 'Toevoegen',
+          },
+        ],
+      });
+    }
+
+    steps.push({
+      id: 'grp-review',
+      marker: stepper.defineStep('process-steps', 'controleren'),
+      status: getStatus(
+        stepper.getCurrentStep(),
+        stepper.defineStep('process-steps-status')
+      ),
+      title: 'Controleren',
+    });
+
+    return steps;
+  }, [isEditMode, stepper, koppelingsType, needsDeelnemersStep]);
+
   const currentStepName = (step) => {
-    const logicalStep = getLogicalStepFromPhysical(step);
+    const logicalStep = stepper.getLabelFromStep(step);
 
     switch (logicalStep) {
       case 0:
         return 'Aanbieder';
       case 1:
-        return 'Koppeling zoeken';
+        return 'Controleren op bestaande koppeling';
       case 2:
-        return isEditMode ? 'Bewerken' : 'Toevoegen';
+        return isEditMode ? 'Bewerken' : 'Koppelingen met andere applicaties';
       case 3:
-        return 'Controleren';
+        return 'Controleer uw gegevens';
       default:
         return '';
     }
   };
 
   const canSave = () => {
+    // For gebruik-beheerders flow, validate gebruik-specific fields
+    if (koppelingsType === 'aanbieden-koppeling') {
+      if (!gebruik.selectedKoppelingId) return false;
+      if (!gebruik.status) return false;
+      if (!ownApp?.value) return false;
+      const activeOrg = store?.user?.activeOrganization;
+      if (!activeOrg?.uuid && !activeOrg?.id) return false;
+      return true;
+    }
+
+    // For aanbod-beheerders flow, validate koppeling rows
     if (!rows.length) return false;
     // Require at least app A and app B for all rows
     for (const rowId of rows) {
@@ -1610,66 +1792,31 @@ const AcFormsKoppeling = ({ store }) => {
               style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
             >
               <Icon style={{ width: '1em', height: '1em' }} />
-              {isEditMode ? editModeTitle : wizardName}
+              Uw {isEditMode ? editModeTitle : wizardName}
             </Heading1>
             <Paragraph>
-              Zoek naar bestaande koppelingen, voeg nieuwe koppelingen toe en
-              controleer uw invoer.
+              {(() => {
+                switch (stepper.getCurrentStep()) {
+                  case 1:
+                    return 'Selecteer een applicatie uit uw eigen aanbod waarvoor u een koppeling wilt publiceren.';
+                  default:
+                    return 'Vul dit formulier in om uw koppeling te registreren in de softwarecatalogus.';
+                }
+              })()}
             </Paragraph>
           </div>
 
           <div>
             {saveResult !== 'success' && saveResult !== 'error' && (
               <h3 className={clsx('utrecht-heading-3', 'ac-register-form-heading')}>
-                {currentStepName(currentStep)}
+                {currentStepName(stepper.getCurrentStep())}
               </h3>
             )}
 
             <div className='ac-register-container ac-forms-product'>
               {saveResult !== 'success' && saveResult !== 'error' && (
                 <div ref={processStepsRef} className='ac-register-process-steps'>
-                  <ProcessSteps
-                    steps={(() => {
-                      const steps = [];
-
-                      // Conditionally include Aanbieder step (only for aanbieden-koppeling)
-                      if (koppelingsType === 'aanbieden-koppeling') {
-                        steps.push({
-                          id: 'grp-aanbieder',
-                          marker: 1,
-                          status: getStatus(currentStep, getAdjustedStepIndex(0)),
-                          title: 'Aanbieder',
-                        });
-                      }
-
-                      steps.push({
-                        id: 'grp-koppeling',
-                        marker: koppelingsType === 'aanbieden-koppeling' ? 2 : 1,
-                        status: getStatusMulti(
-                          currentStep,
-                          getAdjustedStepIndex(1),
-                          getAdjustedStepIndex(2)
-                        ),
-                        title: 'Koppeling zoeken',
-                        steps: [
-                          {
-                            id: 'sub-toevoegen',
-                            status: getStatus(currentStep, getAdjustedStepIndex(2)),
-                            title: isEditMode ? 'Bewerken' : 'Toevoegen',
-                          },
-                        ],
-                      });
-
-                      steps.push({
-                        id: 'grp-review',
-                        marker: koppelingsType === 'aanbieden-koppeling' ? 3 : 2,
-                        status: getStatus(currentStep, getAdjustedStepIndex(3)),
-                        title: 'Controleren',
-                      });
-
-                      return steps;
-                    })()}
-                  />
+                  <ProcessSteps steps={processStepsConfig} />
                 </div>
               )}
 
@@ -1680,7 +1827,7 @@ const AcFormsKoppeling = ({ store }) => {
                   aria-live='polite'
                   id='form-status'
                 >
-                  {currentStepName(currentStep)}
+                  {currentStepName(stepper.getCurrentStep())}
                 </div>
 
                 {process.env.NODE_ENV === 'development' && (
@@ -1733,10 +1880,11 @@ const AcFormsKoppeling = ({ store }) => {
                         )}
                       </pre>
                     </details>
+                    0
                   </div>
                 )}
 
-                {renderStep(currentStep)}
+                {renderStep(stepper.getCurrentStep())}
 
                 {saveResult !== 'success' && saveResult !== 'error' && (
                   <div
@@ -1747,51 +1895,41 @@ const AcFormsKoppeling = ({ store }) => {
                     }}
                   >
                     <AcFlex spacing='xs' style={{ width: 'fit-content' }}>
-                      {currentStep !== 0 && (
+                      {/* show previous button on all steps except first step */}
+                      {stepper.getCurrentStep() > 1 && (
                         <AcButton
                           style='button'
                           buttonType='secondary'
                           icon={<VISUALS.ARROW_LEFT />}
-                          onClick={() => setCurrentStep(currentStep - 1)}
+                          onClick={() => stepper.previous()}
                           disabled={loading || saveLoading || prefillLoading}
                         >
                           Vorige
                         </AcButton>
                       )}
 
-                      {getLogicalStepFromPhysical(currentStep) === 0 &&
-                        koppelingsType === 'aanbieden-koppeling' && (
+                      {/* show koppeling button on koppeling zoeken step */}
+                      {stepper.getStepFromLabel('koppeling-zoeken') ===
+                        stepper.getCurrentStep() && (
+                        <>
+                          {/* <AcButton
+                            style='button'
+                            buttonType='secondary'
+                            icon={<VISUALS.CUBE />}
+                            onClick={() => setShowUnsavedChangesAlert(true)}
+                          >
+                            Ik kan de gewenste applicatie niet vinden
+                          </AcButton> */}
                           <AcButton
                             style='button'
                             buttonType='secondary'
-                            icon={
-                              aanbiederKeuze === 'bestaand' ? (
-                                <VISUALS.BUILDING />
-                              ) : (
-                                <VISUALS.ARROW_LEFT />
-                              )
-                            }
-                            onClick={() =>
-                              aanbiederKeuze === 'bestaand'
-                                ? setAanbiederKeuze('nieuw')
-                                : setAanbiederKeuze('bestaand')
-                            }
+                            icon={<VISUALS.LINK />}
+                            onClick={() => setShowCannotFindKoppelingAlert(true)}
+                            disabled={!ownApp?.value || loading}
                           >
-                            {aanbiederKeuze === 'bestaand'
-                              ? 'Ik kan de gewenste leverancier niet vinden'
-                              : 'Bestaande leverancier selecteren'}
+                            Ik kan de gewenste koppeling niet vinden
                           </AcButton>
-                        )}
-
-                      {getLogicalStepFromPhysical(currentStep) === 1 && (
-                        <AcButton
-                          style='button'
-                          buttonType='secondary'
-                          icon={<VISUALS.CUBE />}
-                          onClick={() => setShowUnsavedChangesAlert(true)}
-                        >
-                          Ik kan de gewenste applicatie niet vinden
-                        </AcButton>
+                        </>
                       )}
                     </AcFlex>
 
@@ -1799,15 +1937,18 @@ const AcFormsKoppeling = ({ store }) => {
                       spacing='xs'
                       style={{ width: 'fit-content' }}
                       className={clsx(
-                        currentStep === 0 && 'ac-register-form-next-button'
+                        stepper.getCurrentStep() === 1 &&
+                          'ac-register-form-next-button'
                       )}
                     >
-                      {getLogicalStepFromPhysical(currentStep) !== 3 && (
+                      {/* show next button on all steps except controleren (last step) */}
+                      {stepper.getHighestStep('process-steps') !==
+                        stepper.getCurrentStep() && (
                         <div className='ac-register-button-wrapper'>
                           <AcButton
                             style='button'
                             icon={<VISUALS.ARROW_RIGHT />}
-                            onClick={() => setCurrentStep(currentStep + 1)}
+                            onClick={() => stepper.next()}
                             disabled={
                               !canGoNext() ||
                               loading ||
@@ -1822,7 +1963,9 @@ const AcFormsKoppeling = ({ store }) => {
                       )}
                     </AcFlex>
 
-                    {getLogicalStepFromPhysical(currentStep) === 3 && (
+                    {/* show save button on controleren step (last step) */}
+                    {stepper.getHighestStep('process-steps') ===
+                      stepper.getCurrentStep() && (
                       <AcButton
                         style='button'
                         buttonType='primary'
@@ -1855,6 +1998,28 @@ const AcFormsKoppeling = ({ store }) => {
         }}
         title='Waarschuwing'
         message={`Je staat op het punt om de koppeling ${wizardType} wizard te verlaten om een applicatie aan te maken. Na het aanmaken van de applicatie word je teruggeleid naar dit formulier. Al je huidige wijzigingen zullen niet worden opgeslagen.`}
+        confirmLabel='Verlaten'
+        cancelLabel='Blijven'
+        confirmIcon={<VISUALS.ARROW_RIGHT />}
+        cancelIcon={<VISUALS.ARROW_LEFT />}
+      />
+
+      <ConUnsavedChangesAlertModal
+        key='cannot-find-koppeling-alert-modal'
+        showModal={showCannotFindKoppelingAlert}
+        onClose={() => setShowCannotFindKoppelingAlert(false)}
+        onConfirm={() => {
+          // Navigate to aanbod beheerder flow (eigen-organisatie) with applicatie parameter
+          const params = new URLSearchParams();
+          params.set('type', 'eigen-organisatie');
+          if (ownApp?.value) {
+            params.set('applicatie', ownApp.value);
+          }
+          params.set('redirect', window.location.pathname);
+          navigate(`/forms/koppeling?${params.toString()}`);
+        }}
+        title='Waarschuwing'
+        message='Je staat op het punt om naar de aanbod beheer flow te gaan. Al je huidige wijzigingen zullen niet worden opgeslagen.'
         confirmLabel='Verlaten'
         cancelLabel='Blijven'
         confirmIcon={<VISUALS.ARROW_RIGHT />}
