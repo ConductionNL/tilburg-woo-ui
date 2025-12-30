@@ -18,15 +18,19 @@ import {
   UnorderedList,
   UnorderedListItem,
 } from '@utrecht/component-library-react/dist/css-module';
+import useStepper from '../con-stepper';
 
 // Stage components
 import ConFormDienstInformatieStage from './components/con-form-dienst-informatie-stage';
 // import ConFormProductenStage from './components/con-form-producten-stage';
 import ConFormApplicatiesStage from './components/con-form-applicaties-stage';
 import ConFormControlerenStage from './components/con-form-controleren-stage';
-import ConFormDienstAanbiederInformatieStage from './components/con-form-dienst-aanbieder-informatie-stage';
+import ConFormDienstZoekenStage from './components/con-form-dienst-zoeken-stage';
+import ConFormGebruiksinformatieStage from './components/con-form-gebruiksinformatie-stage';
+import ConFormDeelnemersStage from './components/con-form-deelnemers-stage';
 import ConUnsavedChangesAlertModal from '@src/components/con-unsaved-changes-alert-modal/con-unsaved-changes-alert-modal';
 import { getActiveWizard } from '@src/constants/wizards.constants';
+import { ConDebugViewer } from '@src/components';
 
 const mapToOption = (item, index) => {
   const label =
@@ -40,14 +44,17 @@ const mapToOption = (item, index) => {
   return { value: String(value), label: String(label), data: item };
 };
 
-const ConFormsDienst = ({ store, userStore }) => {
+const ConFormsDienst = ({ store }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const dienstId = searchParams.get('id') || '';
   const formType = searchParams.get('type') || '';
   const applicatieFromUrl = searchParams.get('applicatie') || '';
+  const dienstFromUrl = searchParams.get('dienst') || ''; // For redirect from Aanbod-beheerders flow
   const isEditMode = !!dienstId;
-  const [currentStep, setCurrentStep] = useState(0);
+  const isGebruikBeheerdersFlow = formType === 'ontbrekend-dienst';
+
+  const stepper = useStepper();
   const processStepsRef = useRef(null);
 
   // Schemas
@@ -85,34 +92,10 @@ const ConFormsDienst = ({ store, userStore }) => {
   // Service type selection state - default to 'eigen-organisatie' since selection stage is disabled
   const [dienstType, setDienstType] = useState('eigen-organisatie'); // 'eigen-organisatie' or 'andere-organisatie'
 
-  // State for aanbieder selection
-  const [aanbiederKeuze, setAanbiederKeuze] = useState('bestaand'); // 'bestaand' or 'nieuw'
-
-  /**
-   * Aanbieder Organization State Object
-   *
-   * This object holds organization data for creating a new organization.
-   * Only used when aanbiederKeuze === 'nieuw'
-   */
-  const [aanbiederOrganisatie, setAanbiederOrganisatie] = useState({
-    naam: '',
-    type: '',
-    website: '',
-    beschrijvingKort: '',
-    beschrijvingLang: '',
-    'e-mailadres': '',
-    telefoonnummer: '',
-    logo: '',
-  });
-
   const setDienstData = (key, value) => {
     setDienst((prev) => ({ ...prev, [key]: value }));
     setTouched((prev) => ({ ...prev, [key]: true }));
   };
-
-  const setAanbiederOrganisatieData = useCallback((key, value) => {
-    setAanbiederOrganisatie((prev) => ({ ...prev, [key]: value }));
-  }, []);
 
   // productId -> module options derived from product details
   const [productToModulesLookup, setProductToModulesLookup] = useState({});
@@ -128,9 +111,39 @@ const ConFormsDienst = ({ store, userStore }) => {
 
   const [saving, setSaving] = useState(false);
   const [saveResult, setSaveResult] = useState(null);
+  const [saveErrorMessage, setSaveErrorMessage] = useState('');
 
   // Unsaved changes alert
   const [showUnsavedChangesAlert, setShowUnsavedChangesAlert] = useState(false);
+  const [showCannotFindDienstAlert, setShowCannotFindDienstAlert] = useState(false);
+
+  // Gebruik-beheerders flow state (ontbrekend-dienst)
+  const [selectedApplicatie, setSelectedApplicatie] = useState(null); // Single applicatie option object
+  const [dienstenResults, setDienstenResults] = useState([]); // Array of dienst objects
+  const [dienstenResultsLoading, setDienstenResultsLoading] = useState(false);
+  const [resolvedModulesFromDiensten, setResolvedModulesFromDiensten] = useState([]);
+  const [ownAppOptions, setOwnAppOptions] = useState([]); // Options for applicatie select in Dienst zoeken
+  const [ownAppLoading, setOwnAppLoading] = useState(false);
+
+  // State for full organization data (to check type for conditional Deelnemers step)
+  const [fullActiveOrganisation, setFullActiveOrganisation] = useState(null);
+
+  // Deelnemers options and loading state
+  const [deelnemerOptions, setDeelnemerOptions] = useState([]);
+  const [deelnemersLoading, setDeelnemersLoading] = useState(false);
+
+  // Gebruik state (for gebruik beheerder flow - ontbrekend-dienst)
+  const [gebruik, setGebruik] = useState({
+    diensten: [],
+    status: '',
+    interneAantekening: '',
+    deelnemers: [],
+  });
+
+  // Helper function to update gebruik state
+  const setGebruikData = (key, value) => {
+    setGebruik((prev) => ({ ...prev, [key]: value }));
+  };
 
   // Prefill dienst data when editing
   useEffect(() => {
@@ -140,8 +153,12 @@ const ConFormsDienst = ({ store, userStore }) => {
       setPrefillLoading(true);
       setPrefillError(null);
       try {
-        // Skip to step 0 in edit mode (Applicaties)
-        setCurrentStep(0);
+        // Skip to appropriate step in edit mode
+        if (isGebruikBeheerdersFlow) {
+          stepper.setCurrentStepByLabel('dienst-zoeken');
+        } else {
+          stepper.resetCurrentStep();
+        }
         await store.object.fetchObject('voorzieningen', 'dienst', String(dienstId), {
           '_extend[]': ['@self.schema'],
           _published: 'false',
@@ -268,43 +285,51 @@ const ConFormsDienst = ({ store, userStore }) => {
     if (prefillLoading || prefillError) return;
     const addClickHandlers = () => {
       const stepElements = processStepsRef.current.querySelectorAll(
-        '.denhaag-process-steps .denhaag-process-steps__step'
+        '.denhaag-process-steps .denhaag-process-steps__step-header, .denhaag-process-steps .denhaag-process-steps__sub-step'
       );
       stepElements.forEach((el, index) => {
+        const stepNumber = index + 1;
         el.style.cursor = '';
         el.onclick = null;
         el.classList.remove('ac-step-clickable');
-        if (index < currentStep) {
+        if (stepNumber < stepper.getCurrentStep()) {
           el.classList.add('ac-step-clickable');
           el.onclick = (e) => {
             e.preventDefault();
-            setCurrentStep(index);
+            stepper.setCurrentStep(stepNumber);
           };
         }
       });
     };
     const timeoutId = setTimeout(addClickHandlers, 100);
     return () => clearTimeout(timeoutId);
-  }, [currentStep, prefillLoading, prefillError]);
+  }, [stepper.getCurrentStep(), prefillLoading, prefillError, stepper]);
 
   // Ensure /me is refreshed when the wizard mounts (so stages can read active organisation)
   useEffect(() => {
-    if (typeof userStore?.fetchUserProfile === 'function') {
+    if (typeof store?.user?.fetchUserProfile === 'function') {
       if (process.env.NODE_ENV === 'development') {
         // eslint-disable-next-line no-console
         console.log(
-          'ConFormsDienst - refreshing /me via userStore.fetchUserProfile'
+          'ConFormsDienst - refreshing /me via store.user.fetchUserProfile'
         );
       }
-      userStore.fetchUserProfile();
+      store.user.fetchUserProfile();
     }
-  }, [userStore]);
+  }, [store]);
 
   // Load schemas through object store (auth-aware)
   useEffect(() => {
     const load = async () => {
       setSchemasLoading(true);
-      const types = ['dienst', 'product', 'module', 'koppeling', 'organisatie'];
+      const types = [
+        'dienst',
+        'product',
+        'module',
+        'koppeling',
+        'organisatie',
+        'gebruik',
+      ];
       const fetched = {};
       try {
         await Promise.all(
@@ -394,6 +419,25 @@ const ConFormsDienst = ({ store, userStore }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Initialize ownAppOptions with moduleOptions for Gebruik-beheerders flow
+  useEffect(() => {
+    if (isGebruikBeheerdersFlow && moduleOptions.length > 0) {
+      setOwnAppOptions((prev) => {
+        if (prev.length === 0) {
+          return [...moduleOptions];
+        }
+        // Merge with existing options
+        const existingMap = new Map(prev.map((opt) => [opt.value, opt]));
+        moduleOptions.forEach((opt) => {
+          if (!existingMap.has(opt.value)) {
+            existingMap.set(opt.value, opt);
+          }
+        });
+        return Array.from(existingMap.values());
+      });
+    }
+  }, [moduleOptions, isGebruikBeheerdersFlow]);
+
   // Pre-select applicatie from URL parameter
   useEffect(() => {
     if (!applicatieFromUrl || isEditMode) return; // Skip if editing or no applicatie in URL
@@ -459,77 +503,414 @@ const ConFormsDienst = ({ store, userStore }) => {
     preSelectApplicatie();
   }, [applicatieFromUrl, moduleOptions, isEditMode, store]);
 
-  // Server-side search for modules (searches all modules)
-  const searchModules = useCallback(
-    async (query) => {
-      try {
-        setSearchLoading(true);
-        const q = String(query || '').trim();
+  // Generic server-side search for modules
+  const createModuleSearch = useCallback(
+    (collectionSuffix, setOptions, setLoading) => {
+      return async (query) => {
+        try {
+          setLoading(true);
+          const q = String(query || '').trim();
 
-        const queryParams = {
-          _limit: '50',
-          _page: '1',
-          _published: 'false',
-          _source: 'index',
-        };
+          const queryParams = {
+            _limit: '50',
+            _page: '1',
+            _published: 'false',
+            _source: 'index',
+          };
 
-        // Add search parameter if provided
-        if (q) {
-          queryParams._search = q;
-        }
+          // Add search parameter if provided
+          if (q) {
+            queryParams._search = q;
+          }
 
-        await store.object.fetchCollection(
-          'voorzieningen',
-          'module',
-          queryParams,
-          null,
-          'dienst_form_search'
-        );
-        const collection = store.object.getCollection(
-          'voorzieningen_module_dienst_form_search'
-        );
-        const list = collection?.results || collection || [];
-        const options = list.map(mapToOption);
-
-        // Add search results to existing options (don't replace, merge)
-        setModuleOptions((prevOptions) => {
-          const existingOptionsMap = new Map(
-            prevOptions.map((opt) => [opt.value, opt])
+          await store.object.fetchCollection(
+            'voorzieningen',
+            'module',
+            queryParams,
+            null,
+            collectionSuffix
           );
-          const newOptionsMap = new Map(options.map((opt) => [opt.value, opt]));
+          const collection = store.object.getCollection(
+            `voorzieningen_module_${collectionSuffix}`
+          );
+          const list = collection?.results || collection || [];
+          const options = list.map(mapToOption);
 
-          // Start with existing options
-          const mergedOptions = [...prevOptions];
+          // Merge with existing options (don't replace, merge)
+          setOptions((prevOptions) => {
+            const existingOptionsMap = new Map(
+              prevOptions.map((opt) => [opt.value, opt])
+            );
+            const newOptionsMap = new Map(options.map((opt) => [opt.value, opt]));
 
-          // Add new search results that don't already exist
-          newOptionsMap.forEach((newOpt, value) => {
-            if (!existingOptionsMap.has(value)) {
-              mergedOptions.push(newOpt);
-            } else {
-              // Update existing option with new data (in case it changed)
-              const index = mergedOptions.findIndex((opt) => opt.value === value);
-              if (index !== -1) {
-                mergedOptions[index] = newOpt;
+            // Start with existing options
+            const mergedOptions = [...prevOptions];
+
+            // Add new search results that don't already exist
+            newOptionsMap.forEach((newOpt, value) => {
+              if (!existingOptionsMap.has(value)) {
+                mergedOptions.push(newOpt);
+              } else {
+                // Update existing option with new data (in case it changed)
+                const index = mergedOptions.findIndex((opt) => opt.value === value);
+                if (index !== -1) {
+                  mergedOptions[index] = newOpt;
+                }
               }
-            }
-          });
+            });
 
-          return mergedOptions;
-        });
-      } catch (e) {
-        // Don't clear options on error to preserve existing selections
-        console.error('Module search failed:', e);
-      } finally {
-        setSearchLoading(false);
-      }
+            return mergedOptions;
+          });
+        } catch (e) {
+          // Don't clear options on error to preserve existing selections
+          console.error('Module search failed:', e);
+        } finally {
+          setLoading(false);
+        }
+      };
     },
     [store]
+  );
+
+  // Server-side search for modules (searches all modules)
+  const searchModules = useCallback(
+    createModuleSearch('dienst_form_search', setModuleOptions, setSearchLoading),
+    [createModuleSearch]
   );
 
   // Debounced search function
   const debouncedSearchModules = useDebouncedInput(searchModules, 250, {
     disableInstantValidation: true,
   });
+
+  // Server-side search for modules (for Dienst zoeken step)
+  const searchModulesForDienstZoeken = useCallback(
+    createModuleSearch('dienst_zoeken_search', setOwnAppOptions, setOwnAppLoading),
+    [createModuleSearch]
+  );
+
+  // Debounced search function for Dienst zoeken step
+  const debouncedSearchModulesForDienstZoeken = useDebouncedInput(
+    searchModulesForDienstZoeken,
+    250,
+    {
+      disableInstantValidation: true,
+    }
+  );
+
+  // Fetch diensten for a selected applicatie (Gebruik-beheerders flow)
+  const fetchDienstenForApplicatie = useCallback(
+    async (applicatieId) => {
+      if (!applicatieId) {
+        setDienstenResults([]);
+        setResolvedModulesFromDiensten([]);
+        return;
+      }
+
+      setDienstenResultsLoading(true);
+      try {
+        // Query diensten where modules array contains applicatie ID
+        const params = new URLSearchParams({
+          _limit: '50',
+          _page: '1',
+          _published: 'false',
+          _source: 'index',
+        });
+        params.append('modules', String(applicatieId));
+
+        await store.object.fetchCollection(
+          'voorzieningen',
+          'dienst',
+          Object.fromEntries(params),
+          null,
+          'dienst_zoeken_results'
+        );
+        const collection = store.object.getCollection(
+          'voorzieningen_dienst_dienst_zoeken_results'
+        );
+        const list = collection?.results || collection || [];
+        setDienstenResults(list);
+
+        // Collect module IDs from diensten for resolution
+        const moduleIds = new Set();
+        list.forEach((dienst) => {
+          const modules = Array.isArray(dienst.modules) ? dienst.modules : [];
+          modules.forEach((m) => {
+            const id =
+              typeof m === 'string'
+                ? m
+                : String(m?.id || m?.value || m?.['@self']?.id || '');
+            if (id) moduleIds.add(id);
+          });
+        });
+
+        // Resolve module labels
+        const resolved = [];
+        for (const moduleId of Array.from(moduleIds)) {
+          // Check if already in ownAppOptions
+          const existing = ownAppOptions.find(
+            (opt) => String(opt.value) === String(moduleId)
+          );
+          if (existing) {
+            resolved.push({ value: moduleId, label: existing.label });
+          } else {
+            // Try to fetch if not available
+            try {
+              await store.object.fetchObject(
+                'voorzieningen',
+                'module',
+                String(moduleId),
+                {
+                  '_extend[]': ['@self.schema'],
+                  _published: 'false',
+                  _source: 'index',
+                }
+              );
+              const moduleData = store.object.getObject(
+                'voorzieningen_module',
+                String(moduleId)
+              );
+              if (moduleData) {
+                const label =
+                  moduleData?.naam ||
+                  moduleData?.name ||
+                  moduleData?.['@self']?.name ||
+                  moduleId;
+                resolved.push({ value: moduleId, label });
+              }
+            } catch {
+              // If fetch fails, use ID as label
+              resolved.push({ value: moduleId, label: moduleId });
+            }
+          }
+        }
+        setResolvedModulesFromDiensten(resolved);
+      } catch (e) {
+        console.error('Failed to fetch diensten:', e);
+        setDienstenResults([]);
+        setResolvedModulesFromDiensten([]);
+      } finally {
+        setDienstenResultsLoading(false);
+      }
+    },
+    [store, ownAppOptions]
+  );
+
+  // Fetch full organisation data to check type (for conditional Deelnemers step)
+  useEffect(() => {
+    const fetchFullOrganisationData = async () => {
+      const activeOrg = store?.user?.activeOrganization;
+      const organisationId = activeOrg?.uuid || activeOrg?.id;
+
+      if (!organisationId || !isGebruikBeheerdersFlow) return;
+
+      try {
+        await store.object.fetchObject(
+          'voorzieningen',
+          'organisatie',
+          organisationId,
+          {
+            '_extend[]': ['@self.schema'],
+          }
+        );
+
+        const fullOrgData = store.object.getObject(
+          'voorzieningen_organisatie',
+          organisationId
+        );
+
+        if (fullOrgData) {
+          setFullActiveOrganisation(fullOrgData);
+        }
+      } catch (error) {
+        console.error('Error fetching full organization data:', error);
+      }
+    };
+
+    fetchFullOrganisationData();
+  }, [
+    store?.user?.activeOrganization?.uuid,
+    store?.user?.activeOrganization?.id,
+    store,
+    isGebruikBeheerdersFlow,
+  ]);
+
+  // Fetch deelnemers from current logged-in organization (for gebruik beheerder flow)
+  useEffect(() => {
+    const fetchDeelnemers = async () => {
+      const activeOrg = store?.user?.activeOrganization;
+      const organisationId = activeOrg?.uuid || activeOrg?.id;
+
+      if (!organisationId || !isGebruikBeheerdersFlow) return;
+
+      try {
+        setDeelnemersLoading(true);
+        await store.object.fetchObject(
+          'voorzieningen',
+          'organisatie',
+          organisationId,
+          {
+            '_extend[]': ['@self.schema', 'deelnemers'],
+          }
+        );
+
+        const fullOrgData = store.object.getObject(
+          'voorzieningen_organisatie',
+          organisationId
+        );
+
+        if (fullOrgData) {
+          // Process deelnemers into options format
+          const deelnemers = Array.isArray(fullOrgData?.deelnemers)
+            ? fullOrgData.deelnemers
+            : [];
+
+          // Map deelnemers to options format
+          const options = deelnemers
+            .filter((deelnemer) => {
+              // Filter out invalid deelnemers
+              const id =
+                typeof deelnemer === 'object'
+                  ? deelnemer?.id || deelnemer?.['@self']?.id
+                  : deelnemer;
+              return id && id !== 'undefined' && id !== 'null';
+            })
+            .map((deelnemer) => {
+              // Handle both object format and string (UUID) format
+              if (typeof deelnemer === 'object') {
+                const id = deelnemer?.id || deelnemer?.['@self']?.id;
+                const label =
+                  deelnemer?.naam ||
+                  deelnemer?.['@self']?.name ||
+                  deelnemer?.name ||
+                  id;
+                return {
+                  value: String(id),
+                  label: String(label),
+                  data: deelnemer,
+                };
+              }
+              // If it's just a string (UUID), use it as both value and label
+              return {
+                value: String(deelnemer),
+                label: String(deelnemer),
+                data: null,
+              };
+            });
+
+          setDeelnemerOptions(options);
+        }
+      } catch (error) {
+        console.error('Error fetching deelnemers from organization:', error);
+        setDeelnemerOptions([]);
+      } finally {
+        setDeelnemersLoading(false);
+      }
+    };
+
+    fetchDeelnemers();
+  }, [
+    store?.user?.activeOrganization?.uuid,
+    store?.user?.activeOrganization?.id,
+    store,
+    isGebruikBeheerdersFlow,
+  ]);
+
+  // Fetch diensten when applicatie is selected (Gebruik-beheerders flow)
+  useEffect(() => {
+    if (!isGebruikBeheerdersFlow) return;
+    const applicatieId = selectedApplicatie?.value;
+    if (applicatieId) {
+      fetchDienstenForApplicatie(applicatieId);
+    } else {
+      setDienstenResults([]);
+      setResolvedModulesFromDiensten([]);
+    }
+  }, [selectedApplicatie, isGebruikBeheerdersFlow, fetchDienstenForApplicatie]);
+
+  // Handle redirect from Aanbod-beheerders flow (Gebruik-beheerders flow)
+  useEffect(() => {
+    if (!isGebruikBeheerdersFlow || !dienstFromUrl || isEditMode) return;
+
+    const handleRedirect = async () => {
+      try {
+        // Fetch the dienst that was just created
+        await store.object.fetchObject(
+          'voorzieningen',
+          'dienst',
+          String(dienstFromUrl),
+          {
+            '_extend[]': ['@self.schema'],
+            _published: 'false',
+          }
+        );
+        const fetchedDienst = store.object.getObject(
+          'voorzieningen_dienst',
+          String(dienstFromUrl)
+        );
+
+        if (fetchedDienst) {
+          // Get the applicatie from the dienst's modules array
+          const modules = Array.isArray(fetchedDienst.modules)
+            ? fetchedDienst.modules
+            : [];
+          const applicatieId =
+            modules.length > 0
+              ? String(
+                  typeof modules[0] === 'object'
+                    ? modules[0]?.id ||
+                        modules[0]?.value ||
+                        modules[0]?.['@self']?.id ||
+                        ''
+                    : modules[0] || ''
+                )
+              : null;
+
+          if (applicatieId) {
+            // Fetch applicatie and add to options
+            try {
+              await store.object.fetchObject(
+                'voorzieningen',
+                'module',
+                applicatieId,
+                {
+                  '_extend[]': ['@self.schema'],
+                  _published: 'false',
+                  _source: 'index',
+                }
+              );
+              const applicatieData = store.object.getObject(
+                'voorzieningen_module',
+                applicatieId
+              );
+              if (applicatieData) {
+                const applicatieOption = mapToOption(applicatieData, 0);
+                setOwnAppOptions((prev) => {
+                  const exists = prev.some(
+                    (o) => o.value === applicatieOption.value
+                  );
+                  return exists ? prev : [...prev, applicatieOption];
+                });
+                setSelectedApplicatie(applicatieOption);
+              }
+            } catch (error) {
+              console.error('Error fetching applicatie for redirect:', error);
+            }
+          }
+
+          // Auto-select the dienst
+          setGebruikData('diensten', [String(dienstFromUrl)]);
+
+          // Auto-advance to next step (Gebruiksinformatie)
+          stepper.setCurrentStepByLabel('gebruiksinformatie');
+        }
+      } catch (error) {
+        console.error('Error handling redirect:', error);
+      }
+    };
+
+    handleRedirect();
+  }, [dienstFromUrl, isGebruikBeheerdersFlow, isEditMode, store, stepper]);
 
   // Keep dienst.modules in sync with current selection
   useEffect(() => {
@@ -623,68 +1004,85 @@ const ConFormsDienst = ({ store, userStore }) => {
     }
   };
 
-  /**
-   * Helper function to get the correct step index accounting for optional steps
-   * Accounts for the optional Aanbieder step (only shown for ontbrekend-dienst)
-   * @param {number} logicalStep - The logical step number
-   * Logical steps: 0=Applicaties, 1=Aanbieder, 2=Dienst informatie, 3=Controleren
-   * @returns {number} The adjusted physical step index
-   */
-  const getAdjustedStepIndex = useCallback(
-    (logicalStep) => {
-      let index = logicalStep;
-
-      // If Aanbieder step is not shown and we're past it, adjust the index
-      if (formType !== 'ontbrekend-dienst' && logicalStep > 1) {
-        index -= 1;
-      }
-
-      return index;
-    },
-    [formType]
-  );
-
-  /**
-   * Convert physical step index to logical step number
-   * Accounts for optional Aanbieder step
-   * @param {number} physicalStep - The physical step index
-   * @returns {number} The logical step number
-   */
-  const getLogicalStepFromPhysical = useCallback(
-    (physicalStep) => {
-      // Start with physical step
-      let logicalStep = physicalStep;
-
-      // If Aanbieder step is not shown, add 1 to account for skipped step
-      if (formType !== 'ontbrekend-dienst') {
-        // If we're at or past where Aanbieder would be (logical step 1), add 1 to skip it
-        if (logicalStep >= 1) {
-          logicalStep += 1;
-        }
-      }
-
-      return logicalStep;
-    },
-    [formType]
-  );
-
-  const handleNextStep = async () => {
-    const next = currentStep + 1;
-    setCurrentStep(next);
-  };
-
   const getStatus = (active, step) => {
     if (active === step) return 'current';
     if (active < step) return 'not-checked';
     return 'checked';
   };
 
-  const renderStep = (step) => {
-    // Convert physical step to logical step using helper function
-    const logicalStep = getLogicalStepFromPhysical(step);
+  const renderStep = () => {
+    const stepLabel = stepper.getLabelFromStep(stepper.getCurrentStep());
 
-    switch (logicalStep) {
-      case 0:
+    // Gebruik-beheerders flow (ontbrekend-dienst)
+    if (isGebruikBeheerdersFlow) {
+      switch (stepLabel) {
+        case 'dienst-zoeken':
+          return (
+            <ConFormDienstZoekenStage
+              loading={prefillLoading || schemasLoading}
+              ownAppOptions={ownAppOptions}
+              ownApp={selectedApplicatie}
+              setOwnApp={setSelectedApplicatie}
+              ownAppLoading={ownAppLoading}
+              searchResults={dienstenResults}
+              resolvedModulesFromResults={resolvedModulesFromDiensten}
+              resultsLoading={dienstenResultsLoading}
+              isEditMode={isEditMode}
+              onSearchModules={debouncedSearchModulesForDienstZoeken}
+              schemas={schemas}
+              selectedDienstIds={gebruik.diensten}
+              setSelectedDienstIds={(ids) => setGebruikData('diensten', ids)}
+            />
+          );
+        case 'gebruiksinformatie':
+          return (
+            <ConFormGebruiksinformatieStage
+              status={gebruik.status}
+              setStatus={(value) => setGebruikData('status', value)}
+              interneAantekening={gebruik.interneAantekening}
+              setInterneAantekening={(value) =>
+                setGebruikData('interneAantekening', value)
+              }
+              loading={prefillLoading || schemasLoading}
+              schemas={schemas}
+              isEditMode={isEditMode}
+            />
+          );
+        case 'deelnemers':
+          return (
+            <ConFormDeelnemersStage
+              deelnemers={gebruik.deelnemers}
+              setDeelnemers={(value) => setGebruikData('deelnemers', value)}
+              loading={prefillLoading || schemasLoading}
+              deelnemerOptions={deelnemerOptions}
+              deelnemersLoading={deelnemersLoading}
+            />
+          );
+        case 'controleren':
+          return (
+            <ConFormControlerenStage
+              isGebruikBeheerdersFlow={true}
+              gebruik={gebruik}
+              dienstenResults={dienstenResults}
+              deelnemerOptions={deelnemerOptions}
+              dienst={dienst}
+              selectedModuleIds={selectedModuleIds}
+              moduleOptionsByProduct={productToModulesLookup}
+              selectedKoppelingIds={selectedKoppelingIds}
+              koppelingOptions={koppelingOptions}
+              userStore={store.user}
+              dienstType={dienstType}
+              formType={formType}
+            />
+          );
+        default:
+          return null;
+      }
+    }
+
+    // Aanbod-beheerders flow (dienst) - existing flow
+    switch (stepLabel) {
+      case 'applicaties':
         return (
           <ConFormApplicatiesStage
             selectedModuleIds={selectedModuleIds}
@@ -697,20 +1095,7 @@ const ConFormsDienst = ({ store, userStore }) => {
             dienstType={dienstType}
           />
         );
-      case 1:
-        // Aanbieder - only for ontbrekend-dienst
-        return (
-          <ConFormDienstAanbiederInformatieStage
-            dienst={dienst}
-            setDienstData={setDienstData}
-            aanbiederOrganisatie={aanbiederOrganisatie}
-            setAanbiederOrganisatieData={setAanbiederOrganisatieData}
-            loading={schemasLoading}
-            schemas={schemas}
-            aanbiederKeuze={aanbiederKeuze}
-          />
-        );
-      case 2:
+      case 'dienst-informatie':
         return (
           <ConFormDienstInformatieStage
             dienst={dienst}
@@ -718,11 +1103,11 @@ const ConFormsDienst = ({ store, userStore }) => {
             loading={schemasLoading}
             touched={touched}
             schemas={schemas}
-            userStore={userStore}
+            userStore={store.user}
             dienstType={dienstType}
           />
         );
-      case 3:
+      case 'controleren':
         return (
           <ConFormControlerenStage
             dienst={dienst}
@@ -730,17 +1115,130 @@ const ConFormsDienst = ({ store, userStore }) => {
             moduleOptionsByProduct={productToModulesLookup}
             selectedKoppelingIds={selectedKoppelingIds}
             koppelingOptions={koppelingOptions}
-            userStore={userStore}
+            userStore={store.user}
             dienstType={dienstType}
             formType={formType}
-            aanbiederKeuze={aanbiederKeuze}
-            aanbiederOrganisatie={aanbiederOrganisatie}
           />
         );
       default:
         return null;
     }
   };
+
+  const currentStepName = () => {
+    const stepLabel = stepper.getLabelFromStep(stepper.getCurrentStep());
+
+    switch (stepLabel) {
+      case 'dienst-zoeken':
+        return 'Dienst zoeken';
+      case 'gebruiksinformatie':
+        return 'Gebruiksinformatie';
+      case 'deelnemers':
+        return 'Deelnemers';
+      case 'applicaties':
+        return 'Applicaties';
+      case 'dienst-informatie':
+        return 'Dienst informatie';
+      case 'controleren':
+        return 'Controleer uw gegevens';
+      default:
+        return '';
+    }
+  };
+
+  // Check if we need to show the deelnemers step (when organization type is Samenwerking)
+  const organizationType = fullActiveOrganisation?.type || '';
+  const needsDeelnemersStep =
+    isGebruikBeheerdersFlow && organizationType === 'Samenwerking';
+
+  // ProcessSteps configuration
+  const processStepsConfig = useMemo(() => {
+    const steps = [];
+
+    stepper.resetStepDefinitions('process-steps');
+    stepper.resetStepDefinitions('process-steps-status');
+
+    if (isGebruikBeheerdersFlow) {
+      // Gebruik-beheerders flow steps
+      steps.push({
+        id: 'dienst-zoeken-step',
+        marker: stepper.defineStep('process-steps', 'dienst-zoeken'),
+        status: getStatus(
+          stepper.getCurrentStep(),
+          stepper.defineStep('process-steps-status')
+        ),
+        title: 'Dienst zoeken',
+      });
+
+      steps.push({
+        id: 'gebruiksinformatie-step',
+        marker: stepper.defineStep('process-steps', 'gebruiksinformatie'),
+        status: getStatus(
+          stepper.getCurrentStep(),
+          stepper.defineStep('process-steps-status')
+        ),
+        title: 'Gebruiksinformatie',
+      });
+
+      // Conditionally add Deelnemers step
+      if (needsDeelnemersStep) {
+        steps.push({
+          id: 'deelnemers-step',
+          marker: stepper.defineStep('process-steps', 'deelnemers'),
+          status: getStatus(
+            stepper.getCurrentStep(),
+            stepper.defineStep('process-steps-status')
+          ),
+          title: 'Deelnemers',
+        });
+      }
+
+      steps.push({
+        id: 'controleren-step',
+        marker: stepper.defineStep('process-steps', 'controleren'),
+        status: getStatus(
+          stepper.getCurrentStep(),
+          stepper.defineStep('process-steps-status')
+        ),
+        title: 'Controleren',
+      });
+    } else {
+      // Aanbod-beheerders flow steps (existing flow)
+      const currentStepNum = stepper.getCurrentStep();
+
+      steps.push({
+        id: 'a9p0p1l2-i3c4-a5t6-i7e8-s9t0a1g2e3f4',
+        marker: stepper.defineStep('process-steps', 'applicaties'),
+        status: getStatus(
+          currentStepNum,
+          stepper.defineStep('process-steps-status')
+        ),
+        title: 'Applicaties',
+      });
+
+      steps.push({
+        id: 'd1e2n3s4-t5i6-n7f8-o9r0-m1a2t3i4e5f6',
+        marker: stepper.defineStep('process-steps', 'dienst-informatie'),
+        status: getStatus(
+          currentStepNum,
+          stepper.defineStep('process-steps-status')
+        ),
+        title: 'Dienst informatie',
+      });
+
+      steps.push({
+        id: 'c5o6n7t8-r9o0-l1e2-r3e4-n5s6t7a8g9e0',
+        marker: stepper.defineStep('process-steps', 'controleren'),
+        status: getStatus(
+          currentStepNum,
+          stepper.defineStep('process-steps-status')
+        ),
+        title: 'Controleren',
+      });
+    }
+
+    return steps;
+  }, [stepper, isGebruikBeheerdersFlow, needsDeelnemersStep]);
 
   // Check if a field is required according to loaded schema
   const isSchemaFieldRequired = (schemaType, fieldName) => {
@@ -757,173 +1255,164 @@ const ConFormsDienst = ({ store, userStore }) => {
   };
 
   // Validation mirroring product form style
-  const getDisabledStatus = (step) => {
-    // Convert physical step to logical step using helper function
-    const logicalStep = getLogicalStepFromPhysical(step);
+  const getDisabledStatus = () => {
+    const stepLabel = stepper.getLabelFromStep(stepper.getCurrentStep());
 
-    if (logicalStep === 0) {
-      // Applicaties: at least one applicatie selected
-      return selectedModuleIds.length === 0;
-    }
-    if (logicalStep === 1 && formType === 'ontbrekend-dienst') {
-      // Aanbieder step validation
-      // If user selected "bestaand", check if aanbieder is selected
-      if (aanbiederKeuze === 'bestaand') {
-        return !dienst.aanbieder || !String(dienst.aanbieder).trim();
-      }
+    switch (stepLabel) {
+      case 'dienst-zoeken':
+        // Require applicatie and at least one dienst selection
+        return (
+          !selectedApplicatie?.value ||
+          !gebruik.diensten ||
+          gebruik.diensten.length === 0
+        );
+      case 'applicaties':
+        // Applicaties: at least one applicatie selected
+        return selectedModuleIds.length === 0;
+      case 'dienst-informatie': {
+        // Dienst informatie: Respect schema requiredness
+        const naamRequired = isSchemaFieldRequired('dienst', 'naam');
+        const websiteRequired = isSchemaFieldRequired('dienst', 'website');
+        const soortRequired = isSchemaFieldRequired('dienst', 'type');
+        const missingSoort =
+          soortRequired && (!Array.isArray(dienst.type) || dienst.type.length === 0);
 
-      // If user selected "nieuw", check if all required fields are filled
-      const requiredNewOrgFields = ['naam', 'type', 'website'];
-      const missingNewOrgFields = requiredNewOrgFields.filter(
-        (field) =>
-          !aanbiederOrganisatie[field] || !String(aanbiederOrganisatie[field]).trim()
-      );
+        const missingNaam = naamRequired && (!dienst.naam || !dienst.naam.trim());
+        const missingWebsite =
+          websiteRequired && (!dienst.website || !dienst.website.trim());
+        if (missingNaam || missingWebsite || missingSoort) return true;
 
-      // Validate website format if provided
-      if (
-        aanbiederOrganisatie.website &&
-        String(aanbiederOrganisatie.website).trim()
-      ) {
-        const website = String(aanbiederOrganisatie.website).trim();
-        if (!validateWebsite(website)) {
-          return true;
+        // If website is provided, validate its format; if empty and not required, it's allowed
+        if (dienst.website && dienst.website.trim()) {
+          const website = dienst.website.trim();
+          if (!validateWebsite(website)) return true;
         }
+        return false;
       }
-
-      return missingNewOrgFields.length > 0;
+      case 'gebruiksinformatie':
+        // Require status to be selected
+        return !gebruik.status;
+      case 'deelnemers':
+      case 'controleren':
+        // Other steps validation to be added when stages are implemented
+        return false;
+      default:
+        return false;
     }
-    if (logicalStep === 2) {
-      // Dienst informatie: Respect schema requiredness
-      const naamRequired = isSchemaFieldRequired('dienst', 'naam');
-      const websiteRequired = isSchemaFieldRequired('dienst', 'website');
-      const soortRequired = isSchemaFieldRequired('dienst', 'type');
-      const missingSoort =
-        soortRequired && (!Array.isArray(dienst.type) || dienst.type.length === 0);
-
-      const missingNaam = naamRequired && (!dienst.naam || !dienst.naam.trim());
-      const missingWebsite =
-        websiteRequired && (!dienst.website || !dienst.website.trim());
-      if (missingNaam || missingWebsite || missingSoort) return true;
-
-      // If website is provided, validate its format; if empty and not required, it's allowed
-      if (dienst.website && dienst.website.trim()) {
-        const website = dienst.website.trim();
-        if (!validateWebsite(website)) return true;
-      }
-      return false;
-    }
-    // Controleren: no strict validation
-    return false;
   };
 
-  const getDisabledTooltip = (step) => {
-    // Convert physical step to logical step using helper function
-    const logicalStep = getLogicalStepFromPhysical(step);
+  const getDisabledTooltip = () => {
+    const stepLabel = stepper.getLabelFromStep(stepper.getCurrentStep());
 
-    if (logicalStep === 0) {
-      return selectedModuleIds.length === 0
-        ? 'Selecteer minimaal één applicatie'
-        : '';
-    }
-    if (logicalStep === 1 && formType === 'ontbrekend-dienst') {
-      // Aanbieder step validation messages
-      if (aanbiederKeuze === 'bestaand') {
-        if (!dienst.aanbieder || !String(dienst.aanbieder).trim()) {
-          return 'Selecteer een aanbieder';
-        }
-      } else {
+    switch (stepLabel) {
+      case 'dienst-zoeken': {
         const messages = [];
-        if (!aanbiederOrganisatie.naam || !aanbiederOrganisatie.naam.trim()) {
-          messages.push('Vul de naam van de organisatie in');
+        if (!selectedApplicatie?.value) {
+          messages.push('Selecteer een applicatie');
         }
-        if (!aanbiederOrganisatie.type || !aanbiederOrganisatie.type.trim()) {
-          messages.push('Selecteer het type organisatie');
-        }
-        if (!aanbiederOrganisatie.website || !aanbiederOrganisatie.website.trim()) {
-          messages.push('Vul de website van de organisatie in');
-        }
-        if (
-          aanbiederOrganisatie.website &&
-          !validateWebsite(String(aanbiederOrganisatie.website).trim())
-        ) {
-          messages.push('Website heeft een ongeldig formaat');
+        if (!gebruik.diensten || gebruik.diensten.length === 0) {
+          messages.push('Selecteer minimaal één dienst');
         }
         return messages.join('\n');
       }
-    }
-    if (logicalStep === 2) {
-      // Dienst informatie validation messages
-      const messages = [];
-      const naamRequired = isSchemaFieldRequired('dienst', 'naam');
-      const websiteRequired = isSchemaFieldRequired('dienst', 'website');
-      const soortRequired = isSchemaFieldRequired('dienst', 'type');
+      case 'applicaties':
+        return selectedModuleIds.length === 0
+          ? 'Selecteer minimaal één applicatie'
+          : '';
+      case 'dienst-informatie': {
+        const messages = [];
+        const naamRequired = isSchemaFieldRequired('dienst', 'naam');
+        const websiteRequired = isSchemaFieldRequired('dienst', 'website');
+        const soortRequired = isSchemaFieldRequired('dienst', 'type');
 
-      if (naamRequired && (!dienst.naam || !dienst.naam.trim())) {
-        messages.push('Dienstnaam is verplicht');
-      }
-      if (
-        soortRequired &&
-        (!Array.isArray(dienst.type) || dienst.type.length === 0)
-      ) {
-        messages.push('Soort dienst is verplicht');
-      }
-      if (websiteRequired && (!dienst.website || !dienst.website.trim())) {
-        messages.push('Website is verplicht');
-      } else if (dienst.website && dienst.website.trim()) {
-        const website = dienst.website.trim();
-        if (!validateWebsite(website)) {
-          messages.push(
-            'Website heeft een ongeldig formaat (bijv. conduction.nl, www.conduction.nl of https://conduction.nl)'
-          );
+        if (naamRequired && (!dienst.naam || !dienst.naam.trim())) {
+          messages.push('Dienstnaam is verplicht');
         }
+        if (
+          soortRequired &&
+          (!Array.isArray(dienst.type) || dienst.type.length === 0)
+        ) {
+          messages.push('Soort dienst is verplicht');
+        }
+        if (websiteRequired && (!dienst.website || !dienst.website.trim())) {
+          messages.push('Website is verplicht');
+        } else if (dienst.website && dienst.website.trim()) {
+          const website = dienst.website.trim();
+          if (!validateWebsite(website)) {
+            messages.push(
+              'Website heeft een ongeldig formaat (bijv. conduction.nl, www.conduction.nl of https://conduction.nl)'
+            );
+          }
+        }
+        return messages.join('\n');
       }
-      return messages.join('\n');
+      case 'gebruiksinformatie': {
+        const messages = [];
+        if (!gebruik.status) {
+          messages.push('Status is verplicht');
+        }
+        return messages.join('\n');
+      }
+      case 'deelnemers':
+      case 'controleren':
+        // Other steps validation messages to be added when stages are implemented
+        return '';
+      default:
+        return '';
     }
-    // Legacy tooltips (commented out)
-    return '';
   };
 
   const handleSaveDienst = async () => {
     setSaving(true);
     setSaveResult(null);
+    setSaveErrorMessage('');
     try {
-      let finalAanbieder = dienst.aanbieder;
-
-      // ✅ For new organization, create the organization first (only for ontbrekend-dienst)
-      if (formType === 'ontbrekend-dienst' && aanbiederKeuze === 'nieuw') {
-        try {
-          const newOrganizationData = {
-            naam: aanbiederOrganisatie.naam,
-            type: aanbiederOrganisatie.type,
-            website: aanbiederOrganisatie.website,
-            beschrijvingKort: aanbiederOrganisatie.beschrijvingKort,
-            beschrijvingLang: aanbiederOrganisatie.beschrijvingLang,
-            'e-mailadres': aanbiederOrganisatie['e-mailadres'],
-            telefoonnummer: aanbiederOrganisatie.telefoonnummer,
-            logo: aanbiederOrganisatie.logo,
-          };
-
-          // Create the organization and get its ID
-          const createdOrganization = await store.object.createObject(
-            'voorzieningen',
-            'organisatie',
-            newOrganizationData
-          );
-
-          // Use the newly created organization ID as aanbieder
-          finalAanbieder =
-            createdOrganization?.id || createdOrganization?.['@self']?.id;
-
-          if (!finalAanbieder) {
-            throw new Error('Organisatie aangemaakt maar geen ID ontvangen');
-          }
-        } catch (orgError) {
-          console.error('Failed to create organization:', orgError);
+      // Handle Gebruik-beheerders flow (save gebruik object)
+      if (isGebruikBeheerdersFlow) {
+        // Validation
+        if (!gebruik.diensten || gebruik.diensten.length === 0) {
+          setSaveErrorMessage('Selecteer minimaal één dienst.');
           setSaveResult('error');
-          setSaving(false);
           return;
         }
+
+        if (!gebruik.status) {
+          setSaveErrorMessage('Status is verplicht.');
+          setSaveResult('error');
+          return;
+        }
+
+        const activeOrg = store?.user?.activeOrganization;
+        const afnemerId = activeOrg?.uuid || activeOrg?.id;
+        if (!afnemerId) {
+          setSaveErrorMessage('Geen actieve organisatie gevonden. Log opnieuw in.');
+          setSaveResult('error');
+          return;
+        }
+
+        if (!selectedApplicatie?.value) {
+          setSaveErrorMessage('Selecteer een applicatie.');
+          setSaveResult('error');
+          return;
+        }
+
+        // Build payload with gebruik field names directly
+        const payload = {
+          diensten: gebruik.diensten,
+          status: gebruik.status,
+          interneAantekening: gebruik.interneAantekening || '',
+          deelnemers: Array.isArray(gebruik.deelnemers) ? gebruik.deelnemers : [],
+          afnemer: afnemerId,
+          module: selectedApplicatie.value,
+        };
+
+        await store.object.createObject('voorzieningen', 'gebruik', payload);
+        setSaveResult('success');
+        return;
       }
+
+      // Handle Aanbod-beheerders flow (save dienst object)
+      let finalAanbieder = dienst.aanbieder;
 
       const payload = {
         ...dienst,
@@ -934,6 +1423,7 @@ const ConFormsDienst = ({ store, userStore }) => {
         // Include service type for processing
         dienstType: dienstType,
       };
+
       if (isEditMode) {
         await store.object.updateObject(
           'voorzieningen',
@@ -945,28 +1435,18 @@ const ConFormsDienst = ({ store, userStore }) => {
         await store.object.createObject('voorzieningen', 'dienst', payload);
       }
       setSaveResult('success');
-    } catch (e) {
+    } catch (error) {
+      console.error('Error saving dienst:', error);
+      // Extract error message from the error object
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        'Onbekende fout bij het opslaan.';
+      setSaveErrorMessage(errorMessage);
       setSaveResult('error');
     } finally {
       setSaving(false);
-    }
-  };
-
-  const currentStepName = (step) => {
-    // Convert physical step to logical step using helper function
-    const logicalStep = getLogicalStepFromPhysical(step);
-
-    switch (logicalStep) {
-      case 0:
-        return 'Zoek de applicatie voor uw diensten';
-      case 1:
-        return 'Aanbieder';
-      case 2:
-        return 'Dienstverlening op uw applicaties';
-      case 3:
-        return 'Controleer uw gegevens';
-      default:
-        return '';
     }
   };
 
@@ -977,12 +1457,6 @@ const ConFormsDienst = ({ store, userStore }) => {
   } = useMemo(() => getActiveWizard() || {}, [dienstType]);
   const capitalizedSchema = _.capitalize(wizardSchema);
   const editModeTitle = `${capitalizedSchema} updaten`;
-
-  const newWizardName = (() => {
-    var a = wizardName.split(' ');
-    a[0] += '(en)';
-    return a.join(' ');
-  })();
 
   const wizardType = isEditMode
     ? 'update'
@@ -999,12 +1473,16 @@ const ConFormsDienst = ({ store, userStore }) => {
               style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
             >
               <Icon style={{ width: '1em', height: '1em' }} />
-              Uw {isEditMode ? editModeTitle : newWizardName}
+              {isGebruikBeheerdersFlow && !isEditMode
+                ? 'Toevoegen dienst'
+                : `Een ${isEditMode ? editModeTitle : wizardName}`}
             </Heading1>
             <Paragraph>
               {isEditMode
                 ? 'Werk uw dienstgegevens bij in onze catalogus.'
-                : 'Vul dit formulier in om een dienst voor uw en andere applicaties te registreren en vindbaar te maken in de softwarecatalogus.'}
+                : isGebruikBeheerdersFlow
+                ? 'Zoek naar diensten die op de applicaties in uw applicatielandschap worden uitgevoerd. Zoek op de naam van de betrokken applicatie.\n\nAlle relevante diensten die relevant zijn voor uw eigen applicaties worden weergegeven.\nBestaat de dienst nog niet, dan kunt u deze toevoegen.\n\nNa het selecteren van de gewenste dienst kunt u in de volgende stappen aanvullende informatie opvoeren.'
+                : 'Voer de gegevens van de dienst in, selecteer relevante applicaties en controleer uw invoer.'}
             </Paragraph>
           </div>
 
@@ -1063,7 +1541,7 @@ const ConFormsDienst = ({ store, userStore }) => {
                   icon={<VISUALS.HAND_SHAKE />}
                   onClick={() => {
                     setSaveResult(null);
-                    setCurrentStep(0);
+                    stepper.resetCurrentStep();
                     setDienst({
                       naam: '',
                       beschrijvingKort: '',
@@ -1090,96 +1568,31 @@ const ConFormsDienst = ({ store, userStore }) => {
                 <h3
                   className={clsx('utrecht-heading-3', 'ac-register-form-heading')}
                 >
-                  {currentStepName(currentStep)}
+                  {currentStepName()}
                 </h3>
               </div>
 
               <div className='ac-register-container ac-forms-product'>
                 <div ref={processStepsRef} className='ac-register-process-steps'>
-                  <ProcessSteps
-                    steps={(() => {
-                      const baseSteps = [
-                        {
-                          id: 'a9p0p1l2-i3c4-a5t6-i7e8-s9t0a1g2e3f4',
-                          marker: 1,
-                          status: getStatus(currentStep, getAdjustedStepIndex(0)),
-                          title: 'Applicaties',
-                        },
-                      ];
-
-                      // Only add Aanbieder step for ontbrekend-dienst
-                      if (formType === 'ontbrekend-dienst') {
-                        baseSteps.push({
-                          id: 'a1a2n3b4-i5e6-d7e8-r9i0-n1f2o3r4m5a6t7i8e9',
-                          marker: 2,
-                          status: getStatus(currentStep, getAdjustedStepIndex(1)),
-                          title: 'Aanbieder',
-                        });
-                      }
-
-                      baseSteps.push(
-                        {
-                          id: 'd1e2n3s4-t5i6-n7f8-o9r0-m1a2t3i4e5f6',
-                          marker: formType === 'ontbrekend-dienst' ? 3 : 2,
-                          status: getStatus(currentStep, getAdjustedStepIndex(2)),
-                          title: 'Dienst informatie',
-                        },
-                        {
-                          id: 'c5o6n7t8-r9o0-l1e2-r3e4-n5s6t7a8g9e0',
-                          marker: formType === 'ontbrekend-dienst' ? 4 : 3,
-                          status: getStatus(currentStep, getAdjustedStepIndex(3)),
-                          title: 'Controleren',
-                        }
-                      );
-
-                      return baseSteps;
-                    })()}
-                  />
+                  <ProcessSteps steps={processStepsConfig} />
                 </div>
 
                 <div className='ac-register-form-container'>
-                  {process.env.NODE_ENV === 'development' && (
-                    <div
-                      style={{
-                        marginBottom: '2rem',
-                        padding: '1rem',
-                        backgroundColor: '#f8f9fa',
-                        border: '1px solid #dee2e6',
-                        borderRadius: '4px',
-                        fontSize: '0.8rem',
-                      }}
-                    >
-                      <details>
-                        <summary
-                          style={{
-                            cursor: 'pointer',
-                            fontWeight: 'bold',
-                            marginBottom: '0.5rem',
-                          }}
-                        >
-                          🐛 Debug: Dienst Object (Click to expand)
-                        </summary>
-                        <pre
-                          style={{
-                            whiteSpace: 'pre-wrap',
-                            wordBreak: 'break-word',
-                            maxHeight: '300px',
-                            overflow: 'auto',
-                            backgroundColor: '#ffffff',
-                            padding: '0.5rem',
-                            border: '1px solid #ccc',
-                            borderRadius: '2px',
-                          }}
-                        >
-                          {JSON.stringify(dienst, null, 2)}
-                        </pre>
-                      </details>
-                    </div>
+                  {!isGebruikBeheerdersFlow && (
+                    <ConDebugViewer data={dienst} title='Dienst object' />
+                  )}
+                  {isGebruikBeheerdersFlow && (
+                    <ConDebugViewer data={gebruik} title='Gebruik object' />
                   )}
 
                   {saveResult === 'error' && (
                     <Alert type='error'>
                       Er is een fout opgetreden bij het opslaan.
+                      {saveErrorMessage && (
+                        <Paragraph style={{ marginTop: '0.5rem' }}>
+                          <strong>Details:</strong> {saveErrorMessage}
+                        </Paragraph>
+                      )}
                     </Alert>
                   )}
 
@@ -1209,47 +1622,45 @@ const ConFormsDienst = ({ store, userStore }) => {
                     </Alert>
                   )}
 
-                  {!prefillError && renderStep(currentStep)}
+                  {!prefillError && renderStep()}
 
                   <div
                     className={clsx(
                       'ac-register-form-buttons',
-                      currentStep !== 0 && 'ac-register-form-buttons-not-first-step'
+                      stepper.getCurrentStep() !== 1 &&
+                        'ac-register-form-buttons-not-first-step'
                     )}
                   >
                     <AcFlex spacing='xs' style={{ width: 'fit-content' }}>
-                      {currentStep !== 0 && (
+                      {stepper.getCurrentStep() !== 1 && (
                         <AcButton
                           style='button'
                           buttonType='secondary'
                           icon={<VISUALS.ARROW_LEFT />}
-                          onClick={() => setCurrentStep(currentStep - 1)}
+                          onClick={() => stepper.previous()}
                           disabled={saving || schemasLoading}
                         >
                           Vorige
                         </AcButton>
                       )}
-
-                      {currentStep === getAdjustedStepIndex(1) &&
-                        formType === 'ontbrekend-dienst' && (
-                          <AcButton
-                            style='button'
-                            buttonType='secondary'
-                            icon={<VISUALS.BUILDING />}
-                            onClick={() =>
-                              aanbiederKeuze === 'bestaand'
-                                ? setAanbiederKeuze('nieuw')
-                                : setAanbiederKeuze('bestaand')
-                            }
-                          >
-                            {aanbiederKeuze === 'bestaand'
-                              ? 'Ik kan de gewenste leverancier niet vinden'
-                              : 'Bestaande leverancier selecteren'}
-                          </AcButton>
-                        )}
                     </AcFlex>
 
-                    {currentStep === 0 && (
+                    {/* "Ik kan de gewenste dienst niet vinden" button for Gebruik-beheerders flow */}
+                    {stepper.getStepFromLabel('dienst-zoeken') ===
+                      stepper.getCurrentStep() && (
+                      <AcButton
+                        style='button'
+                        buttonType='secondary'
+                        icon={<VISUALS.CUBE />}
+                        onClick={() => setShowCannotFindDienstAlert(true)}
+                      >
+                        Ik kan de gewenste dienst niet vinden
+                      </AcButton>
+                    )}
+
+                    {/* "Ik kan de gewenste applicatie niet vinden" button for Aanbod-beheerders flow */}
+                    {stepper.getStepFromLabel('applicaties') ===
+                      stepper.getCurrentStep() && (
                       <AcButton
                         style='button'
                         buttonType='secondary'
@@ -1264,26 +1675,24 @@ const ConFormsDienst = ({ store, userStore }) => {
                       spacing='xs'
                       style={{ width: 'fit-content' }}
                       className={clsx(
-                        currentStep === 0 && 'ac-register-form-next-button'
+                        stepper.getCurrentStep() === 1 &&
+                          'ac-register-form-next-button'
                       )}
                     >
-                      {getLogicalStepFromPhysical(currentStep) !== 3 && (
+                      {stepper.getLabelFromStep(stepper.getCurrentStep()) !==
+                        'controleren' && (
                         <div className='ac-register-button-wrapper'>
                           <AcButton
                             style='button'
                             icon={<VISUALS.ARROW_RIGHT />}
-                            onClick={handleNextStep}
+                            onClick={() => stepper.next()}
                             disabled={
-                              getDisabledStatus(currentStep) ||
+                              getDisabledStatus() ||
                               prefillLoading ||
                               saving ||
                               schemasLoading
                             }
-                            title={
-                              getDisabledStatus(currentStep)
-                                ? getDisabledTooltip(currentStep)
-                                : ''
-                            }
+                            title={getDisabledStatus() ? getDisabledTooltip() : ''}
                           >
                             Volgende
                           </AcButton>
@@ -1291,7 +1700,8 @@ const ConFormsDienst = ({ store, userStore }) => {
                       )}
                     </AcFlex>
 
-                    {getLogicalStepFromPhysical(currentStep) === 3 && (
+                    {stepper.getLabelFromStep(stepper.getCurrentStep()) ===
+                      'controleren' && (
                       <AcButton
                         style='button'
                         buttonType='primary'
@@ -1328,6 +1738,28 @@ const ConFormsDienst = ({ store, userStore }) => {
         }}
         title='Waarschuwing'
         message={`Je staat op het punt om de dienst ${wizardType} wizard te verlaten om een applicatie aan te maken. Na het aanmaken van de applicatie word je teruggeleid naar dit formulier. Al je huidige wijzigingen zullen niet worden opgeslagen.`}
+        confirmLabel='Verlaten'
+        cancelLabel='Blijven'
+        confirmIcon={<VISUALS.ARROW_RIGHT />}
+        cancelIcon={<VISUALS.ARROW_LEFT />}
+      />
+
+      <ConUnsavedChangesAlertModal
+        key='cannot-find-dienst-alert-modal'
+        showModal={showCannotFindDienstAlert}
+        onClose={() => setShowCannotFindDienstAlert(false)}
+        onConfirm={() => {
+          // Navigate to aanbod beheerder flow (dienst) with applicatie parameter
+          const params = new URLSearchParams();
+          params.set('type', 'dienst');
+          if (selectedApplicatie?.value) {
+            params.set('applicatie', selectedApplicatie.value);
+          }
+          params.set('redirect', window.location.pathname);
+          navigate(`/forms/dienst?${params.toString()}`);
+        }}
+        title='Waarschuwing'
+        message='Je staat op het punt om naar de aanbod beheer flow te gaan. Al je huidige wijzigingen zullen niet worden opgeslagen.'
         confirmLabel='Verlaten'
         cancelLabel='Blijven'
         confirmIcon={<VISUALS.ARROW_RIGHT />}
