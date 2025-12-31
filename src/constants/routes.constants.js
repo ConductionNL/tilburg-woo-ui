@@ -57,6 +57,9 @@ export const PATHS = AcLockObject({
   FORMS: '/forms',
   FORMS_REGISTER: '/forms/register',
   FORMS_GEBRUIK: '/forms/gebruik',
+  FORMS_GEBRUIK_APPLICATIE: '/forms/gebruik/applicatie',
+  FORMS_GEBRUIK_KOPPELING: '/forms/gebruik/koppeling',
+  FORMS_GEBRUIK_DIENST: '/forms/gebruik/dienst',
   FORMS_PRODUCT: '/forms/product',
   FORMS_APPLICATIE: '/forms/applicatie',
   FORMS_KOPPELING: '/forms/koppeling',
@@ -182,7 +185,9 @@ export const ROUTES = {
     name: 'Password Reminder',
     label: 'Wachtwoord vergeten',
     path: PATHS.PASSWORD_REMINDER_STATIC,
-    title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | Wachtwoord vergeten`,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | Wachtwoord vergeten`,
     component: ConPasswordReminder,
   },
   MIJN_OMGEVING: {
@@ -303,7 +308,37 @@ export const ROUTES = {
     title: `${
       AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
     } | Formulier Gebruik`,
+    redirectTo: '/beheer/gebruik',
+  },
+  FORMS_GEBRUIK_APPLICATIE: {
+    id: AcUUID(),
+    name: 'Formulier Gebruik Applicatie',
+    label: 'Formulier Gebruik Applicatie',
+    path: PATHS.FORMS_GEBRUIK_APPLICATIE,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | Formulier Gebruik Applicatie`,
     component: AcFormsGebruik,
+  },
+  FORMS_GEBRUIK_KOPPELING: {
+    id: AcUUID(),
+    name: 'Formulier Gebruik Koppeling',
+    label: 'Formulier Gebruik Koppeling',
+    path: PATHS.FORMS_GEBRUIK_KOPPELING,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | Formulier Gebruik Koppeling`,
+    component: AcFormsKoppeling,
+  },
+  FORMS_GEBRUIK_DIENST: {
+    id: AcUUID(),
+    name: 'Formulier Gebruik Dienst',
+    label: 'Formulier Gebruik Dienst',
+    path: PATHS.FORMS_GEBRUIK_DIENST,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | Formulier Gebruik Dienst`,
+    component: ConFormsDienst,
   },
   FORMS_PRODUCT: {
     id: AcUUID(),
@@ -320,7 +355,9 @@ export const ROUTES = {
     name: 'Formulier Applicatie',
     label: 'Formulier Applicatie',
     path: PATHS.FORMS_APPLICATIE,
-    title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | Formulier Applicatie`,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | Formulier Applicatie`,
     component: AcFormsApplicatie,
   },
   FORMS_KOPPELING: {

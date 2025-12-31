@@ -147,7 +147,7 @@ const BeheerPageConfigFactory = {
               icon: <VISUALS.CLIPBOARD_CHECK />,
               condition: (row) => row?.['@self']?.id || row?.id,
               action: 'wizard',
-              wizardPath: '/forms/gebruik',
+              wizardPath: '/forms/gebruik/applicatie',
               // Dynamic label and params based on user role
               getLabel: (userGroups) =>
                 userGroups.includes('gebruik-beheerder')
