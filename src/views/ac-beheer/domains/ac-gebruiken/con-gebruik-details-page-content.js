@@ -175,7 +175,21 @@ const ConGebruikDetailsPageContent = ({
                 <ConActionMenu.Button
                   icon={<VISUALS.PENCIL />}
                   onClick={() => {
-                    // Prefer wizard editing when available; fallback to legacy modal
+                    // Check if koppelingen array is filled - redirect to koppeling wizard
+                    const koppelingen = data?.koppelingen;
+                    if (Array.isArray(koppelingen) && koppelingen.length > 0) {
+                      navigate(`/forms/koppeling?type=eigen-organisatie&id=${id}`);
+                      return;
+                    }
+
+                    // Check if diensten array is filled - redirect to dienst wizard
+                    const diensten = data?.diensten;
+                    if (Array.isArray(diensten) && diensten.length > 0) {
+                      navigate(`/forms/dienst?type=dienst&id=${id}`);
+                      return;
+                    }
+
+                    // Default: go to gebruik wizard
                     if (config?.schemaSlug) {
                       const wizards = Object.values(DASHBOARD_WIZARDS);
                       const wizard = wizards.find(

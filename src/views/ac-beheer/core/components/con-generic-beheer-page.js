@@ -816,6 +816,15 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
           label: 'Bewerken',
           icon: <VISUALS.PENCIL />,
           onClick: () => {
+            // Check for custom getEditUrl handler in config first
+            if (typeof config?.getEditUrl === 'function') {
+              const customUrl = config.getEditUrl(row);
+              if (customUrl) {
+                navigate(customUrl);
+                return;
+              }
+            }
+
             // Prefer wizard editing when available; fallback to legacy modal
             if (config?.schemaSlug) {
               const slug =
