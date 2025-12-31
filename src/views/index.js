@@ -48,6 +48,12 @@ const ConBeheerViews = loadable(() =>
 const ConPasswordReminder = loadable(() =>
   import('@views/ac-password-reminder/ac-password-reminder')
 );
+const ConFormsGebruikKoppeling = loadable(() =>
+  import('@views/ac-forms/ac-forms-gebruik/gebruik-koppeling/ac-forms-koppeling')
+);
+const ConFormsGebruikDienst = loadable(() =>
+  import('@views/ac-forms/ac-forms-gebruik/gebruik-dienst/con-forms-dienst')
+);
 
 export {
   AcHome,
@@ -74,4 +80,6 @@ export {
   ConViewsList,
   ConBeheerViews,
   ConPasswordReminder,
+  ConFormsGebruikKoppeling,
+  ConFormsGebruikDienst,
 };

@@ -27,6 +27,8 @@ import {
   AcFormsApplicatie,
   AcFormsKoppeling,
   ConFormsDienst,
+  ConFormsGebruikKoppeling,
+  ConFormsGebruikDienst,
   ConViewsList,
   ConBeheerViews,
   ConFormsIndex,
@@ -328,7 +330,7 @@ export const ROUTES = {
     title: `${
       AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
     } | Formulier Gebruik Koppeling`,
-    component: AcFormsKoppeling,
+    component: ConFormsGebruikKoppeling,
   },
   FORMS_GEBRUIK_DIENST: {
     id: AcUUID(),
@@ -338,7 +340,7 @@ export const ROUTES = {
     title: `${
       AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
     } | Formulier Gebruik Dienst`,
-    component: ConFormsDienst,
+    component: ConFormsGebruikDienst,
   },
   FORMS_PRODUCT: {
     id: AcUUID(),
