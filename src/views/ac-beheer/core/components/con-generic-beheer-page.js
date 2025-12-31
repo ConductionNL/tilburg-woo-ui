@@ -755,6 +755,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
       : headers.filter((header) => defaultHeaderIds.includes(header.id));
 
     const nextKey = next.map((h) => h.id).join(',');
+
     const currentKey = tableHeaders.map((h) => h.id).join(',');
 
     if (nextKey === currentKey) return;
@@ -1064,7 +1065,19 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
 
   // Build table headers with status icon if configured
   const finalTableHeaders = useMemo(() => {
-    const headers = [...tableHeaders];
+    const virtualColumns = Array.isArray(config.virtualColumns)
+      ? config.virtualColumns
+      : [];
+    const virtualColumnsHeaders = virtualColumns.map((column) => ({
+      id: column.id,
+      label: column.label,
+      key: column.key,
+      customContent: column.customContent,
+      customHeader: column.customHeader,
+      sortComparator: column.sortComparator,
+    }));
+
+    const headers = [...virtualColumnsHeaders, ...tableHeaders];
 
     if (config.statusIcon) {
       headers.unshift({

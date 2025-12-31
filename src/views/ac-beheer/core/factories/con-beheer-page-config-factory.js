@@ -250,8 +250,71 @@ const BeheerPageConfigFactory = {
           title: 'Gebruik',
           routeType: 'gebruik',
           disableRelatedCreateActions: true,
-          defaultHeaders: ['voorzieningId', 'diensten', 'status', 'contact'],
+          defaultHeaders: ['type', 'voorzieningId', 'diensten', 'status', 'contact'],
           // extend: ['contactpersoon'],
+          // Virtual columns are columns that don't exist in the schema but are added to the table
+          virtualColumns: [
+            {
+              id: 'type',
+              order: 0,
+              label: 'Type',
+              key: 'type',
+              customContent: (row) => {
+                // Determine icon based on filled fields:
+                // - koppelingen filled → Koppeling icon
+                // - diensten filled → Dienst icon
+                // - neither filled → Applicatie icon
+                const hasKoppelingen =
+                  Array.isArray(row?.koppelingen) && row.koppelingen.length > 0;
+                const hasDiensten =
+                  Array.isArray(row?.diensten) && row.diensten.length > 0;
+
+                let IconComponent;
+                let title;
+
+                if (hasKoppelingen) {
+                  IconComponent = VISUALS.LINK;
+                  title = 'Koppeling';
+                } else if (hasDiensten) {
+                  IconComponent = VISUALS.HAND_SHAKE;
+                  title = 'Dienst';
+                } else {
+                  IconComponent = VISUALS.CUBE;
+                  title = 'Applicatie';
+                }
+
+                return (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                    title={title}
+                  >
+                    <IconComponent
+                      style={{
+                        width: '24px',
+                        height: '24px',
+                        color: 'var(--tilburg-interaction-active-color)',
+                      }}
+                    />
+                  </div>
+                );
+              },
+              sortComparator: byNested((row) => {
+                // Sort by type name: Applicatie, Dienst, Koppeling (alphabetical)
+                const hasKoppelingen =
+                  Array.isArray(row?.koppelingen) && row.koppelingen.length > 0;
+                const hasDiensten =
+                  Array.isArray(row?.diensten) && row.diensten.length > 0;
+
+                if (hasKoppelingen) return 'Koppeling';
+                if (hasDiensten) return 'Dienst';
+                return 'Applicatie';
+              }),
+            },
+          ],
           customHeaders: {
             contactpersoon: {
               id: 'contactpersoon',
