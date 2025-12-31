@@ -176,16 +176,22 @@ const ConGebruikDetailsPageContent = ({
                   icon={<VISUALS.PENCIL />}
                   onClick={() => {
                     // Check if koppelingen array is filled - redirect to koppeling wizard
-                    const koppelingen = data?.koppelingen;
+                    // Also check @self.relations.koppelingen as fallback
+                    const koppelingen =
+                      data?.koppelingen || data?.['@self']?.relations?.koppelingen;
                     if (Array.isArray(koppelingen) && koppelingen.length > 0) {
-                      navigate(`/forms/koppeling?type=eigen-organisatie&id=${id}`);
+                      navigate(
+                        `/forms/gebruik/koppeling?type=eigen-organisatie&id=${id}`
+                      );
                       return;
                     }
 
                     // Check if diensten array is filled - redirect to dienst wizard
-                    const diensten = data?.diensten;
+                    // Also check @self.relations.diensten as fallback
+                    const diensten =
+                      data?.diensten || data?.['@self']?.relations?.diensten;
                     if (Array.isArray(diensten) && diensten.length > 0) {
-                      navigate(`/forms/dienst?type=dienst&id=${id}`);
+                      navigate(`/forms/gebruik/dienst?type=dienst&id=${id}`);
                       return;
                     }
 

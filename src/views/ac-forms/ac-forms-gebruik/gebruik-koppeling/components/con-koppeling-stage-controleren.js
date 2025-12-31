@@ -72,14 +72,9 @@ const ConKoppelingStageControleren = ({
     sessionStorage.setItem('koppeling-controleren-info-alert-closed', 'true');
   };
 
-  // Fetch selected koppeling data for gebruik beheerder flow
+  // Fetch selected koppeling data for gebruik beheerder flow (also in edit mode)
   useEffect(() => {
-    if (
-      !selectedKoppelingId ||
-      koppelingsType !== 'aanbieden-koppeling' ||
-      isEditMode
-    )
-      return;
+    if (!selectedKoppelingId || koppelingsType !== 'aanbieden-koppeling') return;
 
     // First try to find in searchResults
     const foundInResults = (searchResults || []).find(
@@ -117,7 +112,7 @@ const ConKoppelingStageControleren = ({
     return () => {
       cancelled = true;
     };
-  }, [selectedKoppelingId, koppelingsType, isEditMode, searchResults]);
+  }, [selectedKoppelingId, koppelingsType, searchResults]);
 
   // Helper function to get the relevant start date based on status
   const getRelevantStartDate = () => {

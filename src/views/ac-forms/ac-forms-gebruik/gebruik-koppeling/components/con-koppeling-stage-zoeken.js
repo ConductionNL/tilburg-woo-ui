@@ -139,11 +139,23 @@ const ConKoppelingStageZoeken = ({
                 setOwnApp(null);
               }
             }}
-            isDisabled={loading || isEditMode}
+            isDisabled={loading}
             isLoading={ownAppLoading}
             width='full'
             schemas={schemas}
-            optionsProvider={ownAppOptions}
+            optionsProvider={(() => {
+              // Ensure the selected option is always in the options list
+              // This handles the case where the option is prefilled but not yet in ownAppOptions
+              if (ownApp?.value && ownApp?.label) {
+                const existsInOptions = ownAppOptions.some(
+                  (opt) => String(opt.value) === String(ownApp.value)
+                );
+                if (!existsInOptions) {
+                  return [ownApp, ...ownAppOptions];
+                }
+              }
+              return ownAppOptions;
+            })()}
             onSearch={(_path, _refSlug, q) => onSearchModules && onSearchModules(q)}
             customProps={{
               label: 'Applicatie',
@@ -244,7 +256,7 @@ const ConKoppelingStageZoeken = ({
                         backgroundColor: isSelected ? '#f0f7ff' : 'transparent',
                       }}
                       onClick={() => {
-                        if (!isEditMode && !loading) {
+                        if (!loading) {
                           setSelectedKoppelingId(isSelected ? null : koppelingId);
                         }
                       }}
@@ -255,11 +267,11 @@ const ConKoppelingStageZoeken = ({
                           value={koppelingId}
                           checked={isSelected}
                           onChange={(checked) => {
-                            if (!isEditMode && !loading) {
+                            if (!loading) {
                               setSelectedKoppelingId(checked ? koppelingId : null);
                             }
                           }}
-                          disabled={isEditMode || loading}
+                          disabled={loading}
                         />
                       </div>
                       <div style={{ flex: 1, marginLeft: '0.5rem' }}>

@@ -264,13 +264,16 @@ const BeheerPageConfigFactory = {
             if (!gebruikId) return null;
 
             // Check if koppelingen array is filled - redirect to koppeling wizard
-            const koppelingen = row?.koppelingen;
+            // Also check @self.relations.koppelingen as fallback
+            const koppelingen =
+              row?.koppelingen || row?.['@self']?.relations?.koppelingen;
             if (Array.isArray(koppelingen) && koppelingen.length > 0) {
               return `/forms/gebruik/koppeling?type=eigen-organisatie&id=${gebruikId}`;
             }
 
             // Check if diensten array is filled - redirect to dienst wizard
-            const diensten = row?.diensten;
+            // Also check @self.relations.diensten as fallback
+            const diensten = row?.diensten || row?.['@self']?.relations?.diensten;
             if (Array.isArray(diensten) && diensten.length > 0) {
               return `/forms/gebruik/dienst?type=dienst&id=${gebruikId}`;
             }

@@ -10,7 +10,6 @@ import { ProcessSteps } from '@gemeente-denhaag/components-react';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 import { validateWebsite } from '@views/ac-forms/validation/form-validations';
 import { useDebouncedInput } from '@src/hooks';
-import _ from 'lodash';
 import {
   Heading1,
   Paragraph,
@@ -47,12 +46,14 @@ const mapToOption = (item, index) => {
 const ConFormsDienst = ({ store }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const dienstId = searchParams.get('id') || '';
+  const gebruikId = searchParams.get('id') || ''; // For edit mode - we edit the gebruik object
   const formType = searchParams.get('type') || '';
   const applicatieFromUrl = searchParams.get('applicatie') || '';
   const dienstFromUrl = searchParams.get('dienst') || ''; // For redirect from Aanbod-beheerders flow
-  const isEditMode = !!dienstId;
-  const isGebruikBeheerdersFlow = formType === 'ontbrekend-dienst';
+  const isEditMode = !!gebruikId;
+  // In edit mode (when we have a gebruikId), we're always in gebruik beheerder flow
+  // because we're editing a gebruik object, not a dienst object
+  const isGebruikBeheerdersFlow = isEditMode || formType === 'ontbrekend-dienst';
 
   const stepper = useStepper();
   const processStepsRef = useRef(null);
@@ -90,7 +91,7 @@ const ConFormsDienst = ({ store }) => {
   const [touched, setTouched] = useState({});
 
   // Service type selection state - default to 'eigen-organisatie' since selection stage is disabled
-  const [dienstType, setDienstType] = useState('eigen-organisatie'); // 'eigen-organisatie' or 'andere-organisatie'
+  const [dienstType] = useState('eigen-organisatie'); // 'eigen-organisatie' or 'andere-organisatie'
 
   const setDienstData = (key, value) => {
     setDienst((prev) => ({ ...prev, [key]: value }));
@@ -107,7 +108,7 @@ const ConFormsDienst = ({ store }) => {
   const moduleOptionsRef = useRef([]);
 
   const [koppelingOptions, setKoppelingOptions] = useState([]);
-  const [selectedKoppelingIds, setSelectedKoppelingIds] = useState([]);
+  const [selectedKoppelingIds] = useState([]);
 
   const [saving, setSaving] = useState(false);
   const [saveResult, setSaveResult] = useState(null);
@@ -145,7 +146,25 @@ const ConFormsDienst = ({ store }) => {
     setGebruik((prev) => ({ ...prev, [key]: value }));
   };
 
-  // Prefill dienst data when editing
+  // Helper to extract id string from various API reference shapes
+  const getIdString = (ref) => {
+    if (!ref) return '';
+    if (typeof ref === 'string' || typeof ref === 'number') return String(ref);
+    return (
+      String(
+        ref.uuid ||
+          ref.id ||
+          ref.value ||
+          ref?.['@self']?.id ||
+          ref?.['@self']?.value ||
+          ref.slug ||
+          ''
+      ) || ''
+    );
+  };
+
+  // Prefill gebruik data when editing (not dienst - we edit the gebruik object)
+  // The flow is the same as creating, but with all fields pre-filled
   useEffect(() => {
     let cancelled = false;
     const run = async () => {
@@ -153,120 +172,125 @@ const ConFormsDienst = ({ store }) => {
       setPrefillLoading(true);
       setPrefillError(null);
       try {
-        // Skip to appropriate step in edit mode
-        if (isGebruikBeheerdersFlow) {
-          stepper.setCurrentStepByLabel('dienst-zoeken');
-        } else {
-          stepper.resetCurrentStep();
-        }
-        await store.object.fetchObject('voorzieningen', 'dienst', String(dienstId), {
-          '_extend[]': ['@self.schema'],
-          _published: 'false',
-        });
+        // Start at the first step (same as create flow)
+        stepper.resetCurrentStep();
+
+        // Fetch the gebruik object (not the dienst)
+        await store.object.fetchObject(
+          'voorzieningen',
+          'gebruik',
+          String(gebruikId),
+          {
+            '_extend[]': ['@self.schema'],
+            _published: 'false',
+          }
+        );
         if (cancelled) return;
 
         const fetched = store.object.getObject(
-          'voorzieningen_dienst',
-          String(dienstId)
+          'voorzieningen_gebruik',
+          String(gebruikId)
         );
         if (!fetched) return;
 
-        // Map fetched dienst to local state shape
-        const mapId = (item) =>
-          item && typeof item === 'object'
-            ? String(item.id || item.value || item.uuid || item.slug || '')
-            : String(item || '');
-
-        const prefilledModuleIds = Array.isArray(fetched.modules)
-          ? fetched.modules.map((m) => mapId(m)).filter(Boolean)
-          : [];
-        const prefilledKoppelingIds = Array.isArray(fetched.koppelingen)
-          ? fetched.koppelingen.map((k) => mapId(k)).filter(Boolean)
+        // Extract diensten IDs from the gebruik object
+        // First try fetched.diensten, if null/empty fallback to @self.relations.diensten
+        const dienstenSource =
+          Array.isArray(fetched.diensten) && fetched.diensten.length > 0
+            ? fetched.diensten
+            : fetched['@self']?.relations?.diensten;
+        const dienstenIds = Array.isArray(dienstenSource)
+          ? dienstenSource.map((d) => getIdString(d)).filter(Boolean)
           : [];
 
-        // Fetch missing modules from edit data and add to options
-        if (prefilledModuleIds.length > 0) {
-          const currentModuleOptions = moduleOptionsRef.current;
-          const existingModuleIds = new Set(
-            currentModuleOptions.map((opt) => opt.value)
-          );
-          const missingModuleIds = prefilledModuleIds.filter(
-            (id) => !existingModuleIds.has(id)
-          );
+        // Extract module (applicatie) ID from the gebruik object
+        // First try fetched.module, if null fallback to @self.relations.module
+        const moduleId =
+          getIdString(fetched.module) ||
+          getIdString(fetched['@self']?.relations?.module);
 
-          if (missingModuleIds.length > 0 && !cancelled) {
-            const moduleFetches = missingModuleIds.map((id) =>
-              store.object
-                .fetchObject('voorzieningen', 'module', String(id), {
-                  '_extend[]': ['@self.schema'],
-                  _published: 'false',
-                  _source: 'index',
-                })
-                .then(() => {
-                  if (cancelled) return null;
-                  return store.object.getObject('voorzieningen_module', String(id));
-                })
-                .catch(() => null)
+        // Extract deelnemers from the gebruik object
+        const deelnemersIds = Array.isArray(fetched.deelnemers)
+          ? fetched.deelnemers.map((d) => getIdString(d)).filter(Boolean)
+          : [];
+
+        // Update gebruik state with the fetched data (same fields as create flow)
+        setGebruik({
+          diensten: dienstenIds,
+          status: fetched.status || '',
+          interneAantekening: fetched.interneAantekening || '',
+          deelnemers: deelnemersIds,
+        });
+
+        // If we have a module (applicatie), fetch and set it for the first step
+        if (moduleId) {
+          try {
+            await store.object.fetchObject('voorzieningen', 'module', moduleId, {
+              '_extend[]': ['@self.schema'],
+              _published: 'false',
+              _source: 'index',
+            });
+            const moduleData = store.object.getObject(
+              'voorzieningen_module',
+              moduleId
             );
+            if (moduleData) {
+              const applicatieOption = mapToOption(moduleData, 0);
+              // Add to options if not already present
+              setOwnAppOptions((prev) => {
+                const exists = prev.some((o) => o.value === applicatieOption.value);
+                return exists ? prev : [...prev, applicatieOption];
+              });
+              // Set the selected applicatie (pre-fills the first step)
+              setSelectedApplicatie(applicatieOption);
 
-            const moduleResults = await Promise.allSettled(moduleFetches);
-            if (!cancelled) {
-              const newOptions = moduleResults
-                .map((result, index) => {
-                  if (result.status === 'fulfilled' && result.value) {
-                    return mapToOption(result.value, index);
-                  }
-                  return null;
-                })
-                .filter(Boolean);
-
-              if (newOptions.length > 0) {
-                setModuleOptions((prev) => {
-                  const existingValues = new Set(prev.map((opt) => opt.value));
-                  const uniqueNewOptions = newOptions.filter(
-                    (opt) => !existingValues.has(opt.value)
-                  );
-                  return [...prev, ...uniqueNewOptions];
-                });
+              // Trigger loading diensten for the selected applicatie
+              // This will populate the search results in the first step
+              if (!cancelled) {
+                fetchDienstenForApplicatie(moduleId);
               }
             }
+          } catch (moduleError) {
+            console.error('Error fetching module for edit mode:', moduleError);
           }
         }
 
-        // Convert type to array if it comes as a string (for backward compatibility)
-        const prefilledType = Array.isArray(fetched.type)
-          ? fetched.type
-          : fetched.type
-          ? [fetched.type]
-          : [];
+        // Fetch diensten to populate the search results for display
+        if (dienstenIds.length > 0) {
+          try {
+            const dienstFetches = dienstenIds.map((id) =>
+              store.object
+                .fetchObject('voorzieningen', 'dienst', id, {
+                  '_extend[]': ['@self.schema'],
+                  _published: 'false',
+                })
+                .then(() => store.object.getObject('voorzieningen_dienst', id))
+                .catch(() => null)
+            );
+            const dienstResults = await Promise.allSettled(dienstFetches);
+            const fetchedDiensten = dienstResults
+              .map((result) => (result.status === 'fulfilled' ? result.value : null))
+              .filter(Boolean);
 
-        // Update main dienst object
-        setDienst((prev) => ({
-          ...prev,
-          naam: fetched.naam || '',
-          beschrijvingKort: fetched.beschrijvingKort || '',
-          beschrijvingLang: fetched.beschrijvingLang || '',
-          website: fetched.website || '',
-          logo: fetched.logo || '',
-          contactpersoon: fetched.contactpersoon || null,
-          aanbieder: fetched.aanbieder || '',
-          type: prefilledType,
-          producten: [], // Producten prefill commented out
-          modules: prefilledModuleIds,
-          koppelingen: prefilledKoppelingIds,
-        }));
-
-        // Initialize dienstType from API or default to 'eigen-organisatie'
-        setDienstType(
-          (typeof fetched.dienstType === 'string' && fetched.dienstType) ||
-            'eigen-organisatie'
-        );
-
-        setSelectedModuleIds(prefilledModuleIds);
-        setSelectedKoppelingIds(prefilledKoppelingIds);
+            if (fetchedDiensten.length > 0 && !cancelled) {
+              // Add the fetched diensten to the results so they show up as selected
+              setDienstenResults((prev) => {
+                const existingIds = new Set(
+                  prev.map((d) => d?.id || d?.['@self']?.id)
+                );
+                const newDiensten = fetchedDiensten.filter(
+                  (d) => !existingIds.has(d?.id || d?.['@self']?.id)
+                );
+                return [...prev, ...newDiensten];
+              });
+            }
+          } catch (dienstenError) {
+            console.error('Error fetching diensten for edit mode:', dienstenError);
+          }
+        }
       } catch (e) {
         setPrefillError(
-          'Het laden van de dienst is mislukt. Probeer het opnieuw of start een nieuwe dienst.'
+          'Het laden van de gebruiksregistratie is mislukt. Probeer het opnieuw of start een nieuwe registratie.'
         );
       } finally {
         if (!cancelled) setPrefillLoading(false);
@@ -277,7 +301,7 @@ const ConFormsDienst = ({ store }) => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEditMode, dienstId, prefillRetry, store]);
+  }, [isEditMode, gebruikId, prefillRetry, store]);
 
   // Clickable previous steps
   useEffect(() => {
@@ -629,7 +653,28 @@ const ConFormsDienst = ({ store }) => {
           'voorzieningen_dienst_dienst_zoeken_results'
         );
         const list = collection?.results || collection || [];
-        setDienstenResults(list);
+
+        // Merge with any pre-selected diensten (from edit mode) that might not be in search results
+        setDienstenResults((prev) => {
+          // Get the selected diensten IDs if any
+          const selectedIds = gebruik.diensten || [];
+          if (selectedIds.length === 0) return list;
+
+          // Find selected diensten that are not in the new list
+          const listIds = new Set(
+            list.map((d) => String(d?.id || d?.['@self']?.id || ''))
+          );
+          const missingDiensten = prev.filter((d) => {
+            const dienstId = String(d?.id || d?.['@self']?.id || '');
+            return selectedIds.includes(dienstId) && !listIds.has(dienstId);
+          });
+
+          if (missingDiensten.length > 0) {
+            return [...missingDiensten, ...list];
+          }
+
+          return list;
+        });
 
         // Collect module IDs from diensten for resolution
         const moduleIds = new Set();
@@ -1406,12 +1451,25 @@ const ConFormsDienst = ({ store }) => {
           module: selectedApplicatie.value,
         };
 
-        await store.object.createObject('voorzieningen', 'gebruik', payload);
+        if (isEditMode) {
+          // Update existing gebruik object
+          await store.object.updateObject(
+            'voorzieningen',
+            'gebruik',
+            String(gebruikId),
+            payload
+          );
+        } else {
+          // Create new gebruik object
+          await store.object.createObject('voorzieningen', 'gebruik', payload);
+        }
         setSaveResult('success');
         return;
       }
 
       // Handle Aanbod-beheerders flow (save dienst object)
+      // Note: In this file (gebruik-dienst), we only create new diensten, never edit them
+      // Editing diensten is done in the separate aanbod-beheerder dienst form
       let finalAanbieder = dienst.aanbieder;
 
       const payload = {
@@ -1424,16 +1482,7 @@ const ConFormsDienst = ({ store }) => {
         dienstType: dienstType,
       };
 
-      if (isEditMode) {
-        await store.object.updateObject(
-          'voorzieningen',
-          'dienst',
-          String(dienstId),
-          payload
-        );
-      } else {
-        await store.object.createObject('voorzieningen', 'dienst', payload);
-      }
+      await store.object.createObject('voorzieningen', 'dienst', payload);
       setSaveResult('success');
     } catch (error) {
       console.error('Error saving dienst:', error);
@@ -1450,13 +1499,10 @@ const ConFormsDienst = ({ store }) => {
     }
   };
 
-  const {
-    icon: Icon,
-    name: wizardName,
-    schema: wizardSchema,
-  } = useMemo(() => getActiveWizard() || {}, [dienstType]);
-  const capitalizedSchema = _.capitalize(wizardSchema);
-  const editModeTitle = `${capitalizedSchema} updaten`;
+  const { icon: Icon, name: wizardName } = useMemo(
+    () => getActiveWizard() || {},
+    [dienstType]
+  );
 
   const wizardType = isEditMode
     ? 'update'
@@ -1473,13 +1519,15 @@ const ConFormsDienst = ({ store }) => {
               style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
             >
               <Icon style={{ width: '1em', height: '1em' }} />
-              {isGebruikBeheerdersFlow && !isEditMode
+              {isEditMode
+                ? 'Gebruik bewerken'
+                : isGebruikBeheerdersFlow
                 ? 'Toevoegen dienst'
-                : `Een ${isEditMode ? editModeTitle : wizardName}`}
+                : `Een ${wizardName}`}
             </Heading1>
             <Paragraph>
               {isEditMode
-                ? 'Werk uw dienstgegevens bij in onze catalogus.'
+                ? 'Werk uw gebruiksregistratie bij. U kunt de geselecteerde diensten, status en andere gegevens aanpassen.'
                 : isGebruikBeheerdersFlow
                 ? 'Zoek naar diensten die op de applicaties in uw applicatielandschap worden uitgevoerd. Zoek op de naam van de betrokken applicatie.\n\nAlle relevante diensten die relevant zijn voor uw eigen applicaties worden weergegeven.\nBestaat de dienst nog niet, dan kunt u deze toevoegen.\n\nNa het selecteren van de gewenste dienst kunt u in de volgende stappen aanvullende informatie opvoeren.'
                 : 'Voer de gegevens van de dienst in, selecteer relevante applicaties en controleer uw invoer.'}
@@ -1492,20 +1540,19 @@ const ConFormsDienst = ({ store }) => {
             <div>
               <Heading1>
                 {isEditMode
-                  ? '🎉 Dienst succesvol geüpdatet!'
-                  : '🎉 Dienst succesvol aangemeld!'}
+                  ? '🎉 Gebruik succesvol geüpdatet!'
+                  : '🎉 Gebruik succesvol aangemeld!'}
               </Heading1>
               <Alert type='ok'>
                 <Paragraph>
                   <strong>
                     {isEditMode
-                      ? 'Uw dienst is succesvol bijgewerkt!'
-                      : 'Uw dienst is succesvol geregistreerd!'}
+                      ? 'Uw gebruiksregistratie is succesvol bijgewerkt!'
+                      : 'Uw gebruiksregistratie is succesvol aangemaakt!'}
                   </strong>
                 </Paragraph>
                 <Paragraph>
-                  De dienst {dienst.naam || 'Onbekende dienst'} en de geselecteerde
-                  applicaties zijn opgeslagen in de catalogus.
+                  De geselecteerde diensten en gebruiksinformatie zijn opgeslagen.
                 </Paragraph>
               </Alert>
               <div style={{ marginTop: '2rem' }}>
@@ -1713,8 +1760,8 @@ const ConFormsDienst = ({ store }) => {
                         {saving
                           ? 'Bezig met opslaan...'
                           : isEditMode
-                          ? 'Dienst updaten'
-                          : 'Dienst registreren'}
+                          ? 'Gebruik updaten'
+                          : 'Gebruik registreren'}
                       </AcButton>
                     )}
                   </div>

@@ -44,11 +44,11 @@ import useStepper from '../../con-stepper';
 const AcFormsKoppeling = ({ store }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const koppelingId = searchParams.get('id') || ''; // For edit mode only
+  const gebruikId = searchParams.get('id') || ''; // For edit mode - we edit the gebruik object
   const koppelingIdFromUrl = searchParams.get('koppelingId') || ''; // For preselection
   const typeFromUrl = searchParams.get('type') || '';
   const applicatieFromUrl = searchParams.get('applicatie') || ''; // Read applicatie parameter from URL
-  const isEditMode = !!koppelingId;
+  const isEditMode = !!gebruikId;
 
   // Validate type from URL and use it if valid
   const validTypes = ['eigen-organisatie', 'aanbieden-koppeling'];
@@ -448,74 +448,122 @@ const AcFormsKoppeling = ({ store }) => {
     }
   };
 
-  // Prefill in edit mode
+  // Prefill gebruik data when editing (not koppeling - we edit the gebruik object)
+  // The flow is the same as creating, but with all fields pre-filled
   useEffect(() => {
     let cancelled = false;
     const run = async () => {
       if (!isEditMode) return;
-      // Jump to edit step (was step 2, now step 1 after removing type selection)
-      stepper.setCurrentStepByLabel('toevoegen');
+      // Start at the first step (same as create flow)
+      stepper.resetCurrentStep();
       setPrefillLoading(true);
       try {
-        const url = `/api/apps/openregister/api/objects/voorzieningen/koppeling/${encodeURIComponent(
-          koppelingId
-        )}?_extend[]=@self.schema&_extend[]=@self.relations&_published=false`;
-        const res = await fetch(url, { headers: { Accept: 'application/json' } });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-
-        const rels = data?.['@self']?.relations || {};
-        const moduleAIdRaw = rels?.moduleA ?? data?.moduleA;
-        const moduleBIdRaw = rels?.moduleB ?? data?.moduleB;
-        const moduleAId = String(extractRelationId(moduleAIdRaw) || '');
-        const moduleBId = String(extractRelationId(moduleBIdRaw) || '');
-
-        const richting = data?.gegevensuitwisselingRichting || '';
-        const soort = data?.type || '';
-        const beschrijving = data?.beschrijvingKort || '';
-        const status = data?.status || '';
-        const naam = data?.naam || '';
-        const standaarden = data?.standaardversies || [];
-        // Resolve labels and ensure options exist
-        const [labelA, labelB] = await Promise.all([
-          ensureModuleOptionAndGetLabel(moduleAId),
-          ensureModuleOptionAndGetLabel(moduleBId),
-        ]);
-
+        // Fetch the gebruik object (not the koppeling)
+        await store.object.fetchObject(
+          'voorzieningen',
+          'gebruik',
+          String(gebruikId),
+          {
+            '_extend[]': ['@self.schema'],
+            _published: 'false',
+          }
+        );
         if (cancelled) return;
 
-        setSelectedModuleLabels((prev) => ({
-          ...prev,
-          [moduleAId]: labelA || moduleAId,
-          [moduleBId]: labelB || moduleBId,
-        }));
+        const fetched = store.object.getObject(
+          'voorzieningen_gebruik',
+          String(gebruikId)
+        );
+        if (!fetched) return;
 
-        // Set own app to moduleA for anchor behavior
-        if (moduleAId) {
-          setOwnApp({ value: moduleAId, label: labelA || moduleAId });
+        // Extract koppelingen IDs from the gebruik object
+        // First try fetched.koppelingen, if null/empty fallback to @self.relations.koppelingen
+        const koppelingenSource =
+          Array.isArray(fetched.koppelingen) && fetched.koppelingen.length > 0
+            ? fetched.koppelingen
+            : fetched['@self']?.relations?.koppelingen;
+        const koppelingenIds = Array.isArray(koppelingenSource)
+          ? koppelingenSource.map((k) => extractRelationId(k)).filter(Boolean)
+          : [];
+
+        // Extract module (applicatie) ID from the gebruik object
+        // First try fetched.module, if null fallback to @self.relations.module
+        const moduleId =
+          extractRelationId(fetched.module) ||
+          extractRelationId(fetched['@self']?.relations?.module);
+
+        // Extract deelnemers from the gebruik object
+        const deelnemersIds = Array.isArray(fetched.deelnemers)
+          ? fetched.deelnemers.map((d) => extractRelationId(d)).filter(Boolean)
+          : [];
+
+        // Update gebruik state with the fetched data (same fields as create flow)
+        setGebruik({
+          selectedKoppelingId: koppelingenIds.length > 0 ? koppelingenIds[0] : null,
+          status: fetched.status || '',
+          startDatumInProductie: fetched.startDatumInProductie || '',
+          startDatumGepland: fetched.startDatumGepland || '',
+          startDatumUitTeFaseren: fetched.startDatumUitTeFaseren || '',
+          startDatumUitGefaseerd: fetched.startDatumUitGefaseerd || '',
+          startDatumVerwerving: fetched.startDatumVerwerving || '',
+          interneAantekening: fetched.interneAantekening || '',
+          deelnemers: deelnemersIds,
+        });
+
+        // If we have a module (applicatie), fetch and set it for the first step
+        if (moduleId) {
+          try {
+            const label = await ensureModuleOptionAndGetLabel(moduleId);
+            // Set the selected applicatie (pre-fills the first step)
+            setOwnApp({ value: moduleId, label: label || moduleId });
+          } catch (moduleError) {
+            console.error('Error fetching module for edit mode:', moduleError);
+          }
         }
 
-        // Prefill single row
-        setRows([0]);
-        setNextRowId(1);
-        setSelectedAppAByRow({ 0: moduleAId });
-        setSelectedAppBByRow({ 0: moduleBId });
-        setDirectionByRow({ 0: richting });
-        setTypeByRow({ 0: soort });
-        setBeschrijvingByRow({ 0: beschrijving });
-        setStatusByRow({ 0: status });
-        setStandaardenByRow({ 0: standaarden });
-        setNameByRow({ 0: naam });
-        setKoppelingIdByRow({ 0: String(koppelingId) });
+        // Fetch koppelingen to populate the search results for display
+        if (koppelingenIds.length > 0) {
+          try {
+            const koppelingFetches = koppelingenIds.map((id) =>
+              fetch(
+                `/api/apps/openregister/api/objects/voorzieningen/koppeling/${encodeURIComponent(
+                  id
+                )}?_extend[]=@self.schema&_extend[]=@self.relations&_published=false`,
+                { headers: { Accept: 'application/json' } }
+              )
+                .then((res) => (res.ok ? res.json() : null))
+                .catch(() => null)
+            );
+            const koppelingResults = await Promise.allSettled(koppelingFetches);
+            const fetchedKoppelingen = koppelingResults
+              .map((result) => (result.status === 'fulfilled' ? result.value : null))
+              .filter(Boolean);
 
-        // Prefill gebruiksinformatie fields
-        // Note: In edit mode, we're editing a koppeling, not a gebruik
-        // So we don't prefill gebruik fields here
+            if (fetchedKoppelingen.length > 0 && !cancelled) {
+              // Add the fetched koppelingen to the results so they show up as selected
+              setSearchResults((prev) => {
+                const existingIds = new Set(
+                  prev.map((k) => k?.id || k?.['@self']?.id)
+                );
+                const newKoppelingen = fetchedKoppelingen.filter(
+                  (k) => !existingIds.has(k?.id || k?.['@self']?.id)
+                );
+                return [...prev, ...newKoppelingen];
+              });
+            }
+          } catch (koppelingenError) {
+            console.error(
+              'Error fetching koppelingen for edit mode:',
+              koppelingenError
+            );
+          }
+        }
 
-        // Default koppelings type so step 0 isn't blocking
+        // Default koppelings type to aanbieden-koppeling (gebruik beheerder flow)
         setKoppelingsType('aanbieden-koppeling');
       } catch (e) {
-        if (!cancelled) console.error('Het laden van de koppeling is mislukt.');
+        if (!cancelled)
+          console.error('Het laden van de gebruiksregistratie is mislukt.');
       } finally {
         if (!cancelled) setPrefillLoading(false);
       }
@@ -524,7 +572,7 @@ const AcFormsKoppeling = ({ store }) => {
     return () => {
       cancelled = true;
     };
-  }, [isEditMode, koppelingId]);
+  }, [isEditMode, gebruikId, store]);
 
   // Helper function to map module items to option format
   const mapModuleToOption = useCallback((item, index) => {
@@ -813,7 +861,32 @@ const AcFormsKoppeling = ({ store }) => {
           return aId === moduleId || bId === moduleId;
         });
 
-        if (!cancelled) setSearchResults(filtered);
+        if (!cancelled) {
+          // Merge with any pre-selected koppelingen (from edit mode) that might not be in search results
+          setSearchResults((prev) => {
+            // Get the selected koppeling ID if any
+            const selectedId = gebruik.selectedKoppelingId;
+            if (!selectedId) return filtered;
+
+            // Check if the selected koppeling is already in the filtered results
+            const selectedInResults = filtered.some(
+              (k) => String(k?.id || k?.['@self']?.id || '') === String(selectedId)
+            );
+
+            if (selectedInResults) return filtered;
+
+            // Find the selected koppeling in the previous results and preserve it
+            const selectedKoppeling = prev.find(
+              (k) => String(k?.id || k?.['@self']?.id || '') === String(selectedId)
+            );
+
+            if (selectedKoppeling) {
+              return [selectedKoppeling, ...filtered];
+            }
+
+            return filtered;
+          });
+        }
       } catch {
         if (!cancelled) setSearchResults([]);
       } finally {
@@ -824,7 +897,7 @@ const AcFormsKoppeling = ({ store }) => {
     return () => {
       cancelled = true;
     };
-  }, [ownApp?.value]);
+  }, [ownApp?.value, gebruik.selectedKoppelingId]);
 
   useEffect(() => {
     loadBuitengemeentelijkeVoorzieningen();
@@ -1362,28 +1435,19 @@ const AcFormsKoppeling = ({ store }) => {
           break;
       }
 
-      const endpoint = '/api/apps/openregister/api/objects/voorzieningen/gebruik';
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        try {
-          const data = await response.json();
-          setSaveResult('error');
-          setSaveErrors([data?.message || `Request failed (${response.status})`]);
-        } catch {
-          setSaveResult('error');
-          setSaveErrors([`Request failed (${response.status})`]);
-        }
+      if (isEditMode) {
+        // Update existing gebruik object
+        await store.object.updateObject(
+          'voorzieningen',
+          'gebruik',
+          String(gebruikId),
+          payload
+        );
       } else {
-        setSaveResult('success');
+        // Create new gebruik object
+        await store.object.createObject('voorzieningen', 'gebruik', payload);
       }
+      setSaveResult('success');
     } catch (e) {
       setSaveResult('error');
       setSaveErrors([e?.message || 'Onbekende fout bij opslaan']);
