@@ -53,6 +53,12 @@ const ConKoppelingStageControleren = ({
   deelnemers,
   deelnemerOptions,
   searchResults,
+  // New koppeling creation props
+  koppelingKeuze,
+  nieuweKoppeling,
+  leverancierKeuze,
+  leverancierOrganisatie,
+  buitengemeentelijkeOptions,
 }) => {
   const navigate = useNavigate();
 
@@ -296,8 +302,61 @@ const ConKoppelingStageControleren = ({
     return fromPool?.label || '';
   };
 
+  // Helper to get module B label for new koppeling
+  const getModuleBLabelForNewKoppeling = () => {
+    if (!nieuweKoppeling?.moduleB) return '-';
+
+    // First check if we have a stored label
+    if (nieuweKoppeling?.moduleBLabel) {
+      return nieuweKoppeling.moduleBLabel;
+    }
+
+    const moduleBValue = nieuweKoppeling.moduleB;
+
+    // Check in modulesOptions
+    const moduleOption = (modulesOptions || []).find(
+      (opt) => String(opt.value) === String(moduleBValue)
+    );
+    if (moduleOption) return moduleOption.label;
+
+    // Check in buitengemeentelijkeOptions
+    const bgvOption = (buitengemeentelijkeOptions || []).find(
+      (opt) => String(opt.value) === String(moduleBValue)
+    );
+    if (bgvOption) return bgvOption.label;
+
+    return String(moduleBValue);
+  };
+
+  // Helper to get leverancier label for new koppeling
+  const getLeverancierLabelForNewKoppeling = () => {
+    if (leverancierKeuze === 'nieuw') {
+      return leverancierOrganisatie?.naam || '';
+    }
+
+    // First check if we have a stored label (from selection)
+    if (nieuweKoppeling?.leverancierLabel) {
+      return nieuweKoppeling.leverancierLabel;
+    }
+
+    // Fallback to leverancier ID (will be resolved by ConUuidResolver)
+    return nieuweKoppeling?.leverancier || '';
+  };
+
+  // Check if we have any leverancier info to display
+  const hasLeverancierInfo = () => {
+    if (leverancierKeuze === 'nieuw') {
+      return !!leverancierOrganisatie?.naam;
+    }
+    return !!nieuweKoppeling?.leverancier || !!nieuweKoppeling?.leverancierLabel;
+  };
+
   // Render Gebruik-beheerders flow (aanbieden-koppeling)
   if (koppelingsType === 'aanbieden-koppeling') {
+    // Check if we're creating a new koppeling
+    const isNewKoppeling = koppelingKeuze === 'nieuw';
+
+    // For existing koppeling
     const koppeling = selectedKoppelingData;
     const rels = koppeling?.['@self']?.relations || {};
     const moduleAIdRaw = rels?.moduleA ?? koppeling?.moduleA;
@@ -315,6 +374,18 @@ const ConKoppelingStageControleren = ({
     const koppelingType = koppeling?.type || '';
     const koppelingBeschrijving = koppeling?.beschrijvingKort || '';
     const koppelingStandaarden = koppeling?.standaardversies || [];
+
+    // For new koppeling
+    const newKoppelingNaam = nieuweKoppeling?.naam || '';
+    const newKoppelingRichting = nieuweKoppeling?.richting || 'bi-directioneel';
+    const newKoppelingDirArrow = getArrowForDirection(newKoppelingRichting);
+    const newModuleALabel = ownApp?.label || '-';
+    const newModuleBLabel = getModuleBLabelForNewKoppeling();
+    const isNewLeverancier = leverancierKeuze === 'nieuw';
+    const leverancierDisplayName = getLeverancierLabelForNewKoppeling();
+    const leverancierWebsite = isNewLeverancier
+      ? leverancierOrganisatie?.website || ''
+      : '';
 
     return (
       <div
@@ -367,7 +438,139 @@ const ConKoppelingStageControleren = ({
           </Alert>
         )}
 
-        {koppelingLoading ? (
+        {isNewKoppeling ? (
+          /* New Koppeling Review */
+          <div className='ac-register-review'>
+            {/* Leverancier Section - always shown above koppeling */}
+            {hasLeverancierInfo() && (
+              <div className='ac-register-review__section'>
+                <div className='ac-register-review__header'>
+                  <h3 className='utrecht-heading-4'>
+                    {isNewLeverancier ? 'Nieuwe leverancier' : 'Leverancier'}
+                  </h3>
+                </div>
+                <Separator className='ac-register-review-header__separator' />
+
+                <div className='ac-register-review__field'>
+                  <strong>Naam:</strong>
+                  <div>
+                    {isNewLeverancier ? (
+                      leverancierDisplayName || '-'
+                    ) : leverancierDisplayName ? (
+                      <ConUuidResolver>{leverancierDisplayName}</ConUuidResolver>
+                    ) : (
+                      '-'
+                    )}
+                  </div>
+                </div>
+
+                {leverancierWebsite && (
+                  <div className='ac-register-review__field'>
+                    <strong>Website:</strong>
+                    <div>{leverancierWebsite}</div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* New Koppeling Section */}
+            <div className='ac-register-review__section'>
+              <div className='ac-register-review__header'>
+                <h3 className='utrecht-heading-4'>Nieuwe koppeling</h3>
+              </div>
+              <Separator className='ac-register-review-header__separator' />
+
+              <div className='ac-register-review__field'>
+                <strong>Aanbieder:</strong>
+                <div>
+                  <div>
+                    {isNewLeverancier ? (
+                      leverancierDisplayName || '-'
+                    ) : leverancierDisplayName ? (
+                      <ConUuidResolver>{leverancierDisplayName}</ConUuidResolver>
+                    ) : (
+                      '-'
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {newKoppelingNaam && (
+                <div className='ac-register-review__field'>
+                  <strong>Naam:</strong>
+                  <div>{newKoppelingNaam}</div>
+                </div>
+              )}
+
+              <div className='ac-register-review__field'>
+                <strong>Koppeling:</strong>
+                <div>
+                  {newModuleALabel} {newKoppelingDirArrow} {newModuleBLabel}
+                </div>
+              </div>
+            </div>
+
+            {/* Gebruiksinformatie Section for new koppeling */}
+            <div className='ac-register-review__section'>
+              <div className='ac-register-review__header'>
+                <h3 className='utrecht-heading-4'>Gebruiksinformatie</h3>
+              </div>
+              <Separator className='ac-register-review-header__separator' />
+
+              {statusGebruiksinformatie && (
+                <div className='ac-register-review__field'>
+                  <strong>Status:</strong>
+                  <div>{statusGebruiksinformatie}</div>
+                </div>
+              )}
+
+              {/* Only show the relevant start date based on selected status */}
+              {relevantStartDate && relevantStartDate.value && (
+                <div className='ac-register-review__field'>
+                  <strong>{relevantStartDate.label}:</strong>
+                  <div>{relevantStartDate.value}</div>
+                </div>
+              )}
+
+              {interneAantekening && (
+                <div className='ac-register-review__field'>
+                  <strong>Interne notitie:</strong>
+                  <div>{interneAantekening}</div>
+                </div>
+              )}
+            </div>
+
+            {/* Deelnemers Section for new koppeling */}
+            {Array.isArray(deelnemers) && deelnemers.length > 0 && (
+              <div className='ac-register-review__section'>
+                <div className='ac-register-review__header'>
+                  <h3 className='utrecht-heading-4'>Deelnemers</h3>
+                </div>
+                <Separator className='ac-register-review-header__separator' />
+
+                <div className='ac-register-review__field'>
+                  <strong>Deelnemers:</strong>
+                  <div>
+                    <UnorderedList>
+                      {deelnemers.map((deelnemerId) => {
+                        const label = getDeelnemerLabel(deelnemerId);
+                        return (
+                          <UnorderedListItem key={deelnemerId}>
+                            {label ? (
+                              label
+                            ) : (
+                              <ConUuidResolver>{deelnemerId}</ConUuidResolver>
+                            )}
+                          </UnorderedListItem>
+                        );
+                      })}
+                    </UnorderedList>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : koppelingLoading ? (
           <Paragraph>Bezig met laden...</Paragraph>
         ) : !selectedKoppelingData ? (
           <Alert type='error'>

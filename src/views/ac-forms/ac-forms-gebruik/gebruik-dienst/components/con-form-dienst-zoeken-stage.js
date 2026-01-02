@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { AcFlex } from '@src/atoms';
-import { AcCheckbox } from '@src/molecules';
+import { AcCheckbox, AcButton } from '@src/molecules';
 import { ConSchemaEnhancedField, ConUuidResolver } from '@src/components';
 import { Paragraph, Alert } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@src/constants';
+import { validateWebsite } from '@views/ac-forms/validation/form-validations';
 
 const ConFormDienstZoekenStage = ({
   loading,
@@ -19,6 +20,21 @@ const ConFormDienstZoekenStage = ({
   schemas = {},
   selectedDienstIds = [],
   setSelectedDienstIds,
+  // New dienst creation props
+  dienstKeuze = 'bestaand',
+  setDienstKeuze,
+  nieuweDienst = {},
+  setNieuweDienstData,
+  // Leverancier props
+  leverancierKeuze = 'bestaand',
+  setLeverancierKeuze,
+  leverancierOrganisatie = {},
+  setLeverancierOrganisatieData,
+  leverancierOptions = [],
+  leverancierLoading = false,
+  searchLeveranciers,
+  // Type options
+  dienstTypeOptions = [],
 }) => {
   const idToLabel = Object.fromEntries(
     (resolvedModulesFromResults || []).map((o) => [String(o.value), String(o.label)])
@@ -33,9 +49,12 @@ const ConFormDienstZoekenStage = ({
     return '';
   };
 
-  // Manage visibility state of info alert
+  // Manage visibility state of info alerts
   const [showInfoAlert, setShowInfoAlert] = useState(() => {
     return !sessionStorage.getItem('dienst-zoeken-info-alert-closed');
+  });
+  const [showInfoAlertNieuw, setShowInfoAlertNieuw] = useState(() => {
+    return !sessionStorage.getItem('dienst-zoeken-nieuw-info-alert-closed');
   });
 
   const handleCloseAlert = () => {
@@ -43,6 +62,293 @@ const ConFormDienstZoekenStage = ({
     sessionStorage.setItem('dienst-zoeken-info-alert-closed', 'true');
   };
 
+  const handleCloseAlertNieuw = () => {
+    setShowInfoAlertNieuw(false);
+    sessionStorage.setItem('dienst-zoeken-nieuw-info-alert-closed', 'true');
+  };
+
+  // New dienst creation form
+  if (dienstKeuze === 'nieuw' && setDienstKeuze) {
+    return (
+      <AcFlex
+        column
+        spacing='sm'
+        className='ac-register-form-section'
+        role='group'
+        aria-labelledby='dienst-nieuw-title'
+      >
+        <h2 id='dienst-nieuw-title' className='sr-only'>
+          Nieuwe dienst aanmaken
+        </h2>
+
+        <Paragraph className='con-form-wizard-paragraph'>
+          Vul de gegevens in voor de nieuwe dienst. Na het opvoeren van de dienst is
+          deze ook zichtbaar voor andere gemeenten, zodat zij deze ook kunnen opnemen
+          in hun applicatielandschap.
+        </Paragraph>
+
+        {/* Closeable info alert */}
+        {showInfoAlertNieuw && (
+          <Alert severity='info' className='ac-forms-product-info-alert'>
+            <button
+              onClick={handleCloseAlertNieuw}
+              className='ac-forms-product-info-alert__close-button'
+              title='Sluiten'
+              aria-label='Alert sluiten'
+            >
+              <VISUALS.CLOSE />
+            </button>
+            <div className='ac-forms-product-info-alert__content'>
+              <VISUALS.INFO className='ac-forms-product-info-alert__icon' />
+              <div>
+                <strong>Dienst zoeken</strong>
+                <br />
+                <span className='ac-forms-product-info-alert__text'>
+                  Weet je zeker dat de dienst niet al bestaat? Ga naar de zoekpagina
+                  en zoek op de naam van de dienst of applicatie.
+                </span>
+              </div>
+            </div>
+          </Alert>
+        )}
+
+        <div className='con-dynamic-form-container'>
+          <div className='con-form-fields-container'>
+            {/* Section 1: Applicatie */}
+            <h3 className='utrecht-heading-3' style={{ width: '100%' }}>
+              Applicatie selecteren
+            </h3>
+
+            <ConSchemaEnhancedField
+              schemaType='dienst'
+              schemaProperty='modules'
+              value={ownApp?.value || null}
+              onChange={(value) => {
+                let actualValue = value;
+                if (Array.isArray(value)) {
+                  actualValue = value.length > 0 ? value[0] : null;
+                }
+                if (!actualValue) {
+                  setOwnApp(null);
+                } else if (
+                  typeof actualValue === 'object' &&
+                  actualValue.value !== undefined
+                ) {
+                  setOwnApp(actualValue);
+                } else if (typeof actualValue === 'string') {
+                  const option = ownAppOptions.find(
+                    (opt) => String(opt.value) === String(actualValue)
+                  );
+                  setOwnApp(option || null);
+                } else {
+                  setOwnApp(null);
+                }
+              }}
+              isDisabled={loading}
+              isLoading={ownAppLoading}
+              width='half'
+              schemas={schemas}
+              optionsProvider={(() => {
+                if (ownApp?.value && ownApp?.label) {
+                  const existsInOptions = ownAppOptions.some(
+                    (opt) => String(opt.value) === String(ownApp.value)
+                  );
+                  if (!existsInOptions) {
+                    return [ownApp, ...ownAppOptions];
+                  }
+                }
+                return ownAppOptions;
+              })()}
+              onSearch={(_path, _refSlug, q) =>
+                onSearchModules && onSearchModules(q)
+              }
+              customProps={{
+                label: 'Applicatie',
+                placeholder: 'Selecteer een applicatie',
+                isClearable: false,
+                required: true,
+                isMulti: false,
+                closeMenuOnSelect: true,
+              }}
+            />
+
+            {/* Section 2: Leverancier */}
+            <h3
+              className='utrecht-heading-3'
+              style={{ marginTop: '2rem', width: '100%' }}
+            >
+              {leverancierKeuze === 'bestaand'
+                ? 'Leverancier selecteren'
+                : 'Leverancier aanmaken'}
+            </h3>
+
+            {/* Existing leverancier dropdown */}
+            {leverancierKeuze === 'bestaand' && (
+              <>
+                <ConSchemaEnhancedField
+                  schemaType='dienst'
+                  schemaProperty='aanbieder'
+                  value={nieuweDienst.leverancier || null}
+                  onChange={(value) => {
+                    const nextId =
+                      (value && value.data && (value.data.id || value.data.value)) ||
+                      (value && value.value) ||
+                      value;
+                    setNieuweDienstData('leverancier', nextId);
+                  }}
+                  isDisabled={loading}
+                  isLoading={leverancierLoading}
+                  width='half'
+                  schemas={schemas}
+                  optionsProvider={leverancierOptions}
+                  onSearch={(_path, _refSlug, q) =>
+                    searchLeveranciers && searchLeveranciers(q || '')
+                  }
+                  customProps={{
+                    label: 'Leverancier',
+                    isClearable: true,
+                    placeholder: 'Zoek en selecteer leverancier',
+                  }}
+                />
+
+                {!isEditMode && setLeverancierKeuze && (
+                  <div style={{ alignSelf: 'end' }}>
+                    <AcButton
+                      style='button'
+                      buttonType='secondary'
+                      icon={<VISUALS.BUILDING />}
+                      onClick={() => setLeverancierKeuze('nieuw')}
+                    >
+                      Ik kan de gewenste leverancier niet vinden
+                    </AcButton>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* New leverancier form fields */}
+            {leverancierKeuze === 'nieuw' && setLeverancierOrganisatieData && (
+              <>
+                <ConSchemaEnhancedField
+                  schemaType='organisatie'
+                  schemaProperty='naam'
+                  value={leverancierOrganisatie.naam || ''}
+                  onChange={(value) => setLeverancierOrganisatieData('naam', value)}
+                  isDisabled={loading}
+                  width='half'
+                  schemas={schemas}
+                  customProps={{
+                    required: true,
+                  }}
+                />
+
+                <ConSchemaEnhancedField
+                  schemaType='organisatie'
+                  schemaProperty='website'
+                  value={leverancierOrganisatie.website || ''}
+                  onChange={(value) =>
+                    setLeverancierOrganisatieData('website', value)
+                  }
+                  isDisabled={loading}
+                  width='half'
+                  customProps={{
+                    inputType: 'text',
+                    required: true,
+                    validation: {
+                      custom: (value) => {
+                        if (!value || value.trim() === '') return true;
+                        const website = value.trim();
+                        return validateWebsite(website);
+                      },
+                      customErrorMessage:
+                        'Website heeft een ongeldig formaat (bijv. conduction.nl, www.conduction.nl of https://conduction.nl)',
+                    },
+                  }}
+                  schemas={schemas}
+                />
+
+                {setLeverancierKeuze && (
+                  <AcButton
+                    style='button'
+                    buttonType='secondary'
+                    icon={<VISUALS.ARROW_LEFT />}
+                    onClick={() => setLeverancierKeuze('bestaand')}
+                  >
+                    Bestaande leverancier selecteren
+                  </AcButton>
+                )}
+              </>
+            )}
+
+            {/* Section 3: Dienst fields */}
+            <h3
+              className='utrecht-heading-3'
+              style={{ marginTop: '2rem', width: '100%' }}
+            >
+              Dienst
+            </h3>
+
+            <ConSchemaEnhancedField
+              schemaType='dienst'
+              schemaProperty='naam'
+              value={nieuweDienst.naam || ''}
+              onChange={(value) => setNieuweDienstData('naam', value)}
+              isDisabled={loading}
+              width='half'
+              schemas={schemas}
+              customProps={{
+                required: true,
+                placeholder: 'Naam van de dienst',
+              }}
+            />
+
+            <ConSchemaEnhancedField
+              schemaType='dienst'
+              schemaProperty='type'
+              value={nieuweDienst.type || ''}
+              onChange={(value) => {
+                const nextValue = (value && value.value) || value;
+                setNieuweDienstData('type', nextValue);
+              }}
+              isDisabled={loading}
+              width='half'
+              schemas={schemas}
+              optionsProvider={dienstTypeOptions}
+              customProps={{
+                required: true,
+                placeholder: 'Selecteer een type',
+              }}
+            />
+
+            <ConSchemaEnhancedField
+              schemaType='dienst'
+              schemaProperty='website'
+              value={nieuweDienst.website || ''}
+              onChange={(value) => setNieuweDienstData('website', value)}
+              isDisabled={loading}
+              width='half'
+              schemas={schemas}
+              customProps={{
+                inputType: 'text',
+                validation: {
+                  custom: (value) => {
+                    if (!value || String(value).trim() === '') return true;
+                    const website = String(value).trim();
+                    return validateWebsite(website);
+                  },
+                  customErrorMessage:
+                    'Website heeft een ongeldig formaat (bijv. conduction.nl, www.conduction.nl of https://conduction.nl)',
+                },
+                description: 'Een URL naar de dienst of organisatie',
+              }}
+            />
+          </div>
+        </div>
+      </AcFlex>
+    );
+  }
+
+  // Existing dienst selection flow
   return (
     <AcFlex
       column
@@ -306,12 +612,12 @@ const ConFormDienstZoekenStage = ({
                               <span
                                 style={{
                                   display: 'inline-block',
-                                  padding: '0.25rem 0.5rem',
-                                  backgroundColor: '#e8f4f8',
-                                  color: '#0063e5',
-                                  borderRadius: '4px',
+                                  padding: '0.125rem 0.5rem',
+                                  backgroundColor: '#e5e7eb',
+                                  borderRadius: '9999px',
                                   fontSize: '0.75rem',
                                   fontWeight: '500',
+                                  color: '#374151',
                                 }}
                               >
                                 {type}
@@ -321,24 +627,18 @@ const ConFormDienstZoekenStage = ({
                               <span
                                 style={{
                                   display: 'inline-block',
-                                  padding: '0.25rem 0.5rem',
+                                  padding: '0.125rem 0.5rem',
                                   backgroundColor:
-                                    status.toLowerCase() === 'concept'
-                                      ? '#fff3cd'
-                                      : status.toLowerCase() === 'gepubliceerd' ||
-                                        status.toLowerCase() === 'published'
-                                      ? '#d1e7dd'
-                                      : '#e8e8e8',
-                                  color:
-                                    status.toLowerCase() === 'concept'
-                                      ? '#856404'
-                                      : status.toLowerCase() === 'gepubliceerd' ||
-                                        status.toLowerCase() === 'published'
-                                      ? '#0f5132'
-                                      : '#333',
-                                  borderRadius: '4px',
+                                    status.toLowerCase() === 'actief'
+                                      ? '#dcfce7'
+                                      : '#fef3c7',
+                                  borderRadius: '9999px',
                                   fontSize: '0.75rem',
                                   fontWeight: '500',
+                                  color:
+                                    status.toLowerCase() === 'actief'
+                                      ? '#166534'
+                                      : '#92400e',
                                 }}
                               >
                                 {status}
@@ -351,8 +651,8 @@ const ConFormDienstZoekenStage = ({
                         {beschrijvingKort && (
                           <div
                             style={{
-                              color: '#666',
-                              fontSize: '0.9rem',
+                              color: '#4b5563',
+                              fontSize: '0.875rem',
                               marginBottom: '0.5rem',
                               lineHeight: '1.4',
                             }}
@@ -365,32 +665,31 @@ const ConFormDienstZoekenStage = ({
                         <div
                           style={{
                             display: 'flex',
-                            flexDirection: 'column',
-                            gap: '0.375rem',
-                            fontSize: '0.875rem',
-                            color: '#666',
+                            flexWrap: 'wrap',
+                            gap: '1rem',
+                            fontSize: '0.8rem',
+                            color: '#6b7280',
                           }}
                         >
+                          {aanbieder && (
+                            <div>
+                              <strong>Aanbieder:</strong>{' '}
+                              <ConUuidResolver>{aanbieder}</ConUuidResolver>
+                            </div>
+                          )}
                           {moduleLabels.length > 0 && (
                             <div>
-                              <span style={{ fontWeight: '500' }}>Applicaties:</span>{' '}
+                              <strong>Applicatie(s):</strong>{' '}
                               {moduleLabels.map((label, idx) => (
                                 <span key={idx}>
+                                  {idx > 0 && ', '}
                                   <ConUuidResolver>{label}</ConUuidResolver>
-                                  {idx < moduleLabels.length - 1 ? ', ' : ''}
                                 </span>
                               ))}
                             </div>
                           )}
-                          {aanbieder && (
-                            <div>
-                              <span style={{ fontWeight: '500' }}>Aanbieder:</span>{' '}
-                              <ConUuidResolver>{aanbieder}</ConUuidResolver>
-                            </div>
-                          )}
                           {website && (
                             <div>
-                              <span style={{ fontWeight: '500' }}>Website:</span>{' '}
                               <a
                                 href={
                                   website.startsWith('http')

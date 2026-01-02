@@ -116,7 +116,6 @@ const ConFormsDienst = ({ store }) => {
 
   // Unsaved changes alert
   const [showUnsavedChangesAlert, setShowUnsavedChangesAlert] = useState(false);
-  const [showCannotFindDienstAlert, setShowCannotFindDienstAlert] = useState(false);
 
   // Gebruik-beheerders flow state (ontbrekend-dienst)
   const [selectedApplicatie, setSelectedApplicatie] = useState(null); // Single applicatie option object
@@ -125,6 +124,33 @@ const ConFormsDienst = ({ store }) => {
   const [resolvedModulesFromDiensten, setResolvedModulesFromDiensten] = useState([]);
   const [ownAppOptions, setOwnAppOptions] = useState([]); // Options for applicatie select in Dienst zoeken
   const [ownAppLoading, setOwnAppLoading] = useState(false);
+
+  // New dienst creation state
+  const [dienstKeuze, setDienstKeuze] = useState('bestaand'); // 'bestaand' or 'nieuw'
+  const [nieuweDienst, setNieuweDienst] = useState({
+    naam: '',
+    website: '',
+    type: '',
+    leverancier: null,
+  });
+  const setNieuweDienstData = (key, value) => {
+    setNieuweDienst((prev) => ({ ...prev, [key]: value }));
+  };
+
+  // Leverancier creation state (for new dienst flow)
+  const [leverancierKeuze, setLeverancierKeuze] = useState('bestaand');
+  const [leverancierOrganisatie, setLeverancierOrganisatie] = useState({
+    naam: '',
+    website: '',
+  });
+  const setLeverancierOrganisatieData = (key, value) => {
+    setLeverancierOrganisatie((prev) => ({ ...prev, [key]: value }));
+  };
+  const [leverancierOptions, setLeverancierOptions] = useState([]);
+  const [leverancierLoading, setLeverancierLoading] = useState(false);
+
+  // Dienst type options
+  const [dienstTypeOptions, setDienstTypeOptions] = useState([]);
 
   // State for full organization data (to check type for conditional Deelnemers step)
   const [fullActiveOrganisation, setFullActiveOrganisation] = useState(null);
@@ -741,6 +767,85 @@ const ConFormsDienst = ({ store }) => {
     [store, ownAppOptions]
   );
 
+  // Server-side search for leveranciers (organisaties)
+  const searchOrganisaties = useCallback(
+    async (query, setOptions, setLoading) => {
+      try {
+        setLoading(true);
+        const q = String(query || '').trim();
+
+        const params = {
+          _limit: '50',
+          _page: '1',
+          _source: 'index',
+          '_extend[]': '@self.schema',
+          _published: 'false',
+        };
+
+        if (q) {
+          params['_search'] = q;
+        }
+
+        await store.object.fetchCollection(
+          'voorzieningen',
+          'organisatie',
+          params,
+          null,
+          'leverancier_search'
+        );
+        const collection = store.object.getCollection(
+          'voorzieningen_organisatie_leverancier_search'
+        );
+        const list = collection?.results || collection || [];
+        const options = list.map((org, i) => ({
+          value: org?.['@self']?.id || org?.id || String(i),
+          label: org?.naam || org?.name || `Organisatie ${i + 1}`,
+          data: org,
+        }));
+        setOptions(options);
+      } catch (e) {
+        setOptions([]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [store]
+  );
+
+  // Debounced search for leveranciers
+  const debouncedSearchLeveranciers = useDebouncedInput(
+    (query) =>
+      searchOrganisaties(query, setLeverancierOptions, setLeverancierLoading),
+    500,
+    { disableInstantValidation: true }
+  );
+
+  // Fetch dienst type options from schema
+  useEffect(() => {
+    const fetchDienstTypeOptions = async () => {
+      try {
+        const dienstSchema = schemas?.dienst;
+        if (dienstSchema?.properties?.type?.enum) {
+          const options = dienstSchema.properties.type.enum.map((value) => ({
+            value,
+            label: value,
+          }));
+          setDienstTypeOptions(options);
+        }
+      } catch (e) {
+        console.error('Failed to fetch dienst type options:', e);
+      }
+    };
+    fetchDienstTypeOptions();
+  }, [schemas]);
+
+  // Load initial leveranciers when switching to 'nieuw' dienst flow
+  useEffect(() => {
+    if (dienstKeuze === 'nieuw') {
+      searchOrganisaties('', setLeverancierOptions, setLeverancierLoading);
+    }
+  }, [dienstKeuze, searchOrganisaties]);
+
   // Fetch full organisation data to check type (for conditional Deelnemers step)
   useEffect(() => {
     const fetchFullOrganisationData = async () => {
@@ -1077,6 +1182,21 @@ const ConFormsDienst = ({ store }) => {
               schemas={schemas}
               selectedDienstIds={gebruik.diensten}
               setSelectedDienstIds={(ids) => setGebruikData('diensten', ids)}
+              // New dienst creation props
+              dienstKeuze={dienstKeuze}
+              setDienstKeuze={setDienstKeuze}
+              nieuweDienst={nieuweDienst}
+              setNieuweDienstData={setNieuweDienstData}
+              // Leverancier props
+              leverancierKeuze={leverancierKeuze}
+              setLeverancierKeuze={setLeverancierKeuze}
+              leverancierOrganisatie={leverancierOrganisatie}
+              setLeverancierOrganisatieData={setLeverancierOrganisatieData}
+              leverancierOptions={leverancierOptions}
+              leverancierLoading={leverancierLoading}
+              searchLeveranciers={debouncedSearchLeveranciers}
+              // Type options
+              dienstTypeOptions={dienstTypeOptions}
             />
           );
         case 'gebruiksinformatie':
@@ -1305,7 +1425,31 @@ const ConFormsDienst = ({ store }) => {
 
     switch (stepLabel) {
       case 'dienst-zoeken':
-        // Require applicatie and at least one dienst selection
+        // If creating a new dienst, check required fields
+        if (dienstKeuze === 'nieuw') {
+          // Require applicatie
+          if (!selectedApplicatie?.value) return true;
+          // Require leverancier (either selected or new with naam+website)
+          if (leverancierKeuze === 'bestaand') {
+            if (!nieuweDienst.leverancier) return true;
+          } else {
+            // Creating new leverancier - require naam and website
+            if (!leverancierOrganisatie.naam?.trim()) return true;
+            if (!leverancierOrganisatie.website?.trim()) return true;
+            if (!validateWebsite(leverancierOrganisatie.website.trim())) return true;
+          }
+          // Require dienst naam and type
+          if (!nieuweDienst.naam?.trim()) return true;
+          if (!nieuweDienst.type) return true;
+          // Website is optional but validate if provided
+          if (
+            nieuweDienst.website?.trim() &&
+            !validateWebsite(nieuweDienst.website.trim())
+          )
+            return true;
+          return false;
+        }
+        // Existing dienst flow: require applicatie and at least one dienst selection
         return (
           !selectedApplicatie?.value ||
           !gebruik.diensten ||
@@ -1355,8 +1499,39 @@ const ConFormsDienst = ({ store }) => {
         if (!selectedApplicatie?.value) {
           messages.push('Selecteer een applicatie');
         }
-        if (!gebruik.diensten || gebruik.diensten.length === 0) {
-          messages.push('Selecteer minimaal één dienst');
+        if (dienstKeuze === 'nieuw') {
+          // New dienst validation messages
+          if (leverancierKeuze === 'bestaand') {
+            if (!nieuweDienst.leverancier) {
+              messages.push('Selecteer een leverancier');
+            }
+          } else {
+            if (!leverancierOrganisatie.naam?.trim()) {
+              messages.push('Leverancier naam is verplicht');
+            }
+            if (!leverancierOrganisatie.website?.trim()) {
+              messages.push('Leverancier website is verplicht');
+            } else if (!validateWebsite(leverancierOrganisatie.website.trim())) {
+              messages.push('Leverancier website heeft een ongeldig formaat');
+            }
+          }
+          if (!nieuweDienst.naam?.trim()) {
+            messages.push('Dienst naam is verplicht');
+          }
+          if (!nieuweDienst.type) {
+            messages.push('Dienst type is verplicht');
+          }
+          if (
+            nieuweDienst.website?.trim() &&
+            !validateWebsite(nieuweDienst.website.trim())
+          ) {
+            messages.push('Dienst website heeft een ongeldig formaat');
+          }
+        } else {
+          // Existing dienst validation
+          if (!gebruik.diensten || gebruik.diensten.length === 0) {
+            messages.push('Selecteer minimaal één dienst');
+          }
         }
         return messages.join('\n');
       }
@@ -1692,18 +1867,39 @@ const ConFormsDienst = ({ store }) => {
                       )}
                     </AcFlex>
 
-                    {/* "Ik kan de gewenste dienst niet vinden" button for Gebruik-beheerders flow */}
+                    {/* "Ik kan de gewenste dienst niet vinden" / "Bestaande dienst selecteren" button for Gebruik-beheerders flow */}
                     {stepper.getStepFromLabel('dienst-zoeken') ===
-                      stepper.getCurrentStep() && (
-                      <AcButton
-                        style='button'
-                        buttonType='secondary'
-                        icon={<VISUALS.CUBE />}
-                        onClick={() => setShowCannotFindDienstAlert(true)}
-                      >
-                        Ik kan de gewenste dienst niet vinden
-                      </AcButton>
-                    )}
+                      stepper.getCurrentStep() &&
+                      !isEditMode && (
+                        <AcButton
+                          style='button'
+                          buttonType='secondary'
+                          icon={
+                            dienstKeuze === 'bestaand' ? (
+                              <VISUALS.CUBE />
+                            ) : (
+                              <VISUALS.ARROW_LEFT />
+                            )
+                          }
+                          onClick={() =>
+                            setDienstKeuze(
+                              dienstKeuze === 'bestaand' ? 'nieuw' : 'bestaand'
+                            )
+                          }
+                          disabled={
+                            dienstKeuze === 'bestaand' && !selectedApplicatie?.value
+                          }
+                          title={
+                            dienstKeuze === 'bestaand' && !selectedApplicatie?.value
+                              ? 'Selecteer eerst een applicatie'
+                              : ''
+                          }
+                        >
+                          {dienstKeuze === 'bestaand'
+                            ? 'Ik kan de gewenste dienst niet vinden'
+                            : 'Bestaande dienst selecteren'}
+                        </AcButton>
+                      )}
 
                     {/* "Ik kan de gewenste applicatie niet vinden" button for Aanbod-beheerders flow */}
                     {stepper.getStepFromLabel('applicaties') ===
@@ -1785,28 +1981,6 @@ const ConFormsDienst = ({ store }) => {
         }}
         title='Waarschuwing'
         message={`Je staat op het punt om de dienst ${wizardType} wizard te verlaten om een applicatie aan te maken. Na het aanmaken van de applicatie word je teruggeleid naar dit formulier. Al je huidige wijzigingen zullen niet worden opgeslagen.`}
-        confirmLabel='Verlaten'
-        cancelLabel='Blijven'
-        confirmIcon={<VISUALS.ARROW_RIGHT />}
-        cancelIcon={<VISUALS.ARROW_LEFT />}
-      />
-
-      <ConUnsavedChangesAlertModal
-        key='cannot-find-dienst-alert-modal'
-        showModal={showCannotFindDienstAlert}
-        onClose={() => setShowCannotFindDienstAlert(false)}
-        onConfirm={() => {
-          // Navigate to aanbod beheerder flow (dienst) with applicatie parameter
-          const params = new URLSearchParams();
-          params.set('type', 'dienst');
-          if (selectedApplicatie?.value) {
-            params.set('applicatie', selectedApplicatie.value);
-          }
-          params.set('redirect', window.location.pathname);
-          navigate(`/forms/dienst?${params.toString()}`);
-        }}
-        title='Waarschuwing'
-        message='Je staat op het punt om naar de aanbod beheer flow te gaan. Al je huidige wijzigingen zullen niet worden opgeslagen.'
         confirmLabel='Verlaten'
         cancelLabel='Blijven'
         confirmIcon={<VISUALS.ARROW_RIGHT />}
