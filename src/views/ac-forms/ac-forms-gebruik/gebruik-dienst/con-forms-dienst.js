@@ -1238,6 +1238,12 @@ const ConFormsDienst = ({ store }) => {
               userStore={store.user}
               dienstType={dienstType}
               formType={formType}
+              // New dienst creation props
+              dienstKeuze={dienstKeuze}
+              nieuweDienst={nieuweDienst}
+              leverancierKeuze={leverancierKeuze}
+              leverancierOrganisatie={leverancierOrganisatie}
+              ownApp={selectedApplicatie}
             />
           );
         default:
@@ -1589,13 +1595,7 @@ const ConFormsDienst = ({ store }) => {
     try {
       // Handle Gebruik-beheerders flow (save gebruik object)
       if (isGebruikBeheerdersFlow) {
-        // Validation
-        if (!gebruik.diensten || gebruik.diensten.length === 0) {
-          setSaveErrorMessage('Selecteer minimaal één dienst.');
-          setSaveResult('error');
-          return;
-        }
-
+        // Common validation
         if (!gebruik.status) {
           setSaveErrorMessage('Status is verplicht.');
           setSaveResult('error');
@@ -1616,9 +1616,85 @@ const ConFormsDienst = ({ store }) => {
           return;
         }
 
-        // Build payload with gebruik field names directly
+        let finalDienstIds = gebruik.diensten || [];
+
+        // If creating a new dienst, we need to create it first
+        if (dienstKeuze === 'nieuw') {
+          let finalLeverancierId = nieuweDienst.leverancier;
+
+          // Step 1: Create new leverancier if needed
+          if (leverancierKeuze === 'nieuw') {
+            try {
+              const newLeverancierData = {
+                naam: leverancierOrganisatie.naam,
+                website: leverancierOrganisatie.website,
+              };
+
+              const createdLeverancier = await store.object.createObject(
+                'voorzieningen',
+                'organisatie',
+                newLeverancierData
+              );
+
+              finalLeverancierId =
+                createdLeverancier?.id || createdLeverancier?.['@self']?.id;
+
+              if (!finalLeverancierId) {
+                throw new Error('Leverancier aangemaakt maar geen ID ontvangen');
+              }
+            } catch (leverancierError) {
+              console.error('Failed to create leverancier:', leverancierError);
+              setSaveErrorMessage(
+                'Er is een fout opgetreden bij het aanmaken van de leverancier. Probeer het opnieuw.'
+              );
+              setSaveResult('error');
+              return;
+            }
+          }
+
+          // Step 2: Create the new dienst
+          try {
+            const newDienstData = {
+              naam: nieuweDienst.naam,
+              website: nieuweDienst.website || '',
+              type: nieuweDienst.type,
+              aanbieder: finalLeverancierId,
+            };
+
+            const createdDienst = await store.object.createObject(
+              'voorzieningen',
+              'dienst',
+              newDienstData
+            );
+
+            const newDienstId = createdDienst?.id || createdDienst?.['@self']?.id;
+
+            if (!newDienstId) {
+              throw new Error('Dienst aangemaakt maar geen ID ontvangen');
+            }
+
+            // Use the newly created dienst ID
+            finalDienstIds = [newDienstId];
+          } catch (dienstError) {
+            console.error('Failed to create dienst:', dienstError);
+            setSaveErrorMessage(
+              'Er is een fout opgetreden bij het aanmaken van de dienst. Probeer het opnieuw.'
+            );
+            setSaveResult('error');
+            return;
+          }
+        } else {
+          // Using existing dienst(en) - validate at least one is selected
+          if (!finalDienstIds || finalDienstIds.length === 0) {
+            setSaveErrorMessage('Selecteer minimaal één dienst.');
+            setSaveResult('error');
+            return;
+          }
+        }
+
+        // Step 3: Build payload for gebruik object
         const payload = {
-          diensten: gebruik.diensten,
+          diensten: finalDienstIds,
           status: gebruik.status,
           interneAantekening: gebruik.interneAantekening || '',
           deelnemers: Array.isArray(gebruik.deelnemers) ? gebruik.deelnemers : [],

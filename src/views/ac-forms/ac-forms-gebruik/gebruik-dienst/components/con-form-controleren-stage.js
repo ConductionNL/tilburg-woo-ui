@@ -34,6 +34,11 @@ const ConFormControlerenStage = memo(
     gebruik,
     dienstenResults = [],
     deelnemerOptions = [],
+    // New dienst creation props
+    dienstKeuze,
+    nieuweDienst,
+    leverancierKeuze,
+    leverancierOrganisatie,
   }) => {
     // Helper to get module information with additional details
     const getModulesWithDetails = () => {
@@ -106,6 +111,27 @@ const ConFormControlerenStage = memo(
     const selectedDienstenWithDetails = getSelectedDienstenWithDetails();
     const selectedDeelnemersWithLabels = getSelectedDeelnemersWithLabels();
 
+    // Helper to get leverancier label for new dienst (following koppeling pattern)
+    const getLeverancierLabelForNewDienst = () => {
+      if (leverancierKeuze === 'nieuw') {
+        return leverancierOrganisatie?.naam || '';
+      }
+
+      // First check if we have a stored label (from selection)
+      if (nieuweDienst?.leverancierLabel) {
+        return nieuweDienst.leverancierLabel;
+      }
+
+      // Fallback to leverancier ID (will be resolved by ConUuidResolver)
+      return nieuweDienst?.leverancier || '';
+    };
+
+    const isNewLeverancier = leverancierKeuze === 'nieuw';
+    const leverancierDisplayName = getLeverancierLabelForNewDienst();
+    const leverancierWebsite = isNewLeverancier
+      ? leverancierOrganisatie?.website || ''
+      : '';
+
     // Manage visibility state of info alert
     const [showInfoAlert, setShowInfoAlert] = useState(() => {
       return !sessionStorage.getItem('interne-notitie-info-alert-closed');
@@ -157,87 +183,179 @@ const ConFormControlerenStage = memo(
           )}
           <br />
 
-          {/* Diensten section */}
-          <div className='con-form-wizard-review-heading-container'>
-            <h3 className='con-form-wizard-review-heading-header'>Diensten</h3>
-            <div className='ac-register-review'>
-              <div className='ac-register-review__section'>
-                {selectedDienstenWithDetails.length > 0 ? (
-                  <UnorderedList>
-                    {selectedDienstenWithDetails.map((dienst, i) => (
-                      <UnorderedListItem key={`dienst-${dienst.id}-${i}`}>
-                        <div>
-                          <strong>
-                            {dienst.naam ? (
-                              <ConUuidResolver>{dienst.naam}</ConUuidResolver>
-                            ) : (
-                              'Onbekende dienst'
+          {/* Nieuwe Leverancier Section - only shown when creating a NEW leverancier */}
+          {dienstKeuze === 'nieuw' &&
+            isNewLeverancier &&
+            leverancierOrganisatie?.naam && (
+              <div className='con-form-wizard-review-heading-container'>
+                <h3 className='con-form-wizard-review-heading-header'>
+                  Nieuwe leverancier
+                </h3>
+                <div className='ac-register-review'>
+                  <div className='ac-register-review__section'>
+                    <div className='ac-register-review__field'>
+                      <strong>Naam:</strong>{' '}
+                      <span>{leverancierDisplayName || '-'}</span>
+                    </div>
+                    {leverancierWebsite && (
+                      <div className='ac-register-review__field'>
+                        <strong>Website:</strong>{' '}
+                        <AcLink
+                          href={
+                            leverancierWebsite.startsWith('http')
+                              ? leverancierWebsite
+                              : `https://${leverancierWebsite}`
+                          }
+                          target='_blank'
+                          rel='noopener noreferrer'
+                        >
+                          {leverancierWebsite}
+                        </AcLink>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+          {/* New Dienst section (when creating new dienst) */}
+          {dienstKeuze === 'nieuw' && (
+            <div className='con-form-wizard-review-heading-container'>
+              <h3 className='con-form-wizard-review-heading-header'>
+                Nieuwe dienst
+              </h3>
+              <div className='ac-register-review'>
+                <div className='ac-register-review__section'>
+                  <div className='ac-register-review__field'>
+                    <strong>Aanbieder:</strong>
+                    <div>
+                      {isNewLeverancier ? (
+                        leverancierDisplayName || '-'
+                      ) : leverancierDisplayName ? (
+                        <ConUuidResolver>{leverancierDisplayName}</ConUuidResolver>
+                      ) : (
+                        '-'
+                      )}
+                    </div>
+                  </div>
+                  <div className='ac-register-review__field'>
+                    <strong>Naam:</strong> <span>{nieuweDienst?.naam || '-'}</span>
+                  </div>
+                  {nieuweDienst?.type && (
+                    <div className='ac-register-review__field'>
+                      <strong>Type:</strong> <span>{nieuweDienst.type}</span>
+                    </div>
+                  )}
+                  {nieuweDienst?.website && (
+                    <div className='ac-register-review__field'>
+                      <strong>Website:</strong>{' '}
+                      <AcLink
+                        href={
+                          nieuweDienst.website.startsWith('http')
+                            ? nieuweDienst.website
+                            : `https://${nieuweDienst.website}`
+                        }
+                        target='_blank'
+                        rel='noopener noreferrer'
+                      >
+                        {nieuweDienst.website}
+                      </AcLink>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Diensten section (when selecting existing diensten) */}
+          {dienstKeuze !== 'nieuw' && (
+            <div className='con-form-wizard-review-heading-container'>
+              <h3 className='con-form-wizard-review-heading-header'>Diensten</h3>
+              <div className='ac-register-review'>
+                <div className='ac-register-review__section'>
+                  {selectedDienstenWithDetails.length > 0 ? (
+                    <UnorderedList>
+                      {selectedDienstenWithDetails.map((dienstItem, i) => (
+                        <UnorderedListItem key={`dienst-${dienstItem.id}-${i}`}>
+                          <div>
+                            <strong>
+                              {dienstItem.naam ? (
+                                <ConUuidResolver>{dienstItem.naam}</ConUuidResolver>
+                              ) : (
+                                'Onbekende dienst'
+                              )}
+                            </strong>
+                            {dienstItem.beschrijvingKort && (
+                              <div
+                                style={{
+                                  fontSize: '0.875rem',
+                                  color: '#666',
+                                  marginTop: '0.25rem',
+                                }}
+                              >
+                                {dienstItem.beschrijvingKort}
+                              </div>
                             )}
-                          </strong>
-                          {dienst.beschrijvingKort && (
                             <div
                               style={{
                                 fontSize: '0.875rem',
                                 color: '#666',
                                 marginTop: '0.25rem',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '0.25rem',
                               }}
                             >
-                              {dienst.beschrijvingKort}
+                              {dienstItem.type && (
+                                <div>
+                                  <span style={{ fontWeight: '500' }}>Type:</span>{' '}
+                                  <ConUuidResolver>
+                                    {dienstItem.type}
+                                  </ConUuidResolver>
+                                </div>
+                              )}
+                              {dienstItem.aanbieder && (
+                                <div>
+                                  <span style={{ fontWeight: '500' }}>
+                                    Aanbieder:
+                                  </span>{' '}
+                                  <ConUuidResolver>
+                                    {dienstItem.aanbieder}
+                                  </ConUuidResolver>
+                                </div>
+                              )}
+                              {dienstItem.website && (
+                                <div>
+                                  <span style={{ fontWeight: '500' }}>Website:</span>{' '}
+                                  <AcLink
+                                    href={
+                                      dienstItem.website.startsWith('http')
+                                        ? dienstItem.website
+                                        : `https://${dienstItem.website}`
+                                    }
+                                    target='_blank'
+                                    rel='noopener noreferrer'
+                                  >
+                                    {dienstItem.website}
+                                  </AcLink>
+                                </div>
+                              )}
                             </div>
-                          )}
-                          <div
-                            style={{
-                              fontSize: '0.875rem',
-                              color: '#666',
-                              marginTop: '0.25rem',
-                              display: 'flex',
-                              flexDirection: 'column',
-                              gap: '0.25rem',
-                            }}
-                          >
-                            {dienst.type && (
-                              <div>
-                                <span style={{ fontWeight: '500' }}>Type:</span>{' '}
-                                <ConUuidResolver>{dienst.type}</ConUuidResolver>
-                              </div>
-                            )}
-                            {dienst.aanbieder && (
-                              <div>
-                                <span style={{ fontWeight: '500' }}>Aanbieder:</span>{' '}
-                                <ConUuidResolver>{dienst.aanbieder}</ConUuidResolver>
-                              </div>
-                            )}
-                            {dienst.website && (
-                              <div>
-                                <span style={{ fontWeight: '500' }}>Website:</span>{' '}
-                                <AcLink
-                                  href={
-                                    dienst.website.startsWith('http')
-                                      ? dienst.website
-                                      : `https://${dienst.website}`
-                                  }
-                                  target='_blank'
-                                  rel='noopener noreferrer'
-                                >
-                                  {dienst.website}
-                                </AcLink>
-                              </div>
-                            )}
                           </div>
-                        </div>
-                      </UnorderedListItem>
-                    ))}
-                  </UnorderedList>
-                ) : (
-                  <div className='ac-register-review__field'>
-                    <Paragraph style={{ fontStyle: 'italic', color: '#666' }}>
-                      Geen diensten geselecteerd
-                    </Paragraph>
-                  </div>
-                )}
+                        </UnorderedListItem>
+                      ))}
+                    </UnorderedList>
+                  ) : (
+                    <div className='ac-register-review__field'>
+                      <Paragraph style={{ fontStyle: 'italic', color: '#666' }}>
+                        Geen diensten geselecteerd
+                      </Paragraph>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Gebruiksinformatie section */}
           <div className='con-form-wizard-review-heading-container'>

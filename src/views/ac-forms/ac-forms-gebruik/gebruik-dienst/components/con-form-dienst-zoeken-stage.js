@@ -114,8 +114,8 @@ const ConFormDienstZoekenStage = ({
 
         <div className='con-dynamic-form-container'>
           <div className='con-form-fields-container'>
-            {/* Section 1: Applicatie */}
-            <h3 className='utrecht-heading-3' style={{ width: '100%' }}>
+            {/* Section 1: Applicatie - commented out when creating new dienst */}
+            {/* <h3 className='utrecht-heading-3' style={{ width: '100%' }}>
               Applicatie selecteren
             </h3>
 
@@ -170,7 +170,7 @@ const ConFormDienstZoekenStage = ({
                 isMulti: false,
                 closeMenuOnSelect: true,
               }}
-            />
+            /> */}
 
             {/* Section 2: Leverancier */}
             <h3
