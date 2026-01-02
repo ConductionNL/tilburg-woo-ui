@@ -145,7 +145,7 @@ const AcPublicationProduct = ({
           const params = new URLSearchParams({
             applicatie: id,
           });
-          navigate(`/forms/gebruik?${params.toString()}`);
+          navigate(`/forms/gebruik/applicatie?${params.toString()}`);
         },
         disabled: false,
       });
@@ -159,7 +159,7 @@ const AcPublicationProduct = ({
             type: 'ontbrekend-organisatie',
             applicatie: id,
           });
-          navigate(`/forms/gebruik?${params.toString()}`);
+          navigate(`/forms/gebruik/applicatie?${params.toString()}`);
         },
         disabled: false,
       });
@@ -365,7 +365,11 @@ const AcPublicationProduct = ({
     fetchStandards();
     fetchStandaardversies();
     fetchReferentieComponentenWithStandards();
-  }, [fetchStandards, fetchStandaardversies, fetchReferentieComponentenWithStandards]);
+  }, [
+    fetchStandards,
+    fetchStandaardversies,
+    fetchReferentieComponentenWithStandards,
+  ]);
 
   const [uses, setUses] = useState([]);
   const [used, setUsed] = useState([]);
@@ -780,7 +784,9 @@ const AcPublicationProduct = ({
               <ConStandardsTable
                 referentieComponenten={get_single.referentieComponenten}
                 complianceStandards={get_single.compliancy}
-                compliantVersieIds={get_single.standaardVersies || get_single.standaardversies || []}
+                compliantVersieIds={
+                  get_single.standaardVersies || get_single.standaardversies || []
+                }
                 enableScrolling={true}
                 standards={standards}
                 standaardversies={standaardversies}

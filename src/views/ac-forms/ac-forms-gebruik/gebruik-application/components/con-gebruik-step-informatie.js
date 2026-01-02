@@ -184,6 +184,7 @@ const ConGebruikStepInformatie = ({
       )}
 
       <div className='ac-register-form-grid'>
+        {/* Row 1: Hosting and Interne notitie next to each other */}
         {/* Hosting field - filtered from applicatie's cloudDienstverleningsmodel */}
         <div>
           {(() => {
@@ -248,70 +249,26 @@ const ConGebruikStepInformatie = ({
           })()}
         </div>
 
-        {/* Applicatie versie field - select for existing applicatie, input for new applicatie */}
-        {applicatieKeuze === 'bestaand' && (
-          <div>
-            <ConSchemaEnhancedField
-              schemaType='gebruik'
-              schemaProperty='moduleVersie'
-              value={gebruik?.moduleVersie || null}
-              onChange={(value) => setGebruikData('moduleVersie', value)}
-              isDisabled={versionsLoading}
-              isLoading={versionsLoading}
-              schemas={schemas}
-              optionsProvider={versionOptions}
-              onSearch={() => {}}
-              width='full'
-              customProps={{
-                label: 'Applicatie versie',
-                placeholder: 'Selecteer een applicatie versie',
-              }}
-            />
-          </div>
-        )}
+        {/* Interne notitie field - next to Hosting */}
+        <div>
+          <ConSchemaEnhancedField
+            schemaType='gebruik'
+            schemaProperty='interneAantekening'
+            value={gebruik?.interneAantekening || ''}
+            onChange={(value) => setGebruikData('interneAantekening', value)}
+            isDisabled={loading}
+            width='full'
+            schemas={schemas}
+            customProps={{
+              label: 'Interne notitie',
+              placeholder: 'Voeg een interne notitie toe',
+              description:
+                'Interne notitie die alleen zichtbaar is voor uw organisatie',
+            }}
+          />
+        </div>
 
-        {/* Versie creation for new applicatie */}
-        {applicatieKeuze === 'nieuw' && nieuweApplicatie && (
-          <div>
-            <div>
-              <h3>Versie informatie</h3>
-              <Table>
-                <thead>
-                  <TableRow>
-                    <TableCell>
-                      <b>Versie</b>
-                    </TableCell>
-                    <TableCell>
-                      <b>Status</b>
-                    </TableCell>
-                  </TableRow>
-                </thead>
-                <TableBody>
-                  <TableRow>
-                    <TableCell>
-                      <Textbox
-                        value={getVersie().versie ?? schemaDefaults.versie ?? ''}
-                        onChange={(event) =>
-                          updateVersie('versie', event.target.value)
-                        }
-                        placeholder={
-                          schemaDefaults.versie ||
-                          moduleVersieSchema?.properties?.versie?.example ||
-                          '1.0.0'
-                        }
-                        disabled={loading}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <span style={{ color: '#666' }}>In gebruik</span>
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </div>
-          </div>
-        )}
-
+        {/* Row 2: Status and Startdatum next to each other */}
         {/* Status field */}
         <div>
           <ConSchemaEnhancedField
@@ -343,7 +300,7 @@ const ConGebruikStepInformatie = ({
           />
         </div>
 
-        {/* Startdatum field - shown when a status is selected */}
+        {/* Startdatum field - next to Status */}
         {gebruik?.status && getStartDatumPropertyName(gebruik.status) && (
           <div>
             <ConSchemaEnhancedField
@@ -371,24 +328,67 @@ const ConGebruikStepInformatie = ({
           </div>
         )}
 
-        {/* Interne notitie field */}
-        <div>
-          <ConSchemaEnhancedField
-            schemaType='gebruik'
-            schemaProperty='interneAantekening'
-            value={gebruik?.interneAantekening || ''}
-            onChange={(value) => setGebruikData('interneAantekening', value)}
-            isDisabled={loading}
-            width='full'
-            schemas={schemas}
-            customProps={{
-              label: 'Interne notitie',
-              placeholder: 'Voeg een interne notitie toe',
-              description:
-                'Interne notitie die alleen zichtbaar is voor uw organisatie',
-            }}
-          />
-        </div>
+        {/* Row 3: Applicatie versie field - select for existing applicatie */}
+        {applicatieKeuze === 'bestaand' && (
+          <div>
+            <ConSchemaEnhancedField
+              schemaType='gebruik'
+              schemaProperty='moduleVersie'
+              value={gebruik?.moduleVersie || null}
+              onChange={(value) => setGebruikData('moduleVersie', value)}
+              isDisabled={versionsLoading}
+              isLoading={versionsLoading}
+              schemas={schemas}
+              optionsProvider={versionOptions}
+              onSearch={() => {}}
+              width='full'
+              customProps={{
+                label: 'Applicatie versie',
+                placeholder: 'Selecteer een applicatie versie',
+              }}
+            />
+          </div>
+        )}
+
+        {/* Versie creation for new applicatie - placed below other fields */}
+        {applicatieKeuze === 'nieuw' && nieuweApplicatie && (
+          <div style={{ gridColumn: '1 / -1' }}>
+            <h3>Versie informatie</h3>
+            <Table>
+              <thead>
+                <TableRow>
+                  <TableCell>
+                    <b>Versie</b>
+                  </TableCell>
+                  <TableCell>
+                    <b>Status</b>
+                  </TableCell>
+                </TableRow>
+              </thead>
+              <TableBody>
+                <TableRow>
+                  <TableCell>
+                    <Textbox
+                      value={getVersie().versie ?? schemaDefaults.versie ?? ''}
+                      onChange={(event) =>
+                        updateVersie('versie', event.target.value)
+                      }
+                      placeholder={
+                        schemaDefaults.versie ||
+                        moduleVersieSchema?.properties?.versie?.example ||
+                        '1.0.0'
+                      }
+                      disabled={loading}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <span style={{ color: '#666' }}>In gebruik</span>
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+        )}
       </div>
     </div>
   );

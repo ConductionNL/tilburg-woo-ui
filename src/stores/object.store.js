@@ -1128,6 +1128,22 @@ export class ObjectStore {
         this.processRelatedNamesFromResponse(data);
       }
 
+      // Cache names from the fetched objects themselves
+      if (data.results && Array.isArray(data.results)) {
+        const namesToCache = {};
+        data.results.forEach((item) => {
+          const itemId = item?.id || item?.['@self']?.id;
+          const itemName =
+            item?.naam || item?.name || item?.title || item?.['@self']?.name;
+          if (itemId && itemName && typeof itemName === 'string') {
+            namesToCache[itemId] = itemName;
+          }
+        });
+        if (Object.keys(namesToCache).length > 0) {
+          this.setNamesInCache(namesToCache);
+        }
+          }
+
       const paginationInfo = {
         total: data.total || 0,
         page: data.page || 1,
@@ -1218,6 +1234,20 @@ export class ObjectStore {
       if (!response.ok) throw new Error(`Failed to fetch ${type} object`);
 
       const data = response.data;
+
+      // Process related names if present in response (for UUID resolution)
+      if (data.relatedNames) {
+        this.processRelatedNamesFromResponse(data);
+      }
+
+      // Cache the name for the fetched object itself
+      const objectId = data?.id || data?.['@self']?.id;
+      const objectName =
+        data?.naam || data?.name || data?.title || data?.['@self']?.name;
+      if (objectId && objectName && typeof objectName === 'string') {
+        this.setNamesInCacheSingle(objectId, objectName);
+      }
+
       runInAction(() => {
         // run in action to avoid Strict MobX warnings
         if (!this.objects[type]) this.objects[type] = {};
@@ -1658,6 +1688,18 @@ export class ObjectStore {
       if (!response.ok) throw new Error(`Failed to create ${type} object`);
 
       const newObject = response.data;
+
+      // Cache the name for the new object if it has one
+      const objectId = newObject?.id || newObject?.['@self']?.id;
+      const objectName =
+        newObject?.naam ||
+        newObject?.name ||
+        newObject?.title ||
+        newObject?.['@self']?.name;
+      if (objectId && objectName) {
+        this.setNamesInCacheSingle(objectId, objectName);
+      }
+
       runInAction(() => {
         // run in action to avoid Strict MobX warnings
         if (!this.objects[type]) this.objects[type] = {};
@@ -1808,6 +1850,18 @@ export class ObjectStore {
       if (!response.ok) throw new Error(`Failed to update ${type} object`);
 
       const updatedObject = response.data;
+
+      // Cache the name for the updated object if it has one
+      const objectId = updatedObject?.id || updatedObject?.['@self']?.id;
+      const objectName =
+        updatedObject?.naam ||
+        updatedObject?.name ||
+        updatedObject?.title ||
+        updatedObject?.['@self']?.name;
+      if (objectId && objectName) {
+        this.setNamesInCacheSingle(objectId, objectName);
+      }
+
       runInAction(() => {
         // run in action to avoid Strict MobX warnings
         if (!this.objects[type]) this.objects[type] = {};

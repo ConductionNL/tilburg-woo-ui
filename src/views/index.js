@@ -24,7 +24,7 @@ const AcLogin = loadable(() => import('@views/ac-login/ac-login'));
 const ConDirectory = loadable(() => import('@views/con-directory/con-directory'));
 const AcObjects = loadable(() => import('@views/ac-beheer/ac-objects'));
 const AcFormsGebruik = loadable(() =>
-  import('@views/ac-forms/ac-forms-gebruik/ac-forms-gebruik')
+  import('@views/ac-forms/ac-forms-gebruik/gebruik-application/ac-forms-gebruik')
 );
 const AcFormsProduct = loadable(() =>
   import('@views/ac-forms/ac-forms-product/ac-forms-product')
@@ -47,6 +47,12 @@ const ConBeheerViews = loadable(() =>
 );
 const ConPasswordReminder = loadable(() =>
   import('@views/ac-password-reminder/ac-password-reminder')
+);
+const ConFormsGebruikKoppeling = loadable(() =>
+  import('@views/ac-forms/ac-forms-gebruik/gebruik-koppeling/ac-forms-koppeling')
+);
+const ConFormsGebruikDienst = loadable(() =>
+  import('@views/ac-forms/ac-forms-gebruik/gebruik-dienst/con-forms-dienst')
 );
 
 export {
@@ -74,4 +80,6 @@ export {
   ConViewsList,
   ConBeheerViews,
   ConPasswordReminder,
+  ConFormsGebruikKoppeling,
+  ConFormsGebruikDienst,
 };

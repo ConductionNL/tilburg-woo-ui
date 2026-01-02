@@ -147,7 +147,7 @@ const BeheerPageConfigFactory = {
               icon: <VISUALS.CLIPBOARD_CHECK />,
               condition: (row) => row?.['@self']?.id || row?.id,
               action: 'wizard',
-              wizardPath: '/forms/gebruik',
+              wizardPath: '/forms/gebruik/applicatie',
               // Dynamic label and params based on user role
               getLabel: (userGroups) =>
                 userGroups.includes('gebruik-beheerder')
@@ -250,8 +250,101 @@ const BeheerPageConfigFactory = {
           title: 'Gebruik',
           routeType: 'gebruik',
           disableRelatedCreateActions: true,
-          defaultHeaders: ['voorzieningId', 'diensten', 'status', 'contact'],
+          defaultHeaders: ['type', 'voorzieningId', 'diensten', 'status', 'contact'],
+          /**
+           * Custom edit URL handler for gebruik
+           * If koppelingen array is filled, redirect to koppeling wizard
+           * If diensten array is filled, redirect to dienst wizard
+           * Otherwise, use default gebruik wizard behavior
+           * @param {Object} row - The row data containing the gebruik to edit
+           * @returns {string|null} The URL to navigate to for editing, or null to use default behavior
+           */
+          getEditUrl: (row) => {
+            const gebruikId = row?.['@self']?.id || row?.id;
+            if (!gebruikId) return null;
+
+            // Check if koppelingen array is filled - redirect to koppeling wizard
+            // Also check @self.relations.koppelingen as fallback
+            const koppelingen =
+              row?.koppelingen || row?.['@self']?.relations?.koppelingen;
+            if (Array.isArray(koppelingen) && koppelingen.length > 0) {
+              return `/forms/gebruik/koppeling?type=eigen-organisatie&id=${gebruikId}`;
+            }
+
+            // Check if diensten array is filled - redirect to dienst wizard
+            // Also check @self.relations.diensten as fallback
+            const diensten = row?.diensten || row?.['@self']?.relations?.diensten;
+            if (Array.isArray(diensten) && diensten.length > 0) {
+              return `/forms/gebruik/dienst?type=dienst&id=${gebruikId}`;
+            }
+
+            // Return null to use default wizard behavior
+            return null;
+          },
           // extend: ['contactpersoon'],
+          // Virtual columns are columns that don't exist in the schema but are added to the table
+          virtualColumns: [
+            {
+              id: 'type',
+              order: 0,
+              label: 'Type',
+              key: 'type',
+              customContent: (row) => {
+                // Determine icon based on filled fields:
+                // - koppelingen filled → Koppeling icon
+                // - diensten filled → Dienst icon
+                // - neither filled → Applicatie icon
+                const hasKoppelingen =
+                  Array.isArray(row?.koppelingen) && row.koppelingen.length > 0;
+                const hasDiensten =
+                  Array.isArray(row?.diensten) && row.diensten.length > 0;
+
+                let IconComponent;
+                let title;
+
+                if (hasKoppelingen) {
+                  IconComponent = VISUALS.LINK;
+                  title = 'Koppeling';
+                } else if (hasDiensten) {
+                  IconComponent = VISUALS.HAND_SHAKE;
+                  title = 'Dienst';
+                } else {
+                  IconComponent = VISUALS.CUBE;
+                  title = 'Applicatie';
+                }
+
+                return (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                    title={title}
+                  >
+                    <IconComponent
+                      style={{
+                        width: '24px',
+                        height: '24px',
+                        color: 'var(--tilburg-interaction-active-color)',
+                      }}
+                    />
+                  </div>
+                );
+              },
+              sortComparator: byNested((row) => {
+                // Sort by type name: Applicatie, Dienst, Koppeling (alphabetical)
+                const hasKoppelingen =
+                  Array.isArray(row?.koppelingen) && row.koppelingen.length > 0;
+                const hasDiensten =
+                  Array.isArray(row?.diensten) && row.diensten.length > 0;
+
+                if (hasKoppelingen) return 'Koppeling';
+                if (hasDiensten) return 'Dienst';
+                return 'Applicatie';
+              }),
+            },
+          ],
           customHeaders: {
             contactpersoon: {
               id: 'contactpersoon',

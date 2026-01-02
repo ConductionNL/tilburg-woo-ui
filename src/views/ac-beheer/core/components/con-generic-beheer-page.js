@@ -755,6 +755,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
       : headers.filter((header) => defaultHeaderIds.includes(header.id));
 
     const nextKey = next.map((h) => h.id).join(',');
+
     const currentKey = tableHeaders.map((h) => h.id).join(',');
 
     if (nextKey === currentKey) return;
@@ -815,6 +816,15 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
           label: 'Bewerken',
           icon: <VISUALS.PENCIL />,
           onClick: () => {
+            // Check for custom getEditUrl handler in config first
+            if (typeof config?.getEditUrl === 'function') {
+              const customUrl = config.getEditUrl(row);
+              if (customUrl) {
+                navigate(customUrl);
+                return;
+              }
+            }
+
             // Prefer wizard editing when available; fallback to legacy modal
             if (config?.schemaSlug) {
               const slug =
@@ -1064,7 +1074,19 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
 
   // Build table headers with status icon if configured
   const finalTableHeaders = useMemo(() => {
-    const headers = [...tableHeaders];
+    const virtualColumns = Array.isArray(config.virtualColumns)
+      ? config.virtualColumns
+      : [];
+    const virtualColumnsHeaders = virtualColumns.map((column) => ({
+      id: column.id,
+      label: column.label,
+      key: column.key,
+      customContent: column.customContent,
+      customHeader: column.customHeader,
+      sortComparator: column.sortComparator,
+    }));
+
+    const headers = [...virtualColumnsHeaders, ...tableHeaders];
 
     if (config.statusIcon) {
       headers.unshift({
