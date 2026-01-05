@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AcFlex } from '@src/atoms';
-import { AcCheckbox } from '@src/molecules';
 import { ConSchemaEnhancedField, ConUuidResolver } from '@src/components';
 import { Paragraph, Alert } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@src/constants';
+
+// Inject spinner keyframes once
+const SPINNER_KEYFRAMES_ID = 'con-koppeling-zoeken-spinner-keyframes';
 
 const ConKoppelingStageZoeken = ({
   loading,
@@ -18,9 +20,31 @@ const ConKoppelingStageZoeken = ({
   isEditMode,
   onSearchModules,
   schemas = {},
-  selectedKoppelingId,
-  setSelectedKoppelingId,
 }) => {
+  // Inject CSS keyframes for spinner animation
+  useEffect(() => {
+    if (!document.getElementById(SPINNER_KEYFRAMES_ID)) {
+      const style = document.createElement('style');
+      style.id = SPINNER_KEYFRAMES_ID;
+      style.textContent = `
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  }, []);
+
+  // Manage visibility state of info alert
+  const [showInfoAlert, setShowInfoAlert] = useState(() => {
+    return !sessionStorage.getItem('koppeling-zoeken-info-alert-closed');
+  });
+
+  const handleCloseAlert = () => {
+    setShowInfoAlert(false);
+    sessionStorage.setItem('koppeling-zoeken-info-alert-closed', 'true');
+  };
   const idToLabel = Object.fromEntries(
     (resolvedModulesFromResults || []).map((o) => [String(o.value), String(o.label)])
   );
@@ -52,16 +76,6 @@ const ConKoppelingStageZoeken = ({
     return '↔';
   };
 
-  // Manage visibility state of info alert
-  const [showInfoAlert, setShowInfoAlert] = useState(() => {
-    return !sessionStorage.getItem('koppeling-zoeken-info-alert-closed');
-  });
-
-  const handleCloseAlert = () => {
-    setShowInfoAlert(false);
-    sessionStorage.setItem('koppeling-zoeken-info-alert-closed', 'true');
-  };
-
   return (
     <AcFlex
       column
@@ -80,11 +94,11 @@ const ConKoppelingStageZoeken = ({
           <ul style={{ marginInlineStart: '1rem' }}>
             <li>
               Ga naar de betreffende applicatie en kijk onder het tabblad
-              “Koppelingen” of de koppeling al aanwezig is.
+              &quot;Koppelingen&quot; of de koppeling al aanwezig is.
             </li>
             <li>
               Ga naar de zoekpagina, zoek op de applicatie en gebruik de filter
-              “Koppelingen” om te controleren of de koppeling daar al staat.
+              &quot;Koppelingen&quot; om te controleren of de koppeling daar al staat.
             </li>
           </ul>
         </Paragraph>
@@ -171,15 +185,43 @@ const ConKoppelingStageZoeken = ({
             geselecteerde applicatie.
           </Paragraph>
         )}
-        {!resultsLoading && searchResults.length ? (
-          <div className='ac-register-review'>
-            <div className='ac-register-review__section'>
+
+        <div className='ac-register-review'>
+          <div className='ac-register-review__section'>
+            {resultsLoading && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.75rem 1rem',
+                  backgroundColor: '#f5f5f5',
+                  borderRadius: '4px',
+                  marginBottom: searchResults.length > 0 ? '0.75rem' : 0,
+                }}
+              >
+                <span
+                  style={{
+                    width: '16px',
+                    height: '16px',
+                    border: '2px solid #ddd',
+                    borderTopColor: '#0063e5',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite',
+                  }}
+                />
+                <span style={{ fontSize: '0.875rem', color: '#666' }}>
+                  Koppelingen worden geladen...
+                </span>
+              </div>
+            )}
+
+            {searchResults.length > 0 ? (
               <div
                 style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}
               >
                 {searchResults.map((k, i) => {
                   const koppelingId = k?.id || k?.['@self']?.id || String(i);
-                  const isSelected = selectedKoppelingId === koppelingId;
                   const rels = k?.['@self']?.relations || {};
                   const aRel =
                     rels.moduleA ??
@@ -235,81 +277,119 @@ const ConKoppelingStageZoeken = ({
                     <div
                       key={koppelingId}
                       style={{
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: '0.75rem',
                         padding: '0.75rem',
-                        outline: isSelected ? '2px solid #0063e5' : '1px solid #ddd',
+                        border: '1px solid #ddd',
                         borderRadius: '4px',
-                        backgroundColor: isSelected ? '#f0f7ff' : 'transparent',
-                      }}
-                      onClick={() => {
-                        if (!isEditMode && !loading) {
-                          setSelectedKoppelingId(isSelected ? null : koppelingId);
-                        }
+                        backgroundColor: 'transparent',
                       }}
                     >
-                      <div style={{ marginTop: '0.25rem' }}>
-                        <AcCheckbox
-                          id={`koppeling-${koppelingId}`}
-                          value={koppelingId}
-                          checked={isSelected}
-                          onChange={(checked) => {
-                            if (!isEditMode && !loading) {
-                              setSelectedKoppelingId(checked ? koppelingId : null);
-                            }
-                          }}
-                          disabled={isEditMode || loading}
-                        />
-                      </div>
-                      <div style={{ flex: 1, marginLeft: '0.5rem' }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'flex-start',
+                          marginBottom: '0.25rem',
+                        }}
+                      >
                         {naam && (
-                          <div style={{ marginBottom: '0.25rem' }}>
-                            <strong>{naam}</strong>
+                          <div style={{ flex: 1, minWidth: '200px' }}>
+                            <strong style={{ fontSize: '1rem' }}>{naam}</strong>
                           </div>
                         )}
-                        <div>
-                          {dir === 'BnaarA' ? (
-                            <>
-                              <ConUuidResolver>{bLabel}</ConUuidResolver> {dirArrow}{' '}
-                              <ConUuidResolver>{aLabel}</ConUuidResolver>
-                            </>
-                          ) : (
-                            <>
-                              <ConUuidResolver>{aLabel}</ConUuidResolver> {dirArrow}{' '}
-                              <ConUuidResolver>{bLabel}</ConUuidResolver>
-                            </>
+                        <div
+                          style={{
+                            display: 'flex',
+                            gap: '0.5rem',
+                            flexWrap: 'wrap',
+                          }}
+                        >
+                          {soortLabel && (
+                            <span
+                              style={{
+                                display: 'inline-block',
+                                padding: '0.25rem 0.5rem',
+                                backgroundColor: '#e8f4f8',
+                                color: '#0063e5',
+                                borderRadius: '4px',
+                                fontSize: '0.75rem',
+                                fontWeight: '500',
+                              }}
+                            >
+                              {soortLabel}
+                            </span>
                           )}
-                          {soortLabel ? ` (${soortLabel})` : ''}
+                          {statusLabel && (
+                            <span
+                              style={{
+                                display: 'inline-block',
+                                padding: '0.25rem 0.5rem',
+                                backgroundColor:
+                                  statusLabel.toLowerCase() === 'concept'
+                                    ? '#fff3cd'
+                                    : statusLabel.toLowerCase() === 'gepubliceerd' ||
+                                      statusLabel.toLowerCase() === 'published'
+                                    ? '#d1e7dd'
+                                    : '#e8e8e8',
+                                color:
+                                  statusLabel.toLowerCase() === 'concept'
+                                    ? '#856404'
+                                    : statusLabel.toLowerCase() === 'gepubliceerd' ||
+                                      statusLabel.toLowerCase() === 'published'
+                                    ? '#0f5132'
+                                    : '#333',
+                                borderRadius: '4px',
+                                fontSize: '0.75rem',
+                                fontWeight: '500',
+                              }}
+                            >
+                              {statusLabel}
+                            </span>
+                          )}
                         </div>
-                        {(statusLabel || beschrijving) && (
-                          <div
-                            style={{
-                              color: '#666',
-                              fontSize: '0.9rem',
-                              marginTop: '0.25rem',
-                            }}
-                          >
-                            {statusLabel && <div>Status: {statusLabel}</div>}
-                            {beschrijving && <div>Beschrijving: {beschrijving}</div>}
-                          </div>
+                      </div>
+
+                      <div style={{ marginBottom: '0.5rem' }}>
+                        {dir === 'BnaarA' ? (
+                          <>
+                            <ConUuidResolver>{bLabel}</ConUuidResolver> {dirArrow}{' '}
+                            <ConUuidResolver>{aLabel}</ConUuidResolver>
+                          </>
+                        ) : (
+                          <>
+                            <ConUuidResolver>{aLabel}</ConUuidResolver> {dirArrow}{' '}
+                            <ConUuidResolver>{bLabel}</ConUuidResolver>
+                          </>
                         )}
                       </div>
+
+                      {beschrijving && (
+                        <div
+                          style={{
+                            color: '#666',
+                            fontSize: '0.9rem',
+                            marginBottom: '0.5rem',
+                            lineHeight: '1.4',
+                            wordBreak: 'break-word',
+                            whiteSpace: 'normal',
+                            width: '100%',
+                          }}
+                        >
+                          {beschrijving}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
               </div>
-            </div>
+            ) : !resultsLoading ? (
+              <Paragraph style={{ margin: 0 }}>
+                {ownApp?.value
+                  ? `Geen bestaande koppelingen gevonden voor ${ownApp.label}. U kunt deze zelf toevoegen in de volgende stap.`
+                  : 'Selecteer eerst een applicatie om bestaande koppelingen te bekijken.'}
+              </Paragraph>
+            ) : null}
           </div>
-        ) : resultsLoading ? (
-          <Paragraph>Bezig met laden…</Paragraph>
-        ) : (
-          <Paragraph>
-            {ownApp?.value
-              ? `Geen bestaande koppelingen gevonden voor ${ownApp.label}. U kunt deze zelf toevoegen in de volgende stap.`
-              : 'Selecteer eerst een applicatie om bestaande koppelingen te bekijken.'}
-          </Paragraph>
-        )}
+        </div>
       </div>
     </AcFlex>
   );
