@@ -36,7 +36,7 @@ const AcFormsKoppeling = loadable(() =>
   import('@views/ac-forms/ac-forms-koppeling/ac-forms-koppeling')
 );
 const ConFormsDienst = loadable(() =>
-  import('@views/ac-forms/con-forms-dienst/con-forms-dienst')
+  import('@src/views/ac-forms/con-forms-dienst/con-forms-dienst')
 );
 const ConFormsIndex = loadable(() =>
   import('@views/ac-forms/con-forms-index/con-forms-index')

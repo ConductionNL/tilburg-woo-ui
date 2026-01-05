@@ -124,6 +124,10 @@ const ConAangebodenSuggestiesTable = loadable(() =>
   import('@src/components/con-aangeboden-gebruik-table/con-aangeboden-gebruik-table')
 );
 
+const ConExternalLink = loadable(() =>
+  import('@src/components/con-external-link/con-external-link')
+);
+
 export {
   AcAbout,
   AcCNavigation,
@@ -168,4 +172,5 @@ export {
   ConDebugViewer,
   ConOrganizationSelector,
   ConAangebodenSuggestiesTable,
+  ConExternalLink,
 };

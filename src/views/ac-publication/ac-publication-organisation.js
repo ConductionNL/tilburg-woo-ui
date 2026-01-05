@@ -5,7 +5,7 @@ import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-behe
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AcContainer, AcFlex } from '@atoms';
-import { AcLoader, ConDetailsActionsMenu } from '@components';
+import { AcLoader, ConDetailsActionsMenu, ConExternalLink } from '@components';
 import { withStore } from '@stores';
 import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
@@ -176,9 +176,12 @@ const AcPublication = ({ store: { publications, object, user } }) => {
                   onDelete={handleDelete}
                   onEdit={() => {
                     if (schemaSlug) {
-                      const wizardSchemaName = normalizeSchemaName(schemaSlug).toLowerCase();
+                      const wizardSchemaName =
+                        normalizeSchemaName(schemaSlug).toLowerCase();
                       const wizards = Object.values(DASHBOARD_WIZARDS);
-                      const wizard = wizards.find((w) => w.schema === wizardSchemaName);
+                      const wizard = wizards.find(
+                        (w) => w.schema === wizardSchemaName
+                      );
 
                       if (wizard) {
                         const baseUrl = getWizardUrl(wizard);
@@ -252,19 +255,11 @@ const AcPublication = ({ store: { publications, object, user } }) => {
                       </div>
                     )}
                     {get_single?.website && (
-                      <div style={{ marginBottom: '8px' }}>
-                        <strong>Website: </strong>
-                        <Link
-                          href={
-                            get_single.website.startsWith('http')
-                              ? get_single.website
-                              : `https://${get_single.website}`
-                          }
-                          target='_blank'
-                          rel='noopener noreferrer'
-                        >
-                          {get_single.website}
-                        </Link>
+                      <div
+                        style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}
+                      >
+                        <strong>Website:</strong>
+                        <ConExternalLink href={get_single.website} />
                       </div>
                     )}
                   </div>
