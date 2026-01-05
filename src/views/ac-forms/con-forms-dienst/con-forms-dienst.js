@@ -149,8 +149,6 @@ const ConFormsDienst = ({ store, userStore }) => {
       setPrefillLoading(true);
       setPrefillError(null);
       try {
-        // Skip to step 1 in edit mode (Applicaties)
-        stepper.resetCurrentStep();
         await store.object.fetchObject('voorzieningen', 'dienst', String(dienstId), {
           '_extend[]': ['@self.schema'],
           _published: 'false',
