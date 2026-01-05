@@ -204,9 +204,7 @@ const ConGebruikStepReview = ({
             Controleer of het overzicht van de applicatiegebruik melding volledig en
             juist is voordat u verder gaat.
             <br />
-            <br />
             U kunt met Vorige terug naar de eerdere stappen.
-            <br />
             <br />
             Met de knop verzenden kunt u de melding aan de klant sturen
           </>
