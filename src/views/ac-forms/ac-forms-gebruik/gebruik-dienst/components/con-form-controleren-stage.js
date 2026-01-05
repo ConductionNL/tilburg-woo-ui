@@ -1,6 +1,5 @@
 import React, { memo, useState } from 'react';
-import { ConUuidResolver } from '@components';
-import { AcLink } from '@src/molecules';
+import { ConUuidResolver, ConExternalLink } from '@components';
 import {
   UnorderedList,
   UnorderedListItem,
@@ -198,19 +197,12 @@ const ConFormControlerenStage = memo(
                       <span>{leverancierDisplayName || '-'}</span>
                     </div>
                     {leverancierWebsite && (
-                      <div className='ac-register-review__field'>
-                        <strong>Website:</strong>{' '}
-                        <AcLink
-                          href={
-                            leverancierWebsite.startsWith('http')
-                              ? leverancierWebsite
-                              : `https://${leverancierWebsite}`
-                          }
-                          target='_blank'
-                          rel='noopener noreferrer'
-                        >
-                          {leverancierWebsite}
-                        </AcLink>
+                      <div
+                        className='ac-register-review__field'
+                        style={{ display: 'flex', gap: '4px' }}
+                      >
+                        <strong>Website:</strong>
+                        <ConExternalLink href={leverancierWebsite} />
                       </div>
                     )}
                   </div>
@@ -247,19 +239,12 @@ const ConFormControlerenStage = memo(
                     </div>
                   )}
                   {nieuweDienst?.website && (
-                    <div className='ac-register-review__field'>
-                      <strong>Website:</strong>{' '}
-                      <AcLink
-                        href={
-                          nieuweDienst.website.startsWith('http')
-                            ? nieuweDienst.website
-                            : `https://${nieuweDienst.website}`
-                        }
-                        target='_blank'
-                        rel='noopener noreferrer'
-                      >
-                        {nieuweDienst.website}
-                      </AcLink>
+                    <div
+                      className='ac-register-review__field'
+                      style={{ display: 'flex', gap: '4px' }}
+                    >
+                      <strong>Website:</strong>
+                      <ConExternalLink href={nieuweDienst.website} />
                     </div>
                   )}
                 </div>
@@ -325,19 +310,9 @@ const ConFormControlerenStage = memo(
                                 </div>
                               )}
                               {dienstItem.website && (
-                                <div>
-                                  <span style={{ fontWeight: '500' }}>Website:</span>{' '}
-                                  <AcLink
-                                    href={
-                                      dienstItem.website.startsWith('http')
-                                        ? dienstItem.website
-                                        : `https://${dienstItem.website}`
-                                    }
-                                    target='_blank'
-                                    rel='noopener noreferrer'
-                                  >
-                                    {dienstItem.website}
-                                  </AcLink>
+                                <div style={{ display: 'flex', gap: '4px' }}>
+                                  <span style={{ fontWeight: '500' }}>Website:</span>
+                                  <ConExternalLink href={dienstItem.website} />
                                 </div>
                               )}
                             </div>
@@ -502,18 +477,7 @@ const ConFormControlerenStage = memo(
             )}
 
             <div className='ac-register-review__field'>
-              <strong>Website:</strong>{' '}
-              {dienst.website ? (
-                <AcLink
-                  href={dienst.website}
-                  target='_blank'
-                  rel='noopener noreferrer'
-                >
-                  <ConUuidResolver>{dienst.website}</ConUuidResolver>
-                </AcLink>
-              ) : (
-                '-'
-              )}
+              <strong>Website:</strong> <ConExternalLink href={dienst.website} />
             </div>
 
             <div className='ac-register-review__field'>
@@ -660,19 +624,12 @@ const ConFormControlerenStage = memo(
                     </div>
                   )}
                   {aanbiederOrganisatie.website && (
-                    <div className='ac-register-review__field'>
-                      <strong>Website:</strong>{' '}
-                      {aanbiederOrganisatie.website ? (
-                        <AcLink
-                          href={aanbiederOrganisatie.website}
-                          target='_blank'
-                          rel='noopener noreferrer'
-                        >
-                          {aanbiederOrganisatie.website}
-                        </AcLink>
-                      ) : (
-                        '-'
-                      )}
+                    <div
+                      className='ac-register-review__field'
+                      style={{ display: 'flex', gap: '4px' }}
+                    >
+                      <strong>Website:</strong>
+                      <ConExternalLink href={aanbiederOrganisatie.website} />
                     </div>
                   )}
                   {aanbiederOrganisatie.beschrijvingKort && (

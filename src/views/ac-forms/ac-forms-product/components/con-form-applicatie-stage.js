@@ -3,22 +3,6 @@ import { VISUALS } from '@src/constants';
 import { AcButton } from '@src/molecules';
 import ReactSelect from 'react-select';
 import { ConSchemaEnhancedField } from '@src/components';
-
-// Add CSS for spinner animation
-const spinnerStyles = `
-  @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-`;
-
-// Inject CSS if not already present
-if (!document.getElementById('spinner-styles')) {
-  const style = document.createElement('style');
-  style.id = 'spinner-styles';
-  style.textContent = spinnerStyles;
-  document.head.appendChild(style);
-}
 import {
   Table,
   TableBody,
@@ -725,22 +709,10 @@ const ConFormApplicatieStage = memo(
                         buttonType='primary'
                         disabled={!selectedExistingApplication || loading}
                         onClick={addExistingApplication}
+                        icon={<VISUALS.PLUS />}
+                        loading={modulesLoading}
                       >
-                        {modulesLoading ? (
-                          <>
-                            <i
-                              className='ac-icon--refresh'
-                              style={{
-                                marginRight: '0.5rem',
-                                display: 'inline-block',
-                                animation: 'spin 1s linear infinite',
-                              }}
-                            ></i>
-                            Zoeken...
-                          </>
-                        ) : (
-                          'Toevoegen'
-                        )}
+                        {modulesLoading ? 'Zoeken...' : 'Toevoegen'}
                       </AcButton>
                     </div>
                   </div>

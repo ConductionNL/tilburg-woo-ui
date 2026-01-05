@@ -5,7 +5,12 @@ import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-behe
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AcContainer, AcFlex } from '@atoms';
-import { AcLoader, ConDetailsActionsMenu, ConUuidResolver } from '@components';
+import {
+  AcLoader,
+  ConDetailsActionsMenu,
+  ConUuidResolver,
+  ConExternalLink,
+} from '@components';
 import { withStore } from '@stores';
 // import { VISUALS } from '@constants';
 import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
@@ -209,9 +214,12 @@ const AcPublicationProduct = ({
                 onDelete={handleDelete}
                 onEdit={() => {
                   if (schemaSlug) {
-                    const wizardSchemaName = normalizeSchemaName(schemaSlug).toLowerCase();
+                    const wizardSchemaName =
+                      normalizeSchemaName(schemaSlug).toLowerCase();
                     const wizards = Object.values(DASHBOARD_WIZARDS);
-                    const wizard = wizards.find((w) => w.schema === wizardSchemaName);
+                    const wizard = wizards.find(
+                      (w) => w.schema === wizardSchemaName
+                    );
 
                     if (wizard) {
                       const baseUrl = getWizardUrl(wizard);
@@ -267,17 +275,9 @@ const AcPublicationProduct = ({
                 className='con-product-details--contact-info'
               >
                 {get_single?.website && (
-                  <div>
+                  <div style={{ display: 'flex', gap: '4px' }}>
                     <b>Website:</b>
-                    <Link
-                      href={`${
-                        get_single?.website.startsWith('http')
-                          ? get_single?.website
-                          : `https://${get_single?.website}`
-                      }`}
-                    >
-                      {get_single?.website}
-                    </Link>
+                    <ConExternalLink href={get_single?.website} />
                   </div>
                 )}
                 {/* Show loading state while fetching uses data */}

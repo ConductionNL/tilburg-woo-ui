@@ -3,7 +3,7 @@ import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AcColumn, AcContainer, AcFlex } from '@atoms';
-import { AcLoader, ConDetailsActionsMenu } from '@components';
+import { AcLoader, ConDetailsActionsMenu, ConExternalLink } from '@components';
 import { VISUALS } from '@constants';
 import {
   Heading,
@@ -316,18 +316,8 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
               <div style={{ marginTop: '12px' }}>
                 {get_single?.website && (
                   <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
-                    <strong>Website: </strong>
-                    <Link
-                      href={
-                        get_single?.website.startsWith('http')
-                          ? get_single?.website
-                          : `https://${get_single?.website}`
-                      }
-                      target='_blank'
-                      rel='noopener noreferrer'
-                    >
-                      {get_single?.website}
-                    </Link>
+                    <strong>Website:</strong>
+                    <ConExternalLink href={get_single?.website} />
                   </div>
                 )}
                 {contact && typeof contact === 'object' ? (

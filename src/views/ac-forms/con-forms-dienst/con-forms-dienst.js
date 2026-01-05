@@ -149,8 +149,6 @@ const ConFormsDienst = ({ store, userStore }) => {
       setPrefillLoading(true);
       setPrefillError(null);
       try {
-        // Skip to step 1 in edit mode (Applicaties)
-        stepper.resetCurrentStep();
         await store.object.fetchObject('voorzieningen', 'dienst', String(dienstId), {
           '_extend[]': ['@self.schema'],
           _published: 'false',
@@ -276,7 +274,7 @@ const ConFormsDienst = ({ store, userStore }) => {
     if (typeof userStore?.fetchUserProfile === 'function') {
       if (process.env.NODE_ENV === 'development') {
         // eslint-disable-next-line no-console
-        console.log(
+        console.info(
           'ConFormsDienst - refreshing /me via userStore.fetchUserProfile'
         );
       }
