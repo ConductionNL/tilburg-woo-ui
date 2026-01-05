@@ -19,7 +19,62 @@ import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-behe
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
 import { normalizeSchemaName } from '@src/utilities/con-normalize-schema-name';
+import { AcFormatDate } from '@src/utilities/ac-format-date';
 // import { checkOrganizationPermissions } from '@utils/organization-permissions';
+
+/**
+ * Gets the relevant start date based on the status.
+ * Maps status values to their corresponding date fields and labels.
+ */
+const getRelevantStartDate = (data) => {
+  const status = data?.status;
+  if (!status) return null;
+
+  switch (status) {
+    case 'in gebruik':
+      return data?.datumInGebruik
+        ? {
+            label: 'Startdatum In gebruik',
+            value: AcFormatDate(data.datumInGebruik, 'YYYY-MM-DD', 'D MMMM YYYY'),
+          }
+        : null;
+    case 'in ontwikkeling':
+      return data?.datumInOntwikkeling
+        ? {
+            label: 'Startdatum In ontwikkeling',
+            value: AcFormatDate(
+              data.datumInOntwikkeling,
+              'YYYY-MM-DD',
+              'D MMMM YYYY'
+            ),
+          }
+        : null;
+    case 'einde ondersteuning':
+      return data?.datumEindeOndersteuning
+        ? {
+            label: 'Startdatum Einde ondersteuning',
+            value: AcFormatDate(
+              data.datumEindeOndersteuning,
+              'YYYY-MM-DD',
+              'D MMMM YYYY'
+            ),
+          }
+        : null;
+    case 'teruggetrokken':
+      return data?.datumTeruggetrokken
+        ? {
+            label: 'Startdatum Teruggetrokken',
+            value: AcFormatDate(
+              data.datumTeruggetrokken,
+              'YYYY-MM-DD',
+              'D MMMM YYYY'
+            ),
+          }
+        : null;
+    default:
+      return null;
+  }
+};
 
 /**
  * Publication page for schema slug 'koppeling'.
@@ -114,6 +169,14 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
     );
   }, [get_single]);
 
+  const intermediairId = useMemo(() => {
+    return (
+      get_single?.['@self']?.relations?.gerealiseerdMetIntermediairModule ||
+      get_single?.gerealiseerdMetIntermediairModule ||
+      null
+    );
+  }, [get_single]);
+
   if (loading.status || !get_single) {
     return <AcLoader />;
   }
@@ -146,7 +209,8 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
             onDelete={handleDelete}
             onEdit={() => {
               if (schemaSlug) {
-                const wizardSchemaName = normalizeSchemaName(schemaSlug).toLowerCase();
+                const wizardSchemaName =
+                  normalizeSchemaName(schemaSlug).toLowerCase();
                 const wizards = Object.values(DASHBOARD_WIZARDS);
                 const wizard = wizards.find((w) => w.schema === wizardSchemaName);
                 if (wizard) {
@@ -223,7 +287,7 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
             )}
             {get_single?.type && (
               <div style={{ marginBottom: '8px' }}>
-                <strong>Type: </strong>
+                <strong>Transportprotocol: </strong>
                 {get_single.type}
               </div>
             )}
@@ -233,16 +297,38 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
                 {get_single.status}
               </div>
             )}
-            {get_single?.standaardversies && (
+            {(() => {
+              const relevantDate = getRelevantStartDate(get_single);
+              return relevantDate ? (
+                <div style={{ marginBottom: '8px' }}>
+                  <strong>{relevantDate.label}: </strong>
+                  {relevantDate.value}
+                </div>
+              ) : null;
+            })()}
+            {get_single?.beschrijvingKort && (
               <div style={{ marginBottom: '8px' }}>
-                <strong>Standaarden: </strong>
-                {get_single.standaardversies.map((s) => (
-                  <div key={s}>
-                    <ConUuidResolver>{String(s)}</ConUuidResolver>
-                  </div>
-                ))}
+                <strong>Korte beschrijving: </strong>
+                {get_single.beschrijvingKort}
               </div>
             )}
+            {intermediairId && (
+              <div style={{ marginBottom: '8px' }}>
+                <strong>Intermediair: </strong>
+                <ConUuidResolver>{String(intermediairId)}</ConUuidResolver>
+              </div>
+            )}
+            {get_single?.standaardversies &&
+              get_single.standaardversies.length > 0 && (
+                <div style={{ marginBottom: '8px' }}>
+                  <strong>Standaardversies: </strong>
+                  {get_single.standaardversies.map((s) => (
+                    <div key={s}>
+                      <ConUuidResolver>{String(s)}</ConUuidResolver>
+                    </div>
+                  ))}
+                </div>
+              )}
 
             {get_single?.dienst && (
               <div style={{ marginBottom: '8px' }}>

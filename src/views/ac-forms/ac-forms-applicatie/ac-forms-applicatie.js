@@ -1260,6 +1260,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       const nextRows = [];
       const nextSelectedAppBByRow = {};
       const nextDirectionByRow = {};
+      const nextTypeByRow = {};
       const nextKoppelingIdByRow = {};
       const updatedKoppelingen = [];
 
@@ -1925,13 +1926,20 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       }
     }
 
-    // Koppelingen step: validate that all koppelingen have a naam
+    // Koppelingen step: validate that all started koppelingen have a naam
+    // A koppeling is considered "started" if it has moduleB filled in
+    // Empty koppelingen (no moduleB) are ignored - koppelingen are optional
     if (logicalStep === 6) {
       if (Array.isArray(applicatie.koppelingen)) {
-        const koppelingenWithoutNaam = applicatie.koppelingen.filter(
-          (kp) => !kp.naam || !String(kp.naam).trim()
-        );
-        if (koppelingenWithoutNaam.length > 0) {
+        const startedKoppelingenWithoutNaam = applicatie.koppelingen.filter((kp) => {
+          // Check if koppeling has moduleB (meaning it was started)
+          const hasModuleB = kp.moduleB != null && String(kp.moduleB).trim() !== '';
+          // Check if naam is missing
+          const missingNaam = !kp.naam || !String(kp.naam).trim();
+          // Only flag as invalid if started but missing naam
+          return hasModuleB && missingNaam;
+        });
+        if (startedKoppelingenWithoutNaam.length > 0) {
           return true;
         }
       }
@@ -2006,10 +2014,15 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
 
     if (logicalStep === 6) {
       if (Array.isArray(applicatie.koppelingen)) {
-        const koppelingWithoutNaam = applicatie.koppelingen.find(
-          (kp) => !kp.naam || !String(kp.naam).trim()
-        );
-        if (koppelingWithoutNaam) {
+        const startedKoppelingWithoutNaam = applicatie.koppelingen.find((kp) => {
+          // Check if koppeling has moduleB (meaning it was started)
+          const hasModuleB = kp.moduleB != null && String(kp.moduleB).trim() !== '';
+          // Check if naam is missing
+          const missingNaam = !kp.naam || !String(kp.naam).trim();
+          // Only flag as invalid if started but missing naam
+          return hasModuleB && missingNaam;
+        });
+        if (startedKoppelingWithoutNaam) {
           return 'Vul voor alle koppelingen de naam in';
         }
       }

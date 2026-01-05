@@ -1,10 +1,13 @@
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState } from 'react';
+
 import clsx from 'clsx';
 import ReactSelect from 'react-select';
 import { AcButton } from '@src/molecules';
 import {
   Paragraph,
   Textbox,
+  Textarea,
+  Separator,
   Alert,
 } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@src/constants';
@@ -12,53 +15,6 @@ import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 import { TOOLTIP_ID } from '@src/index.web';
 import { commongroundApiUrl } from '@src/config';
 
-/**
- * Maps status value to corresponding date property name.
- * @param {string} status - The status value (e.g., 'in gebruik', 'in ontwikkeling', etc.)
- * @returns {string|null} - The property name or null if no mapping exists
- */
-const getStartDatumPropertyName = (status) => {
-  const statusToPropertyMap = {
-    'in gebruik': 'startDatumInProductie',
-    'in ontwikkeling': 'startDatumGepland',
-    'einde ondersteuning': 'startDatumUitTeFaseren',
-    teruggetrokken: 'startDatumUitGefaseerd',
-  };
-  return statusToPropertyMap[status] || null;
-};
-
-/**
- * Gets the label for the start date field based on the selected status.
- * @param {string} status - The status value
- * @returns {string} - The label for the date field
- */
-const getStartDatumLabel = (status) => {
-  const statusToLabelMap = {
-    'in gebruik': 'Startdatum In gebruik',
-    'in ontwikkeling': 'Startdatum In ontwikkeling',
-    'einde ondersteuning': 'Startdatum Einde ondersteuning',
-    teruggetrokken: 'Startdatum Teruggetrokken',
-  };
-  return statusToLabelMap[status] || 'Startdatum status';
-};
-
-/**
- * Gets today's date in YYYY-MM-DD format for date input fields.
- * @returns {string} - Today's date in YYYY-MM-DD format
- */
-const getTodayDateString = () => new Date().toISOString().split('T')[0];
-
-/**
- * Koppeling Stage Component (renamed from Toevoegen)
- *
- * This stage handles the core koppeling details:
- * - Applicatie A (pre-filled from ownApp)
- * - Richting (direction)
- * - Applicatie B or BGV
- * - Naam (required)
- * - Status
- * - Startdatum status (dynamic based on selected status)
- */
 const ConKoppelingStageToevoegen = ({
   rows,
   addRow,
@@ -70,25 +26,26 @@ const ConKoppelingStageToevoegen = ({
   loading,
   selectedAppAByRow,
   ownApp,
+  typeOptions,
+  typeByRow,
+  setTypeByRow,
   selectedAppBByRow,
   setSelectedAppBByRow,
+  beschrijvingByRow,
+  setBeschrijvingByRow,
   directionOptions,
   directionByRow,
   setDirectionByRow,
   statusOptions,
   statusByRow,
   setStatusByRow,
-  startDatumInProductieByRow,
-  setStartDatumInProductieByRow,
-  startDatumGeplandByRow,
-  setStartDatumGeplandByRow,
-  startDatumUitTeFaserenByRow,
-  setStartDatumUitTeFaserenByRow,
-  startDatumUitGefaseerdByRow,
-  setStartDatumUitGefaseerdByRow,
   nameByRow,
   setNameByRow,
   isEditMode,
+  standaardenOptions,
+  standaardenOptionsLoading,
+  standaardenByRow,
+  setStandaardenByRow,
 }) => {
   const [appBOptionsByRow, setAppBOptionsByRow] = useState({});
   const [appBLoadingByRow, setAppBLoadingByRow] = useState({});
@@ -96,166 +53,15 @@ const ConKoppelingStageToevoegen = ({
   const abortControllersRef = useRef({});
 
   const [showInfoAlert, setShowInfoAlert] = useState(() => {
+    // Check if alert was previously closed in this session
     return !sessionStorage.getItem('koppeling-toevoegen-info-alert-closed');
   });
 
+  // Handle closing the alert and remember the choice
   const handleCloseAlert = () => {
     setShowInfoAlert(false);
     sessionStorage.setItem('koppeling-toevoegen-info-alert-closed', 'true');
   };
-
-  // Get current date value based on status for a specific row
-  const getCurrentDateValue = useCallback(
-    (rowId, status) => {
-      const propertyName = getStartDatumPropertyName(status);
-      if (!propertyName) return '';
-      switch (propertyName) {
-        case 'startDatumInProductie':
-          return startDatumInProductieByRow[rowId] || '';
-        case 'startDatumGepland':
-          return startDatumGeplandByRow[rowId] || '';
-        case 'startDatumUitTeFaseren':
-          return startDatumUitTeFaserenByRow[rowId] || '';
-        case 'startDatumUitGefaseerd':
-          return startDatumUitGefaseerdByRow[rowId] || '';
-        default:
-          return '';
-      }
-    },
-    [
-      startDatumInProductieByRow,
-      startDatumGeplandByRow,
-      startDatumUitTeFaserenByRow,
-      startDatumUitGefaseerdByRow,
-    ]
-  );
-
-  // Set date value based on status for a specific row
-  const setCurrentDateValue = useCallback(
-    (rowId, status, value) => {
-      const propertyName = getStartDatumPropertyName(status);
-      if (!propertyName) return;
-      switch (propertyName) {
-        case 'startDatumInProductie':
-          setStartDatumInProductieByRow((prev) => ({ ...prev, [rowId]: value }));
-          break;
-        case 'startDatumGepland':
-          setStartDatumGeplandByRow((prev) => ({ ...prev, [rowId]: value }));
-          break;
-        case 'startDatumUitTeFaseren':
-          setStartDatumUitTeFaserenByRow((prev) => ({ ...prev, [rowId]: value }));
-          break;
-        case 'startDatumUitGefaseerd':
-          setStartDatumUitGefaseerdByRow((prev) => ({ ...prev, [rowId]: value }));
-          break;
-      }
-    },
-    [
-      setStartDatumInProductieByRow,
-      setStartDatumGeplandByRow,
-      setStartDatumUitTeFaserenByRow,
-      setStartDatumUitGefaseerdByRow,
-    ]
-  );
-
-  // Handle status change - clears other date fields and sets today's date for new status
-  const handleStatusChange = useCallback(
-    (rowId, newStatus) => {
-      const newStartDatumProperty = getStartDatumPropertyName(newStatus);
-
-      // Get current date value for the new status before clearing
-      let currentDateValue = '';
-      if (newStartDatumProperty) {
-        switch (newStartDatumProperty) {
-          case 'startDatumInProductie':
-            currentDateValue = startDatumInProductieByRow[rowId] || '';
-            break;
-          case 'startDatumGepland':
-            currentDateValue = startDatumGeplandByRow[rowId] || '';
-            break;
-          case 'startDatumUitTeFaseren':
-            currentDateValue = startDatumUitTeFaserenByRow[rowId] || '';
-            break;
-          case 'startDatumUitGefaseerd':
-            currentDateValue = startDatumUitGefaseerdByRow[rowId] || '';
-            break;
-        }
-      }
-
-      // Set the new status
-      setStatusByRow((prev) => ({ ...prev, [rowId]: newStatus }));
-
-      if (!isEditMode) {
-        // In create mode: clear all other date fields, only keep the one for current status
-        const allProperties = [
-          'startDatumInProductie',
-          'startDatumGepland',
-          'startDatumUitTeFaseren',
-          'startDatumUitGefaseerd',
-        ];
-        allProperties.forEach((property) => {
-          if (property !== newStartDatumProperty) {
-            switch (property) {
-              case 'startDatumInProductie':
-                setStartDatumInProductieByRow((prev) => ({ ...prev, [rowId]: '' }));
-                break;
-              case 'startDatumGepland':
-                setStartDatumGeplandByRow((prev) => ({ ...prev, [rowId]: '' }));
-                break;
-              case 'startDatumUitTeFaseren':
-                setStartDatumUitTeFaserenByRow((prev) => ({ ...prev, [rowId]: '' }));
-                break;
-              case 'startDatumUitGefaseerd':
-                setStartDatumUitGefaseerdByRow((prev) => ({ ...prev, [rowId]: '' }));
-                break;
-            }
-          }
-        });
-      }
-
-      // Set the corresponding date to today if not already set
-      if (newStartDatumProperty && !currentDateValue) {
-        switch (newStartDatumProperty) {
-          case 'startDatumInProductie':
-            setStartDatumInProductieByRow((prev) => ({
-              ...prev,
-              [rowId]: getTodayDateString(),
-            }));
-            break;
-          case 'startDatumGepland':
-            setStartDatumGeplandByRow((prev) => ({
-              ...prev,
-              [rowId]: getTodayDateString(),
-            }));
-            break;
-          case 'startDatumUitTeFaseren':
-            setStartDatumUitTeFaserenByRow((prev) => ({
-              ...prev,
-              [rowId]: getTodayDateString(),
-            }));
-            break;
-          case 'startDatumUitGefaseerd':
-            setStartDatumUitGefaseerdByRow((prev) => ({
-              ...prev,
-              [rowId]: getTodayDateString(),
-            }));
-            break;
-        }
-      }
-    },
-    [
-      isEditMode,
-      startDatumInProductieByRow,
-      startDatumGeplandByRow,
-      startDatumUitTeFaserenByRow,
-      startDatumUitGefaseerdByRow,
-      setStatusByRow,
-      setStartDatumInProductieByRow,
-      setStartDatumGeplandByRow,
-      setStartDatumUitTeFaserenByRow,
-      setStartDatumUitGefaseerdByRow,
-    ]
-  );
 
   const upsertModuleOption = (opt) => {
     if (!opt) return;
@@ -325,6 +131,7 @@ const ConKoppelingStageToevoegen = ({
           type: 'applicatie',
         };
       });
+      // also upsert into shared pools for persistence
       mapped.forEach((o) => upsertModuleOption(o));
       return mapped;
     } catch (e) {
@@ -377,10 +184,11 @@ const ConKoppelingStageToevoegen = ({
     const key = `${which}-${rowId}`;
     if (debounceTimersRef.current[key]) clearTimeout(debounceTimersRef.current[key]);
     debounceTimersRef.current[key] = setTimeout(async () => {
+      // Abort any previous in-flight fetch for this key
       try {
         const prev = abortControllersRef.current[key];
         if (prev && typeof prev.abort === 'function') prev.abort();
-      } catch {
+      } catch (e) {
         // swallow
       }
       const controller = new AbortController();
@@ -389,19 +197,23 @@ const ConKoppelingStageToevoegen = ({
 
       let opts;
       if (q) {
+        // When searching, fetch both modules and external facilities in parallel
         const [moduleResults, buitengemeentelijkeResults] = await Promise.all([
           fetchModuleOptions(q, controller.signal),
           fetchBuitengemeentelijkeOptions(q, controller.signal),
         ]);
+        // Merge results from both searches
         const merged = [];
         if (Array.isArray(moduleResults)) merged.push(...moduleResults);
         if (Array.isArray(buitengemeentelijkeResults))
           merged.push(...buitengemeentelijkeResults);
         opts = merged;
       } else {
+        // When no query, use merged options from already loaded data
         opts = which === 'B' ? getMergedOptions() : modulesOptions;
       }
 
+      // If another fetch started after this one, skip applying results
       if (abortControllersRef.current[key] !== controller) return;
       if (which === 'B') {
         if (Array.isArray(opts))
@@ -417,7 +229,7 @@ const ConKoppelingStageToevoegen = ({
       Object.values(ctrls).forEach((c) => {
         try {
           if (c && typeof c.abort === 'function') c.abort();
-        } catch {
+        } catch (e) {
           // swallow
         }
       });
@@ -473,17 +285,19 @@ const ConKoppelingStageToevoegen = ({
     <div
       className='ac-register-form-section'
       role='group'
-      aria-labelledby='koppeling-title'
+      aria-labelledby='koppeling-toevoegen-title'
     >
-      <h2 id='koppeling-title' className='sr-only'>
-        Koppeling
+      <h2 id='koppeling-toevoegen-title' className='sr-only'>
+        Toevoegen
       </h2>
 
       <Paragraph>
-        Geef aan met welke applicaties uw oplossing gegevens kan uitwisselen. Vul de
-        naam, richting en status van de koppeling in.
+        Geef aan met welke applicaties uw oplossing gegevens kan uitwisselen en
+        beschrijf de koppeling. Zo kunnen gemeenten zien hoe uw applicatie past in
+        hun applicatielandschap.
       </Paragraph>
 
+      {/* Closeable info alert about updating koppeling details later */}
       {showInfoAlert && (
         <Alert severity='info' className='ac-forms-product-info-alert'>
           <button
@@ -497,11 +311,14 @@ const ConKoppelingStageToevoegen = ({
           <div className='ac-forms-product-info-alert__content'>
             <VISUALS.INFO className='ac-forms-product-info-alert__icon' />
             <div>
-              <strong>Koppeling informatie</strong>
+              <strong>Koppeling informatie aanpassen</strong>
               <br />
               <span className='ac-forms-product-info-alert__text'>
                 Vul per koppeling in met welke applicaties u koppelt en welke
                 applicatie de gegevens verzendt en welke deze ontvangt.
+                <br />
+                Vervolgens kunt u aanvullende informatie invullen, zoals het
+                transportprotocol (bijvoorbeeld API, bestand of bericht).
                 <br />
                 Bestaat de applicatie waarmee u wilt koppelen nog niet, dan kunt u de
                 leverancier vragen zich aan te melden bij de softwarecatalogus.
@@ -553,14 +370,20 @@ const ConKoppelingStageToevoegen = ({
 
       <div className='con-form-wizard-rows'>
         {rows.map((rowId) => {
+          const beschrijving = beschrijvingByRow[rowId] || '';
+          const maxLen = 255;
+          const charsLeft = Math.max(0, maxLen - beschrijving.length);
+
           const appAId = `koppeling-appA-${rowId}`;
           const appBId = `koppeling-appB-${rowId}`;
+          const soortId = `koppeling-soort-${rowId}`;
           const richtingId = `koppeling-richting-${rowId}`;
           const statusId = `koppeling-status-${rowId}`;
 
           return (
             <div
               key={`row-${rowId}`}
+              className='ac-register-form-section'
               style={{
                 padding: '1rem',
                 border: '1px solid #e5e5e5',
@@ -570,6 +393,7 @@ const ConKoppelingStageToevoegen = ({
             >
               {/* Row 1: Applicatie A - Richting - Applicatie B */}
               <div
+                className='ac-register-form-grid'
                 style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
@@ -700,8 +524,9 @@ const ConKoppelingStageToevoegen = ({
                 </div>
               </div>
 
-              {/* Row 2: Naam - Status - Startdatum status */}
+              {/* Row 2: Soort - Naam - Status */}
               <div
+                className='ac-register-form-grid'
                 style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
@@ -712,14 +537,37 @@ const ConKoppelingStageToevoegen = ({
                 <div>
                   <label
                     className='utrecht-form-label'
+                    htmlFor={soortId}
+                    style={{ display: 'block' }}
+                  >
+                    Soort
+                  </label>
+                  <ReactSelect
+                    className={clsx(
+                      'ac-beheer-select',
+                      loading && 'ac-beheer-select--disabled'
+                    )}
+                    options={typeOptions}
+                    isClearable
+                    value={
+                      typeByRow[rowId]
+                        ? typeOptions.find((o) => o.value === typeByRow[rowId])
+                        : null
+                    }
+                    onChange={(opt) =>
+                      setTypeByRow((prev) => ({ ...prev, [rowId]: opt?.value }))
+                    }
+                    placeholder='Soort'
+                    inputId={soortId}
+                  />
+                </div>
+                <div>
+                  <label
+                    className='utrecht-form-label'
                     htmlFor={`koppeling-naam-${rowId}`}
                     style={{ display: 'block' }}
                   >
                     Naam
-                    <span className='required-indicator' aria-hidden='true'>
-                      *
-                    </span>
-                    <span className='sr-only'>(verplicht)</span>
                   </label>
                   <Textbox
                     id={`koppeling-naam-${rowId}`}
@@ -731,7 +579,6 @@ const ConKoppelingStageToevoegen = ({
                       }))
                     }
                     placeholder='Naam van de koppeling'
-                    required
                   />
                 </div>
                 <div>
@@ -754,64 +601,112 @@ const ConKoppelingStageToevoegen = ({
                         ? statusOptions.find((o) => o.value === statusByRow[rowId])
                         : null
                     }
-                    onChange={(opt) => handleStatusChange(rowId, opt?.value)}
+                    onChange={(opt) =>
+                      setStatusByRow((prev) => ({ ...prev, [rowId]: opt?.value }))
+                    }
                     placeholder='Status'
                     inputId={statusId}
                   />
                 </div>
-                <div>
-                  <label
-                    className='utrecht-form-label'
-                    htmlFor={`koppeling-startdatum-${rowId}`}
-                    style={{ display: 'block' }}
-                  >
-                    {statusByRow[rowId]
-                      ? getStartDatumLabel(statusByRow[rowId])
-                      : 'Startdatum status'}
-                  </label>
-                  <Textbox
-                    id={`koppeling-startdatum-${rowId}`}
-                    type='date'
-                    value={
-                      statusByRow[rowId]
-                        ? getCurrentDateValue(rowId, statusByRow[rowId])
-                        : ''
-                    }
-                    onChange={(e) => {
-                      if (statusByRow[rowId]) {
-                        setCurrentDateValue(
-                          rowId,
-                          statusByRow[rowId],
-                          e?.target?.value || ''
-                        );
-                      }
-                    }}
-                    disabled={loading || !statusByRow[rowId]}
-                    style={{ height: '40px' }}
-                    placeholder={
-                      !statusByRow[rowId] ? 'Selecteer eerst een status' : ''
-                    }
-                  />
-                </div>
               </div>
 
-              {!isEditMode && (
-                <div
+              <Separator
+                className='ac-register-review-header__separator'
+                style={{ marginBlock: '24px' }}
+              />
+
+              <div className='con-koppeling-standaarden-field'>
+                <label
+                  className='utrecht-form-label'
+                  htmlFor={statusId}
+                  style={{ display: 'block' }}
+                >
+                  Standaarden
+                </label>
+                <ReactSelect
+                  className={clsx(
+                    'ac-beheer-select',
+                    'con-koppeling-standaarden-select',
+                    loading && 'ac-beheer-select--disabled'
+                  )}
+                  isClearable
+                  value={
+                    standaardenByRow[rowId]
+                      ? standaardenOptions.filter((o) =>
+                          standaardenByRow[rowId].includes(o.value)
+                        )
+                      : null
+                  }
+                  onChange={(opt) => {
+                    const standaarden = opt ? opt.map((o) => o.value) : [];
+                    setStandaardenByRow((prev) => {
+                      const updated = { ...prev };
+                      updated[rowId] = standaarden;
+                      return updated;
+                    });
+                  }}
+                  options={standaardenOptions}
+                  placeholder={
+                    standaardenOptionsLoading ? 'Laden...' : 'Selecteer standaarden'
+                  }
+                  isMulti={true}
+                  isSearchable={true}
+                  isLoading={standaardenOptionsLoading}
+                  closeMenuOnSelect={false}
+                  isDisabled={loading}
+                />
+              </div>
+
+              {/* Korte beschrijving (full width) */}
+              <div style={{ marginTop: '1rem' }}>
+                <label
+                  className='utrecht-form-label'
+                  htmlFor={`koppeling-beschrijving-${rowId}`}
+                  style={{ display: 'block' }}
+                >
+                  Korte beschrijving
+                </label>
+                <Textarea
+                  id={`koppeling-beschrijving-${rowId}`}
+                  className='con-koppeling-beschrijving'
+                  value={beschrijving}
+                  maxLength={maxLen}
+                  onChange={(e) =>
+                    setBeschrijvingByRow((prev) => ({
+                      ...prev,
+                      [rowId]: e?.target?.value || '',
+                    }))
+                  }
+                  placeholder='Korte beschrijving van de koppeling (max 255 tekens)'
+                />
+                <Paragraph
                   style={{
-                    display: 'flex',
-                    justifyContent: 'flex-end',
-                    marginTop: '0.75rem',
+                    marginTop: '0.25rem',
+                    fontSize: '0.875rem',
+                    color: '#666',
                   }}
                 >
-                  <AcButton
-                    style='button'
-                    buttonType='secondary'
-                    onClick={() => removeRow(rowId)}
-                    disabled={rows.length === 1}
-                    icon={<VISUALS.TRASHCAN />}
-                  />
-                </div>
-              )}
+                  {charsLeft} tekens resterend
+                </Paragraph>
+
+                {!isEditMode && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                      marginTop: '0.75rem',
+                    }}
+                  >
+                    <AcButton
+                      style='button'
+                      buttonType='secondary'
+                      onClick={() => removeRow(rowId)}
+                      disabled={rows.length === 1}
+                      icon={<VISUALS.TRASHCAN />}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           );
         })}
