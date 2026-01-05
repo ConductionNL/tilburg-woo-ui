@@ -1,6 +1,5 @@
 import React, { memo, useState, useEffect, useMemo } from 'react';
-import { ConUuidResolver } from '@components';
-import { AcLink } from '@src/molecules';
+import { ConUuidResolver, ConExternalLink } from '@components';
 import { withStore } from '@stores';
 import {
   UnorderedList,
@@ -216,19 +215,12 @@ const ConFormControlerenStage = memo(
               </div>
             )}
 
-            <div className='ac-register-review__field'>
-              <strong>Website:</strong>{' '}
-              {dienst.website ? (
-                <AcLink
-                  href={dienst.website}
-                  target='_blank'
-                  rel='noopener noreferrer'
-                >
-                  <ConUuidResolver>{dienst.website}</ConUuidResolver>
-                </AcLink>
-              ) : (
-                '-'
-              )}
+            <div
+              className='ac-register-review__field'
+              style={{ display: 'flex', gap: '4px' }}
+            >
+              <strong>Website:</strong>
+              <ConExternalLink href={dienst.website} />
             </div>
 
             <div className='ac-register-review__field'>
@@ -349,19 +341,12 @@ const ConFormControlerenStage = memo(
                     </div>
                   )}
                   {aanbiederOrganisatie.website && (
-                    <div className='ac-register-review__field'>
-                      <strong>Website:</strong>{' '}
-                      {aanbiederOrganisatie.website ? (
-                        <AcLink
-                          href={aanbiederOrganisatie.website}
-                          target='_blank'
-                          rel='noopener noreferrer'
-                        >
-                          {aanbiederOrganisatie.website}
-                        </AcLink>
-                      ) : (
-                        '-'
-                      )}
+                    <div
+                      className='ac-register-review__field'
+                      style={{ display: 'flex', gap: '4px' }}
+                    >
+                      <strong>Website:</strong>
+                      <ConExternalLink href={aanbiederOrganisatie.website} />
                     </div>
                   )}
                   {aanbiederOrganisatie.beschrijvingKort && (

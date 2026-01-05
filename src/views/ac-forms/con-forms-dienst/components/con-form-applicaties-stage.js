@@ -1,5 +1,10 @@
 import React, { memo } from 'react';
-import { ConSchemaEnhancedField, ConUuidResolver, AcLoader } from '@components';
+import {
+  ConSchemaEnhancedField,
+  ConUuidResolver,
+  AcLoader,
+  ConExternalLink,
+} from '@components';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
 
 /**
@@ -311,23 +316,9 @@ const ConFormApplicatiesStage = memo(
                                 </div>
                               )}
                               {website && (
-                                <div>
-                                  <span style={{ fontWeight: '500' }}>Website:</span>{' '}
-                                  <a
-                                    href={
-                                      website.startsWith('http')
-                                        ? website
-                                        : `https://${website}`
-                                    }
-                                    target='_blank'
-                                    rel='noopener noreferrer'
-                                    style={{
-                                      color: '#0063e5',
-                                      textDecoration: 'none',
-                                    }}
-                                  >
-                                    {website}
-                                  </a>
+                                <div style={{ display: 'flex', gap: '4px' }}>
+                                  <span style={{ fontWeight: '500' }}>Website:</span>
+                                  <ConExternalLink href={website} />
                                 </div>
                               )}
                             </div>

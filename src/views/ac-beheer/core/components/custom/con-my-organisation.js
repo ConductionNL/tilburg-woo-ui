@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcFlex, AcSection } from '@atoms';
-import { ConDynamicSidenav } from '@components';
+import { ConDynamicSidenav, ConExternalLink } from '@components';
 import {
   Heading,
   Link,
@@ -626,19 +626,15 @@ const ConMyOrganisationPage = ({ store }) => {
                           </div>
                         )}
                         {fullActiveOrganisation?.website && (
-                          <div style={{ marginBottom: '8px' }}>
-                            <strong>Website: </strong>
-                            <Link
-                              href={
-                                fullActiveOrganisation.website.startsWith('http')
-                                  ? fullActiveOrganisation.website
-                                  : `https://${fullActiveOrganisation.website}`
-                              }
-                              target='_blank'
-                              rel='noopener noreferrer'
-                            >
-                              {fullActiveOrganisation.website}
-                            </Link>
+                          <div
+                            style={{
+                              display: 'flex',
+                              gap: '4px',
+                              marginBottom: '8px',
+                            }}
+                          >
+                            <strong>Website:</strong>
+                            <ConExternalLink href={fullActiveOrganisation.website} />
                           </div>
                         )}
                       </div>
@@ -654,9 +650,7 @@ const ConMyOrganisationPage = ({ store }) => {
                       uses={uses}
                       used={used}
                       gebruikId={fullActiveOrganisation?.id}
-                      gebruikSchemaId={
-                        fullActiveOrganisation?.['@self']?.schema
-                      }
+                      gebruikSchemaId={fullActiveOrganisation?.['@self']?.schema}
                       usesLoading={usesLoading}
                       usedLoading={usedLoading}
                       tabIndex={relatedTabIndex}

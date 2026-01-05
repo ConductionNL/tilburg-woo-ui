@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { AcFlex } from '@src/atoms';
 import { AcCheckbox, AcButton } from '@src/molecules';
-import { ConSchemaEnhancedField, ConUuidResolver } from '@src/components';
+import {
+  ConSchemaEnhancedField,
+  ConUuidResolver,
+  ConExternalLink,
+} from '@src/components';
 import { Paragraph, Alert } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@src/constants';
 import { validateWebsite } from '@views/ac-forms/validation/form-validations';
@@ -690,19 +694,10 @@ const ConFormDienstZoekenStage = ({
                           )}
                           {website && (
                             <div>
-                              <a
-                                href={
-                                  website.startsWith('http')
-                                    ? website
-                                    : `https://${website}`
-                                }
-                                target='_blank'
-                                rel='noopener noreferrer'
+                              <ConExternalLink
+                                href={website}
                                 onClick={(e) => e.stopPropagation()}
-                                style={{ color: '#0063e5', textDecoration: 'none' }}
-                              >
-                                {website}
-                              </a>
+                              />
                             </div>
                           )}
                         </div>
