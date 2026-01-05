@@ -1,14 +1,13 @@
-import React, { memo, useState } from 'react';
+import React, { memo, useState, useEffect, useMemo } from 'react';
 import { ConUuidResolver } from '@components';
 import { AcLink } from '@src/molecules';
+import { withStore } from '@stores';
 import {
   UnorderedList,
   UnorderedListItem,
   Separator,
   Paragraph,
-  Alert,
 } from '@utrecht/component-library-react/dist/css-module';
-import { VISUALS } from '@src/constants';
 import ConLogoPreview from '@views/ac-register/con-logo-preview';
 // Import MDEditor for markdown rendering
 import MDEditor from '@uiw/react-md-editor';
@@ -29,12 +28,91 @@ const ConFormControlerenStage = memo(
     formType,
     aanbiederKeuze,
     aanbiederOrganisatie,
-    // Gebruik-beheerders flow props
-    isGebruikBeheerdersFlow = false,
-    gebruik,
-    dienstenResults = [],
-    deelnemerOptions = [],
+    store,
   }) => {
+    // State for fetched contactpersoon data
+    const [contactpersoonData, setContactpersoonData] = useState(null);
+
+    // Extract contactpersoon ID from dienst
+    const contactpersoonId = useMemo(() => {
+      if (!dienst?.contactpersoon) return null;
+      if (typeof dienst.contactpersoon === 'object') {
+        return dienst.contactpersoon.id || dienst.contactpersoon['@self']?.id;
+      }
+      return String(dienst.contactpersoon);
+    }, [dienst?.contactpersoon]);
+
+    // Fetch contactpersoon object if ID is available
+    useEffect(() => {
+      if (!contactpersoonId || !store?.object) return;
+
+      const fetchContactpersoon = async () => {
+        try {
+          // Check if already in store
+          const objectType = 'voorzieningen_contactpersoon';
+          const existingData = store.object.getObject(objectType, contactpersoonId);
+
+          if (existingData) {
+            setContactpersoonData(existingData);
+            return;
+          }
+
+          // Fetch from API
+          await store.object.fetchObject(
+            'voorzieningen',
+            'contactpersoon',
+            contactpersoonId,
+            {
+              '_extend[]': ['@self.schema'],
+              _published: 'false',
+            }
+          );
+
+          // Get from store after fetch
+          const fetchedData = store.object.getObject(objectType, contactpersoonId);
+          if (fetchedData) {
+            setContactpersoonData(fetchedData);
+          }
+        } catch (error) {
+          // Don't set state on error, will fall back to ConUuidResolver
+        }
+      };
+
+      fetchContactpersoon();
+    }, [contactpersoonId, store?.object]);
+
+    // Helper function to get contactpersoon display name
+    const getContactpersoonDisplayName = () => {
+      // First try to use fetched contactpersoon data
+      if (contactpersoonData) {
+        const fullName = [
+          contactpersoonData.voornaam,
+          contactpersoonData.tussenvoegsel,
+          contactpersoonData.achternaam,
+        ]
+          .filter(Boolean)
+          .join(' ');
+
+        if (fullName.trim()) {
+          return fullName;
+        }
+      }
+
+      // Try to use contactpersoon object if it's already an object with name fields
+      if (typeof dienst.contactpersoon === 'object' && dienst.contactpersoon) {
+        const c = dienst.contactpersoon;
+        const fullName = [c?.voornaam, c?.tussenvoegsel, c?.achternaam]
+          .filter(Boolean)
+          .join(' ');
+
+        if (fullName.trim()) {
+          return fullName;
+        }
+      }
+
+      return null;
+    };
+
     // Helper to get module information with additional details
     const getModulesWithDetails = () => {
       return (selectedModuleIds || []).map((id) => {
@@ -49,254 +127,9 @@ const ConFormControlerenStage = memo(
       });
     };
 
-    // Helper to get selected diensten with details for Gebruik-beheerders flow
-    const getSelectedDienstenWithDetails = () => {
-      if (
-        !isGebruikBeheerdersFlow ||
-        !gebruik?.diensten ||
-        !Array.isArray(gebruik.diensten)
-      ) {
-        return [];
-      }
-
-      const selectedDienstIds = gebruik.diensten.map((id) => String(id));
-      return dienstenResults
-        .filter((dienst) => {
-          const dienstId = String(dienst?.id || dienst?.['@self']?.id || '');
-          return selectedDienstIds.includes(dienstId);
-        })
-        .map((dienst) => ({
-          id: dienst?.id || dienst?.['@self']?.id || '',
-          naam: String(
-            dienst?.naam || dienst?.name || dienst?.title || dienst?.label || ''
-          ),
-          beschrijvingKort: String(
-            dienst?.beschrijvingKort ||
-              dienst?.beschrijving ||
-              dienst?.omschrijving ||
-              ''
-          ),
-          website: String(dienst?.website || ''),
-          type: String(dienst?.type || ''),
-          aanbieder: dienst?.aanbieder ? String(dienst.aanbieder) : null,
-        }));
-    };
-
-    // Helper to get selected deelnemers with labels
-    const getSelectedDeelnemersWithLabels = () => {
-      if (
-        !isGebruikBeheerdersFlow ||
-        !gebruik?.deelnemers ||
-        !Array.isArray(gebruik.deelnemers)
-      ) {
-        return [];
-      }
-
-      const selectedDeelnemerIds = gebruik.deelnemers.map((id) => String(id));
-      return deelnemerOptions
-        .filter((option) => selectedDeelnemerIds.includes(String(option.value)))
-        .map((option) => ({
-          id: option.value,
-          label: option.label,
-        }));
-    };
-
     // const productsWithDetails = getProductsWithDetails();
     const modulesWithDetails = getModulesWithDetails();
-    const selectedDienstenWithDetails = getSelectedDienstenWithDetails();
-    const selectedDeelnemersWithLabels = getSelectedDeelnemersWithLabels();
 
-    // Manage visibility state of info alert
-    const [showInfoAlert, setShowInfoAlert] = useState(() => {
-      return !sessionStorage.getItem('interne-notitie-info-alert-closed');
-    });
-
-    const handleCloseAlert = () => {
-      setShowInfoAlert(false);
-      sessionStorage.setItem('interne-notitie-info-alert-closed', 'true');
-    };
-
-    // Render Gebruik-beheerders flow sections
-    if (isGebruikBeheerdersFlow) {
-      return (
-        <div>
-          <Paragraph>
-            Controleer of het overzicht van de dienst volledig en juist is voordat u
-            verder gaat.
-            <br />
-            U kunt met Vorige terug naar de eerdere stappen.
-            <br />
-            Na het registreren van de koppeling kunt u via uw &quot;Dashboard&quot;
-            de koppeling opzoeken en indien gewenst aanpassen.
-          </Paragraph>
-          <br />
-
-          {/* Closeable info alert */}
-          {showInfoAlert && (
-            <Alert severity='info' className='ac-forms-product-info-alert'>
-              <button
-                onClick={handleCloseAlert}
-                className='ac-forms-product-info-alert__close-button'
-                title='Sluiten'
-                aria-label='Alert sluiten'
-              >
-                <VISUALS.CLOSE />
-              </button>
-              <div className='ac-forms-product-info-alert__content'>
-                <VISUALS.INFO className='ac-forms-product-info-alert__icon' />
-                <div>
-                  <strong>Interne notitie</strong>
-                  <br />
-                  <span className='ac-forms-product-info-alert__text'>
-                    De interne notitie is alleen te lezen door gebruikers binnen uw
-                    organisatie.
-                  </span>
-                </div>
-              </div>
-            </Alert>
-          )}
-          <br />
-
-          {/* Diensten section */}
-          <div className='con-form-wizard-review-heading-container'>
-            <h3 className='con-form-wizard-review-heading-header'>Diensten</h3>
-            <div className='ac-register-review'>
-              <div className='ac-register-review__section'>
-                {selectedDienstenWithDetails.length > 0 ? (
-                  <UnorderedList>
-                    {selectedDienstenWithDetails.map((dienst, i) => (
-                      <UnorderedListItem key={`dienst-${dienst.id}-${i}`}>
-                        <div>
-                          <strong>
-                            {dienst.naam ? (
-                              <ConUuidResolver>{dienst.naam}</ConUuidResolver>
-                            ) : (
-                              'Onbekende dienst'
-                            )}
-                          </strong>
-                          {dienst.beschrijvingKort && (
-                            <div
-                              style={{
-                                fontSize: '0.875rem',
-                                color: '#666',
-                                marginTop: '0.25rem',
-                              }}
-                            >
-                              {dienst.beschrijvingKort}
-                            </div>
-                          )}
-                          <div
-                            style={{
-                              fontSize: '0.875rem',
-                              color: '#666',
-                              marginTop: '0.25rem',
-                              display: 'flex',
-                              flexDirection: 'column',
-                              gap: '0.25rem',
-                            }}
-                          >
-                            {dienst.type && (
-                              <div>
-                                <span style={{ fontWeight: '500' }}>Type:</span>{' '}
-                                <ConUuidResolver>{dienst.type}</ConUuidResolver>
-                              </div>
-                            )}
-                            {dienst.aanbieder && (
-                              <div>
-                                <span style={{ fontWeight: '500' }}>Aanbieder:</span>{' '}
-                                <ConUuidResolver>{dienst.aanbieder}</ConUuidResolver>
-                              </div>
-                            )}
-                            {dienst.website && (
-                              <div>
-                                <span style={{ fontWeight: '500' }}>Website:</span>{' '}
-                                <AcLink
-                                  href={
-                                    dienst.website.startsWith('http')
-                                      ? dienst.website
-                                      : `https://${dienst.website}`
-                                  }
-                                  target='_blank'
-                                  rel='noopener noreferrer'
-                                >
-                                  {dienst.website}
-                                </AcLink>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </UnorderedListItem>
-                    ))}
-                  </UnorderedList>
-                ) : (
-                  <div className='ac-register-review__field'>
-                    <Paragraph style={{ fontStyle: 'italic', color: '#666' }}>
-                      Geen diensten geselecteerd
-                    </Paragraph>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Gebruiksinformatie section */}
-          <div className='con-form-wizard-review-heading-container'>
-            <h3 className='con-form-wizard-review-heading-header'>
-              Gebruiksinformatie
-            </h3>
-            <div className='ac-register-review__section'>
-              <div className='ac-register-review__field'>
-                <strong>Status:</strong>{' '}
-                {gebruik?.status ? (
-                  <span>
-                    <ConUuidResolver>{gebruik.status}</ConUuidResolver>
-                  </span>
-                ) : (
-                  <span style={{ fontStyle: 'italic', color: '#666' }}>-</span>
-                )}
-              </div>
-              {gebruik?.interneAantekening && (
-                <div className='ac-register-review__field'>
-                  <strong>Interne aantekening:</strong>
-                  <div
-                    style={{
-                      wordBreak: 'break-word',
-                      overflowWrap: 'break-word',
-                      hyphens: 'auto',
-                      marginTop: '0.25rem',
-                    }}
-                  >
-                    {gebruik.interneAantekening}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Deelnemers section - only show if deelnemers were selected */}
-          {selectedDeelnemersWithLabels.length > 0 && (
-            <div className='con-form-wizard-review-heading-container'>
-              <h3 className='con-form-wizard-review-heading-header'>Deelnemers</h3>
-              <div className='ac-register-review'>
-                <div className='ac-register-review__section'>
-                  <div className='ac-register-review__field'>
-                    <UnorderedList>
-                      {selectedDeelnemersWithLabels.map((deelnemer, i) => (
-                        <UnorderedListItem key={`deelnemer-${deelnemer.id}-${i}`}>
-                          <ConUuidResolver>{deelnemer.label}</ConUuidResolver>
-                        </UnorderedListItem>
-                      ))}
-                    </UnorderedList>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    // Render Aanbod-beheerders flow sections (existing code)
     return (
       <div>
         <Paragraph>
@@ -423,33 +256,7 @@ const ConFormControlerenStage = memo(
               <div className='ac-register-review__field'>
                 <strong>Contactpersoon:</strong>{' '}
                 <span>
-                  {typeof dienst.contactpersoon === 'object' ? (
-                    // Handle contactpersoon as object with name properties
-                    (() => {
-                      const c = dienst.contactpersoon;
-                      // Try different name combinations for contactpersoon
-                      const fullName = [c?.voornaam, c?.tussenvoegsel, c?.achternaam]
-                        .filter(Boolean)
-                        .join(' ');
-
-                      // Fallback to other name properties if voornaam/achternaam not available
-                      if (fullName.trim()) {
-                        return fullName;
-                      }
-
-                      // Try alternative name properties
-                      return (
-                        c?.['@self']?.name ||
-                        c?.naam ||
-                        c?.name ||
-                        c?.displayName ||
-                        c?.label ||
-                        c?.id ||
-                        'Onbekende contactpersoon'
-                      );
-                    })()
-                  ) : (
-                    // Handle contactpersoon as UUID string - resolve with ConUuidResolver
+                  {getContactpersoonDisplayName() || (
                     <ConUuidResolver>{dienst.contactpersoon}</ConUuidResolver>
                   )}
                 </span>
@@ -463,7 +270,7 @@ const ConFormControlerenStage = memo(
           <div className='ac-register-review'>
             <div className='ac-register-review__section'>
               {modulesWithDetails.length > 0 ? (
-                <div className='ac-register-review__field'>
+                <div>
                   <UnorderedList>
                     {modulesWithDetails.map((module, i) => (
                       <UnorderedListItem key={`mod-${module.id}-${i}`}>
@@ -645,4 +452,4 @@ const ConFormControlerenStage = memo(
 
 ConFormControlerenStage.displayName = 'ConFormControlerenStage';
 
-export default ConFormControlerenStage;
+export default withStore(ConFormControlerenStage);
