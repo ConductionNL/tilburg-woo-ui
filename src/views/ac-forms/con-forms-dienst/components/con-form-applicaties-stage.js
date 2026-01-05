@@ -1,9 +1,6 @@
-import React, { memo, useEffect } from 'react';
-import { ConSchemaEnhancedField, ConUuidResolver } from '@components';
+import React, { memo } from 'react';
+import { ConSchemaEnhancedField, ConUuidResolver, AcLoader } from '@components';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
-
-// Inject spinner keyframes once
-const SPINNER_KEYFRAMES_ID = 'con-form-applicaties-spinner-keyframes';
 
 /**
  * Applicaties Selectie Stage
@@ -23,20 +20,6 @@ const ConFormApplicatiesStage = memo(
     dienstenResultsLoading = false,
     resolvedModulesFromDiensten = [],
   }) => {
-    // Inject CSS keyframes for spinner animation
-    useEffect(() => {
-      if (!document.getElementById(SPINNER_KEYFRAMES_ID)) {
-        const style = document.createElement('style');
-        style.id = SPINNER_KEYFRAMES_ID;
-        style.textContent = `
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `;
-        document.head.appendChild(style);
-      }
-    }, []);
     const handleChange = (value) => {
       // ConSchemaEnhancedField with array schema returns an array of IDs for multi-select
       if (Array.isArray(value)) {
@@ -127,20 +110,11 @@ const ConFormApplicatiesStage = memo(
                       alignItems: 'center',
                       gap: '0.5rem',
                       padding: '0.75rem 1rem',
-                      backgroundColor: '#f5f5f5',
-                      borderRadius: '4px',
                       marginBottom: dienstenResults.length > 0 ? '0.75rem' : 0,
                     }}
                   >
-                    <span
-                      style={{
-                        width: '16px',
-                        height: '16px',
-                        border: '2px solid #ddd',
-                        borderTopColor: '#0063e5',
-                        borderRadius: '50%',
-                        animation: 'spin 1s linear infinite',
-                      }}
+                    <AcLoader
+                      style={{ height: 'auto', flex: 'none', fontSize: '0.5rem' }}
                     />
                     <span style={{ fontSize: '0.875rem', color: '#666' }}>
                       Diensten worden geladen...
