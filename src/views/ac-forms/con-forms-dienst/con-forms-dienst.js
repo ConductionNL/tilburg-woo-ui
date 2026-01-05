@@ -276,7 +276,7 @@ const ConFormsDienst = ({ store, userStore }) => {
     if (typeof userStore?.fetchUserProfile === 'function') {
       if (process.env.NODE_ENV === 'development') {
         // eslint-disable-next-line no-console
-        console.log(
+        console.info(
           'ConFormsDienst - refreshing /me via userStore.fetchUserProfile'
         );
       }
