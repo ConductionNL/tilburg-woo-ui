@@ -878,16 +878,27 @@ const AcFormsGebruik = ({ store }) => {
     const run = async () => {
       setModulesLoading(true);
       try {
+        const queryParams = {
+          _limit: '50',
+          _page: '1',
+          '_extend[]': ['@self.schema', 'moduleVersies'],
+          _published: 'false',
+          _source: 'index', // Use index to get applications from all tenants
+        };
+
+        // Filter by leverancier (aanbieder) for Aanbod beheerders flow
+        if (isAanbodBeheerdersFlow) {
+          const activeOrg = store?.user?.activeOrganization;
+          const activeOrgId = activeOrg?.uuid || activeOrg?.id;
+          if (activeOrgId) {
+            queryParams.aanbieder = activeOrgId;
+          }
+        }
+
         await store.object.fetchCollection(
           'voorzieningen',
           'module',
-          {
-            _limit: '50',
-            _page: '1',
-            '_extend[]': ['@self.schema', 'moduleVersies'],
-            _published: 'false',
-            _source: 'index', // Use index to get applications from all tenants
-          },
+          queryParams,
           null,
           'gebruik_form'
         );
@@ -921,7 +932,7 @@ const AcFormsGebruik = ({ store }) => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [store, isAanbodBeheerdersFlow]);
 
   // Pre-select applicatie from URL parameter
   useEffect(() => {
@@ -944,15 +955,26 @@ const AcFormsGebruik = ({ store }) => {
           // If applicatie not in initial list, fetch it directly
           setApplicatiePreloadLoading(true);
           try {
+            const fetchParams = {
+              '_extend[]': ['@self.schema', 'moduleVersies'],
+              _published: 'false',
+              _source: 'index', // Use index to get applications from all tenants
+            };
+
+            // Filter by leverancier (aanbieder) for Aanbod beheerders flow
+            if (isAanbodBeheerdersFlow) {
+              const activeOrg = store?.user?.activeOrganization;
+              const activeOrgId = activeOrg?.uuid || activeOrg?.id;
+              if (activeOrgId) {
+                fetchParams.aanbieder = activeOrgId;
+              }
+            }
+
             await store.object.fetchObject(
               'voorzieningen',
               'module',
               String(applicatieFromUrl),
-              {
-                '_extend[]': ['@self.schema', 'moduleVersies'],
-                _published: 'false',
-                _source: 'index', // Use index to get applications from all tenants
-              }
+              fetchParams
             );
             const fetched = store.object.getObject(
               'voorzieningen_module',
@@ -980,7 +1002,7 @@ const AcFormsGebruik = ({ store }) => {
     };
 
     preSelectApplicatie();
-  }, [applicatieFromUrl, modulesOptions, isEditMode, store]);
+  }, [applicatieFromUrl, modulesOptions, isEditMode, store, isAanbodBeheerdersFlow]);
 
   // Server-side search for modules (searches all modules)
   const searchModules = useCallback(
@@ -1551,7 +1573,7 @@ const AcFormsGebruik = ({ store }) => {
 
         try {
           const response = await fetch(
-            `${commongroundApiUrl()}/apps/openregister/api/bulk/voorzieningen/gebruik/save`,
+            `${commongroundApiUrl()}/openregister/api/bulk/voorzieningen/gebruik/save`,
             {
               method: 'POST',
               headers: {
