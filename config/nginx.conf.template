@@ -31,12 +31,10 @@ http {
         # API Proxy for Nextcloud apps (adds index.php automatically)
         location /api/apps/ {
             proxy_pass ${NGINX_NEXTCLOUD_UPSTREAM}/index.php/apps/;
-            proxy_set_header Host ${NGINX_TARGET_HOST};
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
             proxy_cookie_path / /;
-            proxy_cookie_domain ${NGINX_NEXTCLOUD_DOMAIN} $host;
             
             # Hide any CORS headers from backend to prevent conflicts
             proxy_hide_header Access-Control-Allow-Origin;
