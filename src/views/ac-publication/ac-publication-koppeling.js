@@ -23,57 +23,41 @@ import { AcFormatDate } from '@src/utilities/ac-format-date';
 // import { checkOrganizationPermissions } from '@utils/organization-permissions';
 
 /**
- * Gets the relevant start date based on the status.
- * Maps status values to their corresponding date fields and labels.
+ * Gets all dates that have values, to show the full history/trail of status changes.
+ * Returns an array of date objects with label and formatted value.
  */
-const getRelevantStartDate = (data) => {
-  const status = data?.status;
-  if (!status) return null;
+const getAllDatesWithValues = (data) => {
+  const dates = [];
 
-  switch (status) {
-    case 'in gebruik':
-      return data?.datumInGebruik
-        ? {
-            label: 'Startdatum In gebruik',
-            value: AcFormatDate(data.datumInGebruik, 'YYYY-MM-DD', 'D MMMM YYYY'),
-          }
-        : null;
-    case 'in ontwikkeling':
-      return data?.datumInOntwikkeling
-        ? {
-            label: 'Startdatum In ontwikkeling',
-            value: AcFormatDate(
-              data.datumInOntwikkeling,
-              'YYYY-MM-DD',
-              'D MMMM YYYY'
-            ),
-          }
-        : null;
-    case 'einde ondersteuning':
-      return data?.datumEindeOndersteuning
-        ? {
-            label: 'Startdatum Einde ondersteuning',
-            value: AcFormatDate(
-              data.datumEindeOndersteuning,
-              'YYYY-MM-DD',
-              'D MMMM YYYY'
-            ),
-          }
-        : null;
-    case 'teruggetrokken':
-      return data?.datumTeruggetrokken
-        ? {
-            label: 'Startdatum Teruggetrokken',
-            value: AcFormatDate(
-              data.datumTeruggetrokken,
-              'YYYY-MM-DD',
-              'D MMMM YYYY'
-            ),
-          }
-        : null;
-    default:
-      return null;
+  if (data?.datumInOntwikkeling) {
+    dates.push({
+      label: 'Startdatum In ontwikkeling',
+      value: AcFormatDate(data.datumInOntwikkeling, 'YYYY-MM-DD', 'D MMMM YYYY'),
+    });
   }
+
+  if (data?.datumInGebruik) {
+    dates.push({
+      label: 'Startdatum In gebruik',
+      value: AcFormatDate(data.datumInGebruik, 'YYYY-MM-DD', 'D MMMM YYYY'),
+    });
+  }
+
+  if (data?.datumEindeOndersteuning) {
+    dates.push({
+      label: 'Startdatum Einde ondersteuning',
+      value: AcFormatDate(data.datumEindeOndersteuning, 'YYYY-MM-DD', 'D MMMM YYYY'),
+    });
+  }
+
+  if (data?.datumTeruggetrokken) {
+    dates.push({
+      label: 'Startdatum Teruggetrokken',
+      value: AcFormatDate(data.datumTeruggetrokken, 'YYYY-MM-DD', 'D MMMM YYYY'),
+    });
+  }
+
+  return dates;
 };
 
 /**
@@ -298,13 +282,15 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
               </div>
             )}
             {(() => {
-              const relevantDate = getRelevantStartDate(get_single);
-              return relevantDate ? (
-                <div style={{ marginBottom: '8px' }}>
-                  <strong>{relevantDate.label}: </strong>
-                  {relevantDate.value}
-                </div>
-              ) : null;
+              const allDates = getAllDatesWithValues(get_single);
+              return allDates.length > 0
+                ? allDates.map((dateInfo, index) => (
+                    <div key={index} style={{ marginBottom: '8px' }}>
+                      <strong>{dateInfo.label}: </strong>
+                      {dateInfo.value}
+                    </div>
+                  ))
+                : null;
             })()}
             {get_single?.beschrijvingKort && (
               <div style={{ marginBottom: '8px' }}>

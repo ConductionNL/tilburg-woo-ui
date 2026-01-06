@@ -11,6 +11,8 @@ import { VISUALS } from '@src/constants';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 import { TOOLTIP_ID } from '@src/index.web';
 import { commongroundApiUrl } from '@src/config';
+import { ConSchemaEnhancedField } from '@src/components';
+import { validateWebsite } from '@views/ac-forms/validation/form-validations';
 
 /**
  * Maps status value to corresponding date property name.
@@ -89,6 +91,20 @@ const ConKoppelingStageToevoegen = ({
   nameByRow,
   setNameByRow,
   isEditMode,
+  schemas,
+  applicatieKeuzeByRow,
+  setApplicatieKeuzeForRow,
+  nieuweApplicatieByRow,
+  setNieuweApplicatieDataForRow,
+  leverancierKeuzeByRow,
+  setLeverancierKeuzeForRow,
+  nieuweLeveancierByRow,
+  setNieuweLeverancierDataForRow,
+  leverancierOptions,
+  leverancierLoading,
+  searchLeveranciers,
+  ownAppKeuze = 'bestaand', // Whether own app (Applicatie A) is existing or new
+  nieuweOwnApp = {}, // New own app data when ownAppKeuze === 'nieuw'
 }) => {
   const [appBOptionsByRow, setAppBOptionsByRow] = useState({});
   const [appBLoadingByRow, setAppBLoadingByRow] = useState({});
@@ -476,12 +492,13 @@ const ConKoppelingStageToevoegen = ({
       aria-labelledby='koppeling-title'
     >
       <h2 id='koppeling-title' className='sr-only'>
-        Koppeling
+        Koppelingen met andere applicaties
       </h2>
 
-      <Paragraph>
-        Geef aan met welke applicaties uw oplossing gegevens kan uitwisselen. Vul de
-        naam, richting en status van de koppeling in.
+      <Paragraph className='con-form-wizard-paragraph'>
+        Geef aan met welke applicaties uw oplossing gegevens kan uitwisselen en
+        beschrijf de koppeling. Zo kunnen gemeenten zien hoe uw applicatie past in
+        hun applicatielandschap.
       </Paragraph>
 
       {showInfoAlert && (
@@ -497,11 +514,14 @@ const ConKoppelingStageToevoegen = ({
           <div className='ac-forms-product-info-alert__content'>
             <VISUALS.INFO className='ac-forms-product-info-alert__icon' />
             <div>
-              <strong>Koppeling informatie</strong>
+              <strong>Koppeling informatie aanpassen</strong>
               <br />
               <span className='ac-forms-product-info-alert__text'>
                 Vul per koppeling in met welke applicaties u koppelt en welke
                 applicatie de gegevens verzendt en welke deze ontvangt.
+                <br />
+                Vervolgens kunt u aanvullende informatie invullen, zoals het
+                transportprotocol (bijvoorbeeld API, bestand of bericht).
                 <br />
                 Bestaat de applicatie waarmee u wilt koppelen nog niet, dan kunt u de
                 leverancier vragen zich aan te melden bij de softwarecatalogus.
@@ -594,7 +614,11 @@ const ConKoppelingStageToevoegen = ({
                       'ac-beheer-select',
                       'ac-beheer-select--disabled'
                     )}
-                    value={ownApp || null}
+                    value={
+                      ownAppKeuze === 'nieuw' && nieuweOwnApp?.naam
+                        ? { value: '__new_own_app__', label: nieuweOwnApp.naam }
+                        : ownApp || null
+                    }
                     placeholder='Selecteer applicatie A'
                     inputId={appAId}
                     aria-required='true'
@@ -650,53 +674,312 @@ const ConKoppelingStageToevoegen = ({
                       data-tooltip-content='Applicatie B kan ook een buiten gemeentelijke voorziening zijn.'
                     />
                   </label>
-                  <ReactSelect
-                    className={clsx(
-                      'ac-beheer-select',
-                      loading && 'ac-beheer-select--disabled'
-                    )}
-                    isClearable
-                    options={appBOptionsByRow[rowId] || getMergedOptions()}
-                    value={(() => {
-                      const options = appBOptionsByRow[rowId] || getMergedOptions();
-                      const selectedValue =
-                        selectedAppBByRow[rowId] != null
-                          ? String(selectedAppBByRow[rowId])
-                          : null;
-                      const found = selectedValue
-                        ? options.find((o) => String(o.value) === selectedValue)
-                        : null;
-                      return found || null;
-                    })()}
-                    onChange={(opt) => {
-                      setSelectedAppBByRow((prev) => ({
-                        ...prev,
-                        [rowId]: opt?.value,
-                      }));
-                      if (opt) upsertModuleOption(opt);
-                    }}
-                    inputId={appBId}
-                    aria-required='true'
-                    isOptionDisabled={(opt) =>
-                      String(opt?.value) ===
-                      String(selectedAppAByRow[rowId] || ownApp?.value || '')
-                    }
-                    onInputChange={(input, { action }) => {
-                      if (action === 'input-change')
-                        debounceFetchForRow(rowId, 'B', input || '');
-                      return input;
-                    }}
-                    isLoading={!!appBLoadingByRow[rowId]}
-                    loadingMessage={() => 'Bezig met laden…'}
-                    getOptionLabel={(opt) => {
-                      const base = opt?.label ?? '';
-                      const aSel = selectedAppAByRow[rowId] || ownApp?.value || '';
-                      return String(opt?.value) === String(aSel)
-                        ? `${base} (al gekozen bij A)`
-                        : base;
-                    }}
-                    styles={getSelectStyles()}
-                  />
+                  {/* Show existing application select or new application form */}
+                  {applicatieKeuzeByRow[rowId] !== 'nieuw' ? (
+                    <>
+                      <ReactSelect
+                        className={clsx(
+                          'ac-beheer-select',
+                          loading && 'ac-beheer-select--disabled'
+                        )}
+                        isClearable
+                        options={appBOptionsByRow[rowId] || getMergedOptions()}
+                        value={(() => {
+                          const options =
+                            appBOptionsByRow[rowId] || getMergedOptions();
+                          const selectedValue =
+                            selectedAppBByRow[rowId] != null
+                              ? String(selectedAppBByRow[rowId])
+                              : null;
+                          const found = selectedValue
+                            ? options.find((o) => String(o.value) === selectedValue)
+                            : null;
+                          return found || null;
+                        })()}
+                        onChange={(opt) => {
+                          setSelectedAppBByRow((prev) => ({
+                            ...prev,
+                            [rowId]: opt?.value,
+                          }));
+                          if (opt) upsertModuleOption(opt);
+                        }}
+                        inputId={appBId}
+                        aria-required='true'
+                        isOptionDisabled={(opt) =>
+                          String(opt?.value) ===
+                          String(selectedAppAByRow[rowId] || ownApp?.value || '')
+                        }
+                        onInputChange={(input, { action }) => {
+                          if (action === 'input-change')
+                            debounceFetchForRow(rowId, 'B', input || '');
+                          return input;
+                        }}
+                        isLoading={!!appBLoadingByRow[rowId]}
+                        loadingMessage={() => 'Bezig met laden…'}
+                        getOptionLabel={(opt) => {
+                          const base = opt?.label ?? '';
+                          const aSel =
+                            selectedAppAByRow[rowId] || ownApp?.value || '';
+                          return String(opt?.value) === String(aSel)
+                            ? `${base} (al gekozen bij A)`
+                            : base;
+                        }}
+                        styles={getSelectStyles()}
+                      />
+                    </>
+                  ) : (
+                    <div
+                      style={{
+                        marginTop: '0.5rem',
+                        padding: '1rem',
+                        border: '1px solid #e5e5e5',
+                        borderRadius: '6px',
+                        backgroundColor: '#fafafa',
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          marginBottom: '1rem',
+                        }}
+                      >
+                        <strong>Nieuwe applicatie aanmaken</strong>
+                        <AcButton
+                          style='button'
+                          buttonType='secondary'
+                          small
+                          icon={<VISUALS.ARROW_LEFT />}
+                          onClick={() => {
+                            setApplicatieKeuzeForRow(rowId, 'bestaand');
+                            // Clear new application data
+                            setSelectedAppBByRow((prev) => ({
+                              ...prev,
+                              [rowId]: null,
+                            }));
+                          }}
+                        >
+                          Bestaande applicatie selecteren
+                        </AcButton>
+                      </div>
+
+                      {/* Leverancier section */}
+                      <div style={{ marginBottom: '1rem' }}>
+                        <h4
+                          className='utrecht-heading-4'
+                          style={{ marginBottom: '0.5rem' }}
+                        >
+                          {leverancierKeuzeByRow[rowId] === 'nieuw'
+                            ? 'Leverancier aanmaken'
+                            : 'Leverancier selecteren'}
+                        </h4>
+
+                        {leverancierKeuzeByRow[rowId] !== 'nieuw' ? (
+                          <>
+                            <ConSchemaEnhancedField
+                              schemaType='module'
+                              schemaProperty='aanbieder'
+                              value={
+                                nieuweApplicatieByRow[rowId]?.leverancier || null
+                              }
+                              onChange={(value) => {
+                                const nextId =
+                                  (value &&
+                                    value.data &&
+                                    (value.data.id || value.data.value)) ||
+                                  (value && value.value) ||
+                                  value;
+                                setNieuweApplicatieDataForRow(
+                                  rowId,
+                                  'leverancier',
+                                  nextId
+                                );
+                              }}
+                              isDisabled={loading}
+                              isLoading={leverancierLoading}
+                              width='full'
+                              schemas={schemas}
+                              optionsProvider={leverancierOptions}
+                              onSearch={(_path, _refSlug, query) =>
+                                searchLeveranciers && searchLeveranciers(query || '')
+                              }
+                              customProps={{
+                                label: 'Leverancier',
+                                isClearable: true,
+                                placeholder: 'Zoek en selecteer leverancier',
+                                required: true,
+                              }}
+                            />
+                            <div style={{ marginTop: '0.5rem' }}>
+                              <AcButton
+                                style='button'
+                                buttonType='secondary'
+                                small
+                                icon={<VISUALS.BUILDING />}
+                                onClick={() =>
+                                  setLeverancierKeuzeForRow(rowId, 'nieuw')
+                                }
+                              >
+                                Leverancier niet gevonden? Maak een nieuwe aan
+                              </AcButton>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div
+                              style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(2, 1fr)',
+                                gap: '1rem',
+                                marginBottom: '0.5rem',
+                              }}
+                            >
+                              <ConSchemaEnhancedField
+                                schemaType='organisatie'
+                                schemaProperty='naam'
+                                value={nieuweLeveancierByRow[rowId]?.naam || ''}
+                                onChange={(value) =>
+                                  setNieuweLeverancierDataForRow(
+                                    rowId,
+                                    'naam',
+                                    value
+                                  )
+                                }
+                                isDisabled={loading}
+                                width='full'
+                                schemas={schemas}
+                                customProps={{
+                                  required: true,
+                                  placeholder: 'Naam van de leverancier',
+                                }}
+                              />
+                              <ConSchemaEnhancedField
+                                schemaType='organisatie'
+                                schemaProperty='website'
+                                value={nieuweLeveancierByRow[rowId]?.website || ''}
+                                onChange={(value) =>
+                                  setNieuweLeverancierDataForRow(
+                                    rowId,
+                                    'website',
+                                    value
+                                  )
+                                }
+                                isDisabled={loading}
+                                width='full'
+                                schemas={schemas}
+                                customProps={{
+                                  inputType: 'text',
+                                  required: true,
+                                  placeholder: 'Website van de leverancier',
+                                  validation: {
+                                    custom: (value) => {
+                                      if (!value || value.trim() === '') return true;
+                                      return validateWebsite(value.trim());
+                                    },
+                                    customErrorMessage:
+                                      'Website heeft een ongeldig formaat (bijv. conduction.nl)',
+                                  },
+                                }}
+                              />
+                            </div>
+                            <AcButton
+                              style='button'
+                              buttonType='secondary'
+                              small
+                              icon={<VISUALS.ARROW_LEFT />}
+                              onClick={() =>
+                                setLeverancierKeuzeForRow(rowId, 'bestaand')
+                              }
+                            >
+                              Bestaande leverancier selecteren
+                            </AcButton>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Applicatie fields */}
+                      <div>
+                        <h4
+                          className='utrecht-heading-4'
+                          style={{ marginBottom: '0.5rem' }}
+                        >
+                          Applicatie
+                        </h4>
+                        <div
+                          style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(2, 1fr)',
+                            gap: '1rem',
+                          }}
+                        >
+                          <ConSchemaEnhancedField
+                            schemaType='module'
+                            schemaProperty='naam'
+                            value={nieuweApplicatieByRow[rowId]?.naam || ''}
+                            onChange={(value) =>
+                              setNieuweApplicatieDataForRow(rowId, 'naam', value)
+                            }
+                            isDisabled={loading}
+                            width='full'
+                            schemas={schemas}
+                            customProps={{
+                              required: true,
+                              placeholder: 'Naam van de applicatie',
+                            }}
+                          />
+                          <ConSchemaEnhancedField
+                            schemaType='module'
+                            schemaProperty='website'
+                            value={nieuweApplicatieByRow[rowId]?.website || ''}
+                            onChange={(value) =>
+                              setNieuweApplicatieDataForRow(rowId, 'website', value)
+                            }
+                            isDisabled={loading}
+                            width='full'
+                            schemas={schemas}
+                            customProps={{
+                              inputType: 'text',
+                              required: true,
+                              placeholder: 'Website van de applicatie',
+                              validation: {
+                                custom: (value) => {
+                                  if (!value || String(value).trim() === '')
+                                    return true;
+                                  return validateWebsite(String(value).trim());
+                                },
+                                customErrorMessage:
+                                  'Website heeft een ongeldig formaat (bijv. conduction.nl)',
+                              },
+                            }}
+                          />
+                        </div>
+                        <div style={{ marginTop: '1rem' }}>
+                          <ConSchemaEnhancedField
+                            schemaType='module'
+                            schemaProperty='beschrijvingKort'
+                            value={
+                              nieuweApplicatieByRow[rowId]?.beschrijvingKort || ''
+                            }
+                            onChange={(value) =>
+                              setNieuweApplicatieDataForRow(
+                                rowId,
+                                'beschrijvingKort',
+                                value
+                              )
+                            }
+                            isDisabled={loading}
+                            width='full'
+                            schemas={schemas}
+                            customProps={{
+                              description:
+                                'Een korte beschrijving van de applicatie',
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 

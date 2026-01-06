@@ -1,13 +1,11 @@
-import React, { memo, useState } from 'react';
+import React, { memo } from 'react';
 import clsx from 'clsx';
 import ReactSelect from 'react-select';
 import {
   Paragraph,
   Textarea,
   Separator,
-  Alert,
 } from '@utrecht/component-library-react/dist/css-module';
-import { VISUALS } from '@src/constants';
 
 /**
  * ConKoppelingStepGebruiksinformatie (Aanvullende informatie)
@@ -36,14 +34,14 @@ const ConKoppelingStepGebruiksinformatie = ({
   loading,
   nameByRow,
 }) => {
-  const [showInfoAlert, setShowInfoAlert] = useState(() => {
-    return !sessionStorage.getItem('koppeling-aanvullende-info-alert-closed');
-  });
+//   const [showInfoAlert, setShowInfoAlert] = useState(() => {
+//     return !sessionStorage.getItem('koppeling-aanvullende-info-alert-closed');
+//   });
 
-  const handleCloseAlert = () => {
-    setShowInfoAlert(false);
-    sessionStorage.setItem('koppeling-aanvullende-info-alert-closed', 'true');
-  };
+//   const handleCloseAlert = () => {
+//     setShowInfoAlert(false);
+//     sessionStorage.setItem('koppeling-aanvullende-info-alert-closed', 'true');
+//   };
 
   return (
     <div
@@ -52,16 +50,16 @@ const ConKoppelingStepGebruiksinformatie = ({
       aria-labelledby='aanvullende-informatie-title'
     >
       <h2 id='aanvullende-informatie-title' className='sr-only'>
-        Aanvullende informatie
+      Aanvullende informatie over uw koppelingen
+
       </h2>
 
       <Paragraph className='con-form-wizard-paragraph'>
-        Vul aanvullende informatie in voor de koppeling(en). Deze velden zijn
-        optioneel maar helpen andere gebruikers beter te begrijpen hoe de koppeling
-        werkt.
+      Beschrijf hier de koppeling aanvullend. Geef aan op welke standaard de koppeling is gebaseerd en voeg relevante technische informatie toe.
+
       </Paragraph>
 
-      {showInfoAlert && (
+      {/* {showInfoAlert && (
         <Alert severity='info' className='ac-forms-product-info-alert'>
           <button
             onClick={handleCloseAlert}
@@ -85,7 +83,7 @@ const ConKoppelingStepGebruiksinformatie = ({
             </div>
           </div>
         </Alert>
-      )}
+      )} */}
 
       <div className='con-form-wizard-rows'>
         {rows.map((rowId, index) => {
