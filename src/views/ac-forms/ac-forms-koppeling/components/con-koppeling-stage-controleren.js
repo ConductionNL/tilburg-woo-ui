@@ -395,15 +395,32 @@ const ConKoppelingStageControleren = ({
                           )}
                           {standaardenByRow?.[rowId]?.length > 0 && (
                             <div>
-                              Standaardversies:{' '}
-                              {standaardenByRow[rowId]
-                                .map(
-                                  (s) =>
-                                    standaardenOptions.find((o) => o.value === s)
-                                      ?.label
-                                )
-                                .filter(Boolean)
-                                .join(', ')}
+                              <div style={{ marginBottom: '0.25rem' }}>
+                                Standaardversies:
+                              </div>
+                              <ul
+                                style={{
+                                  margin: 0,
+                                  paddingInlineStart: '1.25rem',
+                                  listStyleType: 'disc',
+                                }}
+                              >
+                                {standaardenByRow[rowId]
+                                  .map((s) => {
+                                    const label = standaardenOptions.find(
+                                      (o) => o.value === s
+                                    )?.label;
+                                    return label ? (
+                                      <li
+                                        key={s}
+                                        style={{ marginBottom: '0.125rem' }}
+                                      >
+                                        {label}
+                                      </li>
+                                    ) : null;
+                                  })
+                                  .filter(Boolean)}
+                              </ul>
                             </div>
                           )}
                         </div>

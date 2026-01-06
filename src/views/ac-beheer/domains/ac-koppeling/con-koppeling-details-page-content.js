@@ -348,12 +348,20 @@ const ConKoppelingDetailsPageContent = ({
           )}
           {data?.standaardversies && data.standaardversies.length > 0 && (
             <div style={{ marginBottom: '8px' }}>
-              <strong>Standaardversies: </strong>
-              {data.standaardversies.map((s) => (
-                <div key={s}>
-                  <ConUuidResolver>{String(s)}</ConUuidResolver>
-                </div>
-              ))}
+              <strong>Standaardversies:</strong>
+              <ul
+                style={{
+                  margin: '0.5rem 0 0 0',
+                  paddingInlineStart: '1.25rem',
+                  listStyleType: 'disc',
+                }}
+              >
+                {data.standaardversies.map((s) => (
+                  <li key={s} style={{ marginBottom: '0.25rem' }}>
+                    <ConUuidResolver>{String(s)}</ConUuidResolver>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
           {data?.dienst && (
