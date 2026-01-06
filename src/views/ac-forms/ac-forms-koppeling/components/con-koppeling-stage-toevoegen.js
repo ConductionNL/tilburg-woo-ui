@@ -1,19 +1,66 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useCallback } from 'react';
 import clsx from 'clsx';
 import ReactSelect from 'react-select';
 import { AcButton } from '@src/molecules';
 import {
   Paragraph,
   Textbox,
-  Textarea,
-  Separator,
   Alert,
 } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@src/constants';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 import { TOOLTIP_ID } from '@src/index.web';
 import { commongroundApiUrl } from '@src/config';
+import { ConSchemaEnhancedField } from '@src/components';
+import { validateWebsite } from '@views/ac-forms/validation/form-validations';
 
+/**
+ * Maps status value to corresponding date property name.
+ * @param {string} status - The status value (e.g., 'in gebruik', 'in ontwikkeling', etc.)
+ * @returns {string|null} - The property name or null if no mapping exists
+ */
+const getStartDatumPropertyName = (status) => {
+  const statusToPropertyMap = {
+    'in gebruik': 'startDatumInProductie',
+    'in ontwikkeling': 'startDatumGepland',
+    'einde ondersteuning': 'startDatumUitTeFaseren',
+    teruggetrokken: 'startDatumUitGefaseerd',
+  };
+  return statusToPropertyMap[status] || null;
+};
+
+/**
+ * Gets the label for the start date field based on the selected status.
+ * @param {string} status - The status value
+ * @returns {string} - The label for the date field
+ */
+const getStartDatumLabel = (status) => {
+  const statusToLabelMap = {
+    'in gebruik': 'Startdatum In gebruik',
+    'in ontwikkeling': 'Startdatum In ontwikkeling',
+    'einde ondersteuning': 'Startdatum Einde ondersteuning',
+    teruggetrokken: 'Startdatum Teruggetrokken',
+  };
+  return statusToLabelMap[status] || 'Startdatum status';
+};
+
+/**
+ * Gets today's date in YYYY-MM-DD format for date input fields.
+ * @returns {string} - Today's date in YYYY-MM-DD format
+ */
+const getTodayDateString = () => new Date().toISOString().split('T')[0];
+
+/**
+ * Koppeling Stage Component (renamed from Toevoegen)
+ *
+ * This stage handles the core koppeling details:
+ * - Applicatie A (pre-filled from ownApp)
+ * - Richting (direction)
+ * - Applicatie B or BGV
+ * - Naam (required)
+ * - Status
+ * - Startdatum status (dynamic based on selected status)
+ */
 const ConKoppelingStageToevoegen = ({
   rows,
   addRow,
@@ -25,26 +72,39 @@ const ConKoppelingStageToevoegen = ({
   loading,
   selectedAppAByRow,
   ownApp,
-  typeOptions,
-  typeByRow,
-  setTypeByRow,
   selectedAppBByRow,
   setSelectedAppBByRow,
-  beschrijvingByRow,
-  setBeschrijvingByRow,
   directionOptions,
   directionByRow,
   setDirectionByRow,
   statusOptions,
   statusByRow,
   setStatusByRow,
+  startDatumInProductieByRow,
+  setStartDatumInProductieByRow,
+  startDatumGeplandByRow,
+  setStartDatumGeplandByRow,
+  startDatumUitTeFaserenByRow,
+  setStartDatumUitTeFaserenByRow,
+  startDatumUitGefaseerdByRow,
+  setStartDatumUitGefaseerdByRow,
   nameByRow,
   setNameByRow,
   isEditMode,
-  standaardenOptions,
-  standaardenOptionsLoading,
-  standaardenByRow,
-  setStandaardenByRow,
+  schemas,
+  applicatieKeuzeByRow,
+  setApplicatieKeuzeForRow,
+  nieuweApplicatieByRow,
+  setNieuweApplicatieDataForRow,
+  leverancierKeuzeByRow,
+  setLeverancierKeuzeForRow,
+  nieuweLeveancierByRow,
+  setNieuweLeverancierDataForRow,
+  leverancierOptions,
+  leverancierLoading,
+  searchLeveranciers,
+  ownAppKeuze = 'bestaand', // Whether own app (Applicatie A) is existing or new
+  nieuweOwnApp = {}, // New own app data when ownAppKeuze === 'nieuw'
 }) => {
   const [appBOptionsByRow, setAppBOptionsByRow] = useState({});
   const [appBLoadingByRow, setAppBLoadingByRow] = useState({});
@@ -52,15 +112,166 @@ const ConKoppelingStageToevoegen = ({
   const abortControllersRef = useRef({});
 
   const [showInfoAlert, setShowInfoAlert] = useState(() => {
-    // Check if alert was previously closed in this session
     return !sessionStorage.getItem('koppeling-toevoegen-info-alert-closed');
   });
 
-  // Handle closing the alert and remember the choice
   const handleCloseAlert = () => {
     setShowInfoAlert(false);
     sessionStorage.setItem('koppeling-toevoegen-info-alert-closed', 'true');
   };
+
+  // Get current date value based on status for a specific row
+  const getCurrentDateValue = useCallback(
+    (rowId, status) => {
+      const propertyName = getStartDatumPropertyName(status);
+      if (!propertyName) return '';
+      switch (propertyName) {
+        case 'startDatumInProductie':
+          return startDatumInProductieByRow[rowId] || '';
+        case 'startDatumGepland':
+          return startDatumGeplandByRow[rowId] || '';
+        case 'startDatumUitTeFaseren':
+          return startDatumUitTeFaserenByRow[rowId] || '';
+        case 'startDatumUitGefaseerd':
+          return startDatumUitGefaseerdByRow[rowId] || '';
+        default:
+          return '';
+      }
+    },
+    [
+      startDatumInProductieByRow,
+      startDatumGeplandByRow,
+      startDatumUitTeFaserenByRow,
+      startDatumUitGefaseerdByRow,
+    ]
+  );
+
+  // Set date value based on status for a specific row
+  const setCurrentDateValue = useCallback(
+    (rowId, status, value) => {
+      const propertyName = getStartDatumPropertyName(status);
+      if (!propertyName) return;
+      switch (propertyName) {
+        case 'startDatumInProductie':
+          setStartDatumInProductieByRow((prev) => ({ ...prev, [rowId]: value }));
+          break;
+        case 'startDatumGepland':
+          setStartDatumGeplandByRow((prev) => ({ ...prev, [rowId]: value }));
+          break;
+        case 'startDatumUitTeFaseren':
+          setStartDatumUitTeFaserenByRow((prev) => ({ ...prev, [rowId]: value }));
+          break;
+        case 'startDatumUitGefaseerd':
+          setStartDatumUitGefaseerdByRow((prev) => ({ ...prev, [rowId]: value }));
+          break;
+      }
+    },
+    [
+      setStartDatumInProductieByRow,
+      setStartDatumGeplandByRow,
+      setStartDatumUitTeFaserenByRow,
+      setStartDatumUitGefaseerdByRow,
+    ]
+  );
+
+  // Handle status change - clears other date fields and sets today's date for new status
+  const handleStatusChange = useCallback(
+    (rowId, newStatus) => {
+      const newStartDatumProperty = getStartDatumPropertyName(newStatus);
+
+      // Get current date value for the new status before clearing
+      let currentDateValue = '';
+      if (newStartDatumProperty) {
+        switch (newStartDatumProperty) {
+          case 'startDatumInProductie':
+            currentDateValue = startDatumInProductieByRow[rowId] || '';
+            break;
+          case 'startDatumGepland':
+            currentDateValue = startDatumGeplandByRow[rowId] || '';
+            break;
+          case 'startDatumUitTeFaseren':
+            currentDateValue = startDatumUitTeFaserenByRow[rowId] || '';
+            break;
+          case 'startDatumUitGefaseerd':
+            currentDateValue = startDatumUitGefaseerdByRow[rowId] || '';
+            break;
+        }
+      }
+
+      // Set the new status
+      setStatusByRow((prev) => ({ ...prev, [rowId]: newStatus }));
+
+      if (!isEditMode) {
+        // In create mode: clear all other date fields, only keep the one for current status
+        const allProperties = [
+          'startDatumInProductie',
+          'startDatumGepland',
+          'startDatumUitTeFaseren',
+          'startDatumUitGefaseerd',
+        ];
+        allProperties.forEach((property) => {
+          if (property !== newStartDatumProperty) {
+            switch (property) {
+              case 'startDatumInProductie':
+                setStartDatumInProductieByRow((prev) => ({ ...prev, [rowId]: '' }));
+                break;
+              case 'startDatumGepland':
+                setStartDatumGeplandByRow((prev) => ({ ...prev, [rowId]: '' }));
+                break;
+              case 'startDatumUitTeFaseren':
+                setStartDatumUitTeFaserenByRow((prev) => ({ ...prev, [rowId]: '' }));
+                break;
+              case 'startDatumUitGefaseerd':
+                setStartDatumUitGefaseerdByRow((prev) => ({ ...prev, [rowId]: '' }));
+                break;
+            }
+          }
+        });
+      }
+
+      // Set the corresponding date to today if not already set
+      if (newStartDatumProperty && !currentDateValue) {
+        switch (newStartDatumProperty) {
+          case 'startDatumInProductie':
+            setStartDatumInProductieByRow((prev) => ({
+              ...prev,
+              [rowId]: getTodayDateString(),
+            }));
+            break;
+          case 'startDatumGepland':
+            setStartDatumGeplandByRow((prev) => ({
+              ...prev,
+              [rowId]: getTodayDateString(),
+            }));
+            break;
+          case 'startDatumUitTeFaseren':
+            setStartDatumUitTeFaserenByRow((prev) => ({
+              ...prev,
+              [rowId]: getTodayDateString(),
+            }));
+            break;
+          case 'startDatumUitGefaseerd':
+            setStartDatumUitGefaseerdByRow((prev) => ({
+              ...prev,
+              [rowId]: getTodayDateString(),
+            }));
+            break;
+        }
+      }
+    },
+    [
+      isEditMode,
+      startDatumInProductieByRow,
+      startDatumGeplandByRow,
+      startDatumUitTeFaserenByRow,
+      startDatumUitGefaseerdByRow,
+      setStatusByRow,
+      setStartDatumInProductieByRow,
+      setStartDatumGeplandByRow,
+      setStartDatumUitTeFaserenByRow,
+      setStartDatumUitGefaseerdByRow,
+    ]
+  );
 
   const upsertModuleOption = (opt) => {
     if (!opt) return;
@@ -130,7 +341,6 @@ const ConKoppelingStageToevoegen = ({
           type: 'applicatie',
         };
       });
-      // also upsert into shared pools for persistence
       mapped.forEach((o) => upsertModuleOption(o));
       return mapped;
     } catch (e) {
@@ -183,11 +393,10 @@ const ConKoppelingStageToevoegen = ({
     const key = `${which}-${rowId}`;
     if (debounceTimersRef.current[key]) clearTimeout(debounceTimersRef.current[key]);
     debounceTimersRef.current[key] = setTimeout(async () => {
-      // Abort any previous in-flight fetch for this key
       try {
         const prev = abortControllersRef.current[key];
         if (prev && typeof prev.abort === 'function') prev.abort();
-      } catch (e) {
+      } catch {
         // swallow
       }
       const controller = new AbortController();
@@ -196,23 +405,19 @@ const ConKoppelingStageToevoegen = ({
 
       let opts;
       if (q) {
-        // When searching, fetch both modules and external facilities in parallel
         const [moduleResults, buitengemeentelijkeResults] = await Promise.all([
           fetchModuleOptions(q, controller.signal),
           fetchBuitengemeentelijkeOptions(q, controller.signal),
         ]);
-        // Merge results from both searches
         const merged = [];
         if (Array.isArray(moduleResults)) merged.push(...moduleResults);
         if (Array.isArray(buitengemeentelijkeResults))
           merged.push(...buitengemeentelijkeResults);
         opts = merged;
       } else {
-        // When no query, use merged options from already loaded data
         opts = which === 'B' ? getMergedOptions() : modulesOptions;
       }
 
-      // If another fetch started after this one, skip applying results
       if (abortControllersRef.current[key] !== controller) return;
       if (which === 'B') {
         if (Array.isArray(opts))
@@ -228,7 +433,7 @@ const ConKoppelingStageToevoegen = ({
       Object.values(ctrls).forEach((c) => {
         try {
           if (c && typeof c.abort === 'function') c.abort();
-        } catch (e) {
+        } catch {
           // swallow
         }
       });
@@ -284,19 +489,18 @@ const ConKoppelingStageToevoegen = ({
     <div
       className='ac-register-form-section'
       role='group'
-      aria-labelledby='koppeling-toevoegen-title'
+      aria-labelledby='koppeling-title'
     >
-      <h2 id='koppeling-toevoegen-title' className='sr-only'>
-        Toevoegen
+      <h2 id='koppeling-title' className='sr-only'>
+        Koppelingen met andere applicaties
       </h2>
 
-      <Paragraph>
+      <Paragraph className='con-form-wizard-paragraph'>
         Geef aan met welke applicaties uw oplossing gegevens kan uitwisselen en
         beschrijf de koppeling. Zo kunnen gemeenten zien hoe uw applicatie past in
         hun applicatielandschap.
       </Paragraph>
 
-      {/* Closeable info alert about updating koppeling details later */}
       {showInfoAlert && (
         <Alert severity='info' className='ac-forms-product-info-alert'>
           <button
@@ -369,20 +573,14 @@ const ConKoppelingStageToevoegen = ({
 
       <div className='con-form-wizard-rows'>
         {rows.map((rowId) => {
-          const beschrijving = beschrijvingByRow[rowId] || '';
-          const maxLen = 255;
-          const charsLeft = Math.max(0, maxLen - beschrijving.length);
-
           const appAId = `koppeling-appA-${rowId}`;
           const appBId = `koppeling-appB-${rowId}`;
-          const soortId = `koppeling-soort-${rowId}`;
           const richtingId = `koppeling-richting-${rowId}`;
           const statusId = `koppeling-status-${rowId}`;
 
           return (
             <div
               key={`row-${rowId}`}
-              className='ac-register-form-section'
               style={{
                 padding: '1rem',
                 border: '1px solid #e5e5e5',
@@ -392,7 +590,6 @@ const ConKoppelingStageToevoegen = ({
             >
               {/* Row 1: Applicatie A - Richting - Applicatie B */}
               <div
-                className='ac-register-form-grid'
                 style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
@@ -417,7 +614,11 @@ const ConKoppelingStageToevoegen = ({
                       'ac-beheer-select',
                       'ac-beheer-select--disabled'
                     )}
-                    value={ownApp || null}
+                    value={
+                      ownAppKeuze === 'nieuw' && nieuweOwnApp?.naam
+                        ? { value: '__new_own_app__', label: nieuweOwnApp.naam }
+                        : ownApp || null
+                    }
                     placeholder='Selecteer applicatie A'
                     inputId={appAId}
                     aria-required='true'
@@ -473,59 +674,317 @@ const ConKoppelingStageToevoegen = ({
                       data-tooltip-content='Applicatie B kan ook een buiten gemeentelijke voorziening zijn.'
                     />
                   </label>
-                  <ReactSelect
-                    className={clsx(
-                      'ac-beheer-select',
-                      loading && 'ac-beheer-select--disabled'
-                    )}
-                    isClearable
-                    options={appBOptionsByRow[rowId] || getMergedOptions()}
-                    value={(() => {
-                      const options = appBOptionsByRow[rowId] || getMergedOptions();
-                      const selectedValue =
-                        selectedAppBByRow[rowId] != null
-                          ? String(selectedAppBByRow[rowId])
-                          : null;
-                      const found = selectedValue
-                        ? options.find((o) => String(o.value) === selectedValue)
-                        : null;
-                      return found || null;
-                    })()}
-                    onChange={(opt) => {
-                      setSelectedAppBByRow((prev) => ({
-                        ...prev,
-                        [rowId]: opt?.value,
-                      }));
-                      if (opt) upsertModuleOption(opt);
-                    }}
-                    inputId={appBId}
-                    aria-required='true'
-                    isOptionDisabled={(opt) =>
-                      String(opt?.value) ===
-                      String(selectedAppAByRow[rowId] || ownApp?.value || '')
-                    }
-                    onInputChange={(input, { action }) => {
-                      if (action === 'input-change')
-                        debounceFetchForRow(rowId, 'B', input || '');
-                      return input;
-                    }}
-                    isLoading={!!appBLoadingByRow[rowId]}
-                    loadingMessage={() => 'Bezig met laden…'}
-                    getOptionLabel={(opt) => {
-                      const base = opt?.label ?? '';
-                      const aSel = selectedAppAByRow[rowId] || ownApp?.value || '';
-                      return String(opt?.value) === String(aSel)
-                        ? `${base} (al gekozen bij A)`
-                        : base;
-                    }}
-                    styles={getSelectStyles()}
-                  />
+                  {/* Show existing application select or new application form */}
+                  {applicatieKeuzeByRow[rowId] !== 'nieuw' ? (
+                    <>
+                      <ReactSelect
+                        className={clsx(
+                          'ac-beheer-select',
+                          loading && 'ac-beheer-select--disabled'
+                        )}
+                        isClearable
+                        options={appBOptionsByRow[rowId] || getMergedOptions()}
+                        value={(() => {
+                          const options =
+                            appBOptionsByRow[rowId] || getMergedOptions();
+                          const selectedValue =
+                            selectedAppBByRow[rowId] != null
+                              ? String(selectedAppBByRow[rowId])
+                              : null;
+                          const found = selectedValue
+                            ? options.find((o) => String(o.value) === selectedValue)
+                            : null;
+                          return found || null;
+                        })()}
+                        onChange={(opt) => {
+                          setSelectedAppBByRow((prev) => ({
+                            ...prev,
+                            [rowId]: opt?.value,
+                          }));
+                          if (opt) upsertModuleOption(opt);
+                        }}
+                        inputId={appBId}
+                        aria-required='true'
+                        isOptionDisabled={(opt) =>
+                          String(opt?.value) ===
+                          String(selectedAppAByRow[rowId] || ownApp?.value || '')
+                        }
+                        onInputChange={(input, { action }) => {
+                          if (action === 'input-change')
+                            debounceFetchForRow(rowId, 'B', input || '');
+                          return input;
+                        }}
+                        isLoading={!!appBLoadingByRow[rowId]}
+                        loadingMessage={() => 'Bezig met laden…'}
+                        getOptionLabel={(opt) => {
+                          const base = opt?.label ?? '';
+                          const aSel =
+                            selectedAppAByRow[rowId] || ownApp?.value || '';
+                          return String(opt?.value) === String(aSel)
+                            ? `${base} (al gekozen bij A)`
+                            : base;
+                        }}
+                        styles={getSelectStyles()}
+                      />
+                    </>
+                  ) : (
+                    <div
+                      style={{
+                        marginTop: '0.5rem',
+                        padding: '1rem',
+                        border: '1px solid #e5e5e5',
+                        borderRadius: '6px',
+                        backgroundColor: '#fafafa',
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          marginBottom: '1rem',
+                        }}
+                      >
+                        <strong>Nieuwe applicatie aanmaken</strong>
+                        <AcButton
+                          style='button'
+                          buttonType='secondary'
+                          small
+                          icon={<VISUALS.ARROW_LEFT />}
+                          onClick={() => {
+                            setApplicatieKeuzeForRow(rowId, 'bestaand');
+                            // Clear new application data
+                            setSelectedAppBByRow((prev) => ({
+                              ...prev,
+                              [rowId]: null,
+                            }));
+                          }}
+                        >
+                          Bestaande applicatie selecteren
+                        </AcButton>
+                      </div>
+
+                      {/* Leverancier section */}
+                      <div style={{ marginBottom: '1rem' }}>
+                        <h4
+                          className='utrecht-heading-4'
+                          style={{ marginBottom: '0.5rem' }}
+                        >
+                          {leverancierKeuzeByRow[rowId] === 'nieuw'
+                            ? 'Leverancier aanmaken'
+                            : 'Leverancier selecteren'}
+                        </h4>
+
+                        {leverancierKeuzeByRow[rowId] !== 'nieuw' ? (
+                          <>
+                            <ConSchemaEnhancedField
+                              schemaType='module'
+                              schemaProperty='aanbieder'
+                              value={
+                                nieuweApplicatieByRow[rowId]?.leverancier || null
+                              }
+                              onChange={(value) => {
+                                const nextId =
+                                  (value &&
+                                    value.data &&
+                                    (value.data.id || value.data.value)) ||
+                                  (value && value.value) ||
+                                  value;
+                                setNieuweApplicatieDataForRow(
+                                  rowId,
+                                  'leverancier',
+                                  nextId
+                                );
+                              }}
+                              isDisabled={loading}
+                              isLoading={leverancierLoading}
+                              width='full'
+                              schemas={schemas}
+                              optionsProvider={leverancierOptions}
+                              onSearch={(_path, _refSlug, query) =>
+                                searchLeveranciers && searchLeveranciers(query || '')
+                              }
+                              customProps={{
+                                label: 'Leverancier',
+                                isClearable: true,
+                                placeholder: 'Zoek en selecteer leverancier',
+                                required: true,
+                              }}
+                            />
+                            <div style={{ marginTop: '0.5rem' }}>
+                              <AcButton
+                                style='button'
+                                buttonType='secondary'
+                                small
+                                icon={<VISUALS.BUILDING />}
+                                onClick={() =>
+                                  setLeverancierKeuzeForRow(rowId, 'nieuw')
+                                }
+                              >
+                                Leverancier niet gevonden? Maak een nieuwe aan
+                              </AcButton>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div
+                              style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(2, 1fr)',
+                                gap: '1rem',
+                                marginBottom: '0.5rem',
+                              }}
+                            >
+                              <ConSchemaEnhancedField
+                                schemaType='organisatie'
+                                schemaProperty='naam'
+                                value={nieuweLeveancierByRow[rowId]?.naam || ''}
+                                onChange={(value) =>
+                                  setNieuweLeverancierDataForRow(
+                                    rowId,
+                                    'naam',
+                                    value
+                                  )
+                                }
+                                isDisabled={loading}
+                                width='full'
+                                schemas={schemas}
+                                customProps={{
+                                  required: true,
+                                  placeholder: 'Naam van de leverancier',
+                                }}
+                              />
+                              <ConSchemaEnhancedField
+                                schemaType='organisatie'
+                                schemaProperty='website'
+                                value={nieuweLeveancierByRow[rowId]?.website || ''}
+                                onChange={(value) =>
+                                  setNieuweLeverancierDataForRow(
+                                    rowId,
+                                    'website',
+                                    value
+                                  )
+                                }
+                                isDisabled={loading}
+                                width='full'
+                                schemas={schemas}
+                                customProps={{
+                                  inputType: 'text',
+                                  required: true,
+                                  placeholder: 'Website van de leverancier',
+                                  validation: {
+                                    custom: (value) => {
+                                      if (!value || value.trim() === '') return true;
+                                      return validateWebsite(value.trim());
+                                    },
+                                    customErrorMessage:
+                                      'Website heeft een ongeldig formaat (bijv. conduction.nl)',
+                                  },
+                                }}
+                              />
+                            </div>
+                            <AcButton
+                              style='button'
+                              buttonType='secondary'
+                              small
+                              icon={<VISUALS.ARROW_LEFT />}
+                              onClick={() =>
+                                setLeverancierKeuzeForRow(rowId, 'bestaand')
+                              }
+                            >
+                              Bestaande leverancier selecteren
+                            </AcButton>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Applicatie fields */}
+                      <div>
+                        <h4
+                          className='utrecht-heading-4'
+                          style={{ marginBottom: '0.5rem' }}
+                        >
+                          Applicatie
+                        </h4>
+                        <div
+                          style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(2, 1fr)',
+                            gap: '1rem',
+                          }}
+                        >
+                          <ConSchemaEnhancedField
+                            schemaType='module'
+                            schemaProperty='naam'
+                            value={nieuweApplicatieByRow[rowId]?.naam || ''}
+                            onChange={(value) =>
+                              setNieuweApplicatieDataForRow(rowId, 'naam', value)
+                            }
+                            isDisabled={loading}
+                            width='full'
+                            schemas={schemas}
+                            customProps={{
+                              required: true,
+                              placeholder: 'Naam van de applicatie',
+                            }}
+                          />
+                          <ConSchemaEnhancedField
+                            schemaType='module'
+                            schemaProperty='website'
+                            value={nieuweApplicatieByRow[rowId]?.website || ''}
+                            onChange={(value) =>
+                              setNieuweApplicatieDataForRow(rowId, 'website', value)
+                            }
+                            isDisabled={loading}
+                            width='full'
+                            schemas={schemas}
+                            customProps={{
+                              inputType: 'text',
+                              required: true,
+                              placeholder: 'Website van de applicatie',
+                              validation: {
+                                custom: (value) => {
+                                  if (!value || String(value).trim() === '')
+                                    return true;
+                                  return validateWebsite(String(value).trim());
+                                },
+                                customErrorMessage:
+                                  'Website heeft een ongeldig formaat (bijv. conduction.nl)',
+                              },
+                            }}
+                          />
+                        </div>
+                        <div style={{ marginTop: '1rem' }}>
+                          <ConSchemaEnhancedField
+                            schemaType='module'
+                            schemaProperty='beschrijvingKort'
+                            value={
+                              nieuweApplicatieByRow[rowId]?.beschrijvingKort || ''
+                            }
+                            onChange={(value) =>
+                              setNieuweApplicatieDataForRow(
+                                rowId,
+                                'beschrijvingKort',
+                                value
+                              )
+                            }
+                            isDisabled={loading}
+                            width='full'
+                            schemas={schemas}
+                            customProps={{
+                              description:
+                                'Een korte beschrijving van de applicatie',
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Row 2: Soort - Naam - Status */}
+              {/* Row 2: Naam - Status - Startdatum status */}
               <div
-                className='ac-register-form-grid'
                 style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
@@ -536,37 +995,14 @@ const ConKoppelingStageToevoegen = ({
                 <div>
                   <label
                     className='utrecht-form-label'
-                    htmlFor={soortId}
-                    style={{ display: 'block' }}
-                  >
-                    Soort
-                  </label>
-                  <ReactSelect
-                    className={clsx(
-                      'ac-beheer-select',
-                      loading && 'ac-beheer-select--disabled'
-                    )}
-                    options={typeOptions}
-                    isClearable
-                    value={
-                      typeByRow[rowId]
-                        ? typeOptions.find((o) => o.value === typeByRow[rowId])
-                        : null
-                    }
-                    onChange={(opt) =>
-                      setTypeByRow((prev) => ({ ...prev, [rowId]: opt?.value }))
-                    }
-                    placeholder='Soort'
-                    inputId={soortId}
-                  />
-                </div>
-                <div>
-                  <label
-                    className='utrecht-form-label'
                     htmlFor={`koppeling-naam-${rowId}`}
                     style={{ display: 'block' }}
                   >
                     Naam
+                    <span className='required-indicator' aria-hidden='true'>
+                      *
+                    </span>
+                    <span className='sr-only'>(verplicht)</span>
                   </label>
                   <Textbox
                     id={`koppeling-naam-${rowId}`}
@@ -578,6 +1014,7 @@ const ConKoppelingStageToevoegen = ({
                       }))
                     }
                     placeholder='Naam van de koppeling'
+                    required
                   />
                 </div>
                 <div>
@@ -600,112 +1037,64 @@ const ConKoppelingStageToevoegen = ({
                         ? statusOptions.find((o) => o.value === statusByRow[rowId])
                         : null
                     }
-                    onChange={(opt) =>
-                      setStatusByRow((prev) => ({ ...prev, [rowId]: opt?.value }))
-                    }
+                    onChange={(opt) => handleStatusChange(rowId, opt?.value)}
                     placeholder='Status'
                     inputId={statusId}
                   />
                 </div>
-              </div>
-
-              <Separator
-                className='ac-register-review-header__separator'
-                style={{ marginBlock: '24px' }}
-              />
-
-              <div className='con-koppeling-standaarden-field'>
-                <label
-                  className='utrecht-form-label'
-                  htmlFor={statusId}
-                  style={{ display: 'block' }}
-                >
-                  Standaarden
-                </label>
-                <ReactSelect
-                  className={clsx(
-                    'ac-beheer-select',
-                    'con-koppeling-standaarden-select',
-                    loading && 'ac-beheer-select--disabled'
-                  )}
-                  isClearable
-                  value={
-                    standaardenByRow[rowId]
-                      ? standaardenOptions.filter((o) =>
-                          standaardenByRow[rowId].includes(o.value)
-                        )
-                      : null
-                  }
-                  onChange={(opt) => {
-                    const standaarden = opt ? opt.map((o) => o.value) : [];
-                    setStandaardenByRow((prev) => {
-                      const updated = { ...prev };
-                      updated[rowId] = standaarden;
-                      return updated;
-                    });
-                  }}
-                  options={standaardenOptions}
-                  placeholder={
-                    standaardenOptionsLoading ? 'Laden...' : 'Selecteer standaarden'
-                  }
-                  isMulti={true}
-                  isSearchable={true}
-                  isLoading={standaardenOptionsLoading}
-                  closeMenuOnSelect={false}
-                  isDisabled={loading}
-                />
-              </div>
-
-              {/* Korte beschrijving (full width) */}
-              <div style={{ marginTop: '1rem' }}>
-                <label
-                  className='utrecht-form-label'
-                  htmlFor={`koppeling-beschrijving-${rowId}`}
-                  style={{ display: 'block' }}
-                >
-                  Korte beschrijving
-                </label>
-                <Textarea
-                  id={`koppeling-beschrijving-${rowId}`}
-                  className='con-koppeling-beschrijving'
-                  value={beschrijving}
-                  maxLength={maxLen}
-                  onChange={(e) =>
-                    setBeschrijvingByRow((prev) => ({
-                      ...prev,
-                      [rowId]: e?.target?.value || '',
-                    }))
-                  }
-                  placeholder='Korte beschrijving van de koppeling (max 255 tekens)'
-                />
-                <Paragraph
-                  style={{
-                    marginTop: '0.25rem',
-                    fontSize: '0.875rem',
-                    color: '#666',
-                  }}
-                >
-                  {charsLeft} tekens resterend
-                </Paragraph>
-
-                {!isEditMode && (
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'flex-end',
-                      marginTop: '0.75rem',
-                    }}
+                <div>
+                  <label
+                    className='utrecht-form-label'
+                    htmlFor={`koppeling-startdatum-${rowId}`}
+                    style={{ display: 'block' }}
                   >
-                    <AcButton
-                      style='button'
-                      buttonType='secondary'
-                      onClick={() => removeRow(rowId)}
-                      disabled={rows.length === 1}
-                      icon={<VISUALS.TRASHCAN />}
-                    />
-                  </div>
-                )}
+                    {statusByRow[rowId]
+                      ? getStartDatumLabel(statusByRow[rowId])
+                      : 'Startdatum status'}
+                  </label>
+                  <Textbox
+                    id={`koppeling-startdatum-${rowId}`}
+                    type='date'
+                    value={
+                      statusByRow[rowId]
+                        ? getCurrentDateValue(rowId, statusByRow[rowId])
+                        : ''
+                    }
+                    onChange={(e) => {
+                      if (statusByRow[rowId]) {
+                        setCurrentDateValue(
+                          rowId,
+                          statusByRow[rowId],
+                          e?.target?.value || ''
+                        );
+                      }
+                    }}
+                    disabled={loading || !statusByRow[rowId]}
+                    style={{ height: '40px' }}
+                    placeholder={
+                      !statusByRow[rowId] ? 'Selecteer eerst een status' : ''
+                    }
+                  />
+                </div>
               </div>
+
+              {!isEditMode && (
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    marginTop: '0.75rem',
+                  }}
+                >
+                  <AcButton
+                    style='button'
+                    buttonType='secondary'
+                    onClick={() => removeRow(rowId)}
+                    disabled={rows.length === 1}
+                    icon={<VISUALS.TRASHCAN />}
+                  />
+                </div>
+              )}
             </div>
           );
         })}

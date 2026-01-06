@@ -17,6 +17,45 @@ import { TOOLTIP_ID } from '@src/index.web';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
 import { useNavigate } from 'react-router-dom';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
+import { AcFormatDate } from '@src/utilities/ac-format-date';
+
+/**
+ * Gets all dates that have values, to show the full history/trail of status changes.
+ * Returns an array of date objects with label and formatted value.
+ */
+const getAllDatesWithValues = (data) => {
+  const dates = [];
+
+  if (data?.datumInOntwikkeling) {
+    dates.push({
+      label: 'Startdatum In ontwikkeling',
+      value: AcFormatDate(data.datumInOntwikkeling, 'YYYY-MM-DD', 'D MMMM YYYY'),
+    });
+  }
+
+  if (data?.datumInGebruik) {
+    dates.push({
+      label: 'Startdatum In gebruik',
+      value: AcFormatDate(data.datumInGebruik, 'YYYY-MM-DD', 'D MMMM YYYY'),
+    });
+  }
+
+  if (data?.datumEindeOndersteuning) {
+    dates.push({
+      label: 'Startdatum Einde ondersteuning',
+      value: AcFormatDate(data.datumEindeOndersteuning, 'YYYY-MM-DD', 'D MMMM YYYY'),
+    });
+  }
+
+  if (data?.datumTeruggetrokken) {
+    dates.push({
+      label: 'Startdatum Teruggetrokken',
+      value: AcFormatDate(data.datumTeruggetrokken, 'YYYY-MM-DD', 'D MMMM YYYY'),
+    });
+  }
+
+  return dates;
+};
 
 /**
  * Koppeling Details Content
@@ -86,6 +125,14 @@ const ConKoppelingDetailsPageContent = ({
       data?.gegevensuitwisselingRichting ||
       data?.['@self']?.relations?.richtingDataUitwisseling ||
       'bi-directioneel'
+    );
+  }, [data]);
+
+  const intermediairId = useMemo(() => {
+    return (
+      data?.['@self']?.relations?.gerealiseerdMetIntermediairModule ||
+      data?.gerealiseerdMetIntermediairModule ||
+      null
     );
   }, [data]);
 
@@ -266,7 +313,7 @@ const ConKoppelingDetailsPageContent = ({
           )}
           {data?.type && (
             <div style={{ marginBottom: '8px' }}>
-              <strong>Type: </strong>
+              <strong>Transportprotocol: </strong>
               {data.type}
             </div>
           )}
@@ -276,14 +323,45 @@ const ConKoppelingDetailsPageContent = ({
               {data.status}
             </div>
           )}
-          {data?.standaardversies && (
+          {(() => {
+            const allDates = getAllDatesWithValues(data);
+            return allDates.length > 0
+              ? allDates.map((dateInfo, index) => (
+                  <div key={index} style={{ marginBottom: '8px' }}>
+                    <strong>{dateInfo.label}: </strong>
+                    {dateInfo.value}
+                  </div>
+                ))
+              : null;
+          })()}
+          {data?.beschrijvingKort && (
             <div style={{ marginBottom: '8px' }}>
-              <strong>Standaarden: </strong>
-              {data.standaardversies.map((s) => (
-                <div key={s}>
-                  <ConUuidResolver>{String(s)}</ConUuidResolver>
-                </div>
-              ))}
+              <strong>Korte beschrijving: </strong>
+              {data.beschrijvingKort}
+            </div>
+          )}
+          {intermediairId && (
+            <div style={{ marginBottom: '8px' }}>
+              <strong>Intermediair: </strong>
+              <ConUuidResolver>{String(intermediairId)}</ConUuidResolver>
+            </div>
+          )}
+          {data?.standaardversies && data.standaardversies.length > 0 && (
+            <div style={{ marginBottom: '8px' }}>
+              <strong>Standaardversies:</strong>
+              <ul
+                style={{
+                  margin: '0.5rem 0 0 0',
+                  paddingInlineStart: '1.25rem',
+                  listStyleType: 'disc',
+                }}
+              >
+                {data.standaardversies.map((s) => (
+                  <li key={s} style={{ marginBottom: '0.25rem' }}>
+                    <ConUuidResolver>{String(s)}</ConUuidResolver>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
           {data?.dienst && (

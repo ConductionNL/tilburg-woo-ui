@@ -33,7 +33,7 @@ const AcFormsApplicatie = loadable(() =>
   import('@views/ac-forms/ac-forms-applicatie/ac-forms-applicatie')
 );
 const AcFormsKoppeling = loadable(() =>
-  import('@views/ac-forms/ac-forms-koppeling/ac-forms-koppeling')
+  import('@src/views/ac-forms/ac-forms-koppeling/ac-forms-koppeling')
 );
 const ConFormsDienst = loadable(() =>
   import('@src/views/ac-forms/con-forms-dienst/con-forms-dienst')
