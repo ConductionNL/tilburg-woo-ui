@@ -26,7 +26,7 @@ import { getActiveWizard } from '@src/constants/wizards.constants';
 import { commongroundApiUrl } from '@config';
 import _ from 'lodash';
 import { ConDebugViewer } from '@src/components';
-import useStepper from '../../con-stepper';
+import useStepper, { addStepperClickHandlers, generateSteps } from '../../con-stepper';
 // Commented out - modal no longer used
 // import ConUnsavedChangesAlertModal from '@src/components/con-unsaved-changes-alert-modal/con-unsaved-changes-alert-modal';
 
@@ -345,166 +345,47 @@ const AcFormsGebruik = ({ store }) => {
   // Usage type selection state - determined from URL or from API data in edit mode
   const [gebruikType, setGebruikType] = useState(getGebruikTypeFromUrl()); // 'eigen-organisatie' or 'andere-organisatie'
 
-  // Helper function for step status (must be defined before processStepsConfig)
-  const getStatus = (active, step) => {
-    if (active === step) return 'current';
-    if (active < step) return 'not-checked';
-    return 'checked';
-  };
-
-  const getStatusMulti = (active, first, last) => {
-    if (active >= first && active <= last) return 'current';
-    if (active < first) return 'not-checked';
-    return 'checked';
-  };
-
   // ProcessSteps configuration - must be created early to define steps with stepper
   const processStepsConfig = useMemo(() => {
-    const steps = [];
-    const currentStepNum = stepper.getCurrentStep();
-
-    // Reset step definitions for this flavor
-    stepper.resetStepDefinitions('process-steps');
-    stepper.resetStepDefinitions('process-steps-status');
-
     if (isAanbodBeheerdersFlow) {
-      // Aanbod beheerders flow: simplified 2-step flow
-      steps.push({
-        id: 'selecteren-step',
-        marker: stepper.defineStep('process-steps', 'selecteren'),
-        status: getStatus(
-          currentStepNum,
-          stepper.defineStep('process-steps-status')
-        ),
-        title: 'Selecteren',
-      });
-
-      steps.push({
-        id: 'controleren-step',
-        marker: stepper.defineStep('process-steps', 'controleren'),
-        status: getStatus(
-          currentStepNum,
-          stepper.defineStep('process-steps-status')
-        ),
-        title: 'Controleren',
-      });
+      return generateSteps(stepper, [
+        { title: 'Selecteren' },
+        { title: 'Controleren' },
+      ]);
     } else {
-      // Gebruik beheerders flow
-      // Conditionally include Aanbieder step (only for ontbrekend-organisatie)
-      if (needsAanbiederStep) {
-        steps.push({
-          id: 'aanbieder-step',
-          marker: stepper.defineStep('process-steps', 'aanbieder'),
-          status: getStatus(
-            currentStepNum,
-            stepper.defineStep('process-steps-status')
-          ),
-          title: 'Aanbieder',
-        });
-      }
-
-      steps.push({
-        id: 'applicatie-selectie-step',
-        marker: stepper.defineStep('process-steps', 'applicatie'),
-        status: getStatus(
-          currentStepNum,
-          stepper.defineStep('process-steps-status')
-        ),
-        title: 'Applicatie',
-      });
-
-      // Gebruik configuratie step with sub-steps
-      // Define the status step for the multi-step group first
-      const gebruikConfigStartStatusStep = stepper.defineStep(
-        'process-steps-status'
-      );
-
-      // Build sub-steps for gebruik configuratie flow (define inline, in order)
-      // These are the actual navigable steps - define them BEFORE the main step marker
-      const informatieMarker = stepper.defineStep('process-steps', 'informatie');
-      const referentiecomponentenMarker = stepper.defineStep(
-        'process-steps',
-        'referentiecomponenten'
-      );
-      const subSteps = [
+      return generateSteps(stepper, [
+        { title: 'Aanbieder', condition: needsAanbiederStep },
+        { title: 'Applicatie' },
         {
-          id: 'informatie-substep',
-          marker: informatieMarker,
-          status: getStatus(stepper.getCurrentStep(), informatieMarker),
-          title: 'Gebruikinformatie',
+          title: 'Gebruik configuratie',
+          isNavigable: false,
+          substeps: [
+            { title: 'Gebruikinformatie', stepLabel: 'informatie' },
+            { title: 'Referentiecomponenten' },
+            { title: 'Deelnemers', condition: needsDeelnemersStep },
+          ],
         },
-        {
-          id: 'referentiecomponenten-substep',
-          marker: referentiecomponentenMarker,
-          status: getStatus(stepper.getCurrentStep(), referentiecomponentenMarker),
-          title: 'Referentiecomponenten',
-        },
-      ];
-
-      // Only add deelnemers step if organization type is Samenwerking/Community
-      if (needsDeelnemersStep) {
-        const deelnemersMarker = stepper.defineStep('process-steps', 'deelnemers');
-        subSteps.push({
-          id: 'deelnemers-substep',
-          marker: deelnemersMarker,
-          status: getStatus(stepper.getCurrentStep(), deelnemersMarker),
-          title: 'Deelnemers',
-        });
-      }
-
-      // Use the first sub-step's marker as the main step marker (for visual grouping)
-      // This ensures navigation goes directly to the first sub-step, not to a non-existent "Gebruik configuratie" step
-      steps.push({
-        id: 'gebruik-configuratie-step',
-        marker: subSteps[0].marker,
-        status: getStatusMulti(
-          stepper.getCurrentStep(),
-          gebruikConfigStartStatusStep,
-          gebruikConfigStartStatusStep + subSteps.length
-        ),
-        title: 'Gebruik configuratie',
-        steps: subSteps,
-      });
-
-      const controlerenMarker = stepper.defineStep('process-steps', 'controleren');
-      steps.push({
-        id: 'controleren-step',
-        marker: controlerenMarker,
-        status: getStatus(currentStepNum, controlerenMarker),
-        title: 'Controleren',
-      });
+        { title: 'Controleren' },
+      ]);
     }
-
-    return steps;
-  }, [stepper, isAanbodBeheerdersFlow, needsAanbiederStep, needsDeelnemersStep]);
+  }, [stepper.getCurrentStep()]);
 
   // Add click handlers to steps
   useEffect(() => {
-    if (!processStepsRef.current) return;
-    if (prefillLoading || prefillError) return;
-
-    const addClickHandlers = () => {
-      const stepElements = processStepsRef.current.querySelectorAll(
-        '.denhaag-process-steps .denhaag-process-steps__step-header, .denhaag-process-steps .denhaag-process-steps__sub-step'
-      );
-      stepElements.forEach((el, index) => {
-        const stepNumber = index + 1;
-        el.style.cursor = '';
-        el.onclick = null;
-        el.classList.remove('ac-step-clickable');
-        if (stepNumber < stepper.getCurrentStep()) {
-          el.classList.add('ac-step-clickable');
-          el.onclick = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            stepper.setCurrentStep(stepNumber);
-          };
-        }
-      });
-    };
-    const timeoutId = setTimeout(addClickHandlers, 100);
-    return () => clearTimeout(timeoutId);
-  }, [stepper.getCurrentStep(), prefillLoading, prefillError, stepper]);
+    return addStepperClickHandlers({
+      processStepsRef,
+      processStepsConfig,
+      stepper,
+      skipIfLoading: prefillLoading,
+      skipIfError: prefillError,
+    });
+  }, [
+    stepper.getCurrentStep(),
+    prefillLoading,
+    prefillError,
+    stepper,
+    processStepsConfig,
+  ]);
 
   // Clear certain fields when gebruikType changes to 'andere-organisatie'
   useEffect(() => {
