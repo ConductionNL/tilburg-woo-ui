@@ -368,7 +368,7 @@ const AcFormsGebruik = ({ store }) => {
         { title: 'Controleren' },
       ]);
     }
-  }, [stepper.getCurrentStep()]);
+  }, [stepper.getCurrentStep(), needsAanbiederStep, needsDeelnemersStep]);
 
   // Add click handlers to steps
   useEffect(() => {
