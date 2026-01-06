@@ -12,9 +12,7 @@ import RelatedTabs from '@views/ac-publication/con-related-tabs';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
 // import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
-import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
-import { normalizeSchemaName } from '@src/utilities/con-normalize-schema-name';
 import { AcFormatDate } from '@src/utilities/ac-format-date';
 // import { checkOrganizationPermissions } from '@utils/organization-permissions';
 
@@ -50,6 +48,38 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
 
   // Resolved names state for referentiecomponenten (needed for sorting and GEMMA links)
   const [sortedReferentiecomponenten, setSortedReferentiecomponenten] = useState([]);
+
+  // Full organization data for checking type (Leverancier, Community, etc.)
+  const [fullActiveOrganisation, setFullActiveOrganisation] = useState(null);
+
+  // Fetch full organization data to get the type
+  useEffect(() => {
+    const fetchFullOrganisationData = async () => {
+      const activeOrg = user?.activeOrganization;
+      const organisationId = activeOrg?.uuid || activeOrg?.id;
+
+      if (!organisationId) return;
+
+      try {
+        await object.fetchObject('voorzieningen', 'organisatie', organisationId, {
+          '_extend[]': ['@self.schema'],
+        });
+
+        const fullOrgData = object.getObject(
+          'voorzieningen_organisatie',
+          organisationId
+        );
+
+        if (fullOrgData) {
+          setFullActiveOrganisation(fullOrgData);
+        }
+      } catch (error) {
+        console.error('Error fetching full organization data:', error);
+      }
+    };
+
+    fetchFullOrganisationData();
+  }, [user?.activeOrganization?.uuid, user?.activeOrganization?.id, object]);
 
   const fetchUses = useCallback(async () => {
     if (!id) return;
@@ -201,22 +231,26 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
             showPublishActions={true}
             onDelete={handleDelete}
             onEdit={() => {
-              if (schemaSlug) {
-                const wizardSchemaName =
-                  normalizeSchemaName(schemaSlug).toLowerCase();
-                const wizards = Object.values(DASHBOARD_WIZARDS);
-                const wizard = wizards.find((w) => w.schema === wizardSchemaName);
-                if (wizard) {
-                  const baseUrl = getWizardUrl(wizard);
-                  const url = new URL(baseUrl, window.location.origin);
-                  url.searchParams.set('id', id);
-                  navigate(url.pathname + url.search);
-                  return;
-                }
+              // Check if organization type is Leverancier or Community
+              // These organization types don't have their own gebruik objects,
+              // they only manage gebruik for gemeentes or other organizations
+              const orgType = fullActiveOrganisation?.type;
+              const isLeverancierOrCommunity =
+                orgType === 'Leverancier' || orgType === 'Community';
+
+              // For Leverancier/Community, use ontbrekend-organisatie type
+              const gebruikType = isLeverancierOrCommunity
+                ? 'ontbrekend-organisatie'
+                : '';
+              const url = new URL(
+                '/forms/gebruik/applicatie',
+                window.location.origin
+              );
+              if (gebruikType) {
+                url.searchParams.set('type', gebruikType);
               }
-              // Fallback to beheer detail page in same tab with edit modal
-              const beheerUrl = `/beheer/${schemaSlug}/${id}?showEditModal=true`;
-              navigate(beheerUrl);
+              url.searchParams.set('id', id);
+              navigate(url.pathname + url.search);
             }}
             triggerStyle='button'
           />
