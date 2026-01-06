@@ -23,7 +23,6 @@ import { validateWebsite } from '@views/ac-forms/validation/form-validations';
 import { VISUALS } from '@src/constants';
 import { useDebouncedInput } from '@src/hooks';
 import { getActiveWizard } from '@src/constants/wizards.constants';
-import { getStatusMultiStep } from '@views/ac-forms/ac-forms-applicatie/utils/steps.utils';
 import { commongroundApiUrl } from '@config';
 import _ from 'lodash';
 import { ConDebugViewer } from '@src/components';
@@ -353,6 +352,12 @@ const AcFormsGebruik = ({ store }) => {
     return 'checked';
   };
 
+  const getStatusMulti = (active, first, last) => {
+    if (active >= first && active <= last) return 'current';
+    if (active < first) return 'not-checked';
+    return 'checked';
+  };
+
   // ProcessSteps configuration - must be created early to define steps with stepper
   const processStepsConfig = useMemo(() => {
     const steps = [];
@@ -409,63 +414,71 @@ const AcFormsGebruik = ({ store }) => {
       });
 
       // Gebruik configuratie step with sub-steps
-      stepper.defineStep('process-steps', 'informatie');
-      const informatieStatusStep = stepper.defineStep('process-steps-status');
-      stepper.defineStep('process-steps', 'referentiecomponenten');
-      const referentiecomponentenStatusStep = stepper.defineStep(
+      // Define the status step for the multi-step group first
+      const gebruikConfigStartStatusStep = stepper.defineStep(
         'process-steps-status'
       );
 
-      let deelnemersStatusStep = null;
+      // Build sub-steps for gebruik configuratie flow (define inline, in order)
+      // These are the actual navigable steps - define them BEFORE the main step marker
+      const informatieMarker = stepper.defineStep('process-steps', 'informatie')
+      const referentiecomponentenMarker = stepper.defineStep('process-steps', 'referentiecomponenten')
+      const subSteps = [
+        {
+          id: 'informatie-substep',
+          marker: informatieMarker,
+          status: getStatus(
+            stepper.getCurrentStep(),
+            informatieMarker
+          ),
+          title: 'Gebruikinformatie',
+        },
+        {
+          id: 'referentiecomponenten-substep',
+          marker: referentiecomponentenMarker,
+          status: getStatus(
+            stepper.getCurrentStep(),
+            referentiecomponentenMarker
+          ),
+          title: 'Referentiecomponenten',
+        },
+      ];
+
+      // Only add deelnemers step if organization type is Samenwerking/Community
       if (needsDeelnemersStep) {
-        stepper.defineStep('process-steps', 'deelnemers');
-        deelnemersStatusStep = stepper.defineStep('process-steps-status');
+        const deelnemersMarker = stepper.defineStep('process-steps', 'deelnemers')
+        subSteps.push({
+          id: 'deelnemers-substep',
+          marker: deelnemersMarker,
+          status: getStatus(
+            stepper.getCurrentStep(),
+            deelnemersMarker
+          ),
+          title: 'Deelnemers',
+        });
       }
 
-      const gebruikConfigEndStep = needsDeelnemersStep
-        ? deelnemersStatusStep
-        : referentiecomponentenStatusStep;
-
+      // Use the first sub-step's marker as the main step marker (for visual grouping)
+      // This ensures navigation goes directly to the first sub-step, not to a non-existent "Gebruik configuratie" step
       steps.push({
         id: 'gebruik-configuratie-step',
-        marker: stepper.defineStep('process-steps'),
-        status: getStatusMultiStep(
-          currentStepNum,
-          informatieStatusStep,
-          informatieStatusStep,
-          gebruikConfigEndStep
+        marker: subSteps[0].marker,
+        status: getStatusMulti(
+          stepper.getCurrentStep(),
+          gebruikConfigStartStatusStep,
+          gebruikConfigStartStatusStep + subSteps.length
         ),
         title: 'Gebruik configuratie',
-        steps: [
-          {
-            id: 'informatie-substep',
-            status: getStatus(currentStepNum, informatieStatusStep),
-            title: 'Gebruikinformatie',
-          },
-          {
-            id: 'referentiecomponenten-substep',
-            status: getStatus(currentStepNum, referentiecomponentenStatusStep),
-            title: 'Referentiecomponenten',
-          },
-          // Conditionally include Deelnemers sub-step
-          ...(needsDeelnemersStep
-            ? [
-                {
-                  id: 'deelnemers-substep',
-                  status: getStatus(currentStepNum, deelnemersStatusStep),
-                  title: 'Deelnemers',
-                },
-              ]
-            : []),
-        ],
+        steps: subSteps,
       });
 
+      const controlerenMarker = stepper.defineStep('process-steps', 'controleren')
       steps.push({
         id: 'controleren-step',
-        marker: stepper.defineStep('process-steps', 'controleren'),
+        marker: controlerenMarker,
         status: getStatus(
           currentStepNum,
-          stepper.defineStep('process-steps-status')
+          controlerenMarker
         ),
         title: 'Controleren',
       });
