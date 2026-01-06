@@ -6,16 +6,12 @@ import {
 import { AcColumn } from '@src/atoms';
 // import { VISUALS } from '@src/constants';
 import ConLogoPreview from '@src/views/ac-register/con-logo-preview';
+import { ConExternalLink } from '@src/components';
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import { commongroundApiUrl } from '@src/config';
 import ConEditableDescription from '../../shared/components/con-editable-description/con-editable-description';
 // import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
 import RelatedTabs from '@views/ac-publication/con-related-tabs';
-// import {
-//   checkOrganizationPermissions,
-//   getDisabledActionTooltip,
-// } from '@utils/organization-permissions';
-// import { TOOLTIP_ID } from '@src/index.web';
 
 /**
  * Content for the organisation details page
@@ -99,15 +95,6 @@ const ConOrganisatieDetailsPageContent = ({
     }
   }, [id]);
 
-  // Check organization permissions for actions - commented out for now
-  // const { canEdit: hasEditPermission, reason } = data
-  //   ? checkOrganizationPermissions(user, data)
-  //   : {
-  //       canEdit: false,
-  //       reason: 'Kan niet bewerken omdat de organisatie niet gevonden is',
-  //     };
-  // const actualCanEdit = canEdit && hasEditPermission;
-
   useEffect(() => {
     fetchUses();
     fetchUsed();
@@ -143,124 +130,6 @@ const ConOrganisatieDetailsPageContent = ({
             </Heading>
           </div>
         </Heading>
-
-        {/* Action Menu - commented out for now */}
-        {/* <div className='ac-register-review__header-controls'>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <ConActionMenu>
-              <ConActionMenu.Trigger
-                icon={<VISUALS.ELLIPSIS />}
-                buttonType='primary'
-              >
-                Acties
-              </ConActionMenu.Trigger>
-
-              <ConActionMenu.Menu position='right'>
-                <ConActionMenu.Button
-                  icon={<VISUALS.PENCIL />}
-                  onClick={() => actionMenuProps?.setOpenModal?.('edit')}
-                  disabled={!actualCanEdit}
-                  data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
-                  data-tooltip-content={
-                    !actualCanEdit
-                      ? getDisabledActionTooltip('edit', reason)
-                      : undefined
-                  }
-                >
-                  Bewerk contactgegevens
-                </ConActionMenu.Button>
-
-                <ConActionMenu.Button
-                  icon={<VISUALS.PENCIL />}
-                  onClick={() => setEditingSummary(true)}
-                  disabled={!actualCanEdit}
-                  data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
-                  data-tooltip-content={
-                    !actualCanEdit
-                      ? getDisabledActionTooltip('edit', reason)
-                      : undefined
-                  }
-                >
-                  Bewerk korte beschrijving
-                </ConActionMenu.Button>
-
-                <ConActionMenu.Button
-                  icon={<VISUALS.PENCIL />}
-                  onClick={() => setEditingDescription(true)}
-                  disabled={!actualCanEdit}
-                  data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
-                  data-tooltip-content={
-                    !actualCanEdit
-                      ? getDisabledActionTooltip('edit', reason)
-                      : undefined
-                  }
-                >
-                  Bewerk lange beschrijving
-                </ConActionMenu.Button>
-
-                <ConActionMenu.Button
-                  icon={<VISUALS.USERS />}
-                  onClick={() => actionMenuProps?.setOpenModal?.('deelnames')}
-                  disabled={!actualCanEdit}
-                  data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
-                  data-tooltip-content={
-                    !actualCanEdit
-                      ? getDisabledActionTooltip('edit', reason)
-                      : undefined
-                  }
-                >
-                  Deelnames
-                </ConActionMenu.Button>
-
-                {data && !data['@self']?.published && (
-                  <ConActionMenu.Button
-                    icon={<VISUALS.PUBLISH />}
-                    onClick={() => actionMenuProps?.setOpenModal?.('publish')}
-                    disabled={!actualCanEdit}
-                    data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
-                    data-tooltip-content={
-                      !actualCanEdit
-                        ? getDisabledActionTooltip('publish', reason)
-                        : undefined
-                    }
-                  >
-                    Publiceren
-                  </ConActionMenu.Button>
-                )}
-
-                {data && data['@self']?.published && (
-                  <ConActionMenu.Button
-                    icon={<VISUALS.PUBLISH_OFF />}
-                    onClick={() => actionMenuProps?.setOpenModal?.('depublish')}
-                    disabled={!actualCanEdit}
-                    data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
-                    data-tooltip-content={
-                      !actualCanEdit
-                        ? getDisabledActionTooltip('depublish', reason)
-                        : undefined
-                    }
-                  >
-                    Depubliceren
-                  </ConActionMenu.Button>
-                )}
-
-                <ConActionMenu.Button
-                  icon={<VISUALS.TRASHCAN />}
-                  onClick={() => actionMenuProps?.setOpenModal?.('delete')}
-                  disabled={!actualCanEdit}
-                  data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
-                  data-tooltip-content={
-                    !actualCanEdit
-                      ? getDisabledActionTooltip('delete', reason)
-                      : undefined
-                  }
-                >
-                  Verwijderen
-                </ConActionMenu.Button>
-              </ConActionMenu.Menu>
-            </ConActionMenu>
-          </div>
-        </div> */}
       </div>
 
       {/* Unpublished warning */}
@@ -348,19 +217,9 @@ const ConOrganisatieDetailsPageContent = ({
                 </div>
               )}
               {data?.website && (
-                <div style={{ marginBottom: '8px' }}>
-                  <strong>Website: </strong>
-                  <Link
-                    href={
-                      data.website.startsWith('http')
-                        ? data.website
-                        : `https://${data.website}`
-                    }
-                    target='_blank'
-                    rel='noopener noreferrer'
-                  >
-                    {data.website}
-                  </Link>
+                <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
+                  <strong>Website:</strong>
+                  <ConExternalLink href={data.website} />
                 </div>
               )}
             </div>

@@ -13,6 +13,7 @@ import {
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
 import { useNavigate } from 'react-router-dom';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
+import { AcFormatDate } from '@src/utilities/ac-format-date';
 
 /**
  * Content for the gebruik details page
@@ -112,13 +113,94 @@ const ConGebruikDetailsPageContent = ({
 
   const status = data?.status || '-';
 
+  // Get all status dates that are set
+  const statusDates = [
+    {
+      label: 'Startdatum Verwerving',
+      value: data?.startDatumVerwerving
+        ? AcFormatDate(data.startDatumVerwerving, 'YYYY-MM-DD', 'D MMMM YYYY')
+        : null,
+    },
+    {
+      label: 'Startdatum Gepland',
+      value: data?.startDatumGepland
+        ? AcFormatDate(data.startDatumGepland, 'YYYY-MM-DD', 'D MMMM YYYY')
+        : null,
+    },
+    {
+      label: 'Startdatum In productie',
+      value: data?.startDatumInProductie
+        ? AcFormatDate(data.startDatumInProductie, 'YYYY-MM-DD', 'D MMMM YYYY')
+        : null,
+    },
+    {
+      label: 'Startdatum Uit te faseren',
+      value: data?.startDatumUitTeFaseren
+        ? AcFormatDate(data.startDatumUitTeFaseren, 'YYYY-MM-DD', 'D MMMM YYYY')
+        : null,
+    },
+    {
+      label: 'Startdatum Uitgefaseerd',
+      value: data?.startDatumUitGefaseerd
+        ? AcFormatDate(data.startDatumUitGefaseerd, 'YYYY-MM-DD', 'D MMMM YYYY')
+        : null,
+    },
+  ].filter((item) => item.value);
+
   // Extract deelnemer IDs from the data (always an array of UUID strings or empty)
   const deelnemerIds = data?.deelnemers || [];
+
+  // Helper to extract ID from a value that could be a string, object, or nested structure
+  const extractId = (value) => {
+    if (!value) return null;
+    if (typeof value === 'string') return value;
+    if (typeof value === 'object') {
+      return (
+        value?.['@self']?.id || value?.id || value?.uuid || value?.value || null
+      );
+    }
+    return String(value);
+  };
+
+  // Get the UUID of the related object for the title (applicatie/koppeling/dienst)
+  const getRelatedObjectId = () => {
+    // Check for koppelingen first
+    const koppelingen = data?.koppelingen || data?.['@self']?.relations?.koppelingen;
+    if (Array.isArray(koppelingen) && koppelingen.length > 0) {
+      const id = extractId(koppelingen[0]);
+      if (id) return id;
+    }
+
+    // Check for diensten
+    const diensten = data?.diensten || data?.['@self']?.relations?.diensten;
+    if (Array.isArray(diensten) && diensten.length > 0) {
+      const id = extractId(diensten[0]);
+      if (id) return id;
+    }
+
+    // Default to module (applicatie)
+    const moduleRaw = data?.module || data?.['@self']?.relations?.module;
+
+    // Module could be an array or a single value
+    const moduleValue = Array.isArray(moduleRaw) ? moduleRaw[0] : moduleRaw;
+    const moduleId = extractId(moduleValue);
+    if (moduleId) return moduleId;
+
+    // Fallback to gebruik id if no related object found
+    return data?.id;
+  };
+
+  const relatedObjectId = getRelatedObjectId();
 
   if (loading || !data) return null;
 
   return (
     <AcColumn gap='sm' horizontalOverflowWrapper>
+      {/* Page Title */}
+      <Heading level={2} style={{ marginBottom: '0.5rem' }}>
+        Gebruik: <ConUuidResolver>{relatedObjectId}</ConUuidResolver>
+      </Heading>
+
       <div
         className='ac-register-review__organisation-header'
         style={{
@@ -140,7 +222,27 @@ const ConGebruikDetailsPageContent = ({
                 <ConActionMenu.Button
                   icon={<VISUALS.PENCIL />}
                   onClick={() => {
-                    // Prefer wizard editing when available; fallback to legacy modal
+                    // Check if koppelingen array is filled - redirect to koppeling wizard
+                    // Also check @self.relations.koppelingen as fallback
+                    const koppelingen =
+                      data?.koppelingen || data?.['@self']?.relations?.koppelingen;
+                    if (Array.isArray(koppelingen) && koppelingen.length > 0) {
+                      navigate(
+                        `/forms/gebruik/koppeling?type=eigen-organisatie&id=${id}`
+                      );
+                      return;
+                    }
+
+                    // Check if diensten array is filled - redirect to dienst wizard
+                    // Also check @self.relations.diensten as fallback
+                    const diensten =
+                      data?.diensten || data?.['@self']?.relations?.diensten;
+                    if (Array.isArray(diensten) && diensten.length > 0) {
+                      navigate(`/forms/gebruik/dienst?type=dienst&id=${id}`);
+                      return;
+                    }
+
+                    // Default: go to gebruik wizard
                     if (config?.schemaSlug) {
                       const wizards = Object.values(DASHBOARD_WIZARDS);
                       const wizard = wizards.find(
@@ -231,6 +333,13 @@ const ConGebruikDetailsPageContent = ({
             <strong>Status: </strong>
             {status}
           </div>
+
+          {statusDates.map((dateItem) => (
+            <div key={dateItem.label} style={{ marginBottom: '8px' }}>
+              <strong>{dateItem.label}: </strong>
+              {dateItem.value}
+            </div>
+          ))}
         </div>
 
         {sortedReferentiecomponenten.length > 0 && (
@@ -262,6 +371,73 @@ const ConGebruikDetailsPageContent = ({
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Show module (applicatie) if present */}
+        {(() => {
+          const moduleRaw = data?.module || data?.['@self']?.relations?.module;
+          const moduleValue = Array.isArray(moduleRaw) ? moduleRaw[0] : moduleRaw;
+          const moduleId = extractId(moduleValue);
+          if (!moduleId) return null;
+          return (
+            <div style={{ marginBottom: '8px' }}>
+              <strong>Applicatie: </strong>
+              <ConUuidResolver>{moduleId}</ConUuidResolver>
+            </div>
+          );
+        })()}
+
+        {/* Show diensten if present */}
+        {(() => {
+          const diensten = data?.diensten || data?.['@self']?.relations?.diensten;
+          if (!Array.isArray(diensten) || diensten.length === 0) return null;
+          return (
+            <div style={{ marginBottom: '8px' }}>
+              <strong>Dienst{diensten.length > 1 ? 'en' : ''}: </strong>
+              <div>
+                {diensten.map((dienstItem, index) => {
+                  const dienstId = extractId(dienstItem);
+                  if (!dienstId) return null;
+                  return (
+                    <div key={dienstId || index} style={{ marginBottom: '4px' }}>
+                      <ConUuidResolver>{dienstId}</ConUuidResolver>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Show koppelingen if present */}
+        {(() => {
+          const koppelingen =
+            data?.koppelingen || data?.['@self']?.relations?.koppelingen;
+          if (!Array.isArray(koppelingen) || koppelingen.length === 0) return null;
+          return (
+            <div style={{ marginBottom: '8px' }}>
+              <strong>Koppeling{koppelingen.length > 1 ? 'en' : ''}: </strong>
+              <div>
+                {koppelingen.map((koppelingItem, index) => {
+                  const koppelingId = extractId(koppelingItem);
+                  if (!koppelingId) return null;
+                  return (
+                    <div key={koppelingId || index} style={{ marginBottom: '4px' }}>
+                      <ConUuidResolver>{koppelingId}</ConUuidResolver>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Show interne aantekening if present */}
+        {data?.interneAantekening && (
+          <div style={{ marginBottom: '8px' }}>
+            <strong>Interne notitie: </strong>
+            <div style={{ whiteSpace: 'pre-wrap' }}>{data.interneAantekening}</div>
           </div>
         )}
       </div>

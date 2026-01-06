@@ -13,7 +13,8 @@ import { commongroundApiUrl } from '@config';
 import { schemaCache } from '@services/schemaCache.service';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
-import { checkOrganizationPermissions } from '@utils/organization-permissions';
+import { normalizeSchemaName } from '@src/utilities/con-normalize-schema-name';
+// import { checkOrganizationPermissions } from '@utils/organization-permissions';
 
 // Markdown Editor
 import remarkDefinitionList, { defListHastHandlers } from 'remark-definition-list';
@@ -34,7 +35,10 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
 
   const navigate = useNavigate();
 
-  const schemaId = get_single?.['@self']?.schema;
+  const schemaId =
+    typeof get_single?.['@self']?.schema === 'object'
+      ? get_single?.['@self']?.schema.id
+      : get_single?.['@self']?.schema;
   const schemaSlug = useMemo(
     () => (schemaId ? schemaCache.get(schemaId) : null),
     [schemaId]
@@ -217,8 +221,7 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
                 {schemaSlug && getTabHeaderName(schemaSlug, true)}
               </Heading>
 
-              {checkOrganizationPermissions(user, get_single).canEdit && (
-                <ConDetailsActionsMenu
+              <ConDetailsActionsMenu
                   user={user}
                   id={id}
                   schemaSlug={schemaSlug}
@@ -231,8 +234,9 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
                   onDelete={handleDelete}
                   onEdit={() => {
                     if (schemaSlug) {
+                      const wizardSchemaName = normalizeSchemaName(schemaSlug).toLowerCase();
                       const wizards = Object.values(DASHBOARD_WIZARDS);
-                      const wizard = wizards.find((w) => w.schema === schemaSlug);
+                      const wizard = wizards.find((w) => w.schema === wizardSchemaName);
 
                       if (wizard) {
                         const baseUrl = getWizardUrl(wizard);
@@ -242,22 +246,12 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
                         return;
                       }
                     }
-                    // Fallback to beheer legacy edit page in new tab
-                    const beheerUrl = `/beheer/${schemaSlug}/${id}`;
-                    window.open(beheerUrl, '_blank');
+                    // Fallback to beheer detail page in same tab with edit modal
+                    const beheerUrl = `/beheer/${schemaSlug}/${id}?showEditModal=true`;
+                    navigate(beheerUrl);
                   }}
-                  uniqueActions={[
-                    {
-                      key: 'delete',
-                      label: 'Verwijderen',
-                      icon: VISUALS.TRASHCAN,
-                      onClick: handleDelete,
-                    },
-                  ]}
                   triggerStyle='button'
-                  relatedActions={actionMenuItems}
                 />
-              )}
             </AcFlex>
           </AcFlex>
           <AcFlex spacing='sm' justifyContent='between'>

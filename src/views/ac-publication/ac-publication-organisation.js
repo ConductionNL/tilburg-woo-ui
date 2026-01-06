@@ -5,7 +5,7 @@ import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-behe
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AcContainer, AcFlex } from '@atoms';
-import { AcLoader } from '@components';
+import { AcLoader, ConDetailsActionsMenu, ConExternalLink } from '@components';
 import { withStore } from '@stores';
 import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
@@ -22,6 +22,8 @@ import remarkSupersub from 'remark-supersub';
 import rehypeSlug from 'rehype-slug';
 import rehypeSanitize from 'rehype-sanitize';
 import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
+import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
+import { normalizeSchemaName } from '@src/utilities/con-normalize-schema-name';
 
 const AcPublication = ({ store: { publications, object, user } }) => {
   const { id } = useParams();
@@ -29,13 +31,18 @@ const AcPublication = ({ store: { publications, object, user } }) => {
 
   const navigate = useNavigate();
 
-  const schemaId = get_single?.['@self']?.schema.id || get_single?.['@self']?.schema;
+  // Delete modal state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const handleDelete = useCallback(() => setShowDeleteModal(true), []);
+
+  const schemaId =
+    typeof get_single?.['@self']?.schema === 'object'
+      ? get_single?.['@self']?.schema.id
+      : get_single?.['@self']?.schema;
   const schemaSlug = useMemo(
     () => (schemaId ? schemaCache.get(schemaId) : null),
     [schemaId]
   );
-
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // Tabs
   const [uses, setUses] = useState([]);
@@ -155,6 +162,42 @@ const AcPublication = ({ store: { publications, object, user } }) => {
                   })()}
                 {schemaSlug && getTabHeaderName(schemaSlug, true)}
               </Heading>
+              {schemaSlug && (
+                <ConDetailsActionsMenu
+                  user={user}
+                  id={id}
+                  schemaSlug={schemaSlug}
+                  title={get_single?.['@self']?.name || get_single?.id}
+                  published={get_single?.['@self']?.published}
+                  object={get_single}
+                  showViewAction={false}
+                  showEditAction={true}
+                  showPublishActions={true}
+                  onDelete={handleDelete}
+                  onEdit={() => {
+                    if (schemaSlug) {
+                      const wizardSchemaName =
+                        normalizeSchemaName(schemaSlug).toLowerCase();
+                      const wizards = Object.values(DASHBOARD_WIZARDS);
+                      const wizard = wizards.find(
+                        (w) => w.schema === wizardSchemaName
+                      );
+
+                      if (wizard) {
+                        const baseUrl = getWizardUrl(wizard);
+                        const url = new URL(baseUrl, window.location.origin);
+                        url.searchParams.set('id', id);
+                        navigate(url.pathname + url.search);
+                        return;
+                      }
+                    }
+                    // Fallback to beheer detail page in same tab with edit modal
+                    const beheerUrl = `/beheer/${schemaSlug}/${id}?showEditModal=true`;
+                    navigate(beheerUrl);
+                  }}
+                  triggerStyle='button'
+                />
+              )}
             </AcFlex>
           </AcFlex>
           <AcFlex spacing='sm' justifyContent='between'>
@@ -212,19 +255,11 @@ const AcPublication = ({ store: { publications, object, user } }) => {
                       </div>
                     )}
                     {get_single?.website && (
-                      <div style={{ marginBottom: '8px' }}>
-                        <strong>Website: </strong>
-                        <Link
-                          href={
-                            get_single.website.startsWith('http')
-                              ? get_single.website
-                              : `https://${get_single.website}`
-                          }
-                          target='_blank'
-                          rel='noopener noreferrer'
-                        >
-                          {get_single.website}
-                        </Link>
+                      <div
+                        style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}
+                      >
+                        <strong>Website:</strong>
+                        <ConExternalLink href={get_single.website} />
                       </div>
                     )}
                   </div>

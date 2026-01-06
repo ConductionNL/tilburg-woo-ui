@@ -4,7 +4,7 @@ import { withStore } from '@stores';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AcColumn, AcContainer, AcFlex } from '@atoms';
 import { AcLoader, ConDetailsActionsMenu } from '@components';
-import { VISUALS } from '@constants';
+// import { VISUALS } from '@constants';
 import {
   Heading,
   Paragraph,
@@ -15,10 +15,66 @@ import { schemaCache } from '@services/schemaCache.service';
 import RelatedTabs from '@views/ac-publication/con-related-tabs';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
-import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
+// import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
-import { checkOrganizationPermissions } from '@utils/organization-permissions';
+import { normalizeSchemaName } from '@src/utilities/con-normalize-schema-name';
+import { AcFormatDate } from '@src/utilities/ac-format-date';
+// import { checkOrganizationPermissions } from '@utils/organization-permissions';
+
+/**
+ * Gets the relevant start date based on the status.
+ * Maps status values to their corresponding date fields and labels.
+ */
+const getRelevantStartDate = (data) => {
+  const status = data?.status;
+  if (!status) return null;
+
+  switch (status) {
+    case 'in gebruik':
+      return data?.datumInGebruik
+        ? {
+            label: 'Startdatum In gebruik',
+            value: AcFormatDate(data.datumInGebruik, 'YYYY-MM-DD', 'D MMMM YYYY'),
+          }
+        : null;
+    case 'in ontwikkeling':
+      return data?.datumInOntwikkeling
+        ? {
+            label: 'Startdatum In ontwikkeling',
+            value: AcFormatDate(
+              data.datumInOntwikkeling,
+              'YYYY-MM-DD',
+              'D MMMM YYYY'
+            ),
+          }
+        : null;
+    case 'einde ondersteuning':
+      return data?.datumEindeOndersteuning
+        ? {
+            label: 'Startdatum Einde ondersteuning',
+            value: AcFormatDate(
+              data.datumEindeOndersteuning,
+              'YYYY-MM-DD',
+              'D MMMM YYYY'
+            ),
+          }
+        : null;
+    case 'teruggetrokken':
+      return data?.datumTeruggetrokken
+        ? {
+            label: 'Startdatum Teruggetrokken',
+            value: AcFormatDate(
+              data.datumTeruggetrokken,
+              'YYYY-MM-DD',
+              'D MMMM YYYY'
+            ),
+          }
+        : null;
+    default:
+      return null;
+  }
+};
 
 /**
  * Publication page for schema slug 'koppeling'.
@@ -29,7 +85,10 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
   const navigate = useNavigate();
   const { get_single, loading } = publications;
 
-  const schemaId = get_single?.['@self']?.schema;
+  const schemaId =
+    typeof get_single?.['@self']?.schema === 'object'
+      ? get_single?.['@self']?.schema.id
+      : get_single?.['@self']?.schema;
   const schemaSlug = useMemo(
     () => (schemaId ? schemaCache.get(schemaId) : null),
     [schemaId]
@@ -46,50 +105,6 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
   const [usedLoading, setUsedLoading] = useState(false);
   const [relatedTabIndex, setRelatedTabIndex] = useState(0);
   const fetchedIds = useRef(new Set());
-
-  // Related create actions (wizard-aware) like module/product pages
-  const openDynamicCreate = useCallback(
-    (targetType, preSelected, metadata = {}) => {
-      if (metadata.isOutgoing) {
-        // reserved for future use
-      }
-      navigate(`/beheer/${targetType}?showCreateModal=true&voorzieningId=${id}`);
-    },
-    [navigate, id]
-  );
-
-  // Exclude specific schemas from actions
-  const excludeSchemas = useMemo(() => ['beoordeeling', 'gebruik'], []);
-
-  const { makeActionsForContext } = useRelatedCreateActions({
-    object,
-    user,
-    schemaRef: schemaSlug,
-    currentType: schemaSlug,
-    openDynamicCreate,
-    currentObject: get_single,
-    excludeSchemas,
-  });
-
-  const [actionMenuItems, setActionMenuItems] = useState([]);
-
-  useEffect(() => {
-    if (!schemaSlug || !id) return;
-    const items = makeActionsForContext(
-      id,
-      null,
-      get_single,
-      'voorzieningen',
-      schemaSlug
-    ).map(({ key, label, onClick, schema, icon }) => ({
-      key,
-      label,
-      onClick,
-      schema,
-      icon,
-    }));
-    setActionMenuItems(items);
-  }, [schemaSlug, id, makeActionsForContext, get_single]);
 
   const fetchUses = useCallback(async () => {
     if (!id) return;
@@ -154,6 +169,14 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
     );
   }, [get_single]);
 
+  const intermediairId = useMemo(() => {
+    return (
+      get_single?.['@self']?.relations?.gerealiseerdMetIntermediairModule ||
+      get_single?.gerealiseerdMetIntermediairModule ||
+      null
+    );
+  }, [get_single]);
+
   if (loading.status || !get_single) {
     return <AcLoader />;
   }
@@ -173,45 +196,37 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
             {schemaSlug && getTabHeaderName(schemaSlug, true)}
           </Heading>
 
-          {checkOrganizationPermissions(user, get_single).canEdit && (
-            <ConDetailsActionsMenu
-              user={user}
-              id={id}
-              schemaSlug={schemaSlug}
-              title={title}
-              published={get_single?.['@self']?.published}
-              object={get_single}
-              showViewAction={false}
-              showEditAction={true}
-              showPublishActions={true}
-              onDelete={handleDelete}
-              onEdit={() => {
-                if (schemaSlug) {
-                  const wizards = Object.values(DASHBOARD_WIZARDS);
-                  const wizard = wizards.find((w) => w.schema === schemaSlug);
-                  if (wizard) {
-                    const baseUrl = getWizardUrl(wizard);
-                    const url = new URL(baseUrl, window.location.origin);
-                    url.searchParams.set('id', id);
-                    navigate(url.pathname + url.search);
-                    return;
-                  }
-                  const beheerUrl = `/beheer/${schemaSlug}/${id}`;
-                  window.open(beheerUrl, '_blank');
+          <ConDetailsActionsMenu
+            user={user}
+            id={id}
+            schemaSlug={schemaSlug}
+            title={title}
+            published={get_single?.['@self']?.published}
+            object={get_single}
+            showViewAction={false}
+            showEditAction={true}
+            showPublishActions={true}
+            onDelete={handleDelete}
+            onEdit={() => {
+              if (schemaSlug) {
+                const wizardSchemaName =
+                  normalizeSchemaName(schemaSlug).toLowerCase();
+                const wizards = Object.values(DASHBOARD_WIZARDS);
+                const wizard = wizards.find((w) => w.schema === wizardSchemaName);
+                if (wizard) {
+                  const baseUrl = getWizardUrl(wizard);
+                  const url = new URL(baseUrl, window.location.origin);
+                  url.searchParams.set('id', id);
+                  navigate(url.pathname + url.search);
+                  return;
                 }
-              }}
-              uniqueActions={[
-                {
-                  key: 'delete',
-                  label: 'Verwijderen',
-                  icon: VISUALS.TRASHCAN,
-                  onClick: handleDelete,
-                },
-              ]}
-              triggerStyle='button'
-              relatedActions={actionMenuItems}
-            />
-          )}
+              }
+              // Fallback to beheer detail page in same tab with edit modal
+              const beheerUrl = `/beheer/${schemaSlug}/${id}?showEditModal=true`;
+              navigate(beheerUrl);
+            }}
+            triggerStyle='button'
+          />
         </AcFlex>
 
         {!get_single?.['@self']?.published && (
@@ -272,7 +287,7 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
             )}
             {get_single?.type && (
               <div style={{ marginBottom: '8px' }}>
-                <strong>Type: </strong>
+                <strong>Transportprotocol: </strong>
                 {get_single.type}
               </div>
             )}
@@ -282,17 +297,39 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
                 {get_single.status}
               </div>
             )}
-             {get_single?.standaardversies && (
-            <div style={{ marginBottom: '8px' }}>
-              <strong>Standaarden: </strong>
-              {get_single.standaardversies.map((s) => (
-                <div key={s}>
-                  <ConUuidResolver>{String(s)}</ConUuidResolver>
+            {(() => {
+              const relevantDate = getRelevantStartDate(get_single);
+              return relevantDate ? (
+                <div style={{ marginBottom: '8px' }}>
+                  <strong>{relevantDate.label}: </strong>
+                  {relevantDate.value}
                 </div>
-              ))}
-            </div>
-          )}
-         
+              ) : null;
+            })()}
+            {get_single?.beschrijvingKort && (
+              <div style={{ marginBottom: '8px' }}>
+                <strong>Korte beschrijving: </strong>
+                {get_single.beschrijvingKort}
+              </div>
+            )}
+            {intermediairId && (
+              <div style={{ marginBottom: '8px' }}>
+                <strong>Intermediair: </strong>
+                <ConUuidResolver>{String(intermediairId)}</ConUuidResolver>
+              </div>
+            )}
+            {get_single?.standaardversies &&
+              get_single.standaardversies.length > 0 && (
+                <div style={{ marginBottom: '8px' }}>
+                  <strong>Standaardversies: </strong>
+                  {get_single.standaardversies.map((s) => (
+                    <div key={s}>
+                      <ConUuidResolver>{String(s)}</ConUuidResolver>
+                    </div>
+                  ))}
+                </div>
+              )}
+
             {get_single?.dienst && (
               <div style={{ marginBottom: '8px' }}>
                 <strong>Dienst: </strong>

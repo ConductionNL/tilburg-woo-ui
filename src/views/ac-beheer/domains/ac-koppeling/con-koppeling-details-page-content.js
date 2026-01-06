@@ -17,6 +17,61 @@ import { TOOLTIP_ID } from '@src/index.web';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
 import { useNavigate } from 'react-router-dom';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
+import { AcFormatDate } from '@src/utilities/ac-format-date';
+
+/**
+ * Gets the relevant start date based on the status.
+ * Maps status values to their corresponding date fields and labels.
+ */
+const getRelevantStartDate = (data) => {
+  const status = data?.status;
+  if (!status) return null;
+
+  switch (status) {
+    case 'in gebruik':
+      return data?.datumInGebruik
+        ? {
+            label: 'Startdatum In gebruik',
+            value: AcFormatDate(data.datumInGebruik, 'YYYY-MM-DD', 'D MMMM YYYY'),
+          }
+        : null;
+    case 'in ontwikkeling':
+      return data?.datumInOntwikkeling
+        ? {
+            label: 'Startdatum In ontwikkeling',
+            value: AcFormatDate(
+              data.datumInOntwikkeling,
+              'YYYY-MM-DD',
+              'D MMMM YYYY'
+            ),
+          }
+        : null;
+    case 'einde ondersteuning':
+      return data?.datumEindeOndersteuning
+        ? {
+            label: 'Startdatum Einde ondersteuning',
+            value: AcFormatDate(
+              data.datumEindeOndersteuning,
+              'YYYY-MM-DD',
+              'D MMMM YYYY'
+            ),
+          }
+        : null;
+    case 'teruggetrokken':
+      return data?.datumTeruggetrokken
+        ? {
+            label: 'Startdatum Teruggetrokken',
+            value: AcFormatDate(
+              data.datumTeruggetrokken,
+              'YYYY-MM-DD',
+              'D MMMM YYYY'
+            ),
+          }
+        : null;
+    default:
+      return null;
+  }
+};
 
 /**
  * Koppeling Details Content
@@ -86,6 +141,14 @@ const ConKoppelingDetailsPageContent = ({
       data?.gegevensuitwisselingRichting ||
       data?.['@self']?.relations?.richtingDataUitwisseling ||
       'bi-directioneel'
+    );
+  }, [data]);
+
+  const intermediairId = useMemo(() => {
+    return (
+      data?.['@self']?.relations?.gerealiseerdMetIntermediairModule ||
+      data?.gerealiseerdMetIntermediairModule ||
+      null
     );
   }, [data]);
 
@@ -266,7 +329,7 @@ const ConKoppelingDetailsPageContent = ({
           )}
           {data?.type && (
             <div style={{ marginBottom: '8px' }}>
-              <strong>Type: </strong>
+              <strong>Transportprotocol: </strong>
               {data.type}
             </div>
           )}
@@ -276,9 +339,30 @@ const ConKoppelingDetailsPageContent = ({
               {data.status}
             </div>
           )}
-          {data?.standaardversies && (
+          {(() => {
+            const relevantDate = getRelevantStartDate(data);
+            return relevantDate ? (
+              <div style={{ marginBottom: '8px' }}>
+                <strong>{relevantDate.label}: </strong>
+                {relevantDate.value}
+              </div>
+            ) : null;
+          })()}
+          {data?.beschrijvingKort && (
             <div style={{ marginBottom: '8px' }}>
-              <strong>Standaarden: </strong>
+              <strong>Korte beschrijving: </strong>
+              {data.beschrijvingKort}
+            </div>
+          )}
+          {intermediairId && (
+            <div style={{ marginBottom: '8px' }}>
+              <strong>Intermediair: </strong>
+              <ConUuidResolver>{String(intermediairId)}</ConUuidResolver>
+            </div>
+          )}
+          {data?.standaardversies && data.standaardversies.length > 0 && (
+            <div style={{ marginBottom: '8px' }}>
+              <strong>Standaardversies: </strong>
               {data.standaardversies.map((s) => (
                 <div key={s}>
                   <ConUuidResolver>{String(s)}</ConUuidResolver>

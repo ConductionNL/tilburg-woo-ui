@@ -97,16 +97,31 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
    */
   const [applicatie, setApplicatie] = useState({
     naam: '',
-    aanbieder: null,
-    cloudDienstverleningsmodel: '',
-    licentietype: '',
-    licentieType: '',
-    licentie: '',
-    hostingLocatie: '',
+    beschrijvingKort: '',
+    beschrijvingLang: '',
+    website: '',
+    contactpersoon: '',
+    cloudDienstverleningsmodel: [],
     hostingJurisdictie: '',
+    hostingLocatie: '',
+    aanbieder: '',
+    licentietype: '',
+    licentie: '',
     referentieComponenten: [],
-    koppelingen: [],
+    type: '',
+    logo: '',
+    omvat: [],
+    onderdeelVan: [],
     diensten: [],
+    koppelingen: [],
+    compliancy: [],
+    standaarden: [],
+    standaardenGemma: [],
+    moduleVersies: [],
+    gebruiken: [],
+    beoordelingen: [],
+    kwetsbaarheden: [],
+    licentieType: '',
   });
 
   // Ref for ProcessSteps container
@@ -213,8 +228,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     mapping.push(getAdjustedStepIndex(4)); // Referentiecomponenten
     mapping.push(getAdjustedStepIndex(5)); // Standaarden
     mapping.push(getAdjustedStepIndex(6)); // Koppelingen
-    // Diensten step temporarily disabled - keeping code for later re-enabling
-    // mapping.push(getAdjustedStepIndex(7)); // Diensten (was step 7, now skipped)
 
     // Main step 3: Controleren
     mapping.push(getAdjustedStepIndex(7)); // Was step 8, now step 7 (Diensten disabled)
@@ -270,6 +283,11 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
   // Extra standards selected via multi-select (not from referentieComponenten)
   const [selectedExtraStandards, setSelectedExtraStandards] = useState([]);
 
+  // Standaardenversies options with search functionality
+  const [standaardenversiesOptions, setStandaardenversiesOptions] = useState([]);
+  const [standaardenversiesOptionsLoading, setStandaardenversiesOptionsLoading] =
+    useState(false);
+
   // Modules options with search functionality for koppelingen
   const [modulesOptions, setModulesOptions] = useState([]);
   const [modulesLoading, setModulesLoading] = useState(false);
@@ -299,7 +317,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     selectedAppAByRow: {},
     selectedAppBByRow: {},
     directionByRow: {},
-    typeByRow: {},
     koppelingIdByRow: {},
   });
 
@@ -712,6 +729,59 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     }
   }, [schemas?.module]);
 
+  const loadStandaardenversies = useCallback(async () => {
+    if (!schemas?.module) return;
+
+    console.info('📋 Loading standaarden...');
+    setStandaardenversiesOptionsLoading(true);
+
+    try {
+      const queryParams = new URLSearchParams({
+        _limit: '500',
+        _page: '1',
+        gemmaType: 'Standaardversie',
+        '_extend[]': '@self.schema',
+        _published: 'false',
+      });
+
+      // Fetch standards from openconnector endpoint
+      const response = await fetch(
+        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      const list = await response.json();
+
+      const options = list.results
+        .map((item, index) => {
+          const label =
+            item?.xml?.name?._value ||
+            item?.naam ||
+            item?.name ||
+            item?.title ||
+            item?.label ||
+            `Standaard ${index + 1}`;
+          // Use identifier first (id- prefixed format) to match what we store in compliancy/standaardVersies
+          const value =
+            item?.identifier || item?.value || item?.id || item?.slug || label;
+          return { value: String(value), label: String(label), data: item };
+        })
+        .filter((o) => o.label && o.value);
+
+      setStandaardenversiesOptions(options);
+      console.info(`✅ Loaded ${options.length} standaardenversies`);
+    } catch (e) {
+      console.error('Failed to load standaardenversies:', e);
+      setStandaardenversiesOptions([]);
+    } finally {
+      setStandaardenversiesOptionsLoading(false);
+    }
+  }, [schemas?.module]);
+
   // ✅ Load standaarden when schemas are available
   useEffect(() => {
     if (!schemas?.module) return;
@@ -722,80 +792,130 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
 
     if (shouldLoadStandards) {
       loadStandaarden();
+      loadStandaardenversies();
     }
   }, [schemas?.module]);
 
-  // Initialize selectedExtraStandards from existing compliancy data
+  // Initialize selectedExtraStandards from existing compliancy and standaardVersies data
   useEffect(() => {
-    if (standaardenOptions.length === 0) return;
+    if (standaardenversiesOptions.length === 0) return;
+    if (standaardenOptions.length === 0) return; // Need standards to check standaardVersies
     if (selectedExtraStandards.length > 0) return; // Already initialized
 
+    // Get all standaardversie IDs from compliancy and standaardVersies arrays
     const existingCompliancy = applicatie.compliancy || [];
-    if (existingCompliancy.length === 0) return;
+    const existingStandaardVersies =
+      applicatie.standaardVersies || applicatie.standaardversies || [];
 
-    // Get all standard IDs from referentieComponentenWithStandards
-    const getAllStandardsFromRefs = () => {
-      const standardsSet = new Set();
+    // Collect all versie IDs that might be "extra" (from compliancy or standaardVersies)
+    const allVersieIds = new Set();
+    existingCompliancy.forEach((comp) => {
+      if (comp.standaardversie) {
+        allVersieIds.add(String(comp.standaardversie));
+      }
+    });
+    existingStandaardVersies.forEach((versieId) => {
+      if (versieId) {
+        allVersieIds.add(String(versieId));
+      }
+    });
+
+    if (allVersieIds.size === 0) return;
+
+    // Get all standaardversie IDs from referentieComponentenWithStandards
+    // Traverse: referentieComponenten → standaarden → standaardVersies
+    const getAllStandaardVersiesFromRefs = () => {
+      const versiesSet = new Set();
+
+      // Helper to get ID from an item
+      const getItemId = (item) => {
+        if (!item) return null;
+        if (typeof item === 'string') return item;
+        return (
+          item.id ||
+          item.identifier ||
+          item.value ||
+          item.slug ||
+          item.naam ||
+          item.name ||
+          null
+        );
+      };
+
+      // Helper to process standards and extract their versions
+      const processStandards = (standardsList) => {
+        if (!standardsList || !Array.isArray(standardsList)) return;
+
+        standardsList.forEach((standard) => {
+          const standardId = getItemId(standard);
+          if (!standardId) return;
+
+          // Find the full standard data to get standaardVersies
+          const fetchedStandardData = standaardenOptions.find(
+            (opt) =>
+              String(opt.value || opt.data?.id || opt.data?.identifier) ===
+              String(standardId)
+          );
+          const standardData = fetchedStandardData?.data || standard;
+
+          // Get standaardVersies array from the standard
+          const standaardVersiesList = standardData?.standaardVersies || [];
+
+          if (Array.isArray(standaardVersiesList)) {
+            standaardVersiesList.forEach((versie) => {
+              const versieId = getItemId(versie);
+              if (versieId) {
+                versiesSet.add(String(versieId));
+              }
+            });
+          }
+        });
+      };
+
       referentieComponentenWithStandards.forEach((refComp) => {
-        if (
-          refComp.aanbevolenStandaarden &&
-          Array.isArray(refComp.aanbevolenStandaarden)
-        ) {
-          refComp.aanbevolenStandaarden.forEach((standard) => {
-            const id =
-              standard?.id ||
-              standard?.identifier ||
-              standard?.value ||
-              standard?.slug ||
-              standard?.naam ||
-              standard?.name;
-            if (id) standardsSet.add(String(id));
-          });
-        }
-        if (
-          refComp.verplichteStandaarden &&
-          Array.isArray(refComp.verplichteStandaarden)
-        ) {
-          refComp.verplichteStandaarden.forEach((standard) => {
-            const id =
-              standard?.id ||
-              standard?.identifier ||
-              standard?.value ||
-              standard?.slug ||
-              standard?.naam ||
-              standard?.name;
-            if (id) standardsSet.add(String(id));
-          });
-        }
+        processStandards(refComp.aanbevolenStandaarden);
+        processStandards(refComp.verplichteStandaarden);
       });
-      return standardsSet;
+
+      return versiesSet;
     };
 
-    const refStandardIds = getAllStandardsFromRefs();
-    const extraStandardsInCompliancy = existingCompliancy
-      .map((comp) => {
-        const standardId = String(comp.standaardversie);
-        // Check if this standard is NOT in referentieComponenten (i.e., it's an extra standard)
-        if (!refStandardIds.has(standardId)) {
-          // Find the option for this standard
-          return standaardenOptions.find(
-            (opt) =>
-              String(
-                opt.value || opt.data?.id || opt.data?.identifier || opt.data?.value
-              ) === standardId
-          );
-        }
-        return null;
-      })
-      .filter(Boolean);
+    const refVersieIds = getAllStandaardVersiesFromRefs();
 
-    if (extraStandardsInCompliancy.length > 0) {
-      setSelectedExtraStandards(extraStandardsInCompliancy);
+    // Find extra standaardversies: those in compliancy/standaardVersies but NOT in referentieComponenten
+    const extraVersies = [];
+
+    allVersieIds.forEach((versieId) => {
+      // Check if this versie is NOT in referentieComponenten (i.e., it's an extra versie)
+      if (!refVersieIds.has(versieId)) {
+        // Find the option for this standaardversie - check all possible ID formats
+        const option = standaardenversiesOptions.find((opt) => {
+          // Check option value (should now be identifier)
+          if (String(opt.value) === versieId) return true;
+          // Also check data properties for backwards compatibility
+          if (opt.data?.identifier && String(opt.data.identifier) === versieId)
+            return true;
+          if (opt.data?.id && String(opt.data.id) === versieId) return true;
+          if (opt.data?.value && String(opt.data.value) === versieId) return true;
+          return false;
+        });
+
+        if (option) {
+          extraVersies.push(option);
+        }
+      }
+    });
+
+    if (extraVersies.length > 0) {
+      setSelectedExtraStandards(extraVersies);
     }
   }, [
     standaardenOptions,
+    standaardenversiesOptions,
     referentieComponentenWithStandards,
     applicatie.compliancy,
+    applicatie.standaardVersies,
+    applicatie.standaardversies,
     selectedExtraStandards.length,
   ]);
 
@@ -1099,7 +1219,12 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
             item?.label ||
             `Facility ${index + 1}`;
           const value = item?.value || item?.id || item?.slug || label;
-          return { value: String(value), label: String(label), data: item, type: 'buitengemeentelijke' };
+          return {
+            value: String(value),
+            label: String(label),
+            data: item,
+            type: 'buitengemeentelijke',
+          };
         })
         .filter((o) => o.label && o.value);
 
@@ -1137,10 +1262,28 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       const nextDirectionByRow = {};
       const nextTypeByRow = {};
       const nextKoppelingIdByRow = {};
+      const updatedKoppelingen = [];
 
       koppelingen.forEach((kpl) => {
         const rowId = rowCounter++;
         nextRows.push(rowId);
+
+        // Use existing _localId if present, otherwise generate one
+        const localId =
+          kpl && kpl._localId
+            ? kpl._localId
+            : kpl?.id
+            ? `existing_${kpl.id}`
+            : `kpl_${Date.now().toString(36)}_${Math.random()
+                .toString(36)
+                .slice(2, 8)}`;
+        nextKoppelingIdByRow[rowId] = localId;
+
+        // Ensure the koppeling has _localId set for proper data retrieval
+        updatedKoppelingen.push({
+          ...kpl,
+          _localId: localId,
+        });
 
         // Try to prefill Applicatie B by id when present in API data
         const moduleBId = (() => {
@@ -1164,34 +1307,25 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
           nextSelectedAppBByRow[rowId] = moduleBId;
         }
 
-        if (kpl && kpl.richtingDataUitwisseling) {
-          nextDirectionByRow[rowId] = kpl.richtingDataUitwisseling;
+        if (kpl && kpl.gegevensuitwisselingRichting) {
+          nextDirectionByRow[rowId] = kpl.gegevensuitwisselingRichting;
         }
 
         if (kpl && kpl.soortKoppeling) {
           nextTypeByRow[rowId] = kpl.soortKoppeling;
         }
-
-        // Use existing _localId if present, otherwise generate one
-        const localId =
-          kpl && kpl._localId
-            ? kpl._localId
-            : kpl?.id
-            ? `existing_${kpl.id}`
-            : `kpl_${Date.now().toString(36)}_${Math.random()
-                .toString(36)
-                .slice(2, 8)}`;
-        nextKoppelingIdByRow[rowId] = localId;
       });
 
       if (nextRows.length > 0) {
+        // Update applicatie.koppelingen to ensure all have _localId
+        setApplicatieData('koppelingen', updatedKoppelingen);
+
         setKoppelingenFormState((prev) => ({
           ...prev,
           rows: nextRows,
           nextRowId: nextRows.length,
           selectedAppBByRow: { ...prev.selectedAppBByRow, ...nextSelectedAppBByRow },
           directionByRow: { ...prev.directionByRow, ...nextDirectionByRow },
-          typeByRow: { ...prev.typeByRow, ...nextTypeByRow },
           koppelingIdByRow: {
             ...prev.koppelingIdByRow,
             ...nextKoppelingIdByRow,
@@ -1640,6 +1774,8 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
             referentieComponentenWithStandards={referentieComponentenWithStandards}
             standaardenOptions={standaardenOptions}
             standaardenOptionsLoading={standaardenOptionsLoading}
+            standaardenversiesOptions={standaardenversiesOptions}
+            standaardenversiesOptionsLoading={standaardenversiesOptionsLoading}
             selectedExtraStandards={selectedExtraStandards}
             setSelectedExtraStandards={setSelectedExtraStandards}
           />
@@ -1656,19 +1792,10 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
             koppelingenFormState={koppelingenFormState}
             setKoppelingenFormState={setKoppelingenFormState}
             searchModules={searchModules}
+            standaardenOptions={standaardenOptions}
+            standaardenOptionsLoading={standaardenOptionsLoading}
           />
         );
-      // Diensten step temporarily disabled - keeping code for later re-enabling
-      // case 7: (was Diensten, now used for Controleren below)
-      //   return (
-      //     <ConFormApplicatieDienstenStage
-      //       applicatie={applicatie}
-      //       dienstOptions={dienstOptions}
-      //       setApplicatieData={setApplicatieData}
-      //       dienstenFormState={dienstenFormState}
-      //       setDienstenFormState={setDienstenFormState}
-      //     />
-      //   );
       case 7: // Was case 8 (Controleren) - renumbered due to Diensten being disabled
         return (
           <ConFormApplicatieControlerenStage
@@ -1709,9 +1836,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         return 'Selecteer de standaarden voor uw applicatie';
       case 6:
         return 'Koppelingen met andere applicaties';
-      // Diensten step temporarily disabled - keeping code for later re-enabling
-      // case 7: (was Diensten, now used for Controleren below)
-      //   return 'Diensten';
       case 7: // Was case 8 (Controleren) - renumbered due to Diensten being disabled
         return 'Controleer uw gegevens';
       default:
@@ -1802,6 +1926,25 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       }
     }
 
+    // Koppelingen step: validate that all started koppelingen have a naam
+    // A koppeling is considered "started" if it has moduleB filled in
+    // Empty koppelingen (no moduleB) are ignored - koppelingen are optional
+    if (logicalStep === 6) {
+      if (Array.isArray(applicatie.koppelingen)) {
+        const startedKoppelingenWithoutNaam = applicatie.koppelingen.filter((kp) => {
+          // Check if koppeling has moduleB (meaning it was started)
+          const hasModuleB = kp.moduleB != null && String(kp.moduleB).trim() !== '';
+          // Check if naam is missing
+          const missingNaam = !kp.naam || !String(kp.naam).trim();
+          // Only flag as invalid if started but missing naam
+          return hasModuleB && missingNaam;
+        });
+        if (startedKoppelingenWithoutNaam.length > 0) {
+          return true;
+        }
+      }
+    }
+
     return false;
   };
 
@@ -1865,6 +2008,22 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         );
         if (invalidUrl) {
           return 'Een of meer URLs in de compliancy hebben een ongeldig formaat';
+        }
+      }
+    }
+
+    if (logicalStep === 6) {
+      if (Array.isArray(applicatie.koppelingen)) {
+        const startedKoppelingWithoutNaam = applicatie.koppelingen.find((kp) => {
+          // Check if koppeling has moduleB (meaning it was started)
+          const hasModuleB = kp.moduleB != null && String(kp.moduleB).trim() !== '';
+          // Check if naam is missing
+          const missingNaam = !kp.naam || !String(kp.naam).trim();
+          // Only flag as invalid if started but missing naam
+          return hasModuleB && missingNaam;
+        });
+        if (startedKoppelingWithoutNaam) {
+          return 'Vul voor alle koppelingen de naam in';
         }
       }
     }
@@ -2063,15 +2222,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
                                     ),
                                     title: 'Koppelingen',
                                   },
-                                  // Diensten step temporarily disabled - keeping code for later re-enabling
-                                  // {
-                                  //   id: 'diensten-substep',
-                                  //   status: getStatus(
-                                  //     currentStep,
-                                  //     getAdjustedStepIndex(7)
-                                  //   ),
-                                  //   title: 'Diensten',
-                                  // },
                                 ],
                               },
                               {

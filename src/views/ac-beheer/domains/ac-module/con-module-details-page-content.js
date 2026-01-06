@@ -6,6 +6,7 @@ import {
 import { AcColumn, AcFlex } from '@src/atoms';
 import { VISUALS } from '@src/constants';
 import ConLogoPreview from '@src/views/ac-register/con-logo-preview';
+import { ConExternalLink } from '@src/components';
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import { commongroundApiUrl } from '@src/config';
 import ConEditableDescription from '../../shared/components/con-editable-description/con-editable-description';
@@ -125,11 +126,50 @@ const ConModuleDetailsPageContent = ({
 
   const actualCanEdit = canEdit && hasEditPermission;
 
-  const contactId = Array.isArray(data?.contactpersoon)
-    ? data.contactpersoon[0]?.id ?? data.contactpersoon[0]
-    : typeof data?.contactpersoon === 'object' && data?.contactpersoon !== null
-    ? data.contactpersoon.id
-    : data?.contactpersoon;
+  // Extract contactpersoon from data (extended) or fallback to uses data
+  const contact = (() => {
+    const contactpersoon = data?.contactpersoon;
+
+    if (contactpersoon) {
+      // If contactpersoon is an array of objects, use the first one
+      if (Array.isArray(contactpersoon) && contactpersoon.length > 0) {
+        const firstContact = contactpersoon[0];
+        // Check if it's an object (extended) or just a string (UUID)
+        if (typeof firstContact === 'object' && firstContact !== null) {
+          return firstContact;
+        }
+      }
+      // If contactpersoon is a single object (not array, not string UUID)
+      if (typeof contactpersoon === 'object' && !Array.isArray(contactpersoon)) {
+        return contactpersoon;
+      }
+    }
+
+    // Fallback: Find contactpersoon in uses array
+    if (!uses?.length) return null;
+
+    const contactpersoonObject = uses.find((use) => {
+      const useSchemaSlug = use?.['@self']?.schema?.slug;
+      return useSchemaSlug === 'contactpersoon';
+    });
+
+    return contactpersoonObject || null;
+  })();
+
+  // For backward compatibility - get contactId for cases where we only have a UUID string
+  const contactId = (() => {
+    const contactpersoon = data?.contactpersoon;
+    if (Array.isArray(contactpersoon) && contactpersoon.length > 0) {
+      const firstContact = contactpersoon[0];
+      if (typeof firstContact === 'string') {
+        return firstContact;
+      }
+    }
+    if (typeof contactpersoon === 'string') {
+      return contactpersoon;
+    }
+    return null;
+  })();
 
   useEffect(() => {
     fetchUses();
@@ -366,7 +406,7 @@ const ConModuleDetailsPageContent = ({
       </div>
 
       {/* Contact Information Section */}
-      {(contactId || data?.website) && (
+      {(contact || contactId || data?.website) && (
         <>
           <Heading level={3} style={{ marginBlockStart: '1rem' }}>
             Contact Informatie
@@ -375,26 +415,44 @@ const ConModuleDetailsPageContent = ({
             <div style={{ marginTop: '12px' }}>
               {data?.website && (
                 <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
-                  <strong>Website: </strong>
-                  <Link
-                    href={
-                      data?.website.startsWith('http')
-                        ? data?.website
-                        : `https://${data?.website}`
-                    }
-                    target='_blank'
-                    rel='noopener noreferrer'
-                  >
-                    {data?.website}
-                  </Link>
+                  <strong>Website:</strong>
+                  <ConExternalLink href={data?.website} />
                 </div>
               )}
-              {contactId && (
+              {contact && typeof contact === 'object' ? (
+                <div style={{ marginBottom: '8px' }}>
+                  <strong>Contactpersoon: </strong>
+                  <div>
+                    {[contact.voornaam, contact.tussenvoegsel, contact.achternaam]
+                      .filter(Boolean)
+                      .join(' ')}
+                  </div>
+                  {contact['e-mailadres'] && (
+                    <div>
+                      <Link href={`mailto:${contact['e-mailadres']}`}>
+                        {contact['e-mailadres']}
+                      </Link>
+                    </div>
+                  )}
+                  {contact.telefoonnummer && (
+                    <div>
+                      <Link
+                        href={`tel:${String(contact.telefoonnummer)
+                          .split('')
+                          .filter((character) => character !== ' ')
+                          .join('')}`}
+                      >
+                        {contact.telefoonnummer}
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              ) : contactId ? (
                 <div style={{ marginBottom: '8px' }}>
                   <strong>Contactpersoon: </strong>
                   <ConUuidResolver>{String(contactId)}</ConUuidResolver>
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
         </>
@@ -480,6 +538,7 @@ const ConModuleDetailsPageContent = ({
           objectId={data?.['@self']?.id}
           referentieComponenten={data.referentieComponenten}
           complianceStandards={data.compliancy}
+          compliantVersieIds={data.standaardVersies || data.standaardversies || []}
           referentieComponentenWithStandards={
             referentieComponentenWithStandards?.length > 0
               ? referentieComponentenWithStandards

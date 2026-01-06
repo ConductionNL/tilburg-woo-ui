@@ -327,16 +327,6 @@ const ConDynamicSchemaForm = forwardRef(
     const [forceRenderKey, setForceRenderKey] = useState(0);
     const prevOptionsRef = useRef({});
 
-    // Debug logging disabled to reduce console noise
-    // if (process.env.NODE_ENV === 'development') {
-    //   console.log('🔍 ConDynamicSchemaForm: Received props:', {
-    //     schemaTitle: schema?.title,
-    //     optionsProvidersKeys: Object.keys(optionsProviders),
-    //     loadingStatesKeys: Object.keys(loadingStates),
-    //     disabledStatesKeys: Object.keys(disabledStates)
-    //   });
-    // }
-
     // HACK: Force re-render when options change (TODO: Fix the actual re-render loop issue)
     useEffect(() => {
       // Check if any options have changed from empty to having data
@@ -366,25 +356,6 @@ const ConDynamicSchemaForm = forwardRef(
       // Update previous options reference
       prevOptionsRef.current = { ...optionsProviders };
     }, [optionsProviders]);
-
-    // Debug effect disabled to reduce console noise
-    // const prevOptionsKeysRef = useRef([]);
-    // useEffect(() => {
-    //   if (process.env.NODE_ENV === 'development') {
-    //     const currentKeys = Object.keys(optionsProviders).sort();
-    //     const prevKeys = prevOptionsKeysRef.current;
-    //
-    //     // Only log if keys actually changed
-    //     if (JSON.stringify(currentKeys) !== JSON.stringify(prevKeys)) {
-    //       console.log('🔍 ConDynamicSchemaForm: optionsProviders keys changed:', currentKeys);
-    //       console.log('🔍 ConDynamicSchemaForm: optionsProviders content:', optionsProviders);
-    //       prevOptionsKeysRef.current = currentKeys;
-    //     }
-    //   }
-    // }, [optionsProviders]);
-
-    // Extract search handler
-    // const { handleSearch } = onSearchHandlers;
 
     // Expose reset function through ref
     useImperativeHandle(ref, () => ({
@@ -483,29 +454,6 @@ const ConDynamicSchemaForm = forwardRef(
     };
 
     /**
-     * Get field options using the reusable utility
-     */
-    // const getFieldOptions = (propertyPath, propertySchema) => {
-    //   return utilGetFieldOptions(
-    //     propertyPath,
-    //     propertySchema,
-    //     optionsProviders,
-    //     formData
-    //   );
-    // };
-
-    /**
-     * Gets the loading state for a specific field from the loadingStates prop.
-     *
-     * @example
-     * getFieldLoading("bivClassificatie.beschikbaarheid")
-     * // Returns: true if loadingStates["bivClassificatie.beschikbaarheid"] is true
-     */
-    // const getFieldLoading = (propertyPath) => {
-    //   return loadingStates[propertyPath] || false;
-    // };
-
-    /**
      * Get field disabled state using the reusable utility
      */
     const getFieldDisabled = (propertyPath, propertySchema, fieldConfig) => {
@@ -576,18 +524,6 @@ const ConDynamicSchemaForm = forwardRef(
     useEffect(() => {
       getIsValid?.(validateForm());
     }, [formData]);
-
-    /**
-     * Handle field changes using the reusable utility
-     */
-    // const handleFieldChange = (propertyPath, fieldConfig) => {
-    //   return utilHandleFieldChange(
-    //     propertyPath,
-    //     fieldConfig,
-    //     onFieldChange,
-    //     formData
-    //   );
-    // };
 
     /**
      * Render a field using the reusable field renderer utility

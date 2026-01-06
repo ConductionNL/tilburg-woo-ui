@@ -87,11 +87,6 @@ const ConFormLicentieStage = memo(
       }
     });
 
-    // const applicatieOptions = newModules.map((module, i) => ({
-    //   value: i,
-    //   label: module.naam || `Applicatie ${i + 1}`,
-    // }));
-
     // Check if there are multiple NEW applications that need license configuration
     const isMultiNewApplicatie = applicatieIndices.length > 1;
 
@@ -420,10 +415,7 @@ const ConFormLicentieStage = memo(
                   const licenseTypeValue =
                     app.licentietype || app.licentieType || '';
                   const isOpenSourceSelected = licenseTypeValue === 'Open source';
-                  // const selectedLicentie =
-                  //   licentieOptions.find((o) => o.value === app.licentie) || null;
-                  // const isLicenseRequired =
-                  //   isOpenSourceSelected && !selectedLicentie;
+
                   return (
                     <TableRow key={index}>
                       <TableCell>

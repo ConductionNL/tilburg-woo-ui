@@ -26,7 +26,6 @@ const AcFooter = ({ store: { menu, user } }) => {
   const footerItems = menu.getFooterMenus(user.isAuthenticated);
 
   const getFooterStaticContent = () => {
-    console.log(getFooterLogoTitle(), getFooterLogoSubtitle());
     return (
       <span>
         <span>{getFooterLogoTitle() || 'VNG Softwarecatalogus'}</span>
@@ -104,20 +103,6 @@ const AcFooter = ({ store: { menu, user } }) => {
           ) : null}
           <div className='ac-footer__logo'>
             <ConLogo variant='footer' />
-
-            {/* {AcCheckIfSpecificHostname() ? (
-              <span className='ac-footer__logo-text'>
-                <span className='ac-footer__logo-title'>{getFooterLogoTitle()}</span>
-                <span className='ac-footer__logo-subtitle'>
-                  {getFooterLogoSubtitle()}
-                </span>
-              </span>
-            ) : (
-              <span>
-                <span>Open Tilburg</span>
-                <span>Éen plek voor alle publicaties van Gemeente Tilburg</span>
-              </span>
-              )} */}
             {getFooterStaticContent()}
           </div>
         </AcContainer>

@@ -1,11 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { AcFlex } from '@src/atoms';
-import { ConSchemaEnhancedField } from '@src/components';
-import {
-  Paragraph,
-  UnorderedList,
-  UnorderedListItem,
-} from '@utrecht/component-library-react/dist/css-module';
+import { ConSchemaEnhancedField, ConUuidResolver, AcLoader } from '@src/components';
+import { Paragraph, Alert } from '@utrecht/component-library-react/dist/css-module';
+import { VISUALS } from '@src/constants';
 
 const ConKoppelingStageZoeken = ({
   loading,
@@ -13,14 +10,23 @@ const ConKoppelingStageZoeken = ({
   ownApp,
   setOwnApp,
   ownAppLoading,
-  setOwnAppInput,
   searchResults,
   resolvedModulesFromResults = [],
   resultsLoading = false,
   getArrowForDirection,
   isEditMode,
   onSearchModules,
+  schemas = {},
 }) => {
+  // Manage visibility state of info alert
+  const [showInfoAlert, setShowInfoAlert] = useState(() => {
+    return !sessionStorage.getItem('koppeling-zoeken-info-alert-closed');
+  });
+
+  const handleCloseAlert = () => {
+    setShowInfoAlert(false);
+    sessionStorage.setItem('koppeling-zoeken-info-alert-closed', 'true');
+  };
   const idToLabel = Object.fromEntries(
     (resolvedModulesFromResults || []).map((o) => [String(o.value), String(o.label)])
   );
@@ -61,27 +67,56 @@ const ConKoppelingStageZoeken = ({
       aria-labelledby='koppeling-zoek-title'
     >
       <h2 id='koppeling-zoek-title' className='sr-only'>
-        {isEditMode ? 'Koppeling bekijken' : 'Koppeling zoeken'}
+        {isEditMode ? 'Koppeling bekijken' : 'Controleren op bestaande koppeling'}
       </h2>
 
       {!isEditMode && (
         <Paragraph>
-          Leveranciers hebben vaak al opgegeven met welke applicaties of
-          voorzieningen hun product kan koppelen. Zoek hieronder of de gewenste
-          koppeling al bestaat. Als deze nog niet is opgevoerd, kunt u de koppeling
-          zelf toevoegen in de volgende stap.
+          Controleer eerst of de koppeling al bestaat. Dit kan op twee manieren:
+          <ul style={{ marginInlineStart: '1rem' }}>
+            <li>
+              Ga naar de betreffende applicatie en kijk onder het tabblad
+              &quot;Koppelingen&quot; of de koppeling al aanwezig is.
+            </li>
+            <li>
+              Ga naar de zoekpagina, zoek op de applicatie en gebruik de filter
+              &quot;Koppelingen&quot; om te controleren of de koppeling daar al
+              staat.
+            </li>
+          </ul>
         </Paragraph>
+      )}
+
+      {/* Closeable info alert */}
+      {!isEditMode && showInfoAlert && (
+        <Alert severity='info' className='ac-forms-product-info-alert'>
+          <button
+            onClick={handleCloseAlert}
+            className='ac-forms-product-info-alert__close-button'
+            title='Sluiten'
+            aria-label='Alert sluiten'
+          >
+            <VISUALS.CLOSE />
+          </button>
+          <div className='ac-forms-product-info-alert__content'>
+            <VISUALS.INFO className='ac-forms-product-info-alert__icon' />
+            <div>
+              <strong>Zoekpagina</strong>
+              <br />
+              <span className='ac-forms-product-info-alert__text'>
+                U kunt ook starten vanaf de zoekpagina. Open de detailpagina van de
+                gevonden koppeling en kies &apos;Koppeling toevoegen&apos;.
+              </span>
+            </div>
+          </div>
+        </Alert>
       )}
 
       <div className='ac-register-form-grid'>
         <div style={{ gridColumn: 'span 2', maxWidth: '640px' }}>
           <ConSchemaEnhancedField
-            schemaType='module'
-            schemaProperty={{
-              type: 'string',
-              title: 'Applicatie',
-              $ref: '#/definitions/module',
-            }}
+            schemaType='koppeling'
+            schemaProperty='moduleA'
             value={ownApp?.value || null}
             onChange={(value) => {
               // ConSchemaEnhancedField returns the option object directly when using optionsProvider
@@ -100,22 +135,13 @@ const ConKoppelingStageZoeken = ({
               } else {
                 setOwnApp(null);
               }
-              // Clear the search input so the selected value renders
-              setOwnAppInput('');
             }}
             isDisabled={loading || isEditMode}
             isLoading={ownAppLoading}
             width='full'
-            schemas={{}}
+            schemas={schemas}
             optionsProvider={ownAppOptions}
-            onSearch={
-              onSearchModules
-                ? (_path, _refSlug, q) => {
-                    setOwnAppInput(q || '');
-                    onSearchModules(q);
-                  }
-                : null
-            }
+            onSearch={(_path, _refSlug, q) => onSearchModules && onSearchModules(q)}
             customProps={{
               label: 'Applicatie',
               placeholder: 'Selecteer een applicatie',
@@ -125,26 +151,6 @@ const ConKoppelingStageZoeken = ({
           />
         </div>
       </div>
-
-      {/*
-        <div>
-          <AcButton style='button' onClick={handleSearch} disabled={loading}>
-            Zoeken
-          </AcButton>
-        </div>
-      */}
-
-      {/*
-        <AcFlex column style={{ gridColumn: 'span 2' }}>
-          <label className='utrecht-form-label'>Zoek op applicatienaam</label>
-          <Textbox
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e?.target?.value || '')}
-            placeholder='Bijv. OpenWoo'
-            id='koppeling-zoek-input'
-          />
-        </AcFlex>
-      */}
 
       <div style={{ marginTop: '1rem' }}>
         <h3 className='utrecht-heading-4' style={{ marginBottom: '0.5rem' }}>
@@ -162,11 +168,34 @@ const ConKoppelingStageZoeken = ({
             geselecteerde applicatie.
           </Paragraph>
         )}
-        {!resultsLoading && searchResults.length ? (
-          <div className='ac-register-review'>
-            <div className='ac-register-review__section'>
-              <UnorderedList>
+
+        <div className='ac-register-review'>
+          <div className='ac-register-review__section'>
+            {resultsLoading && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.75rem 1rem',
+                  marginBottom: searchResults.length > 0 ? '0.75rem' : 0,
+                }}
+              >
+                <AcLoader
+                  style={{ height: 'auto', flex: 'none', fontSize: '0.5rem' }}
+                />
+                <span style={{ fontSize: '0.875rem', color: '#666' }}>
+                  Koppelingen worden geladen...
+                </span>
+              </div>
+            )}
+
+            {searchResults.length > 0 ? (
+              <div
+                style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}
+              >
                 {searchResults.map((k, i) => {
+                  const koppelingId = k?.id || k?.['@self']?.id || String(i);
                   const rels = k?.['@self']?.relations || {};
                   const aRel =
                     rels.moduleA ??
@@ -219,45 +248,122 @@ const ConKoppelingStageZoeken = ({
                   ).trim();
 
                   return (
-                    <UnorderedListItem key={k?.id || i}>
-                      {naam && (
-                        <div style={{ marginBottom: '0.25rem' }}>
-                          <strong>{naam}</strong>
+                    <div
+                      key={koppelingId}
+                      style={{
+                        padding: '0.75rem',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        backgroundColor: 'transparent',
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'flex-start',
+                          marginBottom: '0.25rem',
+                        }}
+                      >
+                        {naam && (
+                          <div style={{ flex: 1, minWidth: '200px' }}>
+                            <strong style={{ fontSize: '1rem' }}>{naam}</strong>
+                          </div>
+                        )}
+                        <div
+                          style={{
+                            display: 'flex',
+                            gap: '0.5rem',
+                            flexWrap: 'wrap',
+                          }}
+                        >
+                          {soortLabel && (
+                            <span
+                              style={{
+                                display: 'inline-block',
+                                padding: '0.25rem 0.5rem',
+                                backgroundColor: '#e8f4f8',
+                                color: '#0063e5',
+                                borderRadius: '4px',
+                                fontSize: '0.75rem',
+                                fontWeight: '500',
+                              }}
+                            >
+                              {soortLabel}
+                            </span>
+                          )}
+                          {statusLabel && (
+                            <span
+                              style={{
+                                display: 'inline-block',
+                                padding: '0.25rem 0.5rem',
+                                backgroundColor:
+                                  statusLabel.toLowerCase() === 'concept'
+                                    ? '#fff3cd'
+                                    : statusLabel.toLowerCase() === 'gepubliceerd' ||
+                                      statusLabel.toLowerCase() === 'published'
+                                    ? '#d1e7dd'
+                                    : '#e8e8e8',
+                                color:
+                                  statusLabel.toLowerCase() === 'concept'
+                                    ? '#856404'
+                                    : statusLabel.toLowerCase() === 'gepubliceerd' ||
+                                      statusLabel.toLowerCase() === 'published'
+                                    ? '#0f5132'
+                                    : '#333',
+                                borderRadius: '4px',
+                                fontSize: '0.75rem',
+                                fontWeight: '500',
+                              }}
+                            >
+                              {statusLabel}
+                            </span>
+                          )}
                         </div>
-                      )}
-                      <div>
+                      </div>
+
+                      <div style={{ marginBottom: '0.5rem' }}>
                         {dir === 'BnaarA' ? (
                           <>
-                            {bLabel} {dirArrow} {aLabel}
+                            <ConUuidResolver>{bLabel}</ConUuidResolver> {dirArrow}{' '}
+                            <ConUuidResolver>{aLabel}</ConUuidResolver>
                           </>
                         ) : (
                           <>
-                            {aLabel} {dirArrow} {bLabel}
+                            <ConUuidResolver>{aLabel}</ConUuidResolver> {dirArrow}{' '}
+                            <ConUuidResolver>{bLabel}</ConUuidResolver>
                           </>
                         )}
-                        {soortLabel ? ` (${soortLabel})` : ''}
                       </div>
-                      {(statusLabel || beschrijving) && (
-                        <div style={{ color: '#666', fontSize: '0.9rem' }}>
-                          {statusLabel && <div>Status: {statusLabel}</div>}
-                          {beschrijving && <div>Beschrijving: {beschrijving}</div>}
+
+                      {beschrijving && (
+                        <div
+                          style={{
+                            color: '#666',
+                            fontSize: '0.9rem',
+                            marginBottom: '0.5rem',
+                            lineHeight: '1.4',
+                            wordBreak: 'break-word',
+                            whiteSpace: 'normal',
+                            width: '100%',
+                          }}
+                        >
+                          {beschrijving}
                         </div>
                       )}
-                    </UnorderedListItem>
+                    </div>
                   );
                 })}
-              </UnorderedList>
-            </div>
+              </div>
+            ) : !resultsLoading ? (
+              <Paragraph style={{ margin: 0 }}>
+                {ownApp?.value
+                  ? `Geen bestaande koppelingen gevonden voor ${ownApp.label}. U kunt deze zelf toevoegen in de volgende stap.`
+                  : 'Selecteer eerst een applicatie om bestaande koppelingen te bekijken.'}
+              </Paragraph>
+            ) : null}
           </div>
-        ) : resultsLoading ? (
-          <Paragraph>Bezig met laden…</Paragraph>
-        ) : (
-          <Paragraph>
-            {ownApp?.value
-              ? `Geen bestaande koppelingen gevonden voor ${ownApp.label}. U kunt deze zelf toevoegen in de volgende stap.`
-              : 'Selecteer eerst een applicatie om bestaande koppelingen te bekijken.'}
-          </Paragraph>
-        )}
+        </div>
       </div>
     </AcFlex>
   );

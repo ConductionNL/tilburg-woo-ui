@@ -1,7 +1,7 @@
 // Demo bestand om linting te testen
 // Dit simuleert de situatie die we hadden met useNavigate
 
-// import { useNavigate } from 'react-router'; // Deze import ontbreekt!
+import { useNavigate } from 'react-router';
 import axios from 'axios';
 
 export default function useNextcloudRequestsDemo() {

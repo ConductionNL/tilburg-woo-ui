@@ -73,6 +73,139 @@ const useLimitWithBackwardsCompat = (objectType, defaultValue = 20) => {
 };
 
 /**
+ * Helper function to recursively extract all string values from an object
+ * Excludes metadata fields like @self and id to avoid polluting search results
+ * Also excludes keys starting with 'data:' (base64 image data)
+ */
+const extractAllStringValues = (obj, values = []) => {
+  const skipKeys = new Set(['@self', 'id']);
+
+  if (obj === null || obj === undefined) {
+    return values;
+  }
+
+  if (typeof obj === 'string') {
+    // Skip base64 data URLs (data:image/..., data:text/..., etc.)
+    if (obj.startsWith('data:')) {
+      return values;
+    }
+    values.push(obj);
+    return values;
+  }
+
+  if (typeof obj === 'number' || typeof obj === 'boolean') {
+    values.push(String(obj));
+    return values;
+  }
+
+  if (Array.isArray(obj)) {
+    obj.forEach((item) => extractAllStringValues(item, values));
+    return values;
+  }
+
+  if (typeof obj === 'object') {
+    Object.entries(obj).forEach(([key, value]) => {
+      // Skip metadata keys that shouldn't be searched
+      if (skipKeys.has(key)) {
+        return;
+      }
+
+      // Skip keys that start with 'data:' (base64 image data)
+      if (key.startsWith('data:')) {
+        return;
+      }
+
+      // Recursively extract from nested objects and arrays
+      if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+        extractAllStringValues(value, values);
+      } else {
+        // For nested objects, recursively extract
+        extractAllStringValues(value, values);
+      }
+    });
+    return values;
+  }
+
+  return values;
+};
+
+/**
+ * TableContainer component wrapped with observer for proper MobX reactivity
+ * Handles data reading, filtering, and pagination directly (not in useMemo)
+ * Uses render prop pattern to provide data and pagination to parent
+ */
+const TableContainer = observer(
+  ({
+    object,
+    objectType,
+    searchQuery,
+    beoordelingFilter,
+    type,
+    page,
+    limit,
+    children,
+  }) => {
+    // Read collection directly - MobX tracks this automatically
+    const collection = object.getCollection(objectType);
+    const allData = collection?.results || [];
+
+    // Apply search filtering using Fuse.js
+    let filteredData = allData;
+
+    if (searchQuery?.trim()) {
+      // Create searchable data by adding a _searchableText property to each object
+      const searchableData = allData.map((item) => {
+        const allValues = extractAllStringValues(item);
+        return {
+          originalItem: item,
+          _searchableText: allValues.join(' ').toLowerCase(),
+        };
+      });
+
+      // Create Fuse instance fresh each render
+      const fuse = new Fuse(searchableData, {
+        keys: ['_searchableText'],
+        threshold: 0.3, // Lower threshold = more strict matching (0.0 = exact, 1.0 = match anything)
+        ignoreLocation: true, // Search anywhere in the string
+        includeScore: true, // Include score to enable relevance sorting (Fuse sorts by score automatically)
+        minMatchCharLength: 1, // Minimum characters to match
+      });
+
+      // Perform search (convert query to lowercase to match searchable text)
+      // Fuse.js automatically sorts results by score (ascending - lower score = better match)
+      const searchResults = fuse.search(searchQuery.trim().toLowerCase());
+
+      // Extract results and remove the temporary _searchableText property
+      // Results are already sorted by relevance (best matches first)
+      filteredData = searchResults.map((result) => {
+        const item = result.item.originalItem;
+        return item;
+      });
+    }
+
+    // Apply beoordeling filter if applicable
+    if (beoordelingFilter && type === 'organisaties') {
+      filteredData = filteredData.filter((item) => {
+        return item.beoordeling === beoordelingFilter;
+      });
+    }
+
+    // Frontend pagination on filtered results
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const data = filteredData.slice(startIndex, endIndex);
+
+    // Calculate pagination info based on filtered data
+    const total = filteredData.length;
+    const pages = Math.ceil(total / limit) || 1;
+    const pagination = { total, page, pages, limit };
+
+    // Use render prop pattern to provide data and pagination
+    return children({ data, pagination });
+  }
+);
+
+/**
  * Generic Beheer Page Component
  * This component can handle all beheer page types through configuration
  */
@@ -97,6 +230,9 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
 
   // Debounced search query ref for URL updates
   const searchDebounceTimerRef = useRef(null);
+
+  // Track if filter drawer has set headers from session storage
+  const filterDrawerHasSetHeadersRef = useRef(false);
 
   // Get base configuration for this type
   const baseConfig = useMemo(() => {
@@ -123,10 +259,6 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     if (!config) return null;
     return object.getSchemaType(config.schemaSlug);
   }, [config, object]);
-
-  // Get reactive data from object store (read directly to enable MobX tracking)
-  // This reads all pre-fetched data from warmup (up to 10,000 items)
-  const allData = objectType ? object.getCollection(objectType).results || [] : [];
 
   // Check warmup status for loading state (warmup state uses schemaSlug as key)
   const warmupLoading = config?.schemaSlug
@@ -198,6 +330,25 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     }
   }, [baseConfig, dataProperties, schemaData, schemaLoading, schemaError, type]);
 
+  // Refresh warmup data when type changes
+  useEffect(() => {
+    if (!baseConfig || baseConfig.isDynamicEntry) {
+      return;
+    }
+
+    // Prioritize schemaSlug/id from config, otherwise use type
+    const schemaSlug = baseConfig.schemaSlug || type;
+    const register = baseConfig.registerSlug || 'voorzieningen';
+
+    if (schemaSlug) {
+      try {
+        object.refreshWarmupDataForType(schemaSlug, register);
+      } catch (error) {
+        console.error('Failed to refresh warmup data for type:', error);
+      }
+    }
+  }, [type, baseConfig, object]);
+
   // Use custom hook for pagination limit with URL + backwards compatibility
   const [limit, setLimit] = useLimitWithBackwardsCompat(config?.paginationKey, 20);
 
@@ -222,138 +373,6 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
   useEffect(() => {
     setLocalSearchInput(searchQuery);
   }, [searchQuery]);
-
-  // Helper function to recursively extract all string values from an object
-  const extractAllStringValues = (obj, values = []) => {
-    // Excludes metadata fields like @self and id to avoid polluting search results
-    // Also excludes keys starting with 'data:' (base64 image data)
-    const skipKeys = new Set(['@self', 'id']);
-
-    if (obj === null || obj === undefined) {
-      return values;
-    }
-
-    if (typeof obj === 'string') {
-      // Skip base64 data URLs (data:image/..., data:text/..., etc.)
-      if (obj.startsWith('data:')) {
-        return values;
-      }
-      values.push(obj);
-      return values;
-    }
-
-    if (typeof obj === 'number' || typeof obj === 'boolean') {
-      values.push(String(obj));
-      return values;
-    }
-
-    if (Array.isArray(obj)) {
-      obj.forEach((item) => extractAllStringValues(item, values));
-      return values;
-    }
-
-    if (typeof obj === 'object') {
-      Object.entries(obj).forEach(([key, value]) => {
-        // Skip metadata keys that shouldn't be searched
-        if (skipKeys.has(key)) {
-          return;
-        }
-
-        // Skip keys that start with 'data:' (base64 image data)
-        if (key.startsWith('data:')) {
-          return;
-        }
-
-        // Recursively extract from nested objects and arrays
-        if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-          extractAllStringValues(value, values);
-        } else {
-          // For nested objects, recursively extract
-          extractAllStringValues(value, values);
-        }
-      });
-      return values;
-    }
-
-    return values;
-  };
-
-  // Frontend filtering using Fuse.js for fuzzy search
-  const filteredData = useMemo(() => {
-    if (!allData || allData.length === 0) {
-      return [];
-    }
-
-    // If no search query, return all data
-    if (!searchQuery || searchQuery.trim() === '') {
-      return allData;
-    }
-
-    // Create searchable data by adding a _searchableText property to each object
-    const searchableData = allData.map((item) => {
-      const allValues = extractAllStringValues(item);
-      return {
-        originalItem: item,
-        _searchableText: allValues.join(' ').toLowerCase(),
-      };
-    });
-
-    // Configure Fuse.js for fuzzy search on the searchable text
-    const fuseOptions = {
-      keys: ['_searchableText'],
-      threshold: 0.3, // Lower threshold = more strict matching (0.0 = exact, 1.0 = match anything)
-      ignoreLocation: true, // Search anywhere in the string
-      includeScore: true, // Include score to enable relevance sorting (Fuse sorts by score automatically)
-      minMatchCharLength: 1, // Minimum characters to match
-    };
-
-    // Create Fuse instance
-    const fuse = new Fuse(searchableData, fuseOptions);
-
-    // Perform search (convert query to lowercase to match searchable text)
-    // Fuse.js automatically sorts results by score (ascending - lower score = better match)
-    const searchResults = fuse.search(searchQuery.trim().toLowerCase());
-
-    // Extract results and remove the temporary _searchableText property
-    // Results are already sorted by relevance (best matches first)
-    return searchResults.map((result) => {
-      const item = result.item.originalItem;
-      return item;
-    });
-  }, [allData, searchQuery]);
-
-  // Apply beoordeling filter if applicable
-  const filteredDataWithBeoordeling = useMemo(() => {
-    if (!beoordelingFilter || type !== 'organisaties') {
-      return filteredData;
-    }
-
-    return filteredData.filter((item) => {
-      return item.beoordeling === beoordelingFilter;
-    });
-  }, [filteredData, beoordelingFilter, type]);
-
-  // Frontend pagination on filtered results
-  const paginatedData = useMemo(() => {
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    return filteredDataWithBeoordeling.slice(startIndex, endIndex);
-  }, [filteredDataWithBeoordeling, page, limit]);
-
-  // Calculate pagination info based on filtered data
-  const pagination = useMemo(() => {
-    const total = filteredDataWithBeoordeling.length;
-    const pages = Math.ceil(total / limit) || 1;
-    return {
-      total,
-      page,
-      pages,
-      limit,
-    };
-  }, [filteredDataWithBeoordeling.length, page, limit]);
-
-  // Use filtered and paginated data for table
-  const data = paginatedData;
 
   const filterHeadersDrawerRef = useRef(null);
   const tableRef = useRef(null);
@@ -404,6 +423,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     setTableHeaders([]);
     setShowSearch(false);
     setLocalSearchInput('');
+    filterDrawerHasSetHeadersRef.current = false; // Reset so drawer can set headers from session storage
 
     // Reset URL query params (keep only non-SPOT params like showCreateModal)
     const params = new URLSearchParams(window.location.search);
@@ -430,13 +450,30 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     currentObject: null,
   }));
 
+  // State to track pagination from TableContainer for reset effect
+  const [tablePaginationState, setTablePaginationState] = useState({
+    page: 1,
+    pages: 1,
+  });
+  // Ref to track previous pagination to avoid unnecessary state updates
+  const prevPaginationRef = useRef({ page: 1, pages: 1 });
+
   // Proactively reset to page 1 if current page exceeds total pages
   // Uses frontend-calculated pagination (based on filtered data)
+  // Only resets when data has loaded (not during loading states or before collection is initialized)
   useEffect(() => {
     if (!objectType || !config) return;
 
-    const currentPage = pagination.page;
-    const pages = pagination.pages;
+    // Don't reset during loading - wait for data to load first
+    if (warmupLoading || loading || schemaLoading) return;
+
+    // Check if collection has been initialized in the store
+    // collections[objectType] will be undefined if not fetched yet
+    // getCollection() always returns { results: [] } as default, so we check the store directly
+    if (!object.collections[objectType]) return;
+
+    const currentPage = tablePaginationState.page;
+    const pages = tablePaginationState.pages;
 
     if (pages > 0 && currentPage > pages) {
       // Update page in URL query params (no API call triggered)
@@ -445,10 +482,14 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
       setSearchParams(params, { replace: true });
     }
   }, [
-    pagination.pages,
-    pagination.page,
+    tablePaginationState.pages,
+    tablePaginationState.page,
     objectType,
     config,
+    warmupLoading,
+    loading,
+    schemaLoading,
+    object,
     searchParams,
     setSearchParams,
   ]);
@@ -695,14 +736,26 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     [shouldShowAllHeaders, defaultHeaderIds]
   );
 
+  // Wrap setTableHeaders to track when drawer sets headers from session storage
+  const handleSetTableHeaders = useCallback((newHeaders) => {
+    filterDrawerHasSetHeadersRef.current = true;
+    setTableHeaders(newHeaders);
+  }, []);
+
   useEffect(() => {
     if (!config || headers.length === 0) return;
+
+    // If the filter drawer has already set headers from session storage, don't override
+    if (filterDrawerHasSetHeadersRef.current) {
+      return;
+    }
 
     const next = shouldShowAllHeaders
       ? headers
       : headers.filter((header) => defaultHeaderIds.includes(header.id));
 
     const nextKey = next.map((h) => h.id).join(',');
+
     const currentKey = tableHeaders.map((h) => h.id).join(',');
 
     if (nextKey === currentKey) return;
@@ -763,6 +816,15 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
           label: 'Bewerken',
           icon: <VISUALS.PENCIL />,
           onClick: () => {
+            // Check for custom getEditUrl handler in config first
+            if (typeof config?.getEditUrl === 'function') {
+              const customUrl = config.getEditUrl(row);
+              if (customUrl) {
+                navigate(customUrl);
+                return;
+              }
+            }
+
             // Prefer wizard editing when available; fallback to legacy modal
             if (config?.schemaSlug) {
               const slug =
@@ -826,47 +888,151 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
       }
 
       // Add unique actions based on configuration
-      const uniqueActions =
-        config.uniqueActions
-          ?.filter((action) => action.condition(row))
-          .map((action) => ({
-            key: action.key,
-            label: action.label,
-            icon: action.icon,
-            onClick: () => {
-              // Check if this is a wizard action
-              if (action.action === 'wizard' && action.wizardPath) {
-                // Navigate to wizard with params if provided
-                const params = action.wizardParams ? action.wizardParams(row) : {};
-                const searchParams = new URLSearchParams(params);
-                const queryString = searchParams.toString();
-                navigate(
-                  `${action.wizardPath}${queryString ? '?' + queryString : ''}`
-                );
-              } else {
-                // Open modal for regular actions
-                setSingleSelectedRow(row);
-                setOpenModal(action.action);
-              }
-            },
-            disabled: !canEditRow,
-            tooltipId: !canEditRow ? TOOLTIP_ID : undefined,
-            tooltipContent: !canEditRow
-              ? getDisabledActionTooltip(action.key, reason)
-              : undefined,
-          })) || [];
+      const uniqueActions = (() => {
+        if (!config.uniqueActions || config.uniqueActions.length === 0) {
+          return [];
+        }
 
-      // Map related schemas user can create → dynamic create actions
-      // Only include if not explicitly disabled in config
-      const dynamicCreateActions = config.disableRelatedCreateActions
-        ? []
-        : makeActionsForContext(
-            row.id,
-            config.dynamicActionFilter,
-            row,
-            config.registerSlug,
-            config.schemaSlug
-          );
+        // Get user groups for filtering
+        const userGroups = user?.currentUser?.groups || user?.user?.groups || [];
+        const hasAanbodBeheerder = userGroups.includes('aanbod-beheerder');
+        const hasGebruikBeheerder = userGroups.includes('gebruik-beheerder');
+
+        return config.uniqueActions
+          .map((actionConfig) => {
+            // Check if this is a grouped action
+            if (actionConfig.groupKey) {
+              // Filter actions within the group based on user groups and conditions
+              const filteredActions = actionConfig.actions
+                .filter((action) => {
+                  // Check condition first
+                  if (action.condition && !action.condition(row)) {
+                    return false;
+                  }
+
+                  // Filter by user groups if userGroupFilter is specified
+                  if (
+                    action.userGroupFilter &&
+                    Array.isArray(action.userGroupFilter)
+                  ) {
+                    const hasRequiredGroup = action.userGroupFilter.some((group) => {
+                      if (group === 'aanbod-beheerder') return hasAanbodBeheerder;
+                      if (group === 'gebruik-beheerder') return hasGebruikBeheerder;
+                      return userGroups.includes(group);
+                    });
+                    if (!hasRequiredGroup) {
+                      return false;
+                    }
+                  }
+
+                  return true;
+                })
+                .map((action) => ({
+                  key: action.key,
+                  label: action.label,
+                  onClick: () => {
+                    // Check if this is a wizard action
+                    if (action.action === 'wizard' && action.wizardPath) {
+                      // Navigate to wizard with params if provided
+                      const params = action.wizardParams
+                        ? action.wizardParams(row)
+                        : {};
+                      const searchParams = new URLSearchParams(params);
+                      const queryString = searchParams.toString();
+                      navigate(
+                        `${action.wizardPath}${queryString ? '?' + queryString : ''}`
+                      );
+                    } else {
+                      // Open modal for regular actions
+                      setSingleSelectedRow(row);
+                      setOpenModal(action.action);
+                    }
+                  },
+                  disabled: !canEditRow,
+                  tooltipId: !canEditRow ? TOOLTIP_ID : undefined,
+                  tooltipContent: !canEditRow
+                    ? getDisabledActionTooltip(action.key, reason)
+                    : undefined,
+                }));
+
+              // Only return the group if it has at least one action
+              if (filteredActions.length === 0) {
+                return null;
+              }
+
+              return {
+                type: 'group',
+                groupKey: actionConfig.groupKey,
+                label: actionConfig.groupLabel,
+                icon: actionConfig.groupIcon,
+                children: filteredActions,
+              };
+            }
+
+            // Handle non-grouped actions (including dynamic label/params based on user role)
+            if (actionConfig.condition && !actionConfig.condition(row)) {
+              return null;
+            }
+
+            // Filter by user groups if userGroupFilter is specified
+            if (
+              actionConfig.userGroupFilter &&
+              Array.isArray(actionConfig.userGroupFilter)
+            ) {
+              const hasRequiredGroup = actionConfig.userGroupFilter.some((group) => {
+                if (group === 'aanbod-beheerder') return hasAanbodBeheerder;
+                if (group === 'gebruik-beheerder') return hasGebruikBeheerder;
+                return userGroups.includes(group);
+              });
+              if (!hasRequiredGroup) {
+                return null;
+              }
+            }
+
+            // Support dynamic label based on user role (like publish/depublish toggle)
+            const label =
+              typeof actionConfig.getLabel === 'function'
+                ? actionConfig.getLabel(userGroups)
+                : actionConfig.label;
+
+            return {
+              type: 'action',
+              key: actionConfig.key,
+              label,
+              icon: actionConfig.icon,
+              onClick: () => {
+                // Check if this is a wizard action
+                if (actionConfig.action === 'wizard' && actionConfig.wizardPath) {
+                  // Navigate to wizard with params if provided
+                  // Support dynamic params based on user role
+                  const params =
+                    typeof actionConfig.getWizardParams === 'function'
+                      ? actionConfig.getWizardParams(row, userGroups)
+                      : actionConfig.wizardParams
+                      ? actionConfig.wizardParams(row)
+                      : {};
+                  const searchParams = new URLSearchParams(params);
+                  const queryString = searchParams.toString();
+                  navigate(
+                    `${actionConfig.wizardPath}${
+                      queryString ? '?' + queryString : ''
+                    }`
+                  );
+                } else {
+                  // Open modal for regular actions
+                  setSingleSelectedRow(row);
+                  setOpenModal(actionConfig.action);
+                }
+              },
+              disabled: !canEditRow,
+              tooltipId: !canEditRow ? TOOLTIP_ID : undefined,
+              tooltipContent: !canEditRow
+                ? getDisabledActionTooltip(actionConfig.key, reason)
+                : undefined,
+            };
+          })
+          .filter(Boolean);
+      })();
 
       const deleteAction = {
         key: 'delete',
@@ -891,7 +1057,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
         ...baseActions,
         ...publishActions,
         ...uniqueActions,
-        ...dynamicCreateActions,
+        // ...dynamicCreateActions,
         ...(config.disableDeleteAction ? [] : [deleteAction]),
       ];
     },
@@ -908,7 +1074,19 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
 
   // Build table headers with status icon if configured
   const finalTableHeaders = useMemo(() => {
-    const headers = [...tableHeaders];
+    const virtualColumns = Array.isArray(config.virtualColumns)
+      ? config.virtualColumns
+      : [];
+    const virtualColumnsHeaders = virtualColumns.map((column) => ({
+      id: column.id,
+      label: column.label,
+      key: column.key,
+      customContent: column.customContent,
+      customHeader: column.customHeader,
+      sortComparator: column.sortComparator,
+    }));
+
+    const headers = [...virtualColumnsHeaders, ...tableHeaders];
 
     if (config.statusIcon) {
       headers.unshift({
@@ -1132,85 +1310,143 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
             </div>
           )}
 
-          <ConTable
-            data={data}
-            tableHeaders={[
-              ...finalTableHeaders,
-              {
-                id: 'actions',
-                label: 'Acties',
-                key: '',
-                static: true,
-                customContent: (row) => (
-                  <ConActionMenu>
-                    <ConActionMenu.Trigger
-                      icon={<VISUALS.ELLIPSIS />}
-                      buttonType='secondary'
-                    >
-                      Acties
-                    </ConActionMenu.Trigger>
+          {objectType ? (
+            <TableContainer
+              object={object}
+              objectType={objectType}
+              searchQuery={searchQuery}
+              beoordelingFilter={beoordelingFilter}
+              type={type}
+              page={page}
+              limit={limit}
+            >
+              {({ data, pagination: tablePagination }) => {
+                // Update pagination state for the reset effect
+                // Compare with previous value to avoid unnecessary updates
+                if (
+                  prevPaginationRef.current.page !== tablePagination.page ||
+                  prevPaginationRef.current.pages !== tablePagination.pages
+                ) {
+                  prevPaginationRef.current = tablePagination;
+                  // React will batch this state update
+                  setTablePaginationState(tablePagination);
+                }
 
-                    <ConActionMenu.Menu position='right'>
-                      {generateActionButtons(row).map((action) => (
-                        <ConActionMenu.Button
-                          key={action.key}
-                          icon={action.icon}
-                          onClick={action.onClick}
-                          disabled={action.disabled}
-                          data-tooltip-id={action.tooltipId}
-                          data-tooltip-content={action.tooltipContent}
-                        >
-                          {action.label}
-                        </ConActionMenu.Button>
-                      ))}
-                    </ConActionMenu.Menu>
-                  </ConActionMenu>
-                ),
-              },
-            ]}
-            getSelectedRows={setSelectedRows}
-            renderSelectRowButtons={showManageActions}
-            ref={tableRef}
-            truncateLines={3}
-            showSortButtons
-            // LEGACY: Old field-specific search (commented out)
-            // onHeaderSearch={fetchData}
-            // dataProperties={dataProperties}
-            // showSearch={showSearch}
-            loading={loading || schemaLoading || warmupLoading}
-            // Names resolution props
-            objectStore={object}
-            schema={schemaData}
-          />
+                return (
+                  <>
+                    <ConTable
+                      data={data}
+                      tableHeaders={[
+                        ...finalTableHeaders,
+                        {
+                          id: 'actions',
+                          label: 'Acties',
+                          key: '',
+                          static: true,
+                          customContent: (row) => (
+                            <ConActionMenu>
+                              <ConActionMenu.Trigger
+                                icon={<VISUALS.ELLIPSIS />}
+                                buttonType='secondary'
+                              >
+                                Acties
+                              </ConActionMenu.Trigger>
 
-          <AcFlex justifyContent='between' alignItems='center'>
-            <Pagination
-              key={pagination?.page}
-              totalPages={pagination?.pages}
-              page={parseInt(pagination?.page, 10)}
-              onPageChange={(page) => {
-                // Update page in URL query params (no API call triggered - frontend pagination)
-                const params = new URLSearchParams(searchParams);
-                params.set('_page', page.toString());
-                setSearchParams(params, { replace: true });
+                              <ConActionMenu.Menu position='right'>
+                                {generateActionButtons(row).map((action) => {
+                                  if (action.type === 'group') {
+                                    return (
+                                      <ConActionMenu.SubMenu
+                                        key={action.groupKey}
+                                        label={action.label}
+                                        icon={action.icon}
+                                        position='left'
+                                        disabled={
+                                          action.disabled ||
+                                          action.children.every(
+                                            (child) => child?.disabled ?? false
+                                          )
+                                        }
+                                      >
+                                        {action.children.map((childAction) => (
+                                          <ConActionMenu.Button
+                                            key={childAction.key}
+                                            onClick={childAction.onClick}
+                                            disabled={childAction.disabled}
+                                            data-tooltip-id={childAction.tooltipId}
+                                            data-tooltip-content={
+                                              childAction.tooltipContent
+                                            }
+                                          >
+                                            {childAction.label}
+                                          </ConActionMenu.Button>
+                                        ))}
+                                      </ConActionMenu.SubMenu>
+                                    );
+                                  }
+
+                                  return (
+                                    <ConActionMenu.Button
+                                      key={action.key}
+                                      icon={action.icon}
+                                      onClick={action.onClick}
+                                      disabled={action.disabled}
+                                      data-tooltip-id={action.tooltipId}
+                                      data-tooltip-content={action.tooltipContent}
+                                    >
+                                      {action.label}
+                                    </ConActionMenu.Button>
+                                  );
+                                })}
+                              </ConActionMenu.Menu>
+                            </ConActionMenu>
+                          ),
+                        },
+                      ]}
+                      getSelectedRows={setSelectedRows}
+                      renderSelectRowButtons={showManageActions}
+                      ref={tableRef}
+                      truncateLines={3}
+                      showSortButtons
+                      loading={loading || schemaLoading || warmupLoading}
+                      // Names resolution props
+                      objectStore={object}
+                      schema={schemaData}
+                    />
+
+                    <AcFlex justifyContent='between' alignItems='center'>
+                      <Pagination
+                        key={tablePagination?.page}
+                        totalPages={tablePagination?.pages}
+                        page={parseInt(tablePagination?.page, 10)}
+                        onPageChange={(page) => {
+                          // Update page in URL query params (no API call triggered - frontend pagination)
+                          const params = new URLSearchParams(searchParams);
+                          params.set('_page', page.toString());
+                          setSearchParams(params, { replace: true });
+                        }}
+                        nextLabel=''
+                        previousLabel=''
+                        maxVisiblePages={7}
+                      />
+
+                      {tablePagination?.pages <= 1 && (
+                        <span className='ac-beheer-pagination-single-page'>
+                          Pagina 1 van 1
+                        </span>
+                      )}
+
+                      <ConPaginationLimitSelector
+                        objectType={config.paginationKey}
+                        value={limit}
+                        onChange={setLimit}
+                      />
+                    </AcFlex>
+                  </>
+                );
               }}
-              nextLabel=''
-              previousLabel=''
-              maxVisiblePages={7}
-            />
-
-            {pagination?.pages <= 1 && (
-              <span className='ac-beheer-pagination-single-page'>
-                Pagina 1 van 1
-              </span>
-            )}
-
-            <ConPaginationLimitSelector
-              objectType={config.paginationKey}
-              value={limit}
-              onChange={setLimit}
-            />
-          </AcFlex>
+            </TableContainer>
+          ) : null}
 
           {/* Render modals based on configuration */}
           {BeheerModalFactory.renderModals(type, {
@@ -1246,7 +1482,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
             defaultHeaders: shouldShowAllHeaders
               ? headers.map((h) => h.id)
               : defaultHeaderIds,
-            setTableHeaders,
+            setTableHeaders: handleSetTableHeaders,
             loading,
             setBeoordelingFilter,
           })}

@@ -7,6 +7,7 @@ import {
 import { AcColumn } from '@src/atoms';
 import { VISUALS } from '@src/constants';
 import ConLogoPreview from '@src/views/ac-register/con-logo-preview';
+import { ConExternalLink } from '@src/components';
 import { useCallback, useEffect, useMemo, useState } from 'preact/hooks';
 import { commongroundApiUrl } from '@src/config';
 import ConEditableDescription from '../../shared/components/con-editable-description/con-editable-description';
@@ -259,35 +260,6 @@ const ConProductDetailsPageContent = ({
                   Bewerken
                 </ConActionMenu.Button>
 
-                {/* TODO: Summary and description editing is not working yet*/}
-                {/* <ConActionMenu.Button
-                  icon={<VISUALS.PENCIL />}
-                  onClick={() => setEditingSummary(true)}
-                  disabled={!actualCanEdit}
-                  data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
-                  data-tooltip-content={
-                    !actualCanEdit
-                      ? 'Kan niet bewerken omdat de samenvatting niet bewerkt kan worden'
-                      : undefined
-                  }
-                >
-                  Bewerk samenvatting
-                </ConActionMenu.Button>
-
-                <ConActionMenu.Button
-                  icon={<VISUALS.PENCIL />}
-                  onClick={() => setEditingDescription(true)}
-                  disabled={!actualCanEdit}
-                  data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
-                  data-tooltip-content={
-                    !actualCanEdit
-                      ? 'Kan niet bewerken omdat de beschrijving niet bewerkt kan worden'
-                      : undefined
-                  }
-                >
-                  Bewerk beschrijving
-                </ConActionMenu.Button> */}
-
                 {data && !data['@self']?.published && (
                   <ConActionMenu.Button
                     icon={<VISUALS.PUBLISH />}
@@ -434,18 +406,8 @@ const ConProductDetailsPageContent = ({
             <div style={{ marginTop: '12px' }}>
               {data?.website && (
                 <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
-                  <strong>Website: </strong>
-                  <Link
-                    href={
-                      data?.website.startsWith('http')
-                        ? data?.website
-                        : `https://${data?.website}`
-                    }
-                    target='_blank'
-                    rel='noopener noreferrer'
-                  >
-                    {data?.website}
-                  </Link>
+                  <strong>Website:</strong>
+                  <ConExternalLink href={data?.website} />
                 </div>
               )}
               {contact && typeof contact === 'object' && (

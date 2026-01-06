@@ -26,11 +26,6 @@ const AcPublicationDefault = ({ store: { publications } }) => {
     getSearchPageURL,
     setAttachmentsPage,
     getFilteredAttachments,
-    // get_relations,
-    // resetRelations,
-    // resetPublication,
-    // fetchRelations,
-    // fetchPublication,
   } = publications;
 
   useEffect(() => {
@@ -128,12 +123,6 @@ const AcPublicationDefault = ({ store: { publications } }) => {
             <AcTable rows={AcGetAdditionalInfoRow(get_single, getSearchPageURL)} />
           </div>
           <div className='ac-publication-three-column'>
-            {/* <div>
-              <Heading2 className='ac-publication-three-column-item-heading'>Applicatie</Heading2>
-              <div className='ac-publication-three-column-item'>
-                <span>Geen applicatie beschikbaar</span>
-              </div>
-            </div> */}
             <div>
               <Heading2 className='ac-publication-three-column-item-heading'>
                 Organisatie
@@ -166,12 +155,6 @@ const AcPublicationDefault = ({ store: { publications } }) => {
                 </div>
               )}
             </div>
-            {/* <div>
-              <Heading2 className='ac-publication-three-column-item-heading'>Beoordeling</Heading2>
-              <div className='ac-publication-three-column-item'>
-                <span>Geen beoordeling beschikbaar</span>
-              </div>
-            </div> */}
           </div>
         </AcFlex>
       </AcContainer>

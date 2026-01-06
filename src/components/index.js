@@ -86,6 +86,10 @@ const ConSchemaResolver = loadable(() =>
   import('@src/components/con-schema-resolver/con-schema-resolver')
 );
 
+const ConRegisterResolver = loadable(() =>
+  import('@src/components/con-register-resolver/con-register-resolver')
+);
+
 const ConStandardsResolver = loadable(() =>
   import('@src/components/con-standards-resolver/con-standards-resolver')
 );
@@ -118,6 +122,10 @@ const ConOrganizationSelector = loadable(() =>
 
 const ConAangebodenSuggestiesTable = loadable(() =>
   import('@src/components/con-aangeboden-gebruik-table/con-aangeboden-gebruik-table')
+);
+
+const ConExternalLink = loadable(() =>
+  import('@src/components/con-external-link/con-external-link')
 );
 
 export {
@@ -155,6 +163,7 @@ export {
   ConDetailsActionsMenu,
   ConUuidResolver,
   ConSchemaResolver,
+  ConRegisterResolver,
   ConStandardsResolver,
   ConStandardsTable,
   ConRelatedObjectsLinks,
@@ -163,4 +172,5 @@ export {
   ConDebugViewer,
   ConOrganizationSelector,
   ConAangebodenSuggestiesTable,
+  ConExternalLink,
 };

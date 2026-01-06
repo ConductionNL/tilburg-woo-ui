@@ -11,6 +11,73 @@ import {
   UnorderedListItem,
   Heading1,
 } from '@utrecht/component-library-react/dist/css-module';
+import { AcFormatDate } from '@src/utilities/ac-format-date';
+
+/**
+ * Gets the relevant start date based on the selected status for a row.
+ * @param {string} status - The status value
+ * @param {Object} startDatumInProductieByRow - Map of rowId to date
+ * @param {Object} startDatumGeplandByRow - Map of rowId to date
+ * @param {Object} startDatumUitTeFaserenByRow - Map of rowId to date
+ * @param {Object} startDatumUitGefaseerdByRow - Map of rowId to date
+ * @param {number|string} rowId - The row ID
+ * @returns {Object|null} - Object with label and value, or null
+ */
+const getRelevantStartDate = (
+  status,
+  startDatumInProductieByRow,
+  startDatumGeplandByRow,
+  startDatumUitTeFaserenByRow,
+  startDatumUitGefaseerdByRow,
+  rowId
+) => {
+  if (!status) return null;
+
+  switch (status) {
+    case 'in gebruik':
+      return {
+        label: 'Startdatum In gebruik',
+        value: startDatumInProductieByRow?.[rowId]
+          ? AcFormatDate(
+              startDatumInProductieByRow[rowId],
+              'YYYY-MM-DD',
+              'D MMMM YYYY'
+            )
+          : null,
+      };
+    case 'in ontwikkeling':
+      return {
+        label: 'Startdatum In ontwikkeling',
+        value: startDatumGeplandByRow?.[rowId]
+          ? AcFormatDate(startDatumGeplandByRow[rowId], 'YYYY-MM-DD', 'D MMMM YYYY')
+          : null,
+      };
+    case 'einde ondersteuning':
+      return {
+        label: 'Startdatum Einde ondersteuning',
+        value: startDatumUitTeFaserenByRow?.[rowId]
+          ? AcFormatDate(
+              startDatumUitTeFaserenByRow[rowId],
+              'YYYY-MM-DD',
+              'D MMMM YYYY'
+            )
+          : null,
+      };
+    case 'teruggetrokken':
+      return {
+        label: 'Startdatum Teruggetrokken',
+        value: startDatumUitGefaseerdByRow?.[rowId]
+          ? AcFormatDate(
+              startDatumUitGefaseerdByRow[rowId],
+              'YYYY-MM-DD',
+              'D MMMM YYYY'
+            )
+          : null,
+      };
+    default:
+      return null;
+  }
+};
 
 const ConKoppelingStageControleren = ({
   rows,
@@ -40,6 +107,14 @@ const ConKoppelingStageControleren = ({
   organisatieOptions,
   aanbiederKeuze,
   aanbiederOrganisatie,
+  // Startdatum fields per status
+  startDatumInProductieByRow,
+  startDatumGeplandByRow,
+  startDatumUitTeFaserenByRow,
+  startDatumUitGefaseerdByRow,
+  // Intermediair
+  intermediairByRow,
+  intermediairOptions,
 }) => {
   const navigate = useNavigate();
 
@@ -200,6 +275,16 @@ const ConKoppelingStageControleren = ({
         Controleren
       </h2>
 
+      <Paragraph>
+        Controleer of het overzicht van de koppeling volledig en juist is voordat u
+        verder gaat.
+        <br />
+        U kunt met Vorige terug naar de eerdere stappen.
+        <br />
+        Na het registreren van de koppeling kunt u via uw “Dashboard” de koppeling
+        opzoeken en indien gewenst aanpassen.
+      </Paragraph>
+
       {saveResult === 'error' && (
         <Alert type='error'>
           <Paragraph>Opslaan mislukt:</Paragraph>
@@ -259,6 +344,23 @@ const ConKoppelingStageControleren = ({
                       '';
                     const beschrijving = (beschrijvingByRow[rowId] || '').trim();
 
+                    // Get the relevant start date for this row
+                    const relevantStartDate = getRelevantStartDate(
+                      statusVal,
+                      startDatumInProductieByRow,
+                      startDatumGeplandByRow,
+                      startDatumUitTeFaserenByRow,
+                      startDatumUitGefaseerdByRow,
+                      rowId
+                    );
+
+                    // Get intermediair label if selected
+                    const intermediairVal = intermediairByRow?.[rowId];
+                    const intermediairLabel = intermediairVal
+                      ? intermediairOptions?.find((o) => o.value === intermediairVal)
+                          ?.label || ''
+                      : '';
+
                     return (
                       <UnorderedListItem key={rowId}>
                         {naam && (
@@ -268,11 +370,19 @@ const ConKoppelingStageControleren = ({
                         )}
                         <div>
                           {appALabel} {dirArrow} {appBLabel}
-                          {soortLabel ? ` (${soortLabel})` : ''}
                         </div>
                         <div style={{ color: '#666', fontSize: '0.9rem' }}>
                           {statusLabel && <div>Status: {statusLabel}</div>}
+                          {relevantStartDate?.value && (
+                            <div>
+                              {relevantStartDate.label}: {relevantStartDate.value}
+                            </div>
+                          )}
                           {beschrijving && <div>Beschrijving: {beschrijving}</div>}
+                          {soortLabel && <div>Transportprotocol: {soortLabel}</div>}
+                          {intermediairLabel && (
+                            <div>Intermediair: {intermediairLabel}</div>
+                          )}
                           {standaardenByRow?.[rowId]?.length > 0 && (
                             <div>
                               Standaarden:{' '}

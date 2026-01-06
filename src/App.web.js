@@ -1,7 +1,7 @@
 // Imports => React
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
-import { Route, Routes, useNavigate } from 'react-router-dom';
+import { Route, Routes, useNavigate, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useAutoFocus, useDocumentTitleFromPath } from '@hooks';
 import loadable from '@loadable/component';
@@ -86,6 +86,14 @@ const App = ({ store }) => {
       store.object.warmupSchemaCache().catch((error) => {
         console.warn(
           '⚠️ Schema cache warmup failed during app initialization:',
+          error
+        );
+      });
+
+      // Warm up register cache in background for better UX
+      store.object.warmupRegisterCache().catch((error) => {
+        console.warn(
+          '⚠️ Register cache warmup failed during app initialization:',
           error
         );
       });
@@ -263,8 +271,19 @@ const App = ({ store }) => {
 
           {/* Static routes */}
           {Object.values(ROUTES)
-            .filter((route) => route.component)
+            .filter((route) => route.component || route.redirectTo)
             .map((route) => {
+              // Handle redirect routes
+              if (route.redirectTo) {
+                return (
+                  <Route
+                    key={`redirect-route-${route.id}`}
+                    path={route.path}
+                    element={<Navigate to={route.redirectTo} replace />}
+                  />
+                );
+              }
+
               // Check if this route requires authentication
               const requiresAuth = AUTHENTICATION_REQUIRED_ROUTES.includes(
                 route.path
