@@ -421,39 +421,33 @@ const AcFormsGebruik = ({ store }) => {
 
       // Build sub-steps for gebruik configuratie flow (define inline, in order)
       // These are the actual navigable steps - define them BEFORE the main step marker
-      const informatieMarker = stepper.defineStep('process-steps', 'informatie')
-      const referentiecomponentenMarker = stepper.defineStep('process-steps', 'referentiecomponenten')
+      const informatieMarker = stepper.defineStep('process-steps', 'informatie');
+      const referentiecomponentenMarker = stepper.defineStep(
+        'process-steps',
+        'referentiecomponenten'
+      );
       const subSteps = [
         {
           id: 'informatie-substep',
           marker: informatieMarker,
-          status: getStatus(
-            stepper.getCurrentStep(),
-            informatieMarker
-          ),
+          status: getStatus(stepper.getCurrentStep(), informatieMarker),
           title: 'Gebruikinformatie',
         },
         {
           id: 'referentiecomponenten-substep',
           marker: referentiecomponentenMarker,
-          status: getStatus(
-            stepper.getCurrentStep(),
-            referentiecomponentenMarker
-          ),
+          status: getStatus(stepper.getCurrentStep(), referentiecomponentenMarker),
           title: 'Referentiecomponenten',
         },
       ];
 
       // Only add deelnemers step if organization type is Samenwerking/Community
       if (needsDeelnemersStep) {
-        const deelnemersMarker = stepper.defineStep('process-steps', 'deelnemers')
+        const deelnemersMarker = stepper.defineStep('process-steps', 'deelnemers');
         subSteps.push({
           id: 'deelnemers-substep',
           marker: deelnemersMarker,
-          status: getStatus(
-            stepper.getCurrentStep(),
-            deelnemersMarker
-          ),
+          status: getStatus(stepper.getCurrentStep(), deelnemersMarker),
           title: 'Deelnemers',
         });
       }
@@ -472,14 +466,11 @@ const AcFormsGebruik = ({ store }) => {
         steps: subSteps,
       });
 
-      const controlerenMarker = stepper.defineStep('process-steps', 'controleren')
+      const controlerenMarker = stepper.defineStep('process-steps', 'controleren');
       steps.push({
         id: 'controleren-step',
         marker: controlerenMarker,
-        status: getStatus(
-          currentStepNum,
-          controlerenMarker
-        ),
+        status: getStatus(currentStepNum, controlerenMarker),
         title: 'Controleren',
       });
     }
@@ -1562,7 +1553,7 @@ const AcFormsGebruik = ({ store }) => {
   const handleRegister = async () => {
     setLoading(true);
     try {
-      // Handle Aanbod beheerders flow with bulk save
+      // Handle Aanbod beheerders flow with parallel saveObject calls
       if (isAanbodBeheerdersFlow) {
         if (!gebruik?.module || !selectedKlanten || selectedKlanten.length === 0) {
           setRegisterCallBack('error');
@@ -1585,31 +1576,32 @@ const AcFormsGebruik = ({ store }) => {
         }));
 
         try {
-          const response = await fetch(
-            `${commongroundApiUrl()}/openregister/api/bulk/voorzieningen/gebruik/save`,
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Accept: 'application/json',
-              },
-              credentials: 'include',
-              body: JSON.stringify({ objects: gebruikObjects }),
-            }
+          // Save all objects in parallel using Promise.allSettled
+          const savePromises = gebruikObjects.map((obj) =>
+            store.object.saveObject(obj, 'voorzieningen', 'gebruik')
           );
 
-          if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
+          const results = await Promise.allSettled(savePromises);
+
+          // Check if all saves succeeded
+          const failed = results.filter((result) => result.status === 'rejected');
+
+          if (failed.length > 0) {
+            const errorMessages = failed
+              .map((result) => result.reason?.message || 'Unknown error')
+              .filter(Boolean);
+
             throw new Error(
-              errorData.message ||
-                'Er is een fout opgetreden bij het opslaan van de gebruiksmeldingen.'
+              `Er zijn fouten opgetreden bij het opslaan van ${failed.length} van ${
+                gebruikObjects.length
+              } gebruiksmeldingen. ${errorMessages.join('; ')}`
             );
           }
 
           // On success, show success page
           setRegisterCallBack('success');
         } catch (bulkError) {
-          console.error('Bulk save failed:', bulkError);
+          console.error('Parallel save failed:', bulkError);
           setRegisterCallBack('error');
           setError({
             message:
