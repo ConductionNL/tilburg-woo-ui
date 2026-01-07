@@ -72,7 +72,7 @@ export const DASHBOARD_WIZARDS = {
     id: 'gebruik',
     name: 'Applicatie toevoegen',
     description: 'Voeg een applicatie toe aan uw applicatielandschap.',
-    icon: VISUALS.CLIPBOARD_CHECK,
+    icon: VISUALS.CUBE,
     path: PATHS.FORMS_GEBRUIK_APPLICATIE,
     requiresAuth: true,
     requiresOrganization: true,
@@ -134,15 +134,15 @@ export const getDashboardWizards = (user = null) => {
   // Define which wizards are available for each group
   const aanbodBeheerderWizards = [
     DASHBOARD_WIZARDS.EIGEN_APPLICATIE,
+    DASHBOARD_WIZARDS.KOPPELING_PUBLICEEREN,
     DASHBOARD_WIZARDS.DIENST,
     DASHBOARD_WIZARDS.GEBRUIK_TOEVOEGEN,
-    DASHBOARD_WIZARDS.KOPPELING_PUBLICEEREN,
   ];
 
   const gebruikBeheerderWizards = [
     DASHBOARD_WIZARDS.GEBRUIK,
-    DASHBOARD_WIZARDS.DIENST_TOEVOEGEN,
     DASHBOARD_WIZARDS.KOPPELING_TOEVOEGEN,
+    DASHBOARD_WIZARDS.DIENST_TOEVOEGEN,
   ];
 
   // Check which groups the user has
