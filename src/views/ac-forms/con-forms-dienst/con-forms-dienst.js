@@ -1101,7 +1101,7 @@ const ConFormsDienst = ({ store, userStore }) => {
         // Create mode: create dienst without logo first
         const createPayload = { ...payload };
         if (hasLogoDataUrl) {
-          createPayload.logo = undefined;
+          delete createPayload.logo;
         }
         // Always strip UI-only fields
         delete createPayload.logoFilename;
@@ -1131,6 +1131,8 @@ const ConFormsDienst = ({ store, userStore }) => {
               String(response.id),
               { logo: uploadResult.fileData.downloadUrl }
             );
+          } else {
+            console.error('No downloadUrl found for logo');
           }
         }
       }

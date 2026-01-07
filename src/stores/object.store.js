@@ -1142,7 +1142,7 @@ export class ObjectStore {
         if (Object.keys(namesToCache).length > 0) {
           this.setNamesInCache(namesToCache);
         }
-          }
+      }
 
       const paginationInfo = {
         total: data.total || 0,
@@ -4458,12 +4458,16 @@ export class ObjectStore {
   /**
    * Refreshes warmup data for a single specific type.
    * This bypasses the security check that prevents warmup from running multiple times.
-   * Useful for manual refresh operations.
+   * Useful for automated/manual refresh operations.
+   * 
+   * It also avoids triggering loading state changes unless explicitly requested.
+   * Which is useful for manual refresh operations.
    * @param {string} schemaSlug - The schema slug to refresh (e.g., 'module')
    * @param {string} register - Optional register slug (defaults to 'voorzieningen')
+   * @param {boolean} triggerLoading - Optional flag to trigger loading state (defaults to false)
    */
   @action
-  refreshWarmupDataForType = async (schemaSlug, register = 'voorzieningen') => {
+  refreshWarmupDataForType = async (schemaSlug, register = 'voorzieningen', triggerLoading = false) => {
     if (!schemaSlug) {
       console.error('refreshWarmupDataForType: schemaSlug is required');
       return;
@@ -4474,7 +4478,10 @@ export class ObjectStore {
 
       // Reset warmup state for this type to force refresh
       runInAction(() => {
-        this.warmupInProgress[schemaSlug] = true;
+        // only set warmupInProgress if it has not warmup up this type before.
+        if (this.warmupInProgress[schemaSlug] === undefined && triggerLoading) {
+          this.warmupInProgress[schemaSlug] = true;
+        }
         this.warmupCompleted[schemaSlug] = false;
         this.warmupErrors[schemaSlug] = null;
       });
@@ -4496,8 +4503,8 @@ export class ObjectStore {
         // Mark as completed now that data has arrived
         const collection = this.getCollection(collectionType);
         runInAction(() => {
-          this.warmupCompleted[schemaSlug] = true;
           this.warmupInProgress[schemaSlug] = false;
+          this.warmupCompleted[schemaSlug] = true;
           this.warmupErrors[schemaSlug] = null;
         });
 
