@@ -664,7 +664,7 @@ const ConFormsDienst = ({ store }) => {
           _limit: '50',
           _page: '1',
           _published: 'false',
-          _source: 'index',
+          _source: 'database',
         });
         params.append('modules', String(applicatieId));
 
