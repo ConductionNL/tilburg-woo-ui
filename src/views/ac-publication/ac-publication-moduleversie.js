@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import RelatedTabs from './con-related-tabs';
 import ConLogoPreview from '../ac-register/con-logo-preview';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
@@ -7,10 +7,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { AcContainer, AcFlex } from '@atoms';
 import { AcLoader, ConDetailsActionsMenu, ConUuidResolver } from '@components';
 import { withStore } from '@stores';
-import { VISUALS } from '@constants';
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
-import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
+import { schemaCache } from '@services/schemaCache.service';
 
 // Markdown Editor
 import remarkDefinitionList, { defListHastHandlers } from 'remark-definition-list';
@@ -23,6 +22,8 @@ import remarkSupersub from 'remark-supersub';
 import rehypeSlug from 'rehype-slug';
 import rehypeSanitize from 'rehype-sanitize';
 import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
+import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
+import { normalizeSchemaName } from '@src/utilities/con-normalize-schema-name';
 
 /**
  * Module Version (Applicatie Versie) Publication Page
@@ -35,53 +36,23 @@ const AcPublicationModuleVersie = ({ store: { publications, user, object } }) =>
   const { get_single, loading } = publications;
   const navigate = useNavigate();
 
-  const openDynamicCreate = useCallback(
-    (targetType, preSelected, metadata = {}) => {
-      // For publication pages, we'll navigate to the beheer page with modal open
-      if (metadata.isOutgoing) {
-        // handle outgoing relationship metadata
-      }
-      navigate(`/beheer/${targetType}?showCreateModal=true&moduleVersieId=${id}`);
-    },
-    [navigate, id]
+  const schemaId =
+    typeof get_single?.['@self']?.schema === 'object'
+      ? get_single?.['@self']?.schema.id
+      : get_single?.['@self']?.schema;
+  const schemaSlug = useMemo(
+    () => (schemaId ? schemaCache.get(schemaId) : null),
+    [schemaId]
   );
-
-  const { makeActionsForContext } = useRelatedCreateActions({
-    object,
-    user,
-    schemaRef: get_single?.['@self']?.schema?.slug,
-    currentType: get_single?.['@self']?.schema?.slug,
-    openDynamicCreate,
-    currentObject: get_single,
-    currentObjectRegister: 'voorzieningen',
-    currentObjectSchema: get_single?.['@self']?.schema?.slug,
-  });
 
   // Delete modal state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [actionMenuItems, setActionMenuItems] = useState([]);
+  // const [actionMenuItems, setActionMenuItems] = useState([]);
 
   // Open delete modal from actions menu
   const handleDelete = useCallback(() => {
     setShowDeleteModal(true);
   }, []);
-
-  // Generate action menu items
-  useEffect(() => {
-    if (!get_single?.['@self']?.schema?.slug || !id) return;
-
-    const items = makeActionsForContext(id).map(
-      ({ key, label, onClick, schema, icon }) => ({
-        key,
-        label,
-        onClick,
-        schema,
-        icon,
-      })
-    );
-
-    setActionMenuItems(items);
-  }, [get_single?.['@self']?.schema?.slug, id, makeActionsForContext]);
 
   // Tabs
   const [uses, setUses] = useState([]);
@@ -98,7 +69,7 @@ const AcPublicationModuleVersie = ({ store: { publications, user, object } }) =>
     setUsesLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend[]=@self.schema&_limit=100`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_limit=100`,
         {
           method: 'GET',
           headers: {
@@ -124,7 +95,7 @@ const AcPublicationModuleVersie = ({ store: { publications, user, object } }) =>
     setUsedLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=@self.schema&_limit=100`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_limit=100`,
         {
           method: 'GET',
           headers: {
@@ -211,16 +182,17 @@ const AcPublicationModuleVersie = ({ store: { publications, user, object } }) =>
             className='con-product-publication--header-actions'
           >
             <Heading className='con-product-publication--header-type'>
-              {(() => {
-                const Icon = getTabHeaderIcon(get_single?.['@self'].schema.slug);
-                return <Icon />;
-              })()}
-              {getTabHeaderName(get_single?.['@self'].schema.slug, true)}
+              {schemaSlug &&
+                (() => {
+                  const Icon = getTabHeaderIcon(schemaSlug);
+                  return <Icon />;
+                })()}
+              {schemaSlug && getTabHeaderName(schemaSlug, true)}
             </Heading>
             <ConDetailsActionsMenu
               user={user}
               id={id}
-              schemaSlug={get_single?.['@self']?.schema?.slug}
+              schemaSlug={schemaSlug}
               title={get_single?.['@self']?.name || get_single?.id}
               published={get_single?.['@self']?.published}
               object={get_single}
@@ -229,21 +201,24 @@ const AcPublicationModuleVersie = ({ store: { publications, user, object } }) =>
               showPublishActions={true}
               onDelete={handleDelete}
               onEdit={() => {
-                // Navigate to beheer edit page in new tab
-                const schemaSlug = get_single?.['@self']?.schema?.slug;
-                const beheerUrl = `/beheer/${schemaSlug}/${id}`;
-                window.open(beheerUrl, '_blank');
+                if (schemaSlug) {
+                  const wizardSchemaName = normalizeSchemaName(schemaSlug).toLowerCase();
+                  const wizards = Object.values(DASHBOARD_WIZARDS);
+                  const wizard = wizards.find((w) => w.schema === wizardSchemaName);
+
+                  if (wizard) {
+                    const baseUrl = getWizardUrl(wizard);
+                    const url = new URL(baseUrl, window.location.origin);
+                    url.searchParams.set('id', id);
+                    navigate(url.pathname + url.search);
+                    return;
+                  }
+                }
+                // Fallback to beheer detail page in same tab with edit modal
+                const beheerUrl = `/beheer/${schemaSlug}/${id}?showEditModal=true`;
+                navigate(beheerUrl);
               }}
-              uniqueActions={[
-                {
-                  key: 'delete',
-                  label: 'Verwijderen',
-                  icon: VISUALS.TRASHCAN,
-                  onClick: handleDelete,
-                },
-              ]}
               triggerStyle='button'
-              relatedActions={actionMenuItems}
             />
           </AcFlex>
         </AcFlex>
@@ -350,6 +325,9 @@ const AcPublicationModuleVersie = ({ store: { publications, user, object } }) =>
         used={used}
         usesLoading={usesLoading}
         usedLoading={usedLoading}
+        gebruikId={id}
+        gebruikSchemaId={schemaId}
+        gebruikSchemaSlug={get_single?.['@self']?.schema?.slug}
         tabIndex={relatedTabIndex}
         setTabIndex={setRelatedTabIndex}
         object={object}

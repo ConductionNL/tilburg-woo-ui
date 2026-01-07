@@ -1,11 +1,6 @@
 import React from 'react';
 import { AcColumn } from '@atoms';
-import { AcLink } from '@src/molecules';
-import { ConSorterLogic } from '@src/utilities/con-sorter';
-import { isJsonString } from '@src/utilities';
-import { TOOLTIP_ID } from '@src/index.web';
 import { VISUALS } from '@constants';
-import _ from 'lodash';
 import { byNested } from '../utils/sorters';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
 
@@ -66,7 +61,23 @@ const BeheerPageConfigFactory = {
           modals: [...baseConfig.modals],
         };
 
+      case 'moduleversie':
+      case 'applicatieversie':
+      case 'applicatiesversie':
+        return {
+          ...baseConfig,
+          schemaSlug: 'moduleversie',
+          paginationKey: 'applicatiesversie',
+          title: 'Applicatie Versies',
+          routeType: 'applicatiesversie',
+          defaultHeaders: ['naam', 'versie', 'status', 'releaseDatum'],
+          customHeaders: {},
+          dynamicActionFilter: ({ slug }) => !['module'].includes(slug),
+          modals: [...baseConfig.modals],
+        };
+
       // removed plural alias 'extendviews'
+      case 'module':
       case 'applicaties':
       case 'modules':
         return {
@@ -75,8 +86,9 @@ const BeheerPageConfigFactory = {
           paginationKey: 'applicaties',
           title: 'Applicaties',
           routeType: 'applicaties',
-          disableRelatedCreateActions: true, // Enable koppeling toevoegen for applicaties
-          disableDeleteAction: false, // Enable delete action for applicaties
+          disableRelatedCreateActions: true, // Enable koppeling toevoegen voor applicaties
+          disableDeleteAction: false, // Enable delete action voor applicaties
+          extend: ['moduleVersies'],
           defaultHeaders: [
             'naam',
             'referentieComponenten',
@@ -101,37 +113,94 @@ const BeheerPageConfigFactory = {
               },
             },
           },
+          // Unique actions that change based on user role (like publish/depublish toggle)
+          // Each action shows different label/params based on user group
           uniqueActions: [
-            // Commented out: Versie toevoegen action (not reliable yet)
-            //   {
-            //     key: 'addVersion',
-            //     label: 'Versie toevoegen',
-            //     icon: <VISUALS.PLUS />,
-            //     condition: (row) => true,
-            //     action: 'addModuleVersion',
-            //   },
+            // Dienst action - changes based on user role
+            {
+              key: 'addDienst',
+              icon: <VISUALS.HAND_SHAKE />,
+              condition: (row) => row?.['@self']?.id || row?.id,
+              action: 'wizard',
+              wizardPath: '/forms/dienst',
+              // Dynamic label and params based on user role
+              getLabel: (userGroups) =>
+                userGroups.includes('gebruik-beheerder')
+                  ? 'Dienst toevoegen'
+                  : 'Dienst publiceren',
+              getWizardParams: (row, userGroups) =>
+                userGroups.includes('gebruik-beheerder')
+                  ? {
+                      type: 'ontbrekend-dienst',
+                      applicatie: row['@self']?.id || row.id,
+                    }
+                  : {
+                      type: 'dienst',
+                      applicatie: row['@self']?.id || row.id,
+                    },
+              // Show for both user groups
+              userGroupFilter: ['gebruik-beheerder', 'aanbod-beheerder'],
+            },
+            // Gebruik action - changes based on user role
+            {
+              key: 'addGebruik',
+              icon: <VISUALS.CLIPBOARD_CHECK />,
+              condition: (row) => row?.['@self']?.id || row?.id,
+              action: 'wizard',
+              wizardPath: '/forms/gebruik/applicatie',
+              // Dynamic label and params based on user role
+              getLabel: (userGroups) =>
+                userGroups.includes('gebruik-beheerder')
+                  ? 'Applicatie toevoegen'
+                  : 'Applicatiegebruik melden',
+              getWizardParams: (row, userGroups) =>
+                userGroups.includes('gebruik-beheerder')
+                  ? {
+                      applicatie: row['@self']?.id || row.id,
+                    }
+                  : {
+                      type: 'ontbrekend-organisatie',
+                      applicatie: row['@self']?.id || row.id,
+                    },
+              // Show for both user groups
+              userGroupFilter: ['gebruik-beheerder', 'aanbod-beheerder'],
+            },
+            // Koppeling action - changes based on user role
             {
               key: 'addKoppeling',
-              label: 'Koppeling toevoegen',
-              icon: <VISUALS.WAND_SPARKLES_SOLID />,
-              condition: (row) => row?.id,
-              action: 'wizard', // Special action type to indicate wizard navigation
+              icon: <VISUALS.LINK />,
+              condition: (row) => row?.['@self']?.id || row?.id,
+              action: 'wizard',
               wizardPath: '/forms/koppeling',
-              wizardParams: (row) => ({
-                type: 'aanbieden-koppeling',
-                applicatie: row.id,
-              }),
+              // Dynamic label and params based on user role
+              getLabel: (userGroups) =>
+                userGroups.includes('gebruik-beheerder')
+                  ? 'Koppeling toevoegen'
+                  : 'Koppeling publiceren',
+              getWizardParams: (row, userGroups) =>
+                userGroups.includes('gebruik-beheerder')
+                  ? {
+                      type: 'aanbieden-koppeling',
+                      applicatie: row['@self']?.id || row.id,
+                    }
+                  : {
+                      type: 'eigen-organisatie',
+                      applicatie: row['@self']?.id || row.id,
+                    },
+              // Show for both user groups
+              userGroupFilter: ['gebruik-beheerder', 'aanbod-beheerder'],
             },
           ],
           modals: [...baseConfig.modals],
         };
 
       case 'diensten':
+      case 'dienst':
         return {
           ...baseConfig,
-          schemaSlug: 'voorzieningaanbod',
+          schemaSlug: 'dienst',
           paginationKey: 'diensten',
-          title: 'Beheer Dienst',
+          title: 'Diensten',
           routeType: 'diensten',
           defaultHeaders: ['name', 'voorzieningName', 'email'],
           customHeaders: {
@@ -172,382 +241,174 @@ const BeheerPageConfigFactory = {
           modals: [...baseConfig.modals],
         };
 
-      case 'voorzieningen-versie':
-        return {
-          ...baseConfig,
-          schemaSlug: 'voorzieningversie',
-          paginationKey: 'voorzieningen-versie',
-          title: 'Beheer Voorzieningen Versie',
-          routeType: 'voorzieningen-versie',
-          defaultHeaders: ['name', 'versienummer', 'releaseDatum', 'status'],
-          customHeaders: {
-            kwetsbaarheden: {
-              id: 'kwetsbaarheden',
-              label: 'Kwetsbaarheden',
-              key: '',
-              customContent: (row) => {
-                return (
-                  row?.kwetsbaarheden
-                    ?.map((kwetsbaarheid) => kwetsbaarheid.titel)
-                    .join(', ') || '-'
-                );
-              },
-              sortComparator: byNested((r) => r?.kwetsbaarheden?.[0]?.titel),
-            },
-            voorzieningName: {
-              id: 'voorzieningName',
-              label: 'Applicatie',
-              key: '',
-              customContent: (row) => {
-                return row?.voorziening?.naam || '-';
-              },
-              sortComparator: byNested((r) => r?.voorziening?.naam),
-            },
-          },
-          modals: [...baseConfig.modals],
-        };
-
-      case 'moduleversie':
-      case 'applicatieversie':
-      case 'applicatiesversie':
-        return {
-          ...baseConfig,
-          schemaSlug: 'moduleversie',
-          paginationKey: 'applicatiesversie',
-          title: 'Applicatie Versies',
-          routeType: 'applicatiesversie',
-          defaultHeaders: ['naam', 'versie', 'status', 'releaseDatum'],
-          customHeaders: {},
-          dynamicActionFilter: ({ slug }) => !['module'].includes(slug),
-          modals: [...baseConfig.modals],
-        };
-
-      case 'organisaties':
-        return {
-          ...baseConfig,
-          schemaSlug: 'organisatie',
-          paginationKey: 'organisaties',
-          title: 'Beheer Organisaties',
-          routeType: 'organisaties',
-          defaultHeaders: [
-            'organizationName',
-            'website',
-            'beoordeling',
-            'e-mailadres',
-            'type',
-          ],
-          customHeaders: {
-            naam: {
-              id: 'organizationName',
-              label: 'Naam',
-              key: 'naam',
-              customContent: (row) => {
-                return row.naam || row.naam || '-';
-              },
-              sortComparator: byNested((r) => r?.naam),
-            },
-            contactgegevens: {
-              id: 'contactDetails',
-              label: 'Contactgegevens',
-              key: 'contactgegevens',
-              customContent: (row) => {
-                if (!row?.contactgegevens) return '-';
-                return (
-                  <AcColumn key={row.id}>
-                    <span>
-                      {row.contactgegevens.voornaam}{' '}
-                      {row.contactgegevens.tussenvoegsel}{' '}
-                      {row.contactgegevens.achternaam} / {row.contactgegevens.email}{' '}
-                      / {row.contactgegevens.telefoon}
-                    </span>
-                  </AcColumn>
-                );
-              },
-              sortComparator: byNested((r) => r?.contactgegevens?.voornaam),
-            },
-            website: {
-              id: 'website',
-              label: 'Website',
-              key: 'website',
-              customContent: (row) => {
-                if (!row.website) {
-                  return '-';
-                }
-
-                try {
-                  const url = new URL(row.website);
-                  return (
-                    <AcLink href={url.href} target='_blank'>
-                      {url.href}
-                    </AcLink>
-                  );
-                } catch {
-                  return row.website;
-                }
-              },
-            },
-          },
-          statusIcon: {
-            customContent: (row) => (
-              <div className='ac-beheer-organisaties-name-container'>
-                <div
-                  className='ac-beheer-organisaties-name-container__icon'
-                  data-tooltip-id={TOOLTIP_ID}
-                  data-tooltip-content={
-                    row['@self'].published ? 'Gepubliceerd' : 'Niet gepubliceerd'
-                  }
-                >
-                  {row['@self'].published ? (
-                    <VISUALS.CIRCLE_CHECK className='ac-beheer-publish-icon__check' />
-                  ) : (
-                    <VISUALS.CIRCLE_EXCLAMATION className='ac-beheer-publish-icon__exclamation' />
-                  )}
-                </div>
-              </div>
-            ),
-            customHeader: (
-              <div className='ac-beheer-organisaties-name-container__icon'></div>
-            ),
-          },
-          uniqueActions: [
-            {
-              key: 'activate',
-              label: 'Activeren',
-              icon: <VISUALS.CHECK />,
-              condition: (row) => row.beoordeling?.toLowerCase?.() !== 'actief',
-              action: 'activate',
-            },
-            {
-              key: 'deactivate',
-              label: 'Deactiveren',
-              icon: <VISUALS.CLOSE />,
-              condition: (row) => row.beoordeling?.toLowerCase?.() === 'actief',
-              action: 'deactivate',
-            },
-            {
-              key: 'depublish',
-              label: 'Depubliceren',
-              icon: <VISUALS.PUBLISH_OFF />,
-              condition: (row) =>
-                row['@self'].published &&
-                row?.beoordeling?.toLowerCase?.() !== 'concept',
-              action: 'depublish',
-            },
-            {
-              key: 'addDeelname',
-              label: 'Deelname toevoegen',
-              icon: <VISUALS.PLUS />,
-              condition: (row) => row?.beoordeling?.toLowerCase?.() !== 'concept',
-              action: 'addDeelname',
-            },
-            {
-              key: 'removeDeelname',
-              label: 'Deelname verlaten',
-              icon: <VISUALS.MINUS />,
-              condition: (row) =>
-                row?.beoordeling?.toLowerCase?.() !== 'concept' &&
-                row?.deelnames &&
-                row?.deelnames?.length > 0,
-              action: 'removeDeelname',
-            },
-          ],
-          modals: [
-            ...baseConfig.modals,
-            'activate',
-            'deactivate',
-            'publish',
-            'depublish',
-            'addDeelname',
-            'removeDeelname',
-          ],
-          customFilterDrawer: 'organisaties',
-        };
-
-      case 'kwetsbaarheden':
-        return {
-          ...baseConfig,
-          schemaSlug: 'kwetsbaarheid',
-          paginationKey: 'kwetsbaarheden',
-          title: 'Beheer Kwetsbaarheden',
-          routeType: 'kwetsbaarheden',
-          defaultHeaders: ['titel', 'ernst', 'detectedOn', 'status'],
-          customHeaders: {
-            ontdektOp: {
-              id: 'detectedOn',
-              label: 'Ontdekt op',
-              key: 'ontdektOp',
-              customContent: (row) =>
-                row.ontdektOp
-                  ? !isNaN(new Date(row.ontdektOp).getTime())
-                    ? new Date(row.ontdektOp).toLocaleDateString()
-                    : row.ontdektOp
-                  : '-',
-            },
-            gepubliceerdOp: {
-              id: 'publishedOn',
-              label: 'Gepubliceerd op',
-              key: 'gepubliceerdOp',
-              customContent: (row) =>
-                row.gepubliceerdOp
-                  ? !isNaN(new Date(row.gepubliceerdOp).getTime())
-                    ? new Date(row.gepubliceerdOp).toLocaleDateString()
-                    : row.gepubliceerdOp
-                  : '-',
-            },
-          },
-          modals: [...baseConfig.modals],
-        };
-
       case 'gebruiken':
+      case 'gebruik':
         return {
           ...baseConfig,
-          schemaSlug: 'voorzieninggebruik',
+          schemaSlug: 'gebruik',
           paginationKey: 'gebruiken',
-          title: 'Beheer Gebruiken',
-          routeType: 'gebruiken',
-          defaultHeaders: ['voorzieningId', 'diensten', 'status', 'contact'],
-          customHeaders: {
-            versieId: {
-              id: 'versionId',
-              label: 'Versie ID',
-              key: 'versieId',
-              customContent: (row) => {
-                return row?.versieId?.id ?? row?.versieId ?? '-';
-              },
-            },
-            organisatieId: {
-              id: 'organisatieId',
-              label: 'Organisatie',
-              key: 'organisatieId',
-              customContent: (row) => {
-                return (
-                  <AcColumn key={row.id}>
-                    <span>{row?.organisatieId?.naam ?? '-'}</span>
-                  </AcColumn>
-                );
-              },
-            },
-            voorzieningId: {
-              id: 'voorzieningId',
-              label: 'Applicatie',
-              key: 'voorzieningId',
-              customContent: (row) => {
-                return (
-                  <AcColumn key={row.id}>
-                    <span>{row?.voorzieningId?.naam ?? '-'}</span>
-                  </AcColumn>
-                );
-              },
-            },
-            beheerder: {
-              id: 'beheerderNaam',
-              label: 'Beheerder naam',
-              key: 'beheerder',
-              customContent: (row) => {
-                if (
-                  typeof row.beheerder === 'string' &&
-                  isJsonString(row.beheerder)
-                ) {
-                  return JSON.parse(row.beheerder)?.naam || '-';
-                }
-                if (
-                  typeof row.beheerder === 'string' &&
-                  !isJsonString(row.beheerder)
-                ) {
-                  return row.beheerder || '-';
-                }
-                return row?.beheerder?.naam || '-';
-              },
-              sortComparator: (a, b, direction) => {
-                if (direction === null) return 0;
+          title: 'Gebruik',
+          routeType: 'gebruik',
+          disableRelatedCreateActions: true,
+          defaultHeaders: ['type', 'voorzieningId', 'diensten', 'status', 'contact'],
+          /**
+           * Custom edit URL handler for gebruik
+           * If koppelingen array is filled, redirect to koppeling wizard
+           * If diensten array is filled, redirect to dienst wizard
+           * Otherwise, use default gebruik wizard behavior
+           * For Leverancier/Community organizations, use ontbrekend-organisatie type
+           * @param {Object} row - The row data containing the gebruik to edit
+           * @param {Object} fullActiveOrganisation - The full organization data containing type
+           * @returns {string|null} The URL to navigate to for editing, or null to use default behavior
+           */
+          getEditUrl: (row, fullActiveOrganisation) => {
+            const gebruikId = row?.['@self']?.id || row?.id;
+            if (!gebruikId) return null;
 
-                const newA = _.cloneDeep(a);
-                const newB = _.cloneDeep(b);
+            // Check if organization type is Leverancier or Community
+            // These organization types don't have their own gebruik objects,
+            // they only manage gebruik for gemeentes or other organizations
+            const orgType = fullActiveOrganisation?.type;
+            const isLeverancierOrCommunity =
+              orgType === 'Leverancier' || orgType === 'Community';
 
-                if (
-                  typeof newA.beheerder === 'string' &&
-                  isJsonString(newA.beheerder)
-                ) {
-                  newA.beheerder = JSON.parse(newA.beheerder);
-                }
-                if (
-                  typeof newB.beheerder === 'string' &&
-                  isJsonString(newB.beheerder)
-                ) {
-                  newB.beheerder = JSON.parse(newB.beheerder);
-                }
+            // Check if koppelingen array is filled - redirect to koppeling wizard
+            // Also check @self.relations.koppelingen as fallback
+            const koppelingen =
+              row?.koppelingen || row?.['@self']?.relations?.koppelingen;
+            if (Array.isArray(koppelingen) && koppelingen.length > 0) {
+              const koppelingType = isLeverancierOrCommunity
+                ? 'ontbrekend-organisatie'
+                : 'eigen-organisatie';
+              return `/forms/gebruik/koppeling?type=${koppelingType}&id=${gebruikId}`;
+            }
 
-                return ConSorterLogic(
-                  newA?.beheerder?.naam,
-                  newB?.beheerder?.naam,
-                  direction
-                );
-              },
-            },
+            // Check if diensten array is filled - redirect to dienst wizard
+            // Also check @self.relations.diensten as fallback
+            const diensten = row?.diensten || row?.['@self']?.relations?.diensten;
+            if (Array.isArray(diensten) && diensten.length > 0) {
+              const dienstType = isLeverancierOrCommunity
+                ? 'ontbrekend-organisatie'
+                : 'dienst';
+              return `/forms/gebruik/dienst?type=${dienstType}&id=${gebruikId}`;
+            }
+
+            // For Leverancier/Community, use ontbrekend-organisatie type for default gebruik wizard
+            if (isLeverancierOrCommunity) {
+              return `/forms/gebruik/applicatie?type=ontbrekend-organisatie&id=${gebruikId}`;
+            }
+
+            // Return null to use default wizard behavior
+            return null;
           },
-          uniqueActions: [
+          // extend: ['contactpersoon'],
+          // Virtual columns are columns that don't exist in the schema but are added to the table
+          virtualColumns: [
             {
-              key: 'koppelen',
-              label: 'Koppelen',
-              icon: <VISUALS.LINK />,
-              condition: () => true,
-              action: 'koppelen',
-            },
-          ],
-          modals: [...baseConfig.modals, 'koppelen'],
-        };
+              id: 'type',
+              order: 0,
+              label: 'Type',
+              key: 'type',
+              customContent: (row) => {
+                // Determine icon based on filled fields:
+                // - koppelingen filled → Koppeling icon
+                // - diensten filled → Dienst icon
+                // - neither filled → Applicatie icon
+                const hasKoppelingen =
+                  Array.isArray(row?.koppelingen) && row.koppelingen.length > 0;
+                const hasDiensten =
+                  Array.isArray(row?.diensten) && row.diensten.length > 0;
 
-      case 'overeenkomsten':
-        return {
-          ...baseConfig,
-          schemaSlug: 'contract',
-          paginationKey: 'overeenkomsten',
-          title: 'Beheer Overeenkomsten',
-          routeType: 'overeenkomsten',
-          defaultHeaders: [
-            'name',
-            'startDatum',
-            'eindDatum',
-            'contactPersonProvider',
+                let IconComponent;
+                let title;
+
+                if (hasKoppelingen) {
+                  IconComponent = VISUALS.LINK;
+                  title = 'Koppeling';
+                } else if (hasDiensten) {
+                  IconComponent = VISUALS.HAND_SHAKE;
+                  title = 'Dienst';
+                } else {
+                  IconComponent = VISUALS.CUBE;
+                  title = 'Applicatie';
+                }
+
+                return (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                    title={title}
+                  >
+                    <IconComponent
+                      style={{
+                        width: '24px',
+                        height: '24px',
+                        color: 'var(--tilburg-interaction-active-color)',
+                      }}
+                    />
+                  </div>
+                );
+              },
+              sortComparator: byNested((row) => {
+                // Sort by type name: Applicatie, Dienst, Koppeling (alphabetical)
+                const hasKoppelingen =
+                  Array.isArray(row?.koppelingen) && row.koppelingen.length > 0;
+                const hasDiensten =
+                  Array.isArray(row?.diensten) && row.diensten.length > 0;
+
+                if (hasKoppelingen) return 'Koppeling';
+                if (hasDiensten) return 'Dienst';
+                return 'Applicatie';
+              }),
+            },
           ],
           customHeaders: {
-            voorzieningAanbod: {
-              id: 'voorzieningAanbodNaam',
-              label: 'Voorziening aanbod naam',
-              key: 'voorzieningAanbod',
+            contactpersoon: {
+              id: 'contactpersoon',
+              label: 'Contactpersoon',
+              key: 'contactpersoon',
               customContent: (row) => {
-                return row?.voorzieningAanbod?.naam || '-';
+                const fullName = `${row?.contactpersoon?.voornaam || ''} ${
+                  row?.contactpersoon?.tussenvoegsel || ''
+                } ${row?.contactpersoon?.achternaam || ''}`.trim();
+                return (
+                  fullName || (
+                    <ConUuidResolver>{row.contactpersoon}</ConUuidResolver>
+                  ) ||
+                  '-'
+                );
               },
-              sortComparator: byNested((r) => r?.voorzieningAanbod?.naam),
             },
-            voorzieningGebruik: {
-              id: 'voorzieningGebruikId',
-              label: 'Voorziening gebruik ID',
-              key: 'voorzieningGebruikId',
+            module: {
+              id: 'module',
+              label: 'Applicatie',
+              key: 'module',
               customContent: (row) => {
-                return row?.voorzieningGebruik?.id || '-';
+                return (
+                  (
+                    <ConUuidResolver>
+                      {row['@self']?.relations?.module || '-'}
+                    </ConUuidResolver>
+                  ) || '-'
+                );
               },
-              sortComparator: byNested((r) => r?.voorzieningGebruik?.id),
             },
-            contactpersoonAanbieder: {
-              id: 'contactPersonProvider',
-              label: 'contactpersoon Aanbieder',
-              key: 'contactpersoonAanbieder',
+            moduleVersie: {
+              id: 'moduleVersie',
+              label: 'Applicatie versie',
+              key: 'moduleVersie',
               customContent: (row) => {
-                if (!row?.contactpersoonAanbieder) return 'N/A';
-                return row.contactpersoonAanbieder.naam;
+                return (
+                  (
+                    <ConUuidResolver>
+                      {row['@self']?.relations?.moduleVersie || '-'}
+                    </ConUuidResolver>
+                  ) || '-'
+                );
               },
-              sortComparator: byNested((r) => r?.contactpersoonAanbieder?.naam),
-            },
-            contactpersoonGebruiker: {
-              id: 'contactPersonUser',
-              label: 'contactpersoon Gebruiker',
-              key: 'contactpersoonGebruiker',
-              customContent: (row) => {
-                if (!row?.contactpersoonGebruiker) return 'N/A';
-                return row.contactpersoonGebruiker.naam;
-              },
-              sortComparator: byNested((r) => r?.contactpersoonGebruiker?.naam),
             },
           },
           modals: [...baseConfig.modals],
@@ -668,29 +529,7 @@ const BeheerPageConfigFactory = {
               },
             },
           },
-          uniqueActions: [
-            {
-              key: 'addAccount',
-              label: 'Account toevoegen',
-              icon: <VISUALS.USER_PLUS />,
-              condition: (row) => row.username === null,
-              action: 'addAccount',
-            },  
-            {
-              key: 'enableAccount',
-              label: 'Account inschakelen',
-              icon: <VISUALS.USER_CHECK />,
-              condition: (row) => row?.enabled === false,
-              action: 'enableAccount',
-            },
-            {
-              key: 'disableAccount',
-              label: 'Account uitschakelen',
-              icon: <VISUALS.USER_XMARK />,
-              condition: (row) => row?.enabled === true,
-              action: 'disableAccount',
-            },
-          ],
+          uniqueActions: [],
           modals: [...baseConfig.modals, 'addAccount'],
         };
 
@@ -707,6 +546,7 @@ const BeheerPageConfigFactory = {
           extend: [...baseConfig.extend],
           defaultHeaders: [],
           customHeaders: {},
+          isDynamicEntry: true,
         };
     }
   },

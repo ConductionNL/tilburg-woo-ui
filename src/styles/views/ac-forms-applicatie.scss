@@ -1,0 +1,127 @@
+// More specific selectors to override any conflicting styles
+.ac-register-container.ac-forms-applicatie {
+  .con-dynamic-form-container {
+    width: 100%;
+
+    .con-form-fields-container {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: var(--tilburg-space-block-snail);
+      align-items: flex-start;
+      width: 100%;
+
+      .con-form-field-wrapper {
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+
+        // Force proper flexbox behavior with maximum specificity
+        &.field-size-full {
+        // commented out because it caused issues regarding height
+        //   flex: 0 0 100% !important;
+        //   flex-basis: 100% !important;
+          width: 100% !important;
+          max-width: 100% !important;
+        }
+
+        &.field-size-half {
+          flex: 0 0 calc(50% - calc(var(--tilburg-space-block-snail) / 2)) !important;
+          flex-basis: calc(
+            50% - calc(var(--tilburg-space-block-snail) / 2)
+          ) !important;
+          width: calc(50% - calc(var(--tilburg-space-block-snail) / 2)) !important;
+          max-width: calc(
+            50% - calc(var(--tilburg-space-block-snail) / 2)
+          ) !important;
+
+          @media (max-width: 768px) {
+            flex: 0 0 100% !important;
+            flex-basis: 100% !important;
+            width: 100% !important;
+            max-width: 100% !important;
+          }
+        }
+
+        // Ensure nested elements don't interfere
+        > * {
+          width: 100% !important;
+          box-sizing: border-box !important;
+        }
+      }
+    }
+  }
+
+  // Override conflicting select styles
+  .ac-beheer-select,
+  .react-select__control {
+    width: 100% !important;
+    max-width: none !important;
+    box-sizing: border-box !important;
+  }
+
+  // Set minimum block size for dropdown selects
+  .con-form-field-wrapper .ac-beheer-select > div {
+    min-block-size: 46px;
+  }
+
+  // Additional safety: force all field-size-full to be actually full width
+  .con-form-field-wrapper.field-size-full {
+    // commented out because it caused issues regarding height
+    // flex: 0 0 100% !important;
+    // flex-basis: 100% !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+
+    // Ensure select elements are also full width
+    .ac-beheer-select,
+    .react-select__control,
+    .react-select__value-container {
+      width: 100% !important;
+      max-width: none !important;
+      min-width: 0 !important;
+    }
+  }
+}
+
+// Main container
+.ac-forms-applicatie-container {
+  width: 100%;
+  padding: 0;
+}
+
+// Step sections
+.ac-forms-applicatie-step-section {
+  margin-bottom: var(--tilburg-space-block-xl);
+}
+
+// Basic grid layout for form sections
+.ac-forms-applicatie-basic-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--tilburg-space-block-rat);
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Simple CSS for clickable steps - minimal styling to avoid layout disruption
+.ac-register-process-steps .ac-step-clickable {
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.ac-register-process-steps .ac-step-clickable:hover {
+  opacity: 0.8;
+}
+
+// Font consistency for Alert components
+.MuiAlert-root {
+  font-family: 'Avenir', sans-serif !important;
+
+  * {
+    font-family: 'Avenir', sans-serif !important;
+  }
+}

@@ -50,7 +50,7 @@ const ConContactpersoonDetailsPageContent = ({
     setUsesLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend[]=@self.schema`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses`,
         {
           method: 'GET',
           headers: {
@@ -77,7 +77,7 @@ const ConContactpersoonDetailsPageContent = ({
     setUsedLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=@self.schema`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used`,
         {
           method: 'GET',
           headers: {
@@ -202,35 +202,6 @@ const ConContactpersoonDetailsPageContent = ({
                   Bewerken
                 </ConActionMenu.Button>
 
-                {/* TODO: Summary and description editing is not working yet*/}
-                {/* <ConActionMenu.Button
-                  icon={<VISUALS.PENCIL />}
-                  onClick={() => setEditingSummary(true)}
-                  disabled={!actualCanEdit}
-                  data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
-                  data-tooltip-content={
-                    !actualCanEdit
-                      ? 'Kan niet bewerken omdat de samenvatting niet bewerkt kan worden'
-                      : undefined
-                  }
-                >
-                  Bewerk samenvatting
-                </ConActionMenu.Button>
-
-                <ConActionMenu.Button
-                  icon={<VISUALS.PENCIL />}
-                  onClick={() => setEditingDescription(true)}
-                  disabled={!actualCanEdit}
-                  data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
-                  data-tooltip-content={
-                    !actualCanEdit
-                      ? 'Kan niet bewerken omdat de beschrijving niet bewerkt kan worden'
-                      : undefined
-                  }
-                >
-                  Bewerk beschrijving
-                </ConActionMenu.Button> */}
-
                 {data && !data['@self']?.published && (
                   <ConActionMenu.Button
                     icon={<VISUALS.PUBLISH />}
@@ -340,6 +311,8 @@ const ConContactpersoonDetailsPageContent = ({
             used={used}
             usesLoading={usesLoading}
             usedLoading={usedLoading}
+            gebruikId={id}
+            gebruikSchemaId={data?.['@self']?.schema}
             tabIndex={relatedTabIndex}
             setTabIndex={setRelatedTabIndex}
             object={object}

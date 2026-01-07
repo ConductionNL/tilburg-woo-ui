@@ -43,7 +43,10 @@ const AcHero = (contents) => {
   const getHeroImage = () => {
     // Use container config if available
     if (containerConfig && containerConfig.getHeroImageUrl) {
-      return containerConfig.getHeroImageUrl();
+      const heroImageUrl = containerConfig.getHeroImageUrl();
+      if (heroImageUrl) {
+        return heroImageUrl;
+      }
     }
 
     // Fallback to hostname-based logic for production builds

@@ -40,9 +40,11 @@ const DetailsPageConfigFactory = {
     };
 
     switch (type) {
+      case 'module':
       case 'applicaties':
         return {
           ...baseDetailsConfig,
+          extend: [...detailsExtend, 'contactpersoon'],
           excludedProperties: [
             'id',
             'naam',
@@ -67,28 +69,6 @@ const DetailsPageConfigFactory = {
               onClick: (row) => window.open(`/publicatie/${row.id}`, '_blank'),
               condition: (row) => !!row?.id,
             },
-            // commented incase this is ever still needed
-            // {
-            //   key: 'addGebruik',
-            //   label: 'Gebruiken aanmaken',
-            //   icon: VISUALS.CLOUD,
-            //   action: 'addGebruik',
-            //   condition: () => true,
-            // },
-            // {
-            //   key: 'addDienst',
-            //   label: 'Dienst toevoegen',
-            //   icon: VISUALS.HAND_HOLDING,
-            //   action: 'addDienst',
-            //   condition: () => true,
-            // },
-            // {
-            //   key: 'addVersion',
-            //   label: 'Versie toevoegen',
-            //   icon: VISUALS.INFO,
-            //   action: 'addVersion',
-            //   condition: () => true,
-            // },
           ],
         };
 
@@ -113,8 +93,10 @@ const DetailsPageConfigFactory = {
         };
 
       case 'diensten':
+      case 'dienst':
         return {
           ...baseDetailsConfig,
+          extend: [...detailsExtend, 'contactpersoon'],
           excludedProperties: [
             'id',
             'naam',

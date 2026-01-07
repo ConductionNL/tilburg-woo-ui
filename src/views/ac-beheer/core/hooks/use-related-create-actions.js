@@ -21,6 +21,11 @@ import { normalizeSchemaName } from '@src/utilities';
  * @param {Object} params.currentObject - Current object for organization permission checks (optional)
  * @param {string} params.currentObjectRegister - Register slug of the current object (optional)
  * @param {string} params.currentObjectSchema - Schema slug of the current object (optional)
+ * @param {Array<string>} params.excludeSchemas - Array of schema slugs to exclude from actions (optional)
+ * @param {Array<string>} params.onlyIncludeSchemas - Array of schema slugs to include (whitelist mode - only these will show) (optional)
+ * @param {Object.<string, string>} params.labelOverrides - Object mapping schema slug to custom label (optional)
+ * @param {Object.<string, React.ReactNode>} params.iconOverrides - Object mapping schema slug to custom icon (optional)
+ * @param {Object.<string, any>} params.wizardParams - Object with additional URL parameters to pass to wizards (optional)
  */
 export const useRelatedCreateActions = ({
   object,
@@ -31,10 +36,41 @@ export const useRelatedCreateActions = ({
   currentObject = null, // Add current object for organization permission checks
   currentObjectRegister = null, // Add current object register information
   currentObjectSchema = null, // Add current object schema information
+  excludeSchemas = [], // Array of schema slugs to exclude
+  onlyIncludeSchemas = null, // Array of schema slugs to include (whitelist mode)
+  labelOverrides = {}, // Object mapping schema slug to custom label
+  iconOverrides = {}, // Object mapping schema slug to custom icon
+  wizardParams = {}, // Additional URL parameters for wizards
 }) => {
   const navigate = useNavigate();
   const [creatableRelated, setCreatableRelated] = useState([]);
   const [outgoingSchemas, setOutgoingSchemas] = useState(new Set());
+
+  // Create stable references for array/object parameters to prevent infinite loops
+  const excludeSchemasString = useMemo(
+    () => JSON.stringify(excludeSchemas),
+    [excludeSchemas]
+  );
+
+  const onlyIncludeSchemasString = useMemo(
+    () => JSON.stringify(onlyIncludeSchemas),
+    [onlyIncludeSchemas]
+  );
+
+  const labelOverridesString = useMemo(
+    () => JSON.stringify(labelOverrides),
+    [labelOverrides]
+  );
+
+  const iconOverridesString = useMemo(
+    () => JSON.stringify(iconOverrides),
+    [iconOverrides]
+  );
+
+  const wizardParamsString = useMemo(
+    () => JSON.stringify(wizardParams),
+    [wizardParams]
+  );
 
   useEffect(() => {
     if (!schemaRef) return;
@@ -77,11 +113,6 @@ export const useRelatedCreateActions = ({
               .filter(Boolean)
           : [];
 
-        // Check organization permissions for current object (needed for outgoing relationships)
-        const { canEdit: canEditCurrentObject } = currentObject
-          ? checkOrganizationPermissions(user, currentObject)
-          : { canEdit: true }; // Default to true if no current object provided
-
         // Deduplicate by slug to prevent duplicate menu items
         const deduplicatedResults = relatedResults.reduce((acc, rs) => {
           if (!rs?.slug) return acc;
@@ -94,12 +125,39 @@ export const useRelatedCreateActions = ({
           return acc;
         }, []);
 
+        // Filter by user group authorization, include/exclude lists
         const creatable = deduplicatedResults.filter((rs) => {
-          // For outgoing relationships, check if user can edit current object
-          if (outgoingSlugs.has(rs?.slug) && !canEditCurrentObject) {
-            return false; // Can't create outgoing relationships if can't edit current object
+          // Check if current user is the owner of the object
+          // If currentObject is provided, check organization ownership
+          const isOwner = currentObject
+            ? checkOrganizationPermissions(user, currentObject).canEdit
+            : true; // If no object provided, treat as owner for backward compatibility
+
+          // For non-owners: apply whitelist if provided
+          const isWhitelistMode =
+            onlyIncludeSchemas !== null && Array.isArray(onlyIncludeSchemas);
+          const isInWhitelist =
+            isWhitelistMode && onlyIncludeSchemas.includes(rs?.slug);
+
+          if (!isOwner && isWhitelistMode) {
+            if (!isInWhitelist) {
+              return false; // Not in whitelist, hide it
+            }
+            // If in whitelist, skip API permission checks for non-owners
+            // (we explicitly want them to see this action)
           }
 
+          // For everyone (owners and non-owners): apply exclude list
+          if (excludeSchemas.includes(rs?.slug)) {
+            return false;
+          }
+
+          // For non-owners with whitelisted schemas, skip API authorization checks
+          if (!isOwner && isInWhitelist) {
+            return true; // Explicitly allowed via whitelist
+          }
+
+          // For owners or when no whitelist: check API authorization
           // If authorization is null or undefined, allow access (no restrictions)
           if (!rs?.authorization) return true;
 
@@ -114,7 +172,6 @@ export const useRelatedCreateActions = ({
           if (createGroups.includes('public')) return true;
           return createGroups.some((grp) => userGroups.includes(grp));
         });
-
         setCreatableRelated(creatable);
       } catch (e) {
         // eslint-disable-next-line no-console
@@ -124,8 +181,20 @@ export const useRelatedCreateActions = ({
     };
 
     prepareRelatedActions();
-    // Only re-run when schema reference changes or current object changes (for permissions)
-  }, [schemaRef, user?.currentUser, object, currentObject]);
+    // Only re-run when schema reference changes
+    // Note: user and currentObject are passed directly but changes to user.activeOrganization
+    // or currentObject.@self.organisation will trigger re-evaluation within the filter
+  }, [
+    schemaRef,
+    user?.currentUser,
+    user?.activeOrganization?.id,
+    user?.activeOrganization?.uuid,
+    object,
+    excludeSchemasString,
+    onlyIncludeSchemasString,
+    currentObject?.['@self']?.organisation,
+    currentObject?.['@self']?.organization,
+  ]);
 
   // Schema-driven helper to determine which field in the current object should be updated for outgoing relationships
   const getOutgoingRelationshipField = useCallback(
@@ -176,7 +245,7 @@ export const useRelatedCreateActions = ({
 
   // Schema-driven approach to build preSelected values with labels
   const buildPreSelected = useCallback(
-    async (targetType, ctxId) => {
+    async (targetType, ctxId, rowCurrentObject = null) => {
       const preSelected = {};
       const preSelectedLabels = {};
 
@@ -207,8 +276,8 @@ export const useRelatedCreateActions = ({
           return { preSelected, preSelectedLabels };
         }
 
-        // Get current object data to extract label/name
-        const currentObjectData = currentObject;
+        // Get current object data to extract label/name (use row-specific object if provided, otherwise fallback to hook-level currentObject)
+        const currentObjectData = rowCurrentObject || currentObject;
         const currentObjectLabel =
           currentObjectData?.naam ||
           currentObjectData?.name ||
@@ -257,8 +326,29 @@ export const useRelatedCreateActions = ({
     /**
      * @param {string} ctxId - REQUIRED - used with building actions to know what object to reference
      * @param {({ slug: string, title: string }: Schema) => boolean} filter - configurable filter function to be able to filter out unwanted actions, filtered content is a Schema object (runs on .filter())
+     * @param {Object} rowCurrentObject - Optional row-specific object for permission checks (falls back to hook-level currentObject)
+     * @param {string} rowCurrentObjectRegister - Optional row-specific register slug (falls back to hook-level currentObjectRegister)
+     * @param {string} rowCurrentObjectSchema - Optional row-specific schema slug (falls back to hook-level currentObjectSchema)
      */
-    (ctxId, filter = null) => {
+    (
+      ctxId,
+      filter = null,
+      rowCurrentObject = null,
+      rowCurrentObjectRegister = null,
+      rowCurrentObjectSchema = null
+    ) => {
+      // Use row-specific object if provided, otherwise fallback to hook-level currentObject
+      const effectiveCurrentObject = rowCurrentObject || currentObject;
+      const effectiveCurrentObjectRegister =
+        rowCurrentObjectRegister || currentObjectRegister;
+      const effectiveCurrentObjectSchema =
+        rowCurrentObjectSchema || currentObjectSchema;
+
+      // Check organization permissions for row-specific object (needed for outgoing relationships)
+      const { canEdit: canEditCurrentObject } = effectiveCurrentObject
+        ? checkOrganizationPermissions(user, effectiveCurrentObject)
+        : { canEdit: true }; // Default to true if no current object provided
+
       const filteredCreatableRelated =
         typeof filter === 'function' && Array.isArray(creatableRelated)
           ? creatableRelated.filter(filter)
@@ -269,23 +359,42 @@ export const useRelatedCreateActions = ({
           const slug = rs?.slug;
           if (!slug) return null;
 
+          // For outgoing relationships, check if user can edit current object
+          // UNLESS the schema is explicitly whitelisted for non-owners
+          const isOutgoing = outgoingSchemas.has(slug);
+          const isWhitelisted =
+            onlyIncludeSchemas !== null &&
+            Array.isArray(onlyIncludeSchemas) &&
+            onlyIncludeSchemas.includes(slug);
+
+          if (isOutgoing && !canEditCurrentObject && !isWhitelisted) {
+            return null; // Can't create outgoing relationships if can't edit current object (unless whitelisted)
+          }
+
           // Use the schema slug directly as the target type (no more BEHEER_RENAMES dependency)
           const targetType = slug;
 
           const baseName = rs?.title ?? _.startCase(slug);
-          const label = `${normalizeSchemaName(baseName)} toevoegen`;
+          const defaultLabel = `${normalizeSchemaName(baseName)} toevoegen`;
+          // Apply label override if provided
+          const label = labelOverrides[slug] || defaultLabel;
 
-          const isOutgoing = outgoingSchemas.has(slug);
+          // Normalize schema slug for wizard lookup using normalizeSchemaName
+          const wizardSchemaSlug = normalizeSchemaName(slug).toLowerCase();
+
           const wizards = Object.values(DASHBOARD_WIZARDS);
-          const wizard = wizards.find((w) => w.schema === slug);
-          const areThereMultipleOptions =
-            wizards.filter((w) => w.schema === slug).length > 1;
+          const wizard = wizards.find((w) => w.schema === wizardSchemaSlug);
 
-          const iconElement = wizard ? (
+          const areThereMultipleOptions =
+            wizards.filter((w) => w.schema === wizardSchemaSlug).length > 1;
+
+          const defaultIcon = wizard ? (
             <VISUALS.WAND_SPARKLES_SOLID />
           ) : (
             <VISUALS.PLUS />
           );
+          // Apply icon override if provided
+          const iconElement = iconOverrides[slug] || defaultIcon;
 
           return {
             key: `create-${slug}`,
@@ -295,16 +404,24 @@ export const useRelatedCreateActions = ({
             onClick: async () => {
               // Prefer wizard when available
               if (wizard) {
-                const url = getWizardUrl(wizard, !areThereMultipleOptions);
-                if (url) {
-                  navigate(url);
+                const baseUrl = getWizardUrl(wizard, !areThereMultipleOptions);
+                if (baseUrl) {
+                  // Add wizardParams to the URL if provided
+                  const url = new URL(baseUrl, window.location.origin);
+                  Object.entries(wizardParams).forEach(([key, value]) => {
+                    if (value !== null && value !== undefined) {
+                      url.searchParams.set(key, value);
+                    }
+                  });
+                  navigate(url.pathname + url.search);
                   return;
                 }
               }
 
               const { preSelected, preSelectedLabels } = await buildPreSelected(
                 targetType,
-                ctxId
+                ctxId,
+                effectiveCurrentObject
               );
               openDynamicCreate(targetType, preSelected, {
                 isOutgoing,
@@ -313,8 +430,8 @@ export const useRelatedCreateActions = ({
                   ? getOutgoingRelationshipField(targetType, currentType)
                   : null,
                 preSelectedLabels, // Pass the labels for optimization
-                currentObjectRegister, // Pass current object register for updating
-                currentObjectSchema, // Pass current object schema for updating
+                currentObjectRegister: effectiveCurrentObjectRegister, // Pass row-specific register for updating
+                currentObjectSchema: effectiveCurrentObjectSchema, // Pass row-specific schema for updating
               });
             },
           };
@@ -323,7 +440,25 @@ export const useRelatedCreateActions = ({
 
       return actions;
     },
-    [creatableRelated, openDynamicCreate, buildPreSelected]
+    [
+      creatableRelated,
+      openDynamicCreate,
+      buildPreSelected,
+      outgoingSchemas,
+      user,
+      currentObject,
+      currentObjectRegister,
+      currentObjectSchema,
+      currentType,
+      getOutgoingRelationshipField,
+      navigate,
+      labelOverridesString,
+      iconOverridesString,
+      labelOverrides,
+      iconOverrides,
+      wizardParamsString,
+      wizardParams,
+    ]
   );
 
   return useMemo(() => ({ makeActionsForContext }), [makeActionsForContext]);

@@ -10,7 +10,7 @@ import {
   AcTab,
   AcTabPanel,
 } from '@atoms';
-import { AcLoader } from '@components';
+import { AcLoader, ConExternalLink } from '@components';
 import {
   Heading,
   Paragraph,
@@ -112,7 +112,7 @@ const AcMyAccount = ({ store }) => {
       try {
         // Fetch the full organization data using the object store
         await object.fetchObject('voorzieningen', 'organisatie', organisationId, {
-          _extend: ['@self.schema', 'contactpersonen'],
+          '_extend[]': ['@self.schema', 'contactpersonen'],
           _related: true,
           _relatedNames: true,
         });
@@ -579,25 +579,11 @@ const AcMyAccount = ({ store }) => {
                         <br />
                         <br />
                         <div className='ac-account-review__header-info'>
-                          <div>
-                            Website:
-                            <div>
-                              {fullActiveOrganisation?.website ? (
-                                <Link
-                                  href={
-                                    fullActiveOrganisation.website.startsWith('http')
-                                      ? fullActiveOrganisation.website
-                                      : `https://${fullActiveOrganisation.website}`
-                                  }
-                                  target='_blank'
-                                  rel='noreferrer'
-                                >
-                                  {fullActiveOrganisation.website}
-                                </Link>
-                              ) : (
-                                '-'
-                              )}
-                            </div>
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <span>Website:</span>
+                            <ConExternalLink
+                              href={fullActiveOrganisation?.website}
+                            />
                           </div>
                           <div>
                             Telefoon:

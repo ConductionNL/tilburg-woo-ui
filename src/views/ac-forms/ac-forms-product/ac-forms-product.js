@@ -8,6 +8,7 @@ import { VISUALS } from '@src/constants';
 import { AcButton } from '@src/molecules';
 import { ProcessSteps } from '@gemeente-denhaag/components-react';
 import { useDebouncedInput } from '@src/hooks/index';
+import _ from 'lodash';
 
 import {
   Heading1,
@@ -36,10 +37,7 @@ import {
   getDisabledStatus as utilGetDisabledStatus,
   getDisabledTooltip as utilGetDisabledTooltip,
 } from './utils/validation.utils';
-import {
-  getPageTitle as utilGetPageTitle,
-  getPageDescription as utilGetPageDescription,
-} from './utils/texts.utils';
+import { getPageDescription as utilGetPageDescription } from './utils/texts.utils';
 import { commongroundApiUrl } from '@config';
 import { uploadFileToObject, isDataUrlNeedingUpload } from '@src/utilities';
 
@@ -55,6 +53,7 @@ import ConFormReferentiecomponentenStage from './components/con-form-referentiec
 import ConFormKoppelingenStage from './components/con-form-koppelingen-stage';
 import ConFormDienstenStage from './components/con-form-diensten-stage';
 import ConFormControlerenStage from './components/con-form-controleren-stage';
+import { getActiveWizard } from '@src/constants/wizards.constants';
 
 /**
  * Product Aanmelden Wizard (AcFormsProduct)
@@ -912,13 +911,7 @@ const AcFormsProductInner = ({
       _source: 'index',
     };
 
-    if (queryParamsString) {
-      // // Parse the queryParams string: "gemmaType=Referentiecomponent&_extend=aanbevolenStandaarden,verplichteStandaarden"
-      // const urlParams = new URLSearchParams(queryParamsString);
-      // urlParams.forEach((value, key) => {
-      //   baseParams[key] = value;
-      // });
-    } else {
+    if (!queryParamsString) {
       // Fallback to hardcoded if schema doesn't have queryParams
       baseParams.gemmaType = 'Referentiecomponent';
       // Ensure standards are included with referentiecomponenten
@@ -967,56 +960,6 @@ const AcFormsProductInner = ({
 
     return baseParams;
   }, [schemas]);
-
-  // Function to load all referentiecomponenten upfront using object store cache
-  // ✅ Uses cache-first strategy for immediate response
-  // const loadReferentieComponenten = useCallback(async () => {
-  //   if (!schemas?.module) return; // Wait for schemas to load
-
-  //   console.info('📋 Loading referentiecomponenten via object store cache...');
-  //   setReferentieComponentenLoading(true);
-
-  //   try {
-  //     const queryParams = getReferentieComponentenQueryParams();
-
-  //     // Use object store cache-first method for immediate response
-  //     const list = await store.object.fetchGemmaElementsCacheFirst(
-  //       'Referentiecomponent',
-  //       queryParams
-  //     );
-
-  //     const mapToOption = (item, index) => {
-  //       const label =
-  //         item?.xml?.name?._value ||
-  //         item?.naam ||
-  //         item?.name ||
-  //         item?.title ||
-  //         item?.label ||
-  //         `Component ${index + 1}`;
-  //       const value = item?.value || item?.id || item?.slug || label;
-  //       return {
-  //         value: String(value),
-  //         label: String(label),
-  //         data: item, // Store the full API data for access to aanbevolenStandaarden, verplichteStandaarden
-  //       };
-  //     };
-
-  //     const options = list.map(mapToOption).filter((o) => o.label && o.value);
-  //     setReferentieComponentenOptions(options);
-  //     console.info(
-  //       `✅ Loaded ${options.length} referentiecomponenten (cache-first)`
-  //     );
-  //     // Prefill edit-mode selections as soon as options are available
-  //     if (isEditMode) {
-  //       prefillReferentieComponentenWithStandardsForEdit(product.modules, options);
-  //     }
-  //   } catch (e) {
-  //     console.error('Failed to load referentie componenten:', e);
-  //     setReferentieComponentenOptions([]);
-  //   } finally {
-  //     setReferentieComponentenLoading(false);
-  //   }
-  // }, [schemas, getReferentieComponentenQueryParams, store]);
 
   // TODO remove this once we have the referentiecomponenten options loaded from the object store cache
   const loadReferentieComponenten = useCallback(async () => {
@@ -1082,47 +1025,6 @@ const AcFormsProductInner = ({
       setReferentieComponentenLoading(false);
     }
   }, [schemas, getReferentieComponentenQueryParams, store]);
-
-  // Function to load standaarden using object store cache
-  // ✅ Uses cache-first strategy for immediate response
-  // const loadStandaarden = useCallback(async () => {
-  //   if (!schemas?.module) return;
-
-  //   console.info('📋 Loading standaarden via object store cache...');
-  //   setStandaardenOptionsLoading(true);
-
-  //   try {
-  //     const queryParams = getStandaardenQueryParams();
-
-  //     // Use object store cache-first method for immediate response
-  //     const list = await store.object.fetchGemmaElementsCacheFirst(
-  //       'standaard',
-  //       queryParams
-  //     );
-
-  //     const options = list
-  //       .map((item, index) => {
-  //         const label =
-  //           item?.xml?.name?._value ||
-  //           item?.naam ||
-  //           item?.name ||
-  //           item?.title ||
-  //           item?.label ||
-  //           `Standaard ${index + 1}`;
-  //         const value = item?.value || item?.id || item?.slug || label;
-  //         return { value: String(value), label: String(label), data: item };
-  //       })
-  //       .filter((o) => o.label && o.value);
-
-  //     setStandaardenOptions(options);
-  //     console.info(`✅ Loaded ${options.length} standaarden (cache-first)`);
-  //   } catch (e) {
-  //     console.error('Failed to load standaarden:', e);
-  //     setStandaardenOptions([]);
-  //   } finally {
-  //     setStandaardenOptionsLoading(false);
-  //   }
-  // }, [schemas, getStandaardenQueryParams, store]);
 
   // TODO remove this once we have the standaarden options loaded from the object store cache
   const loadStandaarden = useCallback(async () => {
@@ -1410,7 +1312,7 @@ const AcFormsProductInner = ({
           'product',
           String(productId),
           {
-            _extend: [
+            '_extend[]': [
               '@self.schema',
               'modules',
               'modules.koppelingen',
@@ -2174,6 +2076,8 @@ const AcFormsProductInner = ({
       aanbiederkeuze
     );
 
+  const { icon: Icon, schema } = getActiveWizard();
+
   return (
     <AcSection spacing>
       <AcContainer>
@@ -2181,8 +2085,16 @@ const AcFormsProductInner = ({
           {!registerCallBack && (
             <>
               <div>
-                <Heading1>
-                  {isEditMode ? 'Product updaten' : utilGetPageTitle(formType)}
+                <Heading1
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                >
+                  <Icon style={{ width: '1em', height: '1em' }} />
+                  {_.capitalize(schema)}
+                  {isEditMode
+                    ? ' updaten'
+                    : formType === 'ontbrekend'
+                    ? ' melden'
+                    : ' registreren'}
                 </Heading1>
                 <Paragraph>
                   {isEditMode

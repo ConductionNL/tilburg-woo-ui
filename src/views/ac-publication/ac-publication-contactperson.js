@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import RelatedTabs from './con-related-tabs';
 import ConLogoPreview from '../ac-register/con-logo-preview';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
@@ -10,8 +10,11 @@ import { withStore } from '@stores';
 import { VISUALS } from '@constants';
 import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
+import { schemaCache } from '@services/schemaCache.service';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
+import { normalizeSchemaName } from '@src/utilities/con-normalize-schema-name';
+// import { checkOrganizationPermissions } from '@utils/organization-permissions';
 
 // Markdown Editor
 import remarkDefinitionList, { defListHastHandlers } from 'remark-definition-list';
@@ -32,6 +35,15 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
 
   const navigate = useNavigate();
 
+  const schemaId =
+    typeof get_single?.['@self']?.schema === 'object'
+      ? get_single?.['@self']?.schema.id
+      : get_single?.['@self']?.schema;
+  const schemaSlug = useMemo(
+    () => (schemaId ? schemaCache.get(schemaId) : null),
+    [schemaId]
+  );
+
   // Use the same related actions hook as beheer pages
   const openDynamicCreate = useCallback(
     (targetType, preSelected, metadata = {}) => {
@@ -45,15 +57,20 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
     [navigate, id]
   );
 
+  // Exclude specific schemas from actions
+  const excludeSchemas = useMemo(
+    () => ['organisatie', 'product', 'dienst', 'gebruik', 'module', 'suite'],
+    []
+  );
+
   const { makeActionsForContext } = useRelatedCreateActions({
     object,
     user,
-    schemaRef: get_single?.['@self']?.schema?.slug,
-    currentType: get_single?.['@self']?.schema?.slug, // Use schema slug as current type
+    schemaRef: schemaSlug,
+    currentType: schemaSlug, // Use schema slug as current type
     openDynamicCreate,
-    currentObject: get_single, // Pass current object for organization permission checks
-    currentObjectRegister: 'voorzieningen', // Pass current object register (for publication pages)
-    currentObjectSchema: get_single?.['@self']?.schema?.slug, // Pass current object schema
+    currentObject: get_single,
+    excludeSchemas,
   });
 
   // Generate action menu items
@@ -68,20 +85,24 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
   }, []);
 
   useEffect(() => {
-    if (!get_single?.['@self']?.schema?.slug || !id) return;
+    if (!schemaSlug || !id) return;
 
-    const items = makeActionsForContext(id).map(
-      ({ key, label, onClick, schema, icon }) => ({
-        key,
-        label,
-        onClick,
-        schema,
-        icon,
-      })
-    );
+    const items = makeActionsForContext(
+      id,
+      null,
+      get_single,
+      'voorzieningen',
+      schemaSlug
+    ).map(({ key, label, onClick, schema, icon }) => ({
+      key,
+      label,
+      onClick,
+      schema,
+      icon,
+    }));
 
     setActionMenuItems(items);
-  }, [get_single?.['@self']?.schema?.slug, id, makeActionsForContext]);
+  }, [schemaSlug, id, makeActionsForContext, get_single]);
 
   // Tabs
   const [uses, setUses] = useState([]);
@@ -98,7 +119,7 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
     setUsesLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend[]=@self.schema`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses`,
         {
           method: 'GET',
           headers: {
@@ -124,7 +145,7 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
     setUsedLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=@self.schema`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used`,
         {
           method: 'GET',
           headers: {
@@ -192,53 +213,45 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
               className='con-product-publication--header-actions'
             >
               <Heading className='con-product-publication--header-type'>
-                {(() => {
-                  const Icon = getTabHeaderIcon(get_single?.['@self'].schema.slug);
-                  return <Icon />;
-                })()}
-                {getTabHeaderName(get_single?.['@self'].schema.slug, true)}
+                {schemaSlug &&
+                  (() => {
+                    const Icon = getTabHeaderIcon(schemaSlug);
+                    return <Icon />;
+                  })()}
+                {schemaSlug && getTabHeaderName(schemaSlug, true)}
               </Heading>
 
               <ConDetailsActionsMenu
-                user={user}
-                id={id}
-                schemaSlug={get_single?.['@self']?.schema?.slug}
-                title={get_single?.['@self']?.name || get_single?.id}
-                published={get_single?.['@self']?.published}
-                object={get_single}
-                showViewAction={false}
-                showEditAction={true}
-                showPublishActions={true}
-                onDelete={handleDelete}
-                onEdit={() => {
-                  const schemaSlug = get_single?.['@self']?.schema?.slug;
-                  if (schemaSlug) {
-                    const wizards = Object.values(DASHBOARD_WIZARDS);
-                    const wizard = wizards.find((w) => w.schema === schemaSlug);
+                  user={user}
+                  id={id}
+                  schemaSlug={schemaSlug}
+                  title={get_single?.['@self']?.name || get_single?.id}
+                  published={get_single?.['@self']?.published}
+                  object={get_single}
+                  showViewAction={false}
+                  showEditAction={true}
+                  showPublishActions={true}
+                  onDelete={handleDelete}
+                  onEdit={() => {
+                    if (schemaSlug) {
+                      const wizardSchemaName = normalizeSchemaName(schemaSlug).toLowerCase();
+                      const wizards = Object.values(DASHBOARD_WIZARDS);
+                      const wizard = wizards.find((w) => w.schema === wizardSchemaName);
 
-                    if (wizard) {
-                      const baseUrl = getWizardUrl(wizard);
-                      const url = new URL(baseUrl, window.location.origin);
-                      url.searchParams.set('id', id);
-                      navigate(url.pathname + url.search);
-                      return;
+                      if (wizard) {
+                        const baseUrl = getWizardUrl(wizard);
+                        const url = new URL(baseUrl, window.location.origin);
+                        url.searchParams.set('id', id);
+                        navigate(url.pathname + url.search);
+                        return;
+                      }
                     }
-                  }
-                  // Fallback to beheer legacy edit page in new tab
-                  const beheerUrl = `/beheer/${schemaSlug}/${id}`;
-                  window.open(beheerUrl, '_blank');
-                }}
-                uniqueActions={[
-                  {
-                    key: 'delete',
-                    label: 'Verwijderen',
-                    icon: VISUALS.TRASHCAN,
-                    onClick: handleDelete,
-                  },
-                ]}
-                triggerStyle='button'
-                relatedActions={actionMenuItems}
-              />
+                    // Fallback to beheer detail page in same tab with edit modal
+                    const beheerUrl = `/beheer/${schemaSlug}/${id}?showEditModal=true`;
+                    navigate(beheerUrl);
+                  }}
+                  triggerStyle='button'
+                />
             </AcFlex>
           </AcFlex>
           <AcFlex spacing='sm' justifyContent='between'>
@@ -334,6 +347,9 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
             used={used}
             usesLoading={usesLoading}
             usedLoading={usedLoading}
+            gebruikId={id}
+            gebruikSchemaId={schemaId}
+            gebruikSchemaSlug={get_single?.['@self']?.schema?.slug}
             tabIndex={tabIndex}
             setTabIndex={setTabIndex}
             object={object}

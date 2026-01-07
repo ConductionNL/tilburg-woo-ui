@@ -80,9 +80,10 @@ const ConModuleDetailsPage = ({ store }) => {
     if (!config || !id) return;
     const extendParams = Array.isArray(config.extend) ? config.extend : [];
     object.fetchObject(config.registerSlug, config.schemaSlug, id, {
-      _extend: extendParams,
+      '_extend[]': ['@self.schema', ...extendParams],
       _related: true,
       _relatedNames: true,
+      _published: 'false',
     });
     object.fetchSchema(config.schemaSlug);
   }, [config?.schemaSlug, config?.registerSlug, id, config?.extend]);
@@ -144,12 +145,16 @@ const ConModuleDetailsPage = ({ store }) => {
                   setDynamicCreatePreSelected,
                   setDynamicCreateMetadata,
                   setOpenModal,
-                  onDataUpdate: (updatedData) => {
+                  onDataUpdate: () => {
                     // Refresh the object in the store when data is updated
+                    const extendParams = Array.isArray(config.extend)
+                      ? config.extend
+                      : [];
                     object.fetchObject(registerSlug, schemaSlug, id, {
-                      _extend: config.extend,
+                      '_extend[]': ['@self.schema', ...extendParams],
                       _related: true,
                       _relatedNames: true,
+                      _published: 'false',
                     });
                   },
                 }}
@@ -176,8 +181,10 @@ const ConModuleDetailsPage = ({ store }) => {
             navigate(`/beheer/${config.routeType}`);
             return;
           }
+          const extendParams = Array.isArray(config.extend) ? config.extend : [];
           return object.fetchObject(registerSlug, schemaSlug, id, {
-            _extend: config.extend,
+            '_extend[]': ['@self.schema', ...extendParams],
+            _published: 'false',
           });
         },
         config: modalConfig,

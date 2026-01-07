@@ -2,11 +2,11 @@ import {
   Heading,
   Paragraph,
   Link,
-  Alert,
 } from '@utrecht/component-library-react/dist/css-module';
 import { AcColumn } from '@src/atoms';
 import { VISUALS } from '@src/constants';
 import ConLogoPreview from '@src/views/ac-register/con-logo-preview';
+import { ConExternalLink } from '@src/components';
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import { commongroundApiUrl } from '@src/config';
 import ConEditableDescription from '../../shared/components/con-editable-description/con-editable-description';
@@ -17,11 +17,16 @@ import {
   getDisabledActionTooltip,
 } from '@utils/organization-permissions';
 import { TOOLTIP_ID } from '@src/index.web';
-import { useNavigate } from 'react-router-dom';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
+import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
+import { useNavigate } from 'react-router-dom';
 
 /**
  * Content for the dienst details page
+ *
+ * note:
+ * Restructured to match con-module-details-page-content layout with vertical content flow
+ * and integrated action menu with inline editing buttons.
  */
 const ConDienstDetailsPageContent = ({
   loading,
@@ -33,22 +38,25 @@ const ConDienstDetailsPageContent = ({
   canEdit = false,
   actionMenuProps,
 }) => {
-  const navigate = useNavigate();
+  // Related tabs state
   const [uses, setUses] = useState([]);
   const [used, setUsed] = useState([]);
   const [usesLoading, setUsesLoading] = useState(false);
   const [usedLoading, setUsedLoading] = useState(false);
   const [relatedTabIndex, setRelatedTabIndex] = useState(0);
 
+  // Editing state for inline editing
   const [editingSummary, setEditingSummary] = useState(false);
   const [editingDescription, setEditingDescription] = useState(false);
+
+  const navigate = useNavigate();
 
   const fetchUses = useCallback(async () => {
     if (!id) return;
     setUsesLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend[]=@self.schema`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses`,
         { method: 'GET', headers: { 'Content-Type': 'application/json' } }
       );
       if (!response.ok) return;
@@ -64,7 +72,7 @@ const ConDienstDetailsPageContent = ({
     setUsedLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=@self.schema`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used`,
         { method: 'GET', headers: { 'Content-Type': 'application/json' } }
       );
       if (!response.ok) return;
@@ -75,9 +83,50 @@ const ConDienstDetailsPageContent = ({
     }
   }, [id]);
 
-  const contactId = Array.isArray(data?.contactpersoon)
-    ? data.contactpersoon[0]
-    : data?.contactpersoon;
+  // Extract contactpersoon from data (extended) or fallback to uses data
+  const contact = (() => {
+    const contactpersoon = data?.contactpersoon;
+
+    if (contactpersoon) {
+      // If contactpersoon is an array of objects, use the first one
+      if (Array.isArray(contactpersoon) && contactpersoon.length > 0) {
+        const firstContact = contactpersoon[0];
+        // Check if it's an object (extended) or just a string (UUID)
+        if (typeof firstContact === 'object' && firstContact !== null) {
+          return firstContact;
+        }
+      }
+      // If contactpersoon is a single object (not array, not string UUID)
+      if (typeof contactpersoon === 'object' && !Array.isArray(contactpersoon)) {
+        return contactpersoon;
+      }
+    }
+
+    // Fallback: Find contactpersoon in uses array
+    if (!uses?.length) return null;
+
+    const contactpersoonObject = uses.find((use) => {
+      const useSchemaSlug = use?.['@self']?.schema?.slug;
+      return useSchemaSlug === 'contactpersoon';
+    });
+
+    return contactpersoonObject || null;
+  })();
+
+  // For backward compatibility - get contactId for cases where we only have a UUID string
+  const contactId = (() => {
+    const contactpersoon = data?.contactpersoon;
+    if (Array.isArray(contactpersoon) && contactpersoon.length > 0) {
+      const firstContact = contactpersoon[0];
+      if (typeof firstContact === 'string') {
+        return firstContact;
+      }
+    }
+    if (typeof contactpersoon === 'string') {
+      return contactpersoon;
+    }
+    return null;
+  })();
 
   const { canEdit: hasEditPermission, reason } = data
     ? checkOrganizationPermissions(user, data)
@@ -131,10 +180,21 @@ const ConDienstDetailsPageContent = ({
                 <ConActionMenu.Button
                   icon={<VISUALS.PENCIL />}
                   onClick={() => {
+                    // Prefer wizard editing when available; fallback to legacy modal
                     if (config?.schemaSlug) {
-                      // Prefer wizard editing when available; fallback to legacy modal
-                      // Currently no dienst wizard; fallback to modal
+                      const wizards = Object.values(DASHBOARD_WIZARDS);
+                      const wizard = wizards.find((w) => w.schema === 'dienst');
+
+                      if (wizard) {
+                        const baseUrl = getWizardUrl(wizard);
+                        const url = new URL(baseUrl, window.location.origin);
+                        url.searchParams.set('id', id);
+                        navigate(url.pathname + url.search);
+                        return;
+                      }
                     }
+
+                    // Fallback to modal
                     actionMenuProps?.setOpenModal?.('edit');
                   }}
                   disabled={!actualCanEdit}
@@ -148,21 +208,33 @@ const ConDienstDetailsPageContent = ({
                   Bewerken
                 </ConActionMenu.Button>
 
-                {/* Inline editors toggles prepared for future enablement */}
-                {/* <ConActionMenu.Button
+                <ConActionMenu.Button
                   icon={<VISUALS.PENCIL />}
                   onClick={() => setEditingSummary(true)}
                   disabled={!actualCanEdit}
+                  data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
+                  data-tooltip-content={
+                    !actualCanEdit
+                      ? getDisabledActionTooltip('edit', reason)
+                      : undefined
+                  }
                 >
                   Bewerk samenvatting
-                </ConActionMenu.Button> */}
-                {/* <ConActionMenu.Button
+                </ConActionMenu.Button>
+
+                <ConActionMenu.Button
                   icon={<VISUALS.PENCIL />}
                   onClick={() => setEditingDescription(true)}
                   disabled={!actualCanEdit}
+                  data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
+                  data-tooltip-content={
+                    !actualCanEdit
+                      ? getDisabledActionTooltip('edit', reason)
+                      : undefined
+                  }
                 >
                   Bewerk beschrijving
-                </ConActionMenu.Button> */}
+                </ConActionMenu.Button>
 
                 {data && !data['@self']?.published && (
                   <ConActionMenu.Button
@@ -217,10 +289,11 @@ const ConDienstDetailsPageContent = ({
 
       <UnpublishedWarning data={data} />
 
+      {/* Short description */}
       <div style={{ flex: 2 }}>
         <ConEditableDescription
-          registerSlug={data['@self'].register.slug}
-          schemaSlug={data['@self'].schema.slug}
+          registerSlug={config?.registerSlug}
+          schemaSlug={config?.schemaSlug}
           objectId={data?.['@self']?.id}
           field='beschrijvingKort'
           label='Korte beschrijving'
@@ -232,18 +305,22 @@ const ConDienstDetailsPageContent = ({
           isEditingCustomTrigger={editingSummary}
           serialize={(v) => v}
           deserialize={(v) => v || ''}
-          onSuccess={() => setEditingSummary(false)}
+          onSuccess={(v) => {
+            setEditingSummary(false);
+            data.beschrijvingKort = v;
+            // No data refresh needed - data already updated locally
+          }}
           onCancel={() => setEditingSummary(false)}
-          canEdit={actualCanEdit}
         />
       </div>
 
+      {/* Long description */}
       <div>
         <br />
         <ConEditableDescription
           markdownPreviewClassName='con-my-account-description'
-          registerSlug={data['@self'].register.slug}
-          schemaSlug={data['@self'].schema.slug}
+          registerSlug={config?.registerSlug}
+          schemaSlug={config?.schemaSlug}
           objectId={data?.['@self']?.id}
           field='beschrijvingLang'
           label='Lange beschrijving'
@@ -263,12 +340,15 @@ const ConDienstDetailsPageContent = ({
             }
           }}
           onCancel={() => setEditingDescription(false)}
-          onSuccess={() => setEditingDescription(false)}
-          canEdit={actualCanEdit}
+          onSuccess={(v) => {
+            setEditingDescription(false);
+            data.beschrijvingLang = v;
+            // No data refresh needed - data already updated locally
+          }}
         />
       </div>
 
-      {(contactId || data?.website) && (
+      {(contact || contactId || data?.website) && (
         <>
           <Heading level={3} style={{ marginBlockStart: '1rem' }}>
             Contact informatie
@@ -277,26 +357,44 @@ const ConDienstDetailsPageContent = ({
             <div style={{ marginTop: '12px' }}>
               {data?.website && (
                 <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
-                  <strong>Website: </strong>
-                  <Link
-                    href={
-                      data?.website.startsWith('http')
-                        ? data?.website
-                        : `https://${data?.website}`
-                    }
-                    target='_blank'
-                    rel='noopener noreferrer'
-                  >
-                    {data?.website}
-                  </Link>
+                  <strong>Website:</strong>
+                  <ConExternalLink href={data?.website} />
                 </div>
               )}
-              {contactId && (
+              {contact && typeof contact === 'object' ? (
+                <div style={{ marginBottom: '8px' }}>
+                  <strong>Contactpersoon: </strong>
+                  <div>
+                    {[contact.voornaam, contact.tussenvoegsel, contact.achternaam]
+                      .filter(Boolean)
+                      .join(' ')}
+                  </div>
+                  {contact['e-mailadres'] && (
+                    <div>
+                      <Link href={`mailto:${contact['e-mailadres']}`}>
+                        {contact['e-mailadres']}
+                      </Link>
+                    </div>
+                  )}
+                  {contact.telefoonnummer && (
+                    <div>
+                      <Link
+                        href={`tel:${String(contact.telefoonnummer)
+                          .split('')
+                          .filter((character) => character !== ' ')
+                          .join('')}`}
+                      >
+                        {contact.telefoonnummer}
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              ) : contactId ? (
                 <div style={{ marginBottom: '8px' }}>
                   <strong>Contactpersoon: </strong>
                   <ConUuidResolver>{String(contactId)}</ConUuidResolver>
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
         </>
@@ -333,9 +431,7 @@ const ConDienstDetailsPageContent = ({
       )}
 
       {(data?.aanbieder ||
-        (Array.isArray(data?.producten) && data.producten.length > 0) ||
-        (Array.isArray(data?.koppelingen) && data.koppelingen.length > 0) ||
-        (Array.isArray(data?.modules) && data.modules.length > 0)) && (
+        (Array.isArray(data?.koppelingen) && data.koppelingen.length > 0)) && (
         <>
           <Heading level={3} style={{ marginBlockStart: '1rem' }}>
             Relaties
@@ -361,22 +457,6 @@ const ConDienstDetailsPageContent = ({
                   </div>
                 </div>
               )}
-
-              {Array.isArray(data?.modules) && data.modules.length > 0 && (
-                <div style={{ marginBottom: '8px' }}>
-                  <strong>Modules: </strong>
-                  <div>
-                    {data.modules.map((mid, idx) => {
-                      const moduleId = typeof mid === 'object' ? mid.id : mid;
-                      return (
-                        <div key={`${moduleId}-${idx}`}>
-                          <ConUuidResolver>{String(moduleId)}</ConUuidResolver>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </>
@@ -390,6 +470,8 @@ const ConDienstDetailsPageContent = ({
             used={used}
             usesLoading={usesLoading}
             usedLoading={usedLoading}
+            gebruikId={id}
+            gebruikSchemaId={data?.['@self']?.schema}
             tabIndex={relatedTabIndex}
             setTabIndex={setRelatedTabIndex}
             object={object}
@@ -410,14 +492,14 @@ const UnpublishedWarning = ({ data }) => {
   const objectName = data?.['@self']?.name;
 
   return (
-    <Alert type='warning' style={{ marginBottom: '1rem' }}>
+    <div className='ac-alert ac-alert--warning' style={{ marginBottom: '1rem' }}>
       <Heading level={4}>{title} is nog niet gepubliceerd</Heading>
       <Paragraph>
         {objectName} is momenteel niet zichtbaar in de zoekfunctie van{' '}
-        {schemaName || 'de catalogus'}. Gebruik de "Publiceren" actie om deze
-        gegevens beschikbaar te maken voor bezoekers.
+        {schemaName || 'de catalogus'}. Gebruik de &quot;Publiceren&quot; actie om
+        deze gegevens beschikbaar te maken voor bezoekers.
       </Paragraph>
-    </Alert>
+    </div>
   );
 };
 

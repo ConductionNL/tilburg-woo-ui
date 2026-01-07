@@ -2,7 +2,7 @@ import { Heading, Link } from '@utrecht/component-library-react/dist/css-module'
 import { AcColumn } from '@src/atoms';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
 import { VISUALS } from '@src/constants';
-import { useCallback, useEffect, useMemo, useState } from 'preact/hooks';
+import { useCallback, useEffect, useState } from 'preact/hooks';
 import { commongroundApiUrl } from '@src/config';
 import RelatedTabs from '@views/ac-publication/con-related-tabs';
 import { TOOLTIP_ID } from '@src/index.web';
@@ -11,6 +11,8 @@ import {
   getDisabledActionTooltip,
 } from '@utils/organization-permissions';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
+import { useNavigate } from 'react-router-dom';
+import { AcFormatDate } from '@src/utilities/ac-format-date';
 
 /**
  * Content for the gebruik details page
@@ -18,19 +20,49 @@ import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver
 const ConGebruikDetailsPageContent = ({
   loading,
   data,
-
   userStore: user,
   objectStore: object,
   id,
   canEdit = false,
   actionMenuProps,
 }) => {
+  const navigate = useNavigate();
   const [uses, setUses] = useState([]);
   const [used, setUsed] = useState([]);
   const [usesLoading, setUsesLoading] = useState(false);
   const [usedLoading, setUsedLoading] = useState(false);
   const [relatedTabIndex, setRelatedTabIndex] = useState(0);
   const [sortedReferentiecomponenten, setSortedReferentiecomponenten] = useState([]);
+  const [fullActiveOrganisation, setFullActiveOrganisation] = useState(null);
+
+  // Fetch full organization data to get the type (Leverancier, Community, etc.)
+  useEffect(() => {
+    const fetchFullOrganisationData = async () => {
+      const activeOrg = user?.activeOrganization;
+      const organisationId = activeOrg?.uuid || activeOrg?.id;
+
+      if (!organisationId) return;
+
+      try {
+        await object.fetchObject('voorzieningen', 'organisatie', organisationId, {
+          '_extend[]': ['@self.schema'],
+        });
+
+        const fullOrgData = object.getObject(
+          'voorzieningen_organisatie',
+          organisationId
+        );
+
+        if (fullOrgData) {
+          setFullActiveOrganisation(fullOrgData);
+        }
+      } catch (error) {
+        console.error('Error fetching full organization data:', error);
+      }
+    };
+
+    fetchFullOrganisationData();
+  }, [user?.activeOrganization?.uuid, user?.activeOrganization?.id, object]);
 
   const { canEdit: hasEditPermission, reason } = data
     ? checkOrganizationPermissions(user, data)
@@ -45,7 +77,7 @@ const ConGebruikDetailsPageContent = ({
     setUsesLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend[]=@self.schema`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses`,
         { method: 'GET', headers: { 'Content-Type': 'application/json' } }
       );
       if (!response.ok) return;
@@ -61,7 +93,7 @@ const ConGebruikDetailsPageContent = ({
     setUsedLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=@self.schema`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used`,
         { method: 'GET', headers: { 'Content-Type': 'application/json' } }
       );
       if (!response.ok) return;
@@ -107,37 +139,104 @@ const ConGebruikDetailsPageContent = ({
     resolveAndSortReferentiecomponenten();
   }, [data?.gebruiktVoorReferentiecomponenten, object]);
 
-  // Determine date field based on status
   const status = data?.status || '-';
-  const statusDateKey = useMemo(() => {
-    if (status === 'In productie') return 'startDatumInProductie';
-    if (status === 'Gepland') return 'startDatumGepland';
-    if (status === 'Uit te faseren') return 'startDatumUitTeFaseren';
-    if (status === 'Uit gefaseerd') return 'startDatumUitGefaseerd';
-    return 'startDatumVerwerving';
-  }, [status]);
 
-  const statusDate = data?.[statusDateKey] || null;
+  // Get all status dates that are set
+  const statusDates = [
+    {
+      label: 'Startdatum Verwerving',
+      value: data?.startDatumVerwerving
+        ? AcFormatDate(data.startDatumVerwerving, 'YYYY-MM-DD', 'D MMMM YYYY')
+        : null,
+    },
+    {
+      label: 'Startdatum Gepland',
+      value: data?.startDatumGepland
+        ? AcFormatDate(data.startDatumGepland, 'YYYY-MM-DD', 'D MMMM YYYY')
+        : null,
+    },
+    {
+      label: 'Startdatum In productie',
+      value: data?.startDatumInProductie
+        ? AcFormatDate(data.startDatumInProductie, 'YYYY-MM-DD', 'D MMMM YYYY')
+        : null,
+    },
+    {
+      label: 'Startdatum Uit te faseren',
+      value: data?.startDatumUitTeFaseren
+        ? AcFormatDate(data.startDatumUitTeFaseren, 'YYYY-MM-DD', 'D MMMM YYYY')
+        : null,
+    },
+    {
+      label: 'Startdatum Uitgefaseerd',
+      value: data?.startDatumUitGefaseerd
+        ? AcFormatDate(data.startDatumUitGefaseerd, 'YYYY-MM-DD', 'D MMMM YYYY')
+        : null,
+    },
+  ].filter((item) => item.value);
+
+  // Extract deelnemer IDs from the data (always an array of UUID strings or empty)
+  const deelnemerIds = data?.deelnemers || [];
+
+  // Helper to extract ID from a value that could be a string, object, or nested structure
+  const extractId = (value) => {
+    if (!value) return null;
+    if (typeof value === 'string') return value;
+    if (typeof value === 'object') {
+      return (
+        value?.['@self']?.id || value?.id || value?.uuid || value?.value || null
+      );
+    }
+    return String(value);
+  };
+
+  // Get the UUID of the related object for the title (applicatie/koppeling/dienst)
+  const getRelatedObjectId = () => {
+    // Check for koppelingen first
+    const koppelingen = data?.koppelingen || data?.['@self']?.relations?.koppelingen;
+    if (Array.isArray(koppelingen) && koppelingen.length > 0) {
+      const id = extractId(koppelingen[0]);
+      if (id) return id;
+    }
+
+    // Check for diensten
+    const diensten = data?.diensten || data?.['@self']?.relations?.diensten;
+    if (Array.isArray(diensten) && diensten.length > 0) {
+      const id = extractId(diensten[0]);
+      if (id) return id;
+    }
+
+    // Default to module (applicatie)
+    const moduleRaw = data?.module || data?.['@self']?.relations?.module;
+
+    // Module could be an array or a single value
+    const moduleValue = Array.isArray(moduleRaw) ? moduleRaw[0] : moduleRaw;
+    const moduleId = extractId(moduleValue);
+    if (moduleId) return moduleId;
+
+    // Fallback to gebruik id if no related object found
+    return data?.id;
+  };
+
+  const relatedObjectId = getRelatedObjectId();
 
   if (loading || !data) return null;
 
   return (
     <AcColumn gap='sm' horizontalOverflowWrapper>
+      {/* Page Title */}
+      <Heading level={2} style={{ marginBottom: '0.5rem' }}>
+        Gebruik: <ConUuidResolver>{relatedObjectId}</ConUuidResolver>
+      </Heading>
+
       <div
         className='ac-register-review__organisation-header'
         style={{
           display: 'flex',
-          justifyContent: 'space-between',
+          justifyContent: 'flex-end',
           alignItems: 'center',
         }}
       >
-        <Heading level={4}>
-          <div className='con-beheer-details--header-container'>
-            <ConUuidResolver>
-              <Heading className='con-beheer-details--title'>{data?.id}</Heading>
-            </ConUuidResolver>
-          </div>
-        </Heading>
         <div className='ac-register-review__header-controls'>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <ConActionMenu>
@@ -150,7 +249,55 @@ const ConGebruikDetailsPageContent = ({
               <ConActionMenu.Menu position='right'>
                 <ConActionMenu.Button
                   icon={<VISUALS.PENCIL />}
-                  onClick={() => actionMenuProps?.setOpenModal?.('edit')}
+                  onClick={() => {
+                    // Check if organization type is Leverancier or Community
+                    // These organization types don't have their own gebruik objects,
+                    // they only manage gebruik for gemeentes or other organizations
+                    const orgType = fullActiveOrganisation?.type;
+                    const isLeverancierOrCommunity =
+                      orgType === 'Leverancier' || orgType === 'Community';
+
+                    // Check if koppelingen array is filled - redirect to koppeling wizard
+                    // Also check @self.relations.koppelingen as fallback
+                    const koppelingen =
+                      data?.koppelingen || data?.['@self']?.relations?.koppelingen;
+                    if (Array.isArray(koppelingen) && koppelingen.length > 0) {
+                      const koppelingType = isLeverancierOrCommunity
+                        ? 'ontbrekend-organisatie'
+                        : 'eigen-organisatie';
+                      navigate(
+                        `/forms/gebruik/koppeling?type=${koppelingType}&id=${id}`
+                      );
+                      return;
+                    }
+
+                    // Check if diensten array is filled - redirect to dienst wizard
+                    // Also check @self.relations.diensten as fallback
+                    const diensten =
+                      data?.diensten || data?.['@self']?.relations?.diensten;
+                    if (Array.isArray(diensten) && diensten.length > 0) {
+                      const dienstType = isLeverancierOrCommunity
+                        ? 'ontbrekend-organisatie'
+                        : 'dienst';
+                      navigate(`/forms/gebruik/dienst?type=${dienstType}&id=${id}`);
+                      return;
+                    }
+
+                    // Default: go to gebruik wizard
+                    // For Leverancier/Community, use ontbrekend-organisatie type
+                    const gebruikType = isLeverancierOrCommunity
+                      ? 'ontbrekend-organisatie'
+                      : '';
+                    const url = new URL(
+                      '/forms/gebruik/applicatie',
+                      window.location.origin
+                    );
+                    if (gebruikType) {
+                      url.searchParams.set('type', gebruikType);
+                    }
+                    url.searchParams.set('id', id);
+                    navigate(url.pathname + url.search);
+                  }}
                   disabled={!actualCanEdit}
                   data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
                   data-tooltip-content={
@@ -223,10 +370,13 @@ const ConGebruikDetailsPageContent = ({
             <strong>Status: </strong>
             {status}
           </div>
-          <div style={{ marginBottom: '8px' }}>
-            <strong>Datum ({status}): </strong>
-            {statusDate || '-'}
-          </div>
+
+          {statusDates.map((dateItem) => (
+            <div key={dateItem.label} style={{ marginBottom: '8px' }}>
+              <strong>{dateItem.label}: </strong>
+              {dateItem.value}
+            </div>
+          ))}
         </div>
 
         {sortedReferentiecomponenten.length > 0 && (
@@ -247,6 +397,86 @@ const ConGebruikDetailsPageContent = ({
             </div>
           </div>
         )}
+
+        {deelnemerIds.length > 0 && (
+          <div style={{ marginBottom: '8px' }}>
+            <strong>Deelnemers: </strong>
+            <div>
+              {deelnemerIds.map((deelnemerId) => (
+                <div key={deelnemerId} style={{ marginBottom: '4px' }}>
+                  <ConUuidResolver>{deelnemerId}</ConUuidResolver>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Show module (applicatie) if present */}
+        {(() => {
+          const moduleRaw = data?.module || data?.['@self']?.relations?.module;
+          const moduleValue = Array.isArray(moduleRaw) ? moduleRaw[0] : moduleRaw;
+          const moduleId = extractId(moduleValue);
+          if (!moduleId) return null;
+          return (
+            <div style={{ marginBottom: '8px' }}>
+              <strong>Applicatie: </strong>
+              <ConUuidResolver>{moduleId}</ConUuidResolver>
+            </div>
+          );
+        })()}
+
+        {/* Show diensten if present */}
+        {(() => {
+          const diensten = data?.diensten || data?.['@self']?.relations?.diensten;
+          if (!Array.isArray(diensten) || diensten.length === 0) return null;
+          return (
+            <div style={{ marginBottom: '8px' }}>
+              <strong>Dienst{diensten.length > 1 ? 'en' : ''}: </strong>
+              <div>
+                {diensten.map((dienstItem, index) => {
+                  const dienstId = extractId(dienstItem);
+                  if (!dienstId) return null;
+                  return (
+                    <div key={dienstId || index} style={{ marginBottom: '4px' }}>
+                      <ConUuidResolver>{dienstId}</ConUuidResolver>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Show koppelingen if present */}
+        {(() => {
+          const koppelingen =
+            data?.koppelingen || data?.['@self']?.relations?.koppelingen;
+          if (!Array.isArray(koppelingen) || koppelingen.length === 0) return null;
+          return (
+            <div style={{ marginBottom: '8px' }}>
+              <strong>Koppeling{koppelingen.length > 1 ? 'en' : ''}: </strong>
+              <div>
+                {koppelingen.map((koppelingItem, index) => {
+                  const koppelingId = extractId(koppelingItem);
+                  if (!koppelingId) return null;
+                  return (
+                    <div key={koppelingId || index} style={{ marginBottom: '4px' }}>
+                      <ConUuidResolver>{koppelingId}</ConUuidResolver>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Show interne aantekening if present */}
+        {data?.interneAantekening && (
+          <div style={{ marginBottom: '8px' }}>
+            <strong>Interne notitie: </strong>
+            <div style={{ whiteSpace: 'pre-wrap' }}>{data.interneAantekening}</div>
+          </div>
+        )}
       </div>
 
       {id && (
@@ -257,6 +487,8 @@ const ConGebruikDetailsPageContent = ({
             used={used}
             usesLoading={usesLoading}
             usedLoading={usedLoading}
+            gebruikId={id}
+            gebruikSchemaId={data?.['@self']?.schema}
             tabIndex={relatedTabIndex}
             setTabIndex={setRelatedTabIndex}
             object={object}

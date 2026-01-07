@@ -6,7 +6,7 @@ import { AcTile } from '@molecules';
 import {
   ConDynamicSidenav,
   ConOrganizationSelector,
-  ConAangebodenGebruikTable,
+  ConAangebodenSuggestiesTable,
   ConSpinLoader,
 } from '@components';
 import { getDashboardWizards, getWizardUrl } from '@constants/wizards.constants';
@@ -25,7 +25,7 @@ const AcDashboard = ({ store }) => {
 
   const [orgIsPublished, setOrgIsPublished] = useState(false);
   const [userOrganization, setUserOrganization] = useState(null);
-  const [hasVoorgesteldGebruik, setHasVoorgesteldGebruik] = useState(true); // Start as true, let component set to false if no data
+  const [hasSuggestions, setHasSuggestions] = useState(true); // Start as true, let component set to false if no data
   const [refreshKey, setRefreshKey] = useState(0); // Key to force component refresh
   const [isLoadingOrganization, setIsLoadingOrganization] = useState(true);
 
@@ -53,7 +53,14 @@ const AcDashboard = ({ store }) => {
     // Fetch if not cached
     setIsLoadingOrganization(true);
     try {
-      await object.fetchObject('voorzieningen', 'organisatie', activeOrganizationId);
+      await object.fetchObject(
+        'voorzieningen',
+        'organisatie',
+        activeOrganizationId,
+        {
+          _published: 'false',
+        }
+      );
 
       const result = object.getObject(
         'voorzieningen_organisatie',
@@ -75,13 +82,13 @@ const AcDashboard = ({ store }) => {
     (updatedUserData) => {
       console.info('Organization switched successfully:', updatedUserData);
 
-      // Reset voorgesteld gebruik state to show info box initially
-      setHasVoorgesteldGebruik(true);
+      // Reset suggestions state to show info box initially
+      setHasSuggestions(true);
 
       // Refresh organization data for new organization
       fetchOrganisatieData();
 
-      // Force refresh of the ConAangebodenGebruikTable component
+      // Force refresh of the ConAangebodenSuggestiesTable component
       setRefreshKey((prev) => prev + 1);
     },
     [fetchOrganisatieData]
@@ -135,7 +142,13 @@ const AcDashboard = ({ store }) => {
                   <ConSpinLoader />
                 </AcFlex>
               ) : availableWizards.length > 0 ? (
-                <AcGrid columns={5} gap='xl' className='ac-dashboard-wizard-grid'>
+                <AcGrid
+                  columns={
+                    availableWizards.length >= 4 ? 4 : availableWizards.length
+                  }
+                  gap='xl'
+                  className='ac-dashboard-wizard-grid'
+                >
                   {availableWizards.map((wizard) => (
                     <AcTile
                       key={wizard.id}
@@ -175,20 +188,21 @@ const AcDashboard = ({ store }) => {
               </Alert>
             )}
 
-            {/* Voorgesteld Gebruik Table - Separate info container - Only show if there are suggestions */}
-            {/* TODO: figure out why did doesnt work anymore */}
-            {hasVoorgesteldGebruik && (
+            {/* Aangeboden Suggesties Table - Shows suggestions from other organizations */}
+            {hasSuggestions && (
               <Alert type='info'>
-                <Heading level={4}>Voorgesteld Gebruik</Heading>
+                <Heading level={4}>Aangeboden Suggesties</Heading>
                 <Paragraph>
-                  Hieronder vindt u gebruik suggesties die door andere organisaties
-                  voor u zijn aangemaakt. U kunt deze overnemen om ze toe te voegen
-                  aan uw organisatie of afwijzen als ze niet relevant zijn.
+                  Hieronder vindt u suggesties die door andere organisaties voor u
+                  zijn aangemaakt. Dit kunnen koppelingen, gebruik of andere
+                  registraties zijn. U kunt deze overnemen om ze toe te voegen aan uw
+                  organisatie, of afwijzen als ze niet relevant zijn.
                 </Paragraph>
                 <div style={{ marginTop: 'var(--tilburg-space-block-md)' }}>
-                  <ConAangebodenGebruikTable
+                  <ConAangebodenSuggestiesTable
+                    id={user?.activeOrganization?.uuid}
                     key={refreshKey}
-                    onDataChange={setHasVoorgesteldGebruik}
+                    onDataChange={setHasSuggestions}
                   />
                 </div>
               </Alert>
@@ -206,22 +220,6 @@ const AcDashboard = ({ store }) => {
                 te beheren en te ontdekken en deze te koppelen aan uw ICT
                 Architectuur op basis van de GEMMA.
               </Paragraph>
-
-              <div
-                className='ac-register-review__field'
-                style={{ marginTop: 'var(--tilburg-space-block-lg)' }}
-              >
-                <strong>Product aanbieden:</strong>
-                <span>registreer uw softwareproduct als leverancier.</span>
-              </div>
-
-              <div
-                className='ac-register-review__field'
-                style={{ marginTop: 'var(--tilburg-space-block-lg)' }}
-              >
-                <strong>Product melden:</strong>
-                <span>geef door als een product nog ontbreekt in de catalogus.</span>
-              </div>
 
               <div className='ac-register-review__field'>
                 <strong>Dienst registreren:</strong>

@@ -12,7 +12,6 @@ import {
 const ConCardGebruik = ({
   skeleton,
   id,
-  product,
   module,
   organisation,
   referentieComponenten,
@@ -21,10 +20,15 @@ const ConCardGebruik = ({
   navigateTo = 'publication',
 }) => {
   // Use generic UUID resolver for organisation name
-  const resolvedOrganisation = useResolvedText(organisation, objectStore);
+  const { resolvedText: resolvedOrganisation } = useResolvedText(organisation, objectStore);
 
-  const title = product || organisation || module;
-  const resolvedTitle = useResolvedText(title, objectStore);
+  // Resolve the module (applicatie) name
+  const { resolvedText: resolvedModule } = useResolvedText(module, objectStore);
+
+  // Title is always "applicatie name - gebruik"
+  const resolvedTitle = resolvedModule
+    ? `${extractTitle(resolvedModule)} - gebruik`
+    : 'gebruik';
 
   const resolvedReferentieComponenten = useResolvedArray(
     referentieComponenten,
@@ -56,7 +60,7 @@ const ConCardGebruik = ({
               color: 'inherit',
             }}
           />
-          <Heading level={3}>{extractTitle(resolvedTitle)}</Heading>
+          <Heading level={3}>{resolvedTitle}</Heading>
           {organisation && (
             <Paragraph small>(Gebruikt door {resolvedOrganisation})</Paragraph>
           )}
@@ -65,7 +69,7 @@ const ConCardGebruik = ({
       <Paragraph>
         Geschikt voor:{' '}
         {resolvedReferentieComponenten
-          .sort((a, b) => a.localeCompare(b))
+          ?.sort((a, b) => a.localeCompare(b))
           ?.join(', ') || '-'}
       </Paragraph>
       <AcFlex justifyContent='between' className='meta'>

@@ -82,7 +82,7 @@ const ConGenericBeheerDeleteModal = ({
               metadata.schema,
               obj.id,
               'used',
-              { _limit: 100 } // Limit to prevent performance issues
+              { _limit: 100, _published: 'false' } // Limit to prevent performance issues
             );
 
             // Get the related data from the store

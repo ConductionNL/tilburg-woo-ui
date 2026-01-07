@@ -51,14 +51,6 @@ const AcSearch = ({ store: { publications, user, object } }) => {
     updateQuery(paramsObj);
   };
 
-  // DISABLED: This effect was competing with URL processing and causing the deep linking issue
-  // useEffect(() => {
-  //   if (getSearchPageURL() === location.pathname + location.search) {
-  //     return;
-  //   }
-  //   navigate(getSearchPageURL());
-  // }, [search_query, ...Object.values(search_query?.published || {})]);
-
   // On GET params change.
   useEffect(() => {
     setQuery();

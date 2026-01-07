@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
+import { useParams, useNavigate } from 'react-router-dom';
 
 import { AcCard, AcContainer, AcFlex , AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
-import { AcLoader } from '@components';
+import { AcLoader, ConDetailsActionsMenu } from '@components';
 import { AcLink, AcTable } from '@molecules';
 import { withStore } from '@stores';
 
@@ -20,8 +21,10 @@ import { Pagination } from '@amsterdam/design-system-react';
 import { Heading2, Heading3 } from '@utrecht/component-library-react';
 import _ from 'lodash';
 import { AcMappedAttachmentRow } from '@src/services/ac-mapped-attachmend-row';
+import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
+import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 
-const AcPublicationSoftwarecatalogus = ({ store: { publications } }) => {
+const AcPublicationSoftwarecatalogus = ({ store: { publications, user, object } }) => {
   const {
     get_single,
     loading,
@@ -36,7 +39,13 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications } }) => {
     fetchPublication,
   } = publications;
 
+  const { id } = useParams();
+  const navigate = useNavigate();
   const [tabIndex, setTabIndex] = useState(0);
+
+  // Delete modal state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const handleDelete = useCallback(() => setShowDeleteModal(true), []);
 
   useEffect(() => {
     document.title = get_single?.title || 'Open Ac | Publicatie';
@@ -80,15 +89,50 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications } }) => {
     <>
       <AcContainer compact margin='xl' className={'ac-publication-container'}>
         <AcFlex column spacing={'lg'}>
-          <div className='ac-publication-header'>
-            <Heading>{get_single?.title}</Heading>
-            {
-              <img
-                src={get_single?.image}
-                className='ac-publication-header-image'
-              ></img>
-            }
-          </div>
+          <AcFlex spacing='sm' justifyContent='between' alignItems='center'>
+            <div className='ac-publication-header'>
+              <Heading>{get_single?.title}</Heading>
+              {
+                <img
+                  src={get_single?.image}
+                  className='ac-publication-header-image'
+                ></img>
+              }
+            </div>
+            {get_single?.['@self'] && (
+              <ConDetailsActionsMenu
+                user={user}
+                id={id}
+                schemaSlug={get_single?.['@self']?.schema?.slug}
+                title={get_single?.title}
+                published={get_single?.['@self']?.published}
+                object={get_single}
+                showViewAction={false}
+                showEditAction={true}
+                showPublishActions={true}
+                onDelete={handleDelete}
+                onEdit={() => {
+                  const schemaSlug = get_single?.['@self']?.schema?.slug;
+                  if (schemaSlug) {
+                    const wizards = Object.values(DASHBOARD_WIZARDS);
+                    const wizard = wizards.find((w) => w.schema === schemaSlug);
+
+                    if (wizard) {
+                      const baseUrl = getWizardUrl(wizard);
+                      const url = new URL(baseUrl, window.location.origin);
+                      url.searchParams.set('id', id);
+                      navigate(url.pathname + url.search);
+                      return;
+                    }
+                  }
+                  // Fallback to beheer legacy edit page in new tab
+                  const beheerUrl = `/beheer/${get_single?.['@self']?.schema?.slug}/${id}`;
+                  window.open(beheerUrl, '_blank');
+                }}
+                triggerStyle='button'
+              />
+            )}
+          </AcFlex>
 
           <AcCard blue>
             <Heading level={2}>Omschrijving</Heading>
@@ -164,12 +208,6 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications } }) => {
           </div>
 
           <div className='ac-publication-three-column'>
-            {/* <div>
-              <Heading2 className='ac-publication-three-column-item-heading'>Applicatie</Heading2>
-              <div className='ac-publication-three-column-item'>
-                <span>Geen applicatie beschikbaar</span>
-              </div>
-            </div> */}
             <div>
               <Heading2 className='ac-publication-three-column-item-heading'>
                 Organisatie
@@ -202,12 +240,6 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications } }) => {
                 </div>
               )}
             </div>
-            {/* <div>
-              <Heading2 className='ac-publication-three-column-item-heading'>Beoordeling</Heading2>
-              <div className='ac-publication-three-column-item'>
-                <span>Geen beoordeling beschikbaar</span>
-              </div>
-            </div> */}
           </div>
 
           {uniquePublicationTypes && uniquePublicationTypes.length > 0 && (
@@ -248,6 +280,13 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications } }) => {
                 ))}
             </AcTabs>
           )}
+
+          <AcGenericBeheerDeleteModal
+            objects={get_single?.['@self'] ? [get_single] : []}
+            showModal={showDeleteModal}
+            onClose={() => setShowDeleteModal(false)}
+            onSuccess={() => navigate('/zoeken')}
+          />
         </AcFlex>
       </AcContainer>
     </>

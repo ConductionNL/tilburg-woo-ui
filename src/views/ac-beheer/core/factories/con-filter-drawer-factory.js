@@ -13,6 +13,7 @@ const FilterDrawerFactory = {
    */
   filterDrawerComponents: {
     default: ConFilterHeadersDrawer,
+    organisatie: OrganisatieFilterHeadersDrawer,
     organisaties: OrganisatieFilterHeadersDrawer,
   },
 
@@ -49,9 +50,11 @@ const FilterDrawerFactory = {
       headers,
       defaultHeaders,
       onChange: setTableHeaders,
+      type,
     };
 
     switch (type) {
+      case 'organisatie':
       case 'organisaties':
         return {
           ...baseProps,

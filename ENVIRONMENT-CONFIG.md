@@ -118,7 +118,7 @@ graph TD
 
 | Variable | Type | Default | Description | Example |
 |----------|------|---------|-------------|---------|
-| `HERO_IMAGE_URL` | string | `/home-hero-background.png` | Hero section background image | `/custom-hero.jpg` |
+| `HERO_IMAGE_URL` | string | `null` | Hero section background image | `/custom-hero.jpg` |
 
 ### Search Configuration
 

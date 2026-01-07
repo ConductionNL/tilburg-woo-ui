@@ -24,16 +24,19 @@ const AcLogin = loadable(() => import('@views/ac-login/ac-login'));
 const ConDirectory = loadable(() => import('@views/con-directory/con-directory'));
 const AcObjects = loadable(() => import('@views/ac-beheer/ac-objects'));
 const AcFormsGebruik = loadable(() =>
-  import('@views/ac-forms/ac-forms-gebruik/ac-forms-gebruik')
+  import('@views/ac-forms/ac-forms-gebruik/gebruik-application/ac-forms-gebruik')
 );
 const AcFormsProduct = loadable(() =>
   import('@views/ac-forms/ac-forms-product/ac-forms-product')
 );
+const AcFormsApplicatie = loadable(() =>
+  import('@views/ac-forms/ac-forms-applicatie/ac-forms-applicatie')
+);
 const AcFormsKoppeling = loadable(() =>
-  import('@views/ac-forms/ac-forms-koppeling/ac-forms-koppeling')
+  import('@src/views/ac-forms/ac-forms-koppeling/ac-forms-koppeling')
 );
 const ConFormsDienst = loadable(() =>
-  import('@views/ac-forms/con-forms-dienst/con-forms-dienst')
+  import('@src/views/ac-forms/con-forms-dienst/con-forms-dienst')
 );
 const ConFormsIndex = loadable(() =>
   import('@views/ac-forms/con-forms-index/con-forms-index')
@@ -44,6 +47,12 @@ const ConBeheerViews = loadable(() =>
 );
 const ConPasswordReminder = loadable(() =>
   import('@views/ac-password-reminder/ac-password-reminder')
+);
+const ConFormsGebruikKoppeling = loadable(() =>
+  import('@views/ac-forms/ac-forms-gebruik/gebruik-koppeling/ac-forms-koppeling')
+);
+const ConFormsGebruikDienst = loadable(() =>
+  import('@views/ac-forms/ac-forms-gebruik/gebruik-dienst/con-forms-dienst')
 );
 
 export {
@@ -64,10 +73,13 @@ export {
   AcObjects,
   AcFormsGebruik,
   AcFormsProduct,
+  AcFormsApplicatie,
   AcFormsKoppeling,
   ConFormsDienst,
   ConFormsIndex,
   ConViewsList,
   ConBeheerViews,
   ConPasswordReminder,
+  ConFormsGebruikKoppeling,
+  ConFormsGebruikDienst,
 };

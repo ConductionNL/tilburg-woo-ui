@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcFlex, AcSection } from '@atoms';
-import { ConDynamicSidenav } from '@components';
+import { ConDynamicSidenav, ConExternalLink } from '@components';
 import {
   Heading,
   Link,
@@ -115,7 +115,7 @@ const ConMyOrganisationPage = ({ store }) => {
     setUsesLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${organisationId}/uses?_extend[]=@self.schema`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${organisationId}/uses?_published=false`,
         {
           method: 'GET',
           headers: {
@@ -142,7 +142,7 @@ const ConMyOrganisationPage = ({ store }) => {
     setUsedLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${organisationId}/used?_extend[]=@self.schema`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${organisationId}/used?_published=false`,
         {
           method: 'GET',
           headers: {
@@ -172,9 +172,10 @@ const ConMyOrganisationPage = ({ store }) => {
       try {
         // Fetch the full organization data using the object store
         await object.fetchObject('voorzieningen', 'organisatie', organisationId, {
-          _extend: ['@self.schema', 'contactpersonen'],
+          '_extend[]': ['contactpersonen'],
           _related: true,
           _relatedNames: true,
+          _published: 'false',
         });
         // Ensure active object is set so related data selectors work
         object.setActiveObject('voorzieningen', 'organisatie', {
@@ -372,12 +373,16 @@ const ConMyOrganisationPage = ({ store }) => {
                 >
                   <Heading level={4}>
                     <div className='con-beheer-details--header-container'>
-                      {fullActiveOrganisation?.['@self']?.image || fullActiveOrganisation?.logo && (
-                        <ConLogoPreview
-                          className='con-beheer-details--logo-container'
-                          logoUrl={fullActiveOrganisation?.['@self']?.image || fullActiveOrganisation?.logo}
-                        />
-                      )}
+                      {fullActiveOrganisation?.['@self']?.image ||
+                        (fullActiveOrganisation?.logo && (
+                          <ConLogoPreview
+                            className='con-beheer-details--logo-container'
+                            logoUrl={
+                              fullActiveOrganisation?.['@self']?.image ||
+                              fullActiveOrganisation?.logo
+                            }
+                          />
+                        ))}
 
                       <Heading className='con-beheer-details--title'>
                         {fullActiveOrganisation?.['@self']?.name ||
@@ -621,19 +626,15 @@ const ConMyOrganisationPage = ({ store }) => {
                           </div>
                         )}
                         {fullActiveOrganisation?.website && (
-                          <div style={{ marginBottom: '8px' }}>
-                            <strong>Website: </strong>
-                            <Link
-                              href={
-                                fullActiveOrganisation.website.startsWith('http')
-                                  ? fullActiveOrganisation.website
-                                  : `https://${fullActiveOrganisation.website}`
-                              }
-                              target='_blank'
-                              rel='noopener noreferrer'
-                            >
-                              {fullActiveOrganisation.website}
-                            </Link>
+                          <div
+                            style={{
+                              display: 'flex',
+                              gap: '4px',
+                              marginBottom: '8px',
+                            }}
+                          >
+                            <strong>Website:</strong>
+                            <ConExternalLink href={fullActiveOrganisation.website} />
                           </div>
                         )}
                       </div>
@@ -648,6 +649,8 @@ const ConMyOrganisationPage = ({ store }) => {
                       id={fullActiveOrganisation?.id}
                       uses={uses}
                       used={used}
+                      gebruikId={fullActiveOrganisation?.id}
+                      gebruikSchemaId={fullActiveOrganisation?.['@self']?.schema}
                       usesLoading={usesLoading}
                       usedLoading={usedLoading}
                       tabIndex={relatedTabIndex}

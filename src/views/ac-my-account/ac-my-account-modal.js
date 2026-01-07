@@ -218,7 +218,7 @@ const AcMyAccountModal = ({
                 placeholder='Uw functie'
                 value={formData.functie}
                 type='text'
-                onBlur={(value) => handleFieldChange('email', value)}
+                onBlur={(value) => handleFieldChange('functie', value)}
                 id='functie-field'
                 disabled={saving}
               />

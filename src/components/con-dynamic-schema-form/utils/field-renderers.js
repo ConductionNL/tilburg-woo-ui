@@ -671,8 +671,6 @@ export const renderField = ({
                   // Only trigger search for user input
                   if (
                     actionMeta.action === 'input-change' &&
-                    inputValue &&
-                    inputValue.length > 1 &&
                     !isLoading
                   ) {
                     const refSchemaSlug = getFieldRefSchemaSlug(propertySchema);

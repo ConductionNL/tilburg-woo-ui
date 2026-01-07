@@ -7,6 +7,7 @@ import {
 import { AcColumn } from '@src/atoms';
 import { VISUALS } from '@src/constants';
 import ConLogoPreview from '@src/views/ac-register/con-logo-preview';
+import { ConExternalLink } from '@src/components';
 import { useCallback, useEffect, useMemo, useState } from 'preact/hooks';
 import { commongroundApiUrl } from '@src/config';
 import ConEditableDescription from '../../shared/components/con-editable-description/con-editable-description';
@@ -19,6 +20,7 @@ import {
 import { TOOLTIP_ID } from '@src/index.web';
 import { useNavigate } from 'react-router-dom';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
+import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 
 /**
  * Content for the product details page
@@ -54,7 +56,7 @@ const ConProductDetailsPageContent = ({
     setUsesLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend[]=@self.schema`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses`,
         {
           method: 'GET',
           headers: {
@@ -81,7 +83,7 @@ const ConProductDetailsPageContent = ({
     setUsedLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=@self.schema`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used`,
         {
           method: 'GET',
           headers: {
@@ -116,6 +118,70 @@ const ConProductDetailsPageContent = ({
       };
 
   const actualCanEdit = canEdit && hasEditPermission;
+
+  // Setup dynamic create callback for related actions
+  const openDynamicCreate = useCallback(
+    (targetType, preSelected, metadata = {}) => {
+      actionMenuProps?.setDynamicCreateTargetType?.(targetType);
+      actionMenuProps?.setDynamicCreatePreSelected?.(preSelected);
+      actionMenuProps?.setDynamicCreateMetadata?.(metadata);
+      actionMenuProps?.setOpenModal?.('dynamicCreate');
+    },
+    [actionMenuProps]
+  );
+
+  // Initialize related create actions hook
+  const { makeActionsForContext } = useRelatedCreateActions({
+    object,
+    user,
+    schemaRef: config?.schemaSlug,
+    currentType: 'product',
+    openDynamicCreate,
+  });
+
+  // Generate unique actions from config
+  const uniqueActions = useMemo(() => {
+    if (!config?.uniqueActions || !data) return [];
+    return config.uniqueActions
+      .filter((action) => action.condition?.(data))
+      .map((action) => ({
+        key: action.key,
+        label: action.label,
+        icon: action.icon,
+        onClick: () => {
+          if (action.action === 'wizard' && action.wizardPath) {
+            const params = action.wizardParams ? action.wizardParams(data) : {};
+            const searchParams = new URLSearchParams(params);
+            const queryString = searchParams.toString();
+            navigate(`${action.wizardPath}${queryString ? '?' + queryString : ''}`);
+          } else if (typeof action.onClick === 'function') {
+            action.onClick(data);
+          } else {
+            actionMenuProps?.setOpenModal?.(action.action);
+          }
+        },
+      }));
+  }, [config?.uniqueActions, data, navigate, actionMenuProps]);
+
+  // Generate dynamic create actions
+  const dynamicCreateActions = useMemo(() => {
+    if (!id || config?.disableRelatedCreateActions) return [];
+    return makeActionsForContext(
+      id,
+      config?.dynamicActionFilter,
+      data,
+      config?.registerSlug,
+      config?.schemaSlug
+    );
+  }, [
+    id,
+    config?.disableRelatedCreateActions,
+    config?.dynamicActionFilter,
+    makeActionsForContext,
+    data,
+    config?.registerSlug,
+    config?.schemaSlug,
+  ]);
 
   useEffect(() => {
     fetchUses();
@@ -194,35 +260,6 @@ const ConProductDetailsPageContent = ({
                   Bewerken
                 </ConActionMenu.Button>
 
-                {/* TODO: Summary and description editing is not working yet*/}
-                {/* <ConActionMenu.Button
-                  icon={<VISUALS.PENCIL />}
-                  onClick={() => setEditingSummary(true)}
-                  disabled={!actualCanEdit}
-                  data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
-                  data-tooltip-content={
-                    !actualCanEdit
-                      ? 'Kan niet bewerken omdat de samenvatting niet bewerkt kan worden'
-                      : undefined
-                  }
-                >
-                  Bewerk samenvatting
-                </ConActionMenu.Button>
-
-                <ConActionMenu.Button
-                  icon={<VISUALS.PENCIL />}
-                  onClick={() => setEditingDescription(true)}
-                  disabled={!actualCanEdit}
-                  data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
-                  data-tooltip-content={
-                    !actualCanEdit
-                      ? 'Kan niet bewerken omdat de beschrijving niet bewerkt kan worden'
-                      : undefined
-                  }
-                >
-                  Bewerk beschrijving
-                </ConActionMenu.Button> */}
-
                 {data && !data['@self']?.published && (
                   <ConActionMenu.Button
                     icon={<VISUALS.PUBLISH />}
@@ -254,6 +291,35 @@ const ConProductDetailsPageContent = ({
                     Depubliceren
                   </ConActionMenu.Button>
                 )}
+
+                {/* Unique actions from config */}
+                {uniqueActions.map((action) => (
+                  <ConActionMenu.Button
+                    key={action.key}
+                    icon={action.icon}
+                    onClick={action.onClick}
+                    disabled={!actualCanEdit}
+                    data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
+                    data-tooltip-content={
+                      !actualCanEdit
+                        ? getDisabledActionTooltip(action.key, reason)
+                        : undefined
+                    }
+                  >
+                    {action.label}
+                  </ConActionMenu.Button>
+                ))}
+
+                {/* Dynamic create actions */}
+                {dynamicCreateActions.map((action) => (
+                  <ConActionMenu.Button
+                    key={action.key}
+                    icon={action.icon}
+                    onClick={action.onClick}
+                  >
+                    {action.label}
+                  </ConActionMenu.Button>
+                ))}
 
                 <ConActionMenu.Button
                   icon={<VISUALS.TRASHCAN />}
@@ -340,18 +406,8 @@ const ConProductDetailsPageContent = ({
             <div style={{ marginTop: '12px' }}>
               {data?.website && (
                 <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
-                  <strong>Website: </strong>
-                  <Link
-                    href={
-                      data?.website.startsWith('http')
-                        ? data?.website
-                        : `https://${data?.website}`
-                    }
-                    target='_blank'
-                    rel='noopener noreferrer'
-                  >
-                    {data?.website}
-                  </Link>
+                  <strong>Website:</strong>
+                  <ConExternalLink href={data?.website} />
                 </div>
               )}
               {contact && typeof contact === 'object' && (
@@ -456,6 +512,8 @@ const ConProductDetailsPageContent = ({
             used={used}
             usesLoading={usesLoading}
             usedLoading={usedLoading}
+            gebruikId={id}
+            gebruikSchemaId={data?.['@self']?.schema}
             tabIndex={relatedTabIndex}
             setTabIndex={setRelatedTabIndex}
             object={object}

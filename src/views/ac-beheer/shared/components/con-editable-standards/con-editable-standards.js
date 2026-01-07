@@ -22,6 +22,7 @@ const ConEditableStandards = ({
   objectId,
   referentieComponenten,
   complianceStandards,
+  compliantVersieIds = [],
   referentieComponentenWithStandards,
   onStandardsCountChange,
   onReferentieComponentenChange,
@@ -87,6 +88,7 @@ const ConEditableStandards = ({
       <ConStandardsTable
         referentieComponenten={referentieComponenten}
         complianceStandards={isEditing ? localCompliancy : complianceStandards}
+        compliantVersieIds={compliantVersieIds}
         referentieComponentenWithStandards={referentieComponentenWithStandards}
         disabled={localSaving}
         enableScrolling={false}

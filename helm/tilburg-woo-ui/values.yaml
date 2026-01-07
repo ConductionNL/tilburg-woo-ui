@@ -135,6 +135,13 @@ secrets:
 additionalEnvVars: {}
 
 # Extra environment variables for ConfigMap
+# These variables are added to container.constants.js with highest priority
+# Example:
+#   extraEnvVars: {
+#     THEME_VARIANT: "vng",
+#     SITE_TITLE: "My Custom Title",
+#     CUSTOM_FEATURE_FLAG: "true"
+#   }
 extraEnvVars: {}
 
 # Environment variables - nginx proxy to backend services

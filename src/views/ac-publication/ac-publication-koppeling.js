@@ -4,19 +4,61 @@ import { withStore } from '@stores';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AcColumn, AcContainer, AcFlex } from '@atoms';
 import { AcLoader, ConDetailsActionsMenu } from '@components';
-import { VISUALS } from '@constants';
+// import { VISUALS } from '@constants';
 import {
   Heading,
   Paragraph,
   Alert,
 } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
+import { schemaCache } from '@services/schemaCache.service';
 import RelatedTabs from '@views/ac-publication/con-related-tabs';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
-import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
+// import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
+import { normalizeSchemaName } from '@src/utilities/con-normalize-schema-name';
+import { AcFormatDate } from '@src/utilities/ac-format-date';
+// import { checkOrganizationPermissions } from '@utils/organization-permissions';
+
+/**
+ * Gets all dates that have values, to show the full history/trail of status changes.
+ * Returns an array of date objects with label and formatted value.
+ */
+const getAllDatesWithValues = (data) => {
+  const dates = [];
+
+  if (data?.datumInOntwikkeling) {
+    dates.push({
+      label: 'Startdatum In ontwikkeling',
+      value: AcFormatDate(data.datumInOntwikkeling, 'YYYY-MM-DD', 'D MMMM YYYY'),
+    });
+  }
+
+  if (data?.datumInGebruik) {
+    dates.push({
+      label: 'Startdatum In gebruik',
+      value: AcFormatDate(data.datumInGebruik, 'YYYY-MM-DD', 'D MMMM YYYY'),
+    });
+  }
+
+  if (data?.datumEindeOndersteuning) {
+    dates.push({
+      label: 'Startdatum Einde ondersteuning',
+      value: AcFormatDate(data.datumEindeOndersteuning, 'YYYY-MM-DD', 'D MMMM YYYY'),
+    });
+  }
+
+  if (data?.datumTeruggetrokken) {
+    dates.push({
+      label: 'Startdatum Teruggetrokken',
+      value: AcFormatDate(data.datumTeruggetrokken, 'YYYY-MM-DD', 'D MMMM YYYY'),
+    });
+  }
+
+  return dates;
+};
 
 /**
  * Publication page for schema slug 'koppeling'.
@@ -26,6 +68,15 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { get_single, loading } = publications;
+
+  const schemaId =
+    typeof get_single?.['@self']?.schema === 'object'
+      ? get_single?.['@self']?.schema.id
+      : get_single?.['@self']?.schema;
+  const schemaSlug = useMemo(
+    () => (schemaId ? schemaCache.get(schemaId) : null),
+    [schemaId]
+  );
 
   // Delete modal state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -39,50 +90,12 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
   const [relatedTabIndex, setRelatedTabIndex] = useState(0);
   const fetchedIds = useRef(new Set());
 
-  // Related create actions (wizard-aware) like module/product pages
-  const openDynamicCreate = useCallback(
-    (targetType, preSelected, metadata = {}) => {
-      if (metadata.isOutgoing) {
-        // reserved for future use
-      }
-      navigate(`/beheer/${targetType}?showCreateModal=true&voorzieningId=${id}`);
-    },
-    [navigate, id]
-  );
-
-  const { makeActionsForContext } = useRelatedCreateActions({
-    object,
-    user,
-    schemaRef: get_single?.['@self']?.schema?.slug,
-    currentType: get_single?.['@self']?.schema?.slug,
-    openDynamicCreate,
-    currentObject: get_single,
-    currentObjectRegister: 'voorzieningen',
-    currentObjectSchema: get_single?.['@self']?.schema?.slug,
-  });
-
-  const [actionMenuItems, setActionMenuItems] = useState([]);
-
-  useEffect(() => {
-    if (!get_single?.['@self']?.schema?.slug || !id) return;
-    const items = makeActionsForContext(id).map(
-      ({ key, label, onClick, schema, icon }) => ({
-        key,
-        label,
-        onClick,
-        schema,
-        icon,
-      })
-    );
-    setActionMenuItems(items);
-  }, [get_single?.['@self']?.schema?.slug, id, makeActionsForContext]);
-
   const fetchUses = useCallback(async () => {
     if (!id) return;
     setUsesLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend[]=@self.schema`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses`,
         { method: 'GET', headers: { 'Content-Type': 'application/json' } }
       );
       if (!response.ok) return;
@@ -98,7 +111,7 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
     setUsedLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=@self.schema`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used`,
         { method: 'GET', headers: { 'Content-Type': 'application/json' } }
       );
       if (!response.ok) return;
@@ -140,6 +153,14 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
     );
   }, [get_single]);
 
+  const intermediairId = useMemo(() => {
+    return (
+      get_single?.['@self']?.relations?.gerealiseerdMetIntermediairModule ||
+      get_single?.gerealiseerdMetIntermediairModule ||
+      null
+    );
+  }, [get_single]);
+
   if (loading.status || !get_single) {
     return <AcLoader />;
   }
@@ -151,17 +172,18 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
           <Heading className='con-beheer-details--title'>{title}</Heading>
 
           <Heading className='con-module-publication--header-type'>
-            {(() => {
-              const Icon = getTabHeaderIcon(get_single?.['@self'].schema.slug);
-              return <Icon />;
-            })()}
-            {getTabHeaderName(get_single?.['@self'].schema.slug, true)}
+            {schemaSlug &&
+              (() => {
+                const Icon = getTabHeaderIcon(schemaSlug);
+                return <Icon />;
+              })()}
+            {schemaSlug && getTabHeaderName(schemaSlug, true)}
           </Heading>
 
           <ConDetailsActionsMenu
             user={user}
             id={id}
-            schemaSlug={get_single?.['@self']?.schema?.slug}
+            schemaSlug={schemaSlug}
             title={title}
             published={get_single?.['@self']?.published}
             object={get_single}
@@ -170,10 +192,11 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
             showPublishActions={true}
             onDelete={handleDelete}
             onEdit={() => {
-              const schemaSlug = get_single?.['@self']?.schema?.slug;
               if (schemaSlug) {
+                const wizardSchemaName =
+                  normalizeSchemaName(schemaSlug).toLowerCase();
                 const wizards = Object.values(DASHBOARD_WIZARDS);
-                const wizard = wizards.find((w) => w.schema === schemaSlug);
+                const wizard = wizards.find((w) => w.schema === wizardSchemaName);
                 if (wizard) {
                   const baseUrl = getWizardUrl(wizard);
                   const url = new URL(baseUrl, window.location.origin);
@@ -181,20 +204,12 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
                   navigate(url.pathname + url.search);
                   return;
                 }
-                const beheerUrl = `/beheer/${schemaSlug}/${id}`;
-                window.open(beheerUrl, '_blank');
               }
+              // Fallback to beheer detail page in same tab with edit modal
+              const beheerUrl = `/beheer/${schemaSlug}/${id}?showEditModal=true`;
+              navigate(beheerUrl);
             }}
-            uniqueActions={[
-              {
-                key: 'delete',
-                label: 'Verwijderen',
-                icon: VISUALS.TRASHCAN,
-                onClick: handleDelete,
-              },
-            ]}
             triggerStyle='button'
-            relatedActions={actionMenuItems}
           />
         </AcFlex>
 
@@ -256,7 +271,7 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
             )}
             {get_single?.type && (
               <div style={{ marginBottom: '8px' }}>
-                <strong>Type: </strong>
+                <strong>Transportprotocol: </strong>
                 {get_single.type}
               </div>
             )}
@@ -266,6 +281,49 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
                 {get_single.status}
               </div>
             )}
+            {(() => {
+              const allDates = getAllDatesWithValues(get_single);
+              return allDates.length > 0
+                ? allDates.map((dateInfo, index) => (
+                    <div key={index} style={{ marginBottom: '8px' }}>
+                      <strong>{dateInfo.label}: </strong>
+                      {dateInfo.value}
+                    </div>
+                  ))
+                : null;
+            })()}
+            {get_single?.beschrijvingKort && (
+              <div style={{ marginBottom: '8px' }}>
+                <strong>Korte beschrijving: </strong>
+                {get_single.beschrijvingKort}
+              </div>
+            )}
+            {intermediairId && (
+              <div style={{ marginBottom: '8px' }}>
+                <strong>Intermediair: </strong>
+                <ConUuidResolver>{String(intermediairId)}</ConUuidResolver>
+              </div>
+            )}
+            {get_single?.standaardversies &&
+              get_single.standaardversies.length > 0 && (
+                <div style={{ marginBottom: '8px' }}>
+                  <strong>Standaardversies:</strong>
+                  <ul
+                    style={{
+                      margin: '0.5rem 0 0 0',
+                      paddingInlineStart: '1.25rem',
+                      listStyleType: 'disc',
+                    }}
+                  >
+                    {get_single.standaardversies.map((s) => (
+                      <li key={s} style={{ marginBottom: '0.25rem' }}>
+                        <ConUuidResolver>{String(s)}</ConUuidResolver>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
             {get_single?.dienst && (
               <div style={{ marginBottom: '8px' }}>
                 <strong>Dienst: </strong>
@@ -282,6 +340,9 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
             used={used}
             usesLoading={usesLoading}
             usedLoading={usedLoading}
+            gebruikId={id}
+            gebruikSchemaId={schemaId}
+            gebruikSchemaSlug={get_single?.['@self']?.schema?.slug}
             tabIndex={relatedTabIndex}
             setTabIndex={setRelatedTabIndex}
             object={object}

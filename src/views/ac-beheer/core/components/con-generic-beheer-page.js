@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
+import { useSearchParams } from 'react-router-dom';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcFlex, AcSection, AcContainer } from '@atoms';
@@ -13,19 +14,196 @@ import AcColumn from '@atoms/ac-column/ac-column';
 import ConTable from '@views/ac-beheer/shared/components/con-table';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
 import { Pagination } from '@amsterdam/design-system-react';
-import ConPaginationLimitSelector, {
-  usePaginationLimit,
-} from '@src/components/con-pagination-limit-selector/con-pagination-limit-selector';
+import ConPaginationLimitSelector from '@src/components/con-pagination-limit-selector/con-pagination-limit-selector';
 import BeheerModalFactory from '@views/ac-beheer/core/factories/con-beheer-modal-factory';
 import FilterDrawerFactory from '@views/ac-beheer/core/factories/con-filter-drawer-factory';
 import BeheerPageConfigFactory from '@views/ac-beheer/core/factories/con-beheer-page-config-factory';
 import _ from 'lodash';
-import { CanceledError } from 'axios';
 import { AcButton, AcFormField } from '@molecules';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { canReadField } from '@utils/field-authorization';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
-import { extractReferenceIdsFromCollection } from '@src/utilities';
+import {
+  checkOrganizationPermissions,
+  getDisabledActionTooltip,
+} from '@utils/organization-permissions';
+import { TOOLTIP_ID } from '@src/index.web';
+import { AcGetState, AcSaveState } from '@src/utilities';
+import Fuse from 'fuse.js';
+
+/**
+ * Custom hook for managing pagination limit with URL query params and backwards compatibility
+ * Priority: URL _limit > session storage > defaultValue
+ * Writes sync to both URL and session storage
+ */
+const useLimitWithBackwardsCompat = (objectType, defaultValue = 20) => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [changeKey, setChangeKey] = useState(0);
+
+  // Read limit: URL first, then session storage, then default
+  const limit = useMemo(() => {
+    const urlLimit = searchParams.get('_limit');
+    if (urlLimit) {
+      const parsed = parseInt(urlLimit, 10);
+      if (!isNaN(parsed) && parsed > 0) {
+        return parsed;
+      }
+    }
+    const sessionLimit = AcGetState(`pagination_limit_${objectType}`);
+    return sessionLimit || defaultValue;
+  }, [searchParams, objectType, defaultValue, changeKey]);
+
+  // Update limit: write to both URL and session storage
+  const updateLimit = useCallback(
+    (newLimit) => {
+      // Write to session storage
+      AcSaveState(`pagination_limit_${objectType}`, newLimit);
+
+      // Write to URL
+      const params = new URLSearchParams(searchParams);
+      params.set('_limit', newLimit.toString());
+      setSearchParams(params, { replace: true });
+
+      setChangeKey((prev) => prev + 1);
+    },
+    [objectType, searchParams, setSearchParams]
+  );
+
+  return [limit, updateLimit];
+};
+
+/**
+ * Helper function to recursively extract all string values from an object
+ * Excludes metadata fields like @self and id to avoid polluting search results
+ * Also excludes keys starting with 'data:' (base64 image data)
+ */
+const extractAllStringValues = (obj, values = []) => {
+  const skipKeys = new Set(['@self', 'id']);
+
+  if (obj === null || obj === undefined) {
+    return values;
+  }
+
+  if (typeof obj === 'string') {
+    // Skip base64 data URLs (data:image/..., data:text/..., etc.)
+    if (obj.startsWith('data:')) {
+      return values;
+    }
+    values.push(obj);
+    return values;
+  }
+
+  if (typeof obj === 'number' || typeof obj === 'boolean') {
+    values.push(String(obj));
+    return values;
+  }
+
+  if (Array.isArray(obj)) {
+    obj.forEach((item) => extractAllStringValues(item, values));
+    return values;
+  }
+
+  if (typeof obj === 'object') {
+    Object.entries(obj).forEach(([key, value]) => {
+      // Skip metadata keys that shouldn't be searched
+      if (skipKeys.has(key)) {
+        return;
+      }
+
+      // Skip keys that start with 'data:' (base64 image data)
+      if (key.startsWith('data:')) {
+        return;
+      }
+
+      // Recursively extract from nested objects and arrays
+      if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+        extractAllStringValues(value, values);
+      } else {
+        // For nested objects, recursively extract
+        extractAllStringValues(value, values);
+      }
+    });
+    return values;
+  }
+
+  return values;
+};
+
+/**
+ * TableContainer component wrapped with observer for proper MobX reactivity
+ * Handles data reading, filtering, and pagination directly (not in useMemo)
+ * Uses render prop pattern to provide data and pagination to parent
+ */
+const TableContainer = observer(
+  ({
+    object,
+    objectType,
+    searchQuery,
+    beoordelingFilter,
+    type,
+    page,
+    limit,
+    children,
+  }) => {
+    // Read collection directly - MobX tracks this automatically
+    const collection = object.getCollection(objectType);
+    const allData = collection?.results || [];
+
+    // Apply search filtering using Fuse.js
+    let filteredData = allData;
+
+    if (searchQuery?.trim()) {
+      // Create searchable data by adding a _searchableText property to each object
+      const searchableData = allData.map((item) => {
+        const allValues = extractAllStringValues(item);
+        return {
+          originalItem: item,
+          _searchableText: allValues.join(' ').toLowerCase(),
+        };
+      });
+
+      // Create Fuse instance fresh each render
+      const fuse = new Fuse(searchableData, {
+        keys: ['_searchableText'],
+        threshold: 0.3, // Lower threshold = more strict matching (0.0 = exact, 1.0 = match anything)
+        ignoreLocation: true, // Search anywhere in the string
+        includeScore: true, // Include score to enable relevance sorting (Fuse sorts by score automatically)
+        minMatchCharLength: 1, // Minimum characters to match
+      });
+
+      // Perform search (convert query to lowercase to match searchable text)
+      // Fuse.js automatically sorts results by score (ascending - lower score = better match)
+      const searchResults = fuse.search(searchQuery.trim().toLowerCase());
+
+      // Extract results and remove the temporary _searchableText property
+      // Results are already sorted by relevance (best matches first)
+      filteredData = searchResults.map((result) => {
+        const item = result.item.originalItem;
+        return item;
+      });
+    }
+
+    // Apply beoordeling filter if applicable
+    if (beoordelingFilter && type === 'organisaties') {
+      filteredData = filteredData.filter((item) => {
+        return item.beoordeling === beoordelingFilter;
+      });
+    }
+
+    // Frontend pagination on filtered results
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const data = filteredData.slice(startIndex, endIndex);
+
+    // Calculate pagination info based on filtered data
+    const total = filteredData.length;
+    const pages = Math.ceil(total / limit) || 1;
+    const pagination = { total, page, pages, limit };
+
+    // Use render prop pattern to provide data and pagination
+    return children({ data, pagination });
+  }
+);
 
 /**
  * Generic Beheer Page Component
@@ -35,11 +213,58 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
   // Destructure the stores we need
   const { object, user } = store;
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [beoordelingFilter, setBeoordelingFilter] = useState(null);
-  const [showSearch, setShowSearch] = useState(false);
-  const [searchQuery, setSearchQuery] = useState(''); // Simple search query state
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(''); // Debounced search value
+  // Initialize showSearch based on whether _search parameter exists in URL
+  const [showSearch, setShowSearch] = useState(() => {
+    return !!searchParams.get('_search');
+  });
   const [enhancedConfig, setEnhancedConfig] = useState(null);
+  const [selectedRows, setSelectedRows] = useState([]);
+  const [singleSelectedRow, setSingleSelectedRow] = useState(null);
+  const [openModal, setOpenModal] = useState(null);
+  const [modalSelectedRows, setModalSelectedRows] = useState([]);
+
+  // Full organization data for checking type (Leverancier, Community, etc.)
+  const [fullActiveOrganisation, setFullActiveOrganisation] = useState(null);
+
+  // Fetch full organization data to get the type
+  useEffect(() => {
+    const fetchFullOrganisationData = async () => {
+      const activeOrg = user?.activeOrganization;
+      const organisationId = activeOrg?.uuid || activeOrg?.id;
+
+      if (!organisationId) return;
+
+      try {
+        await object.fetchObject('voorzieningen', 'organisatie', organisationId, {
+          '_extend[]': ['@self.schema'],
+        });
+
+        const fullOrgData = object.getObject(
+          'voorzieningen_organisatie',
+          organisationId
+        );
+
+        if (fullOrgData) {
+          setFullActiveOrganisation(fullOrgData);
+        }
+      } catch (error) {
+        console.error('Error fetching full organization data:', error);
+      }
+    };
+
+    fetchFullOrganisationData();
+  }, [user?.activeOrganization?.uuid, user?.activeOrganization?.id, object]);
+
+  // Local search input state for immediate UI updates
+  const [localSearchInput, setLocalSearchInput] = useState('');
+
+  // Debounced search query ref for URL updates
+  const searchDebounceTimerRef = useRef(null);
+
+  // Track if filter drawer has set headers from session storage
+  const filterDrawerHasSetHeadersRef = useRef(false);
 
   // Get base configuration for this type
   const baseConfig = useMemo(() => {
@@ -67,9 +292,15 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     return object.getSchemaType(config.schemaSlug);
   }, [config, object]);
 
-  // Get reactive data from object store (read directly to enable MobX tracking)
-  const data = objectType ? object.getCollection(objectType).results || [] : [];
+  // Check warmup status for loading state (warmup state uses schemaSlug as key)
+  const warmupLoading = config?.schemaSlug
+    ? object.isWarmupInProgress(config.schemaSlug)
+    : false;
+  const warmupError = config?.schemaSlug
+    ? object.getWarmupError(config.schemaSlug)
+    : null;
 
+  // Legacy loading state (for manual refresh)
   const loading = objectType ? object.isLoading(objectType) : false;
 
   const error = objectType
@@ -78,10 +309,6 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
         return storeError ? { message: storeError } : null;
       })()
     : null;
-
-  const objectStorePagination = objectType
-    ? object.getPagination(objectType)
-    : { total: 0, page: 1, pages: 0, limit: 20 };
 
   // Get schema properties from object store
   const dataProperties = schemaType ? object.getSchemaProperties(schemaType) : [];
@@ -135,17 +362,49 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     }
   }, [baseConfig, dataProperties, schemaData, schemaLoading, schemaError, type]);
 
-  // Use the custom hook for pagination limit management
-  const [limit, setLimit] = usePaginationLimit(config.paginationKey);
+  // Refresh warmup data when type changes
+  useEffect(() => {
+    if (!baseConfig || baseConfig.isDynamicEntry) {
+      return;
+    }
 
-  // Merge object store pagination with local limit preference
-  const pagination = useMemo(
-    () => ({
-      ...objectStorePagination,
-      limit,
-    }),
-    [objectStorePagination, limit]
-  );
+    // Prioritize schemaSlug/id from config, otherwise use type
+    const schemaSlug = baseConfig.schemaSlug || type;
+    const register = baseConfig.registerSlug || 'voorzieningen';
+
+    if (schemaSlug) {
+      try {
+        object.refreshWarmupDataForType(schemaSlug, register);
+      } catch (error) {
+        console.error('Failed to refresh warmup data for type:', error);
+      }
+    }
+  }, [type, baseConfig, object]);
+
+  // Use custom hook for pagination limit with URL + backwards compatibility
+  const [limit, setLimit] = useLimitWithBackwardsCompat(config?.paginationKey, 20);
+
+  // Read page from URL, default to 1
+  const page = useMemo(() => {
+    const urlPage = searchParams.get('_page');
+    if (urlPage) {
+      const parsed = parseInt(urlPage, 10);
+      if (!isNaN(parsed) && parsed > 0) {
+        return parsed;
+      }
+    }
+    return 1;
+  }, [searchParams]);
+
+  // Read search query from URL
+  const searchQuery = useMemo(() => {
+    return searchParams.get('_search') || '';
+  }, [searchParams]);
+
+  // Sync local search input with URL when URL changes (e.g., browser back/forward)
+  useEffect(() => {
+    setLocalSearchInput(searchQuery);
+  }, [searchQuery]);
 
   const filterHeadersDrawerRef = useRef(null);
   const tableRef = useRef(null);
@@ -158,94 +417,6 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
   // to avoid its initial fetch being aborted on type changes)
   let makeActionsForContext; // will be assigned below
 
-  const fetchData = useCallback(
-    async () => {
-      if (!objectType || !config) {
-        return;
-      }
-
-      try {
-        // Build the extend parameters exactly as before
-        const extend = [...config.extend];
-
-        // LEGACY: Old field-specific search implementation
-        // Convert extend array and searchParams to object format for object store
-        // const storeParams = {
-        //   _page: pagination.page,
-        //   _limit: pagination.limit,
-        //   _extend: extend,
-        //   _related: true, // Request related object data
-        //   _relatedNames: true, // Request ID to name mappings
-        //   ...searchParams,
-        // };
-
-        // New simple search implementation using _search parameter
-        const storeParams = {
-          _page: pagination.page,
-          _limit: pagination.limit,
-          _extend: extend,
-          _related: true, // Request related object data
-          _relatedNames: true, // Request ID to name mappings
-        };
-
-        // Add simple search from debounced search query
-        if (debouncedSearchQuery && debouncedSearchQuery.trim() !== '') {
-          storeParams._search = debouncedSearchQuery.trim();
-        }
-
-        if (beoordelingFilter) storeParams['beoordeling'] = beoordelingFilter;
-
-        console.info(
-          `🔗 Fetching collection for ${config.registerSlug}/${config.schemaSlug} with related names`
-        );
-
-        // Use object store for collection data - this handles loading/error states automatically
-        await object.fetchCollection(
-          config.registerSlug,
-          config.schemaSlug,
-          storeParams
-        );
-
-        // Fetch schema using object store
-        await object.fetchSchema(config.schemaSlug);
-
-        // Additional fallback: manually resolve any remaining reference IDs
-        // (for cases where backend doesn't support _relatedNames yet)
-        const collection = object.getCollection(objectType);
-        const schema = object.getSchema(schemaType);
-
-        if (collection.results?.length && schema) {
-          const referenceIds = extractReferenceIdsFromCollection(
-            collection.results,
-            schema
-          );
-          if (referenceIds.length > 0) {
-            console.info(
-              `📋 Found ${referenceIds.length} additional reference IDs to resolve`
-            );
-            // This will fetch any missing names and cache them
-            await object.getNamesForMultipleIds(referenceIds);
-          }
-        }
-      } catch (err) {
-        // Don't set error if request was cancelled - object store handles collection errors
-        if (err.code === 'ERR_CANCELED' || err instanceof CanceledError) {
-          return;
-        }
-        console.error('Error fetching data:', err);
-      }
-    },
-    [
-      objectType,
-      config,
-      pagination.page,
-      pagination.limit,
-      beoordelingFilter,
-      debouncedSearchQuery,
-      object,
-    ]
-  );
-
   const downloadData = useCallback(
     async (type = 'csv') => {
       await object.exportObjects(config.registerSlug, config.schemaSlug, type);
@@ -253,19 +424,46 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     [object, config.registerSlug, config.schemaSlug]
   );
 
+  // Track previous type to detect actual type changes
+  const prevTypeRef = useRef(type);
+
   // Cancel all requests and reset state when type changes
   useEffect(() => {
+    // Only reset if type actually changed
+    if (prevTypeRef.current === type) {
+      return;
+    }
+
+    // Update ref for next comparison
+    prevTypeRef.current = type;
+
     // Cancel all active requests when switching types
     object.cancelAllRequests();
+
+    // Clear debounce timer
+    if (searchDebounceTimerRef.current) {
+      clearTimeout(searchDebounceTimerRef.current);
+      searchDebounceTimerRef.current = null;
+    }
 
     // Reset all state when type changes
     setSelectedRows([]);
     setSingleSelectedRow(null);
     setOpenModal(null);
+    setModalSelectedRows([]);
     setBeoordelingFilter(null);
     setTableHeaders([]);
     setShowSearch(false);
-  }, [type]);
+    setLocalSearchInput('');
+    filterDrawerHasSetHeadersRef.current = false; // Reset so drawer can set headers from session storage
+
+    // Reset URL query params (keep only non-SPOT params like showCreateModal)
+    const params = new URLSearchParams(window.location.search);
+    params.delete('_page');
+    params.delete('_search');
+    // Note: _limit is kept for backwards compatibility (user preference)
+    setSearchParams(params, { replace: true });
+  }, [type, setSearchParams, object]);
 
   // Initialize related create actions after cancellation effect definition
   ({ makeActionsForContext } = useRelatedCreateActions({
@@ -284,22 +482,56 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     currentObject: null,
   }));
 
-  // Fetch data when component is ready and pagination changes
-  useEffect(() => {
-    if (!!config && objectType) {
-      // Only fetch when objectType is available
-      fetchData();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [objectType, pagination.limit, pagination.page, !config]);
+  // State to track pagination from TableContainer for reset effect
+  const [tablePaginationState, setTablePaginationState] = useState({
+    page: 1,
+    pages: 1,
+  });
+  // Ref to track previous pagination to avoid unnecessary state updates
+  const prevPaginationRef = useRef({ page: 1, pages: 1 });
 
-  // Refetch when debounced search query changes
+  // Proactively reset to page 1 if current page exceeds total pages
+  // Uses frontend-calculated pagination (based on filtered data)
+  // Only resets when data has loaded (not during loading states or before collection is initialized)
   useEffect(() => {
-    if (!!config && objectType) {
-      fetchData();
+    if (!objectType || !config) return;
+
+    // Don't reset during loading - wait for data to load first
+    if (warmupLoading || loading || schemaLoading) return;
+
+    // Check if collection has been initialized in the store
+    // collections[objectType] will be undefined if not fetched yet
+    // getCollection() always returns { results: [] } as default, so we check the store directly
+    if (!object.collections[objectType]) return;
+
+    const currentPage = tablePaginationState.page;
+    const pages = tablePaginationState.pages;
+
+    if (pages > 0 && currentPage > pages) {
+      // Update page in URL query params (no API call triggered)
+      const params = new URLSearchParams(searchParams);
+      params.set('_page', '1');
+      setSearchParams(params, { replace: true });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearchQuery]);
+  }, [
+    tablePaginationState.pages,
+    tablePaginationState.page,
+    objectType,
+    config,
+    warmupLoading,
+    loading,
+    schemaLoading,
+    object,
+    searchParams,
+    setSearchParams,
+  ]);
+
+  // Reset modalSelectedRows when modal closes
+  useEffect(() => {
+    if (!openModal) {
+      setModalSelectedRows([]);
+    }
+  }, [openModal]);
 
   // Open create modal when query param is present, but only after the 'add' modal has actually mounted
   const openAddModal = useCallback(() => {
@@ -322,29 +554,48 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     if (prevObjectType && prevObjectType !== objectType) {
       object.cancelRequest(prevObjectType);
     }
-  }, [objectType, object]);
+  }, [objectType, object, config]);
 
-  // Refetch data when beoordelingFilter changes
+  // Cleanup debounce timer on unmount
   useEffect(() => {
-    if (!config) return;
-    if (type === 'organisaties') {
-      fetchData();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [beoordelingFilter]);
+    return () => {
+      if (searchDebounceTimerRef.current) {
+        clearTimeout(searchDebounceTimerRef.current);
+      }
+    };
+  }, []);
 
-  const [selectedRows, setSelectedRows] = useState([]);
-  const [singleSelectedRow, setSingleSelectedRow] = useState(null);
-  const [openModal, setOpenModal] = useState(null);
+  // Phase 4: Removed API refetch for beoordelingFilter - now handled by frontend filtering
 
-  // Debounce search input
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
-    }, 500); // 500ms delay like the ConTableSearch component
+  // Filter selected rows based on organization permissions
+  const filteredSelectedRows = useMemo(() => {
+    return selectedRows.filter((row) => {
+      const { canEdit } = checkOrganizationPermissions(user, row);
+      return canEdit;
+    });
+  }, [selectedRows, user]);
 
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
+  // const filteredOutCount = selectedRows.length - filteredSelectedRows.length;
+
+  // Handle search input change - update URL immediately (no debounce needed for frontend filtering)
+  const handleSearchChange = useCallback(
+    (value) => {
+      // Update local state immediately for responsive UI
+      setLocalSearchInput(value);
+
+      // Update URL immediately (frontend filtering is instant)
+      const params = new URLSearchParams(searchParams);
+      if (value && value.trim() !== '') {
+        params.set('_search', value.trim());
+      } else {
+        params.delete('_search');
+      }
+      // Reset to page 1 when search changes
+      params.set('_page', '1');
+      setSearchParams(params, { replace: true });
+    },
+    [searchParams, setSearchParams]
+  );
 
   // Handle create action → open corresponding wizard when available
   const handleCreateClick = useCallback(() => {
@@ -353,10 +604,42 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
       return;
     }
 
+    const schemaSlug =
+      config.schemaSlug === 'module' ? 'applicatie' : config.schemaSlug;
+
+    // Special handling for applicatie schema based on user roles
+    if (schemaSlug === 'applicatie') {
+      // Get user groups from the user object
+      const userGroups = user?.currentUser?.groups || user?.user?.groups || [];
+
+      // Check which groups the user has
+      const hasAanbodBeheerder = userGroups.includes('aanbod-beheerder');
+      const hasGebruikBeheerder = userGroups.includes('gebruik-beheerder');
+
+      // Route based on user groups
+      if (hasAanbodBeheerder && hasGebruikBeheerder) {
+        // User has both groups - go to type selection page
+        navigate('/forms/applicatie');
+        return;
+      } else if (hasAanbodBeheerder) {
+        // User only has aanbod-beheerder - go directly to eigen applicatie
+        navigate('/forms/applicatie?type=eigen');
+        return;
+      } else if (hasGebruikBeheerder) {
+        // User only has gebruik-beheerder - go directly to ontbrekend applicatie
+        navigate('/forms/applicatie?type=ontbrekend-applicatie');
+        return;
+      }
+
+      // Fallback: user has neither group - go to type selection page
+      navigate('/forms/applicatie');
+      return;
+    }
+
     const wizards = Object.values(DASHBOARD_WIZARDS);
-    const wizard = wizards.find((w) => w.schema === config.schemaSlug);
+    const wizard = wizards.find((w) => w.schema === schemaSlug);
     const areThereMultipleOptions =
-      wizards.filter((w) => w.schema === config.schemaSlug).length > 1;
+      wizards.filter((w) => w.schema === schemaSlug).length > 1;
 
     if (wizard) {
       navigate(getWizardUrl(wizard, !areThereMultipleOptions));
@@ -365,7 +648,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
 
     // Fallback to legacy modal when no wizard is defined for this schema
     setOpenModal('add');
-  }, [config?.schemaSlug, navigate]);
+  }, [config?.schemaSlug, navigate, user]);
 
   // Generate headers from dataProperties schema
   const headers = useMemo(() => {
@@ -485,14 +768,26 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     [shouldShowAllHeaders, defaultHeaderIds]
   );
 
+  // Wrap setTableHeaders to track when drawer sets headers from session storage
+  const handleSetTableHeaders = useCallback((newHeaders) => {
+    filterDrawerHasSetHeadersRef.current = true;
+    setTableHeaders(newHeaders);
+  }, []);
+
   useEffect(() => {
     if (!config || headers.length === 0) return;
+
+    // If the filter drawer has already set headers from session storage, don't override
+    if (filterDrawerHasSetHeadersRef.current) {
+      return;
+    }
 
     const next = shouldShowAllHeaders
       ? headers
       : headers.filter((header) => defaultHeaderIds.includes(header.id));
 
     const nextKey = next.map((h) => h.id).join(',');
+
     const currentKey = tableHeaders.map((h) => h.id).join(',');
 
     if (nextKey === currentKey) return;
@@ -500,16 +795,29 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     setTableHeaders(next);
   }, [headerIdsKey, defaultHeaderIdsKey]);
 
+  // Filter rows based on permissions before opening modals
   const handleMultipleDelete = () => {
+    if (filteredSelectedRows.length === 0) return;
+    setModalSelectedRows(filteredSelectedRows);
     setOpenModal('delete');
   };
 
   // Bulk publish/depublish handlers
   const handleMultiplePublish = () => {
+    const publishableRows = filteredSelectedRows.filter(
+      (r) => !r['@self']?.published
+    );
+    if (publishableRows.length === 0) return;
+    setModalSelectedRows(publishableRows);
     setOpenModal('publish');
   };
 
   const handleMultipleDepublish = () => {
+    const depublishableRows = filteredSelectedRows.filter(
+      (r) => !!r['@self']?.published
+    );
+    if (depublishableRows.length === 0) return;
+    setModalSelectedRows(depublishableRows);
     setOpenModal('depublish');
   };
 
@@ -517,6 +825,12 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
   const generateActionButtons = useCallback(
     (row) => {
       const isViewOnlyRoute = ['extendview', 'view'].includes(config.routeType);
+
+      // Check organization permissions for this row
+      const { canEdit: canEditRow, reason } = checkOrganizationPermissions(
+        user,
+        row
+      );
 
       const baseActions = [
         {
@@ -534,10 +848,22 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
           label: 'Bewerken',
           icon: <VISUALS.PENCIL />,
           onClick: () => {
+            // Check for custom getEditUrl handler in config first
+            // Pass full organization data to allow organization-type-specific routing
+            if (typeof config?.getEditUrl === 'function') {
+              const customUrl = config.getEditUrl(row, fullActiveOrganisation);
+              if (customUrl) {
+                navigate(customUrl);
+                return;
+              }
+            }
+
             // Prefer wizard editing when available; fallback to legacy modal
             if (config?.schemaSlug) {
+              const slug =
+                config.schemaSlug === 'module' ? 'applicatie' : config.schemaSlug;
               const wizards = Object.values(DASHBOARD_WIZARDS);
-              const wizard = wizards.find((w) => w.schema === config.schemaSlug);
+              const wizard = wizards.find((w) => w.schema === slug);
 
               if (wizard) {
                 const baseUrl = getWizardUrl(wizard);
@@ -551,6 +877,11 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
             setSingleSelectedRow(row);
             setOpenModal('edit');
           },
+          disabled: !canEditRow,
+          tooltipId: !canEditRow ? TOOLTIP_ID : undefined,
+          tooltipContent: !canEditRow
+            ? getDisabledActionTooltip('edit', reason)
+            : undefined,
         },
       ];
 
@@ -565,6 +896,11 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
             setSingleSelectedRow(row);
             setOpenModal('publish');
           },
+          disabled: !canEditRow,
+          tooltipId: !canEditRow ? TOOLTIP_ID : undefined,
+          tooltipContent: !canEditRow
+            ? getDisabledActionTooltip('publish', reason)
+            : undefined,
         });
       }
       if (row['@self']?.published) {
@@ -576,40 +912,160 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
             setSingleSelectedRow(row);
             setOpenModal('depublish');
           },
+          disabled: !canEditRow,
+          tooltipId: !canEditRow ? TOOLTIP_ID : undefined,
+          tooltipContent: !canEditRow
+            ? getDisabledActionTooltip('depublish', reason)
+            : undefined,
         });
       }
 
       // Add unique actions based on configuration
-      const uniqueActions =
-        config.uniqueActions
-          ?.filter((action) => action.condition(row))
-          .map((action) => ({
-            key: action.key,
-            label: action.label,
-            icon: action.icon,
-            onClick: () => {
-              // Check if this is a wizard action
-              if (action.action === 'wizard' && action.wizardPath) {
-                // Navigate to wizard with params if provided
-                const params = action.wizardParams ? action.wizardParams(row) : {};
-                const searchParams = new URLSearchParams(params);
-                const queryString = searchParams.toString();
-                navigate(
-                  `${action.wizardPath}${queryString ? '?' + queryString : ''}`
-                );
-              } else {
-                // Open modal for regular actions
-                setSingleSelectedRow(row);
-                setOpenModal(action.action);
-              }
-            },
-          })) || [];
+      const uniqueActions = (() => {
+        if (!config.uniqueActions || config.uniqueActions.length === 0) {
+          return [];
+        }
 
-      // Map related schemas user can create → dynamic create actions
-      // Only include if not explicitly disabled in config
-      const dynamicCreateActions = config.disableRelatedCreateActions
-        ? []
-        : makeActionsForContext(row.id, config.dynamicActionFilter);
+        // Get user groups for filtering
+        const userGroups = user?.currentUser?.groups || user?.user?.groups || [];
+        const hasAanbodBeheerder = userGroups.includes('aanbod-beheerder');
+        const hasGebruikBeheerder = userGroups.includes('gebruik-beheerder');
+
+        return config.uniqueActions
+          .map((actionConfig) => {
+            // Check if this is a grouped action
+            if (actionConfig.groupKey) {
+              // Filter actions within the group based on user groups and conditions
+              const filteredActions = actionConfig.actions
+                .filter((action) => {
+                  // Check condition first
+                  if (action.condition && !action.condition(row)) {
+                    return false;
+                  }
+
+                  // Filter by user groups if userGroupFilter is specified
+                  if (
+                    action.userGroupFilter &&
+                    Array.isArray(action.userGroupFilter)
+                  ) {
+                    const hasRequiredGroup = action.userGroupFilter.some((group) => {
+                      if (group === 'aanbod-beheerder') return hasAanbodBeheerder;
+                      if (group === 'gebruik-beheerder') return hasGebruikBeheerder;
+                      return userGroups.includes(group);
+                    });
+                    if (!hasRequiredGroup) {
+                      return false;
+                    }
+                  }
+
+                  return true;
+                })
+                .map((action) => ({
+                  key: action.key,
+                  label: action.label,
+                  onClick: () => {
+                    // Check if this is a wizard action
+                    if (action.action === 'wizard' && action.wizardPath) {
+                      // Navigate to wizard with params if provided
+                      const params = action.wizardParams
+                        ? action.wizardParams(row)
+                        : {};
+                      const searchParams = new URLSearchParams(params);
+                      const queryString = searchParams.toString();
+                      navigate(
+                        `${action.wizardPath}${queryString ? '?' + queryString : ''}`
+                      );
+                    } else {
+                      // Open modal for regular actions
+                      setSingleSelectedRow(row);
+                      setOpenModal(action.action);
+                    }
+                  },
+                  disabled: !canEditRow,
+                  tooltipId: !canEditRow ? TOOLTIP_ID : undefined,
+                  tooltipContent: !canEditRow
+                    ? getDisabledActionTooltip(action.key, reason)
+                    : undefined,
+                }));
+
+              // Only return the group if it has at least one action
+              if (filteredActions.length === 0) {
+                return null;
+              }
+
+              return {
+                type: 'group',
+                groupKey: actionConfig.groupKey,
+                label: actionConfig.groupLabel,
+                icon: actionConfig.groupIcon,
+                children: filteredActions,
+              };
+            }
+
+            // Handle non-grouped actions (including dynamic label/params based on user role)
+            if (actionConfig.condition && !actionConfig.condition(row)) {
+              return null;
+            }
+
+            // Filter by user groups if userGroupFilter is specified
+            if (
+              actionConfig.userGroupFilter &&
+              Array.isArray(actionConfig.userGroupFilter)
+            ) {
+              const hasRequiredGroup = actionConfig.userGroupFilter.some((group) => {
+                if (group === 'aanbod-beheerder') return hasAanbodBeheerder;
+                if (group === 'gebruik-beheerder') return hasGebruikBeheerder;
+                return userGroups.includes(group);
+              });
+              if (!hasRequiredGroup) {
+                return null;
+              }
+            }
+
+            // Support dynamic label based on user role (like publish/depublish toggle)
+            const label =
+              typeof actionConfig.getLabel === 'function'
+                ? actionConfig.getLabel(userGroups)
+                : actionConfig.label;
+
+            return {
+              type: 'action',
+              key: actionConfig.key,
+              label,
+              icon: actionConfig.icon,
+              onClick: () => {
+                // Check if this is a wizard action
+                if (actionConfig.action === 'wizard' && actionConfig.wizardPath) {
+                  // Navigate to wizard with params if provided
+                  // Support dynamic params based on user role
+                  const params =
+                    typeof actionConfig.getWizardParams === 'function'
+                      ? actionConfig.getWizardParams(row, userGroups)
+                      : actionConfig.wizardParams
+                      ? actionConfig.wizardParams(row)
+                      : {};
+                  const searchParams = new URLSearchParams(params);
+                  const queryString = searchParams.toString();
+                  navigate(
+                    `${actionConfig.wizardPath}${
+                      queryString ? '?' + queryString : ''
+                    }`
+                  );
+                } else {
+                  // Open modal for regular actions
+                  setSingleSelectedRow(row);
+                  setOpenModal(actionConfig.action);
+                }
+              },
+              disabled: !canEditRow,
+              tooltipId: !canEditRow ? TOOLTIP_ID : undefined,
+              tooltipContent: !canEditRow
+                ? getDisabledActionTooltip(actionConfig.key, reason)
+                : undefined,
+            };
+          })
+          .filter(Boolean);
+      })();
 
       const deleteAction = {
         key: 'delete',
@@ -619,6 +1075,11 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
           setSingleSelectedRow(row);
           setOpenModal('delete');
         },
+        disabled: !canEditRow,
+        tooltipId: !canEditRow ? TOOLTIP_ID : undefined,
+        tooltipContent: !canEditRow
+          ? getDisabledActionTooltip('delete', reason)
+          : undefined,
       };
 
       if (isViewOnlyRoute) {
@@ -629,7 +1090,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
         ...baseActions,
         ...publishActions,
         ...uniqueActions,
-        ...dynamicCreateActions,
+        // ...dynamicCreateActions,
         ...(config.disableDeleteAction ? [] : [deleteAction]),
       ];
     },
@@ -640,12 +1101,25 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
       config.disableDeleteAction,
       navigate,
       makeActionsForContext,
+      user,
     ]
   );
 
   // Build table headers with status icon if configured
   const finalTableHeaders = useMemo(() => {
-    const headers = [...tableHeaders];
+    const virtualColumns = Array.isArray(config.virtualColumns)
+      ? config.virtualColumns
+      : [];
+    const virtualColumnsHeaders = virtualColumns.map((column) => ({
+      id: column.id,
+      label: column.label,
+      key: column.key,
+      customContent: column.customContent,
+      customHeader: column.customHeader,
+      sortComparator: column.sortComparator,
+    }));
+
+    const headers = [...virtualColumnsHeaders, ...tableHeaders];
 
     if (config.statusIcon) {
       headers.unshift({
@@ -705,6 +1179,16 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     );
   }
 
+  if (warmupError) {
+    return (
+      <AcBeheerError
+        title={config.title === 'Module' ? 'Applicaties' : config.title}
+        error={warmupError}
+        store={store}
+      />
+    );
+  }
+
   return (
     <AcSection spacing className='ac-mijn-omgeving-section'>
       <AcFlex spacing='xl'>
@@ -751,8 +1235,13 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
                     <ConActionMenu.Menu position='right'>
                       <ConActionMenu.Button
                         icon={<VISUALS.RELOAD />}
-                        onClick={() => fetchData()}
-                        disabled={loading}
+                        onClick={() => {
+                          // Phase 4: Refresh warmup data for this specific type
+                          if (config?.schemaSlug) {
+                            object.refreshWarmupDataForType(config.schemaSlug);
+                          }
+                        }}
+                        disabled={loading || warmupLoading}
                       >
                         Vernieuwen
                       </ConActionMenu.Button>
@@ -790,8 +1279,8 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
                         icon={<VISUALS.PUBLISH />}
                         onClick={handleMultiplePublish}
                         disabled={
-                          selectedRows.length === 0 ||
-                          !selectedRows.some((r) => !r['@self']?.published)
+                          filteredSelectedRows.length === 0 ||
+                          !filteredSelectedRows.some((r) => !r['@self']?.published)
                         }
                       >
                         Publiceren
@@ -801,8 +1290,8 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
                         icon={<VISUALS.PUBLISH_OFF />}
                         onClick={handleMultipleDepublish}
                         disabled={
-                          selectedRows.length === 0 ||
-                          !selectedRows.some((r) => !!r['@self']?.published)
+                          filteredSelectedRows.length === 0 ||
+                          !filteredSelectedRows.some((r) => !!r['@self']?.published)
                         }
                       >
                         Depubliceren
@@ -812,11 +1301,11 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
 
                       <ConActionMenu.Button
                         icon={<VISUALS.TRASHCAN />}
-                        disabled={selectedRows.length === 0}
+                        disabled={filteredSelectedRows.length === 0}
                         onClick={handleMultipleDelete}
                       >
-                        Delete {selectedRows.length}{' '}
-                        {selectedRows.length === 1 ? 'item' : 'items'}
+                        Delete {filteredSelectedRows.length}{' '}
+                        {filteredSelectedRows.length === 1 ? 'item' : 'items'}
                       </ConActionMenu.Button>
                     </ConActionMenu.Menu>
                   </ConActionMenu>
@@ -841,11 +1330,11 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
                     label=''
                     type='text'
                     inputType='text'
-                    value={searchQuery}
+                    value={localSearchInput}
                     onChange={(e) => {
                       // Handle both event object and direct value
                       const value = e?.target?.value ?? e;
-                      setSearchQuery(value);
+                      handleSearchChange(value);
                     }}
                     placeholder='Zoeken...'
                   />
@@ -854,92 +1343,158 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
             </div>
           )}
 
-          <ConTable
-            data={data}
-            tableHeaders={[
-              ...finalTableHeaders,
-              {
-                id: 'actions',
-                label: 'Acties',
-                key: '',
-                static: true,
-                customContent: (row) => (
-                  <ConActionMenu>
-                    <ConActionMenu.Trigger
-                      icon={<VISUALS.ELLIPSIS />}
-                      buttonType='secondary'
-                    >
-                      Acties
-                    </ConActionMenu.Trigger>
+          {objectType ? (
+            <TableContainer
+              object={object}
+              objectType={objectType}
+              searchQuery={searchQuery}
+              beoordelingFilter={beoordelingFilter}
+              type={type}
+              page={page}
+              limit={limit}
+            >
+              {({ data, pagination: tablePagination }) => {
+                // Update pagination state for the reset effect
+                // Compare with previous value to avoid unnecessary updates
+                if (
+                  prevPaginationRef.current.page !== tablePagination.page ||
+                  prevPaginationRef.current.pages !== tablePagination.pages
+                ) {
+                  prevPaginationRef.current = tablePagination;
+                  // React will batch this state update
+                  setTablePaginationState(tablePagination);
+                }
 
-                    <ConActionMenu.Menu position='right'>
-                      {generateActionButtons(row).map((action) => (
-                        <ConActionMenu.Button
-                          key={action.key}
-                          icon={action.icon}
-                          onClick={action.onClick}
-                        >
-                          {action.label}
-                        </ConActionMenu.Button>
-                      ))}
-                    </ConActionMenu.Menu>
-                  </ConActionMenu>
-                ),
-              },
-            ]}
-            getSelectedRows={setSelectedRows}
-            renderSelectRowButtons={showManageActions}
-            ref={tableRef}
-            truncateLines={3}
-            showSortButtons
-            // LEGACY: Old field-specific search (commented out)
-            // onHeaderSearch={fetchData}
-            // dataProperties={dataProperties}
-            // showSearch={showSearch}
-            loading={loading || schemaLoading}
-            // Names resolution props
-            objectStore={object}
-            schema={schemaData}
-          />
+                return (
+                  <>
+                    <ConTable
+                      data={data}
+                      tableHeaders={[
+                        ...finalTableHeaders,
+                        {
+                          id: 'actions',
+                          label: 'Acties',
+                          key: '',
+                          static: true,
+                          customContent: (row) => (
+                            <ConActionMenu>
+                              <ConActionMenu.Trigger
+                                icon={<VISUALS.ELLIPSIS />}
+                                buttonType='secondary'
+                              >
+                                Acties
+                              </ConActionMenu.Trigger>
 
-          <AcFlex justifyContent='between' alignItems='center'>
-            <Pagination
-              totalPages={pagination?.pages}
-              page={parseInt(pagination?.page, 10)}
-              onPageChange={async (page) => {
-                // push new page to the store
-                object.setPagination(objectType, {
-                  ...object.getPagination(objectType),
-                  page,
-                });
+                              <ConActionMenu.Menu position='right'>
+                                {generateActionButtons(row).map((action) => {
+                                  if (action.type === 'group') {
+                                    return (
+                                      <ConActionMenu.SubMenu
+                                        key={action.groupKey}
+                                        label={action.label}
+                                        icon={action.icon}
+                                        position='left'
+                                        disabled={
+                                          action.disabled ||
+                                          action.children.every(
+                                            (child) => child?.disabled ?? false
+                                          )
+                                        }
+                                      >
+                                        {action.children.map((childAction) => (
+                                          <ConActionMenu.Button
+                                            key={childAction.key}
+                                            onClick={childAction.onClick}
+                                            disabled={childAction.disabled}
+                                            data-tooltip-id={childAction.tooltipId}
+                                            data-tooltip-content={
+                                              childAction.tooltipContent
+                                            }
+                                          >
+                                            {childAction.label}
+                                          </ConActionMenu.Button>
+                                        ))}
+                                      </ConActionMenu.SubMenu>
+                                    );
+                                  }
+
+                                  return (
+                                    <ConActionMenu.Button
+                                      key={action.key}
+                                      icon={action.icon}
+                                      onClick={action.onClick}
+                                      disabled={action.disabled}
+                                      data-tooltip-id={action.tooltipId}
+                                      data-tooltip-content={action.tooltipContent}
+                                    >
+                                      {action.label}
+                                    </ConActionMenu.Button>
+                                  );
+                                })}
+                              </ConActionMenu.Menu>
+                            </ConActionMenu>
+                          ),
+                        },
+                      ]}
+                      getSelectedRows={setSelectedRows}
+                      renderSelectRowButtons={showManageActions}
+                      ref={tableRef}
+                      truncateLines={3}
+                      showSortButtons
+                      loading={loading || schemaLoading || warmupLoading}
+                      // Names resolution props
+                      objectStore={object}
+                      schema={schemaData}
+                    />
+
+                    <AcFlex justifyContent='between' alignItems='center'>
+                      <Pagination
+                        key={tablePagination?.page}
+                        totalPages={tablePagination?.pages}
+                        page={parseInt(tablePagination?.page, 10)}
+                        onPageChange={(page) => {
+                          // Update page in URL query params (no API call triggered - frontend pagination)
+                          const params = new URLSearchParams(searchParams);
+                          params.set('_page', page.toString());
+                          setSearchParams(params, { replace: true });
+                        }}
+                        nextLabel=''
+                        previousLabel=''
+                        maxVisiblePages={7}
+                      />
+
+                      {tablePagination?.pages <= 1 && (
+                        <span className='ac-beheer-pagination-single-page'>
+                          Pagina 1 van 1
+                        </span>
+                      )}
+
+                      <ConPaginationLimitSelector
+                        objectType={config.paginationKey}
+                        value={limit}
+                        onChange={setLimit}
+                      />
+                    </AcFlex>
+                  </>
+                );
               }}
-              nextLabel=''
-              previousLabel=''
-              maxVisiblePages={7}
-            />
-
-            {pagination?.pages <= 1 && (
-              <span className='ac-beheer-pagination-single-page'>
-                Pagina 1 van 1
-              </span>
-            )}
-
-            <ConPaginationLimitSelector
-              objectType={config.paginationKey}
-              value={limit}
-              onChange={setLimit}
-            />
-          </AcFlex>
+            </TableContainer>
+          ) : null}
 
           {/* Render modals based on configuration */}
           {BeheerModalFactory.renderModals(type, {
             singleSelectedRow,
-            selectedRows,
+            selectedRows:
+              openModal === 'delete' ||
+              openModal === 'publish' ||
+              openModal === 'depublish'
+                ? modalSelectedRows
+                : selectedRows,
             openModal,
             setOpenModal,
             setSingleSelectedRow,
             tableRef,
-            fetchData,
+            fetchData: undefined, // Phase 4: Removed fetchData - rely on warmup refresh
             store: { object, user }, // Pass store for cross-collection refreshes
             config: modalConfig,
             dynamicCreateTargetType,
@@ -960,7 +1515,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
             defaultHeaders: shouldShowAllHeaders
               ? headers.map((h) => h.id)
               : defaultHeaderIds,
-            setTableHeaders,
+            setTableHeaders: handleSetTableHeaders,
             loading,
             setBeoordelingFilter,
           })}
