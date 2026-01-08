@@ -11,11 +11,7 @@ import {
 import { AcCheckbox, AcFormField } from '@src/molecules';
 import { LogoUploadField } from '@views/ac-beheer/shared/components/con-logo-upload-field';
 import { VISUALS } from '@constants';
-import {
-  handleFileClick,
-  fetchFileFromObject,
-  isDataUrlNeedingUpload,
-} from '@utils';
+import { handleFileClick } from '@utils';
 import { commongroundApiUrl } from '@config';
 import { validateWebsite } from '@src/views/ac-forms/validation/form-validations';
 
