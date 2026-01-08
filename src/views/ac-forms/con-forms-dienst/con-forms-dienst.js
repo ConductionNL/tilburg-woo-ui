@@ -20,7 +20,11 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 import useStepper from '../con-stepper';
 
-import { uploadFileToObject, isDataUrlNeedingUpload } from '@src/utilities';
+import {
+  uploadFileToObject,
+  uploadFileToObjectDirect,
+  isDataUrlNeedingUpload,
+} from '@src/utilities';
 
 // Stage components
 import ConFormDienstInformatieStage from './components/con-form-dienst-informatie-stage';
@@ -71,13 +75,13 @@ const ConFormsDienst = ({ store, userStore }) => {
   const [prefillRetry, setPrefillRetry] = useState(0);
 
   // Dienst object (schema-compliant)
+  // logo can be: File (new selection), string URL (existing), or null/empty
   const [dienst, setDienst] = useState({
     naam: '',
     beschrijvingKort: '',
     beschrijvingLang: '',
     website: '',
-    logo: '',
-    logoFilename: '',
+    logo: '', // File | string | null
     contactpersoon: null,
     aanbieder: '',
     type: [],
@@ -1046,23 +1050,41 @@ const ConFormsDienst = ({ store, userStore }) => {
         dienstType: dienstType,
       };
 
-      // Check if logo needs to be uploaded separately
+      // Check if logo needs to be uploaded
+      // - File object: needs upload
+      // - base64 data URL: needs upload (backward compatibility)
+      // - string URL: already uploaded, no action needed
+      const logoIsFile = payload.logo instanceof File;
       const hasLogoDataUrl = isDataUrlNeedingUpload(payload.logo);
+      const needsLogoUpload = logoIsFile || hasLogoDataUrl;
 
       let response;
 
       if (isEditMode) {
-        // Edit mode: upload logo first if it's a data URL and get the downloadUrl
+        // Edit mode: upload logo first if needed and get the downloadUrl
         let logoDownloadUrl = null;
-        if (hasLogoDataUrl) {
-          const uploadResult = await uploadFileToObject(
-            payload.logo,
-            'voorzieningen',
-            'dienst',
-            String(dienstId),
-            'logo',
-            payload.logoFilename || 'logo.png'
-          );
+        if (needsLogoUpload) {
+          let uploadResult;
+          if (logoIsFile) {
+            // Upload File object directly
+            uploadResult = await uploadFileToObjectDirect(
+              payload.logo,
+              'voorzieningen',
+              'dienst',
+              String(dienstId),
+              'logo'
+            );
+          } else {
+            // Upload base64 data URL (backward compatibility)
+            uploadResult = await uploadFileToObject(
+              payload.logo,
+              'voorzieningen',
+              'dienst',
+              String(dienstId),
+              'logo',
+              'logo.png'
+            );
+          }
 
           // Capture the downloadUrl for separate update
           if (uploadResult && uploadResult.fileData?.downloadUrl) {
@@ -1073,13 +1095,11 @@ const ConFormsDienst = ({ store, userStore }) => {
           await new Promise((resolve) => setTimeout(resolve, 500));
         }
 
-        // Update dienst without logo (don't send base64)
+        // Update dienst without logo (don't send File or base64)
         const updatePayload = { ...payload };
-        if (hasLogoDataUrl) {
-          delete updatePayload.logo;
+        if (needsLogoUpload) {
+          updatePayload.logo = '';
         }
-        // Always strip UI-only fields
-        delete updatePayload.logoFilename;
 
         response = await store.object.updateObject(
           'voorzieningen',
@@ -1100,11 +1120,9 @@ const ConFormsDienst = ({ store, userStore }) => {
       } else {
         // Create mode: create dienst without logo first
         const createPayload = { ...payload };
-        if (hasLogoDataUrl) {
-          delete createPayload.logo;
+        if (needsLogoUpload) {
+          createPayload.logo = '';
         }
-        // Always strip UI-only fields
-        delete createPayload.logoFilename;
 
         response = await store.object.createObject(
           'voorzieningen',
@@ -1112,16 +1130,29 @@ const ConFormsDienst = ({ store, userStore }) => {
           createPayload
         );
 
-        // Upload logo after creation if it's a data URL
-        if (hasLogoDataUrl && response?.id) {
-          const uploadResult = await uploadFileToObject(
-            payload.logo,
-            'voorzieningen',
-            'dienst',
-            String(response.id),
-            'logo',
-            payload.logoFilename || 'logo.png'
-          );
+        // Upload logo after creation if needed
+        if (needsLogoUpload && response?.id) {
+          let uploadResult;
+          if (logoIsFile) {
+            // Upload File object directly
+            uploadResult = await uploadFileToObjectDirect(
+              payload.logo,
+              'voorzieningen',
+              'dienst',
+              String(response.id),
+              'logo'
+            );
+          } else {
+            // Upload base64 data URL (backward compatibility)
+            uploadResult = await uploadFileToObject(
+              payload.logo,
+              'voorzieningen',
+              'dienst',
+              String(response.id),
+              'logo',
+              'logo.png'
+            );
+          }
 
           // If we got a downloadUrl, update the dienst with the logo URL
           if (uploadResult && uploadResult.fileData?.downloadUrl) {

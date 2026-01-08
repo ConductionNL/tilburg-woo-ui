@@ -166,7 +166,12 @@ const ConFormDienstInformatieStage = memo(
               isDisabled={loading}
               width='full'
               schemas={schemas}
-              customProps={{ inputType: 'file', format: 'base64' }}
+              customProps={{
+                inputType: 'file',
+                format: 'base64',
+                useFileObjects: true,
+                enableFileSizeCheck: false, // Disable file size checks for File objects mode
+              }}
             />
 
             <ConSchemaEnhancedField

@@ -277,8 +277,8 @@ export const renderField = ({
           required: validation.required,
         }}
         _value={value}
-        onChange={(dataUrl) => {
-          handleChange(dataUrl);
+        onChange={(fileOrDataUrl) => {
+          handleChange(fileOrDataUrl);
         }}
         onChangeFileName={(filename) => {
           // Update filename field if it exists in formData structure
@@ -297,6 +297,8 @@ export const renderField = ({
         isDisabled={isDisabled}
         placeholder={fieldConfig.placeholder}
         style={inputStyle}
+        useFileObjects={fieldConfig?.useFileObjects || false}
+        enableFileSizeCheck={fieldConfig?.enableFileSizeCheck}
       />
     );
   }
@@ -669,10 +671,7 @@ export const renderField = ({
             handleSearch && getFieldRefSchemaSlug(propertySchema)
               ? (inputValue, actionMeta) => {
                   // Only trigger search for user input
-                  if (
-                    actionMeta.action === 'input-change' &&
-                    !isLoading
-                  ) {
+                  if (actionMeta.action === 'input-change' && !isLoading) {
                     const refSchemaSlug = getFieldRefSchemaSlug(propertySchema);
                     handleSearch(path, refSchemaSlug, inputValue);
                   }

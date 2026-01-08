@@ -1,13 +1,104 @@
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 
 /**
- * Generic file upload utility for OpenRegister filesMultipart endpoint
+ * Upload a File object directly to OpenRegister filesMultipart endpoint
  *
- * This utility handles uploading files with automatic backend linking.
+ * This is the preferred method for uploading files as it avoids base64 conversion.
  * The backend will automatically link the uploaded file to the specified field
  * when using the fieldName parameter.
  *
- * @param {string} dataUrl - The data URL of the file (base64 encoded)
+ * @param {File} file - The File object to upload
+ * @param {string} registerSlug - The register slug (e.g., 'voorzieningen')
+ * @param {string} schemaSlug - The schema slug (e.g., 'organisatie', 'dienst')
+ * @param {string} objectId - The object ID to attach the file to
+ * @param {string} fieldName - The field name for backend to link the file to (e.g., 'logo', 'bewijs')
+ * @param {string} [filename] - Optional filename override (defaults to file.name)
+ * @returns {Promise<Object|null>} The file object with path or null if upload failed
+ *
+ * @example
+ * // Upload a logo File object
+ * const result = await uploadFileToObjectDirect(
+ *   logoFile,
+ *   'voorzieningen',
+ *   'dienst',
+ *   dienstId,
+ *   'logo'
+ * );
+ */
+export async function uploadFileToObjectDirect(
+  file,
+  registerSlug,
+  schemaSlug,
+  objectId,
+  fieldName,
+  filename = null
+) {
+  if (!(file instanceof File)) {
+    console.error('uploadFileToObjectDirect: Expected File object');
+    return null;
+  }
+
+  try {
+    // Use provided filename or file.name
+    const fileWithExtension = filename || file.name;
+
+    // Upload file as multipart form data
+    const formData = new FormData();
+    formData.append('files', file);
+    formData.append('fieldName', fieldName);
+    // Add title parameter to explicitly set the file title in the backend
+    formData.append('title', fileWithExtension);
+
+    const uploadResponse = await fetch(
+      `${BASE_URL}/openregister/api/objects/${registerSlug}/${schemaSlug}/${objectId}/filesMultipart`,
+      {
+        method: 'POST',
+        body: formData,
+      }
+    );
+
+    if (uploadResponse.ok) {
+      const uploadData = await uploadResponse.json();
+
+      // Backend returns an array, get the first item
+      const firstFile = Array.isArray(uploadData) ? uploadData[0] : uploadData;
+
+      if (firstFile?.path) {
+        return {
+          path: firstFile.path,
+          fullUrl: `${BASE_URL}${firstFile.path}`,
+          id: firstFile.id,
+          accessUrl: firstFile.accessUrl || null,
+          downloadUrl: firstFile.downloadUrl || null,
+          fileData: firstFile,
+        };
+      } else {
+        console.error('File upload succeeded but response has no path property');
+        return null;
+      }
+    } else {
+      console.error(
+        'File upload failed:',
+        uploadResponse.status,
+        uploadResponse.statusText
+      );
+      return null;
+    }
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    return null;
+  }
+}
+
+/**
+ * Generic file upload utility for OpenRegister filesMultipart endpoint
+ *
+ * This utility handles uploading files with automatic backend linking.
+ * Supports both File objects (preferred) and data URLs (backward compatibility).
+ * The backend will automatically link the uploaded file to the specified field
+ * when using the fieldName parameter.
+ *
+ * @param {File|string} fileOrDataUrl - The File object or data URL of the file (base64 encoded)
  * @param {string} registerSlug - The register slug (e.g., 'voorzieningen')
  * @param {string} schemaSlug - The schema slug (e.g., 'organisatie', 'voorziening')
  * @param {string} objectId - The object ID to attach the file to
@@ -16,9 +107,9 @@ import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
  * @returns {Promise<Object|null>} The file object with path or null if upload failed
  *
  * @example
- * // Upload a logo
+ * // Upload a File object (preferred)
  * const result = await uploadFileToObject(
- *   logoDataUrl,
+ *   logoFile,
  *   'voorzieningen',
  *   'organisatie',
  *   orgId,
@@ -27,25 +118,39 @@ import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
  * );
  *
  * @example
- * // Upload standards evidence
+ * // Upload a data URL (backward compatibility)
  * const result = await uploadFileToObject(
- *   evidenceDataUrl,
+ *   logoDataUrl,
  *   'voorzieningen',
- *   'voorziening',
- *   productId,
- *   'bewijs',
- *   'compliance-evidence.pdf'
+ *   'organisatie',
+ *   orgId,
+ *   'logo',
+ *   'logo.png'
  * );
  */
 export async function uploadFileToObject(
-  dataUrl,
+  fileOrDataUrl,
   registerSlug,
   schemaSlug,
   objectId,
   fieldName,
   filename = 'file'
 ) {
+  // If it's a File object, use the direct upload function
+  if (fileOrDataUrl instanceof File) {
+    return uploadFileToObjectDirect(
+      fileOrDataUrl,
+      registerSlug,
+      schemaSlug,
+      objectId,
+      fieldName,
+      filename || fileOrDataUrl.name
+    );
+  }
+
+  // Otherwise, handle as data URL (backward compatibility)
   try {
+    const dataUrl = fileOrDataUrl;
     // Convert data URL to blob
     const response = await fetch(dataUrl);
     const blob = await response.blob();

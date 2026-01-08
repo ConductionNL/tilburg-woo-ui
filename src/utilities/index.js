@@ -139,6 +139,7 @@ export {
 } from './con-data-url-utils';
 export {
   uploadFileToObject,
+  uploadFileToObjectDirect,
   uploadMultipleFilesToObject,
   fetchFileFromObject,
   isDataUrlNeedingUpload,

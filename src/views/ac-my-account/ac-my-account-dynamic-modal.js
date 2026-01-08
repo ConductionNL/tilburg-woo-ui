@@ -11,6 +11,7 @@ import _ from 'lodash';
 import {
   collapseExtendedObjects,
   uploadFileToObject,
+  uploadFileToObjectDirect,
   isDataUrlNeedingUpload,
 } from '@src/utilities';
 import { AcFlex } from '@atoms';
@@ -268,46 +269,15 @@ const AcMyAccountDynamicModal = ({
 
           return mappedData;
         })()),
-      // Ensure UI-only fields are preserved (logoFilename, logoAccessUrl, etc.)
-      // These might be overwritten by server data which doesn't have them
-      ...(isEdit && {
-        logoFilename: data?.logoFilename || '',
-        logoAccessUrl: data?.logoAccessUrl || '',
-      }),
+      // Note: logoFilename and logoAccessUrl are no longer needed
+      // File objects contain the filename, and existing URLs are stored directly in logo field
     };
 
     setFormData(initialFormData);
     hasInitializedRef.current = true;
 
-    // Fetch logo file metadata if editing and logo exists
-    if (isEdit && data?.logo && data?.id && !isDataUrlNeedingUpload(data.logo)) {
-      (async () => {
-        try {
-          const filesResponse = await fetch(
-            `${window.location.origin}/api/apps/openregister/api/objects/${config.beheerConfig.registerSlug}/${config.beheerConfig.schemaSlug}/${data.id}/files`
-          );
-          if (filesResponse.ok) {
-            const filesData = await filesResponse.json();
-            const files = filesData.results || [];
-            // Find the logo file
-            const logoFile = files.find(
-              (f) =>
-                f.title?.toLowerCase().includes('logo') ||
-                f.name?.toLowerCase().includes('logo')
-            );
-            if (logoFile) {
-              setFormData((prev) => ({
-                ...prev,
-                logoFilename: logoFile.title || logoFile.name || 'logo.png',
-                logoAccessUrl: logoFile.accessUrl || null,
-              }));
-            }
-          }
-        } catch (error) {
-          console.warn('Failed to fetch logo metadata:', error);
-        }
-      })();
-    }
+    // Note: Logo file metadata fetching removed - not needed with File objects mode
+    // Existing logos are stored as URLs in the logo field directly
   }, [
     showModal,
     config?.initialData,
@@ -463,41 +433,57 @@ const AcMyAccountDynamicModal = ({
         ? config.transformSubmitData(formData)
         : formData;
 
-      // Check if logo field contains a data URL (base64) that needs to be uploaded
+      // Check if logo needs to be uploaded
+      // - File object: needs upload
+      // - base64 data URL: needs upload (backward compatibility)
+      // - string URL: already uploaded, no action needed
+      const logoIsFile = submitData.logo instanceof File;
       const hasLogoDataUrl = isDataUrlNeedingUpload(submitData.logo);
+      const needsLogoUpload = logoIsFile || hasLogoDataUrl;
 
       let response;
 
       if (isEdit) {
-        // Step 1: If logo is a data URL, upload it first via filesMultipart
+        // Step 1: Upload logo if needed
         let logoDownloadUrl = null;
-        if (hasLogoDataUrl) {
-          const uploadResult = await uploadFileToObject(
-            submitData.logo,
-            config.beheerConfig.registerSlug,
-            config.beheerConfig.schemaSlug,
-            data.id,
-            'logo',
-            submitData.logoFilename || 'logo.png'
-          );
+        if (needsLogoUpload) {
+          let uploadResult;
+          if (logoIsFile) {
+            // Upload File object directly
+            uploadResult = await uploadFileToObjectDirect(
+              submitData.logo,
+              config.beheerConfig.registerSlug,
+              config.beheerConfig.schemaSlug,
+              data.id,
+              'logo'
+              // No filename needed - comes from File.name
+            );
+          } else {
+            // Upload base64 data URL (backward compatibility)
+            uploadResult = await uploadFileToObject(
+              submitData.logo,
+              config.beheerConfig.registerSlug,
+              config.beheerConfig.schemaSlug,
+              data.id,
+              'logo',
+              'logo.png'
+            );
+          }
 
-          // Get the download URL from the upload response (use downloadUrl for images)
+          // Get the download URL from the upload response
           if (uploadResult && uploadResult.fileData?.downloadUrl) {
             logoDownloadUrl = uploadResult.fileData.downloadUrl;
           }
+          await new Promise((resolve) => setTimeout(resolve, 500));
         }
 
         // Step 2: Prepare update payload with all form data
         const updatePayload = { ...submitData };
 
-        // Remove logo from payload if it was uploaded (don't send base64)
-        if (hasLogoDataUrl) {
+        // Remove logo from payload if it was uploaded (don't send File or base64)
+        if (needsLogoUpload) {
           delete updatePayload.logo;
         }
-
-        // Always strip UI-only fields
-        delete updatePayload.logoFilename;
-        delete updatePayload.logoAccessUrl;
 
         // Step 3: Send the PATCH to update the object
         response = await object.updateObject(
@@ -517,14 +503,11 @@ const AcMyAccountDynamicModal = ({
           );
         }
       } else {
-        // Step 1: Create new object without logo
-        const createData = hasLogoDataUrl
-          ? { ...submitData, logo: undefined }
-          : submitData;
-
-        // Always strip UI-only fields
-        delete createData.logoFilename;
-        delete createData.logoAccessUrl;
+        // Step 1: Create new object without logo if it needs upload
+        const createData = { ...submitData };
+        if (needsLogoUpload) {
+          delete createData.logo;
+        }
 
         response = await object.createObject(
           config.beheerConfig.registerSlug,
@@ -532,17 +515,27 @@ const AcMyAccountDynamicModal = ({
           createData
         );
 
-        // Step 2: Upload logo if it's a data URL and we got a response with an ID
-        // The backend will automatically link the file to the logo field
-        if (hasLogoDataUrl && response?.id) {
-          const uploadResult = await uploadFileToObject(
-            submitData.logo,
-            config.beheerConfig.registerSlug,
-            config.beheerConfig.schemaSlug,
-            response.id,
-            'logo',
-            submitData.logoFilename || 'logo.png'
-          );
+        // Step 2: Upload logo if needed and we got a response with an ID
+        if (needsLogoUpload && response?.id) {
+          let uploadResult;
+          if (logoIsFile) {
+            uploadResult = await uploadFileToObjectDirect(
+              submitData.logo,
+              config.beheerConfig.registerSlug,
+              config.beheerConfig.schemaSlug,
+              response.id,
+              'logo'
+            );
+          } else {
+            uploadResult = await uploadFileToObject(
+              submitData.logo,
+              config.beheerConfig.registerSlug,
+              config.beheerConfig.schemaSlug,
+              response.id,
+              'logo',
+              'logo.png'
+            );
+          }
 
           // If we got a downloadUrl, update the object with the logo URL
           if (uploadResult && uploadResult.fileData?.downloadUrl) {

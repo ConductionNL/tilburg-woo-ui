@@ -124,9 +124,7 @@ const FormModalConfigFactory = {
           ...baseConfig,
           // Initial data is now automatically generated from schema properties
           // Only specify custom defaults or overrides here
-          initialData: {
-            logoFilename: '', // Add logoFilename as UI-only field for file tracking
-          },
+          initialData: {},
           optionsProviders: {
             voorzieningstype: () => [
               { value: 'Toepassing', label: 'Toepassing' },
@@ -193,6 +191,10 @@ const FormModalConfigFactory = {
             type: { visible: false }, // Hide the type field in applicaties modal
             logoFilename: { visible: false }, // Hide UI-only field from form
             logoAccessUrl: { visible: false }, // Hide UI-only field from form
+            logo: {
+              useFileObjects: true, // Enable File objects mode
+              enableFileSizeCheck: false, // Disable file size checks
+            },
             licentietype: {
               // Ensure no default value is set for licentietype
               defaultValue: '',
@@ -476,9 +478,7 @@ const FormModalConfigFactory = {
         return {
           ...baseConfig,
           // Initial data is now automatically generated from schema properties
-          initialData: {
-            logoFilename: '', // Add logoFilename as UI-only field for file tracking
-          },
+          initialData: {},
           optionsProviders: {
             samenwerkingen: {
               type: 'collection',
@@ -496,6 +496,10 @@ const FormModalConfigFactory = {
             id: { visible: false },
             logoFilename: { visible: false }, // Hide UI-only field from form
             logoAccessUrl: { visible: false }, // Hide UI-only field from form,
+            logo: {
+              useFileObjects: true, // Enable File objects mode
+              enableFileSizeCheck: false, // Disable file size checks
+            },
             beschrijvingKort: { visible: false },
             beschrijvingLang: { visible: false },
             type: { visible: (formData, isEdit) => !isEdit }, // Only show type field when adding new organisation

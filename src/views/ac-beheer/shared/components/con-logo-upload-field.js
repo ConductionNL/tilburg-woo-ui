@@ -1,5 +1,5 @@
 // eslint-disable-next-line import/no-unresolved
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { AcFlex } from '@src/atoms';
 import { AcButton } from '@src/molecules';
 
@@ -7,8 +7,14 @@ import { AcButton } from '@src/molecules';
  * Custom Logo Upload Component for form fields
  * Handles file selection and validation for logo uploads
  *
+ * Supports two modes:
+ * - File mode: Passes File objects directly (new approach)
+ * - Base64 mode: Converts to base64 strings (backward compatibility)
+ *
  * @param {Object} props
  * @param {'normal'|'small'} props.size - Size variant of the component
+ * @param {boolean} props.useFileObjects - If true, passes File objects instead of base64 (default: false for backward compatibility)
+ * @param {boolean} props.enableFileSizeCheck - If true, validates file size against maxFileSize (default: true, but false when useFileObjects is true unless explicitly set)
  */
 export const LogoUploadField = ({
   fieldConfig,
@@ -24,13 +30,76 @@ export const LogoUploadField = ({
   showPreview = true,
   size = 'normal',
   maxFileSize = 1024, // in KB (default 1 MB)
+  useFileObjects, // New prop: if true, use File objects instead of base64
+  enableFileSizeCheck, // Optional: explicitly control file size checking
 }) => {
+  // Read useFileObjects from fieldConfig if not passed directly (for custom component usage)
+  const effectiveUseFileObjects =
+    useFileObjects !== undefined
+      ? useFileObjects
+      : fieldConfig?.useFileObjects || false;
+
+  // Read enableFileSizeCheck from fieldConfig if not passed directly
+  const effectiveEnableFileSizeCheck =
+    enableFileSizeCheck !== undefined
+      ? enableFileSizeCheck
+      : fieldConfig?.enableFileSizeCheck;
+
   const inputRef = useRef(null);
+  const blobUrlRef = useRef(null);
   const [selectedFileName, setSelectedFileName] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
+  // Determine if file size checking should be enabled
+  // - Default: true (for backward compatibility)
+  // - When useFileObjects is true: default to false, but allow override via enableFileSizeCheck
+  // - When useFileObjects is false: default to true, but allow override via enableFileSizeCheck
+  const shouldLimitFileSize =
+    effectiveEnableFileSizeCheck !== undefined
+      ? effectiveEnableFileSizeCheck
+      : !effectiveUseFileObjects; // Default: true for base64 mode, false for File objects mode
+
   // Use value if provided (from ConDynamicSchemaForm), otherwise fall back to _value
   const logoValue = value !== undefined ? value : _value;
+
+  // Generate preview URL based on logoValue type
+  const previewUrl = useMemo(() => {
+    if (!logoValue) return null;
+
+    // If it's a File object, create blob URL
+    if (logoValue instanceof File) {
+      return URL.createObjectURL(logoValue);
+    }
+
+    // If it's a string (URL or base64), use directly
+    if (typeof logoValue === 'string') {
+      return logoValue;
+    }
+
+    return null;
+  }, [logoValue]);
+
+  // Cleanup blob URLs when component unmounts or logoValue changes
+  useEffect(() => {
+    // Cleanup previous blob URL if it exists
+    if (blobUrlRef.current) {
+      URL.revokeObjectURL(blobUrlRef.current);
+      blobUrlRef.current = null;
+    }
+
+    // Store new blob URL if previewUrl is a blob URL
+    if (previewUrl && previewUrl.startsWith('blob:')) {
+      blobUrlRef.current = previewUrl;
+    }
+
+    // Cleanup function: revoke blob URL on unmount or change
+    return () => {
+      if (blobUrlRef.current) {
+        URL.revokeObjectURL(blobUrlRef.current);
+        blobUrlRef.current = null;
+      }
+    };
+  }, [previewUrl]);
 
   const defaultAccept = [
     'image/png',
@@ -101,7 +170,7 @@ export const LogoUploadField = ({
     // Validate file size against maxFileSize (KB)
     const limitBytes = (Number(maxFileSize) || 0) * 1024;
     const fileSizeBytes = file.size || 0;
-    if (limitBytes > 0 && fileSizeBytes > limitBytes) {
+    if (shouldLimitFileSize && limitBytes > 0 && fileSizeBytes > limitBytes) {
       if (inputRef.current) inputRef.current.value = null;
       onChange('');
       setSelectedFileName('');
@@ -117,17 +186,25 @@ export const LogoUploadField = ({
     if (onChangeFileName) {
       onChangeFileName(file.name);
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      onChange(reader.result);
-    };
-    reader.onerror = () => {
-      // TODO: show user-friendly error state if needed
-      onChange('');
-      setSelectedFileName('');
-      if (onChangeFileName) onChangeFileName('');
-    };
-    reader.readAsDataURL(file);
+
+    // If useFileObjects is true, pass File object directly
+    // Otherwise, convert to base64 for backward compatibility
+    if (effectiveUseFileObjects) {
+      onChange(file);
+    } else {
+      // Backward compatibility: convert to base64
+      const reader = new FileReader();
+      reader.onload = () => {
+        onChange(reader.result);
+      };
+      reader.onerror = () => {
+        // @TODO: show user-friendly error state if needed
+        onChange('');
+        setSelectedFileName('');
+        if (onChangeFileName) onChangeFileName('');
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleButtonClick = () => {
@@ -184,6 +261,12 @@ export const LogoUploadField = ({
   // Get the display filename - auto-detect from URL if needed
   const displayFileName = useMemo(() => {
     if (selectedFileName) return selectedFileName;
+
+    // If logoValue is a File object, use its name
+    if (logoValue instanceof File) {
+      return logoValue.name;
+    }
+
     if (fieldConfig?.filename) return fieldConfig.filename;
 
     // Auto-detect filename from URL if logoValue is a URL
@@ -329,8 +412,12 @@ export const LogoUploadField = ({
           }}
         >
           Toegestane bestandstypen: {readableAccept.join(', ')}
-          <br />
-          Bestand mag maximaal {readableMaxFileSize} groot zijn.
+          {shouldLimitFileSize && (
+            <>
+              <br />
+              Bestand mag maximaal {readableMaxFileSize} groot zijn.
+            </>
+          )}
         </small>
       )}
 
@@ -390,7 +477,7 @@ export const LogoUploadField = ({
         </div>
       )}
 
-      {showPreview && logoValue ? (
+      {showPreview && previewUrl ? (
         <div
           style={{
             marginTop: '0.75rem',
@@ -400,7 +487,7 @@ export const LogoUploadField = ({
           }}
         >
           <img
-            src={logoValue}
+            src={previewUrl}
             alt='Logo preview'
             style={{
               display: 'block',

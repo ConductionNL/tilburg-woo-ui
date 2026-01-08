@@ -25,7 +25,11 @@ import { useNavigate } from 'react-router-dom';
 import { useDebouncedInput } from '@src/hooks/index';
 import { ConMarkdown } from '@src/components';
 import LogoUploadField from '@views/ac-beheer/shared/components/con-logo-upload-field';
-import { uploadFileToObject } from '@src/utilities';
+import {
+  uploadFileToObject,
+  uploadFileToObjectDirect,
+  isDataUrlNeedingUpload,
+} from '@src/utilities';
 import { validateWebsite as centralValidateWebsite } from '@views/ac-forms/validation/form-validations';
 
 const organizationTypes = [
@@ -65,8 +69,8 @@ const AcRegister = () => {
     organizationType: 'Leverancier',
     email: '',
   });
-  const [logoDataUrl, setLogoDataUrl] = useState(null);
-  const [logoFilename, setLogoFilename] = useState(null);
+  // logo can be: File (new selection), string URL (existing), or null/empty
+  const [logo, setLogo] = useState(null);
   const [touched, setTouched] = useState({
     name: false,
     contactPersons: {
@@ -198,16 +202,38 @@ const AcRegister = () => {
       }
 
       // Step 2: Upload logo file if it exists and update organization with downloadUrl
-      if (logoDataUrl && data.id) {
+      // Check if logo needs to be uploaded
+      // - File object: needs upload
+      // - base64 data URL: needs upload (backward compatibility)
+      // - string URL: already uploaded, no action needed
+      const logoIsFile = logo instanceof File;
+      const hasLogoDataUrl = isDataUrlNeedingUpload(logo);
+      const needsLogoUpload = logoIsFile || hasLogoDataUrl;
+
+      if (needsLogoUpload && data.id) {
         try {
-          const uploadResult = await uploadFileToObject(
-            logoDataUrl,
-            'voorzieningen',
-            'organisatie',
-            data.id,
-            'logo',
-            logoFilename || 'logo.png'
-          );
+          let uploadResult;
+          if (logoIsFile) {
+            // Upload File object directly
+            uploadResult = await uploadFileToObjectDirect(
+              logo,
+              'voorzieningen',
+              'organisatie',
+              data.id,
+              'logo'
+              // No filename needed - comes from File.name
+            );
+          } else {
+            // Upload base64 data URL (backward compatibility)
+            uploadResult = await uploadFileToObject(
+              logo,
+              'voorzieningen',
+              'organisatie',
+              data.id,
+              'logo',
+              'logo.png'
+            );
+          }
 
           // If we got a downloadUrl, update the organization with the logo URL
           if (uploadResult && uploadResult.fileData?.downloadUrl) {
@@ -297,9 +323,8 @@ const AcRegister = () => {
               validateEmail,
               validatePhone,
               touched,
-              logoDataUrl,
-              setLogoDataUrl,
-              setLogoFilename,
+              logo,
+              setLogo,
             }}
           />
         );
@@ -324,7 +349,7 @@ const AcRegister = () => {
           <ReviewForm
             {...{
               organization,
-              logoDataUrl,
+              logo,
               confirmationCheckbox,
               setConfirmationCheckbox,
             }}
@@ -925,9 +950,8 @@ const OrganizationOptionalForm = memo(
     loading,
     validateEmail,
     validatePhone,
-    logoDataUrl,
-    setLogoDataUrl,
-    setLogoFilename,
+    logo,
+    setLogo,
   }) => {
     const dimensions = { width: '100%', height: '234px' };
     const counterRef = useRef(null);
@@ -1041,18 +1065,18 @@ const OrganizationOptionalForm = memo(
 
             <LogoUploadField
               fieldConfig={{ label: 'Logo', filename: undefined }}
-              _value={logoDataUrl || ''}
-              onChange={(dataUrl) => setLogoDataUrl(dataUrl || null)}
-              onChangeFileName={(filename) => setLogoFilename(filename)}
+              _value={logo || ''}
+              onChange={(value) => setLogo(value || null)}
               onClear={() => {
-                setLogoDataUrl(null);
-                setLogoFilename(null);
+                setLogo(null);
               }}
               validation={{ required: false }}
               propertyName={'logo'}
               isDisabled={loading}
               showPreview={true}
               size={'normal'}
+              useFileObjects={true}
+              enableFileSizeCheck={false}
             />
 
             {(organization.organizationType === 'Gemeente' ||
@@ -1250,16 +1274,16 @@ const ContactInformationForm = memo(
 );
 
 const ReviewForm = memo(
-  ({ organization, logoDataUrl, confirmationCheckbox, setConfirmationCheckbox }) => {
+  ({ organization, logo, confirmationCheckbox, setConfirmationCheckbox }) => {
     return (
       <div className='ac-register-form-section'>
         <div className='ac-register-review'>
           <div className='ac-register-review__section'>
             <div className='ac-register-review__header'>
               <h4 className='utrecht-heading-4'>Organisatiegegevens</h4>
-              {logoDataUrl && (
+              {logo && (
                 <ConLogoPreview
-                  logoUrl={logoDataUrl}
+                  logoUrl={logo}
                   className='ac-register-review__logo'
                 />
               )}
