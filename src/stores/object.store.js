@@ -4479,7 +4479,7 @@ export class ObjectStore {
       // Reset warmup state for this type to force refresh
       runInAction(() => {
         // only set warmupInProgress if it has not warmup up this type before.
-        if (this.warmupInProgress[schemaSlug] === undefined && triggerLoading) {
+        if (this.warmupInProgress[schemaSlug] === undefined || triggerLoading) {
           this.warmupInProgress[schemaSlug] = true;
         }
         this.warmupCompleted[schemaSlug] = false;

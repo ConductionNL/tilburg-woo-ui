@@ -296,6 +296,9 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
   const warmupLoading = config?.schemaSlug
     ? object.isWarmupInProgress(config.schemaSlug)
     : false;
+  const warmupCompleted = config?.schemaSlug
+    ? object.isWarmupCompleted(config.schemaSlug)
+    : false;
   const warmupError = config?.schemaSlug
     ? object.getWarmupError(config.schemaSlug)
     : null;
@@ -364,7 +367,12 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
 
   // Refresh warmup data when type changes
   useEffect(() => {
-    if (!baseConfig || baseConfig.isDynamicEntry) {
+    if (
+      !baseConfig ||
+      baseConfig.isDynamicEntry ||
+      warmupLoading || // do not warmup if the warmup is in progress
+      !warmupCompleted // do not warmup if the initial warmup is not completed
+    ) {
       return;
     }
 
@@ -1238,7 +1246,11 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
                         onClick={() => {
                           // Phase 4: Refresh warmup data for this specific type
                           if (config?.schemaSlug) {
-                            object.refreshWarmupDataForType(config.schemaSlug, undefined, true);
+                            object.refreshWarmupDataForType(
+                              config.schemaSlug,
+                              undefined,
+                              true
+                            );
                           }
                         }}
                         disabled={loading || warmupLoading}
