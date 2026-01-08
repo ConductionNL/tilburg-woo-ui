@@ -353,7 +353,7 @@ const ConFormsDienst = ({ store }) => {
     };
     const timeoutId = setTimeout(addClickHandlers, 100);
     return () => clearTimeout(timeoutId);
-  }, [stepper.getCurrentStep(), prefillLoading, prefillError, stepper]);
+  }, [stepper.getCurrentStep(), prefillLoading, prefillError]);
 
   // Ensure /me is refreshed when the wizard mounts (so stages can read active organisation)
   useEffect(() => {
@@ -1060,7 +1060,7 @@ const ConFormsDienst = ({ store }) => {
     };
 
     handleRedirect();
-  }, [dienstFromUrl, isGebruikBeheerdersFlow, isEditMode, store, stepper]);
+  }, [dienstFromUrl, isGebruikBeheerdersFlow, isEditMode, store]);
 
   // Keep dienst.modules in sync with current selection
   useEffect(() => {

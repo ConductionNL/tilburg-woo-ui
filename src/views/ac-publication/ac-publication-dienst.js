@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { AcColumn, AcContainer, AcFlex } from '@atoms';
 import { AcLoader, ConDetailsActionsMenu, ConExternalLink } from '@components';
 import { VISUALS } from '@constants';
+import { AcButton } from '@molecules';
 import {
   Heading,
   Paragraph,
@@ -234,39 +235,78 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
               })()}
             {schemaSlug && getTabHeaderName(schemaSlug, true)}
           </Heading>
-          {schemaSlug && (
-            <ConDetailsActionsMenu
-              user={user}
-              id={id}
-              schemaSlug={schemaSlug}
-              title={get_single?.['@self']?.name || get_single?.id}
-              published={get_single?.['@self']?.published}
-              object={get_single}
-              showViewAction={false}
-              showEditAction={true}
-              showPublishActions={true}
-              onDelete={handleDelete}
-              onEdit={() => {
-                if (schemaSlug) {
-                  const wizardSchemaName =
-                    normalizeSchemaName(schemaSlug).toLowerCase();
-                  const wizards = Object.values(DASHBOARD_WIZARDS);
-                  const wizard = wizards.find((w) => w.schema === wizardSchemaName);
-                  if (wizard) {
-                    const baseUrl = getWizardUrl(wizard);
-                    const url = new URL(baseUrl, window.location.origin);
-                    url.searchParams.set('id', id);
-                    navigate(url.pathname + url.search);
-                    return;
-                  }
-                }
-                // Fallback to beheer detail page in same tab with edit modal
-                const beheerUrl = `/beheer/${schemaSlug}/${id}?showEditModal=true`;
-                navigate(beheerUrl);
-              }}
-              triggerStyle='button'
-            />
-          )}
+          {schemaSlug &&
+            (() => {
+              const userGroups =
+                user?.currentUser?.groups || user?.user?.groups || [];
+              const hasGebruikBeheerder = userGroups.includes('gebruik-beheerder');
+
+              // Check if user is the owner of the object
+              const userActiveOrg = user?.activeOrganization;
+              const objectOrg = get_single?.['@self']?.organisation;
+              const userOrgId = userActiveOrg?.uuid || userActiveOrg?.id;
+              const objectOrgId =
+                typeof objectOrg === 'string'
+                  ? objectOrg
+                  : objectOrg?.id || objectOrg?.uuid;
+              const isOwner = userOrgId && objectOrgId && userOrgId === objectOrgId;
+
+              // For GebruikBeheerder, show a single button only if not the owner
+              // If owner, show the actions menu
+              if (hasGebruikBeheerder && !isOwner) {
+                return (
+                  <AcButton
+                    style='button'
+                    buttonType='primary'
+                    icon={<VISUALS.PLUS />}
+                    onClick={() => {
+                      const params = new URLSearchParams({
+                        type: 'ontbrekend-dienst',
+                        dienst: id,
+                      });
+                      navigate(`/forms/gebruik/dienst?${params.toString()}`);
+                    }}
+                  />
+                );
+              }
+
+              // For AanbodBeheerder or GebruikBeheerder who owns the object, show the actions menu
+              return (
+                <ConDetailsActionsMenu
+                  user={user}
+                  id={id}
+                  schemaSlug={schemaSlug}
+                  title={get_single?.['@self']?.name || get_single?.id}
+                  published={get_single?.['@self']?.published}
+                  object={get_single}
+                  showViewAction={false}
+                  showEditAction={true}
+                  showPublishActions={true}
+                  onDelete={handleDelete}
+                  onEdit={() => {
+                    if (schemaSlug) {
+                      const wizardSchemaName =
+                        normalizeSchemaName(schemaSlug).toLowerCase();
+                      const wizards = Object.values(DASHBOARD_WIZARDS);
+                      const wizard = wizards.find(
+                        (w) => w.schema === wizardSchemaName
+                      );
+                      if (wizard) {
+                        const baseUrl = getWizardUrl(wizard);
+                        const url = new URL(baseUrl, window.location.origin);
+                        url.searchParams.set('id', id);
+                        navigate(url.pathname + url.search);
+                        return;
+                      }
+                    }
+                    // Fallback to beheer detail page in same tab with edit modal
+                    const beheerUrl = `/beheer/${schemaSlug}/${id}?showEditModal=true`;
+                    navigate(beheerUrl);
+                  }}
+                  triggerStyle='button'
+                />
+              );
+            })()}
         </AcFlex>
 
         {!get_single?.['@self']?.published && (
