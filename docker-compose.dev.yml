@@ -78,7 +78,7 @@ services:
       # Menu Configuration
       - FOOTER_STYLE=vng
       # Footer Text Configuration
-      - FOOTER_LOGO_TITLE=VNG Softwarectalogus
+      - FOOTER_LOGO_TITLE=Softwarecatalogus
       - FOOTER_LOGO_SUBTITLE=Één plek voor alle software voor en door Gemeenten
       # Search Configuration
       - DEFAULT_SEARCH_SCHEMA=18
