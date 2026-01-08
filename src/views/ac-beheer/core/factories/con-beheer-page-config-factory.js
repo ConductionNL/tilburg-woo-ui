@@ -533,6 +533,20 @@ const BeheerPageConfigFactory = {
           modals: [...baseConfig.modals, 'addAccount'],
         };
 
+      case 'organisatie':
+      case 'organisaties':
+        return {
+          ...baseConfig,
+          schemaSlug: 'organisatie',
+          paginationKey: 'organisatie',
+          title: 'Organisaties',
+          routeType: 'organisatie',
+          extend: [...baseConfig.extend],
+          defaultHeaders: [],
+          customHeaders: {},
+          isDynamicEntry: true, // IMPORTANT: this triggers the beheer page to block access to the list page, this is important to keep as this case is not supposed to exist 😅
+        };
+
       default:
         // Generic configuration for dynamic types
         // Assumes: schemaSlug = type, paginationKey = type, routeType = type

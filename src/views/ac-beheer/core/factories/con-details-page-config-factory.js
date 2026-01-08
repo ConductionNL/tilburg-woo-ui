@@ -132,6 +132,7 @@ const DetailsPageConfigFactory = {
           },
         };
 
+      case 'organisatie':
       case 'organisaties':
         return {
           ...baseDetailsConfig,
