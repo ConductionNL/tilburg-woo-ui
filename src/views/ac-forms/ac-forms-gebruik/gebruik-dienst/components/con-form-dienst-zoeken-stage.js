@@ -504,7 +504,13 @@ const ConFormDienstZoekenStage = ({
                     d?.beschrijvingKort || d?.beschrijving || d?.omschrijving || ''
                   ).trim();
                   const website = String(d?.website || '').trim();
-                  const type = String(d?.type || '').trim();
+                  // d?.type can be a string or array of strings; handle both and turn into array
+                  let type = [];
+                  if (Array.isArray(d?.type)) {
+                    type = d.type.map((t) => String(t).trim()).filter(Boolean);
+                  } else {
+                    type = [String(d?.type || '').trim()];
+                  }
                   const status = String(d?.status || '').trim();
                   const aanbieder = d?.aanbieder ? String(d.aanbieder).trim() : null;
 
@@ -588,20 +594,21 @@ const ConFormDienstZoekenStage = ({
                           disabled={loading}
                         />
                       </div>
-                      <div style={{ flex: 1 }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
                         {/* Header row with naam and badges */}
                         <div
                           style={{
                             display: 'flex',
                             alignItems: 'flex-start',
-                            justifyContent: 'space-between',
                             gap: '0.75rem',
                             marginBottom: '0.5rem',
-                            flexWrap: 'wrap',
+                            minWidth: 0,
                           }}
                         >
                           {naam && (
-                            <div style={{ flex: 1, minWidth: '200px' }}>
+                            <div
+                              style={{ flex: 1, minWidth: '200px', flexShrink: 1 }}
+                            >
                               <strong style={{ fontSize: '1rem' }}>{naam}</strong>
                             </div>
                           )}
@@ -610,23 +617,30 @@ const ConFormDienstZoekenStage = ({
                               display: 'flex',
                               gap: '0.5rem',
                               flexWrap: 'wrap',
+                              minWidth: 0,
+                              flexShrink: 1,
+                              maxWidth: '100%',
+                              marginLeft: 'auto',
+                              justifyContent: 'flex-end',
                             }}
                           >
-                            {type && (
-                              <span
-                                style={{
-                                  display: 'inline-block',
-                                  padding: '0.125rem 0.5rem',
-                                  backgroundColor: '#e5e7eb',
-                                  borderRadius: '9999px',
-                                  fontSize: '0.75rem',
-                                  fontWeight: '500',
-                                  color: '#374151',
-                                }}
-                              >
-                                {type}
-                              </span>
-                            )}
+                            {type.length > 0 &&
+                              type.map((t) => (
+                                <span
+                                  key={t}
+                                  style={{
+                                    display: 'inline-block',
+                                    padding: '0.125rem 0.5rem',
+                                    backgroundColor: '#e5e7eb',
+                                    borderRadius: '9999px',
+                                    fontSize: '0.75rem',
+                                    fontWeight: '500',
+                                    color: '#374151',
+                                  }}
+                                >
+                                  {t}
+                                </span>
+                              ))}
                             {status && (
                               <span
                                 style={{

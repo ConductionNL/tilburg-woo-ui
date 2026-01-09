@@ -20,57 +20,41 @@ import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constant
 import { AcFormatDate } from '@src/utilities/ac-format-date';
 
 /**
- * Gets the relevant start date based on the status.
- * Maps status values to their corresponding date fields and labels.
+ * Gets all dates that have values, to show the full history/trail of status changes.
+ * Returns an array of date objects with label and formatted value.
  */
-const getRelevantStartDate = (data) => {
-  const status = data?.status;
-  if (!status) return null;
+const getAllDatesWithValues = (data) => {
+  const dates = [];
 
-  switch (status) {
-    case 'in gebruik':
-      return data?.datumInGebruik
-        ? {
-            label: 'Startdatum In gebruik',
-            value: AcFormatDate(data.datumInGebruik, 'YYYY-MM-DD', 'D MMMM YYYY'),
-          }
-        : null;
-    case 'in ontwikkeling':
-      return data?.datumInOntwikkeling
-        ? {
-            label: 'Startdatum In ontwikkeling',
-            value: AcFormatDate(
-              data.datumInOntwikkeling,
-              'YYYY-MM-DD',
-              'D MMMM YYYY'
-            ),
-          }
-        : null;
-    case 'einde ondersteuning':
-      return data?.datumEindeOndersteuning
-        ? {
-            label: 'Startdatum Einde ondersteuning',
-            value: AcFormatDate(
-              data.datumEindeOndersteuning,
-              'YYYY-MM-DD',
-              'D MMMM YYYY'
-            ),
-          }
-        : null;
-    case 'teruggetrokken':
-      return data?.datumTeruggetrokken
-        ? {
-            label: 'Startdatum Teruggetrokken',
-            value: AcFormatDate(
-              data.datumTeruggetrokken,
-              'YYYY-MM-DD',
-              'D MMMM YYYY'
-            ),
-          }
-        : null;
-    default:
-      return null;
+  if (data?.datumInOntwikkeling) {
+    dates.push({
+      label: 'Startdatum In ontwikkeling',
+      value: AcFormatDate(data.datumInOntwikkeling, 'YYYY-MM-DD', 'D MMMM YYYY'),
+    });
   }
+
+  if (data?.datumInGebruik) {
+    dates.push({
+      label: 'Startdatum In gebruik',
+      value: AcFormatDate(data.datumInGebruik, 'YYYY-MM-DD', 'D MMMM YYYY'),
+    });
+  }
+
+  if (data?.datumEindeOndersteuning) {
+    dates.push({
+      label: 'Startdatum Einde ondersteuning',
+      value: AcFormatDate(data.datumEindeOndersteuning, 'YYYY-MM-DD', 'D MMMM YYYY'),
+    });
+  }
+
+  if (data?.datumTeruggetrokken) {
+    dates.push({
+      label: 'Startdatum Teruggetrokken',
+      value: AcFormatDate(data.datumTeruggetrokken, 'YYYY-MM-DD', 'D MMMM YYYY'),
+    });
+  }
+
+  return dates;
 };
 
 /**
@@ -340,13 +324,15 @@ const ConKoppelingDetailsPageContent = ({
             </div>
           )}
           {(() => {
-            const relevantDate = getRelevantStartDate(data);
-            return relevantDate ? (
-              <div style={{ marginBottom: '8px' }}>
-                <strong>{relevantDate.label}: </strong>
-                {relevantDate.value}
-              </div>
-            ) : null;
+            const allDates = getAllDatesWithValues(data);
+            return allDates.length > 0
+              ? allDates.map((dateInfo, index) => (
+                  <div key={index} style={{ marginBottom: '8px' }}>
+                    <strong>{dateInfo.label}: </strong>
+                    {dateInfo.value}
+                  </div>
+                ))
+              : null;
           })()}
           {data?.beschrijvingKort && (
             <div style={{ marginBottom: '8px' }}>
@@ -362,12 +348,20 @@ const ConKoppelingDetailsPageContent = ({
           )}
           {data?.standaardversies && data.standaardversies.length > 0 && (
             <div style={{ marginBottom: '8px' }}>
-              <strong>Standaardversies: </strong>
-              {data.standaardversies.map((s) => (
-                <div key={s}>
-                  <ConUuidResolver>{String(s)}</ConUuidResolver>
-                </div>
-              ))}
+              <strong>Standaardversies:</strong>
+              <ul
+                style={{
+                  margin: '0.5rem 0 0 0',
+                  paddingInlineStart: '1.25rem',
+                  listStyleType: 'disc',
+                }}
+              >
+                {data.standaardversies.map((s) => (
+                  <li key={s} style={{ marginBottom: '0.25rem' }}>
+                    <ConUuidResolver>{String(s)}</ConUuidResolver>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
           {data?.dienst && (

@@ -4,7 +4,8 @@ import { withStore } from '@stores';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AcColumn, AcContainer, AcFlex } from '@atoms';
 import { AcLoader, ConDetailsActionsMenu } from '@components';
-// import { VISUALS } from '@constants';
+import { VISUALS } from '@constants';
+import { AcButton } from '@molecules';
 import {
   Heading,
   Paragraph,
@@ -23,57 +24,41 @@ import { AcFormatDate } from '@src/utilities/ac-format-date';
 // import { checkOrganizationPermissions } from '@utils/organization-permissions';
 
 /**
- * Gets the relevant start date based on the status.
- * Maps status values to their corresponding date fields and labels.
+ * Gets all dates that have values, to show the full history/trail of status changes.
+ * Returns an array of date objects with label and formatted value.
  */
-const getRelevantStartDate = (data) => {
-  const status = data?.status;
-  if (!status) return null;
+const getAllDatesWithValues = (data) => {
+  const dates = [];
 
-  switch (status) {
-    case 'in gebruik':
-      return data?.datumInGebruik
-        ? {
-            label: 'Startdatum In gebruik',
-            value: AcFormatDate(data.datumInGebruik, 'YYYY-MM-DD', 'D MMMM YYYY'),
-          }
-        : null;
-    case 'in ontwikkeling':
-      return data?.datumInOntwikkeling
-        ? {
-            label: 'Startdatum In ontwikkeling',
-            value: AcFormatDate(
-              data.datumInOntwikkeling,
-              'YYYY-MM-DD',
-              'D MMMM YYYY'
-            ),
-          }
-        : null;
-    case 'einde ondersteuning':
-      return data?.datumEindeOndersteuning
-        ? {
-            label: 'Startdatum Einde ondersteuning',
-            value: AcFormatDate(
-              data.datumEindeOndersteuning,
-              'YYYY-MM-DD',
-              'D MMMM YYYY'
-            ),
-          }
-        : null;
-    case 'teruggetrokken':
-      return data?.datumTeruggetrokken
-        ? {
-            label: 'Startdatum Teruggetrokken',
-            value: AcFormatDate(
-              data.datumTeruggetrokken,
-              'YYYY-MM-DD',
-              'D MMMM YYYY'
-            ),
-          }
-        : null;
-    default:
-      return null;
+  if (data?.datumInOntwikkeling) {
+    dates.push({
+      label: 'Startdatum In ontwikkeling',
+      value: AcFormatDate(data.datumInOntwikkeling, 'YYYY-MM-DD', 'D MMMM YYYY'),
+    });
   }
+
+  if (data?.datumInGebruik) {
+    dates.push({
+      label: 'Startdatum In gebruik',
+      value: AcFormatDate(data.datumInGebruik, 'YYYY-MM-DD', 'D MMMM YYYY'),
+    });
+  }
+
+  if (data?.datumEindeOndersteuning) {
+    dates.push({
+      label: 'Startdatum Einde ondersteuning',
+      value: AcFormatDate(data.datumEindeOndersteuning, 'YYYY-MM-DD', 'D MMMM YYYY'),
+    });
+  }
+
+  if (data?.datumTeruggetrokken) {
+    dates.push({
+      label: 'Startdatum Teruggetrokken',
+      value: AcFormatDate(data.datumTeruggetrokken, 'YYYY-MM-DD', 'D MMMM YYYY'),
+    });
+  }
+
+  return dates;
 };
 
 /**
@@ -196,37 +181,78 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
             {schemaSlug && getTabHeaderName(schemaSlug, true)}
           </Heading>
 
-          <ConDetailsActionsMenu
-            user={user}
-            id={id}
-            schemaSlug={schemaSlug}
-            title={title}
-            published={get_single?.['@self']?.published}
-            object={get_single}
-            showViewAction={false}
-            showEditAction={true}
-            showPublishActions={true}
-            onDelete={handleDelete}
-            onEdit={() => {
-              if (schemaSlug) {
-                const wizardSchemaName =
-                  normalizeSchemaName(schemaSlug).toLowerCase();
-                const wizards = Object.values(DASHBOARD_WIZARDS);
-                const wizard = wizards.find((w) => w.schema === wizardSchemaName);
-                if (wizard) {
-                  const baseUrl = getWizardUrl(wizard);
-                  const url = new URL(baseUrl, window.location.origin);
-                  url.searchParams.set('id', id);
-                  navigate(url.pathname + url.search);
-                  return;
-                }
+          {schemaSlug &&
+            (() => {
+              const userGroups =
+                user?.currentUser?.groups || user?.user?.groups || [];
+              const hasGebruikBeheerder = userGroups.includes('gebruik-beheerder');
+
+              // Check if user is the owner of the object
+              const userActiveOrg = user?.activeOrganization;
+              const objectOrg = get_single?.['@self']?.organisation;
+              const userOrgId = userActiveOrg?.uuid || userActiveOrg?.id;
+              const objectOrgId =
+                typeof objectOrg === 'string'
+                  ? objectOrg
+                  : objectOrg?.id || objectOrg?.uuid;
+              const isOwner = userOrgId && objectOrgId && userOrgId === objectOrgId;
+
+              // For GebruikBeheerder, show a single button only if not the owner
+              // If owner, show the actions menu
+              if (hasGebruikBeheerder && !isOwner) {
+                return (
+                  <AcButton
+                    style='button'
+                    buttonType='primary'
+                    icon={<VISUALS.PLUS />}
+                    onClick={() => {
+                      const params = new URLSearchParams({
+                        type: 'aanbieden-koppeling',
+                        koppelingId: id,
+                      });
+                      navigate(`/forms/gebruik/koppeling?${params.toString()}`);
+                    }}
+                  />
+                );
               }
-              // Fallback to beheer detail page in same tab with edit modal
-              const beheerUrl = `/beheer/${schemaSlug}/${id}?showEditModal=true`;
-              navigate(beheerUrl);
-            }}
-            triggerStyle='button'
-          />
+
+              // For AanbodBeheerder or GebruikBeheerder who owns the object, show the actions menu
+              return (
+                <ConDetailsActionsMenu
+                  user={user}
+                  id={id}
+                  schemaSlug={schemaSlug}
+                  title={title}
+                  published={get_single?.['@self']?.published}
+                  object={get_single}
+                  showViewAction={false}
+                  showEditAction={true}
+                  showPublishActions={true}
+                  onDelete={handleDelete}
+                  onEdit={() => {
+                    if (schemaSlug) {
+                      const wizardSchemaName =
+                        normalizeSchemaName(schemaSlug).toLowerCase();
+                      const wizards = Object.values(DASHBOARD_WIZARDS);
+                      const wizard = wizards.find(
+                        (w) => w.schema === wizardSchemaName
+                      );
+                      if (wizard) {
+                        const baseUrl = getWizardUrl(wizard);
+                        const url = new URL(baseUrl, window.location.origin);
+                        url.searchParams.set('id', id);
+                        navigate(url.pathname + url.search);
+                        return;
+                      }
+                    }
+                    // Fallback to beheer detail page in same tab with edit modal
+                    const beheerUrl = `/beheer/${schemaSlug}/${id}?showEditModal=true`;
+                    navigate(beheerUrl);
+                  }}
+                  triggerStyle='button'
+                />
+              );
+            })()}
         </AcFlex>
 
         {!get_single?.['@self']?.published && (
@@ -298,13 +324,15 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
               </div>
             )}
             {(() => {
-              const relevantDate = getRelevantStartDate(get_single);
-              return relevantDate ? (
-                <div style={{ marginBottom: '8px' }}>
-                  <strong>{relevantDate.label}: </strong>
-                  {relevantDate.value}
-                </div>
-              ) : null;
+              const allDates = getAllDatesWithValues(get_single);
+              return allDates.length > 0
+                ? allDates.map((dateInfo, index) => (
+                    <div key={index} style={{ marginBottom: '8px' }}>
+                      <strong>{dateInfo.label}: </strong>
+                      {dateInfo.value}
+                    </div>
+                  ))
+                : null;
             })()}
             {get_single?.beschrijvingKort && (
               <div style={{ marginBottom: '8px' }}>
@@ -321,12 +349,20 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
             {get_single?.standaardversies &&
               get_single.standaardversies.length > 0 && (
                 <div style={{ marginBottom: '8px' }}>
-                  <strong>Standaardversies: </strong>
-                  {get_single.standaardversies.map((s) => (
-                    <div key={s}>
-                      <ConUuidResolver>{String(s)}</ConUuidResolver>
-                    </div>
-                  ))}
+                  <strong>Standaardversies:</strong>
+                  <ul
+                    style={{
+                      margin: '0.5rem 0 0 0',
+                      paddingInlineStart: '1.25rem',
+                      listStyleType: 'disc',
+                    }}
+                  >
+                    {get_single.standaardversies.map((s) => (
+                      <li key={s} style={{ marginBottom: '0.25rem' }}>
+                        <ConUuidResolver>{String(s)}</ConUuidResolver>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
 

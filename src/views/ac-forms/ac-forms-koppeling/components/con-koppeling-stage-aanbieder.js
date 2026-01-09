@@ -72,10 +72,6 @@ const ConKoppelingStageAanbieder = memo(
         {/* Use the same container class as ConDynamicSchemaForm for consistency */}
         <div className='con-dynamic-form-container'>
           <div className='con-form-fields-container'>
-            {/* Choice between existing and new organization */}
-            <div className='con-form-field-wrapper field-size-full'>
-              <h3>Aanbieder selecteren</h3>
-            </div>
 
             {/* Existing organization dropdown */}
             {aanbiederKeuze === 'bestaand' && (

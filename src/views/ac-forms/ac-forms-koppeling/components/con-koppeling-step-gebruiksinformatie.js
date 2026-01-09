@@ -1,13 +1,11 @@
-import React, { memo, useState } from 'react';
+import React, { memo } from 'react';
 import clsx from 'clsx';
 import ReactSelect from 'react-select';
 import {
   Paragraph,
   Textarea,
   Separator,
-  Alert,
 } from '@utrecht/component-library-react/dist/css-module';
-import { VISUALS } from '@src/constants';
 
 /**
  * ConKoppelingStepGebruiksinformatie (Aanvullende informatie)
@@ -36,14 +34,14 @@ const ConKoppelingStepGebruiksinformatie = ({
   loading,
   nameByRow,
 }) => {
-  const [showInfoAlert, setShowInfoAlert] = useState(() => {
-    return !sessionStorage.getItem('koppeling-aanvullende-info-alert-closed');
-  });
+  //   const [showInfoAlert, setShowInfoAlert] = useState(() => {
+  //     return !sessionStorage.getItem('koppeling-aanvullende-info-alert-closed');
+  //   });
 
-  const handleCloseAlert = () => {
-    setShowInfoAlert(false);
-    sessionStorage.setItem('koppeling-aanvullende-info-alert-closed', 'true');
-  };
+  //   const handleCloseAlert = () => {
+  //     setShowInfoAlert(false);
+  //     sessionStorage.setItem('koppeling-aanvullende-info-alert-closed', 'true');
+  //   };
 
   return (
     <div
@@ -52,16 +50,15 @@ const ConKoppelingStepGebruiksinformatie = ({
       aria-labelledby='aanvullende-informatie-title'
     >
       <h2 id='aanvullende-informatie-title' className='sr-only'>
-        Aanvullende informatie
+        Aanvullende informatie over uw koppelingen
       </h2>
 
       <Paragraph className='con-form-wizard-paragraph'>
-        Vul aanvullende informatie in voor de koppeling(en). Deze velden zijn
-        optioneel maar helpen andere gebruikers beter te begrijpen hoe de koppeling
-        werkt.
+        Beschrijf hier de koppeling aanvullend. Geef aan op welke standaard de
+        koppeling is gebaseerd en voeg relevante technische informatie toe.
       </Paragraph>
 
-      {showInfoAlert && (
+      {/* {showInfoAlert && (
         <Alert severity='info' className='ac-forms-product-info-alert'>
           <button
             onClick={handleCloseAlert}
@@ -85,7 +82,7 @@ const ConKoppelingStepGebruiksinformatie = ({
             </div>
           </div>
         </Alert>
-      )}
+      )} */}
 
       <div className='con-form-wizard-rows'>
         {rows.map((rowId, index) => {
@@ -103,18 +100,18 @@ const ConKoppelingStepGebruiksinformatie = ({
                 marginBottom: '1rem',
               }}
             >
-              {rows.length > 1 && (
-                <div
-                  style={{
-                    marginBottom: '0.75rem',
-                    fontWeight: '600',
-                    fontSize: '0.9rem',
-                    color: '#333',
-                  }}
-                >
-                  {nameByRow[rowId] || `Koppeling ${index + 1}`}
-                </div>
-              )}
+              <h3
+                className='utrecht-heading-4'
+                style={{
+                  marginBlockStart: 0,
+                  marginBlockEnd: '1rem',
+                  fontSize: '1.125rem',
+                  fontWeight: '600',
+                  color: 'var(--tilburg-color-gray-900, #1a1a1a)',
+                }}
+              >
+                {nameByRow[rowId] || `Koppeling ${index + 1}`}
+              </h3>
 
               {/* Korte beschrijving */}
               <div style={{ marginBottom: '1rem' }}>

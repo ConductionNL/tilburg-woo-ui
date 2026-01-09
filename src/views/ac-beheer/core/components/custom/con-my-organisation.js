@@ -677,10 +677,16 @@ const ConMyOrganisationPage = ({ store }) => {
               showModal={showOrgModal}
               onClose={() => setShowOrgModal(false)}
               onSuccess={handleOrgFormSuccess}
-              type='organisaties'
+              type='organisatie'
               isEdit={true}
               fieldConfigs={{
                 status: {
+                  visible: false,
+                },
+                beschrijvingKort: {
+                  visible: false,
+                },
+                beschrijvingLang: {
                   visible: false,
                 },
               }}

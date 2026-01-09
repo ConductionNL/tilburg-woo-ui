@@ -1739,9 +1739,9 @@ export class ObjectStore {
    * @note register and schema ar retrieved from the objectItem, if the objectItem doesnt have them, the object is not saved
    */
   @action
-  saveObject = async (objectItem) => {
-    const registerId = this.extractId(objectItem['@self']?.register);
-    const schemaId = this.extractId(objectItem['@self']?.schema);
+  saveObject = async (objectItem, register = null, schema = null) => {
+    const registerId = register || this.extractId(objectItem['@self']?.register);
+    const schemaId = schema || this.extractId(objectItem['@self']?.schema);
 
     if (!objectItem || !registerId || !schemaId) {
       throw new Error('Object item, register and schema are required');
