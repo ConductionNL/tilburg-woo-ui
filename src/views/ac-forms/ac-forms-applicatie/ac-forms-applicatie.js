@@ -392,7 +392,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       setSchemasLoading(true);
       const schemaTypes = [
         'module',
-        'product',
+        'suite',
         'moduleversie',
         'organisatie',
         'dienst',

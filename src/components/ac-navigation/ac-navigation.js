@@ -4,16 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 
-// Try to import container constants (generated at runtime)
-let containerConfig;
-try {
-  containerConfig = require('@constants/container.constants');
-} catch (error) {
-  console.warn('Container constants not available for navigation');
-  containerConfig = null;
-}
-
-const AcNavigation = ({ store: { menu, user, chat } }) => {
+const AcNavigation = ({ store: { menu, user } }) => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
@@ -25,9 +16,6 @@ const AcNavigation = ({ store: { menu, user, chat } }) => {
     user.isAuthenticated,
     user.userGroups || []
   );
-
-  // Check if chat is enabled
-  const isChatEnabled = chat?.isChatFeatureEnabled || false;
 
   // Icon component for finding icons based on a variable
   const Icon = ({ icon }) => {
@@ -58,32 +46,19 @@ const AcNavigation = ({ store: { menu, user, chat } }) => {
         {isMenuOpen ? LABELS.CLOSE_SINGULAR : LABELS.MENU}
       </button>
       <nav aria-label='Hoofd'>
-        {((activeMenu &&
+        {activeMenu &&
           activeMenu.items &&
           Array.isArray(activeMenu.items) &&
-          activeMenu.items.length > 0) ||
-          isChatEnabled) && (
+          activeMenu.items.length > 0 && (
           <ul>
-            {activeMenu &&
-              activeMenu.items &&
-              Array.isArray(activeMenu.items) &&
-              activeMenu.items.map((menuItem) => (
-                <li key={menuItem.name || menuItem.link}>
-                  <Link to={menuItem.link}>
-                    <Icon icon={menuItem.icon} />
-                    {menuItem.name}
-                  </Link>
-                </li>
-              ))}
-            {/* Conditionally render chat button if endpoint is configured */}
-            {isChatEnabled && (
-              <li key='chat'>
-                <Link to='/chat'>
-                  <VISUALS.CONTACT />
-                  Chat
+            {activeMenu.items.map((menuItem) => (
+              <li key={menuItem.name || menuItem.link}>
+                <Link to={menuItem.link}>
+                  <Icon icon={menuItem.icon} />
+                  {menuItem.name}
                 </Link>
               </li>
-            )}
+            ))}
           </ul>
         )}
       </nav>

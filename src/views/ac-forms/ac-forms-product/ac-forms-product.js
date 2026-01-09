@@ -701,7 +701,7 @@ const AcFormsProductInner = ({
     const fetchSchemas = async () => {
       setSchemasLoading(true);
       const schemaTypes = [
-        'product',
+        'suite',
         'module',
         'dienst',
         'koppeling',
@@ -731,8 +731,8 @@ const AcFormsProductInner = ({
 
         setSchemas(fetchedSchemas);
 
-        // Update product object with schema-based defaults if product schema was loaded
-        if (fetchedSchemas.product) {
+        // Update product object with schema-based defaults if suite schema was loaded
+        if (fetchedSchemas.suite) {
           setProduct((prevProduct) => {
             // Only update if current product is the default/empty state
             // Don't override if user has already started filling the form
@@ -741,7 +741,7 @@ const AcFormsProductInner = ({
               !prevProduct.website &&
               !prevProduct.beschrijvingKort;
             if (isEmpty) {
-              return createDefaultProductFromSchema(fetchedSchemas.product);
+              return createDefaultProductFromSchema(fetchedSchemas.suite);
             }
             return prevProduct;
           });

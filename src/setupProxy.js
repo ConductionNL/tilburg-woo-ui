@@ -1,8 +1,9 @@
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
 module.exports = function(app) {
-  // Get target URL from environment (fallback to localhost:8080)
+  // Get target URL and hostname from environment
   const targetUrl = process.env.API_TARGET_URL || 'http://localhost:8080';
+  const targetHost = process.env.NEXTCLOUD_HOST || 'localhost';
   
   // Proxy OpenConnector API requests (for hot reload development)
   app.use(
@@ -10,6 +11,9 @@ module.exports = function(app) {
     createProxyMiddleware({
       target: targetUrl,
       changeOrigin: true,
+      headers: {
+        'Host': targetHost
+      },
       pathRewrite: {
         '^/api/openconnector': '/index.php/apps/openconnector/api',
       },
@@ -29,6 +33,9 @@ module.exports = function(app) {
     createProxyMiddleware({
       target: targetUrl,
       changeOrigin: true,
+      headers: {
+        'Host': targetHost
+      },
       pathRewrite: {
         '^/api/apps': '/index.php/apps',  // Add index.php for Nextcloud apps
       },
@@ -48,6 +55,9 @@ module.exports = function(app) {
     createProxyMiddleware({
       target: targetUrl,
       changeOrigin: true,
+      headers: {
+        'Host': targetHost
+      },
       pathRewrite: {
         '^/api': '',  // Remove /api prefix, forward directly to root
       },

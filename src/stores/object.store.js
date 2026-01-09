@@ -3561,7 +3561,7 @@ export class ObjectStore {
     'organisatie',
     'module',
     'moduleversie',
-    'product',
+    'suite',
     'dienst',
     'gebruik',
     'koppeling',
