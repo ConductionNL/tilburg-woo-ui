@@ -363,10 +363,26 @@ const ConFormApplicatieStandaardenStage = ({
   }, [standaardenversiesOptions, existingStandardIds]);
 
   // Clean up selectedExtraStandards when standards move to referentieComponenten
+  // This should only remove items that are actually in referentieComponenten (allStandards)
+  // It should NOT be triggered by compliance checkbox toggles
   useEffect(() => {
-    const allStandardsIds = new Set(
-      allStandards.map((standard) => String(standard.id))
-    );
+    // Build a comprehensive set of all possible ID formats for standards in referentieComponenten
+    const allStandardsIds = new Set();
+
+    allStandards.forEach((standard) => {
+      const standardId = String(standard.id);
+      allStandardsIds.add(standardId);
+
+      // Also add alternative ID formats from fetched data
+      const fetchedData = findMatchingStandaardversieData({ id: standard.id });
+      if (fetchedData) {
+        ['id', 'identifier', 'value', 'slug'].forEach((key) => {
+          if (fetchedData[key]) {
+            allStandardsIds.add(String(fetchedData[key]));
+          }
+        });
+      }
+    });
 
     // Check if allStandardsIds actually changed
     const idsChanged =
@@ -387,20 +403,47 @@ const ConFormApplicatieStandaardenStage = ({
 
     setSelectedExtraStandards((prev) => {
       // Check if any selectedExtraStandards need to be removed
-      const needsCleanup = prev.some((option) =>
-        allStandardsIds.has(String(option.value))
-      );
+      // Only remove if they're actually in referentieComponenten (allStandards)
+      const needsCleanup = prev.some((option) => {
+        const optionValue = String(option.value);
+        // Check direct match
+        if (allStandardsIds.has(optionValue)) return true;
+
+        // Also check alternative ID formats from option data
+        if (option.data) {
+          for (const key of ['id', 'identifier', 'value', 'slug']) {
+            if (option.data[key] && allStandardsIds.has(String(option.data[key]))) {
+              return true;
+            }
+          }
+        }
+
+        return false;
+      });
 
       if (!needsCleanup) {
         return prev; // Return same reference if no changes
       }
 
-      const filtered = prev.filter(
-        (option) => !allStandardsIds.has(String(option.value))
-      );
+      const filtered = prev.filter((option) => {
+        const optionValue = String(option.value);
+        // Keep if NOT in allStandardsIds (i.e., it's truly an extra standard)
+        if (allStandardsIds.has(optionValue)) return false;
+
+        // Also check alternative ID formats from option data
+        if (option.data) {
+          for (const key of ['id', 'identifier', 'value', 'slug']) {
+            if (option.data[key] && allStandardsIds.has(String(option.data[key]))) {
+              return false; // Remove this option
+            }
+          }
+        }
+
+        return true; // Keep this option
+      });
       return filtered;
     });
-  }, [allStandards, setSelectedExtraStandards]);
+  }, [allStandards, setSelectedExtraStandards, standaardenversiesMap]);
 
   // Clean up orphaned compliancy entries when referentieComponenten or selectedExtraStandards change
   useEffect(() => {
