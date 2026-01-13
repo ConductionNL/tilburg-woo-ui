@@ -50,17 +50,17 @@ const AcNavigation = ({ store: { menu, user } }) => {
           activeMenu.items &&
           Array.isArray(activeMenu.items) &&
           activeMenu.items.length > 0 && (
-          <ul>
-            {activeMenu.items.map((menuItem) => (
-              <li key={menuItem.name || menuItem.link}>
-                <Link to={menuItem.link}>
-                  <Icon icon={menuItem.icon} />
-                  {menuItem.name}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
+            <ul>
+              {activeMenu.items.map((menuItem) => (
+                <li key={menuItem.name || menuItem.link}>
+                  <Link to={menuItem.link}>
+                    <Icon icon={menuItem.icon} />
+                    {menuItem.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
       </nav>
     </div>
   );
