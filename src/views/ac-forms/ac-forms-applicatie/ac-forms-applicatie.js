@@ -1933,8 +1933,13 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         (applicatie.website && !validateWebsite(applicatie.website))
       );
     }
-    // licentie: licentie is required when open source is selected
+    // licentie: licentietype is required, and licentie is required when open source is selected
     if (logicalStep === 2) {
+      // Check if licentietype is filled
+      if (!applicatie.licentietype || applicatie.licentietype.trim() === '') {
+        return true;
+      }
+      // If open source is selected, licentie is also required
       if (applicatie.licentietype === 'Open source') {
         return !applicatie.licentie || applicatie.licentie.trim() === '';
       }
@@ -2024,6 +2029,18 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       }
       if (applicatie.website && !validateWebsite(applicatie.website)) {
         return 'Website heeft een ongeldig formaat';
+      }
+    }
+
+    if (logicalStep === 2) {
+      if (!applicatie.licentietype || applicatie.licentietype.trim() === '') {
+        return 'Selecteer een licentievorm';
+      }
+      if (
+        applicatie.licentietype === 'Open source' &&
+        (!applicatie.licentie || applicatie.licentie.trim() === '')
+      ) {
+        return 'Selecteer een licentie';
       }
     }
 
