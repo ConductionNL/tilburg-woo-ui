@@ -1217,12 +1217,15 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
                 buttonType={showSearch ? 'primary' : 'secondary'}
                 onClick={() => setShowSearch(!showSearch)}
                 icon={<VISUALS.SEARCH />}
+                sr={showSearch ? 'Verberg zoekbalk' : 'Toon zoekbalk'}
               />
 
               <SecondaryActionButton
                 onClick={() => filterHeadersDrawerRef.current.showModal()}
+                aria-label='Filters openen'
               >
                 <VISUALS.FILTER />
+                <span className='sr-only'>Filters openen</span>
               </SecondaryActionButton>
               {showManageActions && (
                 <>

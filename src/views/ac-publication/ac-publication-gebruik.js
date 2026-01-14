@@ -284,6 +284,7 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
                       href={`https://www.gemmaonline.nl/wiki/GEMMA/id-${item.id}`}
                       target='_blank'
                       rel='noopener noreferrer'
+                      style={{ minHeight: '24px' }}
                     >
                       {item.label}
                     </Link>

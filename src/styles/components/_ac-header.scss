@@ -64,11 +64,12 @@
 
     // small visual correction due to font-family rendering
     .logo-text {
-      margin-block-start: 1rem;
+    //   margin-block-start: 1rem;
       color: var(--tilburg-header-logo-text-color, inherit);
       @include respond-max($screen-sm) {
         word-break: break-word;
       }
+      font-size: var(--tilburg-typography-font-size-3xl);
     }
 
     svg {
