@@ -148,6 +148,7 @@ const ConDetailsActionsMenu = ({
         icon={canEdit ? <VISUALS.GEAR /> : <VISUALS.PLUS />}
         buttonType={triggerStyle === 'buttonSlim' ? 'secondary' : 'primary'}
         style={triggerStyle}
+        sr={canEdit ? 'Acties bewerken' : 'Acties toevoegen'}
       ></ConActionMenu.Trigger>
 
       <ConActionMenu.Menu position='right'>

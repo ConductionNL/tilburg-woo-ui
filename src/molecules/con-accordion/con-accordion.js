@@ -1,6 +1,7 @@
 import { createContext, useContext, useMemo, useState, useRef } from 'preact/compat';
 import clsx from 'clsx';
 import { VISUALS } from '@src/constants';
+import { Heading } from '@utrecht/component-library-react/dist/css-module';
 
 // Context used to coordinate single-open behavior across items
 const ConAccordionContext = createContext(null);
@@ -31,13 +32,19 @@ const ConAccordion = ({ children, className, singleOpen = false }) => {
 
 /**
  * Renders a single accordion item with a clickable header and a content panel.
- * - header: ReactNode or function ({ isOpen }) => ReactNode
+ * - header: ReactNode or function ({ isOpen }) => ReactNode (header content)
+ * - headerLevel: number (1-6) - if provided, wraps button in Heading element for WAI-ARIA compliance
+ * - headerTitle: string - optional title attribute for the heading
+ * - headerStyle: object - optional style attribute for the heading
  * - id: required when the parent ConAccordion has singleOpen=true
  * - defaultOpen: initial open state for non-singleOpen usage
  */
 const Item = ({
   id,
   header,
+  headerLevel,
+  headerTitle,
+  headerStyle,
   defaultOpen = false,
   children,
   className,
@@ -47,6 +54,10 @@ const Item = ({
   ...props
 }) => {
   const ctx = useConAccordionContext();
+  const buttonIdRef = useRef(
+    `con-accordion-button-${Math.random().toString(36).slice(2)}`
+  );
+  const buttonId = buttonIdRef.current;
   const panelIdRef = useRef(
     `con-accordion-panel-${Math.random().toString(36).slice(2)}`
   );
@@ -87,6 +98,26 @@ const Item = ({
 
   const headerContent = typeof header === 'function' ? header({ isOpen }) : header;
 
+  const buttonElement = (
+    <button
+      type='button'
+      id={buttonId}
+      className={clsx('con-accordion__header')}
+      aria-expanded={isOpen}
+      aria-controls={panelId}
+      onClick={handleToggle}
+      disabled={disabled}
+    >
+      <span className='con-accordion__header-content'>{headerContent}</span>
+      <span
+        className={clsx('con-accordion__icon', chevronClassName)}
+        style={chevronStyle}
+      >
+        <VISUALS.CHEVRON_RIGHT style={{ width: '16px', height: '16px' }} />
+      </span>
+    </button>
+  );
+
   return (
     <div
       className={clsx(
@@ -97,24 +128,20 @@ const Item = ({
       )}
       {...props}
     >
-      <button
-        type='button'
-        className={clsx('con-accordion__header')}
-        aria-expanded={isOpen}
-        aria-controls={panelId}
-        onClick={handleToggle}
-        disabled={disabled}
-      >
-        <span className='con-accordion__header-content'>{headerContent}</span>
-        <span
-          className={clsx('con-accordion__icon', chevronClassName)}
-          style={chevronStyle}
-        >
-          <VISUALS.CHEVRON_RIGHT style={{ width: '16px', height: '16px' }} />
-        </span>
-      </button>
+      {headerLevel ? (
+        <Heading level={headerLevel} title={headerTitle} style={headerStyle}>
+          {buttonElement}
+        </Heading>
+      ) : (
+        buttonElement
+      )}
 
-      <div id={panelId} role='region' className='con-accordion__content'>
+      <div
+        id={panelId}
+        role={ctx?.singleOpen ? 'region' : undefined}
+        aria-hidden={!isOpen}
+        className='con-accordion__content'
+      >
         {children}
       </div>
     </div>
