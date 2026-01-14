@@ -19,6 +19,7 @@ export const LogoUploadField = ({
   onClear,
   validation,
   propertyName,
+  id, // Field id for accessibility
   isDisabled,
   accept,
   showPreview = true,
@@ -205,9 +206,11 @@ export const LogoUploadField = ({
     return '';
   }, [selectedFileName, fieldConfig?.filename, logoValue]);
 
+  const fileInputId = id || `fileInput-${propertyName}`;
+
   return (
     <AcFlex column>
-      <label className='utrecht-form-label'>
+      <label className='utrecht-form-label' htmlFor={fileInputId}>
         <h4 className='utrecht-heading-4'>
           {fieldConfig.label}
           {validation.required && (
@@ -225,7 +228,7 @@ export const LogoUploadField = ({
         <>
           <input
             ref={inputRef}
-            id={`fileInput-${propertyName}`}
+            id={fileInputId}
             type='file'
             accept={acceptAttr}
             multiple={false}
@@ -291,7 +294,7 @@ export const LogoUploadField = ({
       ) : (
         <input
           ref={inputRef}
-          id={`fileInput-${propertyName}`}
+          id={fileInputId}
           type='file'
           accept={acceptAttr}
           multiple={false}

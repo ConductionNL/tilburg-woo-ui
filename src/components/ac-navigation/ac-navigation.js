@@ -45,7 +45,7 @@ const AcNavigation = ({ store: { menu, user } }) => {
         {isMenuOpen ? <VISUALS.CLOSE /> : <VISUALS.MENU />}
         {isMenuOpen ? LABELS.CLOSE_SINGULAR : LABELS.MENU}
       </button>
-      <nav aria-label='Hoofd'>
+      <nav aria-label='Gebruikersmenu'>
         {activeMenu &&
           activeMenu.items &&
           Array.isArray(activeMenu.items) &&

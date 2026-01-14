@@ -13,6 +13,7 @@ const JsonObjectField = ({
   placeholder,
   label,
   path,
+  id,
   disabled,
 }) => {
   const [text, setText] = React.useState(() => {
@@ -46,6 +47,7 @@ const JsonObjectField = ({
   return (
     <AcFormField
       key={path}
+      id={id}
       inputType='textarea'
       label={label}
       value={text}
