@@ -39,6 +39,7 @@ import {
 } from './utils/validation.utils';
 import { getPageDescription as utilGetPageDescription } from './utils/texts.utils';
 import { commongroundApiUrl } from '@config';
+import { uploadFileToObject, isDataUrlNeedingUpload } from '@src/utilities';
 
 // Stage Components
 import ConFormProductopbouwStage from './components/con-form-productopbouw-stage';
@@ -1254,6 +1255,7 @@ const AcFormsProductInner = ({
         website: apiProduct.website || '',
         logo: apiProduct.logo || '',
         logoFilename: '',
+        logoAccessUrl: null,
         hostingLocatie: apiProduct.hostingLocatie || '',
         hostingJurisdictie: apiProduct.hostingJurisdictie || '',
         contactpersoon: apiProduct.contactpersoon || '',
@@ -1332,6 +1334,34 @@ const AcFormsProductInner = ({
             referentieComponentenOptions
           );
           setProduct({ ...mapped, modules: mapped.modules || [] });
+
+          // Fetch logo file metadata if logo exists and is not a data URL
+          if (mapped.logo && !isDataUrlNeedingUpload(mapped.logo)) {
+            try {
+              const filesResponse = await fetch(
+                `${commongroundApiUrl()}/openregister/api/objects/voorzieningen/product/${productId}/files`
+              );
+              if (filesResponse.ok) {
+                const filesData = await filesResponse.json();
+                const files = filesData.results || [];
+                // Find the logo file (usually named 'logo.png' or similar)
+                const logoFile = files.find(
+                  (f) =>
+                    f.title?.toLowerCase().includes('logo') ||
+                    f.name?.toLowerCase().includes('logo')
+                );
+                if (logoFile) {
+                  setProduct((prev) => ({
+                    ...prev,
+                    logoFilename: logoFile.title || logoFile.name || 'logo.png',
+                    logoAccessUrl: logoFile.accessUrl || null,
+                  }));
+                }
+              }
+            } catch (error) {
+              console.warn('Failed to fetch logo metadata:', error);
+            }
+          }
         }
       } catch (e) {
         setPrefillError(
@@ -1349,6 +1379,131 @@ const AcFormsProductInner = ({
 
   // State for aanbieder selection
   const [aanbiederkeuze, setAanbiederKeuze] = useState('bestaand'); // 'bestaand' or 'nieuw'
+
+  /**
+   * Upload all evidence files (bewijs) in modules' compliancy arrays
+   * Uploads each file separately (not batched) for reliability
+   *
+   * IMPORTANT: Evidence files are uploaded to the MODULE, not the product!
+   * The file ID (not path) is saved in compliancy.bewijs for later fetching.
+   *
+   * This allows:
+   * - Fetching files via: GET /api/objects/voorzieningen/module/{moduleId}/files/{fileId}
+   * - Matching files to specific standards in compliancy
+   * - Flexible file management per module
+   *
+   * @param {Array} modules - Array of modules with compliancy arrays
+   * @returns {Promise<Array>} Array of modules with bewijs set to file IDs
+   */
+  const uploadCompliancyEvidence = async (modules) => {
+    if (!Array.isArray(modules) || modules.length === 0) {
+      return modules;
+    }
+
+    const processedModules = await Promise.all(
+      modules.map(async (module) => {
+        if (typeof module !== 'object' || !module.compliancy || !module.id) {
+          return module;
+        }
+
+        // Upload each file separately
+        const processedCompliancy = await Promise.all(
+          module.compliancy.map(async (comp) => {
+            // If bewijs is a data URL, upload it
+            if (isDataUrlNeedingUpload(comp.bewijs)) {
+              try {
+                const filename = comp.bewijsFilename || 'evidence.pdf';
+
+                const uploadResult = await uploadFileToObject(
+                  comp.bewijs,
+                  'voorzieningen',
+                  'module',
+                  String(module.id),
+                  'bewijs',
+                  filename
+                );
+
+                if (uploadResult?.id) {
+                  // Keep bewijsFilename for display, replace bewijs with file ID
+                  return {
+                    ...comp,
+                    bewijs: uploadResult.id, // Save file ID
+                    bewijsFilename: filename, // Keep filename for display in review stage
+                  };
+                } else {
+                  console.error(
+                    'File upload succeeded but no ID returned for standard:',
+                    comp.standaardversie
+                  );
+                  // Return compliancy without bewijs if no ID
+                  const { ...restComp } = comp;
+                  delete restComp.bewijs;
+                  delete restComp.bewijsFilename;
+                  return restComp;
+                }
+              } catch (error) {
+                console.error(
+                  'Failed to upload evidence for standard:',
+                  comp.standaardversie,
+                  error
+                );
+                // Return compliancy without bewijs if upload failed
+                const { ...restComp } = comp;
+                delete restComp.bewijs;
+                delete restComp.bewijsFilename;
+                return restComp;
+              }
+            }
+
+            // If bewijs is not a data URL (already a file ID), keep it
+            if (comp.bewijs && !isDataUrlNeedingUpload(comp.bewijs)) {
+              // Keep both bewijs and bewijsFilename for display
+              return {
+                ...comp,
+                bewijs: comp.bewijs, // Keep existing file ID
+                bewijsFilename: comp.bewijsFilename, // Keep filename
+              };
+            }
+
+            // No bewijs, remove bewijsFilename
+            const { ...restComp } = comp;
+            delete restComp.bewijsFilename;
+            return restComp;
+          })
+        );
+
+        return {
+          ...module,
+          compliancy: processedCompliancy,
+        };
+      })
+    );
+
+    return processedModules;
+  };
+
+  /**
+   * Helper to remove bewijsFilename and bewijsAccessUrl from modules before sending to API
+   * These fields are kept in local state for display, but shouldn't be sent to backend
+   */
+  const stripBewijsFilenamesForAPI = (modules) => {
+    if (!modules || !Array.isArray(modules)) return modules;
+
+    return modules.map((module) => {
+      if (module.compliancy && Array.isArray(module.compliancy)) {
+        return {
+          ...module,
+          compliancy: module.compliancy.map((comp) => {
+            const { ...restComp } = comp;
+            delete restComp.bewijsFilename;
+            delete restComp.bewijsAccessUrl;
+            return restComp;
+          }),
+        };
+      }
+      return module;
+    });
+  };
 
   const handleRegister = async () => {
     setLoading(true);
@@ -1405,20 +1560,168 @@ const AcFormsProductInner = ({
       };
       const sanitized = stripLocalIds(productData);
 
+      // Check if logo needs to be uploaded separately
+      const hasLogoDataUrl = isDataUrlNeedingUpload(sanitized.logo);
+
+      let response;
+
       if (productId) {
-        // Edit mode: update existing product via PUT
-        await store.object.updateObject(
+        // === EDIT MODE ===
+        // Step 1: Upload logo if it's a data URL and get the downloadUrl
+        let logoDownloadUrl = null;
+        if (hasLogoDataUrl) {
+          const uploadResult = await uploadFileToObject(
+            sanitized.logo,
+            'voorzieningen',
+            'product',
+            String(productId),
+            'logo',
+            sanitized.logoFilename || 'logo.png'
+          );
+
+          // Capture the downloadUrl for separate update
+          if (uploadResult && uploadResult.fileData?.downloadUrl) {
+            logoDownloadUrl = uploadResult.fileData.downloadUrl;
+          }
+
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+
+        // Step 2: Upload evidence files for existing modules and get file IDs
+        let modulesWithFileIds = sanitized.modules;
+        if (sanitized.modules && sanitized.modules.length > 0) {
+          modulesWithFileIds = await uploadCompliancyEvidence(sanitized.modules);
+        }
+
+        // Update local product state with modules including bewijsFilename for display
+        setProduct((prev) => ({
+          ...prev,
+          modules: modulesWithFileIds,
+        }));
+
+        // Step 3: Update product with file IDs in compliancy (without bewijsFilename for API)
+        const updatePayload = {
+          ...sanitized,
+          modules: stripBewijsFilenamesForAPI(modulesWithFileIds),
+        };
+
+        // Remove logo if it was uploaded (don't send base64)
+        if (hasLogoDataUrl) {
+          delete updatePayload.logo;
+        }
+
+        // Always strip UI-only fields
+        delete updatePayload.logoFilename;
+        delete updatePayload.logoAccessUrl;
+
+        response = await store.object.updateObject(
           'voorzieningen',
           'product',
           String(productId),
-          sanitized
+          updatePayload
         );
+
+        // Step 4: Update with downloadUrl if logo was uploaded
+        if (logoDownloadUrl) {
+          await store.object.updateObject(
+            'voorzieningen',
+            'product',
+            String(productId),
+            { logo: logoDownloadUrl }
+          );
+        }
       } else {
-        // Create mode: create new product via POST
-        await store.object.createObject('voorzieningen', 'product', sanitized);
+        // === CREATE MODE ===
+        // Step 1: Create product without logo and without evidence files
+        const createPayload = { ...sanitized };
+        if (hasLogoDataUrl) {
+          createPayload.logo = undefined;
+        }
+        delete createPayload.logoFilename;
+        delete createPayload.logoAccessUrl;
+
+        // Remove bewijs data URLs from compliancy before creation
+        if (createPayload.modules) {
+          createPayload.modules = createPayload.modules.map((module) => {
+            if (module.compliancy) {
+              return {
+                ...module,
+                compliancy: module.compliancy.map((comp) => {
+                  const { ...restComp } = comp;
+                  // Only include bewijs if it's not a data URL
+                  if (comp.bewijs && !isDataUrlNeedingUpload(comp.bewijs)) {
+                    return { ...restComp, bewijs: comp.bewijs };
+                  }
+                  delete restComp.bewijs;
+                  delete restComp.bewijsFilename;
+                  return restComp;
+                }),
+              };
+            }
+            return module;
+          });
+        }
+
+        response = await store.object.createObject(
+          'voorzieningen',
+          'product',
+          createPayload
+        );
+
+        // Step 2: Upload logo after creation if it's a data URL
+        if (hasLogoDataUrl && response?.id) {
+          const uploadResult = await uploadFileToObject(
+            sanitized.logo,
+            'voorzieningen',
+            'product',
+            String(response.id),
+            'logo',
+            sanitized.logoFilename || 'logo.png'
+          );
+
+          // If we got a downloadUrl, update the product with the logo URL
+          if (uploadResult && uploadResult.fileData?.downloadUrl) {
+            await store.object.updateObject(
+              'voorzieningen',
+              'product',
+              String(response.id),
+              { logo: uploadResult.fileData.downloadUrl }
+            );
+          }
+        }
+
+        // Step 3: Upload evidence files for newly created modules and update with file IDs
+        if (response?.id && response?.modules && sanitized.modules) {
+          // Map created modules with IDs to original modules with bewijs
+          const modulesWithIds = response.modules.map((createdModule, index) => {
+            const originalModule = sanitized.modules[index];
+            return {
+              ...originalModule,
+              id: createdModule.id || createdModule,
+            };
+          });
+
+          const modulesWithFileIds = await uploadCompliancyEvidence(modulesWithIds);
+
+          // Update local product state with modules including bewijsFilename for display
+          setProduct((prev) => ({
+            ...prev,
+            modules: modulesWithFileIds,
+          }));
+
+          // Update product with file IDs in compliancy (strip bewijsFilename for API)
+          await store.object.updateObject(
+            'voorzieningen',
+            'product',
+            String(response.id),
+            {
+              modules: stripBewijsFilenamesForAPI(modulesWithFileIds),
+            }
+          );
+        }
       }
 
-      // createObject returns the created object directly on success
+      // createObject/updateObject returns the object directly on success
       setRegisterCallBack('success');
     } catch (err) {
       setRegisterCallBack('error');

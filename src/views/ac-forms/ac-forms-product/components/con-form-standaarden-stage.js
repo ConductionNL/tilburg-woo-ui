@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { AcCheckbox, AcFormField } from '@src/molecules';
 import { LogoUploadField } from '@views/ac-beheer/shared/components/con-logo-upload-field';
 import { ConExistingModulesInfoBox } from '@components';
+import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 import {
   Paragraph,
   Table,
@@ -44,6 +45,9 @@ const ConFormStandaardenStage = ({
 
   // State to track compliance and bewijs for each module-standard combination
   const [tableState, setTableState] = useState({});
+
+  // Track which modules have had their files fetched to avoid duplicate fetches
+  const [fetchedModuleIds, setFetchedModuleIds] = useState(new Set());
 
   // Enhanced function to get standard ID with better matching
   const getStandardId = (standard) => {
@@ -319,6 +323,131 @@ const ConFormStandaardenStage = ({
     setTableState(initialState);
   }, [newModules, referentieComponentenWithStandards, standaardenMap]);
 
+  // Fetch evidence files for edit mode - once per module at the beginning
+  useEffect(() => {
+    const fetchAllEvidenceFiles = async () => {
+      if (!newModules || newModules.length === 0) return;
+
+      // Track modules we've fetched in this effect run
+      const modulesToFetch = newModules.filter(
+        (module) => module.id && !fetchedModuleIds.has(module.id)
+      );
+
+      if (modulesToFetch.length === 0) return;
+
+      // Mark these modules as being fetched
+      const newFetchedIds = new Set(fetchedModuleIds);
+      modulesToFetch.forEach((m) => newFetchedIds.add(m.id));
+      setFetchedModuleIds(newFetchedIds);
+
+      // Fetch files for all modules in parallel
+      const fetchPromises = modulesToFetch.map(async (module) => {
+        if (!module.compliancy) return;
+
+        try {
+          // Fetch ALL files for this module at once
+          const filesResponse = await fetch(
+            `${BASE_URL}/openregister/api/objects/voorzieningen/module/${module.id}/files`
+          );
+
+          if (!filesResponse.ok) {
+            console.warn(`Failed to fetch files for module ${module.id}`);
+            return;
+          }
+
+          const filesData = await filesResponse.json();
+          // API returns { results: [...], total, page, ... }
+          const files = filesData.results || [];
+
+          // Convert files to data URLs and store in state
+          const fileConversions = [];
+
+          for (const comp of module.compliancy) {
+            // If bewijs is a number (file ID), find the matching file
+            if (comp.bewijs && typeof comp.bewijs === 'number') {
+              const key = `${module.moduleIndex}-${comp.standaardversie}`;
+              const matchingFile = files.find((f) => f.id === comp.bewijs);
+
+              if (matchingFile) {
+                fileConversions.push({
+                  key,
+                  file: matchingFile,
+                  bewijsFileId: comp.bewijs,
+                });
+              } else {
+                console.warn(
+                  `File with ID ${comp.bewijs} not found for module ${module.id}`
+                );
+              }
+            }
+          }
+
+          // Set file metadata in state without fetching file content
+          fileConversions.forEach(({ key, file, bewijsFileId }) => {
+            const filename = file.title || file.name || 'evidence.pdf';
+            const fileUrl = `${BASE_URL}${file.path}`;
+
+            setTableState((prev) => ({
+              ...prev,
+              [key]: {
+                ...prev[key],
+                bewijs: fileUrl, // Use file URL directly instead of data URL
+                bewijsFilename: filename,
+                bewijsFileId: bewijsFileId,
+                bewijsFetched: true,
+              },
+            }));
+          });
+
+          // Also update the product state with bewijsFilename for display in review stage
+          setProduct((prev) => {
+            const modules = [...(prev.modules || [])];
+            const moduleIndex = module.moduleIndex;
+            const currentModule = modules[moduleIndex];
+
+            if (currentModule && currentModule.compliancy) {
+              const updatedCompliancy = currentModule.compliancy.map((comp) => {
+                // Find if this compliancy has a matching file
+                const matchingConversion = fileConversions.find(
+                  ({ key }) =>
+                    key === `${module.moduleIndex}-${comp.standaardversie}`
+                );
+
+                if (matchingConversion) {
+                  return {
+                    ...comp,
+                    bewijsFilename:
+                      matchingConversion.file.title ||
+                      matchingConversion.file.name ||
+                      'evidence.pdf',
+                    bewijsAccessUrl: matchingConversion.file.accessUrl || null, // Store accessUrl for link
+                  };
+                }
+
+                return comp;
+              });
+
+              modules[moduleIndex] = {
+                ...currentModule,
+                compliancy: updatedCompliancy,
+              };
+
+              return { ...prev, modules };
+            }
+
+            return prev;
+          });
+        } catch (error) {
+          console.error(`Error fetching files for module ${module.id}:`, error);
+        }
+      });
+
+      await Promise.all(fetchPromises);
+    };
+
+    fetchAllEvidenceFiles();
+  }, [newModules, fetchedModuleIds]);
+
   // Apply compliance to all modules for a specific standard
   const applyComplianceToAll = (
     standardId,
@@ -583,14 +712,11 @@ const ConFormStandaardenStage = ({
         return updated;
       });
 
-      // Apply to all modules
-      applyComplianceToAll(
-        entry.standardId,
-        true,
-        bewijs,
-        entry.bewijsFilename,
-        null
-      );
+      // Get the LATEST filename from tableState
+      const currentEntry = tableState[key];
+      const currentFilename = currentEntry?.bewijsFilename || entry.bewijsFilename;
+      // Apply to all modules - use the latest filename
+      applyComplianceToAll(entry.standardId, true, bewijs, currentFilename, null);
     } else {
       // Update single entry
       setTableState((prev) => ({
@@ -609,13 +735,17 @@ const ConFormStandaardenStage = ({
         const app = modules[moduleIndex];
         const compliancy = Array.isArray(app.compliancy) ? [...app.compliancy] : [];
 
+        // Get the LATEST filename from tableState at the time of this update
+        const currentEntry = tableState[key];
+        const currentFilename = currentEntry?.bewijsFilename || entry.bewijsFilename;
+
         const updatedCompliancy = compliancy.map((c) =>
           c.standaardversie === entry.standardId
             ? {
                 ...c,
                 standaardnaam: entry.standardName,
                 bewijs,
-                bewijsFilename: c.bewijsFilename || entry.bewijsFilename || null,
+                bewijsFilename: currentFilename || c.bewijsFilename || null,
                 url: null, // Clear URL when file is uploaded (mutually exclusive)
               }
             : c
@@ -1476,7 +1606,7 @@ const ConFormStandaardenStage = ({
                   <LogoUploadField
                     fieldConfig={{
                       label: '',
-                      filename: entry.bewijs ? 'Bestand geüpload' : '',
+                      filename: entry.bewijsFilename ? 'Bestand geüpload' : '',
                     }}
                     _value={entry.bewijs || ''}
                     onChange={(dataUrl) => updateBewijs(entry.key, dataUrl)}

@@ -1,4 +1,4 @@
-import {  useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 
@@ -87,16 +87,50 @@ const ConLogoPreview = ({ logoUrl, className, style }) => {
   const [isValid, setIsValid] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [processedUrl, setProcessedUrl] = useState(null);
+  const blobUrlRef = useRef(null);
 
   useEffect(() => {
     setIsValid(false);
     setIsLoading(true);
 
-    validateAndProcessLogoUrl(logoUrl).then(({ isValid, processedUrl }) => {
-      setIsValid(isValid);
-      setProcessedUrl(processedUrl);
+    // Cleanup previous blob URL if it exists
+    if (blobUrlRef.current) {
+      URL.revokeObjectURL(blobUrlRef.current);
+      blobUrlRef.current = null;
+    }
+
+    // Handle File objects directly
+    if (logoUrl instanceof File) {
+      // Create blob URL from File object
+      const blobUrl = URL.createObjectURL(logoUrl);
+      blobUrlRef.current = blobUrl;
+      setIsValid(true);
+      setProcessedUrl(blobUrl);
       setIsLoading(false);
-    });
+      return;
+    }
+
+    // Handle string URLs (data URLs, base64, regular URLs)
+    if (logoUrl && typeof logoUrl === 'string') {
+      validateAndProcessLogoUrl(logoUrl).then(({ isValid, processedUrl }) => {
+        setIsValid(isValid);
+        setProcessedUrl(processedUrl);
+        setIsLoading(false);
+      });
+    } else {
+      // No logo provided
+      setIsValid(false);
+      setProcessedUrl(null);
+      setIsLoading(false);
+    }
+
+    // Cleanup function: revoke blob URL on unmount or change
+    return () => {
+      if (blobUrlRef.current) {
+        URL.revokeObjectURL(blobUrlRef.current);
+        blobUrlRef.current = null;
+      }
+    };
   }, [logoUrl]);
 
   return (

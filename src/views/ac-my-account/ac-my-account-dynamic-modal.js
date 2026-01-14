@@ -8,7 +8,12 @@ import ConDynamicSchemaForm from '@components/con-dynamic-schema-form/con-dynami
 import FormModalConfigFactory from '@views/ac-beheer/core/factories/con-form-modal-config-factory.js';
 import { useRefOptions } from '@src/hooks/use-ref-options';
 import _ from 'lodash';
-import { collapseExtendedObjects } from '@src/utilities';
+import {
+  collapseExtendedObjects,
+  uploadFileToObject,
+  uploadFileToObjectDirect,
+  isDataUrlNeedingUpload,
+} from '@src/utilities';
 import { AcFlex } from '@atoms';
 
 const DEFAULT_CONFIG_OVERRIDES = {};
@@ -264,10 +269,15 @@ const AcMyAccountDynamicModal = ({
 
           return mappedData;
         })()),
+      // Note: logoFilename and logoAccessUrl are no longer needed
+      // File objects contain the filename, and existing URLs are stored directly in logo field
     };
 
     setFormData(initialFormData);
     hasInitializedRef.current = true;
+
+    // Note: Logo file metadata fetching removed - not needed with File objects mode
+    // Existing logos are stored as URLs in the logo field directly
   }, [
     showModal,
     config?.initialData,
@@ -445,27 +455,124 @@ const AcMyAccountDynamicModal = ({
 
     try {
       // Transform data before submission (if needed)
-      const submitData = config.transformSubmitData
+      let submitData = config.transformSubmitData
         ? config.transformSubmitData(formData)
         : formData;
+
+      // Check if logo needs to be uploaded
+      // - File object: needs upload
+      // - base64 data URL: needs upload (backward compatibility)
+      // - string URL: already uploaded, no action needed
+      const logoIsFile = submitData.logo instanceof File;
+      const hasLogoDataUrl = isDataUrlNeedingUpload(submitData.logo);
+      const needsLogoUpload = logoIsFile || hasLogoDataUrl;
 
       let response;
 
       if (isEdit) {
-        // Update existing object using object store
+        // Step 1: Upload logo if needed
+        let logoDownloadUrl = null;
+        if (needsLogoUpload) {
+          let uploadResult;
+          if (logoIsFile) {
+            // Upload File object directly
+            uploadResult = await uploadFileToObjectDirect(
+              submitData.logo,
+              config.beheerConfig.registerSlug,
+              config.beheerConfig.schemaSlug,
+              data.id,
+              'logo'
+              // No filename needed - comes from File.name
+            );
+          } else {
+            // Upload base64 data URL (backward compatibility)
+            uploadResult = await uploadFileToObject(
+              submitData.logo,
+              config.beheerConfig.registerSlug,
+              config.beheerConfig.schemaSlug,
+              data.id,
+              'logo',
+              'logo.png'
+            );
+          }
+
+          // Get the download URL from the upload response
+          if (uploadResult && uploadResult.fileData?.downloadUrl) {
+            logoDownloadUrl = uploadResult.fileData.downloadUrl;
+          }
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+
+        // Step 2: Prepare update payload with all form data
+        const updatePayload = { ...submitData };
+
+        // Remove logo from payload if it was uploaded (don't send File or base64)
+        if (needsLogoUpload) {
+          delete updatePayload.logo;
+        }
+
+        // Step 3: Send the PATCH to update the object
         response = await object.updateObject(
           config.beheerConfig.registerSlug,
           config.beheerConfig.schemaSlug,
           data.id,
-          submitData
+          updatePayload
         );
+
+        // Step 4: Update with downloadUrl if logo was uploaded
+        if (logoDownloadUrl) {
+          await object.updateObject(
+            config.beheerConfig.registerSlug,
+            config.beheerConfig.schemaSlug,
+            data.id,
+            { logo: logoDownloadUrl }
+          );
+        }
       } else {
-        // Create new object using object store
+        // Step 1: Create new object without logo if it needs upload
+        const createData = { ...submitData };
+        if (needsLogoUpload) {
+          delete createData.logo;
+        }
+
         response = await object.createObject(
           config.beheerConfig.registerSlug,
           config.beheerConfig.schemaSlug,
-          submitData
+          createData
         );
+
+        // Step 2: Upload logo if needed and we got a response with an ID
+        if (needsLogoUpload && response?.id) {
+          let uploadResult;
+          if (logoIsFile) {
+            uploadResult = await uploadFileToObjectDirect(
+              submitData.logo,
+              config.beheerConfig.registerSlug,
+              config.beheerConfig.schemaSlug,
+              response.id,
+              'logo'
+            );
+          } else {
+            uploadResult = await uploadFileToObject(
+              submitData.logo,
+              config.beheerConfig.registerSlug,
+              config.beheerConfig.schemaSlug,
+              response.id,
+              'logo',
+              'logo.png'
+            );
+          }
+
+          // If we got a downloadUrl, update the object with the logo URL
+          if (uploadResult && uploadResult.fileData?.downloadUrl) {
+            await object.updateObject(
+              config.beheerConfig.registerSlug,
+              config.beheerConfig.schemaSlug,
+              response.id,
+              { logo: uploadResult.fileData.downloadUrl }
+            );
+          }
+        }
       }
 
       // Handle specific logic for applicaties (creating initial version)

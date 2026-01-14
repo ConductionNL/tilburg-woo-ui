@@ -15,6 +15,11 @@ import {
   validateEmail,
   validatePhone,
 } from '@views/ac-forms/validation/form-validations';
+import {
+  uploadFileToObject,
+  uploadFileToObjectDirect,
+  isDataUrlNeedingUpload,
+} from '@src/utilities';
 
 import {
   Heading1,
@@ -40,6 +45,7 @@ import ConFormApplicatieAanbiederInformatieStage from './components/con-form-app
 import { getStatusMultiStep } from './utils/steps.utils';
 import { getActiveWizard } from '@src/constants/wizards.constants';
 import { stripLocalIds } from './utils/serialization.utils';
+import { ConDebugViewer } from '@src/components';
 
 /**
  * Applicatie Aanmelden Wizard (AcFormsApplicatie)
@@ -109,7 +115,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     licentie: '',
     referentieComponenten: [],
     type: '',
-    logo: '',
+    logo: '', // File | string | null
     omvat: [],
     onderdeelVan: [],
     diensten: [],
@@ -1636,26 +1642,127 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         ...applicatie,
         aanbieder: finalAanbieder,
       };
+
+      // Check if logo needs to be uploaded
+      // - File object: needs upload
+      // - base64 data URL: needs upload (backward compatibility)
+      // - string URL: already uploaded, no action needed
+      const logoIsFile = applicatieData.logo instanceof File;
+      const hasLogoDataUrl = isDataUrlNeedingUpload(applicatieData.logo);
+      const needsLogoUpload = logoIsFile || hasLogoDataUrl;
+
       const sanitized = stripLocalIds(applicatieData);
 
       let createdApplicatie = null;
       if (applicatieId) {
-        // Edit mode: update existing applicatie via PUT
+        // Edit mode: upload logo first if needed and get the downloadUrl
+        let logoDownloadUrl = null;
+        if (needsLogoUpload) {
+          let uploadResult;
+          if (logoIsFile) {
+            // Upload File object directly
+            uploadResult = await uploadFileToObjectDirect(
+              applicatieData.logo,
+              'voorzieningen',
+              'module',
+              String(applicatieId),
+              'logo'
+            );
+          } else {
+            // Upload base64 data URL (backward compatibility)
+            uploadResult = await uploadFileToObject(
+              applicatieData.logo,
+              'voorzieningen',
+              'module',
+              String(applicatieId),
+              'logo',
+              'logo.png'
+            );
+          }
+
+          // Capture the downloadUrl for separate update
+          if (uploadResult && uploadResult.fileData?.downloadUrl) {
+            logoDownloadUrl = uploadResult.fileData.downloadUrl;
+          }
+
+          // Wait a moment for backend to finish linking the file
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+
+        // Update applicatie without logo (don't send File or base64)
+        const updatePayload = { ...sanitized };
+        if (needsLogoUpload) {
+          updatePayload.logo = '';
+        }
+
         await store.object.updateObject(
           'voorzieningen',
           'module',
           String(applicatieId),
-          sanitized
+          updatePayload
         );
+
+        // Update with downloadUrl if logo was uploaded
+        if (logoDownloadUrl) {
+          await store.object.updateObject(
+            'voorzieningen',
+            'module',
+            String(applicatieId),
+            { logo: logoDownloadUrl }
+          );
+        }
+
         // For edit mode, use the existing applicatieId
         createdApplicatie = { id: applicatieId };
       } else {
-        // Create mode: create new applicatie via POST
+        // Create mode: create applicatie without logo first
+        const createPayload = { ...sanitized };
+        if (needsLogoUpload) {
+          createPayload.logo = '';
+        }
+
         createdApplicatie = await store.object.createObject(
           'voorzieningen',
           'module',
-          sanitized
+          createPayload
         );
+
+        // Upload logo after creation if needed
+        if (needsLogoUpload && createdApplicatie?.id) {
+          let uploadResult;
+          if (logoIsFile) {
+            // Upload File object directly
+            uploadResult = await uploadFileToObjectDirect(
+              applicatieData.logo,
+              'voorzieningen',
+              'module',
+              String(createdApplicatie.id),
+              'logo'
+            );
+          } else {
+            // Upload base64 data URL (backward compatibility)
+            uploadResult = await uploadFileToObject(
+              applicatieData.logo,
+              'voorzieningen',
+              'module',
+              String(createdApplicatie.id),
+              'logo',
+              'logo.png'
+            );
+          }
+
+          // If we got a downloadUrl, update the applicatie with the logo URL
+          if (uploadResult && uploadResult.fileData?.downloadUrl) {
+            await store.object.updateObject(
+              'voorzieningen',
+              'module',
+              String(createdApplicatie.id),
+              { logo: uploadResult.fileData.downloadUrl }
+            );
+          } else {
+            console.error('No downloadUrl found for logo');
+          }
+        }
       }
 
       // Check if redirect parameter exists
@@ -2293,47 +2400,10 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
                           </div>
                           <div tabIndex='-1' id='formStart'></div>
 
-                          {/* Debug JSON Display - only in development */}
-                          {process.env.NODE_ENV === 'development' && (
-                            <div
-                              style={{
-                                marginBottom: '2rem',
-                                padding: '1rem',
-                                backgroundColor: '#f8f9fa',
-                                border: '1px solid #dee2e6',
-                                borderRadius: '4px',
-                                fontSize: '0.8rem',
-                              }}
-                            >
-                              <details>
-                                <summary
-                                  style={{
-                                    cursor: 'pointer',
-                                    fontWeight: 'bold',
-                                    marginBottom: '0.5rem',
-                                  }}
-                                >
-                                  🐛 Debug: Applicatie Object (Click to expand)
-                                </summary>
-                                <pre
-                                  style={{
-                                    whiteSpace: 'pre-wrap',
-                                    wordBreak: 'break-word',
-                                    maxHeight: '300px',
-                                    overflow: 'auto',
-                                    backgroundColor: '#ffffff',
-                                    padding: '0.5rem',
-                                    border: '1px solid #ccc',
-                                    borderRadius: '2px',
-                                  }}
-                                >
-                                  {JSON.stringify(applicatie, null, 2)}
-                                </pre>
-                              </details>
-
-                              <pre>Step {currentStep}</pre>
-                            </div>
-                          )}
+                          <ConDebugViewer
+                            data={applicatie}
+                            title='Applicatie object'
+                          />
 
                           {renderStep(currentStep)}
 

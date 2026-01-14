@@ -213,6 +213,9 @@ export const renderField = ({
   // Check for custom component first
   const CustomComponent = customFieldComponents[path];
   if (CustomComponent) {
+    // Extract filename field from path (assume fieldname + "Filename") for file upload components
+    const filenamePath = path + 'Filename';
+
     return (
       <CustomComponent
         // Password manager prevention attributes
@@ -227,6 +230,18 @@ export const renderField = ({
         fieldConfig={fieldConfig}
         value={value}
         onChange={handleChange}
+        onChangeFileName={(filename) => {
+          // Update filename field for file upload components
+          if (onFieldChange) {
+            onFieldChange(filenamePath, filename);
+          }
+        }}
+        onClear={() => {
+          handleChange('');
+          if (onFieldChange) {
+            onFieldChange(filenamePath, '');
+          }
+        }}
         validation={validation}
         isLoading={isLoading}
         isDisabled={isDisabled}
@@ -264,8 +279,8 @@ export const renderField = ({
         }}
         id={fieldId}
         _value={value}
-        onChange={(dataUrl) => {
-          handleChange(dataUrl);
+        onChange={(fileOrDataUrl) => {
+          handleChange(fileOrDataUrl);
         }}
         onChangeFileName={(filename) => {
           // Update filename field if it exists in formData structure
@@ -284,6 +299,8 @@ export const renderField = ({
         isDisabled={isDisabled}
         placeholder={fieldConfig.placeholder}
         style={inputStyle}
+        useFileObjects={fieldConfig?.useFileObjects || false}
+        enableFileSizeCheck={fieldConfig?.enableFileSizeCheck}
       />
     );
   }
@@ -668,10 +685,7 @@ export const renderField = ({
             handleSearch && getFieldRefSchemaSlug(propertySchema)
               ? (inputValue, actionMeta) => {
                   // Only trigger search for user input
-                  if (
-                    actionMeta.action === 'input-change' &&
-                    !isLoading
-                  ) {
+                  if (actionMeta.action === 'input-change' && !isLoading) {
                     const refSchemaSlug = getFieldRefSchemaSlug(propertySchema);
                     handleSearch(path, refSchemaSlug, inputValue);
                   }
