@@ -1,30 +1,6 @@
 <!DOCTYPE html>
 <html lang="nl" translate="no">
   <head>
-    <!-- Piwik Pro Analytics - MUST BE FIRST SCRIPT IN HEAD -->
-    <script>
-    (function() {
-      var srcUrl = '%PIWIK_SRC_URL%';
-      var dataLayerName = '%PIWIK_DATA_LAYER%';
-      var id = '%PIWIK_ID%';
-
-      // if nothing is set, do nothing
-      if ([srcUrl, dataLayerName, id].every(v => !v || v.trim() === '')) return;
-
-      // if error in the config (with intent to setup Piwik Pro Analytics) throw an error
-      if ([srcUrl, dataLayerName, id].some(v => !v || v.trim() === '')) {
-        console.error('Piwik Pro Analytics: srcUrl, dataLayerName of id is niet ingesteld');
-        return;
-      }
-      
-      (function(window, document, srcUrl, dataLayerName, id) {
-      window[dataLayerName]=window[dataLayerName]||[],window[dataLayerName].push({start:(new Date).getTime(),event:"stg.start"});var scripts=document.getElementsByTagName('script')[0],tags=document.createElement('script');
-      var qP=[];dataLayerName!=="dataLayer"&&qP.push("data_layer_name="+dataLayerName);var qPString=qP.length>0?("?"+qP.join("&")):"";
-      tags.async=!0,tags.src=srcUrl+id+".js"+qPString,scripts.parentNode.insertBefore(tags,scripts);
-      !function(a,n,i){a[n]=a[n]||{};for(var c=0;c<i.length;c++)!function(i){a[n][i]=a[n][i]||{},a[n][i].api=a[n][i].api||function(){var a=[].slice.call(arguments,0);"string"==typeof a[0]&&window[dataLayerName].push({event:n+"."+i+":"+a[0],parameters:[].slice.call(arguments,1)})}}(i[c])}(window,"ppms",["tm","cm"]);
-      })(window, document, srcUrl, dataLayerName, id);
-    })();
-    </script>
     <!-- Meta: Tags -->
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
@@ -101,6 +77,32 @@
   </head>
 
   <body id="body">
+    <!-- Piwik Pro Analytics - MUST BE FIRST SCRIPT IN BODY -->
+    <script>
+      (function() {
+        var srcUrl = '%PIWIK_SRC_URL%';
+        var dataLayerName = '%PIWIK_DATA_LAYER%';
+        var id = '%PIWIK_ID%';
+  
+        // if nothing is set, do nothing
+        if ([srcUrl, dataLayerName, id].every(v => !v || v.trim() === '')) return;
+  
+        // if error in the config (with intent to setup Piwik Pro Analytics) throw an error
+        if ([srcUrl, dataLayerName, id].some(v => !v || v.trim() === '')) {
+          console.error('Piwik Pro Analytics: srcUrl, dataLayerName of id is niet ingesteld');
+          return;
+        }
+        
+        (function(window, document, srcUrl, dataLayerName, id) {
+        window[dataLayerName]=window[dataLayerName]||[],window[dataLayerName].push({start:(new Date).getTime(),event:"stg.start"});var scripts=document.getElementsByTagName('script')[0],tags=document.createElement('script');
+        var qP=[];dataLayerName!=="dataLayer"&&qP.push("data_layer_name="+dataLayerName);var qPString=qP.length>0?("?"+qP.join("&")):"";
+        tags.async=!0,tags.src=srcUrl+id+".js"+qPString,scripts.parentNode.insertBefore(tags,scripts);
+        !function(a,n,i){a[n]=a[n]||{};for(var c=0;c<i.length;c++)!function(i){a[n][i]=a[n][i]||{},a[n][i].api=a[n][i].api||function(){var a=[].slice.call(arguments,0);"string"==typeof a[0]&&window[dataLayerName].push({event:n+"."+i+":"+a[0],parameters:[].slice.call(arguments,1)})}}(i[c])}(window,"ppms",["tm","cm"]);
+        })(window, document, srcUrl, dataLayerName, id);
+      })();
+    </script>
+    <!-- End of Piwik Pro Analytics -->
+
     <noscript> You need to enable JavaScript to run this app. </noscript>
     <div id="root"></div>
 
