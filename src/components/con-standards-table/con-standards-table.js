@@ -899,7 +899,7 @@ const ConStandardsTable = ({
                           backgroundColor: isCompliant
                             ? '#28a745'
                             : isOndersteund
-                            ? '#ffc107'
+                            ? '#A86200'
                             : versieEntry.type === 'VERPLICHT'
                             ? '#dc3545'
                             : '#6c757d',

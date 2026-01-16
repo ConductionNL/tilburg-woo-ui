@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import clsx from 'clsx';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
@@ -134,6 +134,12 @@ const ConEditableDescription = ({
   const [charCount, setCharCount] = useState(0);
   const [localSaving, setLocalSaving] = useState(false);
 
+  // Generate a unique ID for the textarea to associate with the label
+  const textareaId = useMemo(
+    () => `con-editable-description-${objectId}-${field}`,
+    [objectId, field]
+  );
+
   // Remove the requestType and objectStore.isLoading logic
 
   useEffect(() => {
@@ -183,7 +189,7 @@ const ConEditableDescription = ({
           <div className='ac-organisatie-detail-form'>
             {isMarkdown ? (
               <div className='con-wysiwyg-markdown-field'>
-                <label className='utrecht-form-label'>
+                <label className='utrecht-form-label' htmlFor={textareaId}>
                   <Heading
                     level={4}
                     className={clsx({
@@ -220,6 +226,7 @@ const ConEditableDescription = ({
                     buttonProps: { ...(cmd.buttonProps || {}), tabIndex: -1 },
                   })}
                   textareaProps={{
+                    id: textareaId,
                     maxLength: maxLength,
                   }}
                   previewOptions={{

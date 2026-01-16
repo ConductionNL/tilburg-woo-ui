@@ -111,13 +111,13 @@ const AcHeader = ({ store: { menu, user } }) => {
             <div>
               <ConLogo variant='header' />
               <span className='sr-only'>Logo</span>
-              <span className='logo-text'>{getTitle()}</span>
+              <h1 className='logo-text'>{getTitle()}</h1>
             </div>
           ) : (
             <>
               <Link to='/' title='Logo Tilburg - Ga naar de beginpagina'>
                 <ConLogo variant='header' />
-                <span className='logo-text'>{getTitle()}</span>
+                <h1 className='logo-text'>{getTitle()}</h1>
               </Link>
             </>
           )}

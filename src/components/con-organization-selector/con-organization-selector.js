@@ -59,39 +59,47 @@ const ConOrganizationSelector = ({
     return null;
   }
 
+  const inputId = 'con-organization-selector-input';
+
   return (
-    <ReactSelect
-      placeholder={placeholder}
-      value={
-        activeOrganisation
-          ? {
-              value: activeOrganisation.uuid,
-              label:
-                activeOrganisation.name +
-                (activeOrganisation.isDefault ? ' (Standaard)' : ''),
-            }
-          : null
-      }
-      className={clsx(
-        'ac-beheer-select con-organization-selector',
-        switchingOrg && 'ac-beheer-select--disabled',
-        className
-      )}
-      onChange={handleOrganisationSwitch}
-      options={organisations.results.map((org) => ({
-        value: org.uuid,
-        label: org.name + (org.isDefault ? ' (Standaard)' : ''),
-      }))}
-      isLoading={switchingOrg}
-      isDisabled={switchingOrg}
-      isClearable={false}
-      styles={{
-        container: (provided) => ({
-          ...provided,
-          minWidth: '200px',
-        }),
-      }}
-    />
+    <>
+      <label className='sr-only' htmlFor={inputId}>
+        Selecteer organisatie
+      </label>
+      <ReactSelect
+        inputId={inputId}
+        placeholder={placeholder}
+        value={
+          activeOrganisation
+            ? {
+                value: activeOrganisation.uuid,
+                label:
+                  activeOrganisation.name +
+                  (activeOrganisation.isDefault ? ' (Standaard)' : ''),
+              }
+            : null
+        }
+        className={clsx(
+          'ac-beheer-select con-organization-selector',
+          switchingOrg && 'ac-beheer-select--disabled',
+          className
+        )}
+        onChange={handleOrganisationSwitch}
+        options={organisations.results.map((org) => ({
+          value: org.uuid,
+          label: org.name + (org.isDefault ? ' (Standaard)' : ''),
+        }))}
+        isLoading={switchingOrg}
+        isDisabled={switchingOrg}
+        isClearable={false}
+        styles={{
+          container: (provided) => ({
+            ...provided,
+            minWidth: '200px',
+          }),
+        }}
+      />
+    </>
   );
 };
 
