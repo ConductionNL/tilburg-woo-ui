@@ -1021,7 +1021,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         const queryParams = {
           _limit: '50',
           _page: '1',
-          _source: 'database',
           _published: 'false',
         };
 

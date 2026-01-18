@@ -860,7 +860,6 @@ export class ObjectStore {
     const queryParams = {
       _limit: params._limit || params.limit || 20,
       _page: params._page || params.page || 1,
-      _source: 'database', // Always use database as source
       ...params,
     };
 
