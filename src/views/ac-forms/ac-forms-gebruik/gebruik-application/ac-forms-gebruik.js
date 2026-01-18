@@ -1250,7 +1250,6 @@ const AcFormsGebruik = ({ store }) => {
         const params = {
           _limit: '50',
           _page: '1',
-          _source: 'database',
           _published: 'false',
         };
 

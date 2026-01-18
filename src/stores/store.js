@@ -18,6 +18,7 @@ import AuthenticationStore from '@stores/authentication.store';
 import MijnOmgevingStore from '@stores/mijnOmgeving.store';
 import GemmaStore from '@stores/gemma.store';
 import ObjectStore from '@stores/object.store';
+import ChatStore from '@stores/chat.store';
 
 class Store {
   constructor(config) {
@@ -39,6 +40,7 @@ class Store {
     this.mijnOmgeving = new MijnOmgevingStore(this);
     this.gemma = new GemmaStore(this);
     this.object = new ObjectStore(this);
+    this.chat = new ChatStore(this);
 
     window.addEventListener(
       'swFreshContentReady',

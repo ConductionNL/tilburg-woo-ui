@@ -54,6 +54,7 @@ const ConFormsGebruikKoppeling = loadable(() =>
 const ConFormsGebruikDienst = loadable(() =>
   import('@views/ac-forms/ac-forms-gebruik/gebruik-dienst/con-forms-dienst')
 );
+const AcChat = loadable(() => import('@views/ac-chat/ac-chat'));
 
 export {
   AcHome,
@@ -82,4 +83,5 @@ export {
   ConPasswordReminder,
   ConFormsGebruikKoppeling,
   ConFormsGebruikDienst,
+  AcChat,
 };

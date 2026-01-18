@@ -12,13 +12,13 @@ export const ENDPOINTS = AcLockObject({
     LOGOUT: `/oauth/logout`,
   },
   OPENCONNECTOR: {
-    USER_LOGIN: `/openconnector/api/user/login`,
-    USER_LOGOUT: `/openconnector/api/user/logout`,
-    USER_PROFILE: `/openconnector/api/user/me`,
+    USER_LOGIN: `/openregister/api/user/login`,
+    USER_LOGOUT: `/openregister/api/user/logout`,
+    USER_PROFILE: `/openregister/api/user/me`,
   },
   PUBLICATIONS: {
     SEARCH: `/opencatalogi/api/publications`, // GET
-    SINGLE: (_id) => `/opencatalogi/api/publications/${_id}?_extend[]=themes&_extend[]=contactpersoon`, // GET
+    SINGLE: (_id) => `/opencatalogi/api/publications/${_id}?_extend=_schema,_register,themes,contactpersoon`, // GET
     RELATIONS: (_uri) =>
       `/opencatalogi/api/publications?_extend[]=publicationType&_extend[]=catalog&_relations=${_uri}`, // GET
     ATTACHMENTS: (_id) => `/opencatalogi/api/publications/${_id}/attachments`, // GET
@@ -36,7 +36,7 @@ export const ENDPOINTS = AcLockObject({
     SHOW: (_id) => `/faqs/${_id}`, // GET
   },
   PAGES: {
-    INDEX: `/opencatalogi/api/pages?_source=database`, // GET
+    INDEX: `/opencatalogi/api/pages`, // GET
     SHOW: (_slug) => `/opencatalogi/api/pages${_slug}`, // GET
   },
   THEMES: {
@@ -51,7 +51,7 @@ export const ENDPOINTS = AcLockObject({
       `/openconnector/api/endpoint/relationships?identifier=${_id}`,
   }, // GET
   MENU: {
-    INDEX: `/opencatalogi/api/menus?_source=database`, // GET
+    INDEX: `/opencatalogi/api/menus`, // GET
     SINGLE: (_id) => `/opencatalogi/api/menus/${_id}`, // GET
   },
   AANGEBODEN_GEBRUIK: {

@@ -118,7 +118,7 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
     const fetchGebruik = async () => {
       try {
         const response = await fetch(
-          `${commongroundApiUrl()}/softwarecatalog/api/gebruik?_source=database&_extend[]=@self.schema`,
+          `${commongroundApiUrl()}/softwarecatalog/api/gebruik?_extend[]=@self.schema`,
           {
             method: 'GET',
             signal: abortController.signal,
