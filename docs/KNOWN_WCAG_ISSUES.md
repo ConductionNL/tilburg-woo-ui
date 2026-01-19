@@ -12,7 +12,6 @@ Dit document houdt een lijst van bekende WCAG issues over de softwarecatalogus, 
   - [AAA (hoogste niveau):](#aaa-hoogste-niveau)
   - [S (suggesties / best practices):](#s-suggesties--best-practices)
 - [Bekende problemen](#bekende-problemen)
-  - [Button missing a text alternative (A)](#button-missing-a-text-alternative-a)
   - [Link missing a text alternative (A)](#link-missing-a-text-alternative-a)
   - [Vector image missing a text alternative (A)](#vector-image-missing-a-text-alternative-a)
   - [Hidden element has focusable content (A)](#hidden-element-has-focusable-content-a)
@@ -62,8 +61,6 @@ Automatische tools vinden vooral **technisch detecteerbare** problemen. Ze misse
 
 Gebruik de extensie dus als snelle en consistente **eerste check**, maar combineer het met een korte handmatige controle (toetsenbordtest + screenreader/semantiekcheck) voor de belangrijkste flows.
 
-Als je wilt, kan ik er ook nog een compact blokje “minimum handmatige checks in 5 minuten” onder zetten dat qua lengte matcht met je AA/AAA-stuk.
-
 
 ## Wat voor WCAG levels bestaan er
 
@@ -83,14 +80,6 @@ WCAG kent drie conformiteitsniveaus: **A**, **AA** en **AAA**. Elk niveau bouwt 
 
 
 ## Bekende problemen
-
-### Button missing a text alternative (A)
-Deze regel vereist dat een knop altijd een **toegankelijke naam** heeft (bijv. via zichtbare tekst, `aria-label` of een ander tekstalternatief). Dit is belangrijk voor screenreadergebruikers, zodat zij begrijpen wat de knop doet. De tekst hoeft **niet zichtbaar** te zijn om aan deze eis te voldoen.
-
-**Waar dit speelt:**
-| Locatie | URL | Commentaar |
-| ------- | --- | ---------- |
-| *       | `/` | Er is één element dat hierop faalt: een **onzichtbare knop** links van de “Home”-knop in de **tweede navigatie**. We moeten bepalen of deze knop **weg kan** (als hij geen functie heeft) of een **tekstalternatief** toevoegen (als hij wel nodig is). Dit komt op **alle pagina’s** voor. |
 
 
 ### Link missing a text alternative (A)

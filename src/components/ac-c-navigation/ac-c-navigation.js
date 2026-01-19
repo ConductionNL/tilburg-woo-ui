@@ -25,14 +25,14 @@ const AcCNavigation = ({ items = [], mobileLogo, layoutClassName }) => {
       )}
     >
       {/* @TODO: this element is not being shown due to line 412-414 of `_ac-c-navigation.scss`, decide what to do with this */}
-      <div className='ac-c-navigation__menu-toggle-container'>
+      {/* <div className='ac-c-navigation__menu-toggle-container'>
         {mobileLogo}
 
         <button
           className='ac-c-navigation__menu-toggle'
           onClick={() => setIsOpen((o) => !o)}
         ></button>
-      </div>
+      </div> */}
       <nav
         className={clsx('ac-c-navigation__primary', isOpen && 'isOpen')}
         aria-label='Hoofdnavigatie'
