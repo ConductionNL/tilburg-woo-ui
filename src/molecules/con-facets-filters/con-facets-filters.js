@@ -280,11 +280,9 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
       return [];
     });
 
-  useEffect(() => {
-    // Trigger initial facets fetch when component mounts
-    // Subsequent facets fetches are triggered by facet selection changes
-    publications.fetchFacets();
-  }, []); // Only run once on mount
+  // Note: Initial facets fetch is triggered by ac-search.js on mount
+  // Subsequent facets fetches are triggered by facet selection changes below
+  // No need for useEffect here to avoid duplicate calls
 
   // Render skeleton loading cards for facets
   const renderSkeletonFacets = () => {
@@ -310,11 +308,26 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
 
   const facets = resolvedFacets;
 
+  // Debug: Log facet data to see what labels are present
+  if (facets && Object.keys(facets).length > 0) {
+    console.group('🔍 DEBUG: Facet Labels');
+    Object.entries(facets).forEach(([key, value]) => {
+      if (key !== '@self' && value.buckets) {
+        console.log(`Facet "${key}":`, value.buckets.map(b => ({
+          label: b.label,
+          value: b.value,
+          key: b.key
+        })));
+      }
+    });
+    console.groupEnd();
+  }
+
   // Only show skeleton loading when:
-  // We're loading facets AND don't have existing facets to show, OR we're resolving names
-  const shouldShowSkeleton =
-    (is_facets_loading && (!facets || Object.keys(facets).length === 0)) ||
-    isResolving;
+  // We're loading facets AND don't have existing facets to show
+  // Note: isResolving is NOT included - we show facets immediately even with UUIDs
+  // DISABLED: Always false to prevent blocking on names resolution
+  const shouldShowSkeleton = false;
 
   if (shouldShowSkeleton) {
     return <>{renderSkeletonFacets()}</>;
