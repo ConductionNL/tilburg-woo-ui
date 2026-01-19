@@ -766,7 +766,7 @@ const AcFormsProductInner = ({
     const fetchUserOrganization = async () => {
       try {
         const response = await fetch(
-          `${commongroundApiUrl()}/openconnector/api/user/me`,
+          `${commongroundApiUrl()}/openregister/api/user/me`,
           {
             method: 'GET',
             headers: {
@@ -979,7 +979,7 @@ const AcFormsProductInner = ({
 
       // Fetch standards from openconnector endpoint using normal fetch
       const response = await fetch(
-        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
         {
           method: 'GET',
           headers: {
@@ -1044,7 +1044,7 @@ const AcFormsProductInner = ({
 
       // Fetch standards from openconnector endpoint using normal fetch
       const response = await fetch(
-        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
         {
           method: 'GET',
           headers: {

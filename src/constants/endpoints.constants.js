@@ -43,12 +43,12 @@ export const ENDPOINTS = AcLockObject({
     INDEX: `/opencatalogi/api/themes`, // GET
   },
   GEMMA: {
-    VIEWS: `/openconnector/api/endpoint/views`,
-    VIEW: (_id) => `/openconnector/api/endpoint/views/${_id}`,
+    VIEWS: `/openregister/api/objects/vng-gemma/views`,
+    VIEW: (_id) => `/openregister/api/objects/vng-gemma/view/${_id}`,
     ELEMENT_REFERENCES: (_id) =>
-      `/openconnector/api/endpoint/elements?identifier=${_id}`,
+      `/openregister/api/objects/vng-gemma/element?identifier=${_id}`,
     RELATIONSHIPS: (_id) =>
-      `/openconnector/api/endpoint/relationships?identifier=${_id}`,
+      `/openregister/api/objects/vng-gemma/relationships?identifier=${_id}`,
   }, // GET
   MENU: {
     INDEX: `/opencatalogi/api/menus`, // GET

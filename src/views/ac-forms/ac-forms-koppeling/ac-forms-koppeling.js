@@ -1526,7 +1526,7 @@ const AcFormsKoppeling = ({ store }) => {
 
       // Fetch standaardversies from openconnector endpoint using normal fetch
       const response = await fetch(
-        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
         {
           method: 'GET',
           headers: {
@@ -1580,7 +1580,7 @@ const AcFormsKoppeling = ({ store }) => {
       console.info('📋 Fetching external facilities from openconnector endpoint...');
 
       const response = await fetch(
-        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
         {
           method: 'GET',
           headers: {
