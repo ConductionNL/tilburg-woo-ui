@@ -1594,7 +1594,7 @@ const AcFormsKoppeling = ({ store }) => {
 
       // Fetch standaardversies from openconnector endpoint using normal fetch
       const response = await fetch(
-        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
         {
           method: 'GET',
           headers: {
@@ -1607,6 +1607,7 @@ const AcFormsKoppeling = ({ store }) => {
       const options = list.results
         .map((item, index) => {
           const label =
+            item?.['@self']?.name ||
             item?.xml?.name?._value ||
             item?.naam ||
             item?.name ||
@@ -1648,7 +1649,7 @@ const AcFormsKoppeling = ({ store }) => {
       console.info('📋 Fetching external facilities from openconnector endpoint...');
 
       const response = await fetch(
-        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
         {
           method: 'GET',
           headers: {
@@ -1661,6 +1662,7 @@ const AcFormsKoppeling = ({ store }) => {
       const options = list.results
         .map((item, index) => {
           const label =
+            item?.['@self']?.name ||
             item?.xml?.name?._value ||
             item?.naam ||
             item?.name ||
@@ -1741,6 +1743,7 @@ const AcFormsKoppeling = ({ store }) => {
       const targetRefCompIds = allRefComps
         .filter((refComp) => {
           const name =
+            refComp?.['@self']?.name ||
             refComp?.xml?.name?._value ||
             refComp?.naam ||
             refComp?.name ||

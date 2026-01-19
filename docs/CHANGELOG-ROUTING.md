@@ -12,10 +12,10 @@
 
 ### 🔧 Changed
 - **API Endpoints**: Each form type now posts to dedicated endpoints:
-  - Register: '/openconnector/api/endpoint/register'
-  - Gebruik: '/openconnector/api/endpoint/gebruik' 
-  - Product: '/openconnector/api/endpoint/product'
-  - Koppeling: '/openconnector/api/endpoint/koppeling'
+  - Register: '/openregister/api/objects/vng-gemma/register'
+  - Gebruik: '/openregister/api/objects/vng-gemma/gebruik' 
+  - Product: '/openregister/api/objects/vng-gemma/product'
+  - Koppeling: '/openregister/api/objects/vng-gemma/koppeling'
 
 ### 📁 File Structure
 - **New Components**:

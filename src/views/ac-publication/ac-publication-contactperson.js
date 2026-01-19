@@ -59,7 +59,7 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
 
   // Exclude specific schemas from actions
   const excludeSchemas = useMemo(
-    () => ['organisatie', 'product', 'dienst', 'gebruik', 'module', 'suite'],
+    () => ['organisatie', 'dienst', 'gebruik', 'module', 'suite'],
     []
   );
 

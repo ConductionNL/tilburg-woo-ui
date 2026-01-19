@@ -163,6 +163,11 @@ env:
   # Search Configuration
   DEFAULT_SEARCH_SCHEMA: ""           # Optional: Default schema ID for search queries (e.g. "63" for producten)
 
+  # Chat Configuration (test URL for development)
+  CHAT_ENDPOINT: "https://api.example.com/chat"  # Optional: LLM endpoint URL for chat functionality (leave empty to disable, set URL to enable)
+  CHAT_TITLE: "Chat met Open Registers"          # Optional: Chat page title
+  CHAT_DESCRIPTION: "Stel vragen over data en bestanden in open registers en krijg direct antwoord."  # Optional: Chat page description
+
 
 # Health check configuration
 healthCheck:

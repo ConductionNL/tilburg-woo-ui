@@ -161,7 +161,7 @@ const AcBeheer = ({ store }) => {
   if (type === 'product') {
     return <ConProductDetailsPage />;
   }
-  if (type === 'module' || type === 'applicaties') {
+  if (type === 'module' || type === 'applicaties' || type === 'applications') {
     return <ConModuleDetailsPage />;
   }
   if (

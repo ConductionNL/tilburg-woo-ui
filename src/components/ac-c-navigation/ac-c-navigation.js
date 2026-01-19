@@ -41,10 +41,8 @@ const AcCNavigation = ({ items = [], mobileLogo, layoutClassName }) => {
           {items.map(({ name, icon, link, slug, items }, idx) => (
             <li
               key={idx}
-              className={clsx(
-                'ac-c-navigation__li',
-                isCurrent(slug) && 'ac-c-navigation__current'
-              )}
+              to={!items?.length && link}
+              className='ac-c-navigation__link-container'
             >
               <Link
                 to={!items.length && link}
@@ -62,7 +60,7 @@ const AcCNavigation = ({ items = [], mobileLogo, layoutClassName }) => {
                   {name}
                 </div>
 
-                {items.length > 0 && (
+                {items?.length > 0 && (
                   <ul
                     className={clsx('ac-c-navigation__dropdown', [
                       items.length > 8 && 'ac-c-navigation__dropdown-overflow',
