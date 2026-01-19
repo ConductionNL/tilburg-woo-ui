@@ -42,7 +42,6 @@ const AcCNavigation = ({ items = [], mobileLogo, layoutClassName }) => {
             <li
               key={idx}
               to={!items?.length && link}
-              className='ac-c-navigation__link-container'
             >
               <Link
                 to={!items.length && link}
