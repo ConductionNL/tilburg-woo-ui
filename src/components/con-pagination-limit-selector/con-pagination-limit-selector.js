@@ -182,21 +182,32 @@ const ConPaginationLimitSelector = ({
     return allOptions.find((option) => option.value === selectedLimit) || null;
   }, [allOptions, selectedLimit]);
 
+  const inputId = useMemo(
+    () => `con-pagination-limit-selector-${objectType}`,
+    [objectType]
+  );
+
   return (
-    <CreatableSelect
-      placeholder={placeholder}
-      value={selectedOption}
-      onChange={handleChange}
-      onCreateOption={handleCreateOption}
-      options={allOptions}
-      isValidNewOption={isValidNewOption}
-      className={clsx(className, 'con-pagination-limit-selector')}
-      isClearable={false}
-      isSearchable={true}
-      formatCreateLabel={(inputValue) => `Aanmaken: ${inputValue}`}
-      noOptionsMessage={() => 'Geen opties beschikbaar'}
-      loadingMessage={() => 'Laden...'}
-    />
+    <>
+      <label className='sr-only' htmlFor={inputId}>
+        Selecteer aantal items per pagina
+      </label>
+      <CreatableSelect
+        inputId={inputId}
+        placeholder={placeholder}
+        value={selectedOption}
+        onChange={handleChange}
+        onCreateOption={handleCreateOption}
+        options={allOptions}
+        isValidNewOption={isValidNewOption}
+        className={clsx(className, 'con-pagination-limit-selector')}
+        isClearable={false}
+        isSearchable={true}
+        formatCreateLabel={(inputValue) => `Aanmaken: ${inputValue}`}
+        noOptionsMessage={() => 'Geen opties beschikbaar'}
+        loadingMessage={() => 'Laden...'}
+      />
+    </>
   );
 };
 

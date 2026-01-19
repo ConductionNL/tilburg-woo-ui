@@ -282,6 +282,8 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
   const [standaardenOptionsLoading, setStandaardenOptionsLoading] = useState(false);
   // Extra standards selected via multi-select (not from referentieComponenten)
   const [selectedExtraStandards, setSelectedExtraStandards] = useState([]);
+  // Ref to track if selectedExtraStandards has been initialized from existing data
+  const selectedExtraStandardsInitializedRef = useRef(false);
 
   // Standaardenversies options with search functionality
   const [standaardenversiesOptions, setStandaardenversiesOptions] = useState([]);
@@ -797,10 +799,16 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
   }, [schemas?.module]);
 
   // Initialize selectedExtraStandards from existing compliancy and standaardVersies data
+  // This should only run once on mount, not react to compliance checkbox changes
   useEffect(() => {
     if (standaardenversiesOptions.length === 0) return;
     if (standaardenOptions.length === 0) return; // Need standards to check standaardVersies
-    if (selectedExtraStandards.length > 0) return; // Already initialized
+    if (selectedExtraStandardsInitializedRef.current) return; // Already initialized
+    if (selectedExtraStandards.length > 0) {
+      // If already has values, mark as initialized
+      selectedExtraStandardsInitializedRef.current = true;
+      return;
+    }
 
     // Get all standaardversie IDs from compliancy and standaardVersies arrays
     const existingCompliancy = applicatie.compliancy || [];
@@ -820,7 +828,11 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       }
     });
 
-    if (allVersieIds.size === 0) return;
+    if (allVersieIds.size === 0) {
+      // Mark as initialized even if no data, to prevent re-running
+      selectedExtraStandardsInitializedRef.current = true;
+      return;
+    }
 
     // Get all standaardversie IDs from referentieComponentenWithStandards
     // Traverse: referentieComponenten → standaarden → standaardVersies
@@ -887,7 +899,22 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
 
     allVersieIds.forEach((versieId) => {
       // Check if this versie is NOT in referentieComponenten (i.e., it's an extra versie)
-      if (!refVersieIds.has(versieId)) {
+      // Also check all possible ID format variations to ensure proper matching
+      let isInRefs = false;
+
+      // Check direct match
+      if (refVersieIds.has(versieId)) {
+        isInRefs = true;
+      } else {
+        // Check if any ref versie ID matches this versieId (handle ID format variations)
+        refVersieIds.forEach((refVersieId) => {
+          if (String(refVersieId) === String(versieId)) {
+            isInRefs = true;
+          }
+        });
+      }
+
+      if (!isInRefs) {
         // Find the option for this standaardversie - check all possible ID formats
         const option = standaardenversiesOptions.find((opt) => {
           // Check option value (should now be identifier)
@@ -909,14 +936,16 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     if (extraVersies.length > 0) {
       setSelectedExtraStandards(extraVersies);
     }
+
+    // Mark as initialized after processing
+    selectedExtraStandardsInitializedRef.current = true;
   }, [
     standaardenOptions,
     standaardenversiesOptions,
     referentieComponentenWithStandards,
-    applicatie.compliancy,
-    applicatie.standaardVersies,
-    applicatie.standaardversies,
-    selectedExtraStandards.length,
+    // Removed applicatie.compliancy, applicatie.standaardVersies, applicatie.standaardversies
+    // from dependencies to prevent re-running when compliance checkboxes are toggled
+    // This effect should only initialize once from existing data
   ]);
 
   // Function to search modules with debouncing using object store cache
@@ -1903,8 +1932,13 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         (applicatie.website && !validateWebsite(applicatie.website))
       );
     }
-    // licentie: licentie is required when open source is selected
+    // licentie: licentietype is required, and licentie is required when open source is selected
     if (logicalStep === 2) {
+      // Check if licentietype is filled
+      if (!applicatie.licentietype || applicatie.licentietype.trim() === '') {
+        return true;
+      }
+      // If open source is selected, licentie is also required
       if (applicatie.licentietype === 'Open source') {
         return !applicatie.licentie || applicatie.licentie.trim() === '';
       }
@@ -1994,6 +2028,18 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       }
       if (applicatie.website && !validateWebsite(applicatie.website)) {
         return 'Website heeft een ongeldig formaat';
+      }
+    }
+
+    if (logicalStep === 2) {
+      if (!applicatie.licentietype || applicatie.licentietype.trim() === '') {
+        return 'Selecteer een licentievorm';
+      }
+      if (
+        applicatie.licentietype === 'Open source' &&
+        (!applicatie.licentie || applicatie.licentie.trim() === '')
+      ) {
+        return 'Selecteer een licentie';
       }
     }
 

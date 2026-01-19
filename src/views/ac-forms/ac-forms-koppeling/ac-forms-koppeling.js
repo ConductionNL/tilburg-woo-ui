@@ -165,6 +165,9 @@ const AcFormsKoppeling = ({ store }) => {
   const [ownAppLoading, setOwnAppLoading] = useState(false);
   const [applicatiePreloadLoading, setApplicatiePreloadLoading] = useState(false);
 
+  // State for the full organization data (needed to get the type)
+  const [fullActiveOrganisation, setFullActiveOrganisation] = useState(null);
+
   // Search state
   const [searchResults, setSearchResults] = useState([]);
   const [resolvedModulesFromResults, setResolvedModulesFromResults] = useState([]);
@@ -414,6 +417,42 @@ const AcFormsKoppeling = ({ store }) => {
     }
   }, []);
 
+  // Fetch full organization data to get the type
+  useEffect(() => {
+    const fetchFullOrganisationData = async () => {
+      const activeOrg = store?.user?.activeOrganization;
+      if (!activeOrg) return;
+
+      const orgId = activeOrg?.uuid || activeOrg?.id;
+      if (!orgId) return;
+
+      try {
+        await store.object.fetchObject(
+          'voorzieningen',
+          'organisatie',
+          String(orgId),
+          {
+            '_extend[]': ['@self.schema'],
+            _published: 'false',
+          }
+        );
+        const fullOrgData = store.object.getObject(
+          'voorzieningen_organisatie',
+          orgId
+        );
+        setFullActiveOrganisation(fullOrgData);
+      } catch (error) {
+        console.error('Failed to fetch full organization data:', error);
+      }
+    };
+
+    fetchFullOrganisationData();
+  }, [
+    store?.user?.activeOrganization?.uuid,
+    store?.user?.activeOrganization?.id,
+    store,
+  ]);
+
   // Fetch modules (applications) options on mount
   useEffect(() => {
     let isMounted = true;
@@ -425,6 +464,21 @@ const AcFormsKoppeling = ({ store }) => {
           _page: '1',
           _published: 'false',
         });
+
+        // Filter by organization when type is eigen-organisatie and org type is leverancier or community
+        const organizationType = fullActiveOrganisation?.type || '';
+        const shouldFilterByOrg =
+          koppelingsType === 'eigen-organisatie' &&
+          (organizationType === 'Leverancier' || organizationType === 'Community');
+
+        if (shouldFilterByOrg) {
+          const activeOrg = store?.user?.activeOrganization;
+          const activeOrgId = activeOrg?.uuid || activeOrg?.id;
+          if (activeOrgId) {
+            params.append('organisation', String(activeOrgId));
+          }
+        }
+
         const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module?${params}`;
         const res = await fetch(endpoint, {
           headers: { Accept: 'application/json' },
@@ -479,7 +533,7 @@ const AcFormsKoppeling = ({ store }) => {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [koppelingsType, fullActiveOrganisation, store]);
 
   // Pre-select applicatie from URL parameter
   useEffect(() => {
@@ -772,6 +826,20 @@ const AcFormsKoppeling = ({ store }) => {
           _source: 'index',
         };
 
+        // Filter by organization when type is eigen-organisatie and org type is leverancier or community
+        const organizationType = fullActiveOrganisation?.type || '';
+        const shouldFilterByOrg =
+          koppelingsType === 'eigen-organisatie' &&
+          (organizationType === 'Leverancier' || organizationType === 'Community');
+
+        if (shouldFilterByOrg) {
+          const activeOrg = store?.user?.activeOrganization;
+          const activeOrgId = activeOrg?.uuid || activeOrg?.id;
+          if (activeOrgId) {
+            queryParams.organisation = String(activeOrgId);
+          }
+        }
+
         // Add search parameter if provided
         if (q) {
           queryParams._search = q;
@@ -814,7 +882,7 @@ const AcFormsKoppeling = ({ store }) => {
         setOwnAppLoading(false);
       }
     },
-    [store, mapModuleToOption]
+    [store, mapModuleToOption, koppelingsType, fullActiveOrganisation]
   );
 
   // Debounced search function for modules

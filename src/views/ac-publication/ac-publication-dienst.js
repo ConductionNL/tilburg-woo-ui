@@ -370,7 +370,7 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
                     </div>
                     {contact['e-mailadres'] && (
                       <div>
-                        <Link href={`mailto:${contact['e-mailadres']}`}>
+                        <Link href={`mailto:${contact['e-mailadres']}`} style={{ minHeight: '24px' }}>
                           {contact['e-mailadres']}
                         </Link>
                       </div>
@@ -382,6 +382,7 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
                             .split('')
                             .filter((character) => character !== ' ')
                             .join('')}`}
+                          style={{ minHeight: '24px' }}
                         >
                           {contact.telefoonnummer}
                         </Link>
