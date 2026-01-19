@@ -671,6 +671,179 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     }
   }, [schemas?.module]);
 
+  // Function to load standaarden based on selected referentiecomponenten
+  const loadStandaardenFromReferentieComponenten = useCallback(async (selectedRefComps) => {
+    if (!schemas?.module || !selectedRefComps || selectedRefComps.length === 0) {
+      console.info('⏭️ No referentiecomponenten selected, skipping standaarden load');
+      setStandaardenOptions([]);
+      return;
+    }
+
+    console.info('📋 Loading standaarden from selected referentiecomponenten...');
+    setStandaardenOptionsLoading(true);
+
+    try {
+      // Step 1: Aggregate all standaard IDs from selected referentiecomponenten
+      const standaardIds = new Set();
+      
+      selectedRefComps.forEach((refCompValue) => {
+        // Find the full referentiecomponent data
+        const refCompOption = referentieComponentenOptions.find(opt => opt.value === refCompValue);
+        if (!refCompOption?.data) return;
+
+        const refCompData = refCompOption.data;
+        
+        // Collect aanbevolen standaarden IDs
+        if (Array.isArray(refCompData.aanbevolenStandaarden)) {
+          refCompData.aanbevolenStandaarden.forEach(standaard => {
+            const id = standaard?.['@self']?.id || standaard?.id || standaard;
+            if (id) standaardIds.add(id);
+          });
+        }
+        
+        // Collect verplichte standaarden IDs
+        if (Array.isArray(refCompData.verplichteStandaarden)) {
+          refCompData.verplichteStandaarden.forEach(standaard => {
+            const id = standaard?.['@self']?.id || standaard?.id || standaard;
+            if (id) standaardIds.add(id);
+          });
+        }
+      });
+
+      console.info(`📊 Found ${standaardIds.size} unique standaarden from selected components`);
+
+      if (standaardIds.size === 0) {
+        console.warn('⚠️ No standaarden found in selected referentiecomponenten');
+        setStandaardenOptions([]);
+        setStandaardenOptionsLoading(false);
+        return;
+      }
+
+      // Step 2: Fetch each standaard with _extend[]=standaardVersies
+      const standaardenPromises = Array.from(standaardIds).map(async (standaardId) => {
+        try {
+          const queryParams = new URLSearchParams({
+            '_extend[]': 'standaardVersies',
+          });
+          
+          const response = await fetch(
+            `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element/${standaardId}?${queryParams}`,
+            {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            }
+          );
+          
+          if (!response.ok) {
+            console.error(`Failed to fetch standaard ${standaardId}:`, response.status);
+            return null;
+          }
+          
+          return await response.json();
+        } catch (e) {
+          console.error(`Error fetching standaard ${standaardId}:`, e);
+          return null;
+        }
+      });
+
+      const standaarden = (await Promise.all(standaardenPromises)).filter(Boolean);
+
+      console.info(`✅ Fetched ${standaarden.length} standaarden with their versions`);
+
+      // Step 3: Map to options
+      const options = standaarden.map((item, index) => {
+        const label =
+          item?.['@self']?.name ||
+          item?.xml?.name?._value ||
+          item?.naam ||
+          item?.name ||
+          item?.title ||
+          item?.label ||
+          `Standaard ${index + 1}`;
+        const value = item?.['@self']?.id || item?.id || item?.value || item?.slug || label;
+        return { 
+          value: String(value), 
+          label: String(label), 
+          data: item // Contains standaardVersies array with full objects
+        };
+      }).filter((o) => o.label && o.value);
+
+      setStandaardenOptions(options);
+      console.info(`✅ Loaded ${options.length} standaarden options`);
+    } catch (e) {
+      console.error('Failed to load standaarden:', e);
+      setStandaardenOptions([]);
+    } finally {
+      setStandaardenOptionsLoading(false);
+    }
+  }, [schemas?.module, referentieComponentenOptions]);
+
+  // Legacy function kept for backward compatibility (now unused)
+  const loadStandaarden = useCallback(async () => {
+    console.warn('⚠️ loadStandaarden() called but should use loadStandaardenFromReferentieComponenten()');
+  }, []);
+
+  // Function to extract standaardversies from loaded standaarden
+  const loadStandaardenversiesFromStandaarden = useCallback(() => {
+    if (!schemas?.module) return;
+
+    console.info('📋 Extracting standaardversies from loaded standaarden...');
+    setStandaardenversiesOptionsLoading(true);
+
+    try {
+      const allVersions = [];
+
+      // Extract standaardVersies from each loaded standaard
+      standaardenOptions.forEach(standaardOption => {
+        const standaardData = standaardOption.data;
+        
+        if (Array.isArray(standaardData?.standaardVersies)) {
+          standaardData.standaardVersies.forEach(versie => {
+            // Check if versie is already a full object or just an ID
+            if (typeof versie === 'object' && versie !== null) {
+              allVersions.push(versie);
+            } else {
+              console.warn(`⚠️ Standaard "${standaardOption.label}" has standaardVersies as IDs only, not full objects. Needs backend to extend properly.`);
+            }
+          });
+        }
+      });
+
+      console.info(`📊 Found ${allVersions.length} standaardversies from ${standaardenOptions.length} standaarden`);
+
+      // Map to options
+      const options = allVersions.map((item, index) => {
+        const label =
+          item?.['@self']?.name ||
+          item?.xml?.name?._value ||
+          item?.naam ||
+          item?.name ||
+          item?.title ||
+          item?.label ||
+          `Standaardversie ${index + 1}`;
+        // Use identifier first (id- prefixed format) to match what we store in compliancy/standaardVersies
+        const value =
+          item?.['@self']?.id || item?.identifier || item?.value || item?.id || item?.slug || label;
+        return { value: String(value), label: String(label), data: item };
+      }).filter((o) => o.label && o.value);
+
+      setStandaardenversiesOptions(options);
+      console.info(`✅ Loaded ${options.length} standaardversies options`);
+    } catch (e) {
+      console.error('Failed to extract standaardenversies:', e);
+      setStandaardenversiesOptions([]);
+    } finally {
+      setStandaardenversiesOptionsLoading(false);
+    }
+  }, [schemas?.module, standaardenOptions]);
+
+  // Legacy function kept for backward compatibility (now unused)
+  const loadStandaardenversies = useCallback(async () => {
+    console.warn('⚠️ loadStandaardenversies() called but should use loadStandaardenversiesFromStandaarden()');
+  }, []);
+
   // ✅ Load referentiecomponenten when schemas are available
   useEffect(() => {
     if (!schemas?.module) return;
@@ -682,131 +855,36 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     if (shouldLoadRefs) {
       loadReferentieComponenten();
     }
-  }, [schemas?.module]);
+  }, [schemas?.module, referentieComponentenOptions.length, referentieComponentenLoading, loadReferentieComponenten]);
 
-  // Function to load standaarden
-  const loadStandaarden = useCallback(async () => {
-    if (!schemas?.module) return;
-
-    console.info('📋 Loading standaarden...');
-    setStandaardenOptionsLoading(true);
-
-    try {
-      const queryParams = new URLSearchParams({
-        _limit: '500',
-        _page: '1',
-        gemmaType: 'Standaard',
-        _published: 'false',
-      });
-      
-      // Add multiple extend parameters to include standard versions
-      queryParams.append('_extend[]', '@self.schema');
-      queryParams.append('_extend[]', 'standaardVersies');
-
-      // Fetch standards from openconnector endpoint
-      const response = await fetch(
-        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      const list = await response.json();
-
-      const options = list.results
-        .map((item, index) => {
-          const label =
-            item?.['@self']?.name ||
-            item?.xml?.name?._value ||
-            item?.naam ||
-            item?.name ||
-            item?.title ||
-            item?.label ||
-            `Standaard ${index + 1}`;
-          const value = item?.value || item?.id || item?.slug || label;
-          return { value: String(value), label: String(label), data: item };
-        })
-        .filter((o) => o.label && o.value);
-
-      setStandaardenOptions(options);
-      console.info(`✅ Loaded ${options.length} standaarden`);
-    } catch (e) {
-      console.error('Failed to load standaarden:', e);
-      setStandaardenOptions([]);
-    } finally {
-      setStandaardenOptionsLoading(false);
-    }
-  }, [schemas?.module]);
-
-  const loadStandaardenversies = useCallback(async () => {
-    if (!schemas?.module) return;
-
-    console.info('📋 Loading standaarden...');
-    setStandaardenversiesOptionsLoading(true);
-
-    try {
-      const queryParams = new URLSearchParams({
-        _limit: '500',
-        _page: '1',
-        gemmaType: 'Standaardversie',
-        '_extend[]': '@self.schema',
-        _published: 'false',
-      });
-
-      // Fetch standards from openconnector endpoint
-      const response = await fetch(
-        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      const list = await response.json();
-
-      const options = list.results
-        .map((item, index) => {
-          const label =
-            item?.['@self']?.name ||
-            item?.xml?.name?._value ||
-            item?.naam ||
-            item?.name ||
-            item?.title ||
-            item?.label ||
-            `Standaard ${index + 1}`;
-          // Use identifier first (id- prefixed format) to match what we store in compliancy/standaardVersies
-          const value =
-            item?.identifier || item?.value || item?.id || item?.slug || label;
-          return { value: String(value), label: String(label), data: item };
-        })
-        .filter((o) => o.label && o.value);
-
-      setStandaardenversiesOptions(options);
-      console.info(`✅ Loaded ${options.length} standaardenversies`);
-    } catch (e) {
-      console.error('Failed to load standaardenversies:', e);
-      setStandaardenversiesOptions([]);
-    } finally {
-      setStandaardenversiesOptionsLoading(false);
-    }
-  }, [schemas?.module]);
-
-  // ✅ Load standaarden when schemas are available
+  // ✅ Load standaarden when referentiecomponenten are selected
   useEffect(() => {
     if (!schemas?.module) return;
+    if (referentieComponentenOptions.length === 0) return; // Wait for options to load
 
-    // Only load if we haven't loaded yet and we're not currently loading
-    const shouldLoadStandards =
-      standaardenOptions.length === 0 && !standaardenOptionsLoading;
-
-    if (shouldLoadStandards) {
-      loadStandaarden();
-      loadStandaardenversies();
+    // Get the IDs/values from referentieComponentenWithStandards
+    const selectedRefCompValues = referentieComponentenWithStandards.map(rc => rc.id || rc.value);
+    
+    if (selectedRefCompValues.length > 0) {
+      loadStandaardenFromReferentieComponenten(selectedRefCompValues);
+    } else {
+      // Clear standaarden if no referentiecomponenten selected
+      setStandaardenOptions([]);
     }
-  }, [schemas?.module]);
+  }, [referentieComponentenWithStandards, referentieComponentenOptions, schemas?.module, loadStandaardenFromReferentieComponenten]);
+
+  // ✅ Load standaardversies when standaarden are loaded
+  useEffect(() => {
+    if (!schemas?.module) return;
+    if (standaardenOptions.length === 0) {
+      // Clear standaardversies if no standaarden
+      setStandaardenversiesOptions([]);
+      return;
+    }
+
+    // Extract standaardversies from loaded standaarden
+    loadStandaardenversiesFromStandaarden();
+  }, [standaardenOptions, schemas?.module, loadStandaardenversiesFromStandaarden]);
 
   // Initialize selectedExtraStandards from existing compliancy and standaardVersies data
   // This should only run once on mount, not react to compliance checkbox changes
