@@ -145,18 +145,16 @@ const ConContactpersoonDetailsPageContent = ({
           alignItems: 'center',
         }}
       >
-        <Heading level={4}>
-          <div className='con-beheer-details--header-container'>
-            {(data?.['@self']?.image || data?.image) && (
-              <ConLogoPreview
-                className='con-beheer-details--logo-container'
-                logoUrl={data?.['@self']?.image || data?.image}
-              />
-            )}
+        <div className='con-beheer-details--header-container'>
+          {(data?.['@self']?.image || data?.image) && (
+            <ConLogoPreview
+              className='con-beheer-details--logo-container'
+              logoUrl={data?.['@self']?.image || data?.image}
+            />
+          )}
 
-            <Heading className='con-beheer-details--title'>{fullName}</Heading>
-          </div>
-        </Heading>
+          <Heading className='con-beheer-details--title'>{fullName}</Heading>
+        </div>
 
         <div className='ac-register-review__header-controls'>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
