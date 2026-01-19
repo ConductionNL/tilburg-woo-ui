@@ -26,7 +26,7 @@ export const DASHBOARD_WIZARDS = {
     requiresOrganization: true,
     groupTypes: ['leverancier', 'gemeente', 'samenwerking'],
     params: { type: 'eigen' },
-    color: 'blue',
+    color: '#0078c8',
     schema: 'applicatie',
   },
   // ONTBREKEND_APPLICATIE: {
@@ -39,7 +39,7 @@ export const DASHBOARD_WIZARDS = {
   //   requiresOrganization: false,
   //   groupTypes: ['leverancier', 'gemeente', 'samenwerking', 'community'],
   //   params: { type: 'ontbrekend-applicatie' },
-  //   color: 'blue',
+  //   color: '#0078c8',
   //   schema: 'applicatie',
   // },
   DIENST: {
@@ -52,7 +52,7 @@ export const DASHBOARD_WIZARDS = {
     requiresOrganization: true,
     groupTypes: ['leverancier', 'gemeente', 'samenwerking'],
     params: { type: 'dienst' },
-    color: 'blue',
+    color: '#0078c8',
     schema: 'dienst',
   },
   DIENST_TOEVOEGEN: {
@@ -65,7 +65,7 @@ export const DASHBOARD_WIZARDS = {
     requiresOrganization: false,
     groupTypes: ['leverancier', 'gemeente', 'samenwerking', 'community'],
     params: { type: 'ontbrekend-dienst' },
-    color: 'blue',
+    color: '#0078c8',
     schema: 'dienst',
   },
   GEBRUIK: {
@@ -78,7 +78,7 @@ export const DASHBOARD_WIZARDS = {
     requiresOrganization: true,
     groupTypes: ['gemeente', 'samenwerking', 'community'],
     params: {},
-    color: 'blue',
+    color: '#0078c8',
     schema: 'gebruik',
   },
   GEBRUIK_TOEVOEGEN: {
@@ -92,7 +92,7 @@ export const DASHBOARD_WIZARDS = {
     requiresOrganization: false,
     groupTypes: ['gemeente', 'samenwerking', 'community'],
     params: { type: 'ontbrekend-organisatie' },
-    color: 'blue',
+    color: '#0078c8',
     schema: 'gebruik',
   },
   KOPPELING_PUBLICEEREN: {
@@ -105,7 +105,7 @@ export const DASHBOARD_WIZARDS = {
     requiresOrganization: true,
     groupTypes: ['gemeente', 'samenwerking', 'community'],
     params: { type: 'eigen-organisatie' },
-    color: 'blue',
+    color: '#0078c8',
     schema: 'koppeling',
   },
   KOPPELING_TOEVOEGEN: {
@@ -118,7 +118,7 @@ export const DASHBOARD_WIZARDS = {
     requiresOrganization: false,
     groupTypes: ['gemeente', 'samenwerking', 'community'],
     params: { type: 'aanbieden-koppeling' },
-    color: 'blue',
+    color: '#0078c8',
     schema: 'koppeling',
   },
 };

@@ -80,6 +80,7 @@ const ConFormApplicatieLicentieStage = memo(
                 description:
                   'Biedt u de applicatie aan onder een closed source licentie of open source licentie?',
                 placeholder: 'Selecteer licentievorm',
+                required: true,
               }}
             />
 

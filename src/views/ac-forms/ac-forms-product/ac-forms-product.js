@@ -972,8 +972,12 @@ const AcFormsProductInner = ({
         _limit: '500',
         _page: '1',
         gemmaType: 'Referentiecomponent',
-        '_extend[]': '@self.schema',
       });
+      
+      // Add multiple extend parameters to include standards
+      queryParams.append('_extend[]', '@self.schema');
+      queryParams.append('_extend[]', 'aanbevolenStandaarden');
+      queryParams.append('_extend[]', 'verplichteStandaarden');
 
       console.info('📋 Fetching standards from openconnector endpoint...');
 
@@ -991,6 +995,7 @@ const AcFormsProductInner = ({
 
       const mapToOption = (item, index) => {
         const label =
+          item?.['@self']?.name ||
           item?.xml?.name?._value ||
           item?.naam ||
           item?.name ||
@@ -1025,76 +1030,148 @@ const AcFormsProductInner = ({
     }
   }, [schemas, getReferentieComponentenQueryParams, store]);
 
-  // TODO remove this once we have the standaarden options loaded from the object store cache
-  const loadStandaarden = useCallback(async () => {
-    if (!schemas?.module) return;
+  // Function to load standaarden based on selected referentiecomponenten
+  const loadStandaardenFromReferentieComponenten = useCallback(async (selectedRefComps) => {
+    if (!schemas?.module || !selectedRefComps || selectedRefComps.length === 0) {
+      console.info('⏭️ No referentiecomponenten selected, skipping standaarden load');
+      setStandaardenOptions([]);
+      return;
+    }
 
-    console.info('📋 Loading standaarden via object store cache...');
+    console.info('📋 Loading standaarden from selected referentiecomponenten...');
     setStandaardenOptionsLoading(true);
 
     try {
-      const queryParams = new URLSearchParams({
-        _limit: '500',
-        _page: '1',
-        gemmaType: 'Standaard',
-        '_extend[]': '@self.schema',
+      // Step 1: Aggregate all standaard IDs from selected referentiecomponenten
+      const standaardIds = new Set();
+      
+      selectedRefComps.forEach((refCompValue) => {
+        // Find the full referentiecomponent data
+        const refCompOption = referentieComponentenOptions.find(opt => opt.value === refCompValue);
+        if (!refCompOption?.data) return;
+
+        const refCompData = refCompOption.data;
+        
+        // Collect aanbevolen standaarden IDs
+        if (Array.isArray(refCompData.aanbevolenStandaarden)) {
+          refCompData.aanbevolenStandaarden.forEach(standaard => {
+            const id = standaard?.['@self']?.id || standaard?.id || standaard;
+            if (id) standaardIds.add(id);
+          });
+        }
+        
+        // Collect verplichte standaarden IDs
+        if (Array.isArray(refCompData.verplichteStandaarden)) {
+          refCompData.verplichteStandaarden.forEach(standaard => {
+            const id = standaard?.['@self']?.id || standaard?.id || standaard;
+            if (id) standaardIds.add(id);
+          });
+        }
       });
 
-      console.info('📋 Fetching standards from openconnector endpoint...');
+      console.info(`📊 Found ${standaardIds.size} unique standaarden from selected components`);
 
-      // Fetch standards from openconnector endpoint using normal fetch
-      const response = await fetch(
-        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+      if (standaardIds.size === 0) {
+        console.warn('⚠️ No standaarden found in selected referentiecomponenten');
+        setStandaardenOptions([]);
+        setStandaardenOptionsLoading(false);
+        return;
+      }
+
+      // Step 2: Fetch each standaard with _extend[]=standaardVersies
+      const standaardenPromises = Array.from(standaardIds).map(async (standaardId) => {
+        try {
+          const queryParams = new URLSearchParams({
+            '_extend[]': 'standaardVersies',
+          });
+          
+          const response = await fetch(
+            `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element/${standaardId}?${queryParams}`,
+            {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            }
+          );
+          
+          if (!response.ok) {
+            console.error(`Failed to fetch standaard ${standaardId}:`, response.status);
+            return null;
+          }
+          
+          return await response.json();
+        } catch (e) {
+          console.error(`Error fetching standaard ${standaardId}:`, e);
+          return null;
         }
-      );
-      const list = await response.json();
+      });
 
-      const options = list.results
-        .map((item, index) => {
-          const label =
-            item?.xml?.name?._value ||
-            item?.naam ||
-            item?.name ||
-            item?.title ||
-            item?.label ||
-            `Standaard ${index + 1}`;
-          const value = item?.value || item?.id || item?.slug || label;
-          return { value: String(value), label: String(label), data: item };
-        })
-        .filter((o) => o.label && o.value);
+      const standaarden = (await Promise.all(standaardenPromises)).filter(Boolean);
+
+      console.info(`✅ Fetched ${standaarden.length} standaarden with their versions`);
+
+      // Step 3: Map to options
+      const options = standaarden.map((item, index) => {
+        const label =
+          item?.['@self']?.name ||
+          item?.xml?.name?._value ||
+          item?.naam ||
+          item?.name ||
+          item?.title ||
+          item?.label ||
+          `Standaard ${index + 1}`;
+        const value = item?.['@self']?.id || item?.id || item?.value || item?.slug || label;
+        return { 
+          value: String(value), 
+          label: String(label), 
+          data: item // Contains standaardVersies array with full objects
+        };
+      }).filter((o) => o.label && o.value);
 
       setStandaardenOptions(options);
-      console.info(`✅ Loaded ${options.length} standaarden (cache-first)`);
+      console.info(`✅ Loaded ${options.length} standaarden options`);
     } catch (e) {
       console.error('Failed to load standaarden:', e);
       setStandaardenOptions([]);
     } finally {
       setStandaardenOptionsLoading(false);
     }
-  }, [schemas, getStandaardenQueryParams, store]);
+  }, [schemas?.module, referentieComponentenOptions]);
 
-  // ✅ Load referentiecomponenten and standaarden when schemas are available
+  // Legacy function kept for backward compatibility (now unused)
+  const loadStandaarden = useCallback(async () => {
+    console.warn('⚠️ loadStandaarden() called but should use loadStandaardenFromReferentieComponenten()');
+  }, []);
+
+  // ✅ Load referentiecomponenten when schemas are available
   useEffect(() => {
     if (!schemas?.module) return;
 
     // Only load if we haven't loaded yet and we're not currently loading
     const shouldLoadRefs =
       referentieComponentenOptions.length === 0 && !referentieComponentenLoading;
-    const shouldLoadStandards =
-      standaardenOptions.length === 0 && !standaardenOptionsLoading;
 
-    if (shouldLoadRefs || shouldLoadStandards) {
-      const tasks = [];
-      if (shouldLoadRefs) tasks.push(loadReferentieComponenten());
-      if (shouldLoadStandards) tasks.push(loadStandaarden());
-      Promise.all(tasks).catch(() => {});
+    if (shouldLoadRefs) {
+      loadReferentieComponenten();
     }
   }, [schemas?.module]);
+
+  // ✅ Load standaarden when referentiecomponenten are selected
+  useEffect(() => {
+    if (!schemas?.module) return;
+    if (referentieComponentenOptions.length === 0) return; // Wait for options to load
+
+    // Get the IDs/values from referentieComponentenWithStandards
+    const selectedRefCompValues = referentieComponentenWithStandards.map(rc => rc.id || rc.value);
+    
+    if (selectedRefCompValues.length > 0) {
+      loadStandaardenFromReferentieComponenten(selectedRefCompValues);
+    } else {
+      // Clear standaarden if no referentiecomponenten selected
+      setStandaardenOptions([]);
+    }
+  }, [referentieComponentenWithStandards, referentieComponentenOptions, schemas?.module, loadStandaardenFromReferentieComponenten]);
 
   // Modules options with search functionality
   const [modulesOptions, setModulesOptions] = useState([]);

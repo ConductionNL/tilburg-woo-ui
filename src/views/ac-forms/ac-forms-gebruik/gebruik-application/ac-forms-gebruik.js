@@ -906,6 +906,7 @@ const AcFormsGebruik = ({ store }) => {
         const list = collection?.results || collection || [];
         const options = list.map((item, index) => {
           const label =
+            item?.['@self']?.name ||
             item?.xml?.name?._value ||
             item?.naam ||
             item?.name ||
@@ -1340,9 +1341,13 @@ const AcFormsGebruik = ({ store }) => {
         _limit: '500',
         _page: '1',
         gemmaType: 'Referentiecomponent',
-        '_extend[]': '@self.schema',
         _published: 'false',
       });
+      
+      // Add multiple extend parameters to include standards
+      queryParams.append('_extend[]', '@self.schema');
+      queryParams.append('_extend[]', 'aanbevolenStandaarden');
+      queryParams.append('_extend[]', 'verplichteStandaarden');
 
       // Fetch referentiecomponenten from openconnector endpoint
       const response = await fetch(
@@ -1358,6 +1363,7 @@ const AcFormsGebruik = ({ store }) => {
 
       const mapToOption = (item, index) => {
         const label =
+          item?.['@self']?.name ||
           item?.xml?.name?._value ||
           item?.naam ||
           item?.name ||

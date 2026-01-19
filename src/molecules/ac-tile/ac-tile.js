@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 
 /**
  * AcTile - Reusable colored tile component with icon and text
- * 
+ *
  * @param {Object} props
  * @param {React.Component} props.icon - SVG icon component to display
  * @param {string} props.text - Text to display below the icon
@@ -13,21 +13,21 @@ import PropTypes from 'prop-types';
  * @param {Function} props.onClick - Custom click handler (overrides navigation)
  * @param {string} props.className - Additional CSS classes
  * @param {boolean} props.disabled - Whether the tile is disabled
- * @param {string} props.color - Color variant ('primary', 'secondary', 'success', 'warning', 'danger')
+ * @param {string} props.color - Color variant ('primary', 'secondary', 'success', 'warning', 'danger') or hex code (e.g., '#0078c8')
  * @param {string} props.size - Size variant ('small', 'medium', 'large')
  * @returns {React.ReactElement}
  */
-const AcTile = ({ 
-  icon: Icon, 
-  text, 
-  href, 
-  to, 
-  onClick, 
-  className = '', 
+const AcTile = ({
+  icon: Icon,
+  text,
+  href,
+  to,
+  onClick,
+  className = '',
   disabled = false,
   color = 'primary',
   size = 'medium',
-  ...rest 
+  ...rest
 }) => {
   const navigate = useNavigate();
 
@@ -48,41 +48,44 @@ const AcTile = ({
 
   const handleKeyDown = (event) => {
     if (disabled) return;
-    
+
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       handleClick(event);
     }
   };
 
+  const isHexColor = color && color.startsWith('#');
+
   const tileClasses = [
     'ac-tile',
-    `ac-tile--${color}`,
+    !isHexColor && `ac-tile--${color}`,
     `ac-tile--${size}`,
     disabled && 'ac-tile--disabled',
-    className
-  ].filter(Boolean).join(' ');
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  const tileStyle = isHexColor ? { backgroundColor: color } : {};
 
   return (
     <div
       className={tileClasses}
+      style={tileStyle}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
-      role="button"
+      role='button'
       tabIndex={disabled ? -1 : 0}
       aria-disabled={disabled}
       {...rest}
     >
       {Icon && (
-        <div className="ac-tile__icon">
+        <div className='ac-tile__icon'>
           <Icon />
         </div>
       )}
-      {text && (
-        <div className="ac-tile__text">
-          {text}
-        </div>
-      )}
+      {text && <div className='ac-tile__text'>{text}</div>}
     </div>
   );
 };
@@ -95,8 +98,23 @@ AcTile.propTypes = {
   onClick: PropTypes.func,
   className: PropTypes.string,
   disabled: PropTypes.bool,
-  color: PropTypes.oneOf(['primary', 'secondary', 'success', 'warning', 'danger', 'orange', 'green', 'purple', 'yellow', 'teal', 'blue']),
-  size: PropTypes.oneOf(['small', 'medium', 'large'])
+  color: PropTypes.oneOfType([
+    PropTypes.oneOf([
+      'primary',
+      'secondary',
+      'success',
+      'warning',
+      'danger',
+      'orange',
+      'green',
+      'purple',
+      'yellow',
+      'teal',
+      'blue',
+    ]),
+    PropTypes.string, // For hex codes
+  ]),
+  size: PropTypes.oneOf(['small', 'medium', 'large']),
 };
 
 export default AcTile;
