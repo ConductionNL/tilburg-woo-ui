@@ -785,63 +785,73 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     console.warn('⚠️ loadStandaarden() called but should use loadStandaardenFromReferentieComponenten()');
   }, []);
 
-  // Function to extract standaardversies from loaded standaarden
-  const loadStandaardenversiesFromStandaarden = useCallback(() => {
+  // Function to load ALL standaardversies (for extra standaardversies dropdown)
+  const loadAllStandaardenversies = useCallback(async () => {
     if (!schemas?.module) return;
 
-    console.info('📋 Extracting standaardversies from loaded standaarden...');
+    console.info('📋 Loading ALL standaardversies for extra standaardversies dropdown...');
     setStandaardenversiesOptionsLoading(true);
 
     try {
-      const allVersions = [];
-
-      // Extract standaardVersies from each loaded standaard
-      standaardenOptions.forEach(standaardOption => {
-        const standaardData = standaardOption.data;
-        
-        if (Array.isArray(standaardData?.standaardVersies)) {
-          standaardData.standaardVersies.forEach(versie => {
-            // Check if versie is already a full object or just an ID
-            if (typeof versie === 'object' && versie !== null) {
-              allVersions.push(versie);
-            } else {
-              console.warn(`⚠️ Standaard "${standaardOption.label}" has standaardVersies as IDs only, not full objects. Needs backend to extend properly.`);
-            }
-          });
-        }
+      const queryParams = new URLSearchParams({
+        _limit: '500',
+        _page: '1',
+        gemmaType: 'Standaardversie',
+        _published: 'false',
       });
+      
+      // Add extend parameter for schema
+      queryParams.append('_extend[]', '@self.schema');
 
-      console.info(`📊 Found ${allVersions.length} standaardversies from ${standaardenOptions.length} standaarden`);
+      // Fetch ALL standaardversies from openconnector endpoint
+      const response = await fetch(
+        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      const list = await response.json();
+
+      console.info(`📊 Received ${list.results?.length || 0} standaardversies from API`);
 
       // Map to options
-      const options = allVersions.map((item, index) => {
-        const label =
-          item?.['@self']?.name ||
-          item?.xml?.name?._value ||
-          item?.naam ||
-          item?.name ||
-          item?.title ||
-          item?.label ||
-          `Standaardversie ${index + 1}`;
-        // Use identifier first (id- prefixed format) to match what we store in compliancy/standaardVersies
-        const value =
-          item?.['@self']?.id || item?.identifier || item?.value || item?.id || item?.slug || label;
-        return { value: String(value), label: String(label), data: item };
-      }).filter((o) => o.label && o.value);
+      const options = (list.results || [])
+        .map((item, index) => {
+          const label =
+            item?.['@self']?.name ||
+            item?.xml?.name?._value ||
+            item?.naam ||
+            item?.name ||
+            item?.title ||
+            item?.label ||
+            `Standaardversie ${index + 1}`;
+          // Use identifier first (id- prefixed format) to match what we store in compliancy/standaardVersies
+          const value =
+            item?.['@self']?.id || item?.identifier || item?.value || item?.id || item?.slug || label;
+          return { value: String(value), label: String(label), data: item };
+        })
+        .filter((o) => o.label && o.value);
 
       setStandaardenversiesOptions(options);
-      console.info(`✅ Loaded ${options.length} standaardversies options`);
+      console.info(`✅ Loaded ${options.length} standaardversies options for dropdown`);
+      
+      if (options.length === 0) {
+        console.warn('⚠️ No standaardversies found - API might be empty or filtered');
+      }
     } catch (e) {
-      console.error('Failed to extract standaardenversies:', e);
+      console.error('Failed to load standaardversies:', e);
       setStandaardenversiesOptions([]);
     } finally {
       setStandaardenversiesOptionsLoading(false);
     }
-  }, [schemas?.module, standaardenOptions]);
+  }, [schemas?.module]);
 
   // Legacy function kept for backward compatibility (now unused)
   const loadStandaardenversies = useCallback(async () => {
-    console.warn('⚠️ loadStandaardenversies() called but should use loadStandaardenversiesFromStandaarden()');
+    console.warn('⚠️ loadStandaardenversies() called but should use loadAllStandaardenversies()');
   }, []);
 
   // ✅ Load referentiecomponenten when schemas are available
@@ -873,18 +883,18 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     }
   }, [referentieComponentenWithStandards, referentieComponentenOptions, schemas?.module, loadStandaardenFromReferentieComponenten]);
 
-  // ✅ Load standaardversies when standaarden are loaded
+  // ✅ Load ALL standaardversies when schemas are available (for extra standaardversies dropdown)
   useEffect(() => {
     if (!schemas?.module) return;
-    if (standaardenOptions.length === 0) {
-      // Clear standaardversies if no standaarden
-      setStandaardenversiesOptions([]);
-      return;
-    }
 
-    // Extract standaardversies from loaded standaarden
-    loadStandaardenversiesFromStandaarden();
-  }, [standaardenOptions, schemas?.module, loadStandaardenversiesFromStandaarden]);
+    // Only load if we haven't loaded yet and we're not currently loading
+    const shouldLoadStandaardversies =
+      standaardenversiesOptions.length === 0 && !standaardenversiesOptionsLoading;
+
+    if (shouldLoadStandaardversies) {
+      loadAllStandaardenversies();
+    }
+  }, [schemas?.module, standaardenversiesOptions.length, standaardenversiesOptionsLoading, loadAllStandaardenversies]);
 
   // Initialize selectedExtraStandards from existing compliancy and standaardVersies data
   // This should only run once on mount, not react to compliance checkbox changes
