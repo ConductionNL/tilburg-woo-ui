@@ -55,22 +55,22 @@ As of the latest update, the application now supports multiple form types under 
 
 1. **'/forms/register'** - Organization registration form
    - Component: 'AcRegister'
-   - API Endpoint: '/openconnector/api/endpoint/register'
+   - API Endpoint: '/openregister/api/objects/vng-gemma/register'
    - Purpose: Register new organizations in the system
 
 2. **'/forms/gebruik'** - Usage registration form  
    - Component: 'AcFormsGebruik'
-   - API Endpoint: '/openconnector/api/endpoint/gebruik'
+   - API Endpoint: '/openregister/api/objects/vng-gemma/gebruik'
    - Purpose: Register usage of products/services
 
 3. **'/forms/product'** - Product registration form
    - Component: 'AcFormsProduct' 
-   - API Endpoint: '/openconnector/api/endpoint/product'
+   - API Endpoint: '/openregister/api/objects/vng-gemma/product'
    - Purpose: Register new products in the catalog
 
 4. **'/forms/koppeling'** - Integration registration form
    - Component: 'AcFormsKoppeling'
-   - API Endpoint: '/openconnector/api/endpoint/koppeling' 
+   - API Endpoint: '/openregister/api/objects/vng-gemma/koppeling' 
    - Purpose: Register system integrations/connections
 
 ### Form Component Structure
@@ -90,7 +90,7 @@ const AcFormsExample = () => {
   const handleRegister = async () => {
     // POST to specific endpoint based on form type
     const response = await fetch(
-      '${BASE_URL}/openconnector/api/endpoint/{type}',
+      '${BASE_URL}/openregister/api/objects/vng-gemma/{type}',
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -109,10 +109,10 @@ Each form type posts to its dedicated API endpoint:
 
 | Form Type | Endpoint | Purpose |
 |-----------|----------|---------|
-| Register | '/openconnector/api/endpoint/register' | Organization registration |
-| Gebruik | '/openconnector/api/endpoint/gebruik' | Usage registration |  
-| Product | '/openconnector/api/endpoint/product' | Product registration |
-| Koppeling | '/openconnector/api/endpoint/koppeling' | Integration registration |
+| Register | '/openregister/api/objects/vng-gemma/register' | Organization registration |
+| Gebruik | '/openregister/api/objects/vng-gemma/gebruik' | Usage registration |  
+| Product | '/openregister/api/objects/vng-gemma/product' | Product registration |
+| Koppeling | '/openregister/api/objects/vng-gemma/koppeling' | Integration registration |
 
 ## Protected Routes
 

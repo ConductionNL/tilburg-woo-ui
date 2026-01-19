@@ -570,7 +570,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     const fetchUserOrganization = async () => {
       try {
         const response = await fetch(
-          `${commongroundApiUrl()}/openconnector/api/user/me`,
+          `${commongroundApiUrl()}/openregister/api/user/me`,
           {
             method: 'GET',
             headers: {
@@ -624,7 +624,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
 
       // Fetch referentiecomponenten from openconnector endpoint
       const response = await fetch(
-        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
         {
           method: 'GET',
           headers: {
@@ -695,7 +695,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
 
       // Fetch standards from openconnector endpoint
       const response = await fetch(
-        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
         {
           method: 'GET',
           headers: {
@@ -746,7 +746,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
 
       // Fetch standards from openconnector endpoint
       const response = await fetch(
-        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
         {
           method: 'GET',
           headers: {
@@ -1198,7 +1198,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       console.info('📋 Fetching external facilities from openconnector endpoint...');
 
       const response = await fetch(
-        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
         {
           method: 'GET',
           headers: {

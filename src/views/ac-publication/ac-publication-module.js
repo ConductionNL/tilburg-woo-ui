@@ -218,7 +218,7 @@ const AcPublicationProduct = ({
 
       // Fetch referentieComponenten from openconnector endpoint
       const response = await fetch(
-        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
         {
           method: 'GET',
           headers: {
@@ -293,7 +293,7 @@ const AcPublicationProduct = ({
 
       // Fetch standards from openconnector endpoint using normal fetch
       const response = await fetch(
-        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
         {
           method: 'GET',
           headers: {
@@ -333,7 +333,7 @@ const AcPublicationProduct = ({
       });
 
       const response = await fetch(
-        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
         {
           method: 'GET',
           headers: {
