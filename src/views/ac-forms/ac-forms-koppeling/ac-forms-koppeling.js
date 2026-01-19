@@ -1607,6 +1607,7 @@ const AcFormsKoppeling = ({ store }) => {
       const options = list.results
         .map((item, index) => {
           const label =
+            item?.['@self']?.name ||
             item?.xml?.name?._value ||
             item?.naam ||
             item?.name ||
@@ -1661,6 +1662,7 @@ const AcFormsKoppeling = ({ store }) => {
       const options = list.results
         .map((item, index) => {
           const label =
+            item?.['@self']?.name ||
             item?.xml?.name?._value ||
             item?.naam ||
             item?.name ||
@@ -1741,6 +1743,7 @@ const AcFormsKoppeling = ({ store }) => {
       const targetRefCompIds = allRefComps
         .filter((refComp) => {
           const name =
+            refComp?.['@self']?.name ||
             refComp?.xml?.name?._value ||
             refComp?.naam ||
             refComp?.name ||

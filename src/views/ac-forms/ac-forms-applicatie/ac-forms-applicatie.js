@@ -620,9 +620,13 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         _limit: '500',
         _page: '1',
         gemmaType: 'Referentiecomponent',
-        '_extend[]': '@self.schema',
         _published: 'false',
       });
+      
+      // Add multiple extend parameters to include standards
+      queryParams.append('_extend[]', '@self.schema');
+      queryParams.append('_extend[]', 'aanbevolenStandaarden');
+      queryParams.append('_extend[]', 'verplichteStandaarden');
 
       // Fetch referentiecomponenten from openconnector endpoint
       const response = await fetch(
@@ -638,6 +642,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
 
       const mapToOption = (item, index) => {
         const label =
+          item?.['@self']?.name ||
           item?.xml?.name?._value ||
           item?.naam ||
           item?.name ||
@@ -691,9 +696,12 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         _limit: '500',
         _page: '1',
         gemmaType: 'Standaard',
-        '_extend[]': '@self.schema',
         _published: 'false',
       });
+      
+      // Add multiple extend parameters to include standard versions
+      queryParams.append('_extend[]', '@self.schema');
+      queryParams.append('_extend[]', 'standaardVersies');
 
       // Fetch standards from openconnector endpoint
       const response = await fetch(
@@ -710,6 +718,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       const options = list.results
         .map((item, index) => {
           const label =
+            item?.['@self']?.name ||
             item?.xml?.name?._value ||
             item?.naam ||
             item?.name ||
@@ -761,6 +770,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       const options = list.results
         .map((item, index) => {
           const label =
+            item?.['@self']?.name ||
             item?.xml?.name?._value ||
             item?.naam ||
             item?.name ||
