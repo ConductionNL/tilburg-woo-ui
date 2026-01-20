@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { AcLink } from '@molecules';
+import { ConUuidResolver } from '@components';
 import { LABELS, VISUALS } from '@constants';
 import { AcCard, AcFlex } from '@atoms';
 import { Heading, Paragraph } from '@utrecht/component-library-react';
@@ -7,10 +8,7 @@ import { NAVIGATE_TO } from '@constants/routes.constants';
 import { extractTitle, extractSummary } from '@src/utilities/con-extract-text';
 import ConLogoPreview from '@src/views/ac-register/con-logo-preview';
 import acFormatDate from '@src/utilities/ac-format-date';
-import {
-  useResolvedText,
-  useResolvedArray,
-} from '@src/utilities/con-resolve-uuids-in-text';
+import { useResolvedArray } from '@src/utilities/con-resolve-uuids-in-text';
 import { checkOrganizationPermissions } from '@src/utilities/organization-permissions';
 
 // card for products, modules and organisations
@@ -29,9 +27,6 @@ const ConCardOrganisationApplication = ({
   navigateTo = 'publication',
   user,
 }) => {
-  // Use generic UUID resolver for organisation name
-  const { resolvedText: resolvedOrganisation } = useResolvedText(organisation, objectStore);
-
   // Use generic UUID resolver for reference components
   const resolvedReferenceComponents = useResolvedArray(
     referenceComponents,
@@ -105,7 +100,9 @@ const ConCardOrganisationApplication = ({
           {icon}
           <Heading level={3}>{extractTitle(title)}</Heading>
           {organisation && (cardType === 'product' || cardType === 'module') && (
-            <Paragraph small>(Aangeboden door {resolvedOrganisation})</Paragraph>
+            <Paragraph small>
+              (Aangeboden door <ConUuidResolver>{organisation}</ConUuidResolver>)
+            </Paragraph>
           )}
         </AcFlex>
         {logo && (

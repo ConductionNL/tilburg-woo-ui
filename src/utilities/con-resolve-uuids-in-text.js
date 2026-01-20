@@ -164,7 +164,8 @@ export const resolveUUIDsInObject = async (
  */
 export const useResolvedText = (text, objectStore) => {
   const [resolvedText, setResolvedText] = React.useState(text);
-  const [isResolving, setIsResolving] = React.useState(false);
+  // Start with isResolving=true if we have text to resolve, so loading placeholder shows immediately
+  const [isResolving, setIsResolving] = React.useState(Boolean(text && objectStore));
 
   // Check if the names cache is still warming up
   const isNamesCacheLoading = objectStore?.isLoading?.('names_warmup') ?? false;

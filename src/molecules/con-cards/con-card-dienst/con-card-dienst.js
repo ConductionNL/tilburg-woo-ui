@@ -10,8 +10,6 @@ import {
   extractSummary,
 } from '@src/utilities/con-extract-text';
 import { NAVIGATE_TO } from '@constants/routes.constants';
-import { useResolvedText } from '@src/utilities/con-resolve-uuids-in-text';
-
 const ConCardDienst = ({
   skeleton,
   title,
@@ -23,14 +21,10 @@ const ConCardDienst = ({
   aanbieder,
   status,
   type,
-  objectStore,
   navigateTo = 'publication',
 }) => {
-  // Resolve aanbieder (organisatie) name if UUID provided
-  const { resolvedText: resolvedAanbieder } = useResolvedText(
-    typeof aanbieder === 'object' ? aanbieder?.value : aanbieder,
-    objectStore
-  );
+  // Get the aanbieder value (handle both object and string formats)
+  const aanbiederValue = typeof aanbieder === 'object' ? aanbieder?.value : aanbieder;
 
   const onClick = () => {
     switch (navigateTo) {
@@ -60,8 +54,10 @@ const ConCardDienst = ({
           <Heading level={3}>
             <ConUuidResolver>{extractTitle(title)}</ConUuidResolver>
           </Heading>
-          {aanbieder && (
-            <Paragraph small>(Aangeboden door {resolvedAanbieder})</Paragraph>
+          {aanbiederValue && (
+            <Paragraph small>
+              (Aangeboden door <ConUuidResolver>{aanbiederValue}</ConUuidResolver>)
+            </Paragraph>
           )}
         </AcFlex>
       </AcFlex>
@@ -78,7 +74,11 @@ const ConCardDienst = ({
           {type && (
             <>
               <VISUALS.ELLIPSE />
-              <Paragraph small>{extractText(type)}</Paragraph>
+              <Paragraph small>
+                {Array.isArray(type)
+                  ? type.map(extractText).join(', ')
+                  : extractText(type)}
+              </Paragraph>
             </>
           )}
           {status && (
