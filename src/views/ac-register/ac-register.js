@@ -170,7 +170,7 @@ const AcRegister = () => {
       };
 
       const response = await fetch(
-        `${BASE_URL}/openconnector/api/endpoint/register`,
+        `${BASE_URL}/openregister/api/objects/voorzieningen/organisatie`,
         {
           method: 'POST',
           headers: {

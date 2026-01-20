@@ -91,7 +91,7 @@ const ConStandardsTable = ({
 
       // Fetch referentieComponenten from openconnector endpoint
       const response = await fetch(
-        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
         {
           method: 'GET',
           headers: {
@@ -167,7 +167,7 @@ const ConStandardsTable = ({
       console.info('📋 Fetching standards from openconnector endpoint...');
 
       const response = await fetch(
-        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
         {
           method: 'GET',
           headers: {
@@ -212,7 +212,7 @@ const ConStandardsTable = ({
       console.info('📋 Fetching standaardversies from openconnector endpoint...');
 
       const response = await fetch(
-        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
         {
           method: 'GET',
           headers: {
@@ -899,7 +899,7 @@ const ConStandardsTable = ({
                           backgroundColor: isCompliant
                             ? '#28a745'
                             : isOndersteund
-                            ? '#ffc107'
+                            ? '#A86200'
                             : versieEntry.type === 'VERPLICHT'
                             ? '#dc3545'
                             : '#6c757d',

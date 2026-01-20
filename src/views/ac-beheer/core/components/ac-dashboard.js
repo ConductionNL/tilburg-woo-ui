@@ -23,7 +23,6 @@ const AcDashboard = ({ store }) => {
   const navigate = useNavigate();
   const { user, object } = store;
 
-  const [orgIsPublished, setOrgIsPublished] = useState(false);
   const [userOrganization, setUserOrganization] = useState(null);
   const [hasSuggestions, setHasSuggestions] = useState(true); // Start as true, let component set to false if no data
   const [refreshKey, setRefreshKey] = useState(0); // Key to force component refresh
@@ -44,7 +43,6 @@ const AcDashboard = ({ store }) => {
 
     if (cachedOrganization) {
       // Use cached data immediately
-      setOrgIsPublished(!!cachedOrganization?.['@self']?.published);
       setUserOrganization(cachedOrganization);
       setIsLoadingOrganization(false);
       return;
@@ -67,7 +65,6 @@ const AcDashboard = ({ store }) => {
         activeOrganizationId
       );
       if (result) {
-        setOrgIsPublished(!!result?.['@self']?.published);
         setUserOrganization(result);
       }
     } catch (error) {
@@ -168,25 +165,6 @@ const AcDashboard = ({ store }) => {
                 </Paragraph>
               )}
             </div>
-
-            {/* Warning card for unpublished organization */}
-            {!orgIsPublished && (
-              <Alert type='warning'>
-                <Heading level={4}>
-                  Uw organisatie staat nog niet gepubliceerd in de software catalogus
-                </Heading>
-                <Paragraph>
-                  Dit betekent dat uw organisatie momenteel niet zichtbaar is in de
-                  zoekfunctie van de catalogus. Bezoekers kunnen uw organisatie en de
-                  bijbehorende producten en diensten nog niet vinden. Gebruik de
-                  &quot;Publiceren&quot; actie om uw organisatie beschikbaar te maken
-                  voor bezoekers en deel te nemen aan de software catalogus.
-                </Paragraph>
-                <AcFlex justifyContent='end'>
-                  <Link href='/beheer/my-organisation'>Naar Mijn Organisatie</Link>
-                </AcFlex>
-              </Alert>
-            )}
 
             {/* Aangeboden Suggesties Table - Shows suggestions from other organizations */}
             {hasSuggestions && (

@@ -466,12 +466,12 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
                     className='ac-search-filters__subjects'
                   >
                     <ConAccordion.Item
-                      header={
-                        <Heading level={4} title={_value.description || undefined}>
-                          {_value.title || _.upperFirst(_key)} (
-                          {_value.buckets.length})
-                        </Heading>
-                      }
+                      header={`${_value.title || _.upperFirst(_key)} (${
+                        _value.buckets.length
+                      })`}
+                      headerLevel={3}
+                      headerTitle={_value.description || undefined}
+                      headerStyle={{ fontSize: 'var(--utrecht-heading-4-font-size, revert)' }}
                       defaultOpen={
                         _value.buckets.length > 7 ? false : _value.toggle ?? true
                       }
@@ -533,11 +533,11 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
             className='ac-search-filters__subjects'
           >
             <ConAccordion.Item
-              header={
-                <Heading level={4} title={value.description || undefined}>
-                  {value.title || _.upperFirst(key)} ({value.buckets.length})
-                </Heading>
-              }
+              header={`${value.title || _.upperFirst(key)} (${
+                value.buckets.length
+              })`}
+              headerLevel={4}
+              headerTitle={value.description || undefined}
               defaultOpen={value.buckets.length > 7 ? false : value.toggle ?? true}
             >
               {value.buckets && value.buckets.length > 0 ? (

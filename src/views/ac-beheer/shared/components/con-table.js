@@ -543,9 +543,11 @@ const ConTable = (
               <div className='con-table-checkbox'>
                 <AcCheckbox
                   id='select-all'
+                  label='Selecteer alle rijen in de tabel'
                   checked={selectedAll}
                   onChange={handleSelectAll}
                   disabled={sortedData.length === 0}
+                  srOnlyLabel
                 />
               </div>
             </TableCell>
@@ -658,56 +660,62 @@ const ConTable = (
       );
     }
 
-    return sortedData.map((row, index) => (
-      <TableRow key={index}>
-        {renderSelectRowButtons && (
-          <TableCell className={clsx('con-table-cell', 'con-table-checkbox-cell')}>
-            <div className='con-table-checkbox'>
-              <AcCheckbox
-                id={`select-row-${row[uniqueSymbol]}`}
-                checked={
-                  selectedRows.find(
-                    (selectedRow) => selectedRow[uniqueSymbol] === row[uniqueSymbol]
-                  ) || false
-                }
-                onChange={(checked) => handleSelectRow(checked, row)}
-              />
-            </div>
-          </TableCell>
-        )}
-        {tableHeaders.map((header, headerIndex) => {
-          // Do not render headers content where header does not have an id
-          if (!header.id) return null;
-
-          return (
-            <TableCell
-              data-tooltip-id={
-                isTextClamped(document.getElementById(`table-cell-${headerIndex}`))
-                  ? TOOLTIP_ID
-                  : null
-              }
-              data-tooltip-content={
-                isTextClamped(document.getElementById(`table-cell-${headerIndex}`))
-                  ? row[header.key]
-                  : null
-              }
-              key={header.id}
-              className={clsx(
-                'con-table-cell',
-                header.static ? 'con-table-actions-column' : undefined
-              )}
-            >
-              <div
-                id={`table-cell-${headerIndex}`}
-                style={header?.doNotTruncate ? {} : getTruncateStyle()}
-              >
-                {handleDataCellRender(header, row)}
+    return sortedData.map((row, index) => {
+      const rowId = row[uniqueSymbol] || `row-${index}`;
+      return (
+        <TableRow key={index}>
+          {renderSelectRowButtons && (
+            <TableCell className={clsx('con-table-cell', 'con-table-checkbox-cell')}>
+              <div className='con-table-checkbox'>
+                <AcCheckbox
+                  id={`select-row-${rowId}`}
+                  label='Selecteer deze rij'
+                  checked={
+                    selectedRows.find(
+                      (selectedRow) =>
+                        selectedRow[uniqueSymbol] === row[uniqueSymbol]
+                    ) || false
+                  }
+                  onChange={(checked) => handleSelectRow(checked, row)}
+                  srOnlyLabel
+                />
               </div>
             </TableCell>
-          );
-        })}
-      </TableRow>
-    ));
+          )}
+          {tableHeaders.map((header, headerIndex) => {
+            // Do not render headers content where header does not have an id
+            if (!header.id) return null;
+
+            return (
+              <TableCell
+                data-tooltip-id={
+                  isTextClamped(document.getElementById(`table-cell-${headerIndex}`))
+                    ? TOOLTIP_ID
+                    : null
+                }
+                data-tooltip-content={
+                  isTextClamped(document.getElementById(`table-cell-${headerIndex}`))
+                    ? row[header.key]
+                    : null
+                }
+                key={header.id}
+                className={clsx(
+                  'con-table-cell',
+                  header.static ? 'con-table-actions-column' : undefined
+                )}
+              >
+                <div
+                  id={`table-cell-${headerIndex}`}
+                  style={header?.doNotTruncate ? {} : getTruncateStyle()}
+                >
+                  {handleDataCellRender(header, row)}
+                </div>
+              </TableCell>
+            );
+          })}
+        </TableRow>
+      );
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     sortedData,

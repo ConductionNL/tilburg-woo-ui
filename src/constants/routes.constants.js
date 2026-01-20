@@ -33,6 +33,7 @@ import {
   ConBeheerViews,
   ConFormsIndex,
   ConPasswordReminder,
+  AcChat,
 } from '@views';
 import { LABELS } from '@constants/labels.constants';
 import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
@@ -74,6 +75,7 @@ export const PATHS = AcLockObject({
   BEHEER_VIEW_DETAIL: '/beheer/view/:id',
   MY_ACCOUNT: '/account',
   DIRECTORY: '/directory',
+  CHAT: '/chat',
 });
 
 export const NAVIGATE_TO = AcLockObject({
@@ -453,6 +455,14 @@ export const ROUTES = {
     path: PATHS.DIRECTORY,
     title: 'Directory',
     component: ConDirectory,
+  },
+  CHAT: {
+    id: AcUUID(),
+    name: 'Chat',
+    label: 'Chat',
+    path: PATHS.CHAT,
+    title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | Chat`,
+    component: AcChat,
   },
   OBJECTS: {
     id: AcUUID(),

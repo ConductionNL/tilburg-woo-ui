@@ -1010,7 +1010,7 @@ const AccountOrganisationTabs = observer(({ store }) => {
             ).length;
             return (
               <AcTab key={`uses-${schema.id}`} selected={tabIndex === idx}>
-                {(schema.slug === 'product'
+                {(schema.slug === 'suite'
                   ? 'Producten'
                   : schema.slug === 'dienst'
                   ? 'Diensten'
@@ -1031,7 +1031,7 @@ const AccountOrganisationTabs = observer(({ store }) => {
                 key={`used-${schema.id}`}
                 selected={tabIndex === idx + usesSchemas.length}
               >
-                {(schema.slug === 'product'
+                {(schema.slug === 'suite'
                   ? 'Producten'
                   : schema.slug === 'dienst'
                   ? 'Diensten'

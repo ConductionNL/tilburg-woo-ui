@@ -187,7 +187,10 @@ const ConFormApplicatieStandaardenStage = ({
   // Extract standaardversie information from data
   const extractStandaardversieInfo = (versie, fetchedData = {}) => {
     // Prioritize fetched data, fall back to original versie data
+    // IMPORTANT: Check @self.name first (from backend _extend)
     const name =
+      fetchedData?.['@self']?.name ||
+      versie?.['@self']?.name ||
       fetchedData.xml?.name?._value ||
       fetchedData.name ||
       fetchedData.naam ||
@@ -1412,25 +1415,28 @@ const ConFormApplicatieStandaardenStage = ({
           </Paragraph>
         </div>
 
-        {/* Extra standaardversies multi-select - always show when options available */}
-        {availableExtraStandardsOptions.length > 0 && (
-          <div style={{ marginBlock: '1.5rem' }}>
-            <Paragraph style={{ marginBottom: '0.5rem', fontWeight: '500' }}>
-              Voeg standaardversies toe
-            </Paragraph>
-            <ReactSelect
-              isMulti
-              className='ac-beheer-select'
-              options={availableExtraStandardsOptions}
-              value={selectedExtraStandards}
-              onChange={handleExtraStandardsChange}
-              isLoading={standaardenversiesOptionsLoading}
-              closeMenuOnSelect={false}
-              placeholder='Zoek en selecteer standaardversies...'
-              isSearchable={true}
-            />
-          </div>
-        )}
+        {/* Extra standaardversies multi-select - always show */}
+        <div style={{ marginBlock: '1.5rem' }}>
+          <Paragraph style={{ marginBottom: '0.5rem', fontWeight: '500' }}>
+            Voeg standaardversies toe
+          </Paragraph>
+          <ReactSelect
+            isMulti
+            className='ac-beheer-select'
+            options={availableExtraStandardsOptions}
+            value={selectedExtraStandards}
+            onChange={handleExtraStandardsChange}
+            isLoading={standaardenversiesOptionsLoading}
+            closeMenuOnSelect={false}
+            placeholder={
+              availableExtraStandardsOptions.length === 0
+                ? 'Geen extra standaardversies beschikbaar'
+                : 'Zoek en selecteer standaardversies...'
+            }
+            isSearchable={true}
+            noOptionsMessage={() => 'Geen standaardversies gevonden'}
+          />
+        </div>
       </div>
     );
   }
@@ -1787,25 +1793,28 @@ const ConFormApplicatieStandaardenStage = ({
         })()}
       </div>
 
-      {/* Extra standaardversies multi-select */}
-      {availableExtraStandardsOptions.length > 0 && (
-        <div style={{ marginBlock: '1.5rem' }}>
-          <Paragraph style={{ marginBottom: '0.5rem', fontWeight: '500' }}>
-            Voeg extra standaardversies toe (optioneel)
-          </Paragraph>
-          <ReactSelect
-            isMulti
-            className='ac-beheer-select'
-            options={availableExtraStandardsOptions}
-            value={selectedExtraStandards}
-            onChange={handleExtraStandardsChange}
-            isLoading={standaardenversiesOptionsLoading}
-            closeMenuOnSelect={false}
-            placeholder='Zoek en selecteer extra standaardversies...'
-            isSearchable={true}
-          />
-        </div>
-      )}
+      {/* Extra standaardversies multi-select - always shown */}
+      <div style={{ marginBlock: '1.5rem' }}>
+        <Paragraph style={{ marginBottom: '0.5rem', fontWeight: '500' }}>
+          Voeg extra standaardversies toe (optioneel)
+        </Paragraph>
+        <ReactSelect
+          isMulti
+          className='ac-beheer-select'
+          options={availableExtraStandardsOptions}
+          value={selectedExtraStandards}
+          onChange={handleExtraStandardsChange}
+          isLoading={standaardenversiesOptionsLoading}
+          closeMenuOnSelect={false}
+          placeholder={
+            availableExtraStandardsOptions.length === 0
+              ? 'Geen extra standaardversies beschikbaar'
+              : 'Zoek en selecteer extra standaardversies...'
+          }
+          isSearchable={true}
+          noOptionsMessage={() => 'Geen standaardversies gevonden'}
+        />
+      </div>
     </div>
   );
 };

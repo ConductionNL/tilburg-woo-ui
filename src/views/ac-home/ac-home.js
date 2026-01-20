@@ -76,12 +76,29 @@ const AcHome = ({ store: { pages, publications, themes } }) => {
         </AcContainer>
       </AcSection>
 
-      <AcAbout
-        title={AcRemoveTags(contents[3]?.data?.content)}
-        content={AcSanitizeHtml(AcRemoveParagraphTags(contents[4]?.data?.content))}
-        link={AcSanitizeHtml(AcRemoveParagraphTags(contents[5]?.data?.content))}
-        image={contents[6]?.data}
-      />
+      {(() => {
+        const title = AcRemoveTags(contents[3]?.data?.content);
+        const content = AcSanitizeHtml(
+          AcRemoveParagraphTags(contents[4]?.data?.content)
+        );
+        const link = AcSanitizeHtml(
+          AcRemoveParagraphTags(contents[5]?.data?.content)
+        );
+
+        // if no title or content exist, don't render the component (to comply with best practices)
+        if (!title || !content) {
+          return null;
+        }
+
+        return (
+          <AcAbout
+            title={title}
+            content={content}
+            link={link}
+            image={contents[6]?.data}
+          />
+        );
+      })()}
     </>
   );
 };

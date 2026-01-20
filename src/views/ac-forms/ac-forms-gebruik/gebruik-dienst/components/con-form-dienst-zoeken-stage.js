@@ -569,6 +569,14 @@ const ConFormDienstZoekenStage = ({
                       }}
                     >
                       <div style={{ marginTop: '0.125rem' }}>
+                        <label
+                          htmlFor={`dienst-${dienstId}`}
+                          className='sr-only'
+                        >
+                          {naam
+                            ? `Selecteer dienst ${naam}${type.length > 0 ? `, type: ${type.join(', ')}` : ''}${status ? `, status: ${status}` : ''}${aanbieder ? `, aanbieder: ${aanbieder}` : ''}`
+                            : `Selecteer dienst${type.length > 0 ? `, type: ${type.join(', ')}` : ''}${status ? `, status: ${status}` : ''}`}
+                        </label>
                         <AcCheckbox
                           id={`dienst-${dienstId}`}
                           value={dienstId}

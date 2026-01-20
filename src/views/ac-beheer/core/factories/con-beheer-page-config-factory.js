@@ -79,6 +79,7 @@ const BeheerPageConfigFactory = {
       // removed plural alias 'extendviews'
       case 'module':
       case 'applicaties':
+      case 'applications':
       case 'modules':
         return {
           ...baseConfig,

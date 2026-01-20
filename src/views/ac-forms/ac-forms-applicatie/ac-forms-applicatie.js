@@ -394,7 +394,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       setSchemasLoading(true);
       const schemaTypes = [
         'module',
-        'product',
+        'suite',
         'moduleversie',
         'organisatie',
         'dienst',
@@ -572,7 +572,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     const fetchUserOrganization = async () => {
       try {
         const response = await fetch(
-          `${commongroundApiUrl()}/openconnector/api/user/me`,
+          `${commongroundApiUrl()}/openregister/api/user/me`,
           {
             method: 'GET',
             headers: {
@@ -620,13 +620,17 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         _limit: '500',
         _page: '1',
         gemmaType: 'Referentiecomponent',
-        '_extend[]': '@self.schema',
         _published: 'false',
       });
+      
+      // Add multiple extend parameters to include standards
+      queryParams.append('_extend[]', '@self.schema');
+      queryParams.append('_extend[]', 'aanbevolenStandaarden');
+      queryParams.append('_extend[]', 'verplichteStandaarden');
 
       // Fetch referentiecomponenten from openconnector endpoint
       const response = await fetch(
-        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
         {
           method: 'GET',
           headers: {
@@ -638,6 +642,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
 
       const mapToOption = (item, index) => {
         const label =
+          item?.['@self']?.name ||
           item?.xml?.name?._value ||
           item?.naam ||
           item?.name ||
@@ -666,6 +671,189 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     }
   }, [schemas?.module]);
 
+  // Function to load standaarden based on selected referentiecomponenten
+  const loadStandaardenFromReferentieComponenten = useCallback(async (selectedRefComps) => {
+    if (!schemas?.module || !selectedRefComps || selectedRefComps.length === 0) {
+      console.info('⏭️ No referentiecomponenten selected, skipping standaarden load');
+      setStandaardenOptions([]);
+      return;
+    }
+
+    console.info('📋 Loading standaarden from selected referentiecomponenten...');
+    setStandaardenOptionsLoading(true);
+
+    try {
+      // Step 1: Aggregate all standaard IDs from selected referentiecomponenten
+      const standaardIds = new Set();
+      
+      selectedRefComps.forEach((refCompValue) => {
+        // Find the full referentiecomponent data
+        const refCompOption = referentieComponentenOptions.find(opt => opt.value === refCompValue);
+        if (!refCompOption?.data) return;
+
+        const refCompData = refCompOption.data;
+        
+        // Collect aanbevolen standaarden IDs
+        if (Array.isArray(refCompData.aanbevolenStandaarden)) {
+          refCompData.aanbevolenStandaarden.forEach(standaard => {
+            const id = standaard?.['@self']?.id || standaard?.id || standaard;
+            if (id) standaardIds.add(id);
+          });
+        }
+        
+        // Collect verplichte standaarden IDs
+        if (Array.isArray(refCompData.verplichteStandaarden)) {
+          refCompData.verplichteStandaarden.forEach(standaard => {
+            const id = standaard?.['@self']?.id || standaard?.id || standaard;
+            if (id) standaardIds.add(id);
+          });
+        }
+      });
+
+      console.info(`📊 Found ${standaardIds.size} unique standaarden from selected components`);
+
+      if (standaardIds.size === 0) {
+        console.warn('⚠️ No standaarden found in selected referentiecomponenten');
+        setStandaardenOptions([]);
+        setStandaardenOptionsLoading(false);
+        return;
+      }
+
+      // Step 2: Fetch each standaard with _extend[]=standaardVersies
+      const standaardenPromises = Array.from(standaardIds).map(async (standaardId) => {
+        try {
+          const queryParams = new URLSearchParams({
+            '_extend[]': 'standaardVersies',
+          });
+          
+          const response = await fetch(
+            `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element/${standaardId}?${queryParams}`,
+            {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            }
+          );
+          
+          if (!response.ok) {
+            console.error(`Failed to fetch standaard ${standaardId}:`, response.status);
+            return null;
+          }
+          
+          return await response.json();
+        } catch (e) {
+          console.error(`Error fetching standaard ${standaardId}:`, e);
+          return null;
+        }
+      });
+
+      const standaarden = (await Promise.all(standaardenPromises)).filter(Boolean);
+
+      console.info(`✅ Fetched ${standaarden.length} standaarden with their versions`);
+
+      // Step 3: Map to options
+      const options = standaarden.map((item, index) => {
+        const label =
+          item?.['@self']?.name ||
+          item?.xml?.name?._value ||
+          item?.naam ||
+          item?.name ||
+          item?.title ||
+          item?.label ||
+          `Standaard ${index + 1}`;
+        const value = item?.['@self']?.id || item?.id || item?.value || item?.slug || label;
+        return { 
+          value: String(value), 
+          label: String(label), 
+          data: item // Contains standaardVersies array with full objects
+        };
+      }).filter((o) => o.label && o.value);
+
+      setStandaardenOptions(options);
+      console.info(`✅ Loaded ${options.length} standaarden options`);
+    } catch (e) {
+      console.error('Failed to load standaarden:', e);
+      setStandaardenOptions([]);
+    } finally {
+      setStandaardenOptionsLoading(false);
+    }
+  }, [schemas?.module, referentieComponentenOptions]);
+
+  // Legacy function kept for backward compatibility (now unused)
+  const loadStandaarden = useCallback(async () => {
+    console.warn('⚠️ loadStandaarden() called but should use loadStandaardenFromReferentieComponenten()');
+  }, []);
+
+  // Function to load ALL standaardversies (for extra standaardversies dropdown)
+  const loadAllStandaardenversies = useCallback(async () => {
+    if (!schemas?.module) return;
+
+    console.info('📋 Loading ALL standaardversies for extra standaardversies dropdown...');
+    setStandaardenversiesOptionsLoading(true);
+
+    try {
+      const queryParams = new URLSearchParams({
+        _limit: '500',
+        _page: '1',
+        gemmaType: 'Standaardversie',
+        _published: 'false',
+      });
+      
+      // Add extend parameter for schema
+      queryParams.append('_extend[]', '@self.schema');
+
+      // Fetch ALL standaardversies from openconnector endpoint
+      const response = await fetch(
+        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      const list = await response.json();
+
+      console.info(`📊 Received ${list.results?.length || 0} standaardversies from API`);
+
+      // Map to options
+      const options = (list.results || [])
+        .map((item, index) => {
+          const label =
+            item?.['@self']?.name ||
+            item?.xml?.name?._value ||
+            item?.naam ||
+            item?.name ||
+            item?.title ||
+            item?.label ||
+            `Standaardversie ${index + 1}`;
+          // Use identifier first (id- prefixed format) to match what we store in compliancy/standaardVersies
+          const value =
+            item?.['@self']?.id || item?.identifier || item?.value || item?.id || item?.slug || label;
+          return { value: String(value), label: String(label), data: item };
+        })
+        .filter((o) => o.label && o.value);
+
+      setStandaardenversiesOptions(options);
+      console.info(`✅ Loaded ${options.length} standaardversies options for dropdown`);
+      
+      if (options.length === 0) {
+        console.warn('⚠️ No standaardversies found - API might be empty or filtered');
+      }
+    } catch (e) {
+      console.error('Failed to load standaardversies:', e);
+      setStandaardenversiesOptions([]);
+    } finally {
+      setStandaardenversiesOptionsLoading(false);
+    }
+  }, [schemas?.module]);
+
+  // Legacy function kept for backward compatibility (now unused)
+  const loadStandaardenversies = useCallback(async () => {
+    console.warn('⚠️ loadStandaardenversies() called but should use loadAllStandaardenversies()');
+  }, []);
+
   // ✅ Load referentiecomponenten when schemas are available
   useEffect(() => {
     if (!schemas?.module) return;
@@ -677,126 +865,36 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     if (shouldLoadRefs) {
       loadReferentieComponenten();
     }
-  }, [schemas?.module]);
+  }, [schemas?.module, referentieComponentenOptions.length, referentieComponentenLoading, loadReferentieComponenten]);
 
-  // Function to load standaarden
-  const loadStandaarden = useCallback(async () => {
+  // ✅ Load standaarden when referentiecomponenten are selected
+  useEffect(() => {
     if (!schemas?.module) return;
+    if (referentieComponentenOptions.length === 0) return; // Wait for options to load
 
-    console.info('📋 Loading standaarden...');
-    setStandaardenOptionsLoading(true);
-
-    try {
-      const queryParams = new URLSearchParams({
-        _limit: '500',
-        _page: '1',
-        gemmaType: 'Standaard',
-        '_extend[]': '@self.schema',
-        _published: 'false',
-      });
-
-      // Fetch standards from openconnector endpoint
-      const response = await fetch(
-        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      const list = await response.json();
-
-      const options = list.results
-        .map((item, index) => {
-          const label =
-            item?.xml?.name?._value ||
-            item?.naam ||
-            item?.name ||
-            item?.title ||
-            item?.label ||
-            `Standaard ${index + 1}`;
-          const value = item?.value || item?.id || item?.slug || label;
-          return { value: String(value), label: String(label), data: item };
-        })
-        .filter((o) => o.label && o.value);
-
-      setStandaardenOptions(options);
-      console.info(`✅ Loaded ${options.length} standaarden`);
-    } catch (e) {
-      console.error('Failed to load standaarden:', e);
+    // Get the IDs/values from referentieComponentenWithStandards
+    const selectedRefCompValues = referentieComponentenWithStandards.map(rc => rc.id || rc.value);
+    
+    if (selectedRefCompValues.length > 0) {
+      loadStandaardenFromReferentieComponenten(selectedRefCompValues);
+    } else {
+      // Clear standaarden if no referentiecomponenten selected
       setStandaardenOptions([]);
-    } finally {
-      setStandaardenOptionsLoading(false);
     }
-  }, [schemas?.module]);
+  }, [referentieComponentenWithStandards, referentieComponentenOptions, schemas?.module, loadStandaardenFromReferentieComponenten]);
 
-  const loadStandaardenversies = useCallback(async () => {
-    if (!schemas?.module) return;
-
-    console.info('📋 Loading standaarden...');
-    setStandaardenversiesOptionsLoading(true);
-
-    try {
-      const queryParams = new URLSearchParams({
-        _limit: '500',
-        _page: '1',
-        gemmaType: 'Standaardversie',
-        '_extend[]': '@self.schema',
-        _published: 'false',
-      });
-
-      // Fetch standards from openconnector endpoint
-      const response = await fetch(
-        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      const list = await response.json();
-
-      const options = list.results
-        .map((item, index) => {
-          const label =
-            item?.xml?.name?._value ||
-            item?.naam ||
-            item?.name ||
-            item?.title ||
-            item?.label ||
-            `Standaard ${index + 1}`;
-          // Use identifier first (id- prefixed format) to match what we store in compliancy/standaardVersies
-          const value =
-            item?.identifier || item?.value || item?.id || item?.slug || label;
-          return { value: String(value), label: String(label), data: item };
-        })
-        .filter((o) => o.label && o.value);
-
-      setStandaardenversiesOptions(options);
-      console.info(`✅ Loaded ${options.length} standaardenversies`);
-    } catch (e) {
-      console.error('Failed to load standaardenversies:', e);
-      setStandaardenversiesOptions([]);
-    } finally {
-      setStandaardenversiesOptionsLoading(false);
-    }
-  }, [schemas?.module]);
-
-  // ✅ Load standaarden when schemas are available
+  // ✅ Load ALL standaardversies when schemas are available (for extra standaardversies dropdown)
   useEffect(() => {
     if (!schemas?.module) return;
 
     // Only load if we haven't loaded yet and we're not currently loading
-    const shouldLoadStandards =
-      standaardenOptions.length === 0 && !standaardenOptionsLoading;
+    const shouldLoadStandaardversies =
+      standaardenversiesOptions.length === 0 && !standaardenversiesOptionsLoading;
 
-    if (shouldLoadStandards) {
-      loadStandaarden();
-      loadStandaardenversies();
+    if (shouldLoadStandaardversies) {
+      loadAllStandaardenversies();
     }
-  }, [schemas?.module]);
+  }, [schemas?.module, standaardenversiesOptions.length, standaardenversiesOptionsLoading, loadAllStandaardenversies]);
 
   // Initialize selectedExtraStandards from existing compliancy and standaardVersies data
   // This should only run once on mount, not react to compliance checkbox changes
@@ -1050,7 +1148,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         const queryParams = {
           _limit: '50',
           _page: '1',
-          _source: 'database',
           _published: 'false',
         };
 
@@ -1228,7 +1325,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       console.info('📋 Fetching external facilities from openconnector endpoint...');
 
       const response = await fetch(
-        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
         {
           method: 'GET',
           headers: {

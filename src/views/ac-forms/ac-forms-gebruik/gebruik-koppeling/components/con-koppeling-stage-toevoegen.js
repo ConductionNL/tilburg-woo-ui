@@ -149,7 +149,7 @@ const ConKoppelingStageToevoegen = ({
         _published: 'false',
       });
       if (q) queryParams.set('_search', q);
-      const endpoint = `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`;
+      const endpoint = `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`;
       const res = await fetch(endpoint, {
         headers: { Accept: 'application/json' },
         signal,

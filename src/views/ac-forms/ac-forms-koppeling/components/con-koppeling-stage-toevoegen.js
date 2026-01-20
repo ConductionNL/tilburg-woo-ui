@@ -359,7 +359,7 @@ const ConKoppelingStageToevoegen = ({
         _published: 'false',
       });
       if (q) queryParams.set('_search', q);
-      const endpoint = `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`;
+      const endpoint = `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`;
       const res = await fetch(endpoint, {
         headers: { Accept: 'application/json' },
         signal,
@@ -572,7 +572,7 @@ const ConKoppelingStageToevoegen = ({
       </div>
 
       <div className='con-form-wizard-rows'>
-        {rows.map((rowId) => {
+        {rows.map((rowId, index) => {
           const appAId = `koppeling-appA-${rowId}`;
           const appBId = `koppeling-appB-${rowId}`;
           const richtingId = `koppeling-richting-${rowId}`;
@@ -1092,6 +1092,7 @@ const ConKoppelingStageToevoegen = ({
                     onClick={() => removeRow(rowId)}
                     disabled={rows.length === 1}
                     icon={<VISUALS.TRASHCAN />}
+                    sr={`Rij ${index+1} verwijderen`}
                   />
                 </div>
               )}

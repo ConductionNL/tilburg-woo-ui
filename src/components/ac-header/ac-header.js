@@ -30,6 +30,24 @@ const AcHeader = ({ store: { menu, user } }) => {
     user.userGroups || []
   );
 
+  // Get user display name and organization
+  const getUserDisplayName = () => {
+    if (!user.user) return null;
+    const parts = [user.user.firstName, user.user.middleName, user.user.lastName].filter(Boolean);
+    if (parts.length > 0) {
+      return parts.join(' ');
+    }
+    // Fallback to email if no name parts are available
+    return user.user.email || null;
+  };
+
+  const getOrganizationName = () => {
+    return user.user?.organisations?.active?.naam || null;
+  };
+
+  const userDisplayName = getUserDisplayName();
+  const organizationName = getOrganizationName();
+
   // Icon mapping for admin menu items (reused from dynamic sidenav)
   const getIconForMenuItem = (menuItem) => {
     const iconMap = {
@@ -111,18 +129,33 @@ const AcHeader = ({ store: { menu, user } }) => {
             <div>
               <ConLogo variant='header' />
               <span className='sr-only'>Logo</span>
-              <span className='logo-text'>{getTitle()}</span>
+              <h1 className='logo-text'>{getTitle()}</h1>
             </div>
           ) : (
             <>
               <Link to='/' title='Logo Tilburg - Ga naar de beginpagina'>
                 <ConLogo variant='header' />
-                <span className='logo-text'>{getTitle()}</span>
+                <h1 className='logo-text'>{getTitle()}</h1>
               </Link>
             </>
           )}
         </div>
-        <AcNavigation />
+        <div className='ac-header__right-section'>
+          {user.isAuthenticated && (userDisplayName || organizationName) && (
+            <div className='ac-header__user-info'>
+              {userDisplayName && (
+                <span className='ac-header__username'>{userDisplayName}</span>
+              )}
+              {organizationName && !userDisplayName && (
+                <span className='ac-header__username'>{organizationName}</span>
+              )}
+              {organizationName && userDisplayName && (
+                <span className='ac-header__organization'>({organizationName})</span>
+              )}
+            </div>
+          )}
+          <AcNavigation />
+        </div>
       </div>
       {secondaryNavItems.length > 0 && (
         <div className='ac-header__navigation-secondary'>
