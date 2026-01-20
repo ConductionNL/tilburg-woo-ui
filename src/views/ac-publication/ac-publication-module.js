@@ -60,15 +60,9 @@ const AcPublicationProduct = ({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   // const [actionMenuItems, setActionMenuItems] = useState([]);
 
-  // Standards state for resolving compliance standards
+  // Standards state for resolving compliance standards (extracted from uses data)
   const [standards, setStandards] = useState([]);
-  const [standardsLoading, setStandardsLoading] = useState(false);
-
-  // Standaardversies state for resolving version names
   const [standaardversies, setStandaardversies] = useState([]);
-  const [standaardversiesLoading, setStandaardversiesLoading] = useState(false);
-
-  // State for referentieComponenten data with standards
   const [referentieComponentenWithStandards, setReferentieComponentenWithStandards] =
     useState([]);
 
@@ -200,45 +194,54 @@ const AcPublicationProduct = ({
     return actions;
   }, [schemaSlug, id, user, navigate]);
 
-  // Fetch referentieComponenten data with their standards
-  const fetchReferentieComponentenWithStandards = useCallback(async () => {
-    if (!get_single?.referentieComponenten?.length) {
-      setReferentieComponentenWithStandards([]);
+  // Process vng-gemma/element data from uses response
+  const processVngGemmaData = useCallback((usesData) => {
+    if (!usesData || !Array.isArray(usesData)) {
+      console.info('No uses data to process');
       return;
     }
 
-    console.info('📋 Fetching referentieComponenten with standards data...');
+    console.info('📋 Processing vng-gemma/element data from uses response...');
 
-    try {
-      const queryParams = new URLSearchParams({
-        _limit: '500',
-        _page: '1',
-        gemmaType: 'Referentiecomponent',
-      });
+    // Find vng-gemma/element items by looking for items with a gemmaType property
+    const elementItems = usesData.filter((item) => item?.gemmaType);
 
-      // Fetch referentieComponenten from openconnector endpoint
-      const response = await fetch(
-        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+    if (!elementItems.length) {
+      console.info('No vng-gemma/element items found in uses data');
+      return;
+    }
 
-      if (!response.ok) {
-        console.error('Error fetching referentieComponenten:', response.statusText);
-        return;
-      }
+    // Separate by gemmaType
+    const standardsData = elementItems.filter(
+      (item) => item.gemmaType === 'Standaard'
+    );
+    const standaardversiesData = elementItems.filter(
+      (item) => item.gemmaType === 'Standaardversie'
+    );
+    const referentieComponentenData = elementItems.filter(
+      (item) => item.gemmaType === 'Referentiecomponent'
+    );
 
-      const data = await response.json();
-      const allReferentieComponenten = data.results || data;
+    // Transform standards to add name property from @self.name
+    const transformedStandards = standardsData.map((item) => ({
+      ...item,
+      name: item?.['@self']?.name || item.name || item.id,
+    }));
 
-      // Filter to only the referentieComponenten that are used in this product
+    // Transform standaardversies to add name property from @self.name
+    const transformedStandaardversies = standaardversiesData.map((item) => ({
+      ...item,
+      name: item?.['@self']?.name || item.name || item.id,
+    }));
+
+    setStandards(transformedStandards);
+    setStandaardversies(transformedStandaardversies);
+
+    // Process referentieComponenten with standards for the product
+    if (get_single?.referentieComponenten?.length) {
       const productReferentieComponenten = get_single.referentieComponenten
         .map((refId) => {
-          const refData = allReferentieComponenten.find(
+          const refData = referentieComponentenData.find(
             (ref) =>
               String(ref.id) === String(refId) ||
               String(ref.value) === String(refId) ||
@@ -248,13 +251,7 @@ const AcPublicationProduct = ({
           if (refData) {
             return {
               id: refId,
-              naam:
-                refData?.xml?.name?._value ||
-                refData?.naam ||
-                refData?.name ||
-                refData?.title ||
-                refData?.label ||
-                refId,
+              naam: refData?.['@self']?.name || refId,
               moduleId: 0, // For publication view, we don't have specific modules
               applicatieId: 0,
               // Extract standards from the API data
@@ -270,107 +267,16 @@ const AcPublicationProduct = ({
 
       setReferentieComponentenWithStandards(productReferentieComponenten);
       console.info(
-        `✅ Loaded ${productReferentieComponenten?.length} referentieComponenten with standards data`
+        `✅ Processed ${productReferentieComponenten?.length} referentieComponenten with standards data`
       );
-    } catch (error) {
-      console.warn(
-        '⚠️ Failed to fetch referentieComponenten with standards:',
-        error
-      );
+    } else {
       setReferentieComponentenWithStandards([]);
     }
+
+    console.info(
+      `✅ Processed vng-gemma data: ${standardsData.length} standards, ${standaardversiesData.length} standaardversies, ${referentieComponentenData.length} referentiecomponenten`
+    );
   }, [get_single?.referentieComponenten]);
-
-  // Fetch standards from openconnector endpoint
-  const fetchStandards = useCallback(async () => {
-    setStandardsLoading(true);
-    try {
-      const queryParams = new URLSearchParams({
-        _limit: '500',
-        _page: '1',
-        gemmaType: 'Standaard',
-      });
-
-      // Fetch standards from openconnector endpoint using normal fetch
-      const response = await fetch(
-        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      if (!response.ok) {
-        console.error(
-          'Error fetching openconnector standards:',
-          response.statusText
-        );
-        return;
-      }
-
-      const data = await response.json();
-      const fetchedStandards = data.results || data;
-
-      setStandards(fetchedStandards);
-    } catch (error) {
-      console.warn('⚠️ Failed to fetch standards:', error);
-      setStandards([]);
-    } finally {
-      setStandardsLoading(false);
-    }
-  }, []);
-
-  // Fetch standaardversies from openconnector endpoint
-  const fetchStandaardversies = useCallback(async () => {
-    setStandaardversiesLoading(true);
-    try {
-      const queryParams = new URLSearchParams({
-        _limit: '500',
-        _page: '1',
-        gemmaType: 'Standaardversie',
-      });
-
-      const response = await fetch(
-        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      if (!response.ok) {
-        console.error(
-          'Error fetching openconnector standaardversies:',
-          response.statusText
-        );
-        return;
-      }
-
-      const data = await response.json();
-      const fetchedStandaardversies = data.results || data;
-
-      setStandaardversies(fetchedStandaardversies);
-    } catch (error) {
-      console.warn('⚠️ Failed to fetch standaardversies:', error);
-      setStandaardversies([]);
-    } finally {
-      setStandaardversiesLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchStandards();
-    fetchStandaardversies();
-    fetchReferentieComponentenWithStandards();
-  }, [
-    fetchStandards,
-    fetchStandaardversies,
-    fetchReferentieComponentenWithStandards,
-  ]);
 
   const [uses, setUses] = useState([]);
   const [used, setUsed] = useState([]);
@@ -490,13 +396,17 @@ const AcPublicationProduct = ({
         return;
       }
       const data = await response.json();
-      setUses(data.results);
+      const usesResults = data.results || [];
+      setUses(usesResults);
+      
+      // Process vng-gemma/element data from the uses response
+      processVngGemmaData(usesResults);
     } catch (error) {
       console.error('Error fetching uses:', error);
     } finally {
       setUsesLoading(false);
     }
-  }, []);
+  }, [id, processVngGemmaData]);
 
   const fetchUsed = useCallback(async () => {
     if (!id) return;
@@ -522,7 +432,7 @@ const AcPublicationProduct = ({
     } finally {
       setUsedLoading(false);
     }
-  }, []);
+  }, [id]);
 
   useEffect(() => {
     // Only fetch when the ID in the URL changes and we haven't fetched for this ID before
@@ -831,7 +741,7 @@ const AcPublicationProduct = ({
                 referentieComponentenWithStandards={
                   referentieComponentenWithStandards
                 }
-                loading={standardsLoading || standaardversiesLoading}
+                loading={usesLoading}
                 onStandardsCountChange={(n) => setStandardsCount(n)}
               />
             ),
