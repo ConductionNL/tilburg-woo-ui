@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
-import RelatedTabs from './con-related-tabs';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import RelatedTabs from './con-related-tabs-new';
 import ConLogoPreview from '../ac-register/con-logo-preview';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
 import { observer } from 'mobx-react-lite';
@@ -110,16 +110,16 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
   const [usesLoading, setUsesLoading] = useState(false);
   const [usedLoading, setUsedLoading] = useState(false);
   const [tabIndex, setTabIndex] = useState(0);
-
-  // Track which IDs we've already fetched to prevent duplicate calls
-  const fetchedIds = useRef(new Set());
+  
+  // Aggregated schemas from all endpoints (indexed by schema ID)
+  const [aggregatedSchemas, setAggregatedSchemas] = useState({});
 
   const fetchUses = useCallback(async () => {
     if (!id) return;
     setUsesLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend[]=_schema`,
         {
           method: 'GET',
           headers: {
@@ -132,20 +132,28 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
         return;
       }
       const data = await response.json();
-      setUses(data.results);
+      setUses(data.results || []);
+      
+      // Extract and aggregate schemas from @self.schemas
+      if (data['@self']?.schemas) {
+        setAggregatedSchemas(prev => ({
+          ...prev,
+          ...data['@self'].schemas
+        }));
+      }
     } catch (error) {
       console.error('Error fetching uses:', error);
     } finally {
       setUsesLoading(false);
     }
-  }, []);
+  }, [id]);
 
   const fetchUsed = useCallback(async () => {
     if (!id) return;
     setUsedLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=_schema`,
         {
           method: 'GET',
           headers: {
@@ -158,23 +166,25 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
         return;
       }
       const data = await response.json();
-      setUsed(data.results);
+      setUsed(data.results || []);
+      
+      // Extract and aggregate schemas from @self.schemas
+      if (data['@self']?.schemas) {
+        setAggregatedSchemas(prev => ({
+          ...prev,
+          ...data['@self'].schemas
+        }));
+      }
     } catch (error) {
       console.error('Error fetching used:', error);
     } finally {
       setUsedLoading(false);
     }
-  }, []);
+  }, [id]);
 
   useEffect(() => {
-    // Only fetch when the ID in the URL changes and we haven't fetched for this ID before
-    if (!id || fetchedIds.current.has(id)) {
-      return;
-    }
-
-    // Mark this ID as fetched
-    fetchedIds.current.add(id);
-
+    if (!id) return;
+    
     fetchUses();
     fetchUsed();
   }, [id, fetchUses, fetchUsed]);
@@ -342,14 +352,14 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
           />
 
           <RelatedTabs
-            id={id}
             uses={uses}
             used={used}
+            gebruik={[]}
+            schemas={aggregatedSchemas}
             usesLoading={usesLoading}
             usedLoading={usedLoading}
-            gebruikId={id}
-            gebruikSchemaId={schemaId}
-            gebruikSchemaSlug={get_single?.['@self']?.schema?.slug}
+            gebruikLoading={false}
+            excludeObjectIds={[]}
             tabIndex={tabIndex}
             setTabIndex={setTabIndex}
             object={object}

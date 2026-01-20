@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
-import RelatedTabs from './con-related-tabs';
+import RelatedTabs from './con-related-tabs-new';
 import ConLogoPreview from '../ac-register/con-logo-preview';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
 import { observer } from 'mobx-react-lite';
@@ -280,9 +280,14 @@ const AcPublicationProduct = ({
 
   const [uses, setUses] = useState([]);
   const [used, setUsed] = useState([]);
+  const [gebruik, setGebruik] = useState([]);
   const [usesLoading, setUsesLoading] = useState(false);
   const [usedLoading, setUsedLoading] = useState(false);
+  const [gebruikLoading, setGebruikLoading] = useState(false);
   const [tabIndex, setTabIndex] = useState(0);
+  
+  // Aggregated schemas from all endpoints (indexed by schema ID)
+  const [aggregatedSchemas, setAggregatedSchemas] = useState({});
 
   // Extract contactpersoon from get_single (extended) or fallback to uses data
   const contact = useMemo(() => {
@@ -375,9 +380,6 @@ const AcPublicationProduct = ({
     resolveWithIds();
   }, [get_single?.referentieComponenten, object]);
 
-  // Track which IDs we've already fetched to prevent duplicate calls
-  const fetchedIds = useRef(new Set());
-
   const fetchUses = useCallback(async () => {
     if (!id) return;
     setUsesLoading(true);
@@ -398,6 +400,14 @@ const AcPublicationProduct = ({
       const data = await response.json();
       const usesResults = data.results || [];
       setUses(usesResults);
+      
+      // Extract and aggregate schemas from @self.schemas
+      if (data['@self']?.schemas) {
+        setAggregatedSchemas(prev => ({
+          ...prev,
+          ...data['@self'].schemas
+        }));
+      }
       
       // Process vng-gemma/element data from the uses response
       processVngGemmaData(usesResults);
@@ -427,6 +437,14 @@ const AcPublicationProduct = ({
       }
       const data = await response.json();
       setUsed(data.results);
+      
+      // Extract and aggregate schemas from @self.schemas
+      if (data['@self']?.schemas) {
+        setAggregatedSchemas(prev => ({
+          ...prev,
+          ...data['@self'].schemas
+        }));
+      }
     } catch (error) {
       console.error('Error fetching used:', error);
     } finally {
@@ -434,18 +452,48 @@ const AcPublicationProduct = ({
     }
   }, [id]);
 
-  useEffect(() => {
-    // Only fetch when the ID in the URL changes and we haven't fetched for this ID before
-    if (!id || fetchedIds.current.has(id)) {
-      return;
+  const fetchGebruik = useCallback(async () => {
+    if (!id) return;
+    setGebruikLoading(true);
+    try {
+      // Fetch gebruik data related to this publication (as applicatie/module)
+      const response = await fetch(
+        `${commongroundApiUrl()}/softwarecatalog/api/gebruik?_limit=1000&_extend[]=_schema&${schemaSlug === 'product' ? 'product' : 'module'}=${id}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      if (!response.ok) {
+        console.error('Error fetching gebruik:', response.statusText);
+        return;
+      }
+      const data = await response.json();
+      setGebruik(data.results || []);
+      
+      // Extract and aggregate schemas from @self.schemas
+      if (data['@self']?.schemas) {
+        setAggregatedSchemas(prev => ({
+          ...prev,
+          ...data['@self'].schemas
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching gebruik:', error);
+    } finally {
+      setGebruikLoading(false);
     }
+  }, [id, schemaSlug]);
 
-    // Mark this ID as fetched
-    fetchedIds.current.add(id);
-
+  useEffect(() => {
+    if (!id) return;
+    
     fetchUses();
     fetchUsed();
-  }, [id, fetchUses, fetchUsed]);
+    fetchGebruik();
+  }, [id, fetchUses, fetchUsed, fetchGebruik]);
 
   // Loading
   if (loading.status || !get_single) {
@@ -708,14 +756,14 @@ const AcPublicationProduct = ({
       />
 
       <RelatedTabs
-        id={id}
         uses={uses}
         used={used}
+        gebruik={gebruik}
+        schemas={aggregatedSchemas}
         usesLoading={usesLoading}
         usedLoading={usedLoading}
-        gebruikId={id}
-        gebruikSchemaId={schemaId}
-        gebruikSchemaSlug={get_single?.['@self']?.schema?.slug}
+        gebruikLoading={gebruikLoading}
+        excludeObjectIds={[]}
         tabIndex={tabIndex}
         setTabIndex={setTabIndex}
         object={object}
@@ -726,7 +774,6 @@ const AcPublicationProduct = ({
             id: 'standaarden',
             label: `Standaarden`,
             icon: VISUALS.SCROLL,
-            // Use dynamic count from the table to match visible rows
             count: standardsCount,
             render: () => (
               <ConStandardsTable

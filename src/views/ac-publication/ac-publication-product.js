@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import RelatedTabs from './con-related-tabs';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import RelatedTabs from './con-related-tabs-new';
 import ConLogoPreview from '../ac-register/con-logo-preview';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
 import { observer } from 'mobx-react-lite';
@@ -68,12 +68,14 @@ const AcPublicationProduct = ({
   // Tabs
   const [uses, setUses] = useState([]);
   const [used, setUsed] = useState([]);
+  const [gebruik, setGebruik] = useState([]);
   const [usesLoading, setUsesLoading] = useState(false);
   const [usedLoading, setUsedLoading] = useState(false);
+  const [gebruikLoading, setGebruikLoading] = useState(false);
   const [relatedTabIndex, setRelatedTabIndex] = useState(0);
-
-  // Track which IDs we've already fetched to prevent duplicate calls
-  const fetchedIds = useRef(new Set());
+  
+  // Aggregated schemas from all endpoints (indexed by schema ID)
+  const [aggregatedSchemas, setAggregatedSchemas] = useState({});
 
   // Extract contactpersoon from uses data instead of get_single
   const contact = useMemo(() => {
@@ -97,7 +99,7 @@ const AcPublicationProduct = ({
     setUsesLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_limit=100`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_limit=100&_extend[]=_schema`,
         {
           method: 'GET',
           headers: {
@@ -110,20 +112,28 @@ const AcPublicationProduct = ({
         return;
       }
       const data = await response.json();
-      setUses(data.results);
+      setUses(data.results || []);
+      
+      // Extract and aggregate schemas from @self.schemas
+      if (data['@self']?.schemas) {
+        setAggregatedSchemas(prev => ({
+          ...prev,
+          ...data['@self'].schemas
+        }));
+      }
     } catch (error) {
       console.error('Error fetching uses:', error);
     } finally {
       setUsesLoading(false);
     }
-  }, []);
+  }, [id]);
 
   const fetchUsed = useCallback(async () => {
     if (!id) return;
     setUsedLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_limit=100`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_limit=100&_extend[]=_schema`,
         {
           method: 'GET',
           headers: {
@@ -136,26 +146,64 @@ const AcPublicationProduct = ({
         return;
       }
       const data = await response.json();
-      setUsed(data.results);
+      setUsed(data.results || []);
+      
+      // Extract and aggregate schemas from @self.schemas
+      if (data['@self']?.schemas) {
+        setAggregatedSchemas(prev => ({
+          ...prev,
+          ...data['@self'].schemas
+        }));
+      }
     } catch (error) {
       console.error('Error fetching used:', error);
     } finally {
       setUsedLoading(false);
     }
-  }, []);
+  }, [id]);
+
+  const fetchGebruik = useCallback(async () => {
+    if (!id) return;
+    setGebruikLoading(true);
+    try {
+      // For products, fetch gebruik where the product is referenced
+      const response = await fetch(
+        `${commongroundApiUrl()}/softwarecatalog/api/gebruik?_limit=1000&_extend[]=_schema&product=${id}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      if (!response.ok) {
+        console.error('Error fetching gebruik:', response.statusText);
+        return;
+      }
+      const data = await response.json();
+      setGebruik(data.results || []);
+      
+      // Extract and aggregate schemas from @self.schemas
+      if (data['@self']?.schemas) {
+        setAggregatedSchemas(prev => ({
+          ...prev,
+          ...data['@self'].schemas
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching gebruik:', error);
+    } finally {
+      setGebruikLoading(false);
+    }
+  }, [id]);
 
   useEffect(() => {
-    // Only fetch when the ID in the URL changes and we haven't fetched for this ID before
-    if (!id || fetchedIds.current.has(id)) {
-      return;
-    }
-
-    // Mark this ID as fetched
-    fetchedIds.current.add(id);
-
+    if (!id) return;
+    
     fetchUses();
     fetchUsed();
-  }, [id, fetchUses, fetchUsed]);
+    fetchGebruik();
+  }, [id, fetchUses, fetchUsed, fetchGebruik]);
 
   // Loading
   if (loading.status || !get_single) {
@@ -384,14 +432,14 @@ const AcPublicationProduct = ({
       />
 
       <RelatedTabs
-        id={id}
         uses={uses}
         used={used}
+        gebruik={gebruik}
+        schemas={aggregatedSchemas}
         usesLoading={usesLoading}
         usedLoading={usedLoading}
-        gebruikId={id}
-        gebruikSchemaId={schemaId}
-        gebruikSchemaSlug={get_single?.['@self']?.schema?.slug}
+        gebruikLoading={gebruikLoading}
+        excludeObjectIds={[]}
         tabIndex={relatedTabIndex}
         setTabIndex={setRelatedTabIndex}
         object={object}
