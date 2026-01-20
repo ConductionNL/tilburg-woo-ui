@@ -16,6 +16,7 @@ import { schemaCache } from '@services/schemaCache.service';
 import RelatedTabs from '@views/ac-publication/con-related-tabs-new';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
+import { createBeschrijvingTab } from './helpers/beschrijving-tab.helper';
 // import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
@@ -408,6 +409,7 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
             object={object}
             navigateTo='publication'
             user={user}
+            customTabsBefore={[createBeschrijvingTab(get_single)]}
           />
         </div>
 

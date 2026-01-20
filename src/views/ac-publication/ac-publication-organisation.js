@@ -10,20 +10,10 @@ import { withStore } from '@stores';
 import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
 import { schemaCache } from '@services/schemaCache.service';
-
-// Markdown Editor
-import remarkDefinitionList, { defListHastHandlers } from 'remark-definition-list';
-import { remarkMark } from 'remark-mark-highlight';
-import MDEditor from '@uiw/react-md-editor';
-import remarkGfm from 'remark-gfm';
-import remarkRehype from 'remark-rehype';
-import remarkEmoji from 'remark-emoji';
-import remarkSupersub from 'remark-supersub';
-import rehypeSlug from 'rehype-slug';
-import rehypeSanitize from 'rehype-sanitize';
 import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 import { normalizeSchemaName } from '@src/utilities/con-normalize-schema-name';
+import { createBeschrijvingTab } from './helpers/beschrijving-tab.helper';
 
 const AcPublication = ({ store: { publications, object, user } }) => {
   const { id } = useParams();
@@ -253,27 +243,6 @@ const AcPublication = ({ store: { publications, object, user } }) => {
               {!!get_single?.['@self']?.summary && (
                 <div>{get_single?.['@self']?.summary}</div>
               )}
-
-              {!!get_single?.beschrijvingLang && (
-                <MDEditor.Markdown
-                  wrapperElement={{
-                    'data-color-mode': 'light',
-                  }}
-                  source={get_single?.beschrijvingLang}
-                  remarkPlugins={[
-                    [remarkGfm, { singleTilde: false }],
-                    remarkDefinitionList,
-                    remarkEmoji,
-                    remarkSupersub,
-                    remarkMark,
-                  ]}
-                  rehypePlugins={[
-                    rehypeSlug,
-                    [rehypeSanitize],
-                    [remarkRehype, { handlers: { ...defListHastHandlers } }],
-                  ]}
-                />
-              )}
             </AcFlex>
             {(get_single?.['e-mailadres'] ||
               get_single?.telefoonnummer ||
@@ -337,6 +306,7 @@ const AcPublication = ({ store: { publications, object, user } }) => {
             object={object}
             navigateTo='publication'
             user={user}
+            customTabsBefore={[createBeschrijvingTab(get_single)]}
           />
         </AcFlex>
       </AcContainer>
