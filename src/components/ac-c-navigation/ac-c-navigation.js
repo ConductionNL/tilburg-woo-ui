@@ -41,14 +41,13 @@ const AcCNavigation = ({ items = [], mobileLogo, layoutClassName }) => {
           {items.map(({ name, icon, link, slug, items }, idx) => (
             <li
               key={idx}
-              to={!items?.length && link}
               className={clsx(
                 'ac-c-navigation__li',
                 isCurrent(slug) && 'ac-c-navigation__current'
               )}
             >
               <Link
-                to={!items.length && link}
+                to={!items?.length && link}
                 className='ac-c-navigation__link-container'
               >
                 <div
