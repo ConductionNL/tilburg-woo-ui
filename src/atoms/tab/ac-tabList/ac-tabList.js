@@ -11,20 +11,37 @@ const AcTabList = ({ children, ...otherProps }) => {
 
   const handleScroll = () => {
     if (wrapperRef.current) {
-      setCanScrollLeft(wrapperRef.current.scrollLeft > 0);
-      setCanScrollRight(
-        wrapperRef.current.scrollWidth - wrapperRef.current.scrollLeft >
-          wrapperRef.current.clientWidth
-      );
+      const scrollLeft = wrapperRef.current.scrollLeft;
+      const scrollWidth = wrapperRef.current.scrollWidth;
+      const clientWidth = wrapperRef.current.clientWidth;
+      // Check if we can scroll right: scrollLeft + clientWidth should be less than scrollWidth
+      // Use a tolerance (5px) to account for floating point precision and style changes
+      // (selected tabs may have different border/padding that increases scrollWidth slightly)
+      const canScrollRightValue = scrollLeft + clientWidth < scrollWidth - 5;
+      
+      setCanScrollLeft(scrollLeft > 0);
+      setCanScrollRight(canScrollRightValue);
     }
   };
 
   const handleScrollRight = () => {
-    if (wrapperRef.current)
+    if (wrapperRef.current) {
+      const maxScroll = wrapperRef.current.scrollWidth - wrapperRef.current.clientWidth;
+      const targetScroll = Math.min(
+        wrapperRef.current.scrollLeft + wrapperRef.current.clientWidth * 0.9,
+        maxScroll
+      );
+      
       wrapperRef.current.scrollTo({
-        left: wrapperRef.current.scrollLeft + wrapperRef.current.clientWidth * 0.9,
+        left: targetScroll,
         behavior: 'smooth',
       });
+      
+      // Re-check scroll state after smooth scroll completes
+      setTimeout(() => {
+        handleScroll();
+      }, 300);
+    }
   };
 
   const handleScrollLeft = () => {
@@ -37,11 +54,48 @@ const AcTabList = ({ children, ...otherProps }) => {
 
   React.useEffect(() => {
     if (wrapperRef.current) {
-      setCanScrollRight(
-        wrapperRef.current.scrollWidth > wrapperRef.current.clientWidth
-      ); // initiate scroll
+      handleScroll();
+      
+      // Observe changes to tab list size (e.g., when tab selection changes styles)
+      const resizeObserver = new ResizeObserver(() => {
+        requestAnimationFrame(() => {
+          handleScroll();
+        });
+      });
+      
+      // Observe tab selection changes (aria-selected attribute changes)
+      const mutationObserver = new MutationObserver(() => {
+        requestAnimationFrame(() => {
+          handleScroll();
+        });
+      });
+      
+      const tabListContainer = wrapperRef.current.querySelector('.ac-tabListContainer');
+      if (tabListContainer) {
+        resizeObserver.observe(tabListContainer);
+        mutationObserver.observe(tabListContainer, {
+          attributes: true,
+          attributeFilter: ['aria-selected'],
+          subtree: true
+        });
+      }
+      
+      return () => {
+        resizeObserver.disconnect();
+        mutationObserver.disconnect();
+      };
     }
   }, [children]);
+  
+  React.useEffect(() => {
+    const handleResize = () => {
+      if (wrapperRef.current) {
+        handleScroll();
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   return (
     <div className='ac-tab-container'>
