@@ -229,6 +229,7 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
                       });
                       navigate(`/forms/gebruik/koppeling?${params.toString()}`);
                     }}
+                    sr='Koppeling aanbieden'
                   />
                 );
               }

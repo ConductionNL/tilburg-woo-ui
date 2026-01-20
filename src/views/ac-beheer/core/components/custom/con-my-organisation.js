@@ -375,27 +375,26 @@ const ConMyOrganisationPage = ({ store }) => {
                     alignItems: 'center',
                   }}
                 >
-                  <Heading level={4}>
-                    <div className='con-beheer-details--header-container'>
-                      {fullActiveOrganisation?.['@self']?.image ||
-                        (fullActiveOrganisation?.logo && (
-                          <ConLogoPreview
-                            className='con-beheer-details--logo-container'
-                            logoUrl={
-                              fullActiveOrganisation?.['@self']?.image ||
-                              fullActiveOrganisation?.logo
-                            }
-                          />
-                        ))}
+                <div className='con-beheer-details--header-container'>
+                    {fullActiveOrganisation?.['@self']?.image ||
+                    (fullActiveOrganisation?.logo && (
+                        <ConLogoPreview
+                        className='con-beheer-details--logo-container'
+                        logoUrl={
+                            fullActiveOrganisation?.['@self']?.image ||
+                            fullActiveOrganisation?.logo
+                        }
+                        />
+                    ))}
 
-                      <Heading className='con-beheer-details--title'>
-                        {fullActiveOrganisation?.['@self']?.name ||
-                          fullActiveOrganisation?.id ||
-                          activeOrganisation?.name ||
-                          'Organisatie'}
-                      </Heading>
-                    </div>
-                  </Heading>
+                    <Heading className='con-beheer-details--title'>
+                    {fullActiveOrganisation?.['@self']?.name ||
+                        fullActiveOrganisation?.id ||
+                        activeOrganisation?.name ||
+                        'Organisatie'}
+                    </Heading>
+                </div>
+          
                   <div className='ac-register-review__header-controls'>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <ConActionMenu>

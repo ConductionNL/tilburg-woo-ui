@@ -123,17 +123,28 @@ const ConGebruikStepDeelnemers = memo(
                 Er zijn geen deelnemers gevonden voor uw organisatie.
               </Paragraph>
             ) : (
-              <ReactSelect
-                isMulti
-                className='ac-beheer-select'
-                options={deelnemerOptions}
-                value={currentSelectedOptions}
-                onChange={handleMultiSelectChange}
-                isLoading={deelnemersLoading}
-                isDisabled={loading}
-                closeMenuOnSelect={false}
-                placeholder='Selecteer deelnemers...'
-              />
+              <>
+                <label
+                  id='deelnemers-select-label'
+                  className='sr-only'
+                  htmlFor='deelnemers-select'
+                >
+                  Selecteer deelnemers
+                </label>
+                <ReactSelect
+                  inputId='deelnemers-select'
+                  aria-labelledby='deelnemers-select-label'
+                  isMulti
+                  className='ac-beheer-select'
+                  options={deelnemerOptions}
+                  value={currentSelectedOptions}
+                  onChange={handleMultiSelectChange}
+                  isLoading={deelnemersLoading}
+                  isDisabled={loading}
+                  closeMenuOnSelect={false}
+                  placeholder='Selecteer deelnemers...'
+                />
+              </>
             )}
           </div>
         </div>
