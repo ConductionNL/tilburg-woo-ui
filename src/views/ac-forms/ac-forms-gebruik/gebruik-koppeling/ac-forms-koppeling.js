@@ -2104,6 +2104,13 @@ const AcFormsKoppeling = ({ store }) => {
     const logicalStep = stepper.getLabelFromStep(step);
 
     switch (logicalStep) {
+      case 'koppeling-zoeken':
+        return 'Een koppeling zoeken';
+      case 'gebruiksinformatie':
+        return 'Gebruiksinformatie';
+      case 'controleren':
+        return 'Controleren';
+      // @TODO fix
       case 0:
         return 'Aanbieder';
       case 1:

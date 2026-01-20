@@ -148,10 +148,12 @@
     .ac-header__username {
       font-weight: 500;
       color: var(--tilburg-header-text-color, var(--utrecht-document-color, #000));
+      font-family: var(--tilburg-typography-font-family-primary), sans-serif;
       font-size: 0.9rem;
     }
     
     .ac-header__organization {
+      font-family: var(--tilburg-typography-font-family-primary), sans-serif;
       font-size: 0.85rem;
       color: var(--tilburg-color-gray-600, #666);
       font-style: italic;

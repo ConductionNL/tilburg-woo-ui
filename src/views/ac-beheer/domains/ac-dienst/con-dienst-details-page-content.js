@@ -153,7 +153,6 @@ const ConDienstDetailsPageContent = ({
           alignItems: 'center',
         }}
       >
-        <Heading level={4}>
           <div className='con-beheer-details--header-container'>
             {(data?.logo || data?.['@self']?.image) && (
               <ConLogoPreview
@@ -165,7 +164,6 @@ const ConDienstDetailsPageContent = ({
               {data?.naam || data?.['@self']?.name || data?.['@self']?.id}
             </Heading>
           </div>
-        </Heading>
 
         <div className='ac-register-review__header-controls'>
           <div style={{ display: 'flex', gap: '0.5rem' }}>

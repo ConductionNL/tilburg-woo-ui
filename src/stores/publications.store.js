@@ -2,6 +2,7 @@
 import { observable, computed, makeObservable, action, toJS } from 'mobx';
 import { AcBuildURLSearchParams, getCookie } from '@utils';
 import { commongroundApiUrl } from '@config';
+import { schemaCache } from '@services/schemaCache.service';
 
 let app = {};
 
@@ -746,12 +747,15 @@ export class PublicationsStore {
             ...this.defaultQuery,
             _related: true,
             _relatedNames: true,
+            '_extend[]': '_schema',
           })
         ).toString()
       )
       .then((response) => {
         console.group('📄 PROCESSING SINGLE PUBLICATION RESPONSE');
         console.info('Publication response:', response);
+        console.info('response[@self].schema:', response['@self']?.schema);
+        console.info('response[@self].schemas:', response['@self']?.schemas);
 
         // Normalize schema location: move from @self.schemas[uuid] to @self.schema
         // Check if schemas object exists and schema is just an ID (not the full object)
@@ -759,19 +763,49 @@ export class PublicationsStore {
           const schemaId = response['@self'].schema;
           const schemasObj = response['@self'].schemas;
           
+          console.info('Schema normalization path 1: schema exists as ID');
+          console.info('schemaId:', schemaId, 'type:', typeof schemaId);
+          console.info('schemasObj:', schemasObj);
+          
           // If schema is just an ID string/number and we have the full object in schemas
           if (typeof schemaId !== 'object' && schemasObj[schemaId]) {
             response['@self'].schema = schemasObj[schemaId];
             console.info('✅ Normalized schema from ID to full object using @self.schemas');
+            
+            // Cache the schema slug for quick lookups
+            if (schemasObj[schemaId]?.slug) {
+              schemaCache.set(String(schemaId), schemasObj[schemaId].slug);
+              console.info(`✅ Cached schema slug: ${schemaId} -> ${schemasObj[schemaId].slug}`);
+            } else {
+              console.warn('⚠️ Schema object has no slug property:', schemasObj[schemaId]);
+            }
+          } else if (typeof schemaId === 'object') {
+            console.info('Schema is already an object, checking for slug');
+            if (schemaId?.id && schemaId?.slug) {
+              schemaCache.set(String(schemaId.id), schemaId.slug);
+              console.info(`✅ Cached schema slug from object: ${schemaId.id} -> ${schemaId.slug}`);
+            }
           }
         } else if (response['@self']?.schemas && !response['@self']?.schema) {
+          console.info('Schema normalization path 2: no schema, using first from schemas');
           // Fallback: if schema doesn't exist but schemas does, use the first one
           const schemasObj = response['@self'].schemas;
           const schemaIds = Object.keys(schemasObj);
           if (schemaIds.length > 0) {
             response['@self'].schema = schemasObj[schemaIds[0]];
             console.info('✅ Normalized schema location from @self.schemas to @self.schema');
+            
+            // Cache the schema slug for quick lookups
+            const schemaId = schemaIds[0];
+            if (schemasObj[schemaId]?.slug) {
+              schemaCache.set(String(schemaId), schemasObj[schemaId].slug);
+              console.info(`✅ Cached schema slug: ${schemaId} -> ${schemasObj[schemaId].slug}`);
+            }
           }
+        } else {
+          console.warn('⚠️ No schema normalization needed or possible');
+          console.info('Has @self.schemas?', !!response['@self']?.schemas);
+          console.info('Has @self.schema?', !!response['@self']?.schema);
         }
 
         // Normalize register location: move from @self.registers[uuid] to @self.register

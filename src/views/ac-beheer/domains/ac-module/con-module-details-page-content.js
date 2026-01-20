@@ -189,20 +189,18 @@ const ConModuleDetailsPageContent = ({
           alignItems: 'center',
         }}
       >
-        <Heading level={4}>
-          <div className='con-beheer-details--header-container'>
-            {(data?.logo || data?.['@self']?.image) && (
-              <ConLogoPreview
-                className='con-beheer-details--logo-container'
-                logoUrl={data?.logo || data?.['@self']?.image}
-              />
-            )}
+        <div className='con-beheer-details--header-container'>
+          {(data?.logo || data?.['@self']?.image) && (
+            <ConLogoPreview
+              className='con-beheer-details--logo-container'
+              logoUrl={data?.logo || data?.['@self']?.image}
+            />
+          )}
 
-            <Heading className='con-beheer-details--title'>
-              {data?.naam || data?.['@self']?.name || data?.['@self']?.id}
-            </Heading>
-          </div>
-        </Heading>
+          <Heading className='con-beheer-details--title'>
+            {data?.naam || data?.['@self']?.name || data?.['@self']?.id}
+          </Heading>
+        </div>
 
         <div className='ac-register-review__header-controls'>
           <div style={{ display: 'flex', gap: '0.5rem' }}>

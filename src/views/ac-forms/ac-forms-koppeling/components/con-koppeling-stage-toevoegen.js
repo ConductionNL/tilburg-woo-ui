@@ -572,7 +572,7 @@ const ConKoppelingStageToevoegen = ({
       </div>
 
       <div className='con-form-wizard-rows'>
-        {rows.map((rowId) => {
+        {rows.map((rowId, index) => {
           const appAId = `koppeling-appA-${rowId}`;
           const appBId = `koppeling-appB-${rowId}`;
           const richtingId = `koppeling-richting-${rowId}`;
@@ -1092,6 +1092,7 @@ const ConKoppelingStageToevoegen = ({
                     onClick={() => removeRow(rowId)}
                     disabled={rows.length === 1}
                     icon={<VISUALS.TRASHCAN />}
+                    sr={`Rij ${index+1} verwijderen`}
                   />
                 </div>
               )}

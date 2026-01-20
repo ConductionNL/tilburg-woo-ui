@@ -12,6 +12,7 @@ import {
   ConExternalLink,
 } from '@components';
 import { withStore } from '@stores';
+import { createBeschrijvingTab } from './helpers/beschrijving-tab.helper';
 // import { VISUALS } from '@constants';
 import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
@@ -445,6 +446,7 @@ const AcPublicationProduct = ({
         object={object}
         navigateTo='publication'
         user={user}
+        customTabsBefore={[createBeschrijvingTab(get_single)]}
       />
     </AcContainer>
   );

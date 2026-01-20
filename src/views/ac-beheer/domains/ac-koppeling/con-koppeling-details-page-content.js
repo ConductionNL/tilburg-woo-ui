@@ -163,11 +163,9 @@ const ConKoppelingDetailsPageContent = ({
           alignItems: 'center',
         }}
       >
-        <Heading level={4}>
-          <div className='con-beheer-details--header-container'>
-            <Heading className='con-beheer-details--title'>{title}</Heading>
-          </div>
-        </Heading>
+        <div className='con-beheer-details--header-container'>
+          <Heading className='con-beheer-details--title'>{title}</Heading>
+        </div>
         <div className='ac-register-review__header-controls'>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <ConActionMenu>

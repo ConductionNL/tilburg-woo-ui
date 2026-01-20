@@ -42,7 +42,7 @@ const enrichEnvVariables = (type) => {
   const _type = type ? type : 'stringified';
 
   // Get the ENV variables from the .env file
-  const ENV = dotenv.config().parsed;
+  const ENV = dotenv.config().parsed || {};
 
   Object.keys(ENV).reduce((prev, next) => {
     prev[`process.env.${next}`] = JSON.stringify(ENV[next]);
@@ -52,6 +52,26 @@ const enrichEnvVariables = (type) => {
 
     return prev;
   }, {});
+
+  // Add Piwik Pro variables - always add these so InterpolateHtmlPlugin can replace placeholders
+  // Priority: .env file > process.env > empty string
+  const piwikVars = ['PIWIK_SRC_URL', 'PIWIK_DATA_LAYER', 'PIWIK_ID'];
+  piwikVars.forEach((key) => {
+    // If already in ENV (from .env file), it was added above, so skip
+    if (!(key in ENV)) {
+      // Get value from process.env or default to empty string
+      const value = process.env[key] !== undefined ? String(process.env[key]) : '';
+      _env.raw[key] = value;
+      if (!_env['stringified']['process.env']) {
+        _env['stringified']['process.env'] = {};
+      }
+      _env['stringified']['process.env'][key] = JSON.stringify(value);
+    }
+    // Ensure key exists in raw even if it was in ENV (to guarantee it's there)
+    if (!(key in _env.raw)) {
+      _env.raw[key] = ENV[key] || '';
+    }
+  });
 
   return _env[_type];
 };

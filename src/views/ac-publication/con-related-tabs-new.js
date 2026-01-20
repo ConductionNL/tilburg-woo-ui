@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import { observer } from 'mobx-react-lite';
+import { useEffect } from 'react';
 import { AcLoader } from '@components';
 import { AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
 import {
@@ -46,7 +47,7 @@ import { VISUALS } from '@constants';
 const SCHEMA_ICONS = {
   product: VISUALS.CUBE,
   module: VISUALS.CUBE,
-  organisatie: VISUALS.OFFICE_BUILDING_OUTLINE,
+  organisatie: VISUALS.BUILDING,
   gebruik: VISUALS.CURSOR_CLICK,
   contactpersoon: VISUALS.USER,
   dienst: VISUALS.COG,
@@ -245,19 +246,8 @@ const RelatedTabs = observer(
     customTabsAfter = [],
     user,
   }) => {
-    console.info('🆕 NEW RelatedTabs rendering - uses:', uses.length, 'used:', used.length, 'gebruik:', gebruik.length);
-    console.info('📚 Schemas available:', Object.keys(schemas).length, schemas);
-    
     // Merge all three data sources
     const allItems = [...uses, ...used, ...gebruik];
-    
-    console.info('📦 Total items to process:', allItems.length);
-    allItems.forEach((item, idx) => {
-      const schemaSlug = getSchemaSlug(item, schemas);
-      const itemId = item?.id || item['@self']?.id;
-      const itemName = item?.naam || item?.['@self']?.name || itemId;
-      console.info(`  [${idx}] ${schemaSlug}: ${itemName} (${itemId})`);
-    });
     
     // Remove duplicates based on item ID and filter out excluded items
     const mergedItems = _.uniqBy(allItems, 'id').filter((item) => {
@@ -310,7 +300,7 @@ const RelatedTabs = observer(
         .filter((t) => isVisible(t?.visible))
         .map((t) => ({ kind: 'custom', tab: t }));
 
-    const beforeCustom = normalizeCustomTabs(customTabsBefore);
+    let beforeCustom = normalizeCustomTabs(customTabsBefore);
     const afterCustom = normalizeCustomTabs(customTabsAfter);
 
     const allTabs = [...beforeCustom, ...schemaTabs, ...afterCustom];
@@ -324,16 +314,7 @@ const RelatedTabs = observer(
     // Check if we have any data
     const hasAnyData = mergedItems.length > 0;
 
-    // Show the tabs if:
-    // 1. Any fetch is still loading (show loader)
-    // 2. We have data
-    // 3. There are visible custom tabs
-    const shouldShow = isLoading || hasAnyData || anyVisibleCustomTabs;
-
-    if (!shouldShow) {
-      return null;
-    }
-
+    // Only show loader if we're loading AND have no tabs at all
     if (isLoading && allTabs.length === 0) {
       return (
         <div>
@@ -342,14 +323,23 @@ const RelatedTabs = observer(
       );
     }
 
+    // Don't render if we have no tabs and we're done loading
+    if (!isLoading && allTabs.length === 0) {
+      return null;
+    }
+
+    // Render tabs even while loading if we have at least one tab
     if (allTabs.length === 0) {
       return null;
     }
 
+    // Ensure tabIndex is within bounds
+    const safeTabIndex = Math.min(Math.max(0, tabIndex), allTabs.length - 1);
+
     return (
       <AcTabs
         style={{ marginBlockStart: 'var(--tilburg-space-block-mouse)' }}
-        selectedIndex={tabIndex}
+        defaultIndex={0}
         onSelect={(index) => setTabIndex(index)}
       >
         <AcTabList>
@@ -362,7 +352,7 @@ const RelatedTabs = observer(
                   ? tabNameOverride.newTabName
                   : getTabHeaderName(entry.schemaSlug);
               return (
-                <AcTab key={entry.id} selected={tabIndex === idx}>
+                <AcTab key={entry.id}>
                   <span
                     style={{
                       display: 'flex',
@@ -383,7 +373,7 @@ const RelatedTabs = observer(
             const count = resolveCount(tab);
 
             return (
-              <AcTab key={tab.id || `custom-${idx}`} selected={tabIndex === idx}>
+              <AcTab key={tab.id || `custom-${idx}`}>
                 {headerNode ? (
                   headerNode
                 ) : (
