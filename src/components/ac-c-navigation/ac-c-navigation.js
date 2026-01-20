@@ -45,7 +45,7 @@ const AcCNavigation = ({ items = [], mobileLogo, layoutClassName }) => {
               className='ac-c-navigation__link-container'
             >
               <Link
-                to={!items.length && link}
+                to={!items?.length && link}
                 className='ac-c-navigation__link-container'
               >
                 <div
