@@ -52,6 +52,7 @@ const SCHEMA_ICONS = {
   contactpersoon: VISUALS.USER,
   dienst: VISUALS.COG,
   moduleversie: VISUALS.DOCUMENT_TEXT,
+  moduleVersie: VISUALS.DOCUMENT_TEXT,
   koppeling: VISUALS.LINK,
 };
 
@@ -136,6 +137,7 @@ const renderCard = (item, object, navigateTo, user, schemas) => {
         />
       );
     case 'moduleversie':
+    case 'moduleVersie':
       return (
         <ConCardModuleVersie
           key={item.id}

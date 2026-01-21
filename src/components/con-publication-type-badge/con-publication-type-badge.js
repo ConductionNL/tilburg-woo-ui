@@ -12,6 +12,7 @@ const SCHEMA_ICONS = {
   contactpersoon: VISUALS.USER,
   dienst: VISUALS.COG,
   moduleversie: VISUALS.DOCUMENT_TEXT,
+  moduleVersie: VISUALS.DOCUMENT_TEXT,
   koppeling: VISUALS.LINK,
 };
 
@@ -30,7 +31,8 @@ const SCHEMA_NAMES = {
   kwetsbaarheid: 'Kwetsbaarheid',
   koppeling: 'Koppeling',
   contactpersoon: 'Contactpersoon',
-  moduleversie: 'Applicatie versie',
+  moduleversie: 'Applicatie Versie',
+  moduleVersie: 'Applicatie Versie',
 };
 
 /**
