@@ -3319,7 +3319,7 @@ export class ObjectStore {
     if (missingIds.length > 0) {
       try {
         console.info(
-          `🌐 Fetching names for ${stillMissingIds.length} IDs from backend`
+          `🌐 Fetching names for ${missingIds.length} IDs from backend`
         );
         const response = await nextcloudApi.post('/openregister/api/names', {
           ids: missingIds,
@@ -3352,7 +3352,7 @@ export class ObjectStore {
             }), caching UUIDs to prevent future API calls`
           );
           const failedLookups = {};
-          stillMissingIds.forEach((id) => {
+          missingIds.forEach((id) => {
             failedLookups[id] = id;
           });
           this.setNamesInCache(failedLookups);
@@ -3362,7 +3362,7 @@ export class ObjectStore {
 
     // Fill in missing names with IDs as fallback and cache them
     const uncachedFallbacks = {};
-    stillMissingIds.forEach((id) => {
+    missingIds.forEach((id) => {
       if (!results[id]) {
         results[id] = id;
         uncachedFallbacks[id] = id;
