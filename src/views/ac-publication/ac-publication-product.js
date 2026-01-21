@@ -10,6 +10,7 @@ import {
   ConDetailsActionsMenu,
   ConUuidResolver,
   ConExternalLink,
+  ConPublicationTypeBadge,
 } from '@components';
 import { withStore } from '@stores';
 import { createBeschrijvingTab } from './helpers/beschrijving-tab.helper';
@@ -236,18 +237,13 @@ const AcPublicationProduct = ({
             </div>
           </Heading>
           <AcFlex
-            justifyContent='between'
+            justifyContent='end'
             alignItems='center'
             spacing='sm'
             className='con-product-publication--header-actions'
           >
             <Heading className='con-product-publication--header-type'>
-              {schemaSlug &&
-                (() => {
-                  const Icon = getTabHeaderIcon(schemaSlug);
-                  return <Icon />;
-                })()}
-              {schemaSlug && getTabHeaderName(schemaSlug, true)}
+              <ConPublicationTypeBadge schemaSlug={schemaSlug} />
             </Heading>
             {schemaSlug && (
               <ConDetailsActionsMenu

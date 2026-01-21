@@ -5,7 +5,7 @@ import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-behe
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AcContainer, AcFlex } from '@atoms';
-import { AcLoader, ConDetailsActionsMenu, ConUuidResolver } from '@components';
+import { AcLoader, ConDetailsActionsMenu, ConUuidResolver, ConPublicationTypeBadge } from '@components';
 import { withStore } from '@stores';
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
@@ -193,12 +193,7 @@ const AcPublicationModuleVersie = ({ store: { publications, user, object } }) =>
             className='con-product-publication--header-actions'
           >
             <Heading className='con-product-publication--header-type'>
-              {schemaSlug &&
-                (() => {
-                  const Icon = getTabHeaderIcon(schemaSlug);
-                  return <Icon />;
-                })()}
-              {schemaSlug && getTabHeaderName(schemaSlug, true)}
+              <ConPublicationTypeBadge schemaSlug={schemaSlug} />
             </Heading>
             <ConDetailsActionsMenu
               user={user}

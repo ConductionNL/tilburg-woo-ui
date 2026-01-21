@@ -5,7 +5,7 @@ import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-behe
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AcContainer, AcFlex } from '@atoms';
-import { AcLoader, ConDetailsActionsMenu } from '@components';
+import { AcLoader, ConDetailsActionsMenu, ConPublicationTypeBadge } from '@components';
 import { withStore } from '@stores';
 import { VISUALS } from '@constants';
 import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
@@ -224,12 +224,7 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
               className='con-product-publication--header-actions'
             >
               <Heading className='con-product-publication--header-type'>
-                {schemaSlug &&
-                  (() => {
-                    const Icon = getTabHeaderIcon(schemaSlug);
-                    return <Icon />;
-                  })()}
-                {schemaSlug && getTabHeaderName(schemaSlug, true)}
+                <ConPublicationTypeBadge schemaSlug={schemaSlug} />
               </Heading>
 
               <ConDetailsActionsMenu
