@@ -5,12 +5,11 @@ import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-behe
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AcContainer, AcFlex } from '@atoms';
-import { AcLoader, ConDetailsActionsMenu, ConExternalLink } from '@components';
+import { AcLoader, ConDetailsActionsMenu, ConExternalLink, ConPublicationTypeBadge } from '@components';
 import { withStore } from '@stores';
 import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
 import { schemaCache } from '@services/schemaCache.service';
-import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 import { normalizeSchemaName } from '@src/utilities/con-normalize-schema-name';
 import { createBeschrijvingTab } from './helpers/beschrijving-tab.helper';
@@ -187,18 +186,13 @@ const AcPublication = ({ store: { publications, object, user } }) => {
             </Heading>
 
             <AcFlex
-              justifyContent='between'
+              justifyContent='end'
               alignItems='center'
               spacing='sm'
               className='con-product-publication--header-actions'
             >
               <Heading className='con-product-publication--header-type'>
-                {schemaSlug &&
-                  (() => {
-                    const Icon = getTabHeaderIcon(schemaSlug);
-                    return <Icon />;
-                  })()}
-                {schemaSlug && getTabHeaderName(schemaSlug, true)}
+                <ConPublicationTypeBadge schemaSlug={schemaSlug} />
               </Heading>
               {schemaSlug && (
                 <ConDetailsActionsMenu

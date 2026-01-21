@@ -3,7 +3,7 @@ import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AcColumn, AcContainer, AcFlex } from '@atoms';
-import { AcLoader, ConDetailsActionsMenu, ConExternalLink } from '@components';
+import { AcLoader, ConDetailsActionsMenu, ConExternalLink, ConPublicationTypeBadge } from '@components';
 import { VISUALS } from '@constants';
 import { AcButton } from '@molecules';
 import {
@@ -246,12 +246,7 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
           </div>
 
           <Heading className='con-module-publication--header-type'>
-            {schemaSlug &&
-              (() => {
-                const Icon = getTabHeaderIcon(schemaSlug);
-                return <Icon />;
-              })()}
-            {schemaSlug && getTabHeaderName(schemaSlug, true)}
+            <ConPublicationTypeBadge schemaSlug={schemaSlug} />
           </Heading>
           {schemaSlug &&
             (() => {

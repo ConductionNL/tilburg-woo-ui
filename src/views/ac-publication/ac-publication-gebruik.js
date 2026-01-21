@@ -3,13 +3,14 @@ import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AcColumn, AcContainer, AcFlex } from '@atoms';
-import { AcLoader, ConDetailsActionsMenu } from '@components';
+import { AcLoader, ConDetailsActionsMenu, ConPublicationTypeBadge } from '@components';
 // import { VISUALS } from '@constants';
 import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
 import { schemaCache } from '@services/schemaCache.service';
 import RelatedTabs from '@views/ac-publication/con-related-tabs-new';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
+import { createBeschrijvingTab } from './helpers/beschrijving-tab.helper';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
 // import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
@@ -230,11 +231,7 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
       <AcColumn gap='sm' horizontalOverflowWrapper>
         <AcFlex spacing='sm' justifyContent='end' alignItems='center'>
           <Heading className='con-module-publication--header-type'>
-            {(() => {
-              const Icon = schemaSlug ? getTabHeaderIcon(schemaSlug) : null;
-              return Icon ? <Icon /> : null;
-            })()}
-            {schemaSlug ? getTabHeaderName(schemaSlug, true) : null}
+            <ConPublicationTypeBadge schemaSlug={schemaSlug} />
           </Heading>
           <ConDetailsActionsMenu
             user={user}
@@ -340,6 +337,7 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
             object={object}
             navigateTo='publication'
             user={user}
+            customTabsBefore={[createBeschrijvingTab(get_single)]}
           />
         </div>
 

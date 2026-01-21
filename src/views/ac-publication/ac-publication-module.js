@@ -10,6 +10,7 @@ import {
   ConDetailsActionsMenu,
   ConStandardsTable,
   ConUuidResolver,
+  ConPublicationTypeBadge,
 } from '@components';
 import { withStore } from '@stores';
 import { VISUALS } from '@constants';
@@ -525,18 +526,13 @@ const AcPublicationProduct = ({
             </div>
           </Heading>
           <AcFlex
-            justifyContent='between'
+            justifyContent='end'
             alignItems='center'
             spacing='sm'
             className='con-module-publication--header-actions'
           >
             <Heading className='con-module-publication--header-type'>
-              {schemaSlug &&
-                (() => {
-                  const Icon = getTabHeaderIcon(schemaSlug);
-                  return <Icon />;
-                })()}
-              {schemaSlug && getTabHeaderName(schemaSlug, true)}
+              <ConPublicationTypeBadge schemaSlug={schemaSlug} />
             </Heading>
             {schemaSlug &&
               (() => {
