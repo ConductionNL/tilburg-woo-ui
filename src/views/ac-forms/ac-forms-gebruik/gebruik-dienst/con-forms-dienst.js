@@ -207,7 +207,7 @@ const ConFormsDienst = ({ store }) => {
           'gebruik',
           String(gebruikId),
           {
-            '_extend[]': ['@self.schema'],
+            '_extend[]': ['_schema'],
             _published: 'false',
           }
         );
@@ -252,9 +252,7 @@ const ConFormsDienst = ({ store }) => {
         if (moduleId) {
           try {
             await store.object.fetchObject('voorzieningen', 'module', moduleId, {
-              '_extend[]': ['@self.schema'],
-              _published: 'false',
-              _source: 'index',
+              '_extend[]': ['_schema'],
             });
             const moduleData = store.object.getObject(
               'voorzieningen_module',
@@ -287,7 +285,7 @@ const ConFormsDienst = ({ store }) => {
             const dienstFetches = dienstenIds.map((id) =>
               store.object
                 .fetchObject('voorzieningen', 'dienst', id, {
-                  '_extend[]': ['@self.schema'],
+                  '_extend[]': ['_schema'],
                   _published: 'false',
                 })
                 .then(() => store.object.getObject('voorzieningen_dienst', id))
@@ -410,8 +408,6 @@ const ConFormsDienst = ({ store }) => {
         {
           _limit: '50',
           _page: '1',
-          _published: 'false',
-          _source: 'index',
         },
         null,
         'dienst_form'
@@ -486,8 +482,6 @@ const ConFormsDienst = ({ store }) => {
           {
             _limit: '50',
             _page: '1',
-            _published: 'false',
-            _source: 'index',
             organisation: String(organisationId),
           },
           null,
@@ -544,7 +538,7 @@ const ConFormsDienst = ({ store }) => {
               'module',
               String(applicatieFromUrl),
               {
-                '_extend[]': ['@self.schema'],
+                '_extend[]': ['_schema'],
                 _published: 'false',
                 _source: 'index',
               }
@@ -591,8 +585,6 @@ const ConFormsDienst = ({ store }) => {
           const queryParams = {
             _limit: '50',
             _page: '1',
-            _published: 'false',
-            _source: 'index',
           };
 
           // Add organisation filter if provided (for gebruik beheerder flow)
@@ -705,8 +697,6 @@ const ConFormsDienst = ({ store }) => {
         const params = new URLSearchParams({
           _limit: '50',
           _page: '1',
-          _published: 'false',
-          _source: 'index',
         });
         params.append('modules', String(applicatieId));
 
@@ -774,7 +764,7 @@ const ConFormsDienst = ({ store }) => {
                 'module',
                 String(moduleId),
                 {
-                  '_extend[]': ['@self.schema'],
+                  '_extend[]': ['_schema'],
                   _published: 'false',
                   _source: 'index',
                 }
@@ -820,7 +810,7 @@ const ConFormsDienst = ({ store }) => {
           _limit: '50',
           _page: '1',
           _source: 'index',
-          '_extend[]': '@self.schema',
+          '_extend[]': '_schema',
           _published: 'false',
         };
 
@@ -902,7 +892,7 @@ const ConFormsDienst = ({ store }) => {
           'organisatie',
           organisationId,
           {
-            '_extend[]': ['@self.schema'],
+            '_extend[]': ['_schema'],
           }
         );
 
@@ -942,7 +932,7 @@ const ConFormsDienst = ({ store }) => {
           'organisatie',
           organisationId,
           {
-            '_extend[]': ['@self.schema', 'deelnemers'],
+            '_extend[]': ['_schema', 'deelnemers'],
           }
         );
 
@@ -1032,7 +1022,7 @@ const ConFormsDienst = ({ store }) => {
           'dienst',
           String(dienstFromUrl),
           {
-            '_extend[]': ['@self.schema'],
+            '_extend[]': ['_schema'],
             _published: 'false',
           }
         );
@@ -1066,7 +1056,7 @@ const ConFormsDienst = ({ store }) => {
                 'module',
                 applicatieId,
                 {
-                  '_extend[]': ['@self.schema'],
+                  '_extend[]': ['_schema'],
                   _published: 'false',
                   _source: 'index',
                 }

@@ -282,14 +282,21 @@ export const useRefOptions = (
         // Use the object store's fetchCollection method to get the objects
         // Use 'options' suffix to separate from main list view collections
         const optionsTypeSuffix = 'options';
+        
+        // Build fetch params - modules/applications should not be filtered by organisation
         const fetchParams = {
           _search: searchQuery || undefined,
           _limit: 50,
           _page: 1, // Always start from page 1 for form field options
-          _source: 'database', // Only show data from own organisation
           ...schemaQueryParams, // Add schema-defined query parameters
           ...(optimizations?.additionalQueryParams || {}), // Add additional query params from optimizations
         };
+        
+        // Only add _source filter for non-module schemas
+        // Modules/applications should be visible across all organisations
+        if (collectionSlug !== 'module' && collectionSlug !== 'moduleversie') {
+          fetchParams._source = 'database'; // Only show data from own organisation
+        }
 
         await object.fetchCollection(
           targetRegister,
