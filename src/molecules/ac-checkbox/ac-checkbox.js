@@ -62,10 +62,10 @@ const AcCheckbox = ({
             <div>
               {srOnlyLabel ? (
                 <span className='sr-only'>
-                  <ConUuidResolver>{label}</ConUuidResolver>
+                  <ConUuidResolver loadingPlaceholder={label}>{label}</ConUuidResolver>
                 </span>
               ) : (
-                <ConUuidResolver>{label}</ConUuidResolver>
+                <ConUuidResolver loadingPlaceholder={label}>{label}</ConUuidResolver>
               )}
               {required && (
                 <>

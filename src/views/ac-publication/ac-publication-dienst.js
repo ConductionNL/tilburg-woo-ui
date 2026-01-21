@@ -1,9 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AcColumn, AcContainer, AcFlex } from '@atoms';
-import { AcLoader, ConDetailsActionsMenu, ConExternalLink } from '@components';
+import { AcLoader, ConDetailsActionsMenu, ConExternalLink, ConPublicationTypeBadge } from '@components';
 import { VISUALS } from '@constants';
 import { AcButton } from '@molecules';
 import {
@@ -14,10 +14,11 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
 import { schemaCache } from '@services/schemaCache.service';
-import RelatedTabs from '@views/ac-publication/con-related-tabs';
+import RelatedTabs from '@views/ac-publication/con-related-tabs-new';
 import ConLogoPreview from '../ac-register/con-logo-preview';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
+import { createBeschrijvingTab } from './helpers/beschrijving-tab.helper';
 
 // Markdown rendering
 import MDEditor from '@uiw/react-md-editor';
@@ -63,7 +64,9 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
   const [usesLoading, setUsesLoading] = useState(false);
   const [usedLoading, setUsedLoading] = useState(false);
   const [relatedTabIndex, setRelatedTabIndex] = useState(0);
-  const fetchedIds = useRef(new Set());
+  
+  // Aggregated schemas from all endpoints (indexed by schema ID)
+  const [aggregatedSchemas, setAggregatedSchemas] = useState({});
 
   // Related create actions (wizard-aware) like module/product pages
   const openDynamicCreate = useCallback(
@@ -125,12 +128,20 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
     setUsesLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend[]=_schema`,
         { method: 'GET', headers: { 'Content-Type': 'application/json' } }
       );
       if (!response.ok) return;
       const json = await response.json();
       setUses(json.results || []);
+      
+      // Extract and aggregate schemas from @self.schemas
+      if (json['@self']?.schemas) {
+        setAggregatedSchemas(prev => ({
+          ...prev,
+          ...json['@self'].schemas
+        }));
+      }
     } finally {
       setUsesLoading(false);
     }
@@ -141,20 +152,27 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
     setUsedLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=_schema`,
         { method: 'GET', headers: { 'Content-Type': 'application/json' } }
       );
       if (!response.ok) return;
       const json = await response.json();
       setUsed(json.results || []);
+      
+      // Extract and aggregate schemas from @self.schemas
+      if (json['@self']?.schemas) {
+        setAggregatedSchemas(prev => ({
+          ...prev,
+          ...json['@self'].schemas
+        }));
+      }
     } finally {
       setUsedLoading(false);
     }
   }, [id]);
 
   useEffect(() => {
-    if (!id || fetchedIds.current.has(id)) return;
-    fetchedIds.current.add(id);
+    if (!id) return;
     fetchUses();
     fetchUsed();
   }, [id, fetchUses, fetchUsed]);
@@ -228,12 +246,7 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
           </div>
 
           <Heading className='con-module-publication--header-type'>
-            {schemaSlug &&
-              (() => {
-                const Icon = getTabHeaderIcon(schemaSlug);
-                return <Icon />;
-              })()}
-            {schemaSlug && getTabHeaderName(schemaSlug, true)}
+            <ConPublicationTypeBadge schemaSlug={schemaSlug} />
           </Heading>
           {schemaSlug &&
             (() => {
@@ -467,19 +480,20 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
 
         <div style={{ marginTop: '2rem' }}>
           <RelatedTabs
-            id={id}
             uses={uses}
             used={used}
+            gebruik={[]}
+            schemas={aggregatedSchemas}
             usesLoading={usesLoading}
             usedLoading={usedLoading}
-            gebruikId={id}
-            gebruikSchemaId={schemaId}
-            gebruikSchemaSlug={get_single?.['@self']?.schema?.slug}
+            gebruikLoading={false}
+            excludeObjectIds={[]}
             tabIndex={relatedTabIndex}
             setTabIndex={setRelatedTabIndex}
             object={object}
             navigateTo='publication'
             user={user}
+            customTabsBefore={[createBeschrijvingTab(get_single)]}
           />
         </div>
 

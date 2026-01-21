@@ -623,10 +623,11 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         _published: 'false',
       });
       
-      // Add multiple extend parameters to include standards
+      // Add multiple extend parameters to include standards and their versions in one go
       queryParams.append('_extend[]', '@self.schema');
       queryParams.append('_extend[]', 'aanbevolenStandaarden');
       queryParams.append('_extend[]', 'verplichteStandaarden');
+      queryParams.append('_extend[]', 'gekoppeldeStandaardVersies'); // ✨ NEW: Get all standard versions in one call
 
       // Fetch referentiecomponenten from openconnector endpoint
       const response = await fetch(
@@ -683,8 +684,9 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     setStandaardenOptionsLoading(true);
 
     try {
-      // Step 1: Aggregate all standaard IDs from selected referentiecomponenten
-      const standaardIds = new Set();
+      // ✨ REFACTORED: Use gekoppeldeStandaardVersies from the initial fetch
+      // instead of making N+1 API calls
+      const standaardenMap = new Map(); // Use Map to deduplicate and store full data
       
       selectedRefComps.forEach((refCompValue) => {
         // Find the full referentiecomponent data
@@ -693,66 +695,52 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
 
         const refCompData = refCompOption.data;
         
-        // Collect aanbevolen standaarden IDs
-        if (Array.isArray(refCompData.aanbevolenStandaarden)) {
-          refCompData.aanbevolenStandaarden.forEach(standaard => {
-            const id = standaard?.['@self']?.id || standaard?.id || standaard;
-            if (id) standaardIds.add(id);
+        // Helper to process standaarden and extract their versions from gekoppeldeStandaardVersies
+        const processStandaarden = (standaardenList) => {
+          if (!Array.isArray(standaardenList)) return;
+          
+          standaardenList.forEach(standaard => {
+            const standaardId = standaard?.['@self']?.id || standaard?.id || standaard;
+            if (!standaardId) return;
+            
+            // If we haven't seen this standaard yet, initialize it
+            if (!standaardenMap.has(standaardId)) {
+              // Get gekoppeldeStandaardVersies for this referentiecomponent
+              const gekoppeldeVersies = refCompData.gekoppeldeStandaardVersies || [];
+              
+              // Filter versions that belong to this standard
+              const standaardVersies = gekoppeldeVersies.filter(versie => {
+                // Check if this version belongs to this standard
+                const versieStandaardId = versie?.standaard?.['@self']?.id || 
+                                         versie?.standaard?.id || 
+                                         versie?.standaard;
+                return String(versieStandaardId) === String(standaardId);
+              });
+              
+              standaardenMap.set(standaardId, {
+                ...standaard,
+                standaardVersies: standaardVersies
+              });
+            }
           });
-        }
+        };
         
-        // Collect verplichte standaarden IDs
-        if (Array.isArray(refCompData.verplichteStandaarden)) {
-          refCompData.verplichteStandaarden.forEach(standaard => {
-            const id = standaard?.['@self']?.id || standaard?.id || standaard;
-            if (id) standaardIds.add(id);
-          });
-        }
+        // Collect from both aanbevolen and verplichte standaarden
+        processStandaarden(refCompData.aanbevolenStandaarden);
+        processStandaarden(refCompData.verplichteStandaarden);
       });
 
-      console.info(`📊 Found ${standaardIds.size} unique standaarden from selected components`);
+      console.info(`📊 Found ${standaardenMap.size} unique standaarden from selected components`);
 
-      if (standaardIds.size === 0) {
+      if (standaardenMap.size === 0) {
         console.warn('⚠️ No standaarden found in selected referentiecomponenten');
         setStandaardenOptions([]);
         setStandaardenOptionsLoading(false);
         return;
       }
 
-      // Step 2: Fetch each standaard with _extend[]=standaardVersies
-      const standaardenPromises = Array.from(standaardIds).map(async (standaardId) => {
-        try {
-          const queryParams = new URLSearchParams({
-            '_extend[]': 'standaardVersies',
-          });
-          
-          const response = await fetch(
-            `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element/${standaardId}?${queryParams}`,
-            {
-              method: 'GET',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-            }
-          );
-          
-          if (!response.ok) {
-            console.error(`Failed to fetch standaard ${standaardId}:`, response.status);
-            return null;
-          }
-          
-          return await response.json();
-        } catch (e) {
-          console.error(`Error fetching standaard ${standaardId}:`, e);
-          return null;
-        }
-      });
-
-      const standaarden = (await Promise.all(standaardenPromises)).filter(Boolean);
-
-      console.info(`✅ Fetched ${standaarden.length} standaarden with their versions`);
-
-      // Step 3: Map to options
+      // Map to options
+      const standaarden = Array.from(standaardenMap.values());
       const options = standaarden.map((item, index) => {
         const label =
           item?.['@self']?.name ||
@@ -766,12 +754,12 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         return { 
           value: String(value), 
           label: String(label), 
-          data: item // Contains standaardVersies array with full objects
+          data: item // Contains standaardVersies array populated from gekoppeldeStandaardVersies
         };
       }).filter((o) => o.label && o.value);
 
       setStandaardenOptions(options);
-      console.info(`✅ Loaded ${options.length} standaarden options`);
+      console.info(`✅ Loaded ${options.length} standaarden with versions from gekoppeldeStandaardVersies (eliminated N+1 queries)`);
     } catch (e) {
       console.error('Failed to load standaarden:', e);
       setStandaardenOptions([]);
@@ -1148,7 +1136,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         const queryParams = {
           _limit: '50',
           _page: '1',
-          _published: 'false',
+          _source: 'database', // Only show data from own organisation
         };
 
         // Add search parameter if provided
@@ -1233,9 +1221,8 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         const queryParams = {
           _limit: '50',
           _page: '1',
-          _source: 'index',
+          _source: 'database', // Only show data from own organisation
           '_extend[]': '@self.schema',
-          _published: 'false',
         };
 
         // Add search parameter if provided

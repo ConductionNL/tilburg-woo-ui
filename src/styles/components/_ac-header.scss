@@ -138,25 +138,34 @@
   &__user-info {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 8px;
     margin-inline-end: var(--tilburg-space-column-mouse, 0.5rem);
     
     @include respond-max($screen-md) {
       display: none; // Hide on mobile to save space
     }
     
+    .ac-header__user-icon {
+      color: rgb(2, 119, 189);
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+    
     .ac-header__username {
-      font-weight: 500;
-      color: var(--tilburg-header-text-color, var(--utrecht-document-color, #000));
-      font-family: var(--tilburg-typography-font-family-primary), sans-serif;
-      font-size: 0.9rem;
+      font-family: Montserrat, sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: rgb(2, 119, 189);
+      line-height: 1;
     }
     
     .ac-header__organization {
-      font-family: var(--tilburg-typography-font-family-primary), sans-serif;
-      font-size: 0.85rem;
-      color: var(--tilburg-color-gray-600, #666);
-      font-style: italic;
+      font-family: Montserrat, sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: rgb(2, 119, 189);
+      line-height: 1;
     }
     
     .ac-header__logout-btn,

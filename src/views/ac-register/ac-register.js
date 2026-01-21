@@ -154,7 +154,7 @@ const AcRegister = () => {
         telefoonnummer: organization.phone,
         rol: organization.role,
         beschrijvingKort: organization.summary,
-        logo: logoDataUrl,
+        logo: logoDataUrl || '',
         contactpersonen: [
           {
             voornaam: organization.contactPersons[0].firstName,

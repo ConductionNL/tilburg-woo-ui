@@ -1251,7 +1251,7 @@ const AcFormsGebruik = ({ store }) => {
         const params = {
           _limit: '50',
           _page: '1',
-          _published: 'false',
+          _source: 'database', // Only show data from own organisation
         };
 
         // Add search parameter if query is provided
