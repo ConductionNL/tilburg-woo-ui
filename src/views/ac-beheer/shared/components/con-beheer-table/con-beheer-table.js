@@ -125,14 +125,17 @@ const BeheerTable = forwardRef(({ store, ...props }, ref) => {
     return finalCfg;
   }, [type, navigate, metadata]);
 
+  // Fetch object data from backend
   const fetchObjectData = async (searchParams = {}) => {
     if (!objectStore) return;
 
     const params = {
       _limit: pagination?.limit || 9999,
       _page: pagination?.page || 1,
+      _source: 'database', // Only show data from own organisation  
       ...searchParams,
     };
+
 
     try {
       await objectStore.fetchCollection(

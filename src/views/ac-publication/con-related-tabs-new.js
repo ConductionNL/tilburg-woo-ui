@@ -337,9 +337,13 @@ const RelatedTabs = observer(
 
     // Ensure tabIndex is within bounds
     const safeTabIndex = Math.min(Math.max(0, tabIndex), allTabs.length - 1);
+    
+    // Create a stable key based on tab structure to force remount on structure changes
+    const tabsKey = allTabs.map(t => t.id || t.tab?.id).join('-');
 
     return (
       <AcTabs
+        key={tabsKey}
         style={{ marginBlockStart: 'var(--tilburg-space-block-mouse)' }}
         defaultIndex={0}
         onSelect={(index) => setTabIndex(index)}
