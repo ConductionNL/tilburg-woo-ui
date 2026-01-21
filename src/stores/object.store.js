@@ -860,7 +860,6 @@ export class ObjectStore {
     const queryParams = {
       _limit: params._limit || params.limit || 20,
       _page: params._page || params.page || 1,
-      _source: 'database', // Always use database as source
       ...params,
     };
 
@@ -3150,6 +3149,11 @@ export class ObjectStore {
 
   /**
    * Waits for names cache warmup to complete if it's in progress
+   * 
+   * **Note:** This is no longer used by getNamesForSingleId/getNamesForMultipleIds
+   * to avoid blocking UI rendering. Kept for potential future use cases where
+   * explicit warmup waiting might be desired.
+   * 
    * @returns {Promise<void>}
    */
   async waitForNamesWarmup() {
@@ -3181,6 +3185,13 @@ export class ObjectStore {
 
   /**
    * Gets a single name from cache, falls back to backend if not found
+   * 
+   * **Optimized behavior (no warmup blocking):**
+   * - Checks cache first for instant response
+   * - If not found, immediately fetches from backend (doesn't wait for warmup)
+   * - Background warmup will populate cache for future requests
+   * - This ensures components can load filters/UI immediately without delay
+   * 
    * @param {string} id - The UUID to resolve to a name
    * @returns {Promise<string>} The name for the given ID, or the ID if no name found
    */
@@ -3198,21 +3209,6 @@ export class ObjectStore {
       }
       // Cache expired, remove it
       delete this.namesCache[id];
-    }
-
-    // Wait for warmup to complete before making API calls
-    await this.waitForNamesWarmup();
-
-    // Check cache again after warmup (it might have been populated)
-    const cachedAfterWarmup = this.namesCache[id];
-    if (cachedAfterWarmup) {
-      const age = Date.now() - cachedAfterWarmup.timestamp;
-      if (age < this.namesCacheConfig.maxAge) {
-        console.info(
-          `📋 Name cache hit after warmup for ${id}: ${cachedAfterWarmup.name}`
-        );
-        return cachedAfterWarmup.name;
-      }
     }
 
     // Check if there's already a pending request for this ID to prevent duplicate calls
@@ -3275,6 +3271,13 @@ export class ObjectStore {
 
   /**
    * Gets multiple names from cache, falls back to backend for missing ones
+   * 
+   * **Optimized behavior (no warmup blocking):**
+   * - Checks cache first for all IDs
+   * - Immediately fetches missing IDs from backend (doesn't wait for warmup)
+   * - Background warmup will populate cache for future requests
+   * - Bulk fetches missing IDs in a single API call for efficiency
+   * 
    * @param {string[]} ids - Array of UUIDs to resolve to names
    * @returns {Promise<{[id: string]: string}>} Object with id -> name mappings
    */
@@ -3312,31 +3315,14 @@ export class ObjectStore {
       }`
     );
 
-    // Wait for warmup to complete before making API calls
-    await this.waitForNamesWarmup();
-
-    // Check cache again after warmup (it might have been populated)
-    const stillMissingIds = [];
-    missingIds.forEach((id) => {
-      const cachedAfterWarmup = this.namesCache[id];
-      if (cachedAfterWarmup) {
-        const age = Date.now() - cachedAfterWarmup.timestamp;
-        if (age < this.namesCacheConfig.maxAge) {
-          results[id] = cachedAfterWarmup.name;
-          return;
-        }
-      }
-      stillMissingIds.push(id);
-    });
-
     // Fetch missing names from backend
-    if (stillMissingIds.length > 0) {
+    if (missingIds.length > 0) {
       try {
         console.info(
-          `🌐 Fetching names for ${stillMissingIds.length} IDs from backend`
+          `🌐 Fetching names for ${missingIds.length} IDs from backend`
         );
         const response = await nextcloudApi.post('/openregister/api/names', {
-          ids: stillMissingIds,
+          ids: missingIds,
         });
 
         if (response.ok && response.data?.names) {
@@ -3366,7 +3352,7 @@ export class ObjectStore {
             }), caching UUIDs to prevent future API calls`
           );
           const failedLookups = {};
-          stillMissingIds.forEach((id) => {
+          missingIds.forEach((id) => {
             failedLookups[id] = id;
           });
           this.setNamesInCache(failedLookups);
@@ -3376,7 +3362,7 @@ export class ObjectStore {
 
     // Fill in missing names with IDs as fallback and cache them
     const uncachedFallbacks = {};
-    stillMissingIds.forEach((id) => {
+    missingIds.forEach((id) => {
       if (!results[id]) {
         results[id] = id;
         uncachedFallbacks[id] = id;
@@ -3561,7 +3547,7 @@ export class ObjectStore {
     'organisatie',
     'module',
     'moduleversie',
-    'product',
+    'suite',
     'dienst',
     'gebruik',
     'koppeling',
@@ -4385,10 +4371,10 @@ export class ObjectStore {
             await this.fetchSchema(schemaSlug);
           }
 
-          // Fetch objects with limit 10000 and _published: false
+          // Fetch objects with limit 10000
           await this.fetchCollection(register, schemaSlug, {
             _limit: 10000,
-            _published: 'false',
+            _source: 'database', // Only fetch data from own organisation
           });
         } catch (error) {
           console.error(`Error fetching data for ${schemaSlug}:`, error);
@@ -4494,10 +4480,10 @@ export class ObjectStore {
           await this.fetchSchema(schemaSlug);
         }
 
-        // Fetch objects with limit 10000 and _published: false
+        // Fetch objects with limit 10000
         await this.fetchCollection(register, schemaSlug, {
           _limit: 10000,
-          _published: 'false',
+          _source: 'database', // Only fetch data from own organisation
         });
 
         // Mark as completed now that data has arrived

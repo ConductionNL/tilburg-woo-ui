@@ -51,10 +51,15 @@ const AcSearch = ({ store: { publications, user, object } }) => {
     updateQuery(paramsObj);
   };
 
-  // On GET params change.
+  // On GET params change - optimized order
   useEffect(() => {
     setQuery();
+    
+    // Step 1: Fetch publications first (fastest, shows results immediately)
     fetchPublications();
+    
+    // Step 2: Fetch facets after publications (only once, not on every search change)
+    // This is heavier and not needed for initial display
     fetchFacets();
   }, [location.search]);
 

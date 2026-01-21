@@ -39,14 +39,17 @@ This application uses a **dual-proxy architecture** to handle API requests:
 
 #### Nextcloud Backend Configuration
 ```bash
-# The hostname of your Nextcloud instance
-NEXTCLOUD_HOST=nextcloud.local
+# Backend API URL (Updated to use localhost:8080)
+API_TARGET_URL=http://localhost:8080
 
 # Nginx proxy configuration (auto-configured for development)
-NGINX_OPENCONNECTOR_UPSTREAM=http://host.docker.internal:80
-NGINX_NEXTCLOUD_UPSTREAM=http://host.docker.internal:80
-NGINX_NEXTCLOUD_DOMAIN=nextcloud.local
-NGINX_TARGET_HOST=nextcloud.local
+NGINX_NEXTCLOUD_UPSTREAM=http://host.docker.internal:8080
+NGINX_NEXTCLOUD_DOMAIN=localhost
+NGINX_TARGET_HOST=localhost
+
+# Legacy configuration (deprecated, kept for compatibility)
+NEXTCLOUD_HOST=localhost
+NEXTCLOUD_PORT=8080
 ```
 
 #### API Endpoint Configuration
@@ -58,45 +61,37 @@ GEMMA_ENDPOINT=/api
 OPENCONNECTOR_API_URL=/api/openconnector
 ```
 
-### Local Nextcloud Setup
+### Local Backend Setup
 
-By default, the application is configured to connect to a local Nextcloud instance at `nextcloud.local`. To set this up:
+By default, the application is configured to connect to a local backend instance at `http://localhost:8080`. This is typically a Nextcloud instance or compatible API server.
 
-#### Option 1: Add to hosts file (Recommended)
-```bash
-# On Windows: C:\Windows\System32\drivers\etc\hosts
-# On macOS/Linux: /etc/hosts
-127.0.0.1    nextcloud.local
-```
+#### Quick Setup (Recommended)
 
-#### Option 2: Use Docker Compose with Nextcloud
-```yaml
-# docker-compose.nextcloud.yml
-services:
-  nextcloud:
-    image: nextcloud:latest
-    ports:
-      - "80:80"
-    volumes:
-      - nextcloud_data:/var/www/html
-    networks:
-      - nextcloud-network
+The default configuration expects your backend API to be available at:
+- **URL**: `http://localhost:8080`
+- **Path**: Requests to `/api/apps/*` are proxied to `http://localhost:8080/index.php/apps/*`
 
-volumes:
-  nextcloud_data:
+Make sure your backend server is running on port 8080 before starting the frontend development environment.
 
-networks:
-  nextcloud-network:
-```
+#### Alternative Configuration
 
-#### Option 3: Override API URLs
-If you prefer different URLs, override them in `docker-compose.dev.yml`:
+If your backend runs on a different port or hostname, you can customize the proxy settings:
+
+**For hot-reload development (port 3000):**
+Edit `docker-compose.yml` or `docker-compose.dev.yml`:
 ```yaml
 environment:
-  - API_URL=http://your-api-server:3000/apps
-  - API_URL_COMMONGROUND=http://your-api-server:3000/apps
-  - GEMMA_ENDPOINT=http://your-api-server:3000
+  - API_TARGET_URL=http://host.docker.internal:YOUR_PORT
 ```
+
+**For nginx-based development (port 81):**
+Edit `docker-compose.dev.yml`:
+```yaml
+environment:
+  - NGINX_NEXTCLOUD_UPSTREAM=http://host.docker.internal:YOUR_PORT
+```
+
+> **Note**: `host.docker.internal` is used to access the host machine's localhost from within Docker containers.
 
 ## Development Modes
 
@@ -299,7 +294,7 @@ All changes maintain **backward compatibility** - the application works in produ
 |----------|---------|-------------|
 | `HERO_IMAGE_URL` | `null` | Hero section background image (URL or base64) |
 | `FAVICON_URL` | `null` | Browser favicon (URL or base64, falls back to hostname-based logic if not set) |
-| `FOOTER_LOGO_TITLE` | `VNG Softwarecatalogus` | Footer logo main text |
+| `FOOTER_LOGO_TITLE` | `Softwarecatalogus` | Footer logo main text |
 | `FOOTER_LOGO_SUBTITLE` | `Één plek voor alle software...` | Footer logo subtitle |
 | `SUPPORT_EMAIL_ADDRESS` | `info@conduction.nl` | Support contact email |
 

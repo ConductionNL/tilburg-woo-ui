@@ -62,7 +62,7 @@ const ConFormsDienst = ({ store, userStore }) => {
   // Schemas
   const [schemas, setSchemas] = useState({
     dienst: null,
-    product: null,
+    suite: null,
     module: null,
     koppeling: null,
     organisatie: null,

@@ -71,18 +71,28 @@ export const useFacetNameResolution = (facets, objectStore) => {
 
         collectUUIDs(facets);
 
+        // OPTIMIZATION: Show facets IMMEDIATELY with UUIDs
+        setResolvedFacets(resolvedFacetsObj);
+        // Keep isResolving true initially so component knows we're still working
+        // but facets are already visible
+
         if (uuidsToResolve.size === 0) {
-          // Schema transformations already applied above
-          setResolvedFacets(resolvedFacetsObj);
+          console.info('No UUIDs to resolve in facets');
           setIsResolving(false);
           return;
         }
 
-        console.info(`🔍 Resolving ${uuidsToResolve.size} UUIDs in facet labels`);
+        console.info(`🔄 Resolving ${uuidsToResolve.size} UUIDs in background for facets...`);
 
-        // Resolve all UUIDs in bulk for better performance
+        // Set to false immediately after showing initial facets - names will update progressively
+        setIsResolving(false);
+
+        // Resolve all UUIDs in bulk for better performance (non-blocking now!)
         const uuidArray = Array.from(uuidsToResolve);
         const nameMap = await objectStore.getNamesForMultipleIds(uuidArray);
+
+        // Clone again for the update with resolved names
+        const updatedFacetsObj = JSON.parse(JSON.stringify(resolvedFacetsObj));
 
         const resolveFacetLabels = (facetsObj) => {
           Object.entries(facetsObj).forEach(([key, value]) => {
@@ -132,15 +142,13 @@ export const useFacetNameResolution = (facets, objectStore) => {
           });
         };
 
-        resolveFacetLabels(resolvedFacetsObj);
+        resolveFacetLabels(updatedFacetsObj);
 
-        console.info(`✅ Resolved ${Object.keys(nameMap).length} facet labels`);
-        setResolvedFacets(resolvedFacetsObj);
+        console.info(`✅ Updated ${Object.keys(nameMap).length} facet labels in background`);
+        setResolvedFacets(updatedFacetsObj);
       } catch (error) {
         console.warn('Failed to resolve facet names:', error);
-        setResolvedFacets(facets); // Fallback to original facets
-      } finally {
-        setIsResolving(false);
+        // Don't reset to original facets - keep the already displayed ones
       }
     };
 

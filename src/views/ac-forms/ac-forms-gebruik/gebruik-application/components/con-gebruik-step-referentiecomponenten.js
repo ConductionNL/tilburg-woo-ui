@@ -220,7 +220,16 @@ const ConGebruikStepReferentiecomponenten = memo(
                         Referentiecomponenten aangegeven door leverancier
                       </Heading>
                     </label>
+                    <label
+                      id='refcomp-select-label-leverancier'
+                      className='sr-only'
+                      htmlFor='refcomp-select-leverancier'
+                    >
+                      Selecteer referentiecomponenten aangegeven door leverancier
+                    </label>
                     <ReactSelect
+                      inputId='refcomp-select-leverancier'
+                      aria-labelledby='refcomp-select-label-leverancier'
                       value={inApplicatieOptions.filter((opt) =>
                         currentRefs.includes(String(opt.value))
                       )}
@@ -258,7 +267,16 @@ const ConGebruikStepReferentiecomponenten = memo(
                     <label className='utrecht-form-label'>
                       <Heading level={4}>Referentiecomponenten toevoegen</Heading>
                     </label>
+                    <label
+                      id='refcomp-select-label-toevoegen'
+                      className='sr-only'
+                      htmlFor='refcomp-select-toevoegen'
+                    >
+                      Selecteer referentiecomponenten toevoegen
+                    </label>
                     <ReactSelect
+                      inputId='refcomp-select-toevoegen'
+                      aria-labelledby='refcomp-select-label-toevoegen'
                       value={notInApplicatieOptions.filter((opt) =>
                         currentRefs.includes(String(opt.value))
                       )}
@@ -309,7 +327,16 @@ const ConGebruikStepReferentiecomponenten = memo(
                     <span className='sr-only'>(verplicht)</span>
                   </Heading>
                 </label>
+                <label
+                  id='refcomp-select-label-gebruik'
+                  className='sr-only'
+                  htmlFor='refcomp-select-gebruik'
+                >
+                  Selecteer de referentiecomponenten waarvoor u de applicatie gebruikt
+                </label>
                 <ReactSelect
+                  inputId='refcomp-select-gebruik'
+                  aria-labelledby='refcomp-select-label-gebruik'
                   value={referentieComponentenOptions.filter((opt) =>
                     currentRefs.includes(String(opt.value))
                   )}

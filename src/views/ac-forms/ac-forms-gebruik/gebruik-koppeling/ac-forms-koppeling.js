@@ -808,7 +808,7 @@ const AcFormsKoppeling = ({ store }) => {
       });
 
       const response = await fetch(
-        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
         {
           method: 'GET',
           headers: {
@@ -1494,7 +1494,7 @@ const AcFormsKoppeling = ({ store }) => {
 
       // Fetch standards from openconnector endpoint using normal fetch
       const response = await fetch(
-        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
         {
           method: 'GET',
           headers: {
@@ -2104,6 +2104,13 @@ const AcFormsKoppeling = ({ store }) => {
     const logicalStep = stepper.getLabelFromStep(step);
 
     switch (logicalStep) {
+      case 'koppeling-zoeken':
+        return 'Een koppeling zoeken';
+      case 'gebruiksinformatie':
+        return 'Gebruiksinformatie';
+      case 'controleren':
+        return 'Controleren';
+      // @TODO fix
       case 0:
         return 'Aanbieder';
       case 1:

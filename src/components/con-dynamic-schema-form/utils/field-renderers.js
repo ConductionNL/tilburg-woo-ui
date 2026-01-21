@@ -266,6 +266,7 @@ export const renderField = ({
     // Extract filename field from path (assume fieldname + "Filename")
     const filenamePath = path + 'Filename';
     const filenameValue = getNestedValue(filenamePath, formData);
+    const fieldId = `fileInput-${path}`;
 
     return (
       <LogoUploadField
@@ -276,6 +277,7 @@ export const renderField = ({
           filename: filenameValue,
           required: validation.required,
         }}
+        id={fieldId}
         _value={value}
         onChange={(fileOrDataUrl) => {
           handleChange(fileOrDataUrl);
@@ -305,9 +307,10 @@ export const renderField = ({
 
   // Render based on component type
   if (fieldConfig.component === 'Boolean') {
+    const fieldId = `dynamic-form-field-${path}`;
     return (
       <div key={`${path}-${resetKey}`}>
-        <label className='utrecht-form-label'>
+        <label className='utrecht-form-label' htmlFor={fieldId}>
           <Heading
             level={4}
             className={clsx({
@@ -342,6 +345,7 @@ export const renderField = ({
         </label>
         <BooleanField
           key={path}
+          id={fieldId}
           label={`Huidige keuze: ${value ? 'Ja' : 'Nee'}`}
           value={!!value}
           onChange={handleChange}
@@ -372,9 +376,11 @@ export const renderField = ({
   }
 
   if (fieldConfig.component === 'Color') {
+    // copy id method from ColorField component
+    const fieldId = `dynamic-form-field-${path}`;
     return (
       <div key={`${path}-${resetKey}`}>
-        <label className='utrecht-form-label'>
+        <label className='utrecht-form-label' htmlFor={fieldId}>
           <Heading
             level={4}
             className={clsx({
@@ -428,6 +434,7 @@ export const renderField = ({
       <JsonObjectField
         key={path}
         path={path}
+        id={`dynamic-form-field-${path}`}
         label={fieldConfig.label}
         value={value}
         onChange={handleChange}
@@ -439,9 +446,11 @@ export const renderField = ({
   }
 
   if (fieldConfig.component === 'WysiwygMarkdown') {
+    const fieldId = `dynamic-form-field-${path}`;
+    const labelId = `${fieldId}-label`;
     return (
       <div key={`${path}-${resetKey}`} className='con-wysiwyg-markdown-field'>
-        <label className='utrecht-form-label'>
+        <label id={labelId} className='utrecht-form-label' htmlFor={fieldId}>
           <Heading
             level={4}
             className={clsx({
@@ -480,6 +489,8 @@ export const renderField = ({
           preview='edit'
           hideToolbar={isDisabled}
           textareaProps={{
+            id: fieldId,
+            'aria-labelledby': labelId,
             maxLength: propertySchema?.maxLength ?? undefined,
           }}
           // Stops the toolbar from being focused when tabbing through the form
@@ -546,6 +557,7 @@ export const renderField = ({
         autocomplete='off'
         tooltip={fieldConfig.description}
         key={path}
+        inputType='textarea'
         inputClassName='textarea'
         id={`dynamic-form-field-${path}`}
         label={fieldConfig.label}
@@ -609,11 +621,12 @@ export const renderField = ({
     // Automatically enable search for $ref fields
     const isRefField = getFieldRefSchemaSlug(propertySchema) !== null;
     const shouldBeSearchable = isRefField || fieldConfig.isSearchable;
+    const fieldId = `dynamic-form-field-${path}`;
 
     return (
       <div key={`${path}-${resetKey}`}>
         {!fieldConfig.hideLabel && (
-          <label className='utrecht-form-label'>
+          <label className='utrecht-form-label' htmlFor={fieldId}>
             <Heading
               level={4}
               className={clsx({
@@ -651,6 +664,7 @@ export const renderField = ({
         <ReactSelectWithGlobalHack
           key={`${path}-${resetKey}-${forceRenderKey}`}
           fieldPath={path}
+          inputId={fieldId}
           placeholder={fieldConfig.placeholder}
           value={selectValue}
           className={clsx(

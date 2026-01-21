@@ -23,8 +23,18 @@ const AcContent = ({ store: { pages, user } }) => {
     return <AcLoader />;
   }
 
+  // Page not found
+  if (!get_single) {
+    return (
+      <AcContainer compact>
+        <Heading level={1}>Pagina niet gevonden</Heading>
+        <p>De pagina die je zoekt bestaat niet of is verwijderd.</p>
+      </AcContainer>
+    );
+  }
+
   // Check if the page should be visible to the current user
-  if (get_single && !shouldShowPage(get_single, user.isAuthenticated)) {
+  if (!shouldShowPage(get_single, user.isAuthenticated)) {
     // Page exists but user doesn't have permission to see it
     // Redirect to login if not authenticated, or show 403 if authenticated but no access
     if (!user.isAuthenticated) {
@@ -33,8 +43,8 @@ const AcContent = ({ store: { pages, user } }) => {
     } else {
       return (
         <AcContainer compact>
-          <Heading level={1}>Access Denied</Heading>
-          <p>You don&apos;t have permission to view this page.</p>
+          <Heading level={1}>Geen toegang</Heading>
+          <p>Je hebt geen toestemming om deze pagina te bekijken.</p>
         </AcContainer>
       );
     }

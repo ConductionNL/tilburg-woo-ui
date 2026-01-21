@@ -26,6 +26,13 @@
     background-color: var(--tilburg-header-background-color);
   }
 
+  &__right-section {
+    display: flex;
+    align-items: center;
+    gap: var(--tilburg-space-column-rat, 1rem);
+    margin-inline-end: 1rem;
+  }
+
   &__navigation-wrapper {
     display: flex;
     align-items: center;
@@ -64,11 +71,12 @@
 
     // small visual correction due to font-family rendering
     .logo-text {
-      margin-block-start: 1rem;
+    //   margin-block-start: 1rem;
       color: var(--tilburg-header-logo-text-color, inherit);
       @include respond-max($screen-sm) {
         word-break: break-word;
       }
+      font-size: var(--tilburg-typography-font-size-3xl);
     }
 
     svg {
@@ -130,11 +138,34 @@
   &__user-info {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 8px;
+    margin-inline-end: var(--tilburg-space-column-mouse, 0.5rem);
+    
+    @include respond-max($screen-md) {
+      display: none; // Hide on mobile to save space
+    }
+    
+    .ac-header__user-icon {
+      color: rgb(2, 119, 189);
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
     
     .ac-header__username {
-      font-weight: 500;
-      color: var(--utrecht-document-color, #000);
+      font-family: Montserrat, sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: rgb(2, 119, 189);
+      line-height: 1;
+    }
+    
+    .ac-header__organization {
+      font-family: Montserrat, sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: rgb(2, 119, 189);
+      line-height: 1;
     }
     
     .ac-header__logout-btn,

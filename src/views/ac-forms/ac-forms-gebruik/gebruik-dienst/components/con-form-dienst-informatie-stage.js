@@ -37,7 +37,7 @@ const ConFormDienstInformatieStage = memo(
           }
 
           // Fallback to /me endpoint once
-          const meUrl = `${BASE_URL}/openconnector/api/user/me`;
+          const meUrl = `${BASE_URL}/openregister/api/user/me`;
           let me = null;
           try {
             const res = await fetch(meUrl, {

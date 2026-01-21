@@ -353,7 +353,7 @@ const ConFormsDienst = ({ store }) => {
     };
     const timeoutId = setTimeout(addClickHandlers, 100);
     return () => clearTimeout(timeoutId);
-  }, [stepper.getCurrentStep(), prefillLoading, prefillError, stepper]);
+  }, [stepper.getCurrentStep(), prefillLoading, prefillError]);
 
   // Ensure /me is refreshed when the wizard mounts (so stages can read active organisation)
   useEffect(() => {
@@ -469,24 +469,51 @@ const ConFormsDienst = ({ store }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Initialize ownAppOptions with moduleOptions for Gebruik-beheerders flow
+  // Load modules filtered by organisation for Gebruik-beheerders flow
   useEffect(() => {
-    if (isGebruikBeheerdersFlow && moduleOptions.length > 0) {
-      setOwnAppOptions((prev) => {
-        if (prev.length === 0) {
-          return [...moduleOptions];
-        }
-        // Merge with existing options
-        const existingMap = new Map(prev.map((opt) => [opt.value, opt]));
-        moduleOptions.forEach((opt) => {
-          if (!existingMap.has(opt.value)) {
-            existingMap.set(opt.value, opt);
-          }
-        });
-        return Array.from(existingMap.values());
-      });
-    }
-  }, [moduleOptions, isGebruikBeheerdersFlow]);
+    if (!isGebruikBeheerdersFlow) return;
+
+    const loadModulesForGebruikBeheerder = async () => {
+      const activeOrg = store?.user?.activeOrganization;
+      const organisationId = activeOrg?.uuid || activeOrg?.id;
+      if (!organisationId) return;
+
+      setOwnAppLoading(true);
+      try {
+        await store.object.fetchCollection(
+          'voorzieningen',
+          'module',
+          {
+            _limit: '50',
+            _page: '1',
+            _published: 'false',
+            _source: 'index',
+            organisation: String(organisationId),
+          },
+          null,
+          'dienst_zoeken_initial'
+        );
+        const collection = store.object.getCollection(
+          'voorzieningen_module_dienst_zoeken_initial'
+        );
+        const list = collection?.results || collection || [];
+        const options = list.map(mapToOption);
+        setOwnAppOptions(options);
+      } catch (e) {
+        console.error('Failed to load modules for gebruik beheerder:', e);
+        setOwnAppOptions([]);
+      } finally {
+        setOwnAppLoading(false);
+      }
+    };
+
+    loadModulesForGebruikBeheerder();
+  }, [
+    isGebruikBeheerdersFlow,
+    store?.user?.activeOrganization?.uuid,
+    store?.user?.activeOrganization?.id,
+    store,
+  ]);
 
   // Pre-select applicatie from URL parameter
   useEffect(() => {
@@ -555,7 +582,7 @@ const ConFormsDienst = ({ store }) => {
 
   // Generic server-side search for modules
   const createModuleSearch = useCallback(
-    (collectionSuffix, setOptions, setLoading) => {
+    (collectionSuffix, setOptions, setLoading, organisationId = null) => {
       return async (query) => {
         try {
           setLoading(true);
@@ -567,6 +594,11 @@ const ConFormsDienst = ({ store }) => {
             _published: 'false',
             _source: 'index',
           };
+
+          // Add organisation filter if provided (for gebruik beheerder flow)
+          if (organisationId) {
+            queryParams.organisation = String(organisationId);
+          }
 
           // Add search parameter if provided
           if (q) {
@@ -634,10 +666,20 @@ const ConFormsDienst = ({ store }) => {
   });
 
   // Server-side search for modules (for Dienst zoeken step)
-  const searchModulesForDienstZoeken = useCallback(
-    createModuleSearch('dienst_zoeken_search', setOwnAppOptions, setOwnAppLoading),
-    [createModuleSearch]
-  );
+  // Filter by active organisation when in gebruik beheerder flow
+  const searchModulesForDienstZoeken = useMemo(() => {
+    const activeOrg = store?.user?.activeOrganization;
+    const organisationId =
+      isGebruikBeheerdersFlow && (activeOrg?.uuid || activeOrg?.id)
+        ? String(activeOrg.uuid || activeOrg.id)
+        : null;
+    return createModuleSearch(
+      'dienst_zoeken_search',
+      setOwnAppOptions,
+      setOwnAppLoading,
+      organisationId
+    );
+  }, [createModuleSearch, isGebruikBeheerdersFlow, store?.user?.activeOrganization]);
 
   // Debounced search function for Dienst zoeken step
   const debouncedSearchModulesForDienstZoeken = useDebouncedInput(
@@ -1060,7 +1102,7 @@ const ConFormsDienst = ({ store }) => {
     };
 
     handleRedirect();
-  }, [dienstFromUrl, isGebruikBeheerdersFlow, isEditMode, store, stepper]);
+  }, [dienstFromUrl, isGebruikBeheerdersFlow, isEditMode, store]);
 
   // Keep dienst.modules in sync with current selection
   useEffect(() => {

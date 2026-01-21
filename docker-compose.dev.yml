@@ -78,10 +78,16 @@ services:
       # Menu Configuration
       - FOOTER_STYLE=vng
       # Footer Text Configuration
-      - FOOTER_LOGO_TITLE=VNG Softwarectalogus
+      - FOOTER_LOGO_TITLE=Softwarecatalogus
       - FOOTER_LOGO_SUBTITLE=Één plek voor alle software voor en door Gemeenten
       # Search Configuration
       - DEFAULT_SEARCH_SCHEMA=18
+      # Piwik Pro Analytics Configuration
+      - PIWIK_SRC_URL=       # url of piwik pro instance (e.g. https://test.piwik.pro/)
+      - PIWIK_DATA_LAYER=    # name of the data layer (e.g. dataLayer)
+      - PIWIK_ID=            # id of the piwik pro instance (e.g. b67368f0-337b-4b36-b9f2-95cedff6a32b)
+      # Chat Configuration (test URL for development)
+      - CHAT_ENDPOINT=https://api.example.com/chat
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:81/api/status.php"]
       interval: 30s
@@ -119,17 +125,18 @@ services:
       - THEME_VARIANT=vng
       - ENVIRONMENT_NAME=development
       - SUPPORT_EMAIL_ADDRESS=info@conduction.nl
-      # API Configuration (Updated to use cleaner /api instead of /api/index.php/apps)
+      # API Configuration (Updated to use localhost:8080)
       - BASE_URL=/api/apps
       - BASE_URL_COMMONGROUND=/api/apps
+      - API_TARGET_URL=http://host.docker.internal:8080
       
-      # Nextcloud/Target Configuration  
-      - NEXTCLOUD_HOST=nextcloud.local
-      - NEXTCLOUD_PORT=80
+      # Nextcloud/Target Configuration (deprecated, kept for compatibility)
+      - NEXTCLOUD_HOST=localhost
+      - NEXTCLOUD_PORT=8080
       # Nginx Proxy Configuration
-      - NGINX_NEXTCLOUD_UPSTREAM=http://host.docker.internal:80
-      - NGINX_NEXTCLOUD_DOMAIN=nextcloud.local
-      - NGINX_TARGET_HOST=nextcloud.local
+      - NGINX_NEXTCLOUD_UPSTREAM=http://host.docker.internal:8080
+      - NGINX_NEXTCLOUD_DOMAIN=localhost
+      - NGINX_TARGET_HOST=localhost
       - NGINX_ROOT_DIR=/app/public
       # Authentication Configuration
       - GRANT_TYPE=authorization_code
@@ -164,8 +171,14 @@ services:
       - FOOTER_LOGO_SUBTITLE=Één plek voor alle publicaties van Gemeente Tilburg
       # Search Configuration
       - DEFAULT_SEARCH_SCHEMA=18
+      # Chat Configuration (test URL for development)
+      - CHAT_ENDPOINT=https://api.example.com/chat
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
+      # Piwik Pro Analytics Configuration
+      - PIWIK_SRC_URL=       # url of piwik pro instance (e.g. https://test.piwik.pro/)
+      - PIWIK_DATA_LAYER=    # name of the data layer (e.g. dataLayer)
+      - PIWIK_ID=            # id of the piwik pro instance (e.g. b67368f0-337b-4b36-b9f2-95cedff6a32b)
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/status.php"]
       interval: 30s

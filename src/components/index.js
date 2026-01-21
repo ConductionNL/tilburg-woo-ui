@@ -128,6 +128,9 @@ const ConExternalLink = loadable(() =>
   import('@src/components/con-external-link/con-external-link')
 );
 
+// Don't lazy load - needs immediate access to VISUALS
+import ConPublicationTypeBadge from '@src/components/con-publication-type-badge/con-publication-type-badge';
+
 export {
   AcAbout,
   AcCNavigation,
@@ -173,4 +176,5 @@ export {
   ConOrganizationSelector,
   ConAangebodenSuggestiesTable,
   ConExternalLink,
+  ConPublicationTypeBadge,
 };

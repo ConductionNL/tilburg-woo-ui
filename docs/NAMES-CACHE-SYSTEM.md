@@ -153,15 +153,19 @@ Het systeem ondersteunt nu ook **arrays van object referenties**. Wanneer een sc
 
 ## Cache Resolution Flow
 
-Het cache systeem gebruikt een **cache-first strategie** met automatische fallback naar de backend:
+Het cache systeem gebruikt een **optimistische cache-first strategie** met parallelle warmup voor optimale performance:
 
 ```mermaid
 sequenceDiagram
     participant C as Component
     participant OS as ObjectStore
     participant Cache as Names Cache
+    participant Warmup as Warmup Process
     participant API as Backend API
     participant DB as Database
+    
+    Note over Warmup: Background warmup gestart bij app init
+    Warmup->>API: GET /api/names (warmup)
     
     C->>OS: getNamesForSingleId(uuid)
     OS->>Cache: Check cache for uuid
@@ -170,7 +174,8 @@ sequenceDiagram
         Cache-->>OS: Return cached name
         OS-->>C: Return name immediately
         Note over C: ⚡ Instant response (< 1ms)
-    else Cache Miss or Expired
+    else Cache Miss
+        Note over OS: Direct fallback - geen wachten op warmup
         OS->>API: GET /api/names/{uuid}
         API->>DB: Query object name
         DB-->>API: Return name + metadata
@@ -179,7 +184,71 @@ sequenceDiagram
         OS-->>C: Return resolved name
         Note over C: 🌐 Network call (~50-100ms)
     end
+    
+    Note over Warmup: Warmup vult cache in achtergrond
+    API-->>Warmup: All names
+    Warmup->>Cache: Populate cache
+    Note over Cache: Volgende verzoeken zijn instant! ✨
 ```
+
+**Belangrijke optimalisatie:**
+- **Geen blokkerende warmup**: Components wachten NIET op de volledige warmup
+- **Direct fallback**: Individuele UUID's worden direct opgehaald als ze niet in cache zitten
+- **Parallelle processing**: Warmup en individual fetches lopen parallel
+- **Progressieve verbetering**: Naarmate warmup vordert, zijn meer names al in cache
+
+**Voor en na warmup gedrag:**
+- **Tijdens warmup**: Individual API calls voor missing UUIDs (componenten blijven responsive)
+- **Na warmup**: Instant cache hits voor alle UUIDs (optimale performance)
+
+## Loading State Optimization
+
+De loading states in de UI zijn **volledig ontkoppeld** van de warmup process voor optimale gebruikerservaring:
+
+```mermaid
+flowchart TD
+    A[Component renders with UUID] --> B[useResolvedText hook]
+    
+    B --> C{Cache Hit?}
+    C -->|Yes| D[Show Name Immediately]
+    D --> E[isLoading: false]
+    
+    C -->|No| F[isLoading: true]
+    F --> G[Show 'Loading...']
+    
+    G --> H[Individual UUID Fetch]
+    H --> I[UUID Resolved]
+    I --> J[Update UI with Name]
+    J --> K[isLoading: false]
+    
+    Note over G,H: Warmup NOT blocking
+    Note over H: ~50-100ms response
+    
+    subgraph "Background Process (Non-blocking)"
+        L[Warmup Process]
+        L --> M[Populate Cache]
+    end
+    
+    style D fill:#c8e6c9
+    style K fill:#c8e6c9
+    style G fill:#fff3e0
+    style L fill:#e3f2fd
+```
+
+**Belangrijke eigenschappen:**
+- **Geen warmup dependency**: `isLoading` hangt NIET af van warmup status
+- **Per-UUID loading**: Elke UUID heeft zijn eigen loading state
+- **Immediate feedback**: Loading verdwijnt zodra de individuele UUID is opgehaald
+- **Progressive rendering**: Names verschijnen zodra ze beschikbaar zijn
+
+**Voor en na de fix:**
+
+| Aspect | Voor (Blocking) | Na (Optimized) |
+|--------|----------------|----------------|
+| Loading state | Geblokkeerd tot warmup compleet | Alleen tijdens actual fetch |
+| UI rendering | Wacht op volledige warmup | Immediate render |
+| Filter display | ~5-30 seconden delay | ~50-100ms per UUID |
+| User experience | Lange loading spinners | Snelle, responsive UI |
 
 ## Bulk Resolution Optimization
 

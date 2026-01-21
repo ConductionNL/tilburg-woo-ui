@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { VISUALS } from '@src/constants';
 import { TOOLTIP_ID } from '@src/index.web';
 import {
@@ -21,8 +21,19 @@ const AcCheckbox = ({
   required,
   customLabelPart,
   disabled = false,
+  srOnlyLabel = false,
 }) => {
-  const memoizedId = useMemo(() => `${label}_${value}`, [label, value]);
+  const uniqueIdRef = useRef(null);
+  if (!uniqueIdRef.current) {
+    uniqueIdRef.current = `ac-checkbox-${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  const memoizedId = useMemo(() => {
+    if (label && value) {
+      return `${label}_${value}`;
+    }
+    return uniqueIdRef.current;
+  }, [label, value]);
   const _id = id || memoizedId;
 
   const onChangeHandler = (e) => {
@@ -49,7 +60,13 @@ const AcCheckbox = ({
             })}
           >
             <div>
-              <ConUuidResolver>{label}</ConUuidResolver>
+              {srOnlyLabel ? (
+                <span className='sr-only'>
+                  <ConUuidResolver loadingPlaceholder={label}>{label}</ConUuidResolver>
+                </span>
+              ) : (
+                <ConUuidResolver loadingPlaceholder={label}>{label}</ConUuidResolver>
+              )}
               {required && (
                 <>
                   <span className='required-indicator' aria-hidden='true'>

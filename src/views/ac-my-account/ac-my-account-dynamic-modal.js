@@ -389,7 +389,33 @@ const AcMyAccountDynamicModal = ({
   const fieldConfigs = useMemo(() => {
     if (!config?.fieldConfigs) return {};
 
-    const configs = {};
+    const configs = {
+      status: {
+        visible: false,
+      },
+      beschrijvingKort: {
+        visible: false,
+      },
+      beschrijvingLang: {
+        visible: false,
+      },
+      type: {
+        visible: false,
+      },
+      deelnames: {
+        visible: false,
+      },
+      deelnemers: {
+        // visible: formData.type?.toLowerCase() === 'community' || formData.type?.toLowerCase() === 'samenwerking',
+        visible: false,
+      },
+      contactpersonen: {
+        visible: false,
+      },
+      cbsCode: {
+        visible: formData.type?.toLowerCase() === 'gemeente',
+      },
+    };
 
     Object.entries(config.fieldConfigs).forEach(([fieldName, fieldConfig]) => {
       configs[fieldName] = {};
