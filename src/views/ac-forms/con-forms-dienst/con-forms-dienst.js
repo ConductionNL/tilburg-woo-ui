@@ -150,8 +150,7 @@ const ConFormsDienst = ({ store, userStore }) => {
       setPrefillError(null);
       try {
         await store.object.fetchObject('voorzieningen', 'dienst', String(dienstId), {
-          '_extend[]': ['@self.schema'],
-          _published: 'false',
+          '_extend[]': ['_schema'],
         });
         if (cancelled) return;
 
@@ -188,9 +187,7 @@ const ConFormsDienst = ({ store, userStore }) => {
             const moduleFetches = missingModuleIds.map((id) =>
               store.object
                 .fetchObject('voorzieningen', 'module', String(id), {
-                  '_extend[]': ['@self.schema'],
-                  _published: 'false',
-                  _source: 'index',
+                  '_extend[]': ['_schema'],
                 })
                 .then(() => {
                   if (cancelled) return null;
@@ -317,8 +314,6 @@ const ConFormsDienst = ({ store, userStore }) => {
         {
           _limit: '50',
           _page: '1',
-          _published: 'false',
-          _source: 'index',
         },
         null,
         'dienst_form'
@@ -405,9 +400,7 @@ const ConFormsDienst = ({ store, userStore }) => {
               'module',
               String(applicatieFromUrl),
               {
-                '_extend[]': ['@self.schema'],
-                _published: 'false',
-                _source: 'index',
+                '_extend[]': ['_schema'],
               }
             );
             const fetched = store.object.getObject(
@@ -451,8 +444,6 @@ const ConFormsDienst = ({ store, userStore }) => {
         const queryParams = {
           _limit: '50',
           _page: '1',
-          _published: 'false',
-          _source: 'index',
         };
 
         // Add search parameter if provided
@@ -545,8 +536,6 @@ const ConFormsDienst = ({ store, userStore }) => {
           const params = new URLSearchParams({
             _limit: '50',
             _page: '1',
-            _published: 'false',
-            _source: 'index',
           });
           params.append('modules', String(applicatieId));
 
@@ -607,9 +596,7 @@ const ConFormsDienst = ({ store, userStore }) => {
                 'module',
                 String(moduleId),
                 {
-                  '_extend[]': ['@self.schema'],
-                  _published: 'false',
-                  _source: 'index',
+                  '_extend[]': ['_schema'],
                 }
               );
               const moduleData = store.object.getObject(

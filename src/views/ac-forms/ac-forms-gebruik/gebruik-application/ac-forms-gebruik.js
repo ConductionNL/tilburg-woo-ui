@@ -272,7 +272,7 @@ const AcFormsGebruik = ({ store }) => {
           'organisatie',
           organisationId,
           {
-            '_extend[]': ['@self.schema', 'deelnemers'],
+            '_extend[]': ['_schema', 'deelnemers'],
           }
         );
 
@@ -749,7 +749,7 @@ const AcFormsGebruik = ({ store }) => {
           'gebruik',
           String(gebruikId),
           {
-            '_extend[]': ['@self.schema'],
+            '_extend[]': ['_schema'],
             _published: 'false',
           }
         );
@@ -783,7 +783,7 @@ const AcFormsGebruik = ({ store }) => {
                 'organisatie',
                 afnemerId,
                 {
-                  '_extend[]': ['@self.schema'],
+                  '_extend[]': ['_schema'],
                   _published: 'false',
                 }
               );
@@ -899,7 +899,7 @@ const AcFormsGebruik = ({ store }) => {
           _page: '1',
           _source: 'index',
           gemmaType: 'Referentiecomponent',
-          '_extend[]': '@self.schema',
+          '_extend[]': '_schema',
           _published: 'false',
         });
         const collection = store.object.getCollection('vng-gemma_element');
@@ -941,9 +941,7 @@ const AcFormsGebruik = ({ store }) => {
         const queryParams = {
           _limit: '50',
           _page: '1',
-          '_extend[]': ['@self.schema', 'moduleVersies'],
-          _published: 'false',
-          _source: 'index', // Use index to get applications from all tenants
+          '_extend[]': ['_schema', 'moduleVersies'],
         };
 
         // Filter by leverancier (aanbieder) for Aanbod beheerders flow
@@ -1016,9 +1014,7 @@ const AcFormsGebruik = ({ store }) => {
           setApplicatiePreloadLoading(true);
           try {
             const fetchParams = {
-              '_extend[]': ['@self.schema', 'moduleVersies'],
-              _published: 'false',
-              _source: 'index', // Use index to get applications from all tenants
+              '_extend[]': ['_schema', 'moduleVersies'],
             };
 
             // Filter by leverancier (aanbieder) for Aanbod beheerders flow
@@ -1074,9 +1070,7 @@ const AcFormsGebruik = ({ store }) => {
         const queryParams = {
           _limit: '50',
           _page: '1',
-          '_extend[]': ['@self.schema', 'moduleVersies'],
-          _published: 'false',
-          _source: 'index', // Use index to get applications from all tenants
+          '_extend[]': ['_schema', 'moduleVersies'],
         };
 
         // Filter by leverancier (aanbieder) for Aanbod beheerders flow
@@ -1145,7 +1139,7 @@ const AcFormsGebruik = ({ store }) => {
           _limit: '50',
           _page: '1',
           _source: 'index',
-          '_extend[]': '@self.schema',
+          '_extend[]': '_schema',
           _published: 'false',
         };
 
@@ -1207,7 +1201,7 @@ const AcFormsGebruik = ({ store }) => {
           _limit: '50',
           _page: '1',
           _source: 'index',
-          '_extend[]': '@self.schema',
+          '_extend[]': '_schema',
           _published: 'false',
         };
 
@@ -1251,7 +1245,7 @@ const AcFormsGebruik = ({ store }) => {
         const params = {
           _limit: '50',
           _page: '1',
-          _published: 'false',
+          _source: 'database', // Only show data from own organisation
         };
 
         // Add search parameter if query is provided
@@ -1345,7 +1339,7 @@ const AcFormsGebruik = ({ store }) => {
       });
       
       // Add multiple extend parameters to include standards
-      queryParams.append('_extend[]', '@self.schema');
+      queryParams.append('_extend[]', '_schema');
       queryParams.append('_extend[]', 'aanbevolenStandaarden');
       queryParams.append('_extend[]', 'verplichteStandaarden');
 
@@ -1453,9 +1447,7 @@ const AcFormsGebruik = ({ store }) => {
       if (!modData || !Array.isArray(versiesArray) || versiesArray.length === 0) {
         try {
           await store.object.fetchObject('voorzieningen', 'module', String(mod), {
-            '_extend[]': ['@self.schema', '@self.relations', 'moduleVersies'],
-            _published: 'false',
-            _source: 'index', // Use index to get applications from all tenants
+            '_extend[]': ['_schema', '@self.relations', 'moduleVersies'],
           });
           if (cancelled) return;
           modData = store.object.getObject('voorzieningen_module', String(mod));

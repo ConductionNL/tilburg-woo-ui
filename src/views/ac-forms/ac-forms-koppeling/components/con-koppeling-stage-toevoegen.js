@@ -301,7 +301,6 @@ const ConKoppelingStageToevoegen = ({
       const params = new URLSearchParams({
         _limit: '20',
         _page: '1',
-        _published: 'false',
       });
       if (q) params.set('_search', q);
       const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module?${params}`;
@@ -355,8 +354,7 @@ const ConKoppelingStageToevoegen = ({
         _limit: '50',
         _page: '1',
         gemmaType: 'Buitengemeentelijke voorziening',
-        '_extend[]': '@self.schema',
-        _published: 'false',
+        '_extend[]': '_schema',
       });
       if (q) queryParams.set('_search', q);
       const endpoint = `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`;
