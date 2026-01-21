@@ -286,6 +286,7 @@ export const useRefOptions = (
           _search: searchQuery || undefined,
           _limit: 50,
           _page: 1, // Always start from page 1 for form field options
+          _source: 'database', // Only show data from own organisation
           ...schemaQueryParams, // Add schema-defined query parameters
           ...(optimizations?.additionalQueryParams || {}), // Add additional query params from optimizations
         };

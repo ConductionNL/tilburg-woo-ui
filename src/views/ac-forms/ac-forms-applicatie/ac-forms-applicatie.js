@@ -1148,7 +1148,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         const queryParams = {
           _limit: '50',
           _page: '1',
-          _published: 'false',
+          _source: 'database', // Only show data from own organisation
         };
 
         // Add search parameter if provided
@@ -1233,9 +1233,8 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         const queryParams = {
           _limit: '50',
           _page: '1',
-          _source: 'index',
+          _source: 'database', // Only show data from own organisation
           '_extend[]': '@self.schema',
-          _published: 'false',
         };
 
         // Add search parameter if provided

@@ -4371,10 +4371,9 @@ export class ObjectStore {
             await this.fetchSchema(schemaSlug);
           }
 
-          // Fetch objects with limit 10000 and _published: false
+          // Fetch objects with limit 10000
           await this.fetchCollection(register, schemaSlug, {
             _limit: 10000,
-            _published: 'false',
             _source: 'database', // Only fetch data from own organisation
           });
         } catch (error) {
@@ -4474,10 +4473,9 @@ export class ObjectStore {
           await this.fetchSchema(schemaSlug);
         }
 
-        // Fetch objects with limit 10000 and _published: false
+        // Fetch objects with limit 10000
         await this.fetchCollection(register, schemaSlug, {
           _limit: 10000,
-          _published: 'false',
           _source: 'database', // Only fetch data from own organisation
         });
 
