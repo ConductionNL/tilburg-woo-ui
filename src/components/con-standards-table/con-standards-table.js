@@ -318,17 +318,27 @@ const ConStandardsTable = ({
   );
 
   // Helper function to get all standaardversies from referentieComponenten data
-  // Traverses: referentieComponenten → standaarden → standaardVersies
+  // Traverses: referentieComponenten → standaarden → find matching standaardversies by their parent standard ID
   const getAllStandaardVersiesFromReferentieComponenten = useCallback(
     (referentieComponentenWithStandardsData) => {
       if (!referentieComponentenWithStandardsData?.length) return [];
+      if (!effectiveStandaardversies?.length) return [];
+
+      console.info(
+        '🔍 Finding standaardversies that match referentieComponenten standards...'
+      );
+      console.info(
+        `📊 Have ${effectiveStandaardversies.length} standaardversies to search through`
+      );
 
       const allVersies = [];
 
       referentieComponentenWithStandardsData.forEach((refComp) => {
         const refCompName = refComp.naam || `Component ${refComp.id}`;
 
-        // Helper to process standards and extract their versions
+        // Helper to process standards and find their versions
+        // Instead of looking for standaardVersies array in the standard,
+        // we search through all standaardversies to find ones that reference this standard
         const processStandards = (standardsList, isVerplicht) => {
           if (!standardsList || !Array.isArray(standardsList)) return;
 
@@ -336,41 +346,49 @@ const ConStandardsTable = ({
             const standardId = getItemId(standard);
             if (!standardId) return;
 
-            // Find the full standard data to get standaardVersies
-            const fetchedStandardData = findMatchingStandardData(standard);
-            const standardData = { ...standard, ...fetchedStandardData };
+            console.info(
+              `🔍 Looking for versions of standard ${standardId} (${
+                isVerplicht ? 'VERPLICHT' : 'AANBEVOLEN'
+              })...`
+            );
 
-            // Get standaardVersies array from the standard
-            const standaardVersiesList = standardData.standaardVersies || [];
+            // Find all standaardversies that have this standard as their parent
+            const matchingVersies = effectiveStandaardversies.filter((versie) => {
+              const versieStandaardId = getItemId(versie.standaard);
+              if (!versieStandaardId) return false;
 
-            // If no versions found, skip this standard
-            if (
-              !Array.isArray(standaardVersiesList) ||
-              standaardVersiesList.length === 0
-            ) {
-              return;
-            }
+              // Match by ID
+              const matches = String(versieStandaardId) === String(standardId);
 
-            // Process each standaardversie
-            standaardVersiesList.forEach((versie) => {
+              if (matches) {
+                console.info(
+                  `   ✅ Found matching version: ${
+                    versie?.xml?.name?._value || versie?.name || versie?.id
+                  }`
+                );
+              }
+
+              return matches;
+            });
+
+            console.info(
+              `   📊 Found ${matchingVersies.length} version(s) for standard ${standardId}`
+            );
+
+            // Process each matching standaardversie
+            matchingVersies.forEach((versie) => {
               const versieId = getItemId(versie);
               if (!versieId) return;
 
-              // Find matching data from fetched standaardversies
-              const fetchedVersieData = findMatchingStandaardversieData(versie);
-
               // Get versie name
               const versieName =
-                fetchedVersieData?.xml?.name?._value ||
-                fetchedVersieData?.name ||
-                fetchedVersieData?.naam ||
                 versie?.xml?.name?._value ||
                 versie?.name ||
                 versie?.naam ||
                 versieId;
 
               const existingVersie = allVersies.find(
-                (versieEntry) => versieEntry.id === versieId
+                (versieEntry) => String(versieEntry.id) === String(versieId)
               );
 
               if (existingVersie) {
@@ -385,7 +403,7 @@ const ConStandardsTable = ({
                   type: isVerplicht ? 'VERPLICHT' : 'AANBEVOLEN',
                   referentieComponent: refCompName,
                   parentStandardId: standardId,
-                  fetchedData: fetchedVersieData,
+                  fetchedData: versie,
                 });
               }
             });
@@ -399,9 +417,11 @@ const ConStandardsTable = ({
         processStandards(refComp.aanbevolenStandaarden, false);
       });
 
+      console.info(`✅ Total standaardversies found: ${allVersies.length}`);
+
       return allVersies;
     },
-    [findMatchingStandardData, findMatchingStandaardversieData]
+    [effectiveStandaardversies, findMatchingStandardData, findMatchingStandaardversieData]
   );
 
   // Get all standaardversies from referentieComponenten using the helper function
