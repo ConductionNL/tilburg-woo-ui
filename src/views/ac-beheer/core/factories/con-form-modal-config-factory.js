@@ -469,6 +469,7 @@ const FormModalConfigFactory = {
         };
 
       case 'organisaties':
+      case 'organisatie':
         return {
           ...baseConfig,
           // Initial data is now automatically generated from schema properties
@@ -491,6 +492,7 @@ const FormModalConfigFactory = {
             beschrijvingKort: { visible: false },
             beschrijvingLang: { visible: false },
             type: { visible: (formData, isEdit) => !isEdit }, // Only show type field when adding new organisation
+            organisatieType: { visible: false }, // Hide organisatieType - it's derived from type field
             links: { visible: false },
             oin: { visible: false },
             rol: { visible: false },

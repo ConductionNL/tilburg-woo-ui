@@ -524,7 +524,6 @@ const ConModuleDetailsPageContent = ({
       <SuitableForSection
         referentieComponenten={data.referentieComponenten}
         referentieComponentenWithStandards={referentieComponentenWithStandards}
-        objectStore={object}
       />
 
       {/* Standaarden Section */}
@@ -583,12 +582,11 @@ const ConModuleDetailsPageContent = ({
 const SuitableForSection = ({
   referentieComponenten,
   referentieComponentenWithStandards,
-  objectStore,
 }) => {
   const [resolved, setResolved] = useState([]);
 
   useEffect(() => {
-    const resolveWithIds = async () => {
+    const resolveWithIds = () => {
       if (
         !Array.isArray(referentieComponenten) ||
         referentieComponenten.length === 0
@@ -606,32 +604,17 @@ const SuitableForSection = ({
 
           return {
             id: refCompData?.fullData?.id || id, // Use actual object ID if available
-            name: refCompData?.naam || id,
           };
         });
         setResolved(resolvedWithObjectIds);
         return;
       }
 
-      // Fallback to the original resolution method
-      try {
-        const results = await Promise.all(
-          referentieComponenten.map(async (id) => {
-            try {
-              const name = await objectStore.getNamesForSingleId(id);
-              return { id, name };
-            } catch (error) {
-              return { id, name: id };
-            }
-          })
-        );
-        setResolved(results);
-      } catch (e) {
-        setResolved(referentieComponenten.map((id) => ({ id, name: id })));
-      }
+      // Fallback: just use the IDs, ConUuidResolver will handle the resolution
+      setResolved(referentieComponenten.map((id) => ({ id })));
     };
     resolveWithIds();
-  }, [referentieComponenten, referentieComponentenWithStandards, objectStore]);
+  }, [referentieComponenten, referentieComponentenWithStandards]);
 
   if (!resolved.length) return null;
 
@@ -652,7 +635,7 @@ const SuitableForSection = ({
                   minHeight: '24px',
                 }}
               >
-                {item.name}
+                <ConUuidResolver>{String(item.id)}</ConUuidResolver>
               </Link>
             </div>
           ))}
