@@ -461,7 +461,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
           String(applicatieId),
           {
             '_extend[]': [
-              '@self.schema',
+              '_schema',
               'koppelingen',
               'diensten',
               'moduleVersies',
@@ -620,11 +620,10 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         _limit: '500',
         _page: '1',
         gemmaType: 'Referentiecomponent',
-        _published: 'false',
       });
       
       // Add multiple extend parameters to include standards and their versions in one go
-      queryParams.append('_extend[]', '@self.schema');
+      queryParams.append('_extend[]', '_schema');
       queryParams.append('_extend[]', 'aanbevolenStandaarden');
       queryParams.append('_extend[]', 'verplichteStandaarden');
       queryParams.append('_extend[]', 'gekoppeldeStandaardVersies'); // ✨ NEW: Get all standard versions in one call
@@ -785,11 +784,8 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         _limit: '500',
         _page: '1',
         gemmaType: 'Standaardversie',
-        _published: 'false',
+        '_extend[]': '_schema',
       });
-      
-      // Add extend parameter for schema
-      queryParams.append('_extend[]', '@self.schema');
 
       // Fetch ALL standaardversies from openconnector endpoint
       const response = await fetch(
@@ -1043,7 +1039,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         const queryParams = {
           _limit: '20',
           _page: '1',
-          _published: 'false',
         };
 
         // Add search parameter if provided
@@ -1222,7 +1217,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
           _limit: '50',
           _page: '1',
           _source: 'database', // Only show data from own organisation
-          '_extend[]': '@self.schema',
+          '_extend[]': '_schema',
         };
 
         // Add search parameter if provided
@@ -1305,8 +1300,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         _limit: '500',
         _page: '1',
         gemmaType: 'Buitengemeentelijke voorziening',
-        '_extend[]': '@self.schema',
-        _published: 'false',
+        '_extend[]': '_schema',
       });
 
       console.info('📋 Fetching external facilities from openconnector endpoint...');
@@ -1325,6 +1319,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       const options = list.results
         .map((item, index) => {
           const label =
+            item?.['@self']?.name ||
             item?.xml?.name?._value ||
             item?.naam ||
             item?.name ||
@@ -1480,8 +1475,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
             'module',
             String(moduleId),
             {
-              _extend: '@self.schema',
-              _published: 'false',
+              _extend: '_schema',
             }
           );
           if (cancelled) return null;
@@ -1808,6 +1802,15 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
   const renderStep = (step) => {
     // Convert physical step to logical step using helper function
     const logicalStep = getLogicalStepFromPhysical(step);
+
+    // Show loading state while schemas are being fetched (except for type selection step)
+    if (schemasLoading && logicalStep !== 0 && formType !== 'ontbrekend-applicatie') {
+      return (
+        <div style={{ padding: '2rem', textAlign: 'center' }}>
+          <Paragraph>Schema's laden...</Paragraph>
+        </div>
+      );
+    }
 
     switch (logicalStep) {
       case 0:
