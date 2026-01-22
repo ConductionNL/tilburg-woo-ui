@@ -6,6 +6,7 @@ import {
 import { AcColumn } from '@src/atoms';
 import { VISUALS } from '@src/constants';
 import ConLogoPreview from '@src/views/ac-register/con-logo-preview';
+import { ConExternalLink } from '@src/components';
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import { commongroundApiUrl } from '@src/config';
 import ConEditableDescription from '../../shared/components/con-editable-description/con-editable-description';
@@ -152,7 +153,6 @@ const ConDienstDetailsPageContent = ({
           alignItems: 'center',
         }}
       >
-        <Heading level={4}>
           <div className='con-beheer-details--header-container'>
             {(data?.logo || data?.['@self']?.image) && (
               <ConLogoPreview
@@ -164,7 +164,6 @@ const ConDienstDetailsPageContent = ({
               {data?.naam || data?.['@self']?.name || data?.['@self']?.id}
             </Heading>
           </div>
-        </Heading>
 
         <div className='ac-register-review__header-controls'>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -356,31 +355,24 @@ const ConDienstDetailsPageContent = ({
             <div style={{ marginTop: '12px' }}>
               {data?.website && (
                 <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
-                  <strong>Website: </strong>
-                  <Link
-                    href={
-                      data?.website.startsWith('http')
-                        ? data?.website
-                        : `https://${data?.website}`
-                    }
-                    target='_blank'
-                    rel='noopener noreferrer'
-                  >
-                    {data?.website}
-                  </Link>
+                  <strong>Website:</strong>
+                  <ConExternalLink href={data?.website} />
                 </div>
               )}
               {contact && typeof contact === 'object' ? (
                 <div style={{ marginBottom: '8px' }}>
                   <strong>Contactpersoon: </strong>
-                  <div>
+                  <div style={{ minHeight: '24px' }}>
                     {[contact.voornaam, contact.tussenvoegsel, contact.achternaam]
                       .filter(Boolean)
                       .join(' ')}
                   </div>
                   {contact['e-mailadres'] && (
                     <div>
-                      <Link href={`mailto:${contact['e-mailadres']}`}>
+                      <Link
+                        href={`mailto:${contact['e-mailadres']}`}
+                        style={{ minHeight: '24px' }}
+                      >
                         {contact['e-mailadres']}
                       </Link>
                     </div>
@@ -392,6 +384,7 @@ const ConDienstDetailsPageContent = ({
                           .split('')
                           .filter((character) => character !== ' ')
                           .join('')}`}
+                        style={{ minHeight: '24px' }}
                       >
                         {contact.telefoonnummer}
                       </Link>

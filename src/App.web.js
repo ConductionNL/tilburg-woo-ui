@@ -61,12 +61,10 @@ const AcLogout = withStore(
 );
 
 const App = ({ store }) => {
-  const { fetchPages, all_pages, getFilteredPages } = store.pages;
   const { user } = store;
   const resetFocus = useAutoFocus();
 
   useEffect(() => {
-    fetchPages();
     // Warm up names cache in background for better UX
     store.object.warmupNamesCache().catch((error) => {
       console.warn('⚠️ Names cache warmup failed during app initialization:', error);
@@ -243,33 +241,12 @@ const App = ({ store }) => {
     setTheme();
   }, []);
 
-  if (!all_pages?.length) {
-    return (
-      <div className={'ac-app-container'} tabIndex='-1' ref={resetFocus}>
-        <AcHeader store={store} />
-        <main id='main' className='ac-app-main'>
-          <AcFallbackErrorPage />
-        </main>
-        <AcFooter />
-      </div>
-    );
-  }
-
   return (
     <div className={'ac-app-container'} tabIndex='-1' ref={resetFocus}>
       <AcHeader store={store} />
       <main id='main' className='ac-app-main'>
         <Routes>
-          {/* CMS-driven pages */}
-          {getFilteredPages(user.isAuthenticated).map((page) => (
-            <Route
-              key={`route-${page.id}`}
-              path={page.slug}
-              element={getView(page)}
-            />
-          ))}
-
-          {/* Static routes */}
+          {/* Static routes - these take precedence over catch-all */}
           {Object.values(ROUTES)
             .filter((route) => route.component || route.redirectTo)
             .map((route) => {
@@ -313,11 +290,11 @@ const App = ({ store }) => {
             element={<AcLogout store={store} />}
           />
 
-          {/* Fallback route */}
+          {/* Catch-all route for CMS pages - fetches on demand */}
           <Route
-            key={`default-route-${DEFAULT_ROUTE.id}`}
-            path={'*'}
-            element={<AcHome store={store} />}
+            key='cms-pages-catchall'
+            path='*'
+            element={<AcContent store={store} />}
           />
         </Routes>
       </main>

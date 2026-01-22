@@ -124,6 +124,13 @@ const ConAangebodenSuggestiesTable = loadable(() =>
   import('@src/components/con-aangeboden-gebruik-table/con-aangeboden-gebruik-table')
 );
 
+const ConExternalLink = loadable(() =>
+  import('@src/components/con-external-link/con-external-link')
+);
+
+// Don't lazy load - needs immediate access to VISUALS
+import ConPublicationTypeBadge from '@src/components/con-publication-type-badge/con-publication-type-badge';
+
 export {
   AcAbout,
   AcCNavigation,
@@ -168,4 +175,6 @@ export {
   ConDebugViewer,
   ConOrganizationSelector,
   ConAangebodenSuggestiesTable,
+  ConExternalLink,
+  ConPublicationTypeBadge,
 };

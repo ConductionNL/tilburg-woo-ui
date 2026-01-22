@@ -79,6 +79,7 @@ const BeheerPageConfigFactory = {
       // removed plural alias 'extendviews'
       case 'module':
       case 'applicaties':
+      case 'applications':
       case 'modules':
         return {
           ...baseConfig,
@@ -256,26 +257,46 @@ const BeheerPageConfigFactory = {
            * If koppelingen array is filled, redirect to koppeling wizard
            * If diensten array is filled, redirect to dienst wizard
            * Otherwise, use default gebruik wizard behavior
+           * For Leverancier/Community organizations, use ontbrekend-organisatie type
            * @param {Object} row - The row data containing the gebruik to edit
+           * @param {Object} fullActiveOrganisation - The full organization data containing type
            * @returns {string|null} The URL to navigate to for editing, or null to use default behavior
            */
-          getEditUrl: (row) => {
+          getEditUrl: (row, fullActiveOrganisation) => {
             const gebruikId = row?.['@self']?.id || row?.id;
             if (!gebruikId) return null;
+
+            // Check if organization type is Leverancier or Community
+            // These organization types don't have their own gebruik objects,
+            // they only manage gebruik for gemeentes or other organizations
+            const orgType = fullActiveOrganisation?.type;
+            const isLeverancierOrCommunity =
+              orgType === 'Leverancier' || orgType === 'Community';
 
             // Check if koppelingen array is filled - redirect to koppeling wizard
             // Also check @self.relations.koppelingen as fallback
             const koppelingen =
               row?.koppelingen || row?.['@self']?.relations?.koppelingen;
             if (Array.isArray(koppelingen) && koppelingen.length > 0) {
-              return `/forms/gebruik/koppeling?type=eigen-organisatie&id=${gebruikId}`;
+              const koppelingType = isLeverancierOrCommunity
+                ? 'ontbrekend-organisatie'
+                : 'eigen-organisatie';
+              return `/forms/gebruik/koppeling?type=${koppelingType}&id=${gebruikId}`;
             }
 
             // Check if diensten array is filled - redirect to dienst wizard
             // Also check @self.relations.diensten as fallback
             const diensten = row?.diensten || row?.['@self']?.relations?.diensten;
             if (Array.isArray(diensten) && diensten.length > 0) {
-              return `/forms/gebruik/dienst?type=dienst&id=${gebruikId}`;
+              const dienstType = isLeverancierOrCommunity
+                ? 'ontbrekend-organisatie'
+                : 'dienst';
+              return `/forms/gebruik/dienst?type=${dienstType}&id=${gebruikId}`;
+            }
+
+            // For Leverancier/Community, use ontbrekend-organisatie type for default gebruik wizard
+            if (isLeverancierOrCommunity) {
+              return `/forms/gebruik/applicatie?type=ontbrekend-organisatie&id=${gebruikId}`;
             }
 
             // Return null to use default wizard behavior

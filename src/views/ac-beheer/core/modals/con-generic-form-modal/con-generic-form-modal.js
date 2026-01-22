@@ -194,7 +194,7 @@ const ConGenericFormModal = ({
           await object.fetchCollection(
             optionConfig.register,
             optionConfig.schema,
-            { ...optionConfig.params, page: 1, limit: 9999, _published: 'false' },
+            { ...optionConfig.params, page: 1, limit: 9999, _source: 'database' },
             false,
             'form-options'
           );

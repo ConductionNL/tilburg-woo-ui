@@ -1,29 +1,18 @@
-import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
-import RelatedTabs from './con-related-tabs';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import RelatedTabs from './con-related-tabs-new';
 import ConLogoPreview from '../ac-register/con-logo-preview';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AcContainer, AcFlex } from '@atoms';
-import { AcLoader, ConDetailsActionsMenu } from '@components';
+import { AcLoader, ConDetailsActionsMenu, ConExternalLink, ConPublicationTypeBadge } from '@components';
 import { withStore } from '@stores';
 import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
 import { schemaCache } from '@services/schemaCache.service';
-
-// Markdown Editor
-import remarkDefinitionList, { defListHastHandlers } from 'remark-definition-list';
-import { remarkMark } from 'remark-mark-highlight';
-import MDEditor from '@uiw/react-md-editor';
-import remarkGfm from 'remark-gfm';
-import remarkRehype from 'remark-rehype';
-import remarkEmoji from 'remark-emoji';
-import remarkSupersub from 'remark-supersub';
-import rehypeSlug from 'rehype-slug';
-import rehypeSanitize from 'rehype-sanitize';
-import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 import { normalizeSchemaName } from '@src/utilities/con-normalize-schema-name';
+import { createBeschrijvingTab } from './helpers/beschrijving-tab.helper';
 
 const AcPublication = ({ store: { publications, object, user } }) => {
   const { id } = useParams();
@@ -47,19 +36,21 @@ const AcPublication = ({ store: { publications, object, user } }) => {
   // Tabs
   const [uses, setUses] = useState([]);
   const [used, setUsed] = useState([]);
+  const [gebruik, setGebruik] = useState([]);
   const [usesLoading, setUsesLoading] = useState(false);
   const [usedLoading, setUsedLoading] = useState(false);
+  const [gebruikLoading, setGebruikLoading] = useState(false);
   const [tabIndex, setTabIndex] = useState(0);
-
-  // Track which IDs we've already fetched to prevent duplicate calls
-  const fetchedIds = useRef(new Set());
+  
+  // Aggregated schemas from all endpoints (indexed by schema ID)
+  const [aggregatedSchemas, setAggregatedSchemas] = useState({});
 
   const fetchUses = useCallback(async () => {
     if (!id) return;
     setUsesLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_source=database`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend[]=_schema`,
         {
           method: 'GET',
           headers: {
@@ -72,20 +63,28 @@ const AcPublication = ({ store: { publications, object, user } }) => {
         return;
       }
       const data = await response.json();
-      setUses(data.results);
+      setUses(data.results || []);
+      
+      // Extract and aggregate schemas from @self.schemas
+      if (data['@self']?.schemas) {
+        setAggregatedSchemas(prev => ({
+          ...prev,
+          ...data['@self'].schemas
+        }));
+      }
     } catch (error) {
       console.error('Error fetching uses:', error);
     } finally {
       setUsesLoading(false);
     }
-  }, []);
+  }, [id]);
 
   const fetchUsed = useCallback(async () => {
     if (!id) return;
     setUsedLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_source=database`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=_schema`,
         {
           method: 'GET',
           headers: {
@@ -98,26 +97,64 @@ const AcPublication = ({ store: { publications, object, user } }) => {
         return;
       }
       const data = await response.json();
-      setUsed(data.results);
+      setUsed(data.results || []);
+      
+      // Extract and aggregate schemas from @self.schemas
+      if (data['@self']?.schemas) {
+        setAggregatedSchemas(prev => ({
+          ...prev,
+          ...data['@self'].schemas
+        }));
+      }
     } catch (error) {
       console.error('Error fetching used:', error);
     } finally {
       setUsedLoading(false);
     }
-  }, []);
+  }, [id]);
+
+  const fetchGebruik = useCallback(async () => {
+    if (!id) return;
+    setGebruikLoading(true);
+    try {
+      // For organisations, fetch gebruik where the organisation is referenced
+      const response = await fetch(
+        `${commongroundApiUrl()}/softwarecatalog/api/gebruik?_limit=1000&_extend[]=_schema&organisatie=${id}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      if (!response.ok) {
+        console.error('Error fetching gebruik:', response.statusText);
+        return;
+      }
+      const data = await response.json();
+      setGebruik(data.results || []);
+      
+      // Extract and aggregate schemas from @self.schemas
+      if (data['@self']?.schemas) {
+        setAggregatedSchemas(prev => ({
+          ...prev,
+          ...data['@self'].schemas
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching gebruik:', error);
+    } finally {
+      setGebruikLoading(false);
+    }
+  }, [id]);
 
   useEffect(() => {
-    // Only fetch when the ID in the URL changes and we haven't fetched for this ID before
-    if (!id || fetchedIds.current.has(id)) {
-      return;
-    }
-
-    // Mark this ID as fetched
-    fetchedIds.current.add(id);
-
+    if (!id) return;
+    
     fetchUses();
     fetchUsed();
-  }, [id, fetchUses, fetchUsed]);
+    fetchGebruik();
+  }, [id, fetchUses, fetchUsed, fetchGebruik]);
 
   // Loading
   if (loading.status || !get_single || !attachments) {
@@ -149,18 +186,13 @@ const AcPublication = ({ store: { publications, object, user } }) => {
             </Heading>
 
             <AcFlex
-              justifyContent='between'
+              justifyContent='end'
               alignItems='center'
               spacing='sm'
               className='con-product-publication--header-actions'
             >
               <Heading className='con-product-publication--header-type'>
-                {schemaSlug &&
-                  (() => {
-                    const Icon = getTabHeaderIcon(schemaSlug);
-                    return <Icon />;
-                  })()}
-                {schemaSlug && getTabHeaderName(schemaSlug, true)}
+                <ConPublicationTypeBadge schemaSlug={schemaSlug} />
               </Heading>
               {schemaSlug && (
                 <ConDetailsActionsMenu
@@ -176,9 +208,12 @@ const AcPublication = ({ store: { publications, object, user } }) => {
                   onDelete={handleDelete}
                   onEdit={() => {
                     if (schemaSlug) {
-                      const wizardSchemaName = normalizeSchemaName(schemaSlug).toLowerCase();
+                      const wizardSchemaName =
+                        normalizeSchemaName(schemaSlug).toLowerCase();
                       const wizards = Object.values(DASHBOARD_WIZARDS);
-                      const wizard = wizards.find((w) => w.schema === wizardSchemaName);
+                      const wizard = wizards.find(
+                        (w) => w.schema === wizardSchemaName
+                      );
 
                       if (wizard) {
                         const baseUrl = getWizardUrl(wizard);
@@ -201,27 +236,6 @@ const AcPublication = ({ store: { publications, object, user } }) => {
             <AcFlex column spacing='md' style={{ flex: 3 }}>
               {!!get_single?.['@self']?.summary && (
                 <div>{get_single?.['@self']?.summary}</div>
-              )}
-
-              {!!get_single?.beschrijvingLang && (
-                <MDEditor.Markdown
-                  wrapperElement={{
-                    'data-color-mode': 'light',
-                  }}
-                  source={get_single?.beschrijvingLang}
-                  remarkPlugins={[
-                    [remarkGfm, { singleTilde: false }],
-                    remarkDefinitionList,
-                    remarkEmoji,
-                    remarkSupersub,
-                    remarkMark,
-                  ]}
-                  rehypePlugins={[
-                    rehypeSlug,
-                    [rehypeSanitize],
-                    [remarkRehype, { handlers: { ...defListHastHandlers } }],
-                  ]}
-                />
               )}
             </AcFlex>
             {(get_single?.['e-mailadres'] ||
@@ -252,19 +266,11 @@ const AcPublication = ({ store: { publications, object, user } }) => {
                       </div>
                     )}
                     {get_single?.website && (
-                      <div style={{ marginBottom: '8px' }}>
-                        <strong>Website: </strong>
-                        <Link
-                          href={
-                            get_single.website.startsWith('http')
-                              ? get_single.website
-                              : `https://${get_single.website}`
-                          }
-                          target='_blank'
-                          rel='noopener noreferrer'
-                        >
-                          {get_single.website}
-                        </Link>
+                      <div
+                        style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}
+                      >
+                        <strong>Website:</strong>
+                        <ConExternalLink href={get_single.website} />
                       </div>
                     )}
                   </div>
@@ -281,19 +287,20 @@ const AcPublication = ({ store: { publications, object, user } }) => {
           />
 
           <RelatedTabs
-            id={id}
             uses={uses}
             used={used}
+            gebruik={gebruik}
+            schemas={aggregatedSchemas}
             usesLoading={usesLoading}
             usedLoading={usedLoading}
-            gebruikId={id}
-            gebruikSchemaId={schemaId}
-            gebruikSchemaSlug={get_single?.['@self']?.schema?.slug}
+            gebruikLoading={gebruikLoading}
+            excludeObjectIds={[]}
             tabIndex={tabIndex}
             setTabIndex={setTabIndex}
             object={object}
             navigateTo='publication'
             user={user}
+            customTabsBefore={[createBeschrijvingTab(get_single)]}
           />
         </AcFlex>
       </AcContainer>

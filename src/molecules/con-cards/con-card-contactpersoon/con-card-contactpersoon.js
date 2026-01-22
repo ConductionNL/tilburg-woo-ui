@@ -1,11 +1,11 @@
 import { AcLink } from '@molecules';
+import { ConUuidResolver } from '@components';
 import { LABELS, VISUALS } from '@constants';
 import { AcCard, AcFlex } from '@atoms';
 import { Heading, Paragraph } from '@utrecht/component-library-react';
 import { NAVIGATE_TO } from '@constants/routes.constants';
 import { extractTitle } from '@src/utilities/con-extract-text';
 import ConLogoPreview from '@src/views/ac-register/con-logo-preview';
-import { useResolvedText } from '@src/utilities/con-resolve-uuids-in-text';
 
 const ConCardContactpersoon = ({
   skeleton,
@@ -18,14 +18,10 @@ const ConCardContactpersoon = ({
   email,
   organisation,
   telefoon,
-  objectStore,
   navigateTo = 'publication',
 }) => {
-  // Use generic UUID resolver for organisation name
-  const { resolvedText: resolvedOrganisation } = useResolvedText(
-    typeof organisation === 'object' ? organisation.value : organisation,
-    objectStore
-  );
+  // Get the organisation value (handle both object and string formats)
+  const organisationValue = typeof organisation === 'object' ? organisation?.value : organisation;
 
   const name = [firstName, middleName, lastName].filter(Boolean).join(' ');
 
@@ -55,8 +51,10 @@ const ConCardContactpersoon = ({
             }}
           />
           <Heading level={3}>{extractTitle(name)}</Heading>
-          {organisation && (
-            <Paragraph small>(Werkzaam bij {resolvedOrganisation})</Paragraph>
+          {organisationValue && (
+            <Paragraph small>
+              (Werkzaam bij <ConUuidResolver>{organisationValue}</ConUuidResolver>)
+            </Paragraph>
           )}
         </AcFlex>
         {image && (

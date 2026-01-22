@@ -33,10 +33,10 @@ const AcFormsApplicatie = loadable(() =>
   import('@views/ac-forms/ac-forms-applicatie/ac-forms-applicatie')
 );
 const AcFormsKoppeling = loadable(() =>
-  import('@views/ac-forms/ac-forms-koppeling/ac-forms-koppeling')
+  import('@src/views/ac-forms/ac-forms-koppeling/ac-forms-koppeling')
 );
 const ConFormsDienst = loadable(() =>
-  import('@views/ac-forms/con-forms-dienst/con-forms-dienst')
+  import('@src/views/ac-forms/con-forms-dienst/con-forms-dienst')
 );
 const ConFormsIndex = loadable(() =>
   import('@views/ac-forms/con-forms-index/con-forms-index')
@@ -54,6 +54,7 @@ const ConFormsGebruikKoppeling = loadable(() =>
 const ConFormsGebruikDienst = loadable(() =>
   import('@views/ac-forms/ac-forms-gebruik/gebruik-dienst/con-forms-dienst')
 );
+const AcChat = loadable(() => import('@views/ac-chat/ac-chat'));
 
 export {
   AcHome,
@@ -82,4 +83,5 @@ export {
   ConPasswordReminder,
   ConFormsGebruikKoppeling,
   ConFormsGebruikDienst,
+  AcChat,
 };

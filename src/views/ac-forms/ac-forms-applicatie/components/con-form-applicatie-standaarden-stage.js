@@ -187,7 +187,10 @@ const ConFormApplicatieStandaardenStage = ({
   // Extract standaardversie information from data
   const extractStandaardversieInfo = (versie, fetchedData = {}) => {
     // Prioritize fetched data, fall back to original versie data
+    // IMPORTANT: Check @self.name first (from backend _extend)
     const name =
+      fetchedData?.['@self']?.name ||
+      versie?.['@self']?.name ||
       fetchedData.xml?.name?._value ||
       fetchedData.name ||
       fetchedData.naam ||
@@ -363,10 +366,26 @@ const ConFormApplicatieStandaardenStage = ({
   }, [standaardenversiesOptions, existingStandardIds]);
 
   // Clean up selectedExtraStandards when standards move to referentieComponenten
+  // This should only remove items that are actually in referentieComponenten (allStandards)
+  // It should NOT be triggered by compliance checkbox toggles
   useEffect(() => {
-    const allStandardsIds = new Set(
-      allStandards.map((standard) => String(standard.id))
-    );
+    // Build a comprehensive set of all possible ID formats for standards in referentieComponenten
+    const allStandardsIds = new Set();
+
+    allStandards.forEach((standard) => {
+      const standardId = String(standard.id);
+      allStandardsIds.add(standardId);
+
+      // Also add alternative ID formats from fetched data
+      const fetchedData = findMatchingStandaardversieData({ id: standard.id });
+      if (fetchedData) {
+        ['id', 'identifier', 'value', 'slug'].forEach((key) => {
+          if (fetchedData[key]) {
+            allStandardsIds.add(String(fetchedData[key]));
+          }
+        });
+      }
+    });
 
     // Check if allStandardsIds actually changed
     const idsChanged =
@@ -387,20 +406,47 @@ const ConFormApplicatieStandaardenStage = ({
 
     setSelectedExtraStandards((prev) => {
       // Check if any selectedExtraStandards need to be removed
-      const needsCleanup = prev.some((option) =>
-        allStandardsIds.has(String(option.value))
-      );
+      // Only remove if they're actually in referentieComponenten (allStandards)
+      const needsCleanup = prev.some((option) => {
+        const optionValue = String(option.value);
+        // Check direct match
+        if (allStandardsIds.has(optionValue)) return true;
+
+        // Also check alternative ID formats from option data
+        if (option.data) {
+          for (const key of ['id', 'identifier', 'value', 'slug']) {
+            if (option.data[key] && allStandardsIds.has(String(option.data[key]))) {
+              return true;
+            }
+          }
+        }
+
+        return false;
+      });
 
       if (!needsCleanup) {
         return prev; // Return same reference if no changes
       }
 
-      const filtered = prev.filter(
-        (option) => !allStandardsIds.has(String(option.value))
-      );
+      const filtered = prev.filter((option) => {
+        const optionValue = String(option.value);
+        // Keep if NOT in allStandardsIds (i.e., it's truly an extra standard)
+        if (allStandardsIds.has(optionValue)) return false;
+
+        // Also check alternative ID formats from option data
+        if (option.data) {
+          for (const key of ['id', 'identifier', 'value', 'slug']) {
+            if (option.data[key] && allStandardsIds.has(String(option.data[key]))) {
+              return false; // Remove this option
+            }
+          }
+        }
+
+        return true; // Keep this option
+      });
       return filtered;
     });
-  }, [allStandards, setSelectedExtraStandards]);
+  }, [allStandards, setSelectedExtraStandards, standaardenversiesMap]);
 
   // Clean up orphaned compliancy entries when referentieComponenten or selectedExtraStandards change
   useEffect(() => {
@@ -1369,25 +1415,28 @@ const ConFormApplicatieStandaardenStage = ({
           </Paragraph>
         </div>
 
-        {/* Extra standaardversies multi-select - always show when options available */}
-        {availableExtraStandardsOptions.length > 0 && (
-          <div style={{ marginBlock: '1.5rem' }}>
-            <Paragraph style={{ marginBottom: '0.5rem', fontWeight: '500' }}>
-              Voeg standaardversies toe
-            </Paragraph>
-            <ReactSelect
-              isMulti
-              className='ac-beheer-select'
-              options={availableExtraStandardsOptions}
-              value={selectedExtraStandards}
-              onChange={handleExtraStandardsChange}
-              isLoading={standaardenversiesOptionsLoading}
-              closeMenuOnSelect={false}
-              placeholder='Zoek en selecteer standaardversies...'
-              isSearchable={true}
-            />
-          </div>
-        )}
+        {/* Extra standaardversies multi-select - always show */}
+        <div style={{ marginBlock: '1.5rem' }}>
+          <Paragraph style={{ marginBottom: '0.5rem', fontWeight: '500' }}>
+            Voeg standaardversies toe
+          </Paragraph>
+          <ReactSelect
+            isMulti
+            className='ac-beheer-select'
+            options={availableExtraStandardsOptions}
+            value={selectedExtraStandards}
+            onChange={handleExtraStandardsChange}
+            isLoading={standaardenversiesOptionsLoading}
+            closeMenuOnSelect={false}
+            placeholder={
+              availableExtraStandardsOptions.length === 0
+                ? 'Geen extra standaardversies beschikbaar'
+                : 'Zoek en selecteer standaardversies...'
+            }
+            isSearchable={true}
+            noOptionsMessage={() => 'Geen standaardversies gevonden'}
+          />
+        </div>
       </div>
     );
   }
@@ -1744,25 +1793,28 @@ const ConFormApplicatieStandaardenStage = ({
         })()}
       </div>
 
-      {/* Extra standaardversies multi-select */}
-      {availableExtraStandardsOptions.length > 0 && (
-        <div style={{ marginBlock: '1.5rem' }}>
-          <Paragraph style={{ marginBottom: '0.5rem', fontWeight: '500' }}>
-            Voeg extra standaardversies toe (optioneel)
-          </Paragraph>
-          <ReactSelect
-            isMulti
-            className='ac-beheer-select'
-            options={availableExtraStandardsOptions}
-            value={selectedExtraStandards}
-            onChange={handleExtraStandardsChange}
-            isLoading={standaardenversiesOptionsLoading}
-            closeMenuOnSelect={false}
-            placeholder='Zoek en selecteer extra standaardversies...'
-            isSearchable={true}
-          />
-        </div>
-      )}
+      {/* Extra standaardversies multi-select - always shown */}
+      <div style={{ marginBlock: '1.5rem' }}>
+        <Paragraph style={{ marginBottom: '0.5rem', fontWeight: '500' }}>
+          Voeg extra standaardversies toe (optioneel)
+        </Paragraph>
+        <ReactSelect
+          isMulti
+          className='ac-beheer-select'
+          options={availableExtraStandardsOptions}
+          value={selectedExtraStandards}
+          onChange={handleExtraStandardsChange}
+          isLoading={standaardenversiesOptionsLoading}
+          closeMenuOnSelect={false}
+          placeholder={
+            availableExtraStandardsOptions.length === 0
+              ? 'Geen extra standaardversies beschikbaar'
+              : 'Zoek en selecteer extra standaardversies...'
+          }
+          isSearchable={true}
+          noOptionsMessage={() => 'Geen standaardversies gevonden'}
+        />
+      </div>
     </div>
   );
 };

@@ -26,7 +26,7 @@ export const DASHBOARD_WIZARDS = {
     requiresOrganization: true,
     groupTypes: ['leverancier', 'gemeente', 'samenwerking'],
     params: { type: 'eigen' },
-    color: 'blue',
+    color: '#0078c8',
     schema: 'applicatie',
   },
   // ONTBREKEND_APPLICATIE: {
@@ -39,7 +39,7 @@ export const DASHBOARD_WIZARDS = {
   //   requiresOrganization: false,
   //   groupTypes: ['leverancier', 'gemeente', 'samenwerking', 'community'],
   //   params: { type: 'ontbrekend-applicatie' },
-  //   color: 'blue',
+  //   color: '#0078c8',
   //   schema: 'applicatie',
   // },
   DIENST: {
@@ -47,12 +47,12 @@ export const DASHBOARD_WIZARDS = {
     name: 'Dienst publiceren',
     description: 'Publiceer een nieuwe dienst in de catalogus',
     icon: VISUALS.HAND_SHAKE,
-    path: PATHS.FORMS_GEBRUIK_DIENST,
+    path: PATHS.FORMS_DIENST,
     requiresAuth: true,
     requiresOrganization: true,
     groupTypes: ['leverancier', 'gemeente', 'samenwerking'],
     params: { type: 'dienst' },
-    color: 'blue',
+    color: '#0078c8',
     schema: 'dienst',
   },
   DIENST_TOEVOEGEN: {
@@ -65,20 +65,20 @@ export const DASHBOARD_WIZARDS = {
     requiresOrganization: false,
     groupTypes: ['leverancier', 'gemeente', 'samenwerking', 'community'],
     params: { type: 'ontbrekend-dienst' },
-    color: 'blue',
+    color: '#0078c8',
     schema: 'dienst',
   },
   GEBRUIK: {
     id: 'gebruik',
     name: 'Applicatie toevoegen',
     description: 'Voeg een applicatie toe aan uw applicatielandschap.',
-    icon: VISUALS.CLIPBOARD_CHECK,
+    icon: VISUALS.CUBE,
     path: PATHS.FORMS_GEBRUIK_APPLICATIE,
     requiresAuth: true,
     requiresOrganization: true,
     groupTypes: ['gemeente', 'samenwerking', 'community'],
     params: {},
-    color: 'blue',
+    color: '#0078c8',
     schema: 'gebruik',
   },
   GEBRUIK_TOEVOEGEN: {
@@ -92,7 +92,7 @@ export const DASHBOARD_WIZARDS = {
     requiresOrganization: false,
     groupTypes: ['gemeente', 'samenwerking', 'community'],
     params: { type: 'ontbrekend-organisatie' },
-    color: 'blue',
+    color: '#0078c8',
     schema: 'gebruik',
   },
   KOPPELING_PUBLICEEREN: {
@@ -100,12 +100,12 @@ export const DASHBOARD_WIZARDS = {
     name: 'Koppeling publiceren',
     description: 'Publiceer een koppeling tussen een product en een dienst',
     icon: VISUALS.LINK,
-    path: PATHS.FORMS_GEBRUIK_KOPPELING,
+    path: PATHS.FORMS_KOPPELING,
     requiresAuth: true,
     requiresOrganization: true,
     groupTypes: ['gemeente', 'samenwerking', 'community'],
     params: { type: 'eigen-organisatie' },
-    color: 'blue',
+    color: '#0078c8',
     schema: 'koppeling',
   },
   KOPPELING_TOEVOEGEN: {
@@ -118,7 +118,7 @@ export const DASHBOARD_WIZARDS = {
     requiresOrganization: false,
     groupTypes: ['gemeente', 'samenwerking', 'community'],
     params: { type: 'aanbieden-koppeling' },
-    color: 'blue',
+    color: '#0078c8',
     schema: 'koppeling',
   },
 };
@@ -134,15 +134,15 @@ export const getDashboardWizards = (user = null) => {
   // Define which wizards are available for each group
   const aanbodBeheerderWizards = [
     DASHBOARD_WIZARDS.EIGEN_APPLICATIE,
+    DASHBOARD_WIZARDS.KOPPELING_PUBLICEEREN,
     DASHBOARD_WIZARDS.DIENST,
     DASHBOARD_WIZARDS.GEBRUIK_TOEVOEGEN,
-    DASHBOARD_WIZARDS.KOPPELING_PUBLICEEREN,
   ];
 
   const gebruikBeheerderWizards = [
     DASHBOARD_WIZARDS.GEBRUIK,
-    DASHBOARD_WIZARDS.DIENST_TOEVOEGEN,
     DASHBOARD_WIZARDS.KOPPELING_TOEVOEGEN,
+    DASHBOARD_WIZARDS.DIENST_TOEVOEGEN,
   ];
 
   // Check which groups the user has

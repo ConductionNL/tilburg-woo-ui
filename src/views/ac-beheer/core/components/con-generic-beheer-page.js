@@ -225,6 +225,38 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
   const [openModal, setOpenModal] = useState(null);
   const [modalSelectedRows, setModalSelectedRows] = useState([]);
 
+  // Full organization data for checking type (Leverancier, Community, etc.)
+  const [fullActiveOrganisation, setFullActiveOrganisation] = useState(null);
+
+  // Fetch full organization data to get the type
+  useEffect(() => {
+    const fetchFullOrganisationData = async () => {
+      const activeOrg = user?.activeOrganization;
+      const organisationId = activeOrg?.uuid || activeOrg?.id;
+
+      if (!organisationId) return;
+
+      try {
+        await object.fetchObject('voorzieningen', 'organisatie', organisationId, {
+          '_extend[]': ['@self.schema'],
+        });
+
+        const fullOrgData = object.getObject(
+          'voorzieningen_organisatie',
+          organisationId
+        );
+
+        if (fullOrgData) {
+          setFullActiveOrganisation(fullOrgData);
+        }
+      } catch (error) {
+        console.error('Error fetching full organization data:', error);
+      }
+    };
+
+    fetchFullOrganisationData();
+  }, [user?.activeOrganization?.uuid, user?.activeOrganization?.id, object]);
+
   // Local search input state for immediate UI updates
   const [localSearchInput, setLocalSearchInput] = useState('');
 
@@ -817,8 +849,9 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
           icon: <VISUALS.PENCIL />,
           onClick: () => {
             // Check for custom getEditUrl handler in config first
+            // Pass full organization data to allow organization-type-specific routing
             if (typeof config?.getEditUrl === 'function') {
-              const customUrl = config.getEditUrl(row);
+              const customUrl = config.getEditUrl(row, fullActiveOrganisation);
               if (customUrl) {
                 navigate(customUrl);
                 return;
@@ -1176,12 +1209,15 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
                 buttonType={showSearch ? 'primary' : 'secondary'}
                 onClick={() => setShowSearch(!showSearch)}
                 icon={<VISUALS.SEARCH />}
+                sr={showSearch ? 'Verberg zoekbalk' : 'Toon zoekbalk'}
               />
 
               <SecondaryActionButton
                 onClick={() => filterHeadersDrawerRef.current.showModal()}
+                aria-label='Filters openen'
               >
                 <VISUALS.FILTER />
+                <span className='sr-only'>Filters openen</span>
               </SecondaryActionButton>
               {showManageActions && (
                 <>

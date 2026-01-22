@@ -2,6 +2,7 @@
 import { observable, computed, makeObservable, action, toJS } from 'mobx';
 import { AcBuildURLSearchParams, getCookie } from '@utils';
 import { commongroundApiUrl } from '@config';
+import { schemaCache } from '@services/schemaCache.service';
 
 let app = {};
 
@@ -422,18 +423,19 @@ export class PublicationsStore {
     this.setFacetsLoadingStatus(true);
 
     try {
-      // Build base query from current filters and add _facets=extend
+      // Build base query from current filters and add _facets=extend and _extend parameters
       const baseQuery = {
         ...this.search_query,
         _limit: 0, // We only want facets, not results
         _facets: 'extend', // Request extended facets
+        _extend: '_schema,_register',
       };
 
       // Remove pagination parameters since we're not fetching results
       delete baseQuery._page;
 
       const queryString = AcBuildURLSearchParams(baseQuery);
-      const fullUrl = `${commongroundApiUrl()}/opencatalogi/api/publications?_source=index&${queryString}`;
+      const fullUrl = `${commongroundApiUrl()}/opencatalogi/api/publications?${queryString}`;
 
       console.group('🚀 INDEPENDENT FACETS API CALL');
       console.info('FACETS QUERY:', toJS(baseQuery));
@@ -536,17 +538,73 @@ export class PublicationsStore {
   };
 
   @action
+  enrichPublications = (publications, responseMetadata) => {
+    if (!publications || publications.length === 0 || !responseMetadata) {
+      return publications;
+    }
+
+    console.group('🔍 Enriching publications with schema and register data');
+    console.info('Publications to enrich:', publications.length);
+
+    try {
+      // Extract register and schema data from response metadata
+      const registers = responseMetadata.registers || {};
+      const schemas = responseMetadata.schemas || {};
+
+      console.info('Available registers:', Object.keys(registers));
+      console.info('Available schemas:', Object.keys(schemas));
+
+      // Enrich publications by replacing IDs with full objects
+      const enrichedPublications = publications.map((pub) => {
+        if (!pub['@self']) {
+          return pub;
+        }
+
+        const enriched = { ...pub };
+        const registerId = pub['@self'].register;
+        const schemaId = pub['@self'].schema;
+
+        // Replace register ID with full register object
+        if (registerId && registers[registerId]) {
+          enriched['@self'] = {
+            ...enriched['@self'],
+            register: registers[registerId],
+          };
+        }
+
+        // Replace schema ID with full schema object
+        if (schemaId && schemas[schemaId]) {
+          enriched['@self'] = {
+            ...enriched['@self'],
+            schema: schemas[schemaId],
+          };
+        }
+
+        return enriched;
+      });
+
+      console.info('✅ Publications enriched successfully');
+      console.groupEnd();
+
+      return enrichedPublications;
+    } catch (error) {
+      console.error('❌ Error enriching publications:', error);
+      console.groupEnd();
+      return publications; // Return original if enrichment fails
+    }
+  };
+
+  @action
   fetchPublications = async () => {
     this.loading.status = true;
 
-    // Build query including current filters/facets and request names data (no facetable)
+    // Build query including current filters/facets and extend parameters
     const baseQuery = {
       ...this.search_query,
-      _related: true,
-      _relatedNames: true,
+      _extend: '_schema,_register',
     };
     const queryString = AcBuildURLSearchParams(baseQuery);
-    const fullUrl = `${commongroundApiUrl()}/opencatalogi/api/publications?_source=index&${queryString}`;
+    const fullUrl = `${commongroundApiUrl()}/opencatalogi/api/publications?${queryString}`;
 
     console.group('🚀 INDEPENDENT PUBLICATIONS API CALL');
     console.info('SEARCH QUERY:', toJS(baseQuery));
@@ -565,9 +623,15 @@ export class PublicationsStore {
         }
         return response.json();
       })
-      .then((response) => {
-        // Set search results immediately
-        this.setItems(response.results);
+      .then(async (response) => {
+        // Enrich publications with full schema and register data from response metadata
+        const enrichedResults = this.enrichPublications(
+          response.results,
+          response['@self']
+        );
+
+        // Set enriched search results
+        this.setItems(enrichedResults);
 
         // Process related names data to populate the names cache
         if (response.relatedNames && app.store?.object) {
@@ -683,12 +747,87 @@ export class PublicationsStore {
             ...this.defaultQuery,
             _related: true,
             _relatedNames: true,
+            '_extend[]': '_schema',
           })
         ).toString()
       )
       .then((response) => {
         console.group('📄 PROCESSING SINGLE PUBLICATION RESPONSE');
         console.info('Publication response:', response);
+        console.info('response[@self].schema:', response['@self']?.schema);
+        console.info('response[@self].schemas:', response['@self']?.schemas);
+
+        // Normalize schema location: move from @self.schemas[uuid] to @self.schema
+        // Check if schemas object exists and schema is just an ID (not the full object)
+        if (response['@self']?.schemas && response['@self']?.schema) {
+          const schemaId = response['@self'].schema;
+          const schemasObj = response['@self'].schemas;
+          
+          console.info('Schema normalization path 1: schema exists as ID');
+          console.info('schemaId:', schemaId, 'type:', typeof schemaId);
+          console.info('schemasObj:', schemasObj);
+          
+          // If schema is just an ID string/number and we have the full object in schemas
+          if (typeof schemaId !== 'object' && schemasObj[schemaId]) {
+            response['@self'].schema = schemasObj[schemaId];
+            console.info('✅ Normalized schema from ID to full object using @self.schemas');
+            
+            // Cache the schema slug for quick lookups
+            if (schemasObj[schemaId]?.slug) {
+              schemaCache.set(String(schemaId), schemasObj[schemaId].slug);
+              console.info(`✅ Cached schema slug: ${schemaId} -> ${schemasObj[schemaId].slug}`);
+            } else {
+              console.warn('⚠️ Schema object has no slug property:', schemasObj[schemaId]);
+            }
+          } else if (typeof schemaId === 'object') {
+            console.info('Schema is already an object, checking for slug');
+            if (schemaId?.id && schemaId?.slug) {
+              schemaCache.set(String(schemaId.id), schemaId.slug);
+              console.info(`✅ Cached schema slug from object: ${schemaId.id} -> ${schemaId.slug}`);
+            }
+          }
+        } else if (response['@self']?.schemas && !response['@self']?.schema) {
+          console.info('Schema normalization path 2: no schema, using first from schemas');
+          // Fallback: if schema doesn't exist but schemas does, use the first one
+          const schemasObj = response['@self'].schemas;
+          const schemaIds = Object.keys(schemasObj);
+          if (schemaIds.length > 0) {
+            response['@self'].schema = schemasObj[schemaIds[0]];
+            console.info('✅ Normalized schema location from @self.schemas to @self.schema');
+            
+            // Cache the schema slug for quick lookups
+            const schemaId = schemaIds[0];
+            if (schemasObj[schemaId]?.slug) {
+              schemaCache.set(String(schemaId), schemasObj[schemaId].slug);
+              console.info(`✅ Cached schema slug: ${schemaId} -> ${schemasObj[schemaId].slug}`);
+            }
+          }
+        } else {
+          console.warn('⚠️ No schema normalization needed or possible');
+          console.info('Has @self.schemas?', !!response['@self']?.schemas);
+          console.info('Has @self.schema?', !!response['@self']?.schema);
+        }
+
+        // Normalize register location: move from @self.registers[uuid] to @self.register
+        // Check if registers object exists and register is just an ID (not the full object)
+        if (response['@self']?.registers && response['@self']?.register) {
+          const registerId = response['@self'].register;
+          const registersObj = response['@self'].registers;
+          
+          // If register is just an ID string/number and we have the full object in registers
+          if (typeof registerId !== 'object' && registersObj[registerId]) {
+            response['@self'].register = registersObj[registerId];
+            console.info('✅ Normalized register from ID to full object using @self.registers');
+          }
+        } else if (response['@self']?.registers && !response['@self']?.register) {
+          // Fallback: if register doesn't exist but registers does, use the first one
+          const registersObj = response['@self'].registers;
+          const registerIds = Object.keys(registersObj);
+          if (registerIds.length > 0) {
+            response['@self'].register = registersObj[registerIds[0]];
+            console.info('✅ Normalized register location from @self.registers to @self.register');
+          }
+        }
 
         // Process related names data to populate the names cache
         if (response.relatedNames && app.store?.object) {

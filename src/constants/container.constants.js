@@ -1,19 +1,16 @@
-// Container constants - Runtime Configuration
-// This file reads from window.RUNTIME_CONFIG which is loaded at runtime
-// The runtime-config.js file is generated at container startup with environment-specific values
-// Priority: 1. Runtime config (window.RUNTIME_CONFIG) -> 2. Build-time defaults
+// Auto-generated container constants
+// This file is generated from values.yaml and environment variables during container startup
+// Priority: 1. values.yaml (env/extraEnvVars) -> 2. Environment variables -> 3. Defaults
+// DO NOT EDIT MANUALLY - changes will be overwritten
 import { AcLockObject } from '@utils/ac-lock-object';
-
-/**
- * Build-time default configuration
- * Used as fallback if runtime config is not available
- */
-const DEFAULT_CONFIG = {
-  SITE_TITLE: 'VNG Softwarecatalogus',
+// Container configuration
+export const CONTAINER_CONFIG = AcLockObject({
+  SITE_TITLE: 'Development Catalogus',
   SITE_DESCRIPTION: 'Local development instance of the softwarecatalogus',
   SITE: 'localhost',
   MODE: 'development',
-  THEME_VARIANT: 'vng',
+  THEME_VARIANT: 'development',
+  FAVICON_URL: '/favicon.svg',
   ENVIRONMENT_NAME: 'development',
   BASE_URL: '/api/apps',
   GRANT_TYPE: 'authorization_code',
@@ -31,50 +28,30 @@ const DEFAULT_CONFIG = {
   ENABLE_GEMMA: true,
   ENABLE_DIRECTORY: true,
   ENABLE_ROLLBAR: false,
-  ENABLE_MOCK_THEMES: true,
+  ENABLE_MOCK_THEMES: false,
   ENABLE_BREADCRUMBS: false,
   EXTERNAL_WEBSITE_URL: 'https://www.tilburg.nl/',
   EXTERNAL_PRIVACY_URL: 'https://www.tilburg.nl/privacystatement/',
   EXTERNAL_COOKIES_URL: 'https://www.tilburg.nl/cookies/',
   EXTERNAL_PROCLAIMER_URL: 'https://www.tilburg.nl/proclaimer/',
-  HERO_IMAGE_URL: null,
-  FAVICON_URL: null,
+  HERO_IMAGE_URL: 'null',
   FOOTER_STYLE: 'vng',
-  FOOTER_LOGO_TITLE: 'VNG Softwarecatalogus',
-  FOOTER_LOGO_SUBTITLE: 'Één plek voor alle software voor en door Gemeenten',
+  FOOTER_LOGO_TITLE: 'Open Tilburg',
+  FOOTER_LOGO_SUBTITLE: 'Één plek voor alle publicaties van Gemeente Tilburg',
   SUPPORT_EMAIL_ADDRESS: 'info@conduction.nl',
-  DEFAULT_SEARCH_SCHEMA: '18',
-};
-
-/**
- * Initialize configuration at module load time
- * Since runtime-config.js is loaded in <head> before React bundle, window.RUNTIME_CONFIG is available
- */
-const initializeConfig = () => {
-  // Check if we're in a browser environment and runtime config is available
-  if (typeof window !== 'undefined' && window.RUNTIME_CONFIG) {
-    // console.log(
-    //   '✅ [container.constants.js] Using runtime configuration from window.RUNTIME_CONFIG',
-    //   window.RUNTIME_CONFIG
-    // );
-    // Merge runtime config with defaults (runtime config takes priority)
-    return { ...DEFAULT_CONFIG, ...window.RUNTIME_CONFIG };
-  }
-
-  // Fallback to build-time defaults (for SSR, tests, or if runtime config fails to load)
-  console.warn(
-    '⚠️  [container.constants.js] Runtime config not found, using build-time defaults'
-  );
-  return DEFAULT_CONFIG;
-};
-
-// Initialize configuration once at module load time
-// This is safe because runtime-config.js is loaded in <head> before this bundle
-const configData = initializeConfig();
-
-// Container configuration - frozen to prevent accidental modifications
-export const CONTAINER_CONFIG = AcLockObject(configData);
-
+  DEFAULT_SEARCH_SCHEMA: '',
+  CHAT_ENDPOINT: 'https://api.example.com/chat',
+  CHAT_TITLE: 'Chat met Open Registers',
+  CHAT_DESCRIPTION: 'Stel vragen over data en bestanden in open registers en krijg direct antwoord.',
+  NODE_ENV: 'development',
+  BASE_URL_COMMONGROUND: '/api/apps',
+  NGINX_ROOT_DIR: '/usr/share/nginx/html',
+  NGINX_OPENCONNECTOR_UPSTREAM: '',
+  NGINX_NEXTCLOUD_UPSTREAM: '',
+  NGINX_NEXTCLOUD_DOMAIN: '',
+  NGINX_TARGET_HOST: '',
+  FAST_REFRESH: 'true',
+});
 // Helper functions to replace hostname-based logic
 export const getTitle = () => CONTAINER_CONFIG.SITE_TITLE;
 export const getSiteDescription = () => CONTAINER_CONFIG.SITE_DESCRIPTION;
@@ -82,16 +59,13 @@ export const getSite = () => CONTAINER_CONFIG.SITE;
 export const getMode = () => CONTAINER_CONFIG.MODE;
 export const getThemeVariant = () => CONTAINER_CONFIG.THEME_VARIANT;
 export const getEnvironmentName = () => CONTAINER_CONFIG.ENVIRONMENT_NAME;
-
 // All API URLs are now unified under BASE_URL
 export const getApiUrl = () => CONTAINER_CONFIG.BASE_URL || '/api/apps';
 export const getCommongroundApiUrl = () => CONTAINER_CONFIG.BASE_URL || '/api/apps';
 export const getGemmaEndpoint = () => CONTAINER_CONFIG.BASE_URL || '/api/apps';
 export const getOpenconnectorApiUrl = () => '/api/openconnector';
-
 // Legacy aliases for backward compatibility
 export const getApiConfig = getApiUrl;
-
 export const getAuthConfig = () => ({
   grantType: CONTAINER_CONFIG.GRANT_TYPE,
   clientId: CONTAINER_CONFIG.CLIENT_ID,
@@ -99,27 +73,23 @@ export const getAuthConfig = () => ({
   provider: CONTAINER_CONFIG.PROVIDER,
   registerUrl: CONTAINER_CONFIG.REGISTER_URL,
 });
-
 export const getSessionConfig = () => ({
   autoLogout: CONTAINER_CONFIG.AUTO_LOGOUT,
   sessionTimeout: CONTAINER_CONFIG.SESSION_TIMEOUT,
   activityPing: CONTAINER_CONFIG.ACTIVITY_PING,
 });
-
 export const getFeatureFlags = () => ({
   enableBreadcrumbs: CONTAINER_CONFIG.ENABLE_BREADCRUMBS,
   enableDirectory: CONTAINER_CONFIG.ENABLE_DIRECTORY,
   enableRollbar: CONTAINER_CONFIG.ENABLE_ROLLBAR,
   enableMockThemes: CONTAINER_CONFIG.ENABLE_MOCK_THEMES,
 });
-
 export const getExternalUrls = () => ({
   website: CONTAINER_CONFIG.EXTERNAL_WEBSITE_URL,
   privacy: CONTAINER_CONFIG.EXTERNAL_PRIVACY_URL,
   cookies: CONTAINER_CONFIG.EXTERNAL_COOKIES_URL,
   proclaimer: CONTAINER_CONFIG.EXTERNAL_PROCLAIMER_URL,
 });
-
 export const getVisualConfig = () => ({
   heroImageUrl: CONTAINER_CONFIG.HERO_IMAGE_URL,
   faviconUrl: CONTAINER_CONFIG.FAVICON_URL,
@@ -135,7 +105,13 @@ export const getFaviconUrl = () => CONTAINER_CONFIG.FAVICON_URL;
 export const getFooterLogoTitle = () => CONTAINER_CONFIG.FOOTER_LOGO_TITLE;
 export const getFooterLogoSubtitle = () => CONTAINER_CONFIG.FOOTER_LOGO_SUBTITLE;
 export const getSupportEmailAddress = () => CONTAINER_CONFIG.SUPPORT_EMAIL_ADDRESS;
-
 // Search helper functions
 export const getDefaultSearchSchema = () => CONTAINER_CONFIG.DEFAULT_SEARCH_SCHEMA;
+// Chat helper functions
+export const getChatEndpoint = () => CONTAINER_CONFIG.CHAT_ENDPOINT;
+export const getChatTitle = () => CONTAINER_CONFIG.CHAT_TITLE;
+export const getChatDescription = () => CONTAINER_CONFIG.CHAT_DESCRIPTION;
+export const isChatEnabled = () => {
+  return CONTAINER_CONFIG.CHAT_ENDPOINT && CONTAINER_CONFIG.CHAT_ENDPOINT.trim() !== '';
+};
 export const getDefaultConfig = () => CONTAINER_CONFIG;

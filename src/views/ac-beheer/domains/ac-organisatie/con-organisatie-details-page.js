@@ -26,7 +26,7 @@ const ConOrganisatieDetailsPage = ({ store }) => {
   const id = params?.id;
 
   // Fixed page type and configuration (organisaties)
-  const pageType = 'organisaties';
+  const pageType = 'organisatie';
   const config = useMemo(() => {
     try {
       return DetailsPageConfigFactory.createConfig(pageType);

@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AcButton } from '@src/molecules';
 import { VISUALS } from '@src/constants';
 import { ConUuidResolver } from '@src/components';
 import {
   Alert,
+  Link,
   Paragraph,
   Separator,
   UnorderedList,
@@ -12,6 +13,72 @@ import {
   Heading1,
 } from '@utrecht/component-library-react/dist/css-module';
 import { AcFormatDate } from '@src/utilities/ac-format-date';
+
+/**
+ * Gets the relevant start date based on the selected status for a row.
+ * @param {string} status - The status value
+ * @param {Object} startDatumInProductieByRow - Map of rowId to date
+ * @param {Object} startDatumGeplandByRow - Map of rowId to date
+ * @param {Object} startDatumUitTeFaserenByRow - Map of rowId to date
+ * @param {Object} startDatumUitGefaseerdByRow - Map of rowId to date
+ * @param {number|string} rowId - The row ID
+ * @returns {Object|null} - Object with label and value, or null
+ */
+const getRelevantStartDate = (
+  status,
+  startDatumInProductieByRow,
+  startDatumGeplandByRow,
+  startDatumUitTeFaserenByRow,
+  startDatumUitGefaseerdByRow,
+  rowId
+) => {
+  if (!status) return null;
+
+  switch (status) {
+    case 'in gebruik':
+      return {
+        label: 'Startdatum In gebruik',
+        value: startDatumInProductieByRow?.[rowId]
+          ? AcFormatDate(
+              startDatumInProductieByRow[rowId],
+              'YYYY-MM-DD',
+              'D MMMM YYYY'
+            )
+          : null,
+      };
+    case 'in ontwikkeling':
+      return {
+        label: 'Startdatum In ontwikkeling',
+        value: startDatumGeplandByRow?.[rowId]
+          ? AcFormatDate(startDatumGeplandByRow[rowId], 'YYYY-MM-DD', 'D MMMM YYYY')
+          : null,
+      };
+    case 'einde ondersteuning':
+      return {
+        label: 'Startdatum Einde ondersteuning',
+        value: startDatumUitTeFaserenByRow?.[rowId]
+          ? AcFormatDate(
+              startDatumUitTeFaserenByRow[rowId],
+              'YYYY-MM-DD',
+              'D MMMM YYYY'
+            )
+          : null,
+      };
+    case 'teruggetrokken':
+      return {
+        label: 'Startdatum Teruggetrokken',
+        value: startDatumUitGefaseerdByRow?.[rowId]
+          ? AcFormatDate(
+              startDatumUitGefaseerdByRow[rowId],
+              'YYYY-MM-DD',
+              'D MMMM YYYY'
+            )
+          : null,
+      };
+    default:
+      return null;
+  }
+};
 
 const ConKoppelingStageControleren = ({
   rows,
@@ -41,151 +108,22 @@ const ConKoppelingStageControleren = ({
   organisatieOptions,
   aanbiederKeuze,
   aanbiederOrganisatie,
-  // Gebruik-beheerders flow props
-  selectedKoppelingId,
-  statusGebruiksinformatie,
-  datumInGebruik,
-  datumInOntwikkeling,
-  datumEindeOndersteuning,
-  datumTeruggetrokken,
-  datumVerwerving,
-  interneAantekening,
-  deelnemers,
-  deelnemerOptions,
-  searchResults,
+  // Startdatum fields per status
+  startDatumInProductieByRow,
+  startDatumGeplandByRow,
+  startDatumUitTeFaserenByRow,
+  startDatumUitGefaseerdByRow,
+  // Intermediair
+  intermediairByRow,
+  intermediairOptions,
+  // New own app flow
+  ownAppKeuze = 'bestaand',
+  nieuweOwnApp = {},
+  ownAppLeverancierKeuze = 'bestaand',
+  nieuweOwnAppLeverancier = {},
+  leverancierOptions = [],
 }) => {
   const navigate = useNavigate();
-
-  // State for fetched koppeling data (for gebruik beheerder flow)
-  const [selectedKoppelingData, setSelectedKoppelingData] = useState(null);
-  const [koppelingLoading, setKoppelingLoading] = useState(false);
-
-  // Manage visibility state of info alert (for gebruik beheerder flow)
-  // Alert persists as closed for the session after user closes it (via sessionStorage).
-  const [showInfoAlert, setShowInfoAlert] = useState(() => {
-    return !sessionStorage.getItem('koppeling-controleren-info-alert-closed');
-  });
-
-  // Mark the alert as closed for the session and update state.
-  const handleCloseAlert = () => {
-    setShowInfoAlert(false);
-    sessionStorage.setItem('koppeling-controleren-info-alert-closed', 'true');
-  };
-
-  // Fetch selected koppeling data for gebruik beheerder flow
-  useEffect(() => {
-    if (
-      !selectedKoppelingId ||
-      koppelingsType !== 'aanbieden-koppeling' ||
-      isEditMode
-    )
-      return;
-
-    // First try to find in searchResults
-    const foundInResults = (searchResults || []).find(
-      (k) => String(k?.id || k?.['@self']?.id || '') === String(selectedKoppelingId)
-    );
-
-    if (foundInResults) {
-      setSelectedKoppelingData(foundInResults);
-      return;
-    }
-
-    // If not found in results, fetch it
-    let cancelled = false;
-    const fetchKoppelingData = async () => {
-      try {
-        setKoppelingLoading(true);
-        const url = `/api/apps/openregister/api/objects/voorzieningen/koppeling/${encodeURIComponent(
-          selectedKoppelingId
-        )}?_extend[]=@self.schema&_extend[]=@self.relations&_published=false`;
-        const res = await fetch(url, { headers: { Accept: 'application/json' } });
-        if (!res.ok) return;
-        const data = await res.json();
-
-        if (!cancelled) {
-          setSelectedKoppelingData(data);
-        }
-      } catch (error) {
-        console.error('Failed to fetch koppeling data for review:', error);
-      } finally {
-        if (!cancelled) setKoppelingLoading(false);
-      }
-    };
-
-    fetchKoppelingData();
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedKoppelingId, koppelingsType, isEditMode, searchResults]);
-
-  // Helper function to get the relevant start date based on status
-  const getRelevantStartDate = () => {
-    const status = statusGebruiksinformatie;
-    if (!status) return null;
-
-    switch (status) {
-      case 'Verwerving':
-        return {
-          label: 'Startdatum Verwerving',
-          value: datumVerwerving
-            ? AcFormatDate(datumVerwerving, 'YYYY-MM-DD', 'D MMMM YYYY')
-            : null,
-        };
-      case 'Gepland':
-        return {
-          label: 'Startdatum Gepland',
-          value: datumInOntwikkeling
-            ? AcFormatDate(datumInOntwikkeling, 'YYYY-MM-DD', 'D MMMM YYYY')
-            : null,
-        };
-      case 'In productie':
-        return {
-          label: 'Startdatum In productie',
-          value: datumInGebruik
-            ? AcFormatDate(datumInGebruik, 'YYYY-MM-DD', 'D MMMM YYYY')
-            : null,
-        };
-      case 'Uit te faseren':
-        return {
-          label: 'Startdatum Uit te faseren',
-          value: datumEindeOndersteuning
-            ? AcFormatDate(datumEindeOndersteuning, 'YYYY-MM-DD', 'D MMMM YYYY')
-            : null,
-        };
-      case 'Uitgefaseerd':
-        return {
-          label: 'Startdatum Uitgefaseerd',
-          value: datumTeruggetrokken
-            ? AcFormatDate(datumTeruggetrokken, 'YYYY-MM-DD', 'D MMMM YYYY')
-            : null,
-        };
-      default:
-        return null;
-    }
-  };
-
-  const relevantStartDate = getRelevantStartDate();
-
-  // Helper function to resolve deelnemer names from IDs
-  const getDeelnemerLabel = (deelnemerId) => {
-    if (!deelnemerId) return '';
-    const deelnemerOpt = (deelnemerOptions || []).find(
-      (o) => String(o.value) === String(deelnemerId)
-    );
-    if (deelnemerOpt) return deelnemerOpt.label;
-    return String(deelnemerId);
-  };
-
-  // Helper function to extract relation ID
-  const extractRelationId = (rel) => {
-    if (!rel) return '';
-    if (typeof rel === 'string') return String(rel);
-    if (typeof rel === 'object') {
-      return String(rel.id || rel.value || rel?.['@self']?.id || '') || '';
-    }
-    return '';
-  };
 
   if (saveResult === 'error') {
     return (
@@ -301,206 +239,6 @@ const ConKoppelingStageControleren = ({
     return fromPool?.label || '';
   };
 
-  // Render Gebruik-beheerders flow (aanbieden-koppeling)
-  if (koppelingsType === 'aanbieden-koppeling') {
-    const koppeling = selectedKoppelingData;
-    const rels = koppeling?.['@self']?.relations || {};
-    const moduleAIdRaw = rels?.moduleA ?? koppeling?.moduleA;
-    const moduleBIdRaw = rels?.moduleB ?? koppeling?.moduleB;
-    const moduleAId = String(extractRelationId(moduleAIdRaw) || '');
-    const moduleBId = String(extractRelationId(moduleBIdRaw) || '');
-    const moduleALabel = optionLabelByValue(moduleAId) || moduleAId || '-';
-    const moduleBLabel = optionLabelByValue(moduleBId) || moduleBId || '-';
-    const richting =
-      koppeling?.gegevensuitwisselingRichting ||
-      koppeling?.richting ||
-      'bi-directioneel';
-    const dirArrow = getArrowForDirection(richting);
-    const koppelingNaam = koppeling?.naam || '';
-    const koppelingType = koppeling?.type || '';
-    const koppelingBeschrijving = koppeling?.beschrijvingKort || '';
-    const koppelingStandaarden = koppeling?.standaardversies || [];
-
-    return (
-      <div
-        className='ac-register-form-section'
-        role='group'
-        aria-labelledby='koppeling-review-title'
-      >
-        <h2 id='koppeling-review-title' className='utrecht-heading-2'>
-          Controleer uw gegevens
-        </h2>
-
-        <Paragraph className='con-form-wizard-paragraph'>
-          Controleer of het overzicht van de koppeling volledig en juist is voordat u
-          verder gaat. U kunt met Vorige terug naar de eerdere stappen. Na het
-          registreren van de koppeling kunt u via uw Dashboard de koppeling opzoeken
-          en indien gewenst aanpassen.
-        </Paragraph>
-
-        {/* Closeable info alert */}
-        {showInfoAlert && (
-          <Alert
-            severity='info'
-            className='ac-forms-product-info-alert'
-            style={{ marginBottom: '2rem' }}
-          >
-            <button
-              onClick={handleCloseAlert}
-              className='ac-forms-product-info-alert__close-button'
-              title='Sluiten'
-              aria-label='Alert sluiten'
-            >
-              <VISUALS.CLOSE />
-            </button>
-            <div className='ac-forms-product-info-alert__content'>
-              <VISUALS.INFO className='ac-forms-product-info-alert__icon' />
-              <div>
-                <Paragraph style={{ margin: 0 }}>
-                  De koppeling wordt toegevoegd aan uw applicatielandschap.
-                </Paragraph>
-                <Paragraph style={{ margin: '0.5rem 0 0 0' }}>
-                  Uw gebruiksinformatie is zichtbaar voor andere gemeenten en
-                  samenwerkingen om kennisdeling te bevorderen. De leverancier ziet
-                  dat u de koppeling gebruikt.
-                </Paragraph>
-                <Paragraph style={{ margin: '0.5rem 0 0 0' }}>
-                  De interne notitie is uitsluitend voor intern gebruik.
-                </Paragraph>
-              </div>
-            </div>
-          </Alert>
-        )}
-
-        {koppelingLoading ? (
-          <Paragraph>Bezig met laden...</Paragraph>
-        ) : !selectedKoppelingData ? (
-          <Alert type='error'>
-            <Paragraph>
-              De geselecteerde koppeling kon niet worden geladen. Controleer of de
-              koppeling nog bestaat.
-            </Paragraph>
-          </Alert>
-        ) : (
-          <div className='ac-register-review'>
-            {/* Selected Koppeling Section */}
-            <div className='ac-register-review__section'>
-              <div className='ac-register-review__header'>
-                <h3 className='utrecht-heading-4'>Geselecteerde koppeling</h3>
-              </div>
-              <Separator className='ac-register-review-header__separator' />
-
-              {koppelingNaam && (
-                <div className='ac-register-review__field'>
-                  <strong>Naam:</strong>
-                  <div>{koppelingNaam}</div>
-                </div>
-              )}
-
-              <div className='ac-register-review__field'>
-                <strong>Koppeling:</strong>
-                <div>
-                  <ConUuidResolver>{moduleALabel}</ConUuidResolver> {dirArrow}{' '}
-                  <ConUuidResolver>{moduleBLabel}</ConUuidResolver>
-                </div>
-              </div>
-
-              {koppelingType && (
-                <div className='ac-register-review__field'>
-                  <strong>Type:</strong>
-                  <div>{koppelingType}</div>
-                </div>
-              )}
-
-              {koppelingBeschrijving && (
-                <div className='ac-register-review__field'>
-                  <strong>Beschrijving:</strong>
-                  <div>{koppelingBeschrijving}</div>
-                </div>
-              )}
-
-              {koppelingStandaarden.length > 0 && (
-                <div className='ac-register-review__field'>
-                  <strong>Standaarden:</strong>
-                  <div>
-                    {koppelingStandaarden
-                      .map((s) => {
-                        const standaardOpt = (standaardenOptions || []).find(
-                          (o) => String(o.value) === String(s)
-                        );
-                        return standaardOpt?.label || String(s);
-                      })
-                      .join(', ')}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Gebruiksinformatie Section */}
-            <div className='ac-register-review__section'>
-              <div className='ac-register-review__header'>
-                <h3 className='utrecht-heading-4'>Gebruiksinformatie</h3>
-              </div>
-              <Separator className='ac-register-review-header__separator' />
-
-              {statusGebruiksinformatie && (
-                <div className='ac-register-review__field'>
-                  <strong>Status:</strong>
-                  <div>{statusGebruiksinformatie}</div>
-                </div>
-              )}
-
-              {/* Only show the relevant start date based on selected status */}
-              {relevantStartDate && relevantStartDate.value && (
-                <div className='ac-register-review__field'>
-                  <strong>{relevantStartDate.label}:</strong>
-                  <div>{relevantStartDate.value}</div>
-                </div>
-              )}
-
-              {interneAantekening && (
-                <div className='ac-register-review__field'>
-                  <strong>Interne notitie:</strong>
-                  <div>{interneAantekening}</div>
-                </div>
-              )}
-            </div>
-
-            {/* Deelnemers Section */}
-            {Array.isArray(deelnemers) && deelnemers.length > 0 && (
-              <div className='ac-register-review__section'>
-                <div className='ac-register-review__header'>
-                  <h3 className='utrecht-heading-4'>Deelnemers</h3>
-                </div>
-                <Separator className='ac-register-review-header__separator' />
-
-                <div className='ac-register-review__field'>
-                  <strong>Deelnemers:</strong>
-                  <div>
-                    <UnorderedList>
-                      {deelnemers.map((deelnemerId) => {
-                        const label = getDeelnemerLabel(deelnemerId);
-                        return (
-                          <UnorderedListItem key={deelnemerId}>
-                            {label ? (
-                              label
-                            ) : (
-                              <ConUuidResolver>{deelnemerId}</ConUuidResolver>
-                            )}
-                          </UnorderedListItem>
-                        );
-                      })}
-                    </UnorderedList>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    );
-  }
-
   // Helper function to get the correct aanbieder display name
   const getAanbiederDisplayName = () => {
     // If creating a new organization, show the naam from aanbiederOrganisatie
@@ -541,17 +279,17 @@ const ConKoppelingStageControleren = ({
       aria-labelledby='koppeling-review-title'
     >
       <h2 id='koppeling-review-title' className='sr-only'>
-        Controleren
+        Controleer uw gegevens
       </h2>
 
-      <Paragraph>
+      <Paragraph className='con-form-wizard-paragraph'>
         Controleer of het overzicht van de koppeling volledig en juist is voordat u
         verder gaat.
         <br />
         U kunt met Vorige terug naar de eerdere stappen.
         <br />
-        Na het registreren van de koppeling kunt u via uw “Dashboard” de koppeling
-        opzoeken en indien gewenst aanpassen.
+        Na het registreren van de koppeling kunt u via uw &quot;Dashboard&quot; de
+        koppeling opzoeken en indien gewenst aanpassen.
       </Paragraph>
 
       {saveResult === 'error' && (
@@ -582,6 +320,7 @@ const ConKoppelingStageControleren = ({
             </div>
           )}
 
+          {/* Koppelingen list - show first */}
           {!rows.length ? (
             <Paragraph>Geen koppelingen toegevoegd.</Paragraph>
           ) : (
@@ -594,7 +333,9 @@ const ConKoppelingStageControleren = ({
                     const appAValue =
                       selectedAppAByRow[rowId] || ownApp?.value || '';
                     const appALabel =
-                      optionLabelByValue(appAValue) || ownApp?.label || '-';
+                      ownAppKeuze === 'nieuw'
+                        ? nieuweOwnApp?.naam || '-'
+                        : optionLabelByValue(appAValue) || ownApp?.label || '-';
                     const appBValue = selectedAppBByRow[rowId] || '';
                     const appBLabel = optionLabelByValue(appBValue) || '-';
                     const richting = directionByRow[rowId] || '';
@@ -613,6 +354,23 @@ const ConKoppelingStageControleren = ({
                       '';
                     const beschrijving = (beschrijvingByRow[rowId] || '').trim();
 
+                    // Get the relevant start date for this row
+                    const relevantStartDate = getRelevantStartDate(
+                      statusVal,
+                      startDatumInProductieByRow,
+                      startDatumGeplandByRow,
+                      startDatumUitTeFaserenByRow,
+                      startDatumUitGefaseerdByRow,
+                      rowId
+                    );
+
+                    // Get intermediair label if selected
+                    const intermediairVal = intermediairByRow?.[rowId];
+                    const intermediairLabel = intermediairVal
+                      ? intermediairOptions?.find((o) => o.value === intermediairVal)
+                          ?.label || ''
+                      : '';
+
                     return (
                       <UnorderedListItem key={rowId}>
                         {naam && (
@@ -622,21 +380,47 @@ const ConKoppelingStageControleren = ({
                         )}
                         <div>
                           {appALabel} {dirArrow} {appBLabel}
-                          {soortLabel ? ` (${soortLabel})` : ''}
                         </div>
                         <div style={{ color: '#666', fontSize: '0.9rem' }}>
                           {statusLabel && <div>Status: {statusLabel}</div>}
+                          {relevantStartDate?.value && (
+                            <div>
+                              {relevantStartDate.label}: {relevantStartDate.value}
+                            </div>
+                          )}
                           {beschrijving && <div>Beschrijving: {beschrijving}</div>}
+                          {soortLabel && <div>Transportprotocol: {soortLabel}</div>}
+                          {intermediairLabel && (
+                            <div>Intermediair: {intermediairLabel}</div>
+                          )}
                           {standaardenByRow?.[rowId]?.length > 0 && (
                             <div>
-                              Standaarden:{' '}
-                              {standaardenByRow[rowId]
-                                .map(
-                                  (s) =>
-                                    standaardenOptions.find((o) => o.value === s)
-                                      ?.label
-                                )
-                                .join(', ')}
+                              <div style={{ marginBottom: '0.25rem' }}>
+                                Standaardversies:
+                              </div>
+                              <ul
+                                style={{
+                                  margin: 0,
+                                  paddingInlineStart: '1.25rem',
+                                  listStyleType: 'disc',
+                                }}
+                              >
+                                {standaardenByRow[rowId]
+                                  .map((s) => {
+                                    const label = standaardenOptions.find(
+                                      (o) => o.value === s
+                                    )?.label;
+                                    return label ? (
+                                      <li
+                                        key={s}
+                                        style={{ marginBottom: '0.125rem' }}
+                                      >
+                                        {label}
+                                      </li>
+                                    ) : null;
+                                  })
+                                  .filter(Boolean)}
+                              </ul>
                             </div>
                           )}
                         </div>
@@ -646,6 +430,190 @@ const ConKoppelingStageControleren = ({
                 </UnorderedList>
               </div>
             </div>
+          )}
+
+          {/* Show new application section when creating a new own app - after koppelingen */}
+          {ownAppKeuze === 'nieuw' && (
+            <>
+              <Separator className='ac-register-review__separator' />
+              <div
+                className='ac-register-review__subsection'
+                role='group'
+                aria-labelledby='nieuwe-applicatie-heading'
+              >
+                <h4
+                  id='nieuwe-applicatie-heading'
+                  className='utrecht-heading-5'
+                  style={{ marginBlockEnd: '1rem' }}
+                >
+                  Nieuwe applicatie wordt aangemaakt
+                </h4>
+
+                <dl
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'minmax(120px, auto) 1fr',
+                    gap: '0.5rem 1rem',
+                    margin: 0,
+                  }}
+                >
+                  <dt
+                    style={{
+                      fontWeight: 600,
+                      color: 'var(--tilburg-color-gray-700)',
+                    }}
+                  >
+                    Naam
+                  </dt>
+                  <dd style={{ margin: 0 }}>{nieuweOwnApp?.naam || '-'}</dd>
+
+                  {nieuweOwnApp?.website && (
+                    <>
+                      <dt
+                        style={{
+                          fontWeight: 600,
+                          color: 'var(--tilburg-color-gray-700)',
+                        }}
+                      >
+                        Website
+                      </dt>
+                      <dd style={{ margin: 0 }}>
+                        <Link
+                          href={
+                            nieuweOwnApp.website.startsWith('http://') ||
+                            nieuweOwnApp.website.startsWith('https://')
+                              ? nieuweOwnApp.website
+                              : `https://${nieuweOwnApp.website}`
+                          }
+                          target='_blank'
+                          rel='noopener noreferrer'
+                        >
+                          {nieuweOwnApp.website}
+                        </Link>
+                      </dd>
+                    </>
+                  )}
+
+                  {nieuweOwnApp?.beschrijvingKort && (
+                    <>
+                      <dt
+                        style={{
+                          fontWeight: 600,
+                          color: 'var(--tilburg-color-gray-700)',
+                        }}
+                      >
+                        Beschrijving
+                      </dt>
+                      <dd style={{ margin: 0 }}>{nieuweOwnApp.beschrijvingKort}</dd>
+                    </>
+                  )}
+                </dl>
+
+                {/* Leverancier subsection */}
+                {(ownAppLeverancierKeuze === 'nieuw' ||
+                  nieuweOwnApp?.leverancier) && (
+                  <div
+                    style={{
+                      marginBlockStart: '1.5rem',
+                      paddingBlockStart: '1rem',
+                      borderBlockStart: '1px solid var(--tilburg-color-gray-200)',
+                    }}
+                    role='group'
+                    aria-labelledby='nieuwe-leverancier-heading'
+                  >
+                    <h5
+                      id='nieuwe-leverancier-heading'
+                      className='utrecht-heading-6'
+                      style={{ marginBlockEnd: '0.75rem' }}
+                    >
+                      {ownAppLeverancierKeuze === 'nieuw'
+                        ? 'Nieuwe leverancier wordt aangemaakt'
+                        : 'Leverancier'}
+                    </h5>
+
+                    <dl
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'minmax(120px, auto) 1fr',
+                        gap: '0.5rem 1rem',
+                        margin: 0,
+                      }}
+                    >
+                      {ownAppLeverancierKeuze === 'nieuw' ? (
+                        <>
+                          <dt
+                            style={{
+                              fontWeight: 600,
+                              color: 'var(--tilburg-color-gray-700)',
+                            }}
+                          >
+                            Naam
+                          </dt>
+                          <dd style={{ margin: 0 }}>
+                            {nieuweOwnAppLeverancier?.naam || '-'}
+                          </dd>
+
+                          {nieuweOwnAppLeverancier?.website && (
+                            <>
+                              <dt
+                                style={{
+                                  fontWeight: 600,
+                                  color: 'var(--tilburg-color-gray-700)',
+                                }}
+                              >
+                                Website
+                              </dt>
+                              <dd style={{ margin: 0 }}>
+                                <Link
+                                  href={
+                                    nieuweOwnAppLeverancier.website.startsWith(
+                                      'http://'
+                                    ) ||
+                                    nieuweOwnAppLeverancier.website.startsWith(
+                                      'https://'
+                                    )
+                                      ? nieuweOwnAppLeverancier.website
+                                      : `https://${nieuweOwnAppLeverancier.website}`
+                                  }
+                                  target='_blank'
+                                  rel='noopener noreferrer'
+                                >
+                                  {nieuweOwnAppLeverancier.website}
+                                </Link>
+                              </dd>
+                            </>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <dt
+                            style={{
+                              fontWeight: 600,
+                              color: 'var(--tilburg-color-gray-700)',
+                            }}
+                          >
+                            Naam
+                          </dt>
+                          <dd style={{ margin: 0 }}>
+                            {(() => {
+                              const leverancierId = nieuweOwnApp.leverancier;
+                              const leverancierOption = (
+                                leverancierOptions || []
+                              ).find(
+                                (opt) => String(opt.value) === String(leverancierId)
+                              );
+                              return leverancierOption
+                                ? leverancierOption.label
+                                : leverancierId;
+                            })()}
+                          </dd>
+                        </>
+                      )}
+                    </dl>
+                  </div>
+                )}
+              </div>
+            </>
           )}
         </div>
       </div>

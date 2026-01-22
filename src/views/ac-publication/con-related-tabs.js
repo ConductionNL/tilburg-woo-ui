@@ -529,7 +529,7 @@ const RelatedTabs = observer(
           if (!isMounted) return;
 
           const response = await fetch(
-            `${commongroundApiUrl()}/softwarecatalog/api/gebruik?_source=database&_limit=1000${gebruikParam}`,
+            `${commongroundApiUrl()}/softwarecatalog/api/gebruik?_limit=1000&_extend[]=_schema${gebruikParam}`,
             {
               method: 'GET',
               signal: abortController.signal,

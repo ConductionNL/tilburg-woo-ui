@@ -12,7 +12,6 @@ import {
 } from '@utils/organization-permissions';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
 import { useNavigate } from 'react-router-dom';
-import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 import { AcFormatDate } from '@src/utilities/ac-format-date';
 
 /**
@@ -21,7 +20,6 @@ import { AcFormatDate } from '@src/utilities/ac-format-date';
 const ConGebruikDetailsPageContent = ({
   loading,
   data,
-  config,
   userStore: user,
   objectStore: object,
   id,
@@ -35,6 +33,36 @@ const ConGebruikDetailsPageContent = ({
   const [usedLoading, setUsedLoading] = useState(false);
   const [relatedTabIndex, setRelatedTabIndex] = useState(0);
   const [sortedReferentiecomponenten, setSortedReferentiecomponenten] = useState([]);
+  const [fullActiveOrganisation, setFullActiveOrganisation] = useState(null);
+
+  // Fetch full organization data to get the type (Leverancier, Community, etc.)
+  useEffect(() => {
+    const fetchFullOrganisationData = async () => {
+      const activeOrg = user?.activeOrganization;
+      const organisationId = activeOrg?.uuid || activeOrg?.id;
+
+      if (!organisationId) return;
+
+      try {
+        await object.fetchObject('voorzieningen', 'organisatie', organisationId, {
+          '_extend[]': ['@self.schema'],
+        });
+
+        const fullOrgData = object.getObject(
+          'voorzieningen_organisatie',
+          organisationId
+        );
+
+        if (fullOrgData) {
+          setFullActiveOrganisation(fullOrgData);
+        }
+      } catch (error) {
+        console.error('Error fetching full organization data:', error);
+      }
+    };
+
+    fetchFullOrganisationData();
+  }, [user?.activeOrganization?.uuid, user?.activeOrganization?.id, object]);
 
   const { canEdit: hasEditPermission, reason } = data
     ? checkOrganizationPermissions(user, data)
@@ -222,13 +250,23 @@ const ConGebruikDetailsPageContent = ({
                 <ConActionMenu.Button
                   icon={<VISUALS.PENCIL />}
                   onClick={() => {
+                    // Check if organization type is Leverancier or Community
+                    // These organization types don't have their own gebruik objects,
+                    // they only manage gebruik for gemeentes or other organizations
+                    const orgType = fullActiveOrganisation?.type;
+                    const isLeverancierOrCommunity =
+                      orgType === 'Leverancier' || orgType === 'Community';
+
                     // Check if koppelingen array is filled - redirect to koppeling wizard
                     // Also check @self.relations.koppelingen as fallback
                     const koppelingen =
                       data?.koppelingen || data?.['@self']?.relations?.koppelingen;
                     if (Array.isArray(koppelingen) && koppelingen.length > 0) {
+                      const koppelingType = isLeverancierOrCommunity
+                        ? 'ontbrekend-organisatie'
+                        : 'eigen-organisatie';
                       navigate(
-                        `/forms/gebruik/koppeling?type=eigen-organisatie&id=${id}`
+                        `/forms/gebruik/koppeling?type=${koppelingType}&id=${id}`
                       );
                       return;
                     }
@@ -238,28 +276,27 @@ const ConGebruikDetailsPageContent = ({
                     const diensten =
                       data?.diensten || data?.['@self']?.relations?.diensten;
                     if (Array.isArray(diensten) && diensten.length > 0) {
-                      navigate(`/forms/gebruik/dienst?type=dienst&id=${id}`);
+                      const dienstType = isLeverancierOrCommunity
+                        ? 'ontbrekend-organisatie'
+                        : 'dienst';
+                      navigate(`/forms/gebruik/dienst?type=${dienstType}&id=${id}`);
                       return;
                     }
 
                     // Default: go to gebruik wizard
-                    if (config?.schemaSlug) {
-                      const wizards = Object.values(DASHBOARD_WIZARDS);
-                      const wizard = wizards.find(
-                        (w) => w.schema === config.schemaSlug
-                      );
-
-                      if (wizard) {
-                        const baseUrl = getWizardUrl(wizard);
-                        const url = new URL(baseUrl, window.location.origin);
-                        url.searchParams.set('id', id);
-                        navigate(url.pathname + url.search);
-                        return;
-                      }
+                    // For Leverancier/Community, use ontbrekend-organisatie type
+                    const gebruikType = isLeverancierOrCommunity
+                      ? 'ontbrekend-organisatie'
+                      : '';
+                    const url = new URL(
+                      '/forms/gebruik/applicatie',
+                      window.location.origin
+                    );
+                    if (gebruikType) {
+                      url.searchParams.set('type', gebruikType);
                     }
-
-                    // Fallback to modal
-                    actionMenuProps?.setOpenModal?.('edit');
+                    url.searchParams.set('id', id);
+                    navigate(url.pathname + url.search);
                   }}
                   disabled={!actualCanEdit}
                   data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
@@ -352,6 +389,7 @@ const ConGebruikDetailsPageContent = ({
                     href={`https://www.gemmaonline.nl/wiki/GEMMA/id-${item.id}`}
                     target='_blank'
                     rel='noopener noreferrer'
+                    style={{ minHeight: '24px' }}
                   >
                     {item.label}
                   </Link>

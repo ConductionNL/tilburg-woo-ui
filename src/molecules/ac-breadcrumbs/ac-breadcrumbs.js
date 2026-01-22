@@ -126,7 +126,7 @@ const AcBreadcrumbs = ({ store: { pages, publications, gemma } }) => {
   }, [get_single_document, get_single_page, location, single_view]);
 
   return (
-    <BreadcrumbNav>
+    <BreadcrumbNav aria-label='Kruimelpad'>
       <BreadcrumbNavLink
         href='/'
         rel='home'

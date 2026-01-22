@@ -794,6 +794,14 @@ const ConKoppelingStageZoeken = ({
                       }}
                     >
                       <div style={{ marginTop: '0.25rem' }}>
+                        <label
+                          htmlFor={`koppeling-${koppelingId}`}
+                          className='sr-only'
+                        >
+                          {naam
+                            ? `Selecteer koppeling ${naam}, ${dir === 'BnaarA' ? `${bLabel} ${dirArrow} ${aLabel}` : `${aLabel} ${dirArrow} ${bLabel}`}${soortLabel ? `, type: ${soortLabel}` : ''}`
+                            : `Selecteer koppeling ${dir === 'BnaarA' ? `${bLabel} ${dirArrow} ${aLabel}` : `${aLabel} ${dirArrow} ${bLabel}`}${soortLabel ? `, type: ${soortLabel}` : ''}`}
+                        </label>
                         <AcCheckbox
                           id={`koppeling-${koppelingId}`}
                           value={koppelingId}

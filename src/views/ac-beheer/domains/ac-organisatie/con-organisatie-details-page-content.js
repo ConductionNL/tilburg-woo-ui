@@ -6,6 +6,7 @@ import {
 import { AcColumn } from '@src/atoms';
 // import { VISUALS } from '@src/constants';
 import ConLogoPreview from '@src/views/ac-register/con-logo-preview';
+import { ConExternalLink } from '@src/components';
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import { commongroundApiUrl } from '@src/config';
 import ConEditableDescription from '../../shared/components/con-editable-description/con-editable-description';
@@ -115,20 +116,18 @@ const ConOrganisatieDetailsPageContent = ({
           alignItems: 'center',
         }}
       >
-        <Heading level={4}>
-          <div className='con-beheer-details--header-container'>
-            {(data?.logo || data?.['@self']?.image) && (
-              <ConLogoPreview
-                className='con-beheer-details--logo-container'
-                logoUrl={data?.logo || data?.['@self']?.image}
-              />
-            )}
+        <div className='con-beheer-details--header-container'>
+          {(data?.logo || data?.['@self']?.image) && (
+            <ConLogoPreview
+            className='con-beheer-details--logo-container'
+            logoUrl={data?.logo || data?.['@self']?.image}
+            />
+          )}
 
-            <Heading className='con-beheer-details--title'>
-              {data?.naam || data?.['@self']?.name || data?.['@self']?.id}
-            </Heading>
-          </div>
-        </Heading>
+          <Heading className='con-beheer-details--title'>
+            {data?.naam || data?.['@self']?.name || data?.['@self']?.id}
+          </Heading>
+        </div>
       </div>
 
       {/* Unpublished warning */}
@@ -216,19 +215,9 @@ const ConOrganisatieDetailsPageContent = ({
                 </div>
               )}
               {data?.website && (
-                <div style={{ marginBottom: '8px' }}>
-                  <strong>Website: </strong>
-                  <Link
-                    href={
-                      data.website.startsWith('http')
-                        ? data.website
-                        : `https://${data.website}`
-                    }
-                    target='_blank'
-                    rel='noopener noreferrer'
-                  >
-                    {data.website}
-                  </Link>
+                <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
+                  <strong>Website:</strong>
+                  <ConExternalLink href={data.website} />
                 </div>
               )}
             </div>

@@ -645,6 +645,61 @@ const AcFormsGebruik = ({ store }) => {
         setGebruikType(mapped.gebruikType || null);
         // Initialize previous module ref to prevent clearing hosting on initial load
         previousModuleRef.current = mapped.module;
+
+        // For Aanbod beheerders flow (ontbrekend-organisatie), set the afnemer as selectedKlanten
+        if (typeFromUrl === 'ontbrekend-organisatie' && mapped.afnemer) {
+          // afnemer could be a single ID or already an array
+          const afnemerIds = Array.isArray(mapped.afnemer)
+            ? mapped.afnemer
+            : [mapped.afnemer];
+          const filteredAfnemerIds = afnemerIds.filter(Boolean);
+          setSelectedKlanten(filteredAfnemerIds);
+
+          // Also fetch the afnemer organisation to add to klanten options so it displays correctly
+          if (filteredAfnemerIds.length > 0) {
+            const afnemerId = filteredAfnemerIds[0];
+            try {
+              await store.object.fetchObject(
+                'voorzieningen',
+                'organisatie',
+                afnemerId,
+                {
+                  '_extend[]': ['@self.schema'],
+                  _published: 'false',
+                }
+              );
+              const afnemerData = store.object.getObject(
+                'voorzieningen_organisatie',
+                afnemerId
+              );
+              if (afnemerData) {
+                const afnemerOption = {
+                  value: String(
+                    afnemerData?.['@self']?.id || afnemerData?.id || afnemerId
+                  ),
+                  label: String(
+                    afnemerData?.['@self']?.name ||
+                      afnemerData?.naam ||
+                      afnemerData?.name ||
+                      afnemerId
+                  ),
+                  data: afnemerData,
+                };
+                // Add to klanten options if not already present
+                setKlantenOptions((prev) => {
+                  const exists = prev.some(
+                    (opt) => opt.value === afnemerOption.value
+                  );
+                  if (exists) return prev;
+                  return [afnemerOption, ...prev];
+                });
+              }
+            } catch (fetchError) {
+              console.error('Error fetching afnemer organisation:', fetchError);
+            }
+          }
+        }
+
         // Mark initial load as complete after a brief delay to allow useEffects to run with the flag still true
         setTimeout(() => {
           setIsInitialLoad(false);
@@ -732,6 +787,7 @@ const AcFormsGebruik = ({ store }) => {
         const list = collection?.results || collection || [];
         const options = list.map((item, index) => {
           const label =
+            item?.['@self']?.name ||
             item?.xml?.name?._value ||
             item?.naam ||
             item?.name ||
@@ -1076,8 +1132,7 @@ const AcFormsGebruik = ({ store }) => {
         const params = {
           _limit: '50',
           _page: '1',
-          _source: 'database',
-          _published: 'false',
+          _source: 'database', // Only show data from own organisation
         };
 
         // Add search parameter if query is provided
@@ -1167,13 +1222,17 @@ const AcFormsGebruik = ({ store }) => {
         _limit: '500',
         _page: '1',
         gemmaType: 'Referentiecomponent',
-        '_extend[]': '@self.schema',
         _published: 'false',
       });
+      
+      // Add multiple extend parameters to include standards
+      queryParams.append('_extend[]', '@self.schema');
+      queryParams.append('_extend[]', 'aanbevolenStandaarden');
+      queryParams.append('_extend[]', 'verplichteStandaarden');
 
       // Fetch referentiecomponenten from openconnector endpoint
       const response = await fetch(
-        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
         {
           method: 'GET',
           headers: {
@@ -1185,6 +1244,7 @@ const AcFormsGebruik = ({ store }) => {
 
       const mapToOption = (item, index) => {
         const label =
+          item?.['@self']?.name ||
           item?.xml?.name?._value ||
           item?.naam ||
           item?.name ||

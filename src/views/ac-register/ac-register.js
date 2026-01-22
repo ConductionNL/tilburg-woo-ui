@@ -154,7 +154,7 @@ const AcRegister = () => {
         telefoonnummer: organization.phone,
         rol: organization.role,
         beschrijvingKort: organization.summary,
-        logo: logoDataUrl,
+        logo: logoDataUrl || '',
         contactpersonen: [
           {
             voornaam: organization.contactPersons[0].firstName,
@@ -170,7 +170,7 @@ const AcRegister = () => {
       };
 
       const response = await fetch(
-        `${BASE_URL}/openconnector/api/endpoint/register`,
+        `${BASE_URL}/openregister/api/objects/voorzieningen/organisatie`,
         {
           method: 'POST',
           headers: {

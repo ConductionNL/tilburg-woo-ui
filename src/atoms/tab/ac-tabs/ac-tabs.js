@@ -3,7 +3,7 @@ import { Tabs as RTabs } from 'react-tabs';
 
 // Tabs
 const AcTabs = ({ children, ...otherProps }) => (
-  <RTabs selectedIndex={0} className='ac-tabs' {...otherProps}>
+  <RTabs className='ac-tabs' {...otherProps}>
     {children}
   </RTabs>
 );
