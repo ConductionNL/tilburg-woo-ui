@@ -140,6 +140,22 @@
     align-items: center;
     gap: 8px;
     margin-inline-end: var(--tilburg-space-column-mouse, 0.5rem);
+    text-decoration: none;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+    
+    &:hover {
+      background-color: rgba(2, 119, 189, 0.08);
+      text-decoration: none;
+    }
+    
+    &:focus {
+      outline: 2px solid rgb(2, 119, 189);
+      outline-offset: 2px;
+      text-decoration: none;
+    }
     
     @include respond-max($screen-md) {
       display: none; // Hide on mobile to save space
@@ -158,6 +174,7 @@
       font-weight: 700;
       color: rgb(2, 119, 189);
       line-height: 1;
+      text-decoration: none;
     }
     
     .ac-header__organization {
@@ -166,6 +183,7 @@
       font-weight: 700;
       color: rgb(2, 119, 189);
       line-height: 1;
+      text-decoration: none;
     }
     
     .ac-header__logout-btn,

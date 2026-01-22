@@ -142,7 +142,7 @@ const AcHeader = ({ store: { menu, user } }) => {
         </div>
         <div className='ac-header__right-section'>
           {user.isAuthenticated && (userDisplayName || organizationName) && (
-            <div className='ac-header__user-info'>
+            <Link to='/beheer' className='ac-header__user-info'>
               <VISUALS.USER className='ac-header__user-icon' />
               {userDisplayName && (
                 <span className='ac-header__username'>{userDisplayName}</span>
@@ -153,7 +153,7 @@ const AcHeader = ({ store: { menu, user } }) => {
               {organizationName && userDisplayName && (
                 <span className='ac-header__organization'>({organizationName})</span>
               )}
-            </div>
+            </Link>
           )}
           <AcNavigation />
         </div>
