@@ -135,9 +135,12 @@ export const generateSteps = (stepper, stepsConfig, options = {}) => {
   };
 
   // Collect labels we'll create to remove them from the index before regenerating
+  // Also check for duplicate labels and throw an error if found
   const labelsToCreate = new Set();
+  const labelSources = new Map(); // Track where each label comes from for error messages
+  
   const collectLabels = (config) => {
-    config.forEach((stepConfig) => {
+    config.forEach((stepConfig, stepIndex) => {
       const condition =
         typeof stepConfig.condition === 'function'
           ? stepConfig.condition()
@@ -145,13 +148,27 @@ export const generateSteps = (stepper, stepsConfig, options = {}) => {
       if (condition === false) return;
 
       const stepLabel = stepConfig?.stepLabel || generateLabel(stepConfig.title);
+      const stepLabelSource = stepConfig?.stepLabel 
+        ? `explicitly defined as '${stepConfig.stepLabel}'`
+        : `auto-generated from title '${stepConfig.title}'`;
+      
       if (stepConfig.substeps && stepConfig.substeps.length > 0) {
         // Group step label only if navigable
         if (stepConfig.isNavigable !== false) {
+          if (labelsToCreate.has(stepLabel)) {
+            const existingSource = labelSources.get(stepLabel);
+            throw new Error(
+              `Stepper: Duplicate label '${stepLabel}' detected. ` +
+              `It is used in step ${stepIndex + 1} (${stepLabelSource}) ` +
+              `and was already used in ${existingSource}. ` +
+              `All step labels must be unique.`
+            );
+          }
           labelsToCreate.add(stepLabel);
+          labelSources.set(stepLabel, `step ${stepIndex + 1} (${stepLabelSource})`);
         }
         // Sub-step labels are always created
-        stepConfig.substeps.forEach((subStepConfig) => {
+        stepConfig.substeps.forEach((subStepConfig, subStepIndex) => {
           const subCondition =
             typeof subStepConfig.condition === 'function'
               ? subStepConfig.condition()
@@ -159,11 +176,35 @@ export const generateSteps = (stepper, stepsConfig, options = {}) => {
           if (subCondition === false) return;
           const subStepLabel =
             subStepConfig.stepLabel || generateLabel(subStepConfig.title);
+          const subStepLabelSource = subStepConfig?.stepLabel
+            ? `explicitly defined as '${subStepConfig.stepLabel}'`
+            : `auto-generated from title '${subStepConfig.title}'`;
+          
+          if (labelsToCreate.has(subStepLabel)) {
+            const existingSource = labelSources.get(subStepLabel);
+            throw new Error(
+              `Stepper: Duplicate label '${subStepLabel}' detected. ` +
+              `It is used in step ${stepIndex + 1}, sub-step ${subStepIndex + 1} (${subStepLabelSource}) ` +
+              `and was already used in ${existingSource}. ` +
+              `All step labels must be unique.`
+            );
+          }
           labelsToCreate.add(subStepLabel);
+          labelSources.set(subStepLabel, `step ${stepIndex + 1}, sub-step ${subStepIndex + 1} (${subStepLabelSource})`);
         });
       } else {
         // Single steps are always navigable
+        if (labelsToCreate.has(stepLabel)) {
+          const existingSource = labelSources.get(stepLabel);
+          throw new Error(
+            `Stepper: Duplicate label '${stepLabel}' detected. ` +
+            `It is used in step ${stepIndex + 1} (${stepLabelSource}) ` +
+            `and was already used in ${existingSource}. ` +
+            `All step labels must be unique.`
+          );
+        }
         labelsToCreate.add(stepLabel);
+        labelSources.set(stepLabel, `step ${stepIndex + 1} (${stepLabelSource})`);
       }
     });
   };
@@ -207,6 +248,12 @@ export const generateSteps = (stepper, stepsConfig, options = {}) => {
 
     // If step has sub-steps, handle as multi-step group
     if (stepConfig.substeps && stepConfig.substeps.length > 0) {
+      // If parent step is navigable, define it first to get its own marker
+      let parentMarker = null;
+      if (isNavigable) {
+        parentMarker = defineStep(flavor, stepLabel);
+      }
+      
       // Process sub-steps
       const processedSubSteps = [];
       stepConfig.substeps.forEach((subStepConfig) => {
@@ -231,30 +278,23 @@ export const generateSteps = (stepper, stepsConfig, options = {}) => {
       // Skip if no sub-steps were processed
       if (processedSubSteps.length === 0) return;
 
-      // Calculate group status based on sub-steps' markers (main flavor), not status flavor
-      const firstSubStepMarker = processedSubSteps[0].marker;
+      // Calculate group status
+      // If parent is navigable, include it in the status range (parent marker to last sub-step)
+      // Otherwise, use sub-steps' markers only
+      const firstMarker = isNavigable && parentMarker !== null ? parentMarker : processedSubSteps[0].marker;
       const lastSubStepMarker =
         processedSubSteps[processedSubSteps.length - 1].marker;
       const groupStatus = calculateMultiStatus(
-        firstSubStepMarker,
+        firstMarker,
         lastSubStepMarker
       );
 
-      // Add group step (use first sub-step marker if navigable, otherwise don't create marker)
+      // Add group step
       if (isNavigable) {
-        // If navigable, create label mapped to first sub-step's marker for navigation
-        if (processedSubSteps.length > 0) {
-          if (
-            labelIndexRef.current[stepLabel] &&
-            labelIndexRef.current[stepLabel] !== processedSubSteps[0].marker
-          ) {
-            throw new Error(`Stepper: Label ${stepLabel} already defined`);
-          }
-          labelIndexRef.current[stepLabel] = processedSubSteps[0].marker;
-        }
+        // Use parent's own marker (created via defineStep above)
         result.push({
           id: `${stepLabel}-step`,
-          marker: processedSubSteps[0].marker,
+          marker: parentMarker,
           status: groupStatus,
           title: stepConfig.title,
           steps: processedSubSteps,

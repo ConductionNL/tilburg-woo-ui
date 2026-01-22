@@ -17,7 +17,7 @@ import {
   UnorderedList,
   UnorderedListItem,
 } from '@utrecht/component-library-react/dist/css-module';
-import useStepper from '../../con-stepper';
+import useStepper, { addStepperClickHandlers, generateSteps } from '../../con-stepper';
 
 // Stage components
 import ConFormDienstInformatieStage from './components/con-form-dienst-informatie-stage';
@@ -329,31 +329,6 @@ const ConFormsDienst = ({ store }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditMode, gebruikId, prefillRetry, store]);
 
-  // Clickable previous steps
-  useEffect(() => {
-    if (!processStepsRef.current) return;
-    if (prefillLoading || prefillError) return;
-    const addClickHandlers = () => {
-      const stepElements = processStepsRef.current.querySelectorAll(
-        '.denhaag-process-steps .denhaag-process-steps__step-header, .denhaag-process-steps .denhaag-process-steps__sub-step'
-      );
-      stepElements.forEach((el, index) => {
-        const stepNumber = index + 1;
-        el.style.cursor = '';
-        el.onclick = null;
-        el.classList.remove('ac-step-clickable');
-        if (stepNumber < stepper.getCurrentStep()) {
-          el.classList.add('ac-step-clickable');
-          el.onclick = (e) => {
-            e.preventDefault();
-            stepper.setCurrentStep(stepNumber);
-          };
-        }
-      });
-    };
-    const timeoutId = setTimeout(addClickHandlers, 100);
-    return () => clearTimeout(timeoutId);
-  }, [stepper.getCurrentStep(), prefillLoading, prefillError]);
 
   // Ensure /me is refreshed when the wizard mounts (so stages can read active organisation)
   useEffect(() => {
@@ -1196,11 +1171,6 @@ const ConFormsDienst = ({ store }) => {
     }
   };
 
-  const getStatus = (active, step) => {
-    if (active === step) return 'current';
-    if (active < step) return 'not-checked';
-    return 'checked';
-  };
 
   const renderStep = () => {
     const stepLabel = stepper.getLabelFromStep(stepper.getCurrentStep());
@@ -1364,94 +1334,40 @@ const ConFormsDienst = ({ store }) => {
   const needsDeelnemersStep =
     isGebruikBeheerdersFlow && organizationType === 'Samenwerking';
 
-  // ProcessSteps configuration
+  // ProcessSteps configuration - must be created early to define steps with stepper
   const processStepsConfig = useMemo(() => {
-    const steps = [];
-
-    stepper.resetStepDefinitions('process-steps');
-    stepper.resetStepDefinitions('process-steps-status');
-
     if (isGebruikBeheerdersFlow) {
-      // Gebruik-beheerders flow steps
-      steps.push({
-        id: 'dienst-zoeken-step',
-        marker: stepper.defineStep('process-steps', 'dienst-zoeken'),
-        status: getStatus(
-          stepper.getCurrentStep(),
-          stepper.defineStep('process-steps-status')
-        ),
-        title: 'Dienst zoeken',
-      });
-
-      steps.push({
-        id: 'gebruiksinformatie-step',
-        marker: stepper.defineStep('process-steps', 'gebruiksinformatie'),
-        status: getStatus(
-          stepper.getCurrentStep(),
-          stepper.defineStep('process-steps-status')
-        ),
-        title: 'Gebruiksinformatie',
-      });
-
-      // Conditionally add Deelnemers step
-      if (needsDeelnemersStep) {
-        steps.push({
-          id: 'deelnemers-step',
-          marker: stepper.defineStep('process-steps', 'deelnemers'),
-          status: getStatus(
-            stepper.getCurrentStep(),
-            stepper.defineStep('process-steps-status')
-          ),
-          title: 'Deelnemers',
-        });
-      }
-
-      steps.push({
-        id: 'controleren-step',
-        marker: stepper.defineStep('process-steps', 'controleren'),
-        status: getStatus(
-          stepper.getCurrentStep(),
-          stepper.defineStep('process-steps-status')
-        ),
-        title: 'Controleren',
-      });
+      return generateSteps(stepper, [
+        { title: 'Dienst zoeken', stepLabel: 'dienst-zoeken' },
+        { title: 'Gebruiksinformatie', stepLabel: 'gebruiksinformatie' },
+        { title: 'Deelnemers', stepLabel: 'deelnemers', condition: needsDeelnemersStep },
+        { title: 'Controleren', stepLabel: 'controleren' },
+      ]);
     } else {
-      // Aanbod-beheerders flow steps (existing flow)
-      const currentStepNum = stepper.getCurrentStep();
-
-      steps.push({
-        id: 'a9p0p1l2-i3c4-a5t6-i7e8-s9t0a1g2e3f4',
-        marker: stepper.defineStep('process-steps', 'applicaties'),
-        status: getStatus(
-          currentStepNum,
-          stepper.defineStep('process-steps-status')
-        ),
-        title: 'Applicaties',
-      });
-
-      steps.push({
-        id: 'd1e2n3s4-t5i6-n7f8-o9r0-m1a2t3i4e5f6',
-        marker: stepper.defineStep('process-steps', 'dienst-informatie'),
-        status: getStatus(
-          currentStepNum,
-          stepper.defineStep('process-steps-status')
-        ),
-        title: 'Dienst informatie',
-      });
-
-      steps.push({
-        id: 'c5o6n7t8-r9o0-l1e2-r3e4-n5s6t7a8g9e0',
-        marker: stepper.defineStep('process-steps', 'controleren'),
-        status: getStatus(
-          currentStepNum,
-          stepper.defineStep('process-steps-status')
-        ),
-        title: 'Controleren',
-      });
+      return generateSteps(stepper, [
+        { title: 'Applicaties', stepLabel: 'applicaties' },
+        { title: 'Dienst informatie', stepLabel: 'dienst-informatie' },
+        { title: 'Controleren', stepLabel: 'controleren' },
+      ]);
     }
+  }, [stepper.getCurrentStep(), isGebruikBeheerdersFlow, needsDeelnemersStep]);
 
-    return steps;
-  }, [stepper, isGebruikBeheerdersFlow, needsDeelnemersStep]);
+  // Add click handlers to steps
+  useEffect(() => {
+    return addStepperClickHandlers({
+      processStepsRef,
+      processStepsConfig,
+      stepper,
+      skipIfLoading: prefillLoading,
+      skipIfError: prefillError,
+    });
+  }, [
+    stepper.getCurrentStep(),
+    prefillLoading,
+    prefillError,
+    stepper,
+    processStepsConfig,
+  ]);
 
   // Check if a field is required according to loaded schema
   const isSchemaFieldRequired = (schemaType, fieldName) => {

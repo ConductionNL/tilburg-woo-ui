@@ -22,7 +22,10 @@ import { commongroundApiUrl } from '@src/config';
 import { getActiveWizard } from '@src/constants/wizards.constants';
 import ConUnsavedChangesAlertModal from '@src/components/con-unsaved-changes-alert-modal/con-unsaved-changes-alert-modal';
 import { useDebouncedInput } from '@src/hooks';
-import useStepper from '../../con-stepper';
+import useStepper, {
+  addStepperClickHandlers,
+  generateSteps,
+} from '../../con-stepper';
 import { validateWebsite } from '@views/ac-forms/validation/form-validations';
 
 /**
@@ -64,36 +67,6 @@ const AcFormsKoppeling = ({ store }) => {
 
   // Ref for ProcessSteps to add click handlers
   const processStepsRef = useRef(null);
-
-  // Add click handlers to steps
-  useEffect(() => {
-    if (!processStepsRef.current) return;
-
-    const addClickHandlers = () => {
-      const stepElements = processStepsRef.current.querySelectorAll(
-        '.denhaag-process-steps .denhaag-process-steps__step-header, .denhaag-process-steps .denhaag-process-steps__sub-step'
-      );
-
-      stepElements.forEach((stepEl, index) => {
-        index++;
-
-        stepEl.style.cursor = '';
-        stepEl.onclick = null;
-        stepEl.classList.remove('ac-step-clickable');
-
-        if (index < stepper.getCurrentStep()) {
-          stepEl.classList.add('ac-step-clickable');
-          stepEl.onclick = (e) => {
-            e.preventDefault();
-            stepper.setCurrentStep(index);
-          };
-        }
-      });
-    };
-
-    const timeoutId = setTimeout(addClickHandlers, 100);
-    return () => clearTimeout(timeoutId);
-  }, [stepper.getCurrentStep()]);
 
   // Schema management state
   const [schemas, setSchemas] = useState({});
@@ -190,6 +163,7 @@ const AcFormsKoppeling = ({ store }) => {
   const [saveErrors, setSaveErrors] = useState([]); // array of error messages
   const [redirectCountdown, setRedirectCountdown] = useState(0);
   const [prefillLoading, setPrefillLoading] = useState(false);
+  const [prefillError, setPrefillError] = useState(null);
 
   // Unsaved changes alert
   const [showUnsavedChangesAlert, setShowUnsavedChangesAlert] = useState(false);
@@ -1257,18 +1231,6 @@ const AcFormsKoppeling = ({ store }) => {
     }
   }, []);
 
-  const getStatus = (active, step) => {
-    if (active === step) return 'current';
-    if (active < step) return 'not-checked';
-    return 'checked';
-  };
-
-  const getStatusMulti = (active, first, last) => {
-    if (active >= first && active <= last) return 'current';
-    if (active < first) return 'not-checked';
-    return 'checked';
-  };
-
   // Build a detailed tooltip similar to ac-register when Next is disabled
   const getNextDisabledTooltip = () => {
     const logicalStep = stepper.getLabelFromStep(stepper.getCurrentStep());
@@ -2002,106 +1964,58 @@ const AcFormsKoppeling = ({ store }) => {
     }
   };
 
-  // steps configuration for the process steps component
+  // ProcessSteps configuration - must be created early to define steps with stepper
   const processStepsConfig = useMemo(() => {
-    const steps = [];
-
-    stepper.resetStepDefinitions('process-steps');
-    stepper.resetStepDefinitions('process-steps-status');
-
     if (koppelingsType === 'aanbieden-koppeling') {
-      // Define the main step first (koppeling-zoeken)
-      const koppelingZoekenMarker = stepper.defineStep(
-        'process-steps',
-        'koppeling-zoeken'
-      );
-      const firstMultiStepStatus = stepper.defineStep(
-        'process-steps-status',
-        'firstMultiStep'
-      );
-
-      // Build sub-steps for aanbieden-koppeling flow (define after main step)
-      const subSteps = [
+      return generateSteps(stepper, [
         {
-          id: 'sub-gebruiksinformatie',
-          marker: stepper.defineStep('process-steps', 'gebruiksinformatie'),
-          status: getStatus(
-            stepper.getCurrentStep(),
-            stepper.defineStep('process-steps-status')
-          ),
-          title: 'Gebruiksinformatie',
+          title: 'Een koppeling zoeken',
+          stepLabel: 'koppeling-zoeken',
+          substeps: [
+            { title: 'Gebruiksinformatie', stepLabel: 'gebruiksinformatie' },
+            {
+              title: 'Deelnemers toevoegen',
+              stepLabel: 'deelnemers',
+              condition: needsDeelnemersStep,
+            },
+          ],
         },
-      ];
-
-      // Only add deelnemers step if organization type is Samenwerking
-      if (needsDeelnemersStep) {
-        subSteps.push({
-          id: 'sub-deelnemers',
-          marker: stepper.defineStep('process-steps', 'deelnemers'),
-          status: getStatus(
-            stepper.getCurrentStep(),
-            stepper.defineStep('process-steps-status')
-          ),
-          title: 'Deelnemers toevoegen',
-        });
-      }
-
-      steps.push({
-        id: 'grp-koppeling',
-        marker: koppelingZoekenMarker,
-        status: getStatusMulti(
-          // get the current step from the stepper
-          stepper.getCurrentStep(),
-          // get process step status index
-          firstMultiStepStatus,
-          // get the index of the labeled step + [amount of sub-steps]
-          stepper.getStepFromLabel('firstMultiStep') + subSteps.length
-        ),
-        title: 'Een koppeling zoeken',
-        steps: subSteps,
-      });
-    } else if (koppelingsType === 'eigen-organisatie') {
-      steps.push({
-        id: 'grp-koppeling',
-        marker: stepper.defineStep('process-steps', 'koppeling-zoeken'),
-        status: getStatusMulti(
-          // get the current step from the stepper
-          stepper.getCurrentStep(),
-          // get process step status index + define multi step label
-          stepper.defineStep('process-steps-status', 'firstMultiStep'),
-          // get the index of the labeled step + [amount of sub-steps]
-          stepper.getStepFromLabel('firstMultiStep') + 1
-        ),
-        title: 'Een koppeling zoeken',
-        steps: [
-          {
-            id: 'sub-toevoegen',
-            marker: stepper.defineStep('process-steps', 'toevoegen'),
-            status: getStatus(
-              stepper.getCurrentStep(),
-              stepper.defineStep('process-steps-status')
-            ),
-            title: isEditMode ? 'Bewerken' : 'Toevoegen',
-          },
-        ],
-      });
+        { title: 'Controleren', stepLabel: 'controleren' },
+      ]);
+    } else {
+      // eigen-organisatie flow
+      return generateSteps(stepper, [
+        {
+          title: 'Een koppeling zoeken',
+          isNavigable: false,
+          substeps: [
+            { title: isEditMode ? 'Bewerken' : 'Toevoegen', stepLabel: 'toevoegen' },
+          ],
+        },
+        { title: 'Controleren', stepLabel: 'controleren' },
+      ]);
     }
+  }, [stepper.getCurrentStep(), koppelingsType, needsDeelnemersStep, isEditMode]);
 
-    steps.push({
-      id: 'grp-review',
-      marker: stepper.defineStep('process-steps', 'controleren'),
-      status: getStatus(
-        stepper.getCurrentStep(),
-        stepper.defineStep('process-steps-status')
-      ),
-      title: 'Controleren',
+  // Add click handlers to steps
+  useEffect(() => {
+    return addStepperClickHandlers({
+      processStepsRef,
+      processStepsConfig,
+      stepper,
+      skipIfLoading: prefillLoading,
+      skipIfError: prefillError,
     });
+  }, [
+    stepper.getCurrentStep(),
+    prefillLoading,
+    prefillError,
+    stepper,
+    processStepsConfig,
+  ]);
 
-    return steps;
-  }, [isEditMode, stepper, koppelingsType, needsDeelnemersStep]);
-
-  const currentStepName = (step) => {
-    const logicalStep = stepper.getLabelFromStep(step);
+  const currentStepName = () => {
+    const logicalStep = stepper.getLabelFromStep(stepper.getCurrentStep());
 
     switch (logicalStep) {
       case 'koppeling-zoeken':
@@ -2205,7 +2119,7 @@ const AcFormsKoppeling = ({ store }) => {
           <div>
             {saveResult !== 'success' && saveResult !== 'error' && (
               <h3 className={clsx('utrecht-heading-3', 'ac-register-form-heading')}>
-                {currentStepName(stepper.getCurrentStep())}
+                {currentStepName()}
               </h3>
             )}
 
@@ -2223,7 +2137,7 @@ const AcFormsKoppeling = ({ store }) => {
                   aria-live='polite'
                   id='form-status'
                 >
-                  {currentStepName(stepper.getCurrentStep())}
+                  {currentStepName()}
                 </div>
 
                 {process.env.NODE_ENV === 'development' && (
