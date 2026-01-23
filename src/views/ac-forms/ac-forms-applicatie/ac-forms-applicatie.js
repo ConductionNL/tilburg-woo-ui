@@ -764,9 +764,9 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
   }, [schemas?.module, referentieComponentenOptions]);
 
   // Legacy function kept for backward compatibility (now unused)
-  const loadStandaarden = useCallback(async () => {
-    console.warn('⚠️ loadStandaarden() called but should use loadStandaardenFromReferentieComponenten()');
-  }, []);
+  // const loadStandaarden = useCallback(async () => {
+  //   console.warn('⚠️ loadStandaarden() called but should use loadStandaardenFromReferentieComponenten()');
+  // }, []);
 
   // Function to load ALL standaardversies (for extra standaardversies dropdown)
   const loadAllStandaardenversies = useCallback(async () => {
@@ -830,9 +830,9 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
   }, [schemas?.module]);
 
   // Legacy function kept for backward compatibility (now unused)
-  const loadStandaardenversies = useCallback(async () => {
-    console.warn('⚠️ loadStandaardenversies() called but should use loadAllStandaardenversies()');
-  }, []);
+  // const loadStandaardenversies = useCallback(async () => {
+  //   console.warn('⚠️ loadStandaardenversies() called but should use loadAllStandaardenversies()');
+  // }, []);
 
   // ✅ Load referentiecomponenten when schemas are available
   useEffect(() => {

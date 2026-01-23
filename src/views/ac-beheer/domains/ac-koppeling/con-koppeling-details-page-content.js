@@ -260,7 +260,8 @@ const ConKoppelingDetailsPageContent = ({
         </div>
       </div>
 
-      <UnpublishedWarning data={data} />
+      {/* Unpublished warning - LEGACY: No longer needed */}
+      {/* <UnpublishedWarning data={data} /> */}
 
       <Heading level={3} style={{ marginBlockStart: '1rem' }}>
         Koppeling
@@ -393,22 +394,22 @@ const ConKoppelingDetailsPageContent = ({
   );
 };
 
-/* Warning card for unpublished objects */
-const UnpublishedWarning = ({ data }) => {
-  if (data?.['@self']?.published) return null;
-  const schemaName = data?.['@self']?.schema?.title;
-  const title = schemaName ? `${schemaName}` : '';
-  const objectName = data?.['@self']?.name;
-
-  return (
-    <Alert type='warning' style={{ marginBottom: '1rem' }}>
-      <Heading level={4}>{title} is nog niet gepubliceerd</Heading>
-      <Paragraph>
-        {objectName} is momenteel niet zichtbaar in de zoekfunctie. Gebruik de
-        &quot;Publiceren&quot; actie om deze gegevens zichtbaar te maken.
-      </Paragraph>
-    </Alert>
-  );
-};
+/* Warning card for unpublished objects - LEGACY: No longer needed */
+// const UnpublishedWarning = ({ data }) => {
+//   if (data?.['@self']?.published) return null;
+//   const schemaName = data?.['@self']?.schema?.title;
+//   const title = schemaName ? `${schemaName}` : '';
+//   const objectName = data?.['@self']?.name;
+//
+//   return (
+//     <Alert type='warning' style={{ marginBottom: '1rem' }}>
+//       <Heading level={4}>{title} is nog niet gepubliceerd</Heading>
+//       <Paragraph>
+//         {objectName} is momenteel niet zichtbaar in de zoekfunctie. Gebruik de
+//         &quot;Publiceren&quot; actie om deze gegevens zichtbaar te maken.
+//       </Paragraph>
+//     </Alert>
+//   );
+// };
 
 export default ConKoppelingDetailsPageContent;

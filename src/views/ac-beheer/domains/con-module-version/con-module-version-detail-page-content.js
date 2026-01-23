@@ -1,7 +1,5 @@
 import {
   Heading,
-  Paragraph,
-  Alert,
 } from '@utrecht/component-library-react/dist/css-module';
 import { AcColumn } from '@src/atoms';
 import { VISUALS } from '@src/constants';
@@ -247,8 +245,8 @@ const ConModuleVersionDetailsPageContent = ({
         </div>
       </div>
 
-      {/* Unpublished warning */}
-      <UnpublishedWarning data={data} />
+      {/* Unpublished warning - LEGACY: No longer needed */}
+      {/* <UnpublishedWarning data={data} /> */}
 
       {/* Short description */}
       <div style={{ flex: 2 }}>
@@ -382,22 +380,22 @@ const ConModuleVersionDetailsPageContent = ({
   );
 };
 
-/* Warning card for unpublished objects */
-const UnpublishedWarning = ({ data }) => {
-  if (data?.['@self']?.published) return null;
-  const schemaName = data?.['@self']?.schema?.title || 'Applicatie versie';
-  const objectName = data?.['@self']?.name;
-
-  return (
-    <Alert type='warning' style={{ marginBottom: '1rem' }}>
-      <Heading level={4}>{schemaName} is nog niet gepubliceerd</Heading>
-      <Paragraph>
-        {objectName} is momenteel niet zichtbaar in de zoekfunctie van de catalogus.
-        Gebruik de &quot;Publiceren&quot; actie om deze gegevens beschikbaar te maken
-        voor bezoekers.
-      </Paragraph>
-    </Alert>
-  );
-};
+/* Warning card for unpublished objects - LEGACY: No longer needed */
+// const UnpublishedWarning = ({ data }) => {
+//   if (data?.['@self']?.published) return null;
+//   const schemaName = data?.['@self']?.schema?.title || 'Applicatie versie';
+//   const objectName = data?.['@self']?.name;
+//
+//   return (
+//     <Alert type='warning' style={{ marginBottom: '1rem' }}>
+//       <Heading level={4}>{schemaName} is nog niet gepubliceerd</Heading>
+//       <Paragraph>
+//         {objectName} is momenteel niet zichtbaar in de zoekfunctie van de catalogus.
+//         Gebruik de &quot;Publiceren&quot; actie om deze gegevens beschikbaar te maken
+//         voor bezoekers.
+//       </Paragraph>
+//     </Alert>
+//   );
+// };
 
 export default ConModuleVersionDetailsPageContent;

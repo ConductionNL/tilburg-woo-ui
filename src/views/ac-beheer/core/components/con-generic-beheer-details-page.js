@@ -459,8 +459,8 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
                   )}
                 </AcFlex>
 
-                {/* Warning card for unpublished objects */}
-                {!data?.['@self']?.published && (
+                {/* Warning card for unpublished objects - LEGACY: No longer needed */}
+                {/* {!data?.['@self']?.published && (
                   <Alert type='warning'>
                     <Heading level={4}>Dit object is nog niet gepubliceerd</Heading>
                     <Paragraph>
@@ -470,7 +470,7 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
                       voor bezoekers.
                     </Paragraph>
                   </Alert>
-                )}
+                )} */}
 
                 <AcColumn gap='tiger'>
                   <>

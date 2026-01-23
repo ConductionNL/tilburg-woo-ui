@@ -322,7 +322,8 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
             })()}
         </AcFlex>
 
-        {!get_single?.['@self']?.published && (
+        {/* Unpublished warning - LEGACY: No longer needed */}
+        {/* {!get_single?.['@self']?.published && (
           <Alert type='warning' style={{ marginBottom: '1rem' }}>
             <Heading level={4}>Dienst is nog niet gepubliceerd</Heading>
             <Paragraph>
@@ -330,7 +331,7 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
               &quot;Publiceren&quot; actie om deze gegevens zichtbaar te maken.
             </Paragraph>
           </Alert>
-        )}
+        )} */}
 
         <div style={{ flex: 2 }}>
           {!!get_single?.beschrijvingKort && (
