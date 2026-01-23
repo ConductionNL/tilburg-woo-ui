@@ -350,6 +350,16 @@ const ConGenericFormModal = ({
             }
           });
 
+          // Format date fields: strip timestamps for HTML date inputs
+          // (e.g., "2026-01-01 00:00:00" -> "2026-01-01")
+          Object.keys(mappedData).forEach((key) => {
+            const property = schema?.properties?.[key];
+            if (property?.format === 'date' && mappedData[key] && typeof mappedData[key] === 'string') {
+              // Strip timestamp by taking only the date part
+              mappedData[key] = mappedData[key].split(' ')[0];
+            }
+          });
+
           return mappedData;
         })()),
     };

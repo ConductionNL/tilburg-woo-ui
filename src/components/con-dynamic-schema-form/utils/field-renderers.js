@@ -520,7 +520,7 @@ export const renderField = ({
         touchedKey={path}
         minLength={propertySchema?.minLength ?? undefined}
         maxLength={propertySchema?.maxLength ?? undefined}
-        pattern={propertySchema?.pattern || undefined}
+        pattern={fieldConfig.pattern !== undefined ? fieldConfig.pattern : (propertySchema?.pattern || undefined)}
         {...validation}
         style={inputStyle}
       />

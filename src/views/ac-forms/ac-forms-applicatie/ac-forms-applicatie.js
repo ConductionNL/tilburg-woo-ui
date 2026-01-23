@@ -101,7 +101,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     beschrijvingLang: '',
     website: '',
     contactpersoon: '',
-    cloudDienstverleningsmodel: [],
+    cloudDienstverleningsmodel: [], 
     hostingJurisdictie: '',
     hostingLocatie: '',
     aanbieder: '',
@@ -114,11 +114,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     onderdeelVan: [],
     diensten: [],
     koppelingen: [],
-    compliancy: [],
-    standaarden: [],
-    standaardenGemma: [],
-    moduleVersies: [],
-    gebruiken: [],
     beoordelingen: [],
     kwetsbaarheden: [],
     licentieType: '',
@@ -497,28 +492,28 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         // Map koppelingen with _localId for tracking (same pattern as product form)
         const prefilledKoppelingen = Array.isArray(fetched.koppelingen)
           ? fetched.koppelingen.map((kpl) => ({
-              // Preserve existing ID if present, otherwise generate local ID
-              _localId: kpl.id
-                ? `existing_${kpl.id}`
-                : `kpl_${Date.now().toString(36)}_${Math.random()
-                    .toString(36)
-                    .slice(2, 8)}`,
-              ...kpl,
-            }))
+            // Preserve existing ID if present, otherwise generate local ID
+            _localId: kpl.id
+              ? `existing_${kpl.id}`
+              : `kpl_${Date.now().toString(36)}_${Math.random()
+                .toString(36)
+                .slice(2, 8)}`,
+            ...kpl,
+          }))
           : [];
 
         // Map diensten with _localId for tracking (same pattern as product form)
         const prefilledDiensten = Array.isArray(fetched.diensten)
           ? fetched.diensten.map((dienst) => ({
-              // Preserve existing dienst ID if present, otherwise generate local ID
-              _localId:
-                typeof dienst === 'object' && dienst.id
-                  ? `existing_${dienst.id}`
-                  : `dienst_${Date.now().toString(36)}_${Math.random()
-                      .toString(36)
-                      .slice(2, 8)}`,
-              ...(typeof dienst === 'object' ? dienst : { type: dienst }),
-            }))
+            // Preserve existing dienst ID if present, otherwise generate local ID
+            _localId:
+              typeof dienst === 'object' && dienst.id
+                ? `existing_${dienst.id}`
+                : `dienst_${Date.now().toString(36)}_${Math.random()
+                  .toString(36)
+                  .slice(2, 8)}`,
+            ...(typeof dienst === 'object' ? dienst : { type: dienst }),
+          }))
           : [];
 
         // Update applicatie object with fetched data
@@ -622,7 +617,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         _page: '1',
         gemmaType: 'Referentiecomponent',
       });
-      
+
       // Add multiple extend parameters to include standards and their versions in one go
       queryParams.append('_extend[]', '_schema');
       queryParams.append('_extend[]', 'aanbevolenStandaarden');
@@ -687,36 +682,36 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       // ✨ REFACTORED: Use gekoppeldeStandaardVersies from the initial fetch
       // instead of making N+1 API calls
       const standaardenMap = new Map(); // Use Map to deduplicate and store full data
-      
+
       selectedRefComps.forEach((refCompValue) => {
         // Find the full referentiecomponent data
         const refCompOption = referentieComponentenOptions.find(opt => opt.value === refCompValue);
         if (!refCompOption?.data) return;
 
         const refCompData = refCompOption.data;
-        
+
         // Helper to process standaarden and extract their versions from gekoppeldeStandaardVersies
         const processStandaarden = (standaardenList) => {
           if (!Array.isArray(standaardenList)) return;
-          
+
           standaardenList.forEach(standaard => {
             const standaardId = standaard?.['@self']?.id || standaard?.id || standaard;
             if (!standaardId) return;
-            
+
             // If we haven't seen this standaard yet, initialize it
             if (!standaardenMap.has(standaardId)) {
               // Get gekoppeldeStandaardVersies for this referentiecomponent
               const gekoppeldeVersies = refCompData.gekoppeldeStandaardVersies || [];
-              
+
               // Filter versions that belong to this standard
               const standaardVersies = gekoppeldeVersies.filter(versie => {
                 // Check if this version belongs to this standard
-                const versieStandaardId = versie?.standaard?.['@self']?.id || 
-                                         versie?.standaard?.id || 
-                                         versie?.standaard;
+                const versieStandaardId = versie?.standaard?.['@self']?.id ||
+                  versie?.standaard?.id ||
+                  versie?.standaard;
                 return String(versieStandaardId) === String(standaardId);
               });
-              
+
               standaardenMap.set(standaardId, {
                 ...standaard,
                 standaardVersies: standaardVersies
@@ -724,7 +719,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
             }
           });
         };
-        
+
         // Collect from both aanbevolen and verplichte standaarden
         processStandaarden(refCompData.aanbevolenStandaarden);
         processStandaarden(refCompData.verplichteStandaarden);
@@ -751,9 +746,9 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
           item?.label ||
           `Standaard ${index + 1}`;
         const value = item?.['@self']?.id || item?.id || item?.value || item?.slug || label;
-        return { 
-          value: String(value), 
-          label: String(label), 
+        return {
+          value: String(value),
+          label: String(label),
           data: item // Contains standaardVersies array populated from gekoppeldeStandaardVersies
         };
       }).filter((o) => o.label && o.value);
@@ -769,9 +764,9 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
   }, [schemas?.module, referentieComponentenOptions]);
 
   // Legacy function kept for backward compatibility (now unused)
-  const loadStandaarden = useCallback(async () => {
-    console.warn('⚠️ loadStandaarden() called but should use loadStandaardenFromReferentieComponenten()');
-  }, []);
+  // const loadStandaarden = useCallback(async () => {
+  //   console.warn('⚠️ loadStandaarden() called but should use loadStandaardenFromReferentieComponenten()');
+  // }, []);
 
   // Function to load ALL standaardversies (for extra standaardversies dropdown)
   const loadAllStandaardenversies = useCallback(async () => {
@@ -822,7 +817,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
 
       setStandaardenversiesOptions(options);
       console.info(`✅ Loaded ${options.length} standaardversies options for dropdown`);
-      
+
       if (options.length === 0) {
         console.warn('⚠️ No standaardversies found - API might be empty or filtered');
       }
@@ -835,9 +830,9 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
   }, [schemas?.module]);
 
   // Legacy function kept for backward compatibility (now unused)
-  const loadStandaardenversies = useCallback(async () => {
-    console.warn('⚠️ loadStandaardenversies() called but should use loadAllStandaardenversies()');
-  }, []);
+  // const loadStandaardenversies = useCallback(async () => {
+  //   console.warn('⚠️ loadStandaardenversies() called but should use loadAllStandaardenversies()');
+  // }, []);
 
   // ✅ Load referentiecomponenten when schemas are available
   useEffect(() => {
@@ -859,7 +854,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
 
     // Get the IDs/values from referentieComponentenWithStandards
     const selectedRefCompValues = referentieComponentenWithStandards.map(rc => rc.id || rc.value);
-    
+
     if (selectedRefCompValues.length > 0) {
       loadStandaardenFromReferentieComponenten(selectedRefCompValues);
     } else {
@@ -1383,8 +1378,8 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
           kpl && kpl._localId
             ? kpl._localId
             : kpl?.id
-            ? `existing_${kpl.id}`
-            : `kpl_${Date.now().toString(36)}_${Math.random()
+              ? `existing_${kpl.id}`
+              : `kpl_${Date.now().toString(36)}_${Math.random()
                 .toString(36)
                 .slice(2, 8)}`;
         nextKoppelingIdByRow[rowId] = localId;
@@ -1588,8 +1583,8 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
           dienst && dienst._localId
             ? dienst._localId
             : dienst?.id
-            ? `existing_${dienst.id}`
-            : `dienst_${Date.now().toString(36)}_${Math.random()
+              ? `existing_${dienst.id}`
+              : `dienst_${Date.now().toString(36)}_${Math.random()
                 .toString(36)
                 .slice(2, 8)}`;
         nextDienstIdByRow[rowId] = localId;
@@ -1721,6 +1716,15 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         ...applicatie,
         aanbieder: finalAanbieder,
       };
+
+      // Filter out empty moduleVersies entries before submitting
+      // Only keep versions that have at least a version number or status
+      if (Array.isArray(applicatieData.moduleVersies)) {
+        applicatieData.moduleVersies = applicatieData.moduleVersies.filter(
+          (versie) => versie && (versie.versie || versie.status)
+        );
+      }
+
       const sanitized = stripLocalIds(applicatieData);
 
       let createdApplicatie = null;
@@ -1760,9 +1764,8 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
             redirectParams.set('applicatie', String(applicatieIdValue));
 
             // Reconstruct the relative URL with the new parameter
-            const redirectUrl = `${url.pathname}${
-              redirectParams.toString() ? `?${redirectParams.toString()}` : ''
-            }`;
+            const redirectUrl = `${url.pathname}${redirectParams.toString() ? `?${redirectParams.toString()}` : ''
+              }`;
 
             // Navigate to the redirect URL
             navigate(redirectUrl);
@@ -1872,6 +1875,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
             setApplicatieData={setApplicatieData}
             loading={loading}
             schemas={schemas}
+            isEditMode={isEditMode}
           />
         );
       case 4:
@@ -2052,6 +2056,37 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       }
     }
 
+    // Versies step: versie, status, and startdatum are required for each version
+    if (logicalStep === 3 && shouldShowVersiesStep()) {
+      if (Array.isArray(applicatie.moduleVersies) && applicatie.moduleVersies.length > 0) {
+        // Check if all versions have versie, status, and corresponding datum filled
+        const hasInvalidVersions = applicatie.moduleVersies.some((versie) => {
+          const missingVersie = !versie.versie || !String(versie.versie).trim();
+          const missingStatus = !versie.status || !String(versie.status).trim();
+
+          // Check if the corresponding datum field is filled based on status
+          let missingDatum = false;
+          if (versie.status) {
+            const datumProperty = {
+              'in gebruik': 'datumInGebruik',
+              'in ontwikkeling': 'datumInOntwikkeling',
+              'einde ondersteuning': 'datumEindeOndersteuning',
+              teruggetrokken: 'datumTeruggetrokken',
+            }[versie.status];
+
+            if (datumProperty) {
+              missingDatum = !versie[datumProperty] || !String(versie[datumProperty]).trim();
+            }
+          }
+
+          return missingVersie || missingStatus || missingDatum;
+        });
+        if (hasInvalidVersions) {
+          return true;
+        }
+      }
+    }
+
     // Standaarden step: validate URLs in compliancy array
     if (logicalStep === 5) {
       if (Array.isArray(applicatie.compliancy)) {
@@ -2154,6 +2189,39 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         (!applicatie.licentie || applicatie.licentie.trim() === '')
       ) {
         return 'Selecteer een licentie';
+      }
+    }
+
+    // Versies step validation messages
+    if (logicalStep === 3 && shouldShowVersiesStep()) {
+      if (Array.isArray(applicatie.moduleVersies) && applicatie.moduleVersies.length > 0) {
+        const versieWithoutVersie = applicatie.moduleVersies.find(
+          (versie) => !versie.versie || !String(versie.versie).trim()
+        );
+        if (versieWithoutVersie) {
+          return 'Vul het versienummer in voor alle versies';
+        }
+        const versieWithoutStatus = applicatie.moduleVersies.find(
+          (versie) => !versie.status || !String(versie.status).trim()
+        );
+        if (versieWithoutStatus) {
+          return 'Selecteer een status voor alle versies';
+        }
+        // Check for missing datum based on status
+        const versieWithoutDatum = applicatie.moduleVersies.find((versie) => {
+          if (!versie.status) return false;
+          const datumProperty = {
+            'in gebruik': 'datumInGebruik',
+            'in ontwikkeling': 'datumInOntwikkeling',
+            'einde ondersteuning': 'datumEindeOndersteuning',
+            teruggetrokken: 'datumTeruggetrokken',
+          }[versie.status];
+          if (!datumProperty) return false;
+          return !versie[datumProperty] || !String(versie[datumProperty]).trim();
+        });
+        if (versieWithoutDatum) {
+          return 'Vul de startdatum status in voor alle versies';
+        }
       }
     }
 
@@ -2293,36 +2361,36 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
                                 status:
                                   formType === 'ontbrekend-applicatie'
                                     ? getStatusMultiStep(
-                                        currentStep,
-                                        getAdjustedStepIndex(0),
-                                        getAdjustedStepIndex(0),
-                                        getAdjustedStepIndex(1)
-                                      )
+                                      currentStep,
+                                      getAdjustedStepIndex(0),
+                                      getAdjustedStepIndex(0),
+                                      getAdjustedStepIndex(1)
+                                    )
                                     : getStatus(
-                                        currentStep,
-                                        getAdjustedStepIndex(1)
-                                      ),
+                                      currentStep,
+                                      getAdjustedStepIndex(1)
+                                    ),
                                 title: 'Applicatie informatie',
                                 steps:
                                   formType === 'ontbrekend-applicatie'
                                     ? [
-                                        {
-                                          id: 'aanbieder-substep',
-                                          status: getStatus(
-                                            currentStep,
-                                            getAdjustedStepIndex(0)
-                                          ),
-                                          title: 'Aanbieder',
-                                        },
-                                        {
-                                          id: 'applicatie-info-substep',
-                                          status: getStatus(
-                                            currentStep,
-                                            getAdjustedStepIndex(1)
-                                          ),
-                                          title: 'Applicatie gegevens',
-                                        },
-                                      ]
+                                      {
+                                        id: 'aanbieder-substep',
+                                        status: getStatus(
+                                          currentStep,
+                                          getAdjustedStepIndex(0)
+                                        ),
+                                        title: 'Aanbieder',
+                                      },
+                                      {
+                                        id: 'applicatie-info-substep',
+                                        status: getStatus(
+                                          currentStep,
+                                          getAdjustedStepIndex(1)
+                                        ),
+                                        title: 'Applicatie gegevens',
+                                      },
+                                    ]
                                     : undefined,
                               },
                               {
@@ -2347,15 +2415,15 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
                                   // Conditionally include Versies step for On-premises
                                   ...(shouldShowVersiesStep()
                                     ? [
-                                        {
-                                          id: 'versies-substep',
-                                          status: getStatus(
-                                            currentStep,
-                                            getAdjustedStepIndex(3)
-                                          ),
-                                          title: 'Versies',
-                                        },
-                                      ]
+                                      {
+                                        id: 'versies-substep',
+                                        status: getStatus(
+                                          currentStep,
+                                          getAdjustedStepIndex(3)
+                                        ),
+                                        title: 'Versies',
+                                      },
+                                    ]
                                     : []),
                                   {
                                     id: 'referentiecomponenten-substep',
@@ -2454,7 +2522,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
                             className={clsx(
                               'ac-register-form-buttons',
                               currentStep !== 0 &&
-                                'ac-register-form-buttons-not-first-step'
+                              'ac-register-form-buttons-not-first-step'
                             )}
                           >
                             {currentStep !== 0 && (
@@ -2537,8 +2605,8 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
                                 {isEditMode
                                   ? 'Applicatie updaten'
                                   : redirect
-                                  ? 'Applicatie aanmelden en terug naar vorige wizard'
-                                  : 'Applicatie aanmelden'}
+                                    ? 'Applicatie aanmelden en terug naar vorige wizard'
+                                    : 'Applicatie aanmelden'}
                               </AcButton>
                             )}
                           </div>

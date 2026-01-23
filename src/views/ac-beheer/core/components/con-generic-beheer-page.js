@@ -885,8 +885,8 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
         },
       ];
 
-      // Add publish/depublish actions as standard options
-      const publishActions = [];
+      // Add publish/depublish actions as standard options - LEGACY: No longer needed
+      /* const publishActions = [];
       if (!row['@self']?.published) {
         publishActions.push({
           key: 'publish',
@@ -918,7 +918,8 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
             ? getDisabledActionTooltip('depublish', reason)
             : undefined,
         });
-      }
+      } */
+      const publishActions = []; // LEGACY: Empty array to maintain compatibility
 
       // Add unique actions based on configuration
       const uniqueActions = (() => {
@@ -1277,8 +1278,8 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
 
                       <ConActionMenu.Divider />
 
-                      {/* Bulk publish/depublish actions based on selection */}
-                      <ConActionMenu.Button
+                      {/* Bulk publish/depublish actions - LEGACY: No longer needed */}
+                      {/* <ConActionMenu.Button
                         icon={<VISUALS.PUBLISH />}
                         onClick={handleMultiplePublish}
                         disabled={
@@ -1300,7 +1301,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
                         Depubliceren
                       </ConActionMenu.Button>
 
-                      <ConActionMenu.Divider />
+                      <ConActionMenu.Divider /> */}
 
                       <ConActionMenu.Button
                         icon={<VISUALS.TRASHCAN />}

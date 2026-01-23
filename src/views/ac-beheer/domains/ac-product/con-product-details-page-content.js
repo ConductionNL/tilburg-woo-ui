@@ -260,7 +260,8 @@ const ConProductDetailsPageContent = ({
                   Bewerken
                 </ConActionMenu.Button>
 
-                {data && !data['@self']?.published && (
+                {/* Publish/Depublish actions - LEGACY: No longer needed */}
+                {/* {data && !data['@self']?.published && (
                   <ConActionMenu.Button
                     icon={<VISUALS.PUBLISH />}
                     onClick={() => actionMenuProps?.setOpenModal?.('publish')}
@@ -290,7 +291,7 @@ const ConProductDetailsPageContent = ({
                   >
                     Depubliceren
                   </ConActionMenu.Button>
-                )}
+                )} */}
 
                 {/* Unique actions from config */}
                 {uniqueActions.map((action) => (
@@ -340,8 +341,8 @@ const ConProductDetailsPageContent = ({
         </div>
       </div>
 
-      {/* Unpublished warning */}
-      <UnpublishedWarning data={data} />
+      {/* Unpublished warning - LEGACY: No longer needed */}
+      {/* <UnpublishedWarning data={data} /> */}
 
       {/* Short description */}
       <div style={{ flex: 2 }}>
@@ -562,23 +563,23 @@ const SuitableForSection = ({ modules }) => {
   );
 };
 
-/* Warning card for unpublished objects */
-const UnpublishedWarning = ({ data }) => {
-  if (data?.['@self']?.published) return null;
-  const schemaName = data?.['@self']?.schema?.title;
-  const title = schemaName ? `${schemaName}` : '';
-  const objectName = data?.['@self']?.name;
-
-  return (
-    <Alert type='warning' style={{ marginBottom: '1rem' }}>
-      <Heading level={4}>{title} is nog niet gepubliceerd</Heading>
-      <Paragraph>
-        {objectName} is momenteel niet zichtbaar in de zoekfunctie van{' '}
-        {schemaName || 'de catalogus'}. Gebruik de &quot;Publiceren&quot; actie om
-        deze gegevens beschikbaar te maken voor bezoekers.
-      </Paragraph>
-    </Alert>
-  );
-};
+/* Warning card for unpublished objects - LEGACY: No longer needed */
+// const UnpublishedWarning = ({ data }) => {
+//   if (data?.['@self']?.published) return null;
+//   const schemaName = data?.['@self']?.schema?.title;
+//   const title = schemaName ? `${schemaName}` : '';
+//   const objectName = data?.['@self']?.name;
+//
+//   return (
+//     <Alert type='warning' style={{ marginBottom: '1rem' }}>
+//       <Heading level={4}>{title} is nog niet gepubliceerd</Heading>
+//       <Paragraph>
+//         {objectName} is momenteel niet zichtbaar in de zoekfunctie van{' '}
+//         {schemaName || 'de catalogus'}. Gebruik de &quot;Publiceren&quot; actie om
+//         deze gegevens beschikbaar te maken voor bezoekers.
+//       </Paragraph>
+//     </Alert>
+//   );
+// };
 
 export default ConProductDetailsPageContent;
