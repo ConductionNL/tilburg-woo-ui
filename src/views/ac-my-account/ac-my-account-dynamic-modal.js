@@ -392,6 +392,9 @@ const AcMyAccountDynamicModal = ({
       type: {
         visible: false,
       },
+      organisatieType: {
+        visible: false,
+      },
       deelnames: {
         visible: false,
       },
@@ -408,9 +411,12 @@ const AcMyAccountDynamicModal = ({
     };
 
     Object.entries(config.fieldConfigs).forEach(([fieldName, fieldConfig]) => {
-      configs[fieldName] = {};
+      // Preserve existing config or create new one
+      if (!configs[fieldName]) {
+        configs[fieldName] = {};
+      }
 
-      // Handle dynamic configurations
+      // Handle dynamic configurations - merge with existing config
       Object.entries(fieldConfig).forEach(([configKey, configValue]) => {
         if (typeof configValue === 'function') {
           configs[fieldName][configKey] = configValue(formData, isEdit);
