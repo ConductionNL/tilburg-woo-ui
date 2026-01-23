@@ -320,6 +320,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     selectedAppBByRow: {},
     directionByRow: {},
     koppelingIdByRow: {},
+    naamByRow: {},
   });
 
   // Diensten form state
@@ -1375,6 +1376,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       const nextDirectionByRow = {};
       const nextTypeByRow = {};
       const nextKoppelingIdByRow = {};
+      const nextNaamByRow = {};
       const updatedKoppelingen = [];
 
       koppelingen.forEach((kpl) => {
@@ -1427,6 +1429,10 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         if (kpl && kpl.soortKoppeling) {
           nextTypeByRow[rowId] = kpl.soortKoppeling;
         }
+
+        if (kpl && kpl.naam) {
+          nextNaamByRow[rowId] = kpl.naam;
+        }
       });
 
       if (nextRows.length > 0) {
@@ -1443,6 +1449,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
             ...prev.koppelingIdByRow,
             ...nextKoppelingIdByRow,
           },
+          naamByRow: { ...prev.naamByRow, ...nextNaamByRow },
         }));
       }
     }
