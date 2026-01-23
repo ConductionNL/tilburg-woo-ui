@@ -549,6 +549,7 @@ const AcFormsGebruik = ({ store }) => {
 
   // Aanbod beheerders flow state
   const [selectedKlanten, setSelectedKlanten] = useState([]); // Array of klant IDs
+  const [selectedKlantenOptions, setSelectedKlantenOptions] = useState([]); // Array of klant option objects
   const [klantenOptions, setKlantenOptions] = useState([]);
   const [klantenLoading, setKlantenLoading] = useState(false);
   // Versies
@@ -1224,9 +1225,25 @@ const AcFormsGebruik = ({ store }) => {
           const value = item?.['@self']?.id || item?.id || item?.slug || label;
           return { value: String(value), label: String(label), data: item };
         });
-        setKlantenOptions(options);
+
+        // Merge with existing options to preserve selected items
+        setKlantenOptions((prevOptions) => {
+          const newOptionsMap = new Map(options.map((opt) => [opt.value, opt]));
+          const mergedOptions = [...newOptionsMap.values()];
+
+          // Add any existing options that aren't in the new results
+          // This preserves previously selected items that might not match the current search
+          prevOptions.forEach((opt) => {
+            if (!newOptionsMap.has(opt.value)) {
+              mergedOptions.push(opt);
+            }
+          });
+
+          return mergedOptions;
+        });
       } catch (e) {
-        setKlantenOptions([]);
+        // Don't clear options on error to preserve existing selections
+        console.error('Klanten search failed:', e);
       } finally {
         setKlantenLoading(false);
       }
@@ -1994,6 +2011,8 @@ const AcFormsGebruik = ({ store }) => {
               searchKlanten={debouncedSearchKlanten}
               selectedKlanten={selectedKlanten}
               setSelectedKlanten={setSelectedKlanten}
+              selectedKlantenOptions={selectedKlantenOptions}
+              setSelectedKlantenOptions={setSelectedKlantenOptions}
               loading={loading}
             />
           );

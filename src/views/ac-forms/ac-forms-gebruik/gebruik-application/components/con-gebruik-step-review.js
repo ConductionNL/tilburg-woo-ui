@@ -221,7 +221,7 @@ const ConGebruikStepReview = ({
       </Paragraph>
 
       {/* Closeable info alert about adding an existing application */}
-      {showInfoAlert && (
+      {showInfoAlert && gebruik?.type !== 'ontbrekend-organisatie' && (
         <Alert severity='info' className='ac-forms-info-alert'>
           <button
             onClick={handleCloseAlert}

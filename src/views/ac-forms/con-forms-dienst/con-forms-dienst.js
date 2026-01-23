@@ -308,12 +308,8 @@ const ConFormsDienst = ({ store, userStore }) => {
           }
         }
 
-        // Convert type to array if it comes as a string (for backward compatibility)
-        const prefilledType = Array.isArray(fetched.type)
-          ? fetched.type
-          : fetched.type
-          ? [fetched.type]
-          : [];
+        // Keep type as-is (string or array) - don't force conversion
+        const prefilledType = fetched.type || '';
 
         // Update main dienst object
         setDienst((prev) => ({
@@ -1411,20 +1407,6 @@ const ConFormsDienst = ({ store, userStore }) => {
     ? 'toevoegen'
     : 'publicatie';
 
-  // Determine the action verb based on current step
-  const getActionVerb = () => {
-    if (isEditMode) return editModeTitle;
-    const currentStepLabel = stepper.getLabelFromStep(stepper.getCurrentStep());
-    if (currentStepLabel === 'applicaties') {
-      // On applicaties step, use "registreren"
-      var a = wizardName.split(' ');
-      a[0] += '(en) registreren';
-      return a.join(' ');
-    }
-    // On other steps, use "publiceren"
-    return newWizardName;
-  };
-
   return (
     <AcSection spacing>
       <AcContainer>
@@ -1434,7 +1416,7 @@ const ConFormsDienst = ({ store, userStore }) => {
               style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
             >
               <Icon style={{ width: '1em', height: '1em' }} />
-              Uw {getActionVerb()}
+              Uw {isEditMode ? editModeTitle : newWizardName}
             </Heading1>
             <Paragraph>
               {isEditMode

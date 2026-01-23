@@ -665,7 +665,7 @@ export const renderField = ({
             getOptionLabel: fieldConfig.getOptionLabel,
           })}
           onInputChange={
-            handleSearch && getFieldRefSchemaSlug(propertySchema)
+            handleSearch
               ? (inputValue, actionMeta) => {
                   // Only trigger search for user input
                   if (

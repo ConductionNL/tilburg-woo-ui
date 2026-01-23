@@ -336,7 +336,48 @@ const ConFormApplicatiesStage = memo(
                           ''
                       ).trim();
                       const website = String(dienstItem?.website || '').trim();
-                      const type = String(dienstItem?.type || '').trim();
+                      
+                      // Handle type - could be array, object, string, or string containing JSON array
+                      const type = (() => {
+                        const rawType = dienstItem?.type;
+                        if (!rawType) return '';
+                        
+                        // Check if it's a string that looks like a JSON array
+                        if (typeof rawType === 'string' && rawType.trim().startsWith('[')) {
+                          try {
+                            const parsed = JSON.parse(rawType);
+                            if (Array.isArray(parsed)) {
+                              return parsed
+                                .map((item) => (typeof item === 'string' ? item : String(item)))
+                                .join(', ');
+                            }
+                          } catch (e) {
+                            // If parsing fails, return as-is
+                            return String(rawType);
+                          }
+                        }
+                        
+                        // Handle actual arrays
+                        if (Array.isArray(rawType) && rawType.length > 0) {
+                          return rawType
+                            .map((t) =>
+                              typeof t === 'object'
+                                ? t.naam || t.name || t.label || t
+                                : String(t)
+                            )
+                            .join(', ');
+                        }
+                        
+                        // Handle objects
+                        if (typeof rawType === 'object') {
+                          return String(
+                            rawType.naam || rawType.name || rawType.label || rawType
+                          );
+                        }
+                        
+                        return String(rawType);
+                      })().trim();
+                      
                       const status = String(dienstItem?.status || '').trim();
                       const aanbieder = dienstItem?.aanbieder
                         ? String(dienstItem.aanbieder).trim()

@@ -95,13 +95,6 @@ const ConFormDienstInformatieStage = memo(
           )}
         </Paragraph>
 
-        <Paragraph style={{ marginBottom: '2rem' }}>
-          <strong>Basisinformatie van de dienst</strong>
-          <br />
-          Vul de naam, contactpersoon, aanbieder, website, type en beschrijvingen in.
-          Voeg indien gewenst een logo toe.
-        </Paragraph>
-
         <div className='con-dynamic-form-container'>
           <div className='con-form-fields-container'>
             <ConSchemaEnhancedField
@@ -209,16 +202,8 @@ const ConFormDienstInformatieStage = memo(
             <ConSchemaEnhancedField
               schemaType='dienst'
               schemaProperty='type'
-              value={
-                Array.isArray(dienst.type)
-                  ? dienst.type
-                  : dienst.type
-                  ? [dienst.type]
-                  : []
-              }
-              onChange={(value) =>
-                setDienstData('type', Array.isArray(value) ? value : [])
-              }
+              value={dienst.type || ''}
+              onChange={(value) => setDienstData('type', value)}
               isDisabled={loading}
               width='half'
               schemas={schemas}
