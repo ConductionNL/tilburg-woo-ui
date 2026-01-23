@@ -1162,7 +1162,7 @@ const AcFormsKoppeling = ({ store }) => {
         { title: 'Aanbieder', stepLabel: 'aanbieder' },
         {
           title: 'Koppeling zoeken',
-          isNavigable: false,
+          stepLabel: 'koppeling-zoeken',
           substeps: [
             { title: isEditMode ? 'Bewerken' : 'Koppeling', stepLabel: 'koppeling' },
             { title: 'Aanvullende informatie', stepLabel: 'aanvullende-informatie' },
@@ -1175,7 +1175,7 @@ const AcFormsKoppeling = ({ store }) => {
       return generateSteps(stepper, [
         {
           title: 'Koppeling zoeken',
-          isNavigable: false,
+          stepLabel: 'koppeling-zoeken',
           substeps: [
             { title: isEditMode ? 'Bewerken' : 'Koppeling', stepLabel: 'koppeling' },
             { title: 'Aanvullende informatie', stepLabel: 'aanvullende-informatie' },

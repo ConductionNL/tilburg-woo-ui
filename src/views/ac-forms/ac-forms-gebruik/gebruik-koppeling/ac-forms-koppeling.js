@@ -1987,7 +1987,7 @@ const AcFormsKoppeling = ({ store }) => {
       return generateSteps(stepper, [
         {
           title: 'Een koppeling zoeken',
-          isNavigable: false,
+          stepLabel: 'koppeling-zoeken',
           substeps: [
             { title: isEditMode ? 'Bewerken' : 'Toevoegen', stepLabel: 'toevoegen' },
           ],
