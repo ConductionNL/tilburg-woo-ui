@@ -381,7 +381,7 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
                       object={data}
                       showViewAction={false}
                       showEditAction={true}
-                      showPublishActions={true}
+                      showPublishActions={false} // LEGACY: Changed from true - Publish actions no longer needed
                       uniqueActions={[
                         ...(config.uniqueActions
                           ?.filter((action) => action.condition?.(data))
@@ -453,8 +453,8 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
                         }
                         setOpenModal('edit');
                       }}
-                      onPublish={() => setOpenModal('publish')}
-                      onDepublish={() => setOpenModal('depublish')}
+                      // onPublish={() => setOpenModal('publish')} {/* LEGACY: Publish actions no longer needed */}
+                      // onDepublish={() => setOpenModal('depublish')} {/* LEGACY: Publish actions no longer needed */}
                     />
                   )}
                 </AcFlex>

@@ -120,7 +120,8 @@ const ConPublicationActions = ({
           </ConActionMenu.Button>
         )}
 
-        {showPublishActions && !published && (
+        {/* Publish/Depublish actions - LEGACY: No longer needed */}
+        {/* {showPublishActions && !published && (
           <ConActionMenu.Button
             icon={<VISUALS.PUBLISH />}
             onClick={
@@ -166,7 +167,7 @@ const ConPublicationActions = ({
           >
             Depubliceren
           </ConActionMenu.Button>
-        )}
+        )} */}
 
         {/* Additional actions (e.g., related schema create actions) */}
         {additionalActions.map((action, index) => {

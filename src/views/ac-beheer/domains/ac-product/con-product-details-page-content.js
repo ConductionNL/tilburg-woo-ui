@@ -260,7 +260,8 @@ const ConProductDetailsPageContent = ({
                   Bewerken
                 </ConActionMenu.Button>
 
-                {data && !data['@self']?.published && (
+                {/* Publish/Depublish actions - LEGACY: No longer needed */}
+                {/* {data && !data['@self']?.published && (
                   <ConActionMenu.Button
                     icon={<VISUALS.PUBLISH />}
                     onClick={() => actionMenuProps?.setOpenModal?.('publish')}
@@ -290,7 +291,7 @@ const ConProductDetailsPageContent = ({
                   >
                     Depubliceren
                   </ConActionMenu.Button>
-                )}
+                )} */}
 
                 {/* Unique actions from config */}
                 {uniqueActions.map((action) => (

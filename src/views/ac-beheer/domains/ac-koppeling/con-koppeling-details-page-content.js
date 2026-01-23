@@ -1,7 +1,5 @@
 import {
   Heading,
-  Paragraph,
-  Alert,
 } from '@utrecht/component-library-react/dist/css-module';
 import { AcColumn, AcFlex } from '@src/atoms';
 import { VISUALS } from '@src/constants';
@@ -209,7 +207,8 @@ const ConKoppelingDetailsPageContent = ({
                   Bewerken
                 </ConActionMenu.Button>
 
-                {data && !data['@self']?.published && (
+                {/* Publish/Depublish actions - LEGACY: No longer needed */}
+                {/* {data && !data['@self']?.published && (
                   <ConActionMenu.Button
                     icon={<VISUALS.PUBLISH />}
                     onClick={() => actionMenuProps?.setOpenModal?.('publish')}
@@ -239,7 +238,7 @@ const ConKoppelingDetailsPageContent = ({
                   >
                     Depubliceren
                   </ConActionMenu.Button>
-                )}
+                )} */}
 
                 <ConActionMenu.Button
                   icon={<VISUALS.TRASHCAN />}

@@ -294,7 +294,7 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
                   object={get_single}
                   showViewAction={false}
                   showEditAction={true}
-                  showPublishActions={true}
+                  showPublishActions={false} // LEGACY: Changed from true - Publish actions no longer needed
                   onDelete={handleDelete}
                   onEdit={() => {
                     if (schemaSlug) {

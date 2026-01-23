@@ -194,7 +194,8 @@ const ConModuleVersionDetailsPageContent = ({
                   Bewerk beschrijving
                 </ConActionMenu.Button>
 
-                {data && !data['@self']?.published && (
+                {/* Publish/Depublish actions - LEGACY: No longer needed */}
+                {/* {data && !data['@self']?.published && (
                   <ConActionMenu.Button
                     icon={<VISUALS.PUBLISH />}
                     onClick={() => actionMenuProps?.setOpenModal?.('publish')}
@@ -224,7 +225,7 @@ const ConModuleVersionDetailsPageContent = ({
                   >
                     Depubliceren
                   </ConActionMenu.Button>
-                )}
+                )} */}
 
                 <ConActionMenu.Button
                   icon={<VISUALS.TRASHCAN />}
