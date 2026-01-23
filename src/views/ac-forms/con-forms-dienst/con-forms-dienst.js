@@ -117,6 +117,75 @@ const ConFormsDienst = ({ store, userStore }) => {
     setAanbiederOrganisatie((prev) => ({ ...prev, [key]: value }));
   }, []);
 
+  /**
+   * Helper to update nieuwe applicatie data
+   */
+  const setNieuweApplicatieData = useCallback((key, value) => {
+    setNieuweApplicatie((prev) => ({ ...prev, [key]: value }));
+  }, []);
+
+  /**
+   * Helper to update nieuwe leverancier data
+   */
+  const setNieuweLeverancierData = useCallback((key, value) => {
+    setNieuweLeverancier((prev) => ({ ...prev, [key]: value }));
+  }, []);
+
+  /**
+   * Search for leveranciers (organisations)
+   */
+  const searchLeveranciers = useCallback(
+    async (query) => {
+      setLeverancierLoading(true);
+      try {
+        const params = new URLSearchParams({
+          _limit: '20',
+          _page: '1',
+          _published: 'false',
+        });
+        if (query) params.set('_search', query);
+        const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/organisatie?${params}`;
+        const res = await fetch(endpoint, {
+          headers: { Accept: 'application/json' },
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const list = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.results)
+          ? data.results
+          : [];
+        const options = list.map((item, index) => {
+          const id =
+            item?.id ||
+            item?.['@self']?.id ||
+            item?.uuid ||
+            item?.value ||
+            item?.slug ||
+            index;
+          const label =
+            item?.naam ||
+            item?.name ||
+            item?.title ||
+            item?.label ||
+            `Organisatie ${index + 1}`;
+          return {
+            value: String(id),
+            label: String(label),
+            data: item,
+          };
+        });
+        setLeverancierOptions(options);
+      } catch (error) {
+        console.error('Failed to search leveranciers:', error);
+        setLeverancierOptions([]);
+      } finally {
+        setLeverancierLoading(false);
+      }
+    },
+    []
+  );
+
   // productId -> module options derived from product details
   const [productToModulesLookup, setProductToModulesLookup] = useState({});
   const [selectedModuleIds, setSelectedModuleIds] = useState([]);
@@ -128,6 +197,25 @@ const ConFormsDienst = ({ store, userStore }) => {
 
   const [koppelingOptions, setKoppelingOptions] = useState([]);
   const [selectedKoppelingIds, setSelectedKoppelingIds] = useState([]);
+
+  // New application flow state (for creating applications that don't exist)
+  const [showNewApplicatieForm, setShowNewApplicatieForm] = useState(false);
+  const [nieuweApplicatie, setNieuweApplicatie] = useState({
+    naam: '',
+    website: '',
+    beschrijvingKort: '',
+    leverancier: null,
+  });
+  const [leverancierKeuze, setLeverancierKeuze] = useState('bestaand'); // 'bestaand' or 'nieuw'
+  const [nieuweLeverancier, setNieuweLeverancier] = useState({
+    naam: '',
+    website: '',
+    type: '',
+  });
+
+  // Leverancier options for new application flow
+  const [leverancierOptions, setLeverancierOptions] = useState([]);
+  const [leverancierLoading, setLeverancierLoading] = useState(false);
 
   // Diensten display state (for showing diensten related to selected applicaties)
   const [dienstenResults, setDienstenResults] = useState([]);
@@ -220,12 +308,8 @@ const ConFormsDienst = ({ store, userStore }) => {
           }
         }
 
-        // Convert type to array if it comes as a string (for backward compatibility)
-        const prefilledType = Array.isArray(fetched.type)
-          ? fetched.type
-          : fetched.type
-          ? [fetched.type]
-          : [];
+        // Keep type as-is (string or array) - don't force conversion
+        const prefilledType = fetched.type || '';
 
         // Update main dienst object
         setDienst((prev) => ({
@@ -773,6 +857,16 @@ const ConFormsDienst = ({ store, userStore }) => {
             dienstenResults={dienstenResults}
             dienstenResultsLoading={dienstenResultsLoading}
             resolvedModulesFromDiensten={resolvedModulesFromDiensten}
+            showNewApplicatieForm={showNewApplicatieForm}
+            nieuweApplicatie={nieuweApplicatie}
+            setNieuweApplicatieData={setNieuweApplicatieData}
+            leverancierKeuze={leverancierKeuze}
+            setLeverancierKeuze={setLeverancierKeuze}
+            nieuweLeverancier={nieuweLeverancier}
+            setNieuweLeverancierData={setNieuweLeverancierData}
+            leverancierOptions={leverancierOptions}
+            leverancierLoading={leverancierLoading}
+            searchLeveranciers={searchLeveranciers}
           />
         );
       case 'aanbieder':
@@ -815,6 +909,11 @@ const ConFormsDienst = ({ store, userStore }) => {
             aanbiederOrganisatie={aanbiederOrganisatie}
             dienstenResults={dienstenResults}
             resolvedModulesFromDiensten={resolvedModulesFromDiensten}
+            showNewApplicatieForm={showNewApplicatieForm}
+            nieuweApplicatie={nieuweApplicatie}
+            leverancierKeuze={leverancierKeuze}
+            nieuweLeverancier={nieuweLeverancier}
+            leverancierOptions={leverancierOptions}
           />
         );
       default:
@@ -842,7 +941,51 @@ const ConFormsDienst = ({ store, userStore }) => {
 
     switch (stepLabel) {
       case 'applicaties':
-        // Applicaties: at least one applicatie selected
+        // Applicaties: at least one applicatie selected OR new applicatie form filled
+        if (showNewApplicatieForm) {
+          // Validate new application fields
+          if (!nieuweApplicatie.naam || !String(nieuweApplicatie.naam).trim())
+            return true;
+          if (!nieuweApplicatie.website || !String(nieuweApplicatie.website).trim())
+            return true;
+
+          // Validate website format
+          if (nieuweApplicatie.website && String(nieuweApplicatie.website).trim()) {
+            if (!validateWebsite(String(nieuweApplicatie.website).trim()))
+              return true;
+          }
+
+          // Check leverancier
+          if (leverancierKeuze === 'nieuw') {
+            // Validate new leverancier fields
+            if (
+              !nieuweLeverancier.naam ||
+              !String(nieuweLeverancier.naam).trim()
+            )
+              return true;
+            if (
+              !nieuweLeverancier.website ||
+              !String(nieuweLeverancier.website).trim()
+            )
+              return true;
+
+            // Validate website format
+            if (
+              nieuweLeverancier.website &&
+              String(nieuweLeverancier.website).trim()
+            ) {
+              if (!validateWebsite(String(nieuweLeverancier.website).trim()))
+                return true;
+            }
+          } else {
+            // Existing leverancier must be selected
+            if (!nieuweApplicatie.leverancier) return true;
+          }
+
+          return false;
+        }
+
+        // If not using new applicatie form, check if at least one applicatie is selected
         return selectedModuleIds.length === 0;
       case 'aanbieder': {
         // Aanbieder step validation
@@ -904,6 +1047,54 @@ const ConFormsDienst = ({ store, userStore }) => {
 
     switch (stepLabel) {
       case 'applicaties':
+        if (showNewApplicatieForm) {
+          // Validate new application fields
+          const messages = [];
+          if (!nieuweApplicatie.naam || !String(nieuweApplicatie.naam).trim()) {
+            messages.push('Vul de naam van de applicatie in');
+          }
+          if (
+            !nieuweApplicatie.website ||
+            !String(nieuweApplicatie.website).trim()
+          ) {
+            messages.push('Vul de website van de applicatie in');
+          }
+          if (
+            nieuweApplicatie.website &&
+            !validateWebsite(String(nieuweApplicatie.website).trim())
+          ) {
+            messages.push('Website heeft een ongeldig formaat');
+          }
+
+          // Check leverancier
+          if (leverancierKeuze === 'nieuw') {
+            if (
+              !nieuweLeverancier.naam ||
+              !String(nieuweLeverancier.naam).trim()
+            ) {
+              messages.push('Vul de naam van de leverancier in');
+            }
+            if (
+              !nieuweLeverancier.website ||
+              !String(nieuweLeverancier.website).trim()
+            ) {
+              messages.push('Vul de website van de leverancier in');
+            }
+            if (
+              nieuweLeverancier.website &&
+              !validateWebsite(String(nieuweLeverancier.website).trim())
+            ) {
+              messages.push('Website leverancier heeft een ongeldig formaat');
+            }
+          } else {
+            if (!nieuweApplicatie.leverancier) {
+              messages.push('Selecteer een leverancier');
+            }
+          }
+
+          return messages.join('\n');
+        }
+
         return selectedModuleIds.length === 0
           ? 'Selecteer minimaal één applicatie'
           : '';
@@ -977,6 +1168,82 @@ const ConFormsDienst = ({ store, userStore }) => {
     setSaveErrorMessage('');
     try {
       let finalAanbieder = dienst.aanbieder;
+      let finalModuleIds = [...selectedModuleIds];
+
+      // ✅ Create new application if user filled in the new application form
+      if (showNewApplicatieForm) {
+        try {
+          let finalLeverancier = null;
+
+          // Create new leverancier if needed
+          if (leverancierKeuze === 'nieuw') {
+            const leverancierData = {
+              naam: nieuweLeverancier.naam,
+              website: nieuweLeverancier.website,
+              type: nieuweLeverancier.type || 'Leverancier',
+            };
+
+            const createdLeverancier = await store.object.createObject(
+              'voorzieningen',
+              'organisatie',
+              leverancierData
+            );
+
+            finalLeverancier =
+              createdLeverancier?.id || createdLeverancier?.['@self']?.id;
+
+            if (!finalLeverancier) {
+              throw new Error('Leverancier aangemaakt maar geen ID ontvangen');
+            }
+          } else {
+            // Use existing leverancier
+            finalLeverancier = nieuweApplicatie.leverancier;
+          }
+
+          // Create new application
+          const applicatieData = {
+            naam: nieuweApplicatie.naam,
+            website: nieuweApplicatie.website,
+            beschrijvingKort: nieuweApplicatie.beschrijvingKort || '',
+            aanbieder: finalLeverancier,
+          };
+
+          const createdModule = await store.object.createObject(
+            'voorzieningen',
+            'module',
+            applicatieData
+          );
+
+          const createdModuleId = createdModule?.id || createdModule?.['@self']?.id;
+
+          if (!createdModuleId) {
+            throw new Error('Applicatie aangemaakt maar geen ID ontvangen');
+          }
+
+          // Add the newly created module to the selection
+          finalModuleIds = [...finalModuleIds, createdModuleId];
+
+          // Also add to module options so it can be displayed in review
+          const newOption = {
+            value: String(createdModuleId),
+            label: String(nieuweApplicatie.naam),
+            data: createdModule,
+            type: 'applicatie',
+          };
+          setModuleOptions((prev) => [...prev, newOption]);
+        } catch (appError) {
+          console.error('Failed to create application:', appError);
+          const errorMessage =
+            appError?.response?.data?.message ||
+            appError?.response?.data?.error ||
+            appError?.message ||
+            'Fout bij het aanmaken van de applicatie.';
+          setSaveErrorMessage(errorMessage);
+          setSaveResult('error');
+          setSaving(false);
+          return;
+        }
+      }
 
       // ✅ For new organization, create the organization first (only for ontbrekend-dienst)
       if (formType === 'ontbrekend-dienst' && aanbiederKeuze === 'nieuw') {
@@ -1024,7 +1291,7 @@ const ConFormsDienst = ({ store, userStore }) => {
         ...dienst,
         aanbieder: finalAanbieder,
         producten: [], // Producten selection commented out
-        modules: selectedModuleIds,
+        modules: finalModuleIds,
         koppelingen: selectedKoppelingIds,
         // Include service type for processing
         dienstType: dienstType,
@@ -1227,6 +1494,20 @@ const ConFormsDienst = ({ store, userStore }) => {
                       modules: [],
                       koppelingen: [],
                     });
+                    setSelectedModuleIds([]);
+                    setShowNewApplicatieForm(false);
+                    setNieuweApplicatie({
+                      naam: '',
+                      website: '',
+                      beschrijvingKort: '',
+                      leverancier: null,
+                    });
+                    setLeverancierKeuze('bestaand');
+                    setNieuweLeverancier({
+                      naam: '',
+                      website: '',
+                      type: '',
+                    });
                   }}
                   sx={{ marginLeft: '1rem' }}
                 >
@@ -1328,20 +1609,37 @@ const ConFormsDienst = ({ store, userStore }) => {
                             : 'Bestaande leverancier selecteren'}
                         </AcButton>
                       )}
-                    </AcFlex>
 
-                    {/* "Ik kan de gewenste applicatie niet vinden" button */}
-                    {stepper.getStepFromLabel('applicaties') ===
-                      stepper.getCurrentStep() && (
-                      <AcButton
-                        style='button'
-                        buttonType='secondary'
-                        icon={<VISUALS.CUBE />}
-                        onClick={() => setShowUnsavedChangesAlert(true)}
-                      >
-                        Ik kan de gewenste applicatie niet vinden
-                      </AcButton>
-                    )}
+                      {/* Toggle between existing/new applicatie form */}
+                      {stepper.getStepFromLabel('applicaties') ===
+                        stepper.getCurrentStep() &&
+                        !showNewApplicatieForm && (
+                          <AcButton
+                            style='button'
+                            buttonType='secondary'
+                            icon={<VISUALS.CUBE />}
+                            onClick={() => {
+                              setShowNewApplicatieForm(true);
+                              // Load initial leveranciers when switching to new applicatie form
+                              searchLeveranciers('');
+                            }}
+                          >
+                            Ik kan de gewenste applicatie niet vinden
+                          </AcButton>
+                        )}
+                      {stepper.getStepFromLabel('applicaties') ===
+                        stepper.getCurrentStep() &&
+                        showNewApplicatieForm && (
+                          <AcButton
+                            style='button'
+                            buttonType='secondary'
+                            icon={<VISUALS.ARROW_LEFT />}
+                            onClick={() => setShowNewApplicatieForm(false)}
+                          >
+                            Bestaande applicatie selecteren
+                          </AcButton>
+                        )}
+                    </AcFlex>
 
                     <AcFlex
                       spacing='xs'

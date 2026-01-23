@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   Heading,
   Paragraph,
@@ -411,12 +412,46 @@ const ConDienstDetailsPageContent = ({
           </Heading>
           <div className='ac-register-review__section'>
             <div style={{ marginTop: '12px' }}>
-              {data?.type && (
-                <div style={{ marginBottom: '8px' }}>
-                  <strong>Type: </strong>
-                  {data.type}
-                </div>
-              )}
+            {data?.type && (
+              <div style={{ marginBottom: '8px' }}>
+                <strong>Type: </strong>
+                {(() => {
+                  const rawType = data.type;
+                  
+                  // Check if it's a string that looks like a JSON array
+                  if (typeof rawType === 'string' && rawType.trim().startsWith('[')) {
+                    try {
+                      const parsed = JSON.parse(rawType);
+                      if (Array.isArray(parsed)) {
+                        return parsed
+                          .map((item, index) => (
+                            <React.Fragment key={index}>
+                              <ConUuidResolver>{String(item)}</ConUuidResolver>
+                              {index < parsed.length - 1 ? ', ' : ''}
+                            </React.Fragment>
+                          ));
+                      }
+                    } catch (e) {
+                      // If parsing fails, display as-is
+                      return <ConUuidResolver>{String(rawType)}</ConUuidResolver>;
+                    }
+                  }
+                  
+                  // Handle actual arrays
+                  if (Array.isArray(rawType)) {
+                    return rawType.map((typeId, index) => (
+                      <React.Fragment key={index}>
+                        <ConUuidResolver>{String(typeId)}</ConUuidResolver>
+                        {index < rawType.length - 1 ? ', ' : ''}
+                      </React.Fragment>
+                    ));
+                  }
+                  
+                  // Handle single value
+                  return <ConUuidResolver>{String(rawType)}</ConUuidResolver>;
+                })()}
+              </div>
+            )}
               {data?.dienstType && (
                 <div style={{ marginBottom: '8px' }}>
                   <strong>Diensttype: </strong>
