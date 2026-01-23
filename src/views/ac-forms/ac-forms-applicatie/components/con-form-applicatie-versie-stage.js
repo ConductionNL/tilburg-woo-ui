@@ -1,4 +1,4 @@
-import React, { useState, memo } from 'react';
+import React, { useState, memo, useEffect } from 'react';
 import clsx from 'clsx';
 import { AcButton } from '@src/molecules';
 import { VISUALS } from '@src/constants';
@@ -66,6 +66,15 @@ const ConFormApplicatieVersieStage = memo(
     };
 
     const schemaDefaults = getSchemaDefaults();
+
+    // Initialize moduleVersies with one default version if empty
+    // This ensures at least one version exists when the component mounts
+    useEffect(() => {
+      if (!Array.isArray(applicatie?.moduleVersies) || applicatie.moduleVersies.length === 0) {
+        setApplicatieData('moduleVersies', [{ ...schemaDefaults }]);
+      }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // Only run once on mount - we intentionally want this to run once
 
     // Get current versions array or initialize with one default version
     const getVersions = () => {
@@ -154,7 +163,7 @@ const ConFormApplicatieVersieStage = memo(
             <thead>
               <TableRow>
                 <TableCell>
-                  <b>Versienummer</b>
+                  <b>Versie</b>
                 </TableCell>
                 <TableCell>
                   <b>Status</b>

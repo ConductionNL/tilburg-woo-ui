@@ -1807,7 +1807,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     if (schemasLoading && logicalStep !== 0 && formType !== 'ontbrekend-applicatie') {
       return (
         <div style={{ padding: '2rem', textAlign: 'center' }}>
-          <Paragraph>Schema's laden...</Paragraph>
+          <Paragraph>Schema&apos;s laden...</Paragraph>
         </div>
       );
     }
@@ -2013,12 +2013,25 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       return missingNewOrgFields.length > 0;
     }
 
-    // Applicatie informatie: naam is required
+    // Applicatie informatie: naam, website, and beschrijvingKort are required
     if (logicalStep === 1) {
-      return (
-        !applicatie.naam?.trim?.() ||
-        (applicatie.website && !validateWebsite(applicatie.website))
-      );
+      // Check naam is filled
+      if (!applicatie.naam?.trim?.()) {
+        return true;
+      }
+      // Check website is filled
+      if (!applicatie.website?.trim?.()) {
+        return true;
+      }
+      // Check beschrijvingKort is filled
+      if (!applicatie.beschrijvingKort?.trim?.()) {
+        return true;
+      }
+      // Validate website format if provided
+      if (applicatie.website && !validateWebsite(applicatie.website)) {
+        return true;
+      }
+      return false;
     }
     // licentie: licentietype is required, and licentie is required when open source is selected
     if (logicalStep === 2) {
@@ -2113,6 +2126,12 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     if (logicalStep === 1) {
       if (!applicatie.naam || applicatie.naam.trim() === '') {
         return 'Vul de naam van de applicatie in';
+      }
+      if (!applicatie.website || applicatie.website.trim() === '') {
+        return 'Vul de website van de applicatie in';
+      }
+      if (!applicatie.beschrijvingKort || applicatie.beschrijvingKort.trim() === '') {
+        return 'Vul een korte beschrijving van de applicatie in';
       }
       if (applicatie.website && !validateWebsite(applicatie.website)) {
         return 'Website heeft een ongeldig formaat';

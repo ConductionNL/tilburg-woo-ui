@@ -350,6 +350,12 @@ const FormModalConfigFactory = {
             gebruiken: {
               visible: false,
             },
+            pakketversie_beschrijving: {
+              visible: false,
+            },
+            geregistreerdDoor: {
+              visible: false,
+            },
             // Hide description fields - they are edited inline via action menu
             beschrijvingKort: {
               visible: false,
@@ -493,6 +499,7 @@ const FormModalConfigFactory = {
             beschrijvingLang: { visible: false },
             type: { visible: (formData, isEdit) => !isEdit }, // Only show type field when adding new organisation
             organisatieType: { visible: false }, // Hide organisatieType - it's derived from type field
+            geregistreerdDoor: { visible: false },
             links: { visible: false },
             oin: { visible: false },
             rol: { visible: false },
