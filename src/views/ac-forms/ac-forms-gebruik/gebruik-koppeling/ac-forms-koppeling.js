@@ -163,6 +163,7 @@ const AcFormsKoppeling = ({ store }) => {
   const [saveErrors, setSaveErrors] = useState([]); // array of error messages
   const [redirectCountdown, setRedirectCountdown] = useState(0);
   const [prefillLoading, setPrefillLoading] = useState(false);
+  // eslint-disable-next-line no-unused-vars
   const [prefillError, setPrefillError] = useState(null);
 
   // Unsaved changes alert

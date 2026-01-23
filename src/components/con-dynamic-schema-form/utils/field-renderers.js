@@ -106,7 +106,8 @@ const ReactSelectWithGlobalHack = (props) => {
  * @param {object} params.onSearchHandlers - Search handlers
  * @param {number} params.resetKey - Reset key for forcing re-renders
  * @param {number} params.forceRenderKey - Force render key for options updates
- * @param {object} params.touched - Touched states by field path
+ * @param {boolean} params.isTouched - Whether the field has been touched/interacted with
+ * @param {function} params.onBlur - Optional blur handler to track field interactions
  * @returns {React.ReactElement|null} Rendered field or null if not visible
  */
 export const renderField = ({
@@ -129,7 +130,8 @@ export const renderField = ({
   onSearchHandlers = {},
   resetKey = 0,
   forceRenderKey = 0,
-  touched = {},
+  isTouched = false,
+  onBlur = null,
   inputStyle = {},
 }) => {
   // Generate field configuration
@@ -516,8 +518,8 @@ export const renderField = ({
         value={value ?? ''}
         placeholder={fieldConfig.placeholder}
         disabled={isDisabled}
-        touched={touched}
-        touchedKey={path}
+        isTouched={isTouched}
+        onBlur={onBlur}
         minLength={propertySchema?.minLength ?? undefined}
         maxLength={propertySchema?.maxLength ?? undefined}
         pattern={propertySchema?.pattern || undefined}
@@ -549,8 +551,8 @@ export const renderField = ({
         value={value || ''}
         placeholder={fieldConfig.placeholder}
         disabled={isDisabled}
-        touched={touched}
-        touchedKey={path}
+        isTouched={isTouched}
+        onBlur={onBlur}
         {...validation}
         style={inputStyle}
       />
@@ -683,6 +685,14 @@ export const renderField = ({
           })}
           {...(!validation.required && {
             isClearable: true,
+          })}
+          {...(onBlur && {
+            onBlur: () => {
+              // ReactSelect onBlur doesn't pass a value, just call the handler
+              if (typeof onBlur === 'function') {
+                onBlur();
+              }
+            },
           })}
           styles={inputStyle}
         />

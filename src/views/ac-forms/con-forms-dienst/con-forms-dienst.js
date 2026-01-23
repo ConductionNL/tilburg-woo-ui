@@ -18,7 +18,7 @@ import {
   UnorderedList,
   UnorderedListItem,
 } from '@utrecht/component-library-react/dist/css-module';
-import useStepper from '../con-stepper';
+import useStepper, { addStepperClickHandlers, generateSteps } from '../con-stepper';
 
 // Stage components
 import ConFormDienstInformatieStage from './components/con-form-dienst-informatie-stage';
@@ -83,8 +83,6 @@ const ConFormsDienst = ({ store, userStore }) => {
     koppelingen: [],
   });
 
-  const [touched, setTouched] = useState({});
-
   // Service type selection state - default to 'eigen-organisatie' since selection stage is disabled
   const [dienstType, setDienstType] = useState('eigen-organisatie'); // 'eigen-organisatie' or 'andere-organisatie'
 
@@ -110,7 +108,6 @@ const ConFormsDienst = ({ store, userStore }) => {
 
   const setDienstData = (key, value) => {
     setDienst((prev) => ({ ...prev, [key]: value }));
-    setTouched((prev) => ({ ...prev, [key]: true }));
   };
 
   const setAanbiederOrganisatieData = useCallback((key, value) => {
@@ -732,41 +729,7 @@ const ConFormsDienst = ({ store, userStore }) => {
     }
   };
 
-  // Add click handlers to ProcessSteps for navigation
-  useEffect(() => {
-    if (!processStepsRef.current) return;
 
-    const addClickHandlers = () => {
-      const stepElements = processStepsRef.current.querySelectorAll(
-        '.denhaag-process-steps .denhaag-process-steps__step-header, .denhaag-process-steps .denhaag-process-steps__sub-step'
-      );
-
-      stepElements.forEach((stepEl, index) => {
-        const stepNumber = index + 1;
-
-        stepEl.style.cursor = '';
-        stepEl.onclick = null;
-        stepEl.classList.remove('ac-step-clickable');
-
-        if (stepNumber < stepper.getCurrentStep()) {
-          stepEl.classList.add('ac-step-clickable');
-          stepEl.onclick = (e) => {
-            e.preventDefault();
-            stepper.setCurrentStep(stepNumber);
-          };
-        }
-      });
-    };
-
-    const timeoutId = setTimeout(addClickHandlers, 100);
-    return () => clearTimeout(timeoutId);
-  }, [stepper.getCurrentStep()]);
-
-  const getStatus = (active, step) => {
-    if (active === step) return 'current';
-    if (active < step) return 'not-checked';
-    return 'checked';
-  };
 
   const renderStep = () => {
     const stepLabel = stepper.getLabelFromStep(stepper.getCurrentStep());
@@ -807,7 +770,6 @@ const ConFormsDienst = ({ store, userStore }) => {
             dienst={dienst}
             setDienstData={setDienstData}
             loading={schemasLoading}
-            touched={touched}
             schemas={schemas}
             userStore={userStore}
             dienstType={dienstType}
@@ -1087,51 +1049,30 @@ const ConFormsDienst = ({ store, userStore }) => {
 
   // ProcessSteps configuration using stepper
   const processStepsConfig = useMemo(() => {
-    const steps = [];
-    const currentStepNum = stepper.getCurrentStep();
+    return generateSteps(stepper, [
+      { title: 'Applicaties', stepLabel: 'applicaties' },
+      { title: 'Aanbieder', stepLabel: 'aanbieder', condition: formType === 'ontbrekend-dienst' },
+      { title: 'Dienst informatie', stepLabel: 'dienst-informatie' },
+      { title: 'Controleren', stepLabel: 'controleren' },
+    ]);
+  }, [stepper.getCurrentStep(), formType]);
 
-    stepper.resetStepDefinitions('process-steps');
-    stepper.resetStepDefinitions('process-steps-status');
-
-    // Step 1: Applicaties (always shown)
-    steps.push({
-      id: 'a9p0p1l2-i3c4-a5t6-i7e8-s9t0a1g2e3f4',
-      marker: stepper.defineStep('process-steps', 'applicaties'),
-      status: getStatus(currentStepNum, stepper.defineStep('process-steps-status')),
-      title: 'Applicaties',
+  // Add click handlers to steps
+  useEffect(() => {
+    return addStepperClickHandlers({
+      processStepsRef,
+      processStepsConfig,
+      stepper,
+      skipIfLoading: prefillLoading,
+      skipIfError: prefillError,
     });
-
-    // Step 2: Aanbieder (only for ontbrekend-dienst)
-    if (formType === 'ontbrekend-dienst') {
-      steps.push({
-        id: 'a1a2n3b4-i5e6-d7e8-r9i0-n1f2o3r4m5a6t7i8e9',
-        marker: stepper.defineStep('process-steps', 'aanbieder'),
-        status: getStatus(
-          currentStepNum,
-          stepper.defineStep('process-steps-status')
-        ),
-        title: 'Aanbieder',
-      });
-    }
-
-    // Step 3: Dienst informatie
-    steps.push({
-      id: 'd1e2n3s4-t5i6-n7f8-o9r0-m1a2t3i4e5f6',
-      marker: stepper.defineStep('process-steps', 'dienst-informatie'),
-      status: getStatus(currentStepNum, stepper.defineStep('process-steps-status')),
-      title: 'Dienst informatie',
-    });
-
-    // Step 4: Controleren
-    steps.push({
-      id: 'c5o6n7t8-r9o0-l1e2-r3e4-n5s6t7a8g9e0',
-      marker: stepper.defineStep('process-steps', 'controleren'),
-      status: getStatus(currentStepNum, stepper.defineStep('process-steps-status')),
-      title: 'Controleren',
-    });
-
-    return steps;
-  }, [stepper, formType]);
+  }, [
+    stepper.getCurrentStep(),
+    prefillLoading,
+    prefillError,
+    stepper,
+    processStepsConfig,
+  ]);
 
   const {
     icon: Icon,

@@ -203,10 +203,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     processStepsConfig,
   ]);
 
-  const [touched, setTouched] = useState({
-    naam: false,
-  });
-
   // Schema definitions for form generation
   const [schemas, setSchemas] = useState({
     module: null,
@@ -293,10 +289,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       }
       return { ...prev, [key]: value };
     });
-    setTouched((prev) => ({
-      ...prev,
-      [key]: true,
-    }));
   }, []);
 
   const setAanbiederOrganisatieData = useCallback((key, value) => {
@@ -1716,7 +1708,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
             applicatie={applicatie}
             setApplicatieData={setApplicatieData}
             loading={loading || prefillLoading}
-            touched={touched}
             schemas={schemas}
             contactpersoonOptions={contactpersoonOptions}
             contactpersoonLoading={contactpersoonLoading}
@@ -1730,7 +1721,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
             applicatie={applicatie}
             setApplicatieData={setApplicatieData}
             loading={loading}
-            touched={touched}
             schemas={schemas}
           />
         );

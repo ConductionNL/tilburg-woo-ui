@@ -88,14 +88,11 @@ const ConFormsDienst = ({ store }) => {
     koppelingen: [],
   });
 
-  const [touched, setTouched] = useState({});
-
   // Service type selection state - default to 'eigen-organisatie' since selection stage is disabled
   const [dienstType] = useState('eigen-organisatie'); // 'eigen-organisatie' or 'andere-organisatie'
 
   const setDienstData = (key, value) => {
     setDienst((prev) => ({ ...prev, [key]: value }));
-    setTouched((prev) => ({ ...prev, [key]: true }));
   };
 
   // productId -> module options derived from product details
@@ -1284,7 +1281,6 @@ const ConFormsDienst = ({ store }) => {
             dienst={dienst}
             setDienstData={setDienstData}
             loading={schemasLoading}
-            touched={touched}
             schemas={schemas}
             userStore={store.user}
             dienstType={dienstType}

@@ -19,11 +19,10 @@ import licenses from '@assets/licenses/licenses.json';
  * @param {Object} applicatie - The applicatie object containing form data
  * @param {Function} setApplicatieData - Function to update applicatie data
  * @param {boolean} loading - Loading state indicator
- * @param {Object} touched - Touched field tracking for validation
  * @param {Object} schemas - Available schemas for field configuration
  */
 const ConFormApplicatieLicentieStage = memo(
-  ({ applicatie, setApplicatieData, loading, touched, schemas }) => {
+  ({ applicatie, setApplicatieData, loading, schemas }) => {
     // Prepare license options from licenses.json
     const licentieOptions = useMemo(
       () =>
@@ -74,7 +73,6 @@ const ConFormApplicatieLicentieStage = memo(
               }}
               isDisabled={loading}
               width='half'
-              touched={touched}
               schemas={schemas}
               customProps={{
                 description:
@@ -94,7 +92,6 @@ const ConFormApplicatieLicentieStage = memo(
               optionsProvider={licentieOptions}
               isDisabled={loading || !isOpenSource}
               width='half'
-              touched={touched}
               schemas={schemas}
               customProps={{
                 description:
@@ -115,7 +112,6 @@ const ConFormApplicatieLicentieStage = memo(
               }
               isDisabled={loading}
               width='full'
-              touched={touched}
               schemas={schemas}
               customProps={{
                 description:
@@ -140,7 +136,6 @@ const ConFormApplicatieLicentieStage = memo(
                     applicatie?.cloudDienstverleningsmodel?.length === 1)
                 }
                 width='half'
-                touched={touched}
                 schemas={schemas}
                 customProps={{
                   description:
@@ -167,7 +162,6 @@ const ConFormApplicatieLicentieStage = memo(
                       applicatie?.cloudDienstverleningsmodel?.length === 1)
                   }
                   width='full'
-                  touched={touched}
                   schemas={schemas}
                   customProps={{
                     description:
