@@ -5,7 +5,10 @@ import {
   AcLoader,
   ConExternalLink,
 } from '@components';
+import { AcButton } from '@src/molecules';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
+import { VISUALS } from '@src/constants';
+import { validateWebsite } from '@views/ac-forms/validation/form-validations';
 
 /**
  * Applicaties Selectie Stage
@@ -24,6 +27,16 @@ const ConFormApplicatiesStage = memo(
     dienstenResults = [],
     dienstenResultsLoading = false,
     resolvedModulesFromDiensten = [],
+    showNewApplicatieForm = false,
+    nieuweApplicatie = {},
+    setNieuweApplicatieData = () => {},
+    leverancierKeuze = 'bestaand',
+    setLeverancierKeuze = () => {},
+    nieuweLeverancier = {},
+    setNieuweLeverancierData = () => {},
+    leverancierOptions = [],
+    leverancierLoading = false,
+    searchLeveranciers = () => {},
   }) => {
     const handleChange = (value) => {
       // ConSchemaEnhancedField with array schema returns an array of IDs for multi-select
@@ -71,27 +84,195 @@ const ConFormApplicatiesStage = memo(
           leveranciers aanbieden.
         </Paragraph>
 
-        <div className='ac-register-form-grid'>
-          <div style={{ gridColumn: 'span 2', maxWidth: '640px' }}>
-            <ConSchemaEnhancedField
-              schemaType='dienst'
-              schemaProperty='modules'
-              required={true}
-              value={selectedModuleIds}
-              onChange={handleChange}
-              isDisabled={loadingModules}
-              isLoading={loadingModules || searchLoading || dienstenResultsLoading}
-              width='full'
-              schemas={schemas}
-              optionsProvider={moduleOptions}
-              onSearch={(_path, _refSlug, q) => searchModules && searchModules(q)}
-              customProps={{
-                label: 'Applicaties',
-                placeholder: 'Selecteer applicaties',
-              }}
-            />
+        {/* New application form */}
+        {showNewApplicatieForm ? (
+          <div className='con-dynamic-form-container'>
+            <div className='con-form-fields-container'>
+              {/* Section 1: Leverancier */}
+              <h3 className='utrecht-heading-3' style={{ width: '100%' }}>
+                {leverancierKeuze === 'nieuw'
+                  ? 'Leverancier aanmaken'
+                  : 'Leverancier selecteren'}
+              </h3>
+
+              {/* Existing leverancier dropdown */}
+              {leverancierKeuze !== 'nieuw' ? (
+                <>
+                  <ConSchemaEnhancedField
+                    schemaType='module'
+                    schemaProperty='aanbieder'
+                    value={nieuweApplicatie?.leverancier || null}
+                    onChange={(value) => {
+                      const nextId =
+                        (value && value.data && (value.data.id || value.data.value)) ||
+                        (value && value.value) ||
+                        value;
+                      setNieuweApplicatieData('leverancier', nextId);
+                    }}
+                    isDisabled={loadingModules}
+                    isLoading={leverancierLoading}
+                    width='half'
+                    schemas={schemas}
+                    optionsProvider={leverancierOptions}
+                    onSearch={(_path, _refSlug, query) =>
+                      searchLeveranciers && searchLeveranciers(query || '')
+                    }
+                    customProps={{
+                      label: 'Leverancier',
+                      isClearable: true,
+                      placeholder: 'Zoek en selecteer leverancier',
+                      required: true,
+                    }}
+                  />
+
+                  <div style={{ alignSelf: 'end' }}>
+                    <AcButton
+                      style='button'
+                      buttonType='secondary'
+                      icon={<VISUALS.BUILDING />}
+                      onClick={() => setLeverancierKeuze('nieuw')}
+                    >
+                      Ik kan de gewenste leverancier niet vinden
+                    </AcButton>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <ConSchemaEnhancedField
+                    schemaType='organisatie'
+                    schemaProperty='naam'
+                    value={nieuweLeverancier?.naam || ''}
+                    onChange={(value) => setNieuweLeverancierData('naam', value)}
+                    isDisabled={loadingModules}
+                    width='half'
+                    schemas={schemas}
+                    customProps={{
+                      required: true,
+                      placeholder: 'Naam van de leverancier',
+                    }}
+                  />
+
+                  <ConSchemaEnhancedField
+                    schemaType='organisatie'
+                    schemaProperty='website'
+                    value={nieuweLeverancier?.website || ''}
+                    onChange={(value) => setNieuweLeverancierData('website', value)}
+                    isDisabled={loadingModules}
+                    width='half'
+                    schemas={schemas}
+                    customProps={{
+                      inputType: 'text',
+                      required: true,
+                      placeholder: 'Website van de leverancier',
+                      validation: {
+                        custom: (value) => {
+                          if (!value || value.trim() === '') return true;
+                          return validateWebsite(value.trim());
+                        },
+                        customErrorMessage:
+                          'Website heeft een ongeldig formaat (bijv. conduction.nl)',
+                      },
+                    }}
+                  />
+
+                  <AcButton
+                    style='button'
+                    buttonType='secondary'
+                    icon={<VISUALS.ARROW_LEFT />}
+                    onClick={() => setLeverancierKeuze('bestaand')}
+                  >
+                    Bestaande leverancier selecteren
+                  </AcButton>
+                </>
+              )}
+
+              {/* Section 2: Applicatie fields */}
+              <h3
+                className='utrecht-heading-3'
+                style={{ marginTop: '2rem', width: '100%' }}
+              >
+                Applicatie
+              </h3>
+
+              <ConSchemaEnhancedField
+                schemaType='module'
+                schemaProperty='naam'
+                value={nieuweApplicatie?.naam || ''}
+                onChange={(value) => setNieuweApplicatieData('naam', value)}
+                isDisabled={loadingModules}
+                width='half'
+                schemas={schemas}
+                customProps={{
+                  required: true,
+                  placeholder: 'Naam van de applicatie',
+                }}
+              />
+
+              <ConSchemaEnhancedField
+                schemaType='module'
+                schemaProperty='website'
+                value={nieuweApplicatie?.website || ''}
+                onChange={(value) => setNieuweApplicatieData('website', value)}
+                isDisabled={loadingModules}
+                width='half'
+                schemas={schemas}
+                customProps={{
+                  inputType: 'text',
+                  required: true,
+                  placeholder: 'Website van de applicatie',
+                  validation: {
+                    custom: (value) => {
+                      if (!value || String(value).trim() === '') return true;
+                      return validateWebsite(String(value).trim());
+                    },
+                    customErrorMessage:
+                      'Website heeft een ongeldig formaat (bijv. conduction.nl)',
+                  },
+                  description: 'Een URL naar uw applicatie of organisatie',
+                }}
+              />
+
+              <ConSchemaEnhancedField
+                schemaType='module'
+                schemaProperty='beschrijvingKort'
+                value={nieuweApplicatie?.beschrijvingKort || ''}
+                onChange={(value) => setNieuweApplicatieData('beschrijvingKort', value)}
+                isDisabled={loadingModules}
+                width='full'
+                schemas={schemas}
+                customProps={{
+                  description:
+                    'Een korte beschrijving van de applicatie voor o.a. in de zoekresultaten.',
+                }}
+              />
+            </div>
           </div>
-        </div>
+        ) : (
+          // Existing application selection
+          <div className='ac-register-form-grid'>
+            <div style={{ gridColumn: 'span 2', maxWidth: '640px' }}>
+              <ConSchemaEnhancedField
+                schemaType='dienst'
+                schemaProperty='modules'
+                required={true}
+                value={selectedModuleIds}
+                onChange={handleChange}
+                isDisabled={loadingModules}
+                isLoading={
+                  loadingModules || searchLoading || dienstenResultsLoading
+                }
+                width='full'
+                schemas={schemas}
+                optionsProvider={moduleOptions}
+                onSearch={(_path, _refSlug, q) => searchModules && searchModules(q)}
+                customProps={{
+                  label: 'Applicaties',
+                  placeholder: 'Selecteer applicaties',
+                }}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Display diensten related to selected applicaties (read-only) */}
         {selectedModuleIds.length > 0 && (
