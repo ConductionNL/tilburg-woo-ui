@@ -48,7 +48,6 @@ const ConFormApplicatieInformatieStage = memo(
           vinden, herkennen en beoordelen. Vul de velden zo volledig mogelijk in,
           zodat uw applicatie goed zichtbaar is in de softwarecatalogus.
           <br />
-          <br />
           Na het opslaan kunt u de gegevens later altijd weer aanpassen of aanvullen.
         </Paragraph>
 

@@ -356,6 +356,10 @@ const FormModalConfigFactory = {
             geregistreerdDoor: {
               visible: false,
             },
+            // Remove schema pattern from versie field as it uses advanced regex not supported by HTML5
+            versie: {
+              pattern: undefined,
+            },
             // Hide description fields - they are edited inline via action menu
             beschrijvingKort: {
               visible: false,
