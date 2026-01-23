@@ -9,7 +9,6 @@ import { VISUALS } from '@src/constants';
 import { ProcessSteps } from '@gemeente-denhaag/components-react';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 import { validateWebsite } from '@views/ac-forms/validation/form-validations';
-import { useDebouncedInput } from '@src/hooks';
 import _ from 'lodash';
 import {
   Heading1,
@@ -19,6 +18,12 @@ import {
   UnorderedListItem,
 } from '@utrecht/component-library-react/dist/css-module';
 import useStepper, { addStepperClickHandlers, generateSteps } from '../con-stepper';
+import {
+  useSchemaFetcher,
+  createModuleMapper,
+  createModuleSearchConfig,
+  useEntitySearch,
+} from '../wizard-utils';
 
 // Stage components
 import ConFormDienstInformatieStage from './components/con-form-dienst-informatie-stage';
@@ -29,18 +34,6 @@ import ConFormDienstAanbiederInformatieStage from './components/con-form-dienst-
 import ConUnsavedChangesAlertModal from '@src/components/con-unsaved-changes-alert-modal/con-unsaved-changes-alert-modal';
 import { getActiveWizard } from '@src/constants/wizards.constants';
 import { ConDebugViewer } from '@src/components';
-
-const mapToOption = (item, index) => {
-  const label =
-    item?.['@self']?.name ||
-    item?.naam ||
-    item?.name ||
-    item?.title ||
-    item?.label ||
-    `Applicatie ${index + 1}`;
-  const value = item?.['@self']?.id || item?.id || item?.slug || label;
-  return { value: String(value), label: String(label), data: item };
-};
 
 const ConFormsDienst = ({ store, userStore }) => {
   const [searchParams] = useSearchParams();
@@ -53,15 +46,7 @@ const ConFormsDienst = ({ store, userStore }) => {
   const stepper = useStepper();
   const processStepsRef = useRef(null);
 
-  // Schemas
-  const [schemas, setSchemas] = useState({
-    dienst: null,
-    suite: null,
-    module: null,
-    koppeling: null,
-    organisatie: null,
-  });
-  const [schemasLoading, setSchemasLoading] = useState(true);
+  // Schemas - will be set by useSchemaFetcher
 
   // Edit-mode prefill state
   const [prefillLoading, setPrefillLoading] = useState(false);
@@ -118,9 +103,30 @@ const ConFormsDienst = ({ store, userStore }) => {
   const [productToModulesLookup, setProductToModulesLookup] = useState({});
   const [selectedModuleIds, setSelectedModuleIds] = useState([]);
   const [modulesLoading, setModulesLoading] = useState(false);
-  const [searchLoading, setSearchLoading] = useState(false);
   const [applicatiePreloadLoading, setApplicatiePreloadLoading] = useState(false);
-  const [moduleOptions, setModuleOptions] = useState([]);
+  
+  // Module search with utilities
+  const moduleMapper = createModuleMapper();
+  const moduleSearchConfig = createModuleSearchConfig(store, {
+    mapToOption: moduleMapper,
+    cacheKey: 'dienst_form_search',
+    queryParamsBuilder: (searchTerm) => ({
+      _limit: '50',
+      _page: '1',
+      _published: 'false',
+      _source: 'index',
+      ...(searchTerm && searchTerm.trim() ? { _search: searchTerm.trim() } : {}),
+    }),
+  });
+  const {
+    search: searchModules,
+    loading: searchLoading,
+    options: moduleOptions,
+    setOptions: setModuleOptions,
+  } = useEntitySearch(moduleSearchConfig, {
+    debounceDelay: 250,
+    mergeStrategy: 'replace-existing',
+  });
   const moduleOptionsRef = useRef([]);
 
   const [koppelingOptions, setKoppelingOptions] = useState([]);
@@ -201,7 +207,7 @@ const ConFormsDienst = ({ store, userStore }) => {
               const newOptions = moduleResults
                 .map((result, index) => {
                   if (result.status === 'fulfilled' && result.value) {
-                    return mapToOption(result.value, index);
+                    return moduleMapper(result.value, index);
                   }
                   return null;
                 })
@@ -280,29 +286,10 @@ const ConFormsDienst = ({ store, userStore }) => {
   }, [userStore]);
 
   // Load schemas through object store (auth-aware)
-  useEffect(() => {
-    const load = async () => {
-      setSchemasLoading(true);
-      const types = ['dienst', 'product', 'module', 'koppeling', 'organisatie'];
-      const fetched = {};
-      try {
-        await Promise.all(
-          types.map(async (t) => {
-            try {
-              await store.object.fetchSchema(t);
-              fetched[t] = store.object.getSchema(`schema_${t}`);
-            } catch {
-              fetched[t] = null;
-            }
-          })
-        );
-        setSchemas(fetched);
-      } finally {
-        setSchemasLoading(false);
-      }
-    };
-    load();
-  }, [store]);
+  const { schemas, loading: schemasLoading } = useSchemaFetcher(
+    store,
+    ['dienst', 'product', 'module', 'koppeling', 'organisatie']
+  );
 
   // Fetch all modules (not product-based anymore)
   const loadAllModules = async () => {
@@ -324,7 +311,7 @@ const ConFormsDienst = ({ store, userStore }) => {
         'voorzieningen_module_dienst_form'
       );
       const list = collection?.results || collection || [];
-      const options = list.map(mapToOption);
+      const options = list.map(moduleMapper);
 
       // Merge with existing options to preserve search results and manually fetched modules
       setModuleOptions((prevOptions) => {
@@ -412,7 +399,7 @@ const ConFormsDienst = ({ store, userStore }) => {
               String(applicatieFromUrl)
             );
             if (fetched) {
-              const option = mapToOption(fetched, 0);
+              const option = moduleMapper(fetched, 0);
               setModuleOptions((prev) => {
                 const exists = prev.some((o) => o.value === option.value);
                 if (exists) return prev;
@@ -438,77 +425,8 @@ const ConFormsDienst = ({ store, userStore }) => {
     preSelectApplicatie();
   }, [applicatieFromUrl, moduleOptions, isEditMode, store]);
 
-  // Server-side search for modules (searches all modules)
-  const searchModules = useCallback(
-    async (query) => {
-      try {
-        setSearchLoading(true);
-        const q = String(query || '').trim();
-
-        const queryParams = {
-          _limit: '50',
-          _page: '1',
-          _published: 'false',
-          _source: 'index',
-        };
-
-        // Add search parameter if provided
-        if (q) {
-          queryParams._search = q;
-        }
-
-        await store.object.fetchCollection(
-          'voorzieningen',
-          'module',
-          queryParams,
-          null,
-          'dienst_form_search'
-        );
-        const collection = store.object.getCollection(
-          'voorzieningen_module_dienst_form_search'
-        );
-        const list = collection?.results || collection || [];
-        const options = list.map(mapToOption);
-
-        // Add search results to existing options (don't replace, merge)
-        setModuleOptions((prevOptions) => {
-          const existingOptionsMap = new Map(
-            prevOptions.map((opt) => [opt.value, opt])
-          );
-          const newOptionsMap = new Map(options.map((opt) => [opt.value, opt]));
-
-          // Start with existing options
-          const mergedOptions = [...prevOptions];
-
-          // Add new search results that don't already exist
-          newOptionsMap.forEach((newOpt, value) => {
-            if (!existingOptionsMap.has(value)) {
-              mergedOptions.push(newOpt);
-            } else {
-              // Update existing option with new data (in case it changed)
-              const index = mergedOptions.findIndex((opt) => opt.value === value);
-              if (index !== -1) {
-                mergedOptions[index] = newOpt;
-              }
-            }
-          });
-
-          return mergedOptions;
-        });
-      } catch (e) {
-        // Don't clear options on error to preserve existing selections
-        console.error('Module search failed:', e);
-      } finally {
-        setSearchLoading(false);
-      }
-    },
-    [store]
-  );
-
-  // Debounced search function
-  const debouncedSearchModules = useDebouncedInput(searchModules, 250, {
-    disableInstantValidation: true,
-  });
+  // Debounced search function (searchModules is already debounced by useEntitySearch)
+  const debouncedSearchModules = searchModules;
 
   // Keep dienst.modules in sync with current selection
   useEffect(() => {

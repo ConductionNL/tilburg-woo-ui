@@ -27,20 +27,15 @@ import { commongroundApiUrl } from '@config';
 import _ from 'lodash';
 import { ConDebugViewer } from '@src/components';
 import useStepper, { addStepperClickHandlers, generateSteps } from '../../con-stepper';
+import {
+  useSchemaFetcher,
+  createModuleMapper,
+  createReferentieComponentMapper,
+  createModuleSearchConfig,
+  useEntitySearch,
+} from '../../wizard-utils';
 // Commented out - modal no longer used
 // import ConUnsavedChangesAlertModal from '@src/components/con-unsaved-changes-alert-modal/con-unsaved-changes-alert-modal';
-
-const mapToOption = (item, index) => {
-  const label =
-    item?.['@self']?.name ||
-    item?.naam ||
-    item?.name ||
-    item?.title ||
-    item?.label ||
-    `Applicatie ${index + 1}`;
-  const value = item?.['@self']?.id || item?.id || item?.slug || label;
-  return { value: String(value), label: String(label), data: item };
-};
 
 const AcFormsGebruik = ({ store }) => {
   const [searchParams] = useSearchParams();
@@ -226,9 +221,14 @@ const AcFormsGebruik = ({ store }) => {
     [getIdString, store?.user?.activeOrganization, determineGebruikType]
   );
 
-  // Schema management
-  const [schemas, setSchemas] = useState({});
-  const [schemasLoading, setSchemasLoading] = useState(true);
+  // Schema management - gebruik schema fetched separately, others via useSchemaFetcher
+  const [gebruikSchema, setGebruikSchema] = useState(null);
+  const { schemas: otherSchemas, loading: otherSchemasLoading } = useSchemaFetcher(
+    store,
+    ['organisatie', 'module', 'moduleversie']
+  );
+  const schemas = { gebruik: gebruikSchema, ...otherSchemas };
+  const schemasLoading = otherSchemasLoading || !gebruikSchema;
 
   // Gebruik object based on schema
   const [gebruik, setGebruik] = useState({});
@@ -417,9 +417,47 @@ const AcFormsGebruik = ({ store }) => {
   }, [gebruikType, isEditMode, isInitialLoad]);
 
   // Options state (UI-only)
-  const [modulesOptions, setModulesOptions] = useState([]);
+  // Module search with utilities
+  const moduleMapper = createModuleMapper();
+  const moduleSearchConfig = createModuleSearchConfig(store, {
+    mapToOption: moduleMapper,
+    cacheKey: 'gebruik_form_search',
+    queryParamsBuilder: (searchTerm, additionalParams = {}) => {
+      const params = {
+        _limit: '50',
+        _page: '1',
+        '_extend[]': ['@self.schema', 'moduleVersies'],
+        _published: 'false',
+        _source: 'index',
+        ...additionalParams,
+      };
+
+      // Filter by leverancier (aanbieder) for Aanbod beheerders flow
+      if (isAanbodBeheerdersFlow) {
+        const activeOrg = store?.user?.activeOrganization;
+        const activeOrgId = activeOrg?.uuid || activeOrg?.id;
+        if (activeOrgId) {
+          params.aanbieder = activeOrgId;
+        }
+      }
+
+      if (searchTerm && searchTerm.trim()) {
+        params._search = searchTerm.trim();
+      }
+
+      return params;
+    },
+  });
+  const {
+    search: searchModules,
+    loading: searchLoading,
+    options: modulesOptions,
+    setOptions: setModulesOptions,
+  } = useEntitySearch(moduleSearchConfig, {
+    debounceDelay: 500,
+    mergeStrategy: 'preserve-existing',
+  });
   const [modulesLoading, setModulesLoading] = useState(false);
-  const [searchLoading, setSearchLoading] = useState(false);
   const [applicatiePreloadLoading, setApplicatiePreloadLoading] = useState(false);
 
   // Deelnemers (organisaties) options - for andere organisatie flow
@@ -550,20 +588,19 @@ const AcFormsGebruik = ({ store }) => {
     return options;
   }, [leverancierOptions, needsAanbiederStep, afnemerKeuze, afnemerOrganisatie]);
 
-  // Fetch schemas on component mount
+  // Fetch gebruik schema on component mount (special endpoint)
   useEffect(() => {
-    const fetchSchemaAndInit = async () => {
+    const fetchGebruikSchema = async () => {
       try {
-        // Fetch gebruik schema
         const gebruikResponse = await fetch(
           '/api/apps/openregister/api/schemas/gebruik'
         );
-        let gebruikSchema = null;
         if (gebruikResponse.ok) {
-          gebruikSchema = await gebruikResponse.json();
+          const schema = await gebruikResponse.json();
+          setGebruikSchema(schema);
           const defaultGebruik = createDefaultFormObject(
             store,
-            gebruikSchema,
+            schema,
             'gebruik',
             {
               status: 'Verwerving',
@@ -572,48 +609,11 @@ const AcFormsGebruik = ({ store }) => {
           );
           if (!isEditMode) setGebruik((prev) => ({ ...defaultGebruik, ...prev }));
         }
-
-        // Fetch organisatie schema for organization form
-        let organisatieSchema = null;
-        try {
-          await store.object.fetchSchema('organisatie');
-          organisatieSchema = store.object.getSchema('schema_organisatie');
-        } catch (orgError) {
-          console.error('Failed to fetch organisatie schema:', orgError);
-        }
-
-        // Fetch module schema for applicatie form
-        let moduleSchema = null;
-        try {
-          await store.object.fetchSchema('module');
-          moduleSchema = store.object.getSchema('schema_module');
-        } catch (moduleError) {
-          console.error('Failed to fetch module schema:', moduleError);
-        }
-
-        // Fetch moduleversie schema for versie form
-        let moduleversieSchema = null;
-        try {
-          await store.object.fetchSchema('moduleversie');
-          moduleversieSchema = store.object.getSchema('schema_moduleversie');
-        } catch (moduleversieError) {
-          console.error('Failed to fetch moduleversie schema:', moduleversieError);
-        }
-
-        setSchemas({
-          gebruik: gebruikSchema,
-          organisatie: organisatieSchema,
-          module: moduleSchema,
-          moduleversie: moduleversieSchema,
-        });
-        setSchemasLoading(false);
       } catch (error) {
-        console.error('Failed to fetch schemas for gebruik form:', error);
-        setSchemas({});
-        setSchemasLoading(false);
+        console.error('Failed to fetch gebruik schema:', error);
       }
     };
-    fetchSchemaAndInit();
+    fetchGebruikSchema();
   }, [store, isEditMode]);
 
   // Prefill for edit mode: fetch existing gebruik and map to local state; start at step 1
@@ -849,7 +849,7 @@ const AcFormsGebruik = ({ store }) => {
           'voorzieningen_module_gebruik_form'
         );
         const list = collection?.results || collection || [];
-        const options = list.map(mapToOption);
+        const options = list.map(moduleMapper);
         // Merge with existing options to preserve modules added by edit mode fetch
         setModulesOptions((prev) => {
           const existingMap = new Map(prev.map((opt) => [opt.value, opt]));
@@ -945,74 +945,6 @@ const AcFormsGebruik = ({ store }) => {
     preSelectApplicatie();
   }, [applicatieFromUrl, modulesOptions, isEditMode, store, isAanbodBeheerdersFlow]);
 
-  // Server-side search for modules (searches all modules)
-  const searchModules = useCallback(
-    async (query) => {
-      try {
-        setSearchLoading(true);
-        const q = String(query || '').trim();
-
-        const queryParams = {
-          _limit: '50',
-          _page: '1',
-          '_extend[]': ['@self.schema', 'moduleVersies'],
-          _published: 'false',
-          _source: 'index', // Use index to get applications from all tenants
-        };
-
-        // Filter by leverancier (aanbieder) for Aanbod beheerders flow
-        if (isAanbodBeheerdersFlow) {
-          const activeOrg = store?.user?.activeOrganization;
-          const activeOrgId = activeOrg?.uuid || activeOrg?.id;
-          if (activeOrgId) {
-            queryParams.aanbieder = activeOrgId;
-          }
-        }
-
-        // Add search parameter if provided
-        if (q) {
-          queryParams._search = q;
-        }
-
-        await store.object.fetchCollection(
-          'voorzieningen',
-          'module',
-          queryParams,
-          null,
-          'gebruik_form_search'
-        );
-        const collection = store.object.getCollection(
-          'voorzieningen_module_gebruik_form_search'
-        );
-        const list = collection?.results || collection || [];
-        const options = list.map(mapToOption);
-
-        // Merge with existing options to preserve selected items
-        setModulesOptions((prevOptions) => {
-          const newOptionsMap = new Map(options.map((opt) => [opt.value, opt]));
-
-          // Combine existing and new options, preferring new data for existing items
-          const mergedOptions = [...newOptionsMap.values()];
-
-          // Add any existing options that aren't in the new results
-          // This preserves previously selected items that might not match the current search
-          prevOptions.forEach((opt) => {
-            if (!newOptionsMap.has(opt.value)) {
-              mergedOptions.push(opt);
-            }
-          });
-
-          return mergedOptions;
-        });
-      } catch (e) {
-        // Don't clear options on error to preserve existing selections
-        console.error('Module search failed:', e);
-      } finally {
-        setSearchLoading(false);
-      }
-    },
-    [store, isAanbodBeheerdersFlow]
-  );
 
   // Server-side search for leveranciers (similar to searchOrganisaties)
   const searchOrganisaties = useCallback(
@@ -1242,25 +1174,9 @@ const AcFormsGebruik = ({ store }) => {
       );
       const list = await response.json();
 
-      const mapToOption = (item, index) => {
-        const label =
-          item?.['@self']?.name ||
-          item?.xml?.name?._value ||
-          item?.naam ||
-          item?.name ||
-          item?.title ||
-          item?.label ||
-          `Component ${index + 1}`;
-        const value = item?.value || item?.id || item?.slug || label;
-        return {
-          value: String(value),
-          label: String(label),
-          data: item, // Store the full API data for access to aanbevolenStandaarden, verplichteStandaarden
-        };
-      };
-
-      const options = list.results
-        .map(mapToOption)
+      const referentieComponentMapper = createReferentieComponentMapper();
+      const options = (list.results || [])
+        .map(referentieComponentMapper)
         .filter((o) => o.label && o.value);
 
       setReferentieComponentenOptions(options);

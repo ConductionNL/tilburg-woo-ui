@@ -24,6 +24,12 @@ import ConUnsavedChangesAlertModal from '@src/components/con-unsaved-changes-ale
 import { validateWebsite } from '@views/ac-forms/validation/form-validations';
 import { useDebouncedInput } from '@src/hooks';
 import useStepper, { addStepperClickHandlers, generateSteps } from '../con-stepper';
+import {
+  useSchemaFetcher,
+  createModuleMapper,
+  createModuleSearchConfig,
+  useEntitySearch,
+} from '../wizard-utils';
 
 /**
  * Koppeling Wizard (AcFormsKoppeling)
@@ -67,72 +73,14 @@ const AcFormsKoppeling = ({ store }) => {
   const processStepsRef = useRef(null);
 
 
-  // Schema management state
-  const [schemas, setSchemas] = useState({});
-  const [schemasLoading, setSchemasLoading] = useState(true);
-
-  // Fetch schemas on component mount
-  useEffect(() => {
-    const fetchSchemas = async () => {
-      setSchemasLoading(true);
-      try {
-        // Fetch koppeling schema
-        let koppelingSchema = null;
-        try {
-          await store.object.fetchSchema('koppeling');
-          koppelingSchema = store.object.getSchema('schema_koppeling');
-        } catch (koppelingError) {
-          console.error('Failed to fetch koppeling schema:', koppelingError);
-        }
-
-        // Fetch organisatie schema for organization form
-        let organisatieSchema = null;
-        try {
-          await store.object.fetchSchema('organisatie');
-          organisatieSchema = store.object.getSchema('schema_organisatie');
-        } catch (orgError) {
-          console.error('Failed to fetch organisatie schema:', orgError);
-        }
-
-        // Fetch gebruik schema for gebruiksinformatie step
-        let gebruikSchema = null;
-        try {
-          await store.object.fetchSchema('gebruik');
-          gebruikSchema = store.object.getSchema('schema_gebruik');
-        } catch (gebruikError) {
-          console.error('Failed to fetch gebruik schema:', gebruikError);
-        }
-
-        // Fetch module schema for new application creation
-        let moduleSchema = null;
-        try {
-          await store.object.fetchSchema('module');
-          moduleSchema = store.object.getSchema('schema_module');
-        } catch (moduleError) {
-          console.error('Failed to fetch module schema:', moduleError);
-        }
-
-        setSchemas({
-          koppeling: koppelingSchema,
-          organisatie: organisatieSchema,
-          gebruik: gebruikSchema,
-          module: moduleSchema,
-        });
-      } catch (error) {
-        console.error('Failed to fetch schemas for koppeling form:', error);
-        setSchemas({});
-      } finally {
-        setSchemasLoading(false);
-      }
-    };
-    fetchSchemas();
-  }, [store]);
+  // Schema management state - will be set by useSchemaFetcher
+  const { schemas, loading: schemasLoading } = useSchemaFetcher(
+    store,
+    ['koppeling', 'organisatie', 'gebruik', 'module']
+  );
 
   // Options for modules (applications)
   const [modulesOptions, setModulesOptions] = useState([]);
-  // Options/loading specifically for the own-app searchable select
-  const [ownAppOptions, setOwnAppOptions] = useState([]);
-  const [ownAppLoading, setOwnAppLoading] = useState(false);
   const [applicatiePreloadLoading, setApplicatiePreloadLoading] = useState(false);
 
   // State for the full organization data (needed to get the type)
@@ -771,96 +719,53 @@ const AcFormsKoppeling = ({ store }) => {
     };
   }, [isEditMode, koppelingId]);
 
-  // Helper function to map module items to option format
-  const mapModuleToOption = useCallback((item, index) => {
-    const label =
-      item?.['@self']?.name ||
-      item?.naam ||
-      item?.name ||
-      item?.title ||
-      item?.label ||
-      `Applicatie ${index + 1}`;
-    const value = item?.['@self']?.id || item?.id || item?.slug || label;
-    return { value: String(value), label: String(label), data: item };
-  }, []);
+  // Module search with utilities
+  const moduleMapper = createModuleMapper();
+  const moduleSearchConfig = createModuleSearchConfig(store, {
+    mapToOption: moduleMapper,
+    cacheKey: 'koppeling_form_search',
+    queryParamsBuilder: (searchTerm, additionalParams = {}) => {
+      const params = {
+        _limit: '50',
+        _page: '1',
+        _published: 'false',
+        _source: 'index',
+        ...additionalParams,
+      };
 
-  // Server-side search for modules (used by ConSchemaEnhancedField)
-  const searchModules = useCallback(
-    async (query) => {
-      try {
-        setOwnAppLoading(true);
-        const q = String(query || '').trim();
+      // Filter by organization when type is eigen-organisatie and org type is leverancier or community
+      const organizationType = fullActiveOrganisation?.type || '';
+      const shouldFilterByOrg =
+        koppelingsType === 'eigen-organisatie' &&
+        (organizationType === 'Leverancier' || organizationType === 'Community');
 
-        const queryParams = {
-          _limit: '50',
-          _page: '1',
-          _published: 'false',
-          _source: 'index',
-        };
-
-        // Filter by organization when type is eigen-organisatie and org type is leverancier or community
-        const organizationType = fullActiveOrganisation?.type || '';
-        const shouldFilterByOrg =
-          koppelingsType === 'eigen-organisatie' &&
-          (organizationType === 'Leverancier' || organizationType === 'Community');
-
-        if (shouldFilterByOrg) {
-          const activeOrg = store?.user?.activeOrganization;
-          const activeOrgId = activeOrg?.uuid || activeOrg?.id;
-          if (activeOrgId) {
-            queryParams.organisation = String(activeOrgId);
-          }
+      if (shouldFilterByOrg) {
+        const activeOrg = store?.user?.activeOrganization;
+        const activeOrgId = activeOrg?.uuid || activeOrg?.id;
+        if (activeOrgId) {
+          params.organisation = String(activeOrgId);
         }
-
-        // Add search parameter if provided
-        if (q) {
-          queryParams._search = q;
-        }
-
-        await store.object.fetchCollection(
-          'voorzieningen',
-          'module',
-          queryParams,
-          null,
-          'koppeling_form_search'
-        );
-        const collection = store.object.getCollection(
-          'voorzieningen_module_koppeling_form_search'
-        );
-        const list = collection?.results || collection || [];
-        const options = list.map(mapModuleToOption);
-
-        // Merge with existing options to preserve selected items
-        setOwnAppOptions((prevOptions) => {
-          const newOptionsMap = new Map(options.map((opt) => [opt.value, opt]));
-
-          // Combine existing and new options, preferring new data for existing items
-          const mergedOptions = [...newOptionsMap.values()];
-
-          // Add any existing options that aren't in the new results
-          // This preserves previously selected items that might not match the current search
-          prevOptions.forEach((opt) => {
-            if (!newOptionsMap.has(opt.value)) {
-              mergedOptions.push(opt);
-            }
-          });
-
-          return mergedOptions;
-        });
-      } catch (e) {
-        // Don't clear options on error to preserve existing selections
-        console.error('Module search failed:', e);
-      } finally {
-        setOwnAppLoading(false);
       }
-    },
-    [store, mapModuleToOption, koppelingsType, fullActiveOrganisation]
-  );
 
-  // Debounced search function for modules
-  const debouncedSearchModules = useDebouncedInput(searchModules, 250, {
-    disableInstantValidation: true,
+      if (searchTerm && searchTerm.trim()) {
+        params._search = searchTerm.trim();
+      }
+
+      return params;
+    },
   });
+  const {
+    search: searchModules,
+    loading: ownAppLoading,
+    options: ownAppOptions,
+    setOptions: setOwnAppOptions,
+  } = useEntitySearch(moduleSearchConfig, {
+    debounceDelay: 250,
+    mergeStrategy: 'preserve-existing',
+  });
+
+  // Debounced search function for modules (searchModules is already debounced by useEntitySearch)
+  const debouncedSearchModules = searchModules;
 
   // Helper: extract relation id from various shapes (mirrors example.js)
   const extractRelationId = (rel) => {

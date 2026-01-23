@@ -27,6 +27,7 @@ import useStepper, {
   generateSteps,
 } from '../../con-stepper';
 import { validateWebsite } from '@views/ac-forms/validation/form-validations';
+import { createModuleMapper } from '../../wizard-utils';
 
 /**
  * Koppeling Wizard (AcFormsKoppeling)
@@ -594,17 +595,7 @@ const AcFormsKoppeling = ({ store }) => {
   }, [isEditMode, gebruikId, store]);
 
   // Helper function to map module items to option format
-  const mapModuleToOption = useCallback((item, index) => {
-    const label =
-      item?.['@self']?.name ||
-      item?.naam ||
-      item?.name ||
-      item?.title ||
-      item?.label ||
-      `Applicatie ${index + 1}`;
-    const value = item?.['@self']?.id || item?.id || item?.slug || label;
-    return { value: String(value), label: String(label), data: item };
-  }, []);
+  const mapModuleToOption = createModuleMapper();
 
   // Server-side search for modules (used by ConSchemaEnhancedField)
   const searchModules = useCallback(

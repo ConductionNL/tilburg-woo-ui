@@ -18,6 +18,7 @@ import {
   UnorderedListItem,
 } from '@utrecht/component-library-react/dist/css-module';
 import useStepper, { addStepperClickHandlers, generateSteps } from '../../con-stepper';
+import { createModuleMapper } from '../../wizard-utils';
 
 // Stage components
 import ConFormDienstInformatieStage from './components/con-form-dienst-informatie-stage';
@@ -31,17 +32,7 @@ import ConUnsavedChangesAlertModal from '@src/components/con-unsaved-changes-ale
 import { getActiveWizard } from '@src/constants/wizards.constants';
 import { ConDebugViewer } from '@src/components';
 
-const mapToOption = (item, index) => {
-  const label =
-    item?.['@self']?.name ||
-    item?.naam ||
-    item?.name ||
-    item?.title ||
-    item?.label ||
-    `Applicatie ${index + 1}`;
-  const value = item?.['@self']?.id || item?.id || item?.slug || label;
-  return { value: String(value), label: String(label), data: item };
-};
+const mapToOption = createModuleMapper();
 
 const ConFormsDienst = ({ store }) => {
   const [searchParams] = useSearchParams();

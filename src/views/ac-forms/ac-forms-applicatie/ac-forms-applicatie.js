@@ -8,7 +8,6 @@ import { VISUALS } from '@src/constants';
 import { AcButton } from '@src/molecules';
 import { ProcessSteps } from '@gemeente-denhaag/components-react';
 import { commongroundApiUrl } from '@config';
-import { useDebouncedInput } from '@src/hooks';
 import _ from 'lodash';
 import {
   validateWebsite,
@@ -40,6 +39,19 @@ import ConFormApplicatieAanbiederInformatieStage from './components/con-form-app
 import { getActiveWizard } from '@src/constants/wizards.constants';
 import { stripLocalIds } from './utils/serialization.utils';
 import useStepper, { addStepperClickHandlers, generateSteps } from '../con-stepper';
+import {
+  useSchemaFetcher,
+  applySchemaDefaults,
+  createIsEmptyCheck,
+  createModuleMapper,
+  createOrganisatieMapper,
+  createReferentieComponentMapper,
+  createModuleSearchConfig,
+  createOrganisatieSearchConfig,
+  createEntitySearchConfig,
+  mapToOption,
+  useEntitySearch,
+} from '../wizard-utils';
 
 /**
  * Applicatie Aanmelden Wizard (AcFormsApplicatie)
@@ -203,15 +215,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     processStepsConfig,
   ]);
 
-  // Schema definitions for form generation
-  const [schemas, setSchemas] = useState({
-    module: null,
-    product: null,
-    moduleversie: null,
-    dienst: null,
-  });
-  const [schemasLoading, setSchemasLoading] = useState(true);
-
   // Referentiecomponenten options with search functionality
   const [referentieComponentenOptions, setReferentieComponentenOptions] = useState(
     []
@@ -241,8 +244,26 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
   const [standaardenversiesLoaded, setStandaardenversiesLoaded] = useState(false);
 
   // Modules options with search functionality for koppelingen
-  const [modulesOptions, setModulesOptions] = useState([]);
-  const [modulesLoading, setModulesLoading] = useState(false);
+  const moduleMapper = createModuleMapper({ type: 'applicatie' });
+  const moduleSearchConfig = createModuleSearchConfig(store, {
+    useCacheFirst: true,
+    mapToOption: moduleMapper,
+    queryParamsBuilder: (searchTerm) => ({
+      _limit: '20',
+      _page: '1',
+      _published: 'false',
+      ...(searchTerm && searchTerm.trim() ? { _search: searchTerm.trim() } : {}),
+    }),
+  });
+  const {
+    search: searchModules,
+    loading: modulesLoading,
+    options: modulesOptions,
+    setOptions: setModulesOptions,
+  } = useEntitySearch(moduleSearchConfig, {
+    debounceDelay: 500,
+    mergeStrategy: 'preserve-existing',
+  });
   // Ref to track which moduleB IDs we've already fetched (to avoid duplicate fetches)
   const fetchedModuleBIdsRef = useRef(new Set());
 
@@ -252,15 +273,42 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     useState(false);
 
   // Contactpersoon options with search functionality
-  const [contactpersoonOptions, setContactpersoonOptions] = useState([]);
+  // Simple mapper - component handles display via getOptionLabel
+  const contactpersoonMapper = (item, index) => {
+    return mapToOption(item, index, {
+      valueFields: ['@self.id', 'id'],
+      fallbackLabel: `Contactpersoon ${index + 1}`,
+    });
+  };
+  const contactpersoonSearchConfig = createEntitySearchConfig(store, 'contactpersoon', {
+    mapToOption: contactpersoonMapper,
+    source: 'database',
+  });
+  const {
+    search: searchContactpersonen,
+    loading: contactpersoonSearchLoading,
+    options: contactpersoonOptions,
+  } = useEntitySearch(contactpersoonSearchConfig, {
+    debounceDelay: 250,
+    mergeStrategy: 'preserve-existing',
+  });
   const [contactpersoonLoading, setContactpersoonLoading] = useState(false);
-  const [contactpersoonSearchLoading, setContactpersoonSearchLoading] =
-    useState(false);
 
   // Aanbieder (organisatie) options with search functionality
-  const [aanbiederOptions, setAanbiederOptions] = useState([]);
+  const organisatieMapper = createOrganisatieMapper();
+  const organisatieSearchConfig = createOrganisatieSearchConfig(store, {
+    mapToOption: organisatieMapper,
+    source: 'database',
+  });
+  const {
+    search: searchAanbieders,
+    loading: aanbiederSearchLoading,
+    options: aanbiederOptions,
+  } = useEntitySearch(organisatieSearchConfig, {
+    debounceDelay: 500,
+    mergeStrategy: 'preserve-existing',
+  });
   const [aanbiederLoading, setAanbiederLoading] = useState(false);
-  const [aanbiederSearchLoading, setAanbiederSearchLoading] = useState(false);
 
   // Koppelingen form state
   const [koppelingenFormState, setKoppelingenFormState] = useState({
@@ -297,63 +345,29 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
   }, []);
 
   // Fetch schema definitions on component mount
-  useEffect(() => {
-    const fetchSchemas = async () => {
-      setSchemasLoading(true);
-      const schemaTypes = [
-        'module',
-        'suite',
-        'moduleversie',
-        'organisatie',
-        'dienst',
-      ];
-      const fetchedSchemas = {};
-
-      try {
-        const schemaPromises = schemaTypes.map(async (schemaType) => {
-          try {
-            // Use object store's fetchSchema method which includes authentication
-            await store.object.fetchSchema(schemaType);
-            const schema = store.object.getSchema(`schema_${schemaType}`);
-            return { schemaType, schema };
-          } catch (error) {
-            console.error(`Failed to fetch schema for ${schemaType}:`, error);
-            return { schemaType, schema: null };
-          }
-        });
-
-        const results = await Promise.all(schemaPromises);
-        results.forEach(({ schemaType, schema }) => {
-          fetchedSchemas[schemaType] = schema;
-        });
-
-        setSchemas(fetchedSchemas);
-
+  const { schemas, loading: schemasLoading } = useSchemaFetcher(
+    store,
+    ['module', 'suite', 'moduleversie', 'organisatie', 'dienst'],
+    {
+      onSchemasLoaded: (fetchedSchemas) => {
         // Update applicatie object with schema-based defaults if applicatie schema was loaded
         if (fetchedSchemas.module) {
+          const isEmptyCheck = createIsEmptyCheck([
+            'naam',
+            'cloudDienstverleningsmodel',
+          ]);
           setApplicatie((prevApplicatie) => {
-            // Only update if current product is the default/empty state
-            // Don't override if user has already started filling the form
-            const isEmpty =
-              !prevApplicatie.naam && !prevApplicatie.cloudDienstverleningsmodel;
-            if (isEmpty) {
-              // Generate a default/empty applicatie object based on the applicatie schema using ObjectStore
-              return store.object.createDefaultObjectFromSchema(
-                fetchedSchemas.module
-              );
-            }
-            return prevApplicatie;
+            return applySchemaDefaults(
+              store,
+              prevApplicatie,
+              fetchedSchemas.module,
+              isEmptyCheck
+            );
           });
         }
-      } catch (error) {
-        console.error('Failed to fetch schemas:', error);
-      } finally {
-        setSchemasLoading(false);
-      }
-    };
-
-    fetchSchemas();
-  }, []);
+      },
+    }
+  );
 
   // Prefill applicatie data when editing
   useEffect(() => {
@@ -553,25 +567,9 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       );
       const list = await response.json();
 
-      const mapToOption = (item, index) => {
-        const label =
-          item?.['@self']?.name ||
-          item?.xml?.name?._value ||
-          item?.naam ||
-          item?.name ||
-          item?.title ||
-          item?.label ||
-          `Component ${index + 1}`;
-        const value = item?.value || item?.id || item?.slug || label;
-        return {
-          value: String(value),
-          label: String(label),
-          data: item, // Store the full API data for access to aanbevolenStandaarden, verplichteStandaarden
-        };
-      };
-
+      const referentieComponentMapper = createReferentieComponentMapper();
       const options = (list.results || [])
-        .map(mapToOption)
+        .map(referentieComponentMapper)
         .filter((o) => o.label && o.value);
 
       setReferentieComponentenOptions(options);
@@ -976,251 +974,24 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     // This effect should only initialize once from existing data
   ]);
 
-  // Function to search modules with debouncing using object store cache
-  const performModulesSearch = useCallback(
-    async (searchTerm = '') => {
-      setModulesLoading(true);
-
-      try {
-        const queryParams = {
-          _limit: '20',
-          _page: '1',
-          _published: 'false',
-        };
-
-        // Add search parameter if provided
-        if (searchTerm && searchTerm.trim()) {
-          queryParams._search = searchTerm.trim();
-        }
-
-        console.info(
-          `📋 Searching modules via object store cache (term: "${searchTerm}")...`
-        );
-
-        // Use object store cache-first method for immediate response
-        const list = await store.object.fetchModulesCacheFirst(queryParams);
-
-        const mapToOption = (item, index) => {
-          const label =
-            item?.naam ||
-            item?.['@self']?.name ||
-            item?.name ||
-            item?.title ||
-            item?.label ||
-            (item?.id ? String(item.id) : `Applicatie ${index + 1}`);
-          const value = item?.value || item?.id || item?.slug || label;
-          return {
-            value: String(value),
-            label: String(label),
-            data: item, // Store the full API data for later access
-            type: 'applicatie',
-          };
-        };
-
-        const newOptions = list.map(mapToOption).filter((o) => o.label && o.value);
-
-        // Append new results to existing options, checking by ID to avoid duplicates
-        setModulesOptions((prevOptions) => {
-          // Create a Set of existing option values for quick lookup
-          const existingValues = new Set(
-            prevOptions.map((opt) => String(opt.value))
-          );
-
-          // Keep all existing options, then append new ones that aren't already present
-          const mergedOptions = [...prevOptions];
-
-          newOptions.forEach((newOpt) => {
-            const newValue = String(newOpt.value);
-            if (!existingValues.has(newValue)) {
-              mergedOptions.push(newOpt);
-              existingValues.add(newValue); // Track it to avoid duplicates in the same batch
-            }
-          });
-
-          return mergedOptions;
-        });
-        console.info(`✅ Loaded ${newOptions.length} modules (cache-first)`);
-      } catch (e) {
-        console.error('Failed to fetch modules:', e);
-        // Don't clear options on error to preserve existing selections
-      } finally {
-        setModulesLoading(false);
-      }
-    },
-    [store]
-  );
-
-  // ✅ Debounced search function for modules
-  const debouncedModulesSearch = useDebouncedInput(performModulesSearch, 500);
-
-  // ✅ Public search function that always debounces by 500ms (only on real typing)
-  const searchModules = useCallback(
-    (searchTerm = '') => {
-      // Only trigger debounced fetch; component will ensure it's only called on typing
-      setModulesLoading(true);
-      debouncedModulesSearch(searchTerm || '');
-    },
-    [performModulesSearch, debouncedModulesSearch]
-  );
-
   // Pre-load modules once so Applicatie B has initial options
   useEffect(() => {
-    performModulesSearch('');
-  }, [performModulesSearch]);
-
-  // Server-side search for contactpersonen
-  const searchContactpersonen = useCallback(
-    async (query) => {
-      try {
-        setContactpersoonSearchLoading(true);
-        const q = String(query || '').trim();
-
-        const queryParams = {
-          _limit: '50',
-          _page: '1',
-          _source: 'database', // Only show data from own organisation
-        };
-
-        // Add search parameter if provided
-        if (q) {
-          queryParams._search = q;
-        }
-
-        await store.object.fetchCollection(
-          'voorzieningen',
-          'contactpersoon',
-          queryParams
-        );
-        const collection = store.object.getCollection(
-          'voorzieningen_contactpersoon'
-        );
-        const list = collection?.results || collection || [];
-        const options = list.map((item, index) => {
-          const fullName = [item?.voornaam, item?.tussenvoegsel, item?.achternaam]
-            .filter(Boolean)
-            .join(' ');
-          const label = fullName || `Contactpersoon ${index + 1}`;
-          const value = item?.['@self']?.id || item?.id || item?.slug || label;
-          return { value: String(value), label: String(label), data: item };
-        });
-
-        // Merge with existing options to preserve selected items
-        setContactpersoonOptions((prevOptions) => {
-          const newOptionsMap = new Map(options.map((opt) => [opt.value, opt]));
-
-          // Combine existing and new options, preferring new data for existing items
-          const mergedOptions = [...newOptionsMap.values()];
-
-          // Add any existing options that aren't in the new results
-          // This preserves previously selected items that might not match the current search
-          prevOptions.forEach((opt) => {
-            if (!newOptionsMap.has(opt.value)) {
-              mergedOptions.push(opt);
-            }
-          });
-
-          return mergedOptions;
-        });
-      } catch (e) {
-        // Don't clear options on error to preserve existing selections
-        console.error('Contactpersoon search failed:', e);
-      } finally {
-        setContactpersoonSearchLoading(false);
-      }
-    },
-    [store]
-  );
-
-  // Debounced search function for contactpersonen
-  const debouncedSearchContactpersonen = useDebouncedInput(
-    searchContactpersonen,
-    250,
-    {
-      disableInstantValidation: true,
-    }
-  );
+    searchModules('');
+  }, []);
 
   // Pre-load contactpersonen once so dropdown has initial options
   useEffect(() => {
     const loadInitialContactpersonen = async () => {
       setContactpersoonLoading(true);
       try {
-        await searchContactpersonen('');
+        searchContactpersonen('');
       } finally {
         setContactpersoonLoading(false);
       }
     };
     loadInitialContactpersonen();
-  }, [searchContactpersonen]);
+  }, []);
 
-  // Server-side search for organisaties (aanbieder)
-  const searchAanbieders = useCallback(
-    async (query) => {
-      try {
-        setAanbiederSearchLoading(true);
-        const q = String(query || '').trim();
-
-        const queryParams = {
-          _limit: '50',
-          _page: '1',
-          _source: 'database', // Only show data from own organisation
-          '_extend[]': '@self.schema',
-        };
-
-        // Add search parameter if provided
-        if (q) {
-          queryParams._search = q;
-        }
-
-        await store.object.fetchCollection(
-          'voorzieningen',
-          'organisatie',
-          queryParams
-        );
-        const collection = store.object.getCollection('voorzieningen_organisatie');
-        const list = collection?.results || collection || [];
-        const options = list.map((item, index) => {
-          const label =
-            item?.['@self']?.name ||
-            item?.naam ||
-            item?.name ||
-            item?.title ||
-            `Organisatie ${index + 1}`;
-          const value = item?.['@self']?.id || item?.id || item?.slug || label;
-          return { value: String(value), label: String(label), data: item };
-        });
-
-        // Merge with existing options to preserve selected items
-        setAanbiederOptions((prevOptions) => {
-          const newOptionsMap = new Map(options.map((opt) => [opt.value, opt]));
-
-          // Combine existing and new options, preferring new data for existing items
-          const mergedOptions = [...newOptionsMap.values()];
-
-          // Add any existing options that aren't in the new results
-          // This preserves previously selected items that might not match the current search
-          prevOptions.forEach((opt) => {
-            if (!newOptionsMap.has(opt.value)) {
-              mergedOptions.push(opt);
-            }
-          });
-
-          return mergedOptions;
-        });
-      } catch (e) {
-        // Don't clear options on error to preserve existing selections
-        console.error('Aanbieder search failed:', e);
-      } finally {
-        setAanbiederSearchLoading(false);
-      }
-    },
-    [store]
-  );
-
-  // Debounced search function for organisaties
-  const debouncedSearchAanbieders = useDebouncedInput(searchAanbieders, 250, {
-    disableInstantValidation: true,
-  });
 
   // Pre-load organisaties once so dropdown has initial options (only for ontbrekend-applicatie)
   useEffect(() => {
@@ -1229,13 +1000,13 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     const loadInitialAanbieders = async () => {
       setAanbiederLoading(true);
       try {
-        await searchAanbieders('');
+        searchAanbieders('');
       } finally {
         setAanbiederLoading(false);
       }
     };
     loadInitialAanbieders();
-  }, [formType, searchAanbieders]);
+  }, [formType]);
 
   // Function to load buitengemeentelijke voorzieningen
   const loadBuitengemeentelijkeVoorzieningen = useCallback(async () => {
@@ -1451,26 +1222,8 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       if (cancelled) return;
 
       // Map fetched modules to options format (matching performModulesSearch format)
-      const mapToOption = (item, index) => {
-        if (!item) return null;
-        const label =
-          item?.naam ||
-          item?.['@self']?.name ||
-          item?.name ||
-          item?.title ||
-          item?.label ||
-          (item?.id ? String(item.id) : `Applicatie ${index + 1}`);
-        const value = item?.value || item?.id || item?.slug || label;
-        return {
-          value: String(value),
-          label: String(label),
-          data: item,
-          type: 'applicatie',
-        };
-      };
-
       const newOptions = fetchedModules
-        .map(mapToOption)
+        .map(moduleMapper)
         .filter(Boolean)
         .filter((o) => o.label && o.value);
 
@@ -1706,7 +1459,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
             aanbiederOptions={aanbiederOptions}
             aanbiederLoading={aanbiederLoading}
             aanbiederSearchLoading={aanbiederSearchLoading}
-            searchAanbieders={debouncedSearchAanbieders}
+            searchAanbieders={searchAanbieders}
           />
         );
       case 'applicatie-informatie':
@@ -1719,7 +1472,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
             contactpersoonOptions={contactpersoonOptions}
             contactpersoonLoading={contactpersoonLoading}
             contactpersoonSearchLoading={contactpersoonSearchLoading}
-            searchContactpersonen={debouncedSearchContactpersonen}
+            searchContactpersonen={searchContactpersonen}
           />
         );
       case 'licentie':
