@@ -54,6 +54,7 @@ const ConFormApplicatieKoppelingenStage = memo(
       selectedAppBByRow,
       directionByRow,
       koppelingIdByRow = {},
+      naamByRow = {},
     } = koppelingenFormState;
 
     const directionOptions = [
@@ -154,8 +155,12 @@ const ConFormApplicatieKoppelingenStage = memo(
       const appBId = appBIdProvided ? overrides.appBId : selectedAppBByRow[rowId];
       const richting =
         'richting' in overrides ? overrides.richting : directionByRow[rowId];
+      const koppelingData = getKoppelingData(rowId);
+      // Get naam from overrides, then from persisted koppeling data, then from UI state
       const naam =
-        'naam' in overrides ? overrides.naam : getKoppelingData(rowId)?.naam;
+        'naam' in overrides
+          ? overrides.naam
+          : koppelingData?.naam ?? naamByRow[rowId];
 
       let localId = koppelingIdByRow[rowId];
 
@@ -227,6 +232,9 @@ const ConFormApplicatieKoppelingenStage = memo(
         directionByRow: Object.fromEntries(
           Object.entries(prev.directionByRow).filter(([k]) => Number(k) !== rowId)
         ),
+        naamByRow: Object.fromEntries(
+          Object.entries(prev.naamByRow || {}).filter(([k]) => Number(k) !== rowId)
+        ),
       }));
     };
 
@@ -256,6 +264,9 @@ const ConFormApplicatieKoppelingenStage = memo(
           Object.entries(prev.koppelingIdByRow || {}).filter(
             ([k]) => Number(k) !== rowId
           )
+        ),
+        naamByRow: Object.fromEntries(
+          Object.entries(prev.naamByRow || {}).filter(([k]) => Number(k) !== rowId)
         ),
       }));
     };
@@ -565,12 +576,21 @@ const ConFormApplicatieKoppelingenStage = memo(
                     </label>
                     <Textbox
                       id={`koppeling-naam-${rowId}`}
-                      value={koppelingData?.naam || ''}
-                      onChange={(e) =>
+                      value={koppelingData?.naam || naamByRow[rowId] || ''}
+                      onChange={(e) => {
+                        const newNaam = e?.target?.value || '';
+                        // Store in UI state immediately so it persists even if appBId is null
+                        setKoppelingValue(rowId, (prev) => ({
+                          naamByRow: {
+                            ...(prev.naamByRow || {}),
+                            [rowId]: newNaam,
+                          },
+                        }));
+                        // Also persist to applicatie data if appBId exists
                         persistRowIntoApplicatie(rowId, {
-                          naam: e?.target?.value || '',
-                        })
-                      }
+                          naam: newNaam,
+                        });
+                      }}
                       placeholder='Naam van de koppeling'
                       aria-required='true'
                     />
