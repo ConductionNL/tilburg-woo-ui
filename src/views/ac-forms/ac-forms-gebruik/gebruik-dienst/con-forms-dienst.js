@@ -242,6 +242,7 @@ const ConFormsDienst = ({ store }) => {
 
         // Update gebruik state with the fetched data (same fields as create flow)
         setGebruik({
+          module: moduleId, // Add module to gebruik state for field binding
           diensten: dienstenIds,
           status: fetched.status || '',
           interneAantekening: fetched.interneAantekening || '',
@@ -465,15 +466,11 @@ const ConFormsDienst = ({ store }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Load modules filtered by organisation for Gebruik-beheerders flow
+  // Load modules for Gebruik-beheerders flow (load ALL modules, not just organization's)
   useEffect(() => {
     if (!isGebruikBeheerdersFlow) return;
 
     const loadModulesForGebruikBeheerder = async () => {
-      const activeOrg = store?.user?.activeOrganization;
-      const organisationId = activeOrg?.uuid || activeOrg?.id;
-      if (!organisationId) return;
-
       setOwnAppLoading(true);
       try {
         await store.object.fetchCollection(
@@ -482,7 +479,7 @@ const ConFormsDienst = ({ store }) => {
           {
             _limit: '50',
             _page: '1',
-            organisation: String(organisationId),
+            _published: 'false', // Include unpublished modules
           },
           null,
           'dienst_zoeken_initial'
@@ -492,10 +489,20 @@ const ConFormsDienst = ({ store }) => {
         );
         const list = collection?.results || collection || [];
         const options = list.map(mapToOption);
-        setOwnAppOptions(options);
+        // Merge with existing options (e.g., from prefill) to avoid overwriting
+        setOwnAppOptions((prev) => {
+          // Create a Set of existing option values to avoid duplicates
+          const existingValues = new Set(prev.map((opt) => String(opt.value)));
+          // Add new options that don't already exist
+          const newOptions = options.filter(
+            (opt) => !existingValues.has(String(opt.value))
+          );
+          return [...prev, ...newOptions];
+        });
       } catch (e) {
         console.error('Failed to load modules for gebruik beheerder:', e);
-        setOwnAppOptions([]);
+        // Don't clear existing options on error - keep any prefilled options
+        // setOwnAppOptions([]);
       } finally {
         setOwnAppLoading(false);
       }
@@ -504,9 +511,58 @@ const ConFormsDienst = ({ store }) => {
     loadModulesForGebruikBeheerder();
   }, [
     isGebruikBeheerdersFlow,
-    store?.user?.activeOrganization?.uuid,
-    store?.user?.activeOrganization?.id,
     store,
+  ]);
+
+  // Add module to options when it becomes available (for edit mode)
+  // This ensures the selected module from gebruik.module is always in ownAppOptions
+  useEffect(() => {
+    if (!isEditMode || !gebruik?.module) return;
+
+    const moduleId = getIdString(gebruik.module);
+    if (!moduleId) return;
+
+    // Already in options? Skip
+    const alreadyInOptions = ownAppOptions.some(
+      (opt) => String(opt.value) === String(moduleId)
+    );
+    if (alreadyInOptions) return;
+
+    // Try to find module from various sources
+    let moduleData = null;
+
+    // Check if selectedApplicatie has the data
+    if (
+      selectedApplicatie?.data &&
+      String(getIdString(selectedApplicatie.data)) === String(moduleId)
+    ) {
+      moduleData = selectedApplicatie.data;
+    }
+
+    // Check store (module might have been fetched by the prefill useEffect)
+    if (!moduleData) {
+      moduleData = store.object.getObject('voorzieningen_module', String(moduleId));
+    }
+
+    // Add to options if found
+    if (moduleData) {
+      const option = mapToOption(moduleData, 0);
+      setOwnAppOptions((prev) => {
+        const exists = prev.some((o) => String(o.value) === String(option.value));
+        return exists ? prev : [...prev, option];
+      });
+      // Also ensure selectedApplicatie is set
+      if (!selectedApplicatie || String(selectedApplicatie.value) !== String(option.value)) {
+        setSelectedApplicatie(option);
+      }
+    }
+  }, [
+    isEditMode,
+    gebruik?.module,
+    ownAppOptions,
+    selectedApplicatie,
+    store,
+    getIdString,
   ]);
 
   // Pre-select applicatie from URL parameter
@@ -585,6 +641,7 @@ const ConFormsDienst = ({ store }) => {
           const queryParams = {
             _limit: '50',
             _page: '1',
+            _published: 'false', // Include unpublished modules for gemeentes
           };
 
           // Add organisation filter if provided (for gebruik beheerder flow)
@@ -660,18 +717,15 @@ const ConFormsDienst = ({ store }) => {
   // Server-side search for modules (for Dienst zoeken step)
   // Filter by active organisation when in gebruik beheerder flow
   const searchModulesForDienstZoeken = useMemo(() => {
-    const activeOrg = store?.user?.activeOrganization;
-    const organisationId =
-      isGebruikBeheerdersFlow && (activeOrg?.uuid || activeOrg?.id)
-        ? String(activeOrg.uuid || activeOrg.id)
-        : null;
+    // Load ALL modules for gebruik-beheerders, not just organization's modules
+    // Gemeentes can add diensten to any application, including from other leveranciers
     return createModuleSearch(
       'dienst_zoeken_search',
       setOwnAppOptions,
       setOwnAppLoading,
-      organisationId
+      null // Don't filter by organization - show all applications
     );
-  }, [createModuleSearch, isGebruikBeheerdersFlow, store?.user?.activeOrganization]);
+  }, [createModuleSearch]);
 
   // Debounced search function for Dienst zoeken step
   const debouncedSearchModulesForDienstZoeken = useDebouncedInput(

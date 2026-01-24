@@ -69,21 +69,43 @@ const ConFormControlerenStage = memo(
           const dienstId = String(dienst?.id || dienst?.['@self']?.id || '');
           return selectedDienstIds.includes(dienstId);
         })
-        .map((dienst) => ({
-          id: dienst?.id || dienst?.['@self']?.id || '',
-          naam: String(
-            dienst?.naam || dienst?.name || dienst?.title || dienst?.label || ''
-          ),
-          beschrijvingKort: String(
-            dienst?.beschrijvingKort ||
-              dienst?.beschrijving ||
-              dienst?.omschrijving ||
-              ''
-          ),
-          website: String(dienst?.website || ''),
-          type: String(dienst?.type || ''),
-          aanbieder: dienst?.aanbieder ? String(dienst.aanbieder) : null,
-        }));
+        .map((dienst) => {
+          // Parse type field - handle string, array, or string containing JSON array
+          let parsedType = '';
+          if (Array.isArray(dienst?.type)) {
+            parsedType = dienst.type.map((t) => String(t)).join(', ');
+          } else if (typeof dienst?.type === 'string' && dienst.type.trim().startsWith('[')) {
+            // Handle string containing JSON array like "['id1', 'id2']"
+            try {
+              const parsed = JSON.parse(dienst.type);
+              if (Array.isArray(parsed)) {
+                parsedType = parsed.map((t) => String(t)).join(', ');
+              } else {
+                parsedType = String(dienst.type);
+              }
+            } catch (e) {
+              parsedType = String(dienst.type);
+            }
+          } else {
+            parsedType = String(dienst?.type || '');
+          }
+
+          return {
+            id: dienst?.id || dienst?.['@self']?.id || '',
+            naam: String(
+              dienst?.naam || dienst?.name || dienst?.title || dienst?.label || ''
+            ),
+            beschrijvingKort: String(
+              dienst?.beschrijvingKort ||
+                dienst?.beschrijving ||
+                dienst?.omschrijving ||
+                ''
+            ),
+            website: String(dienst?.website || ''),
+            type: parsedType,
+            aanbieder: dienst?.aanbieder ? String(dienst.aanbieder) : null,
+          };
+        });
     };
 
     // Helper to get selected deelnemers with labels

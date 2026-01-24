@@ -42,6 +42,39 @@ const mapToOption = (item, index) => {
   return { value: String(value), label: String(label), data: item };
 };
 
+/**
+ * Helper function to normalize dienst type field
+ * Fixes issue where type comes as a string containing a JSON array
+ * @param {string|array} rawType - The raw type value from API
+ * @returns {array} - Normalized array of type IDs
+ */
+const normalizeDienstType = (rawType) => {
+  // If it's already an array, return it
+  if (Array.isArray(rawType)) {
+    return rawType;
+  }
+
+  // If it's a string that looks like a JSON array, parse it
+  if (typeof rawType === 'string' && rawType.trim().startsWith('[')) {
+    try {
+      const parsed = JSON.parse(rawType);
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
+    } catch (e) {
+      console.warn('Failed to parse dienst type as JSON array:', e);
+    }
+  }
+
+  // If it's a single value (string), wrap it in an array
+  if (rawType) {
+    return [rawType];
+  }
+
+  // Default to empty array
+  return [];
+};
+
 const ConFormsDienst = ({ store, userStore }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -308,8 +341,8 @@ const ConFormsDienst = ({ store, userStore }) => {
           }
         }
 
-        // Keep type as-is (string or array) - don't force conversion
-        const prefilledType = fetched.type || '';
+        // Normalize type field - handle case where it's a string containing JSON array
+        const prefilledType = normalizeDienstType(fetched.type);
 
         // Update main dienst object
         setDienst((prev) => ({
