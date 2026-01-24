@@ -1283,6 +1283,9 @@ const ConFormsDienst = ({ store }) => {
               searchLeveranciers={debouncedSearchLeveranciers}
               // Type options
               dienstTypeOptions={dienstTypeOptions}
+              // Gebruik state for module binding
+              gebruik={gebruik}
+              setGebruikData={setGebruikData}
             />
           );
         case 'gebruiksinformatie':

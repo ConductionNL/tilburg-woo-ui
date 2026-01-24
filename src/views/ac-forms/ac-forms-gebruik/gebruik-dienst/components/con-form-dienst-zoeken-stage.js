@@ -39,6 +39,9 @@ const ConFormDienstZoekenStage = ({
   searchLeveranciers,
   // Type options
   dienstTypeOptions = [],
+  // Gebruik state for module binding
+  gebruik = {},
+  setGebruikData,
 }) => {
   // Memoize the computed options to ensure selected option is always in the list
   const computedAppOptions = useMemo(() => {
@@ -425,10 +428,9 @@ const ConFormDienstZoekenStage = ({
       <div className='ac-register-form-grid'>
         <div style={{ gridColumn: 'span 2', maxWidth: '640px' }}>
           <ConSchemaEnhancedField
-            key={`applicatie-field-${ownApp?.value || 'null'}`}
             schemaType='dienst'
             schemaProperty='modules'
-            value={ownApp?.value || null}
+            value={gebruik?.module || null}
             onChange={(value) => {
               // Handle array case (when schema type is array but we want single-select)
               let actualValue = value;
@@ -436,7 +438,18 @@ const ConFormDienstZoekenStage = ({
                 actualValue = value.length > 0 ? value[0] : null;
               }
 
-              // Handle both object and string formats
+              // Extract ID from value (could be object or string)
+              const nextId =
+                (actualValue && actualValue.data && (actualValue.data.id || actualValue.data.value)) ||
+                (actualValue && actualValue.value) ||
+                actualValue;
+
+              // Update gebruik.module
+              if (setGebruikData) {
+                setGebruikData('module', nextId);
+              }
+
+              // Handle both object and string formats for ownApp state
               if (!actualValue) {
                 setOwnApp(null);
               } else if (
