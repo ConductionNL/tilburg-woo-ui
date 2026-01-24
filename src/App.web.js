@@ -64,12 +64,8 @@ const App = ({ store }) => {
   const { user } = store;
   const resetFocus = useAutoFocus();
 
-  useEffect(() => {
-    // Warm up names cache in background for better UX
-    store.object.warmupNamesCache().catch((error) => {
-      console.warn('⚠️ Names cache warmup failed during app initialization:', error);
-    });
-  }, []);
+  // Names cache warmup removed - names are now efficiently loaded via _extend=_names
+  // on search and collection endpoints, eliminating the need for bulk fetching
 
   // Warm up schema cache only when user is authenticated AND on public pages
   // Skip on authenticated-only routes (/beheer, /forms, /account) since those pages already fetch schemas
