@@ -491,7 +491,8 @@ const AcMyAccount = ({ store }) => {
                           Deelnames
                         </AcButton>
 
-                        {fullActiveOrganisation &&
+                        {/* Publish/Depublish actions - LEGACY: No longer needed */}
+                        {/* {fullActiveOrganisation &&
                           !fullActiveOrganisation['@self']?.published && (
                             <AcButton
                               style='button'
@@ -528,7 +529,7 @@ const AcMyAccount = ({ store }) => {
                             >
                               Depubliceren
                             </AcButton>
-                          )}
+                          )} */}
                       </div>
                     </div>
                   </div>

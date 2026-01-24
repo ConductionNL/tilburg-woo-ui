@@ -8,7 +8,6 @@ import { NAVIGATE_TO } from '@constants/routes.constants';
 import { extractTitle, extractSummary } from '@src/utilities/con-extract-text';
 import ConLogoPreview from '@src/views/ac-register/con-logo-preview';
 import acFormatDate from '@src/utilities/ac-format-date';
-import { useResolvedArray } from '@src/utilities/con-resolve-uuids-in-text';
 import { checkOrganizationPermissions } from '@src/utilities/organization-permissions';
 
 // card for products, modules and organisations
@@ -23,15 +22,9 @@ const ConCardOrganisationApplication = ({
   referenceComponents,
   organisation,
   published,
-  objectStore,
   navigateTo = 'publication',
   user,
 }) => {
-  // Use generic UUID resolver for reference components
-  const resolvedReferenceComponents = useResolvedArray(
-    referenceComponents,
-    objectStore
-  );
 
   const getTypeLabel = (type) => {
     switch (type) {
@@ -116,13 +109,18 @@ const ConCardOrganisationApplication = ({
       <Paragraph>{extractSummary(summary)}</Paragraph>
       <AcFlex justifyContent='between' className='meta'>
         <AcFlex column>
-          {!!resolvedReferenceComponents?.length && (
+          {referenceComponents?.length > 0 && (
             <Paragraph small>
               Geschikt voor:{' '}
-              {resolvedReferenceComponents
-                ?.slice(0, 2) // Only take the first two components
+              {referenceComponents
+                .slice(0, 2) // Only take the first two components
                 .filter(Boolean)
-                .join(', ')}
+                .map((component, index) => (
+                  <span key={component}>
+                    {index > 0 && ', '}
+                    <ConUuidResolver>{component}</ConUuidResolver>
+                  </span>
+                ))}
             </Paragraph>
           )}
           <AcFlex alignItems='center' spacing='sm'>

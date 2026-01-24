@@ -238,6 +238,48 @@ const BeheerPageConfigFactory = {
                 (r) => r?.leverancier?.contactgegevens?.email
               ),
             },
+            type: {
+              id: 'type',
+              label: 'Type',
+              key: 'type',
+              customContent: (row) => {
+                const rawType = row?.type;
+                if (!rawType) return '-';
+                
+                // Check if it's a string that looks like a JSON array
+                if (typeof rawType === 'string' && rawType.trim().startsWith('[')) {
+                  try {
+                    const parsed = JSON.parse(rawType);
+                    if (Array.isArray(parsed)) {
+                      return parsed
+                        .map((item) => (typeof item === 'string' ? item : String(item)))
+                        .join(', ');
+                    }
+                  } catch (e) {
+                    // If parsing fails, return as-is
+                    return rawType;
+                  }
+                }
+                
+                // Handle actual arrays
+                if (Array.isArray(rawType) && rawType.length > 0) {
+                  return rawType
+                    .map((typeItem) =>
+                      typeof typeItem === 'object'
+                        ? typeItem.naam || typeItem.name || typeItem.label || typeItem
+                        : String(typeItem)
+                    )
+                    .join(', ');
+                }
+                
+                // Handle objects
+                if (typeof rawType === 'object') {
+                  return String(rawType.naam || rawType.name || rawType.label || rawType);
+                }
+                
+                return String(rawType);
+              },
+            },
           },
           modals: [...baseConfig.modals],
         };

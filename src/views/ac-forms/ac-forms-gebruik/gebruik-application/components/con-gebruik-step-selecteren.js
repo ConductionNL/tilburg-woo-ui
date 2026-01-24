@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { ConSchemaEnhancedField } from '@src/components';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
 
@@ -20,8 +20,31 @@ const ConGebruikStepSelecteren = ({
   searchKlanten,
   selectedKlanten,
   setSelectedKlanten,
+  selectedKlantenOptions,
+  setSelectedKlantenOptions,
   loading,
 }) => {
+  // Merge selected options with search results to ensure selected items are always visible
+  const mergedKlantenOptions = useMemo(() => {
+    const optionsMap = new Map();
+    
+    // First add selected options
+    (selectedKlantenOptions || []).forEach((option) => {
+      if (option?.value) {
+        optionsMap.set(String(option.value), option);
+      }
+    });
+    
+    // Then add/override with current search results
+    (klantenOptions || []).forEach((option) => {
+      if (option?.value) {
+        optionsMap.set(String(option.value), option);
+      }
+    });
+    
+    return Array.from(optionsMap.values());
+  }, [klantenOptions, selectedKlantenOptions]);
+
   return (
     <div
       className='ac-register-form-section'
@@ -69,27 +92,30 @@ const ConGebruikStepSelecteren = ({
               value={selectedKlanten || []}
               onChange={(value) => {
                 // Handle multi-select: value is array of option objects from ReactSelect
-                // The field renderer converts IDs to option objects, but onChange receives option objects
-                const klantenIds = Array.isArray(value)
-                  ? value
-                      .map((v) => {
-                        // Extract ID from option object
-                        if (v && typeof v === 'object') {
-                          return String(
-                            v.value || v.data?.id || v.data?.value || v.id || ''
-                          );
-                        }
-                        return String(v || '');
-                      })
-                      .filter((id) => id && id !== '') // Filter out empty values
-                  : [];
+                const optionsArray = Array.isArray(value) ? value : [];
+                
+                // Extract IDs
+                const klantenIds = optionsArray
+                  .map((v) => {
+                    // Extract ID from option object
+                    if (v && typeof v === 'object') {
+                      return String(
+                        v.value || v.data?.id || v.data?.value || v.id || ''
+                      );
+                    }
+                    return String(v || '');
+                  })
+                  .filter((id) => id && id !== ''); // Filter out empty values
+                
+                // Store both IDs and full options
                 setSelectedKlanten(klantenIds);
+                setSelectedKlantenOptions(optionsArray);
               }}
               isDisabled={klantenLoading || loading}
               isLoading={klantenLoading}
               width='full'
               schemas={schemas}
-              optionsProvider={klantenOptions}
+              optionsProvider={mergedKlantenOptions}
               onSearch={(_path, _refSlug, q) => searchKlanten && searchKlanten(q)}
               customProps={{
                 label: 'Klant(en)',

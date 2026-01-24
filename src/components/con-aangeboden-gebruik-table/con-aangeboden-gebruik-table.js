@@ -11,7 +11,75 @@ import { Pagination } from '@amsterdam/design-system-react';
 import ConPaginationLimitSelector, {
   usePaginationLimit,
 } from '@src/components/con-pagination-limit-selector/con-pagination-limit-selector';
-import { schemaCache } from '@services/schemaCache.service';
+import { useResolvedSchema } from '@src/utilities/con-resolve-schema';
+
+/**
+ * Component that renders the applicatie column content, waiting for schema cache if needed
+ */
+const ApplicatieColumnContent = ({ row }) => {
+  const schemaId = row?.['@self']?.schema;
+  const { slug: schemaSlug, isLoading } = useResolvedSchema(schemaId);
+
+  if (isLoading) {
+    return '...';
+  }
+
+  // For module (Applicatie): display the name of the application itself
+  if (schemaSlug === 'module') {
+    const name = row?.naam || row?.name;
+    if (name) return name;
+    // Fallback to resolving the row's own ID
+    const rowId = row?.['@self']?.id;
+    return rowId ? <ConUuidResolver>{rowId}</ConUuidResolver> : '-';
+  }
+
+  // For koppeling: display moduleA
+  if (schemaSlug === 'koppeling') {
+    const moduleA = row?.moduleA;
+    if (!moduleA) return '-';
+    const moduleAId =
+      typeof moduleA === 'string'
+        ? moduleA
+        : moduleA?.['@self']?.id || moduleA?.id;
+    return moduleAId ? <ConUuidResolver>{moduleAId}</ConUuidResolver> : '-';
+  }
+
+  // For dienst: display modules array joined with commas
+  if (schemaSlug === 'dienst') {
+    const modules = row?.modules;
+    if (!modules || !Array.isArray(modules) || modules.length === 0)
+      return '-';
+
+    return (
+      <>
+        {modules.map((moduleItem, index) => {
+          const moduleId =
+            typeof moduleItem === 'string'
+              ? moduleItem
+              : moduleItem?.['@self']?.id || moduleItem?.id;
+          if (!moduleId) return null;
+
+          return (
+            <React.Fragment key={moduleId}>
+              <ConUuidResolver>{moduleId}</ConUuidResolver>
+              {index < modules.length - 1 && ', '}
+            </React.Fragment>
+          );
+        })}
+      </>
+    );
+  }
+
+  // Default fallback: try to get module from relations (for gebruik and other types)
+  const module = row?.module || row?.['@self']?.relations?.module;
+  if (!module) return '-';
+
+  const moduleId =
+    typeof module === 'string' ? module : module?.['@self']?.id || module?.id;
+  if (!moduleId) return '-';
+
+  return <ConUuidResolver>{moduleId}</ConUuidResolver>;
+};
 
 /**
  * Default client-side pagination limit - items shown per page
@@ -194,65 +262,7 @@ const ConAangebodenSuggestiesTable = ({ store, onDataChange, id }) => {
       label: 'Applicatie',
       key: '@self',
       customContent: (row) => {
-        // Get the schema slug to determine the type
-        const schemaId = row?.['@self']?.schema;
-        const schemaSlug = schemaId ? schemaCache.get(schemaId) : null;
-
-        // For module (Applicatie): display the name of the application itself
-        if (schemaSlug === 'module') {
-          const name = row?.naam || row?.name;
-          if (name) return name;
-          // Fallback to resolving the row's own ID
-          const rowId = row?.['@self']?.id;
-          return rowId ? <ConUuidResolver>{rowId}</ConUuidResolver> : '-';
-        }
-
-        // For koppeling: display moduleA
-        if (schemaSlug === 'koppeling') {
-          const moduleA = row?.moduleA;
-          if (!moduleA) return '-';
-          const moduleAId =
-            typeof moduleA === 'string'
-              ? moduleA
-              : moduleA?.['@self']?.id || moduleA?.id;
-          return moduleAId ? <ConUuidResolver>{moduleAId}</ConUuidResolver> : '-';
-        }
-
-        // For dienst: display modules array joined with commas
-        if (schemaSlug === 'dienst') {
-          const modules = row?.modules;
-          if (!modules || !Array.isArray(modules) || modules.length === 0)
-            return '-';
-
-          return (
-            <>
-              {modules.map((moduleItem, index) => {
-                const moduleId =
-                  typeof moduleItem === 'string'
-                    ? moduleItem
-                    : moduleItem?.['@self']?.id || moduleItem?.id;
-                if (!moduleId) return null;
-
-                return (
-                  <React.Fragment key={moduleId}>
-                    <ConUuidResolver>{moduleId}</ConUuidResolver>
-                    {index < modules.length - 1 && ', '}
-                  </React.Fragment>
-                );
-              })}
-            </>
-          );
-        }
-
-        // Default fallback: try to get module from relations (for gebruik and other types)
-        const module = row?.module || row?.['@self']?.relations?.module;
-        if (!module) return '-';
-
-        const moduleId =
-          typeof module === 'string' ? module : module?.['@self']?.id || module?.id;
-        if (!moduleId) return '-';
-
-        return <ConUuidResolver>{moduleId}</ConUuidResolver>;
+        return <ApplicatieColumnContent row={row} />;
       },
     },
     {
@@ -278,14 +288,10 @@ const ConAangebodenSuggestiesTable = ({ store, onDataChange, id }) => {
       key: '',
       static: true,
       customContent: (row) => {
-        // Hack because id does not give back the correct uuid TODO: if fixed in the api remove this
-        // const rowId = row?.['@self']?.id;
-        const rowId = row?.['@self']?.uuid;
+        const rowId = row?.['@self']?.uuid || row?.['@self']?.id;
         const isThisRowProcessing = processingAction?.id === rowId;
-        const isClaimLoading =
-          isThisRowProcessing && processingAction?.action === 'claim';
-        const isDenyLoading =
-          isThisRowProcessing && processingAction?.action === 'deny';
+        const isClaimLoading = isThisRowProcessing && processingAction?.action === 'claim';
+        const isDenyLoading = isThisRowProcessing && processingAction?.action === 'deny';
 
         return (
           <AcFlex spacing='xs'>

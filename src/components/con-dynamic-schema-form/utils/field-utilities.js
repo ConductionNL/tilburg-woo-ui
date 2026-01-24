@@ -76,7 +76,6 @@ export const getFieldConfig = (
 ) => {
   const baseConfig = {
     label:
-      propertySchema?.description || // OpenRegister schemas use description as label
       propertySchema?.title ||
       propertyPath.split('.').pop().charAt(0).toUpperCase() +
         propertyPath.split('.').pop().slice(1),

@@ -75,9 +75,48 @@ const ConCardDienst = ({
             <>
               <VISUALS.ELLIPSE />
               <Paragraph small>
-                {Array.isArray(type)
-                  ? type.map(extractText).join(', ')
-                  : extractText(type)}
+                {(() => {
+                  // Check if it's a string that looks like a JSON array
+                  if (typeof type === 'string' && type.trim().startsWith('[')) {
+                    try {
+                      const parsed = JSON.parse(type);
+                      if (Array.isArray(parsed)) {
+                        return parsed
+                          .map((item) => extractText(item))
+                          .filter(Boolean)
+                          .join(', ');
+                      }
+                    } catch (e) {
+                      // If parsing fails, just display as-is
+                      return extractText(type);
+                    }
+                  }
+                  
+                  // Handle actual arrays
+                  if (Array.isArray(type)) {
+                    return type
+                      .map((typeItem) => {
+                        // Handle objects with naam/name/label
+                        if (typeof typeItem === 'object' && typeItem !== null) {
+                          return extractText(
+                            typeItem.naam || typeItem.name || typeItem.label || typeItem
+                          );
+                        }
+                        return extractText(typeItem);
+                      })
+                      .filter(Boolean)
+                      .join(', ');
+                  }
+                  
+                  // Handle single object with naam/name/label
+                  if (typeof type === 'object' && type !== null) {
+                    return extractText(
+                      type.naam || type.name || type.label || type
+                    );
+                  }
+                  
+                  return extractText(type);
+                })()}
               </Paragraph>
             </>
           )}

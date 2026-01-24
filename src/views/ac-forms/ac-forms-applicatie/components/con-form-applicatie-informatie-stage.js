@@ -48,7 +48,6 @@ const ConFormApplicatieInformatieStage = memo(
           vinden, herkennen en beoordelen. Vul de velden zo volledig mogelijk in,
           zodat uw applicatie goed zichtbaar is in de softwarecatalogus.
           <br />
-          <br />
           Na het opslaan kunt u de gegevens later altijd weer aanpassen of aanvullen.
         </Paragraph>
 
@@ -82,6 +81,7 @@ const ConFormApplicatieInformatieStage = memo(
               touched={touched}
               schemas={schemas}
               customProps={{
+                required: true,
                 inputType: 'text',
                 validation: {
                   custom: (value) => {
@@ -93,6 +93,7 @@ const ConFormApplicatieInformatieStage = memo(
                     'Website heeft een ongeldig formaat (bijv. conduction.nl, www.conduction.nl of https://conduction.nl)',
                 },
                 description: 'Een URL naar uw applicatie of organisatie',
+                placeholder: 'www.example.com',
               }}
             />
 
@@ -104,10 +105,13 @@ const ConFormApplicatieInformatieStage = memo(
               onChange={(value) => setApplicatieData('beschrijvingKort', value)}
               isDisabled={loading}
               width='full'
+              touched={touched}
               schemas={schemas}
               customProps={{
+                required: true,
                 description:
                   'Een korte beschrijving van de applicatie voor o.a. in de zoekresultaten.',
+                placeholder: 'Korte beschrijving van de applicatie',
               }}
             />
 
@@ -119,6 +123,7 @@ const ConFormApplicatieInformatieStage = memo(
               onChange={(value) => setApplicatieData('beschrijvingLang', value)}
               isDisabled={loading}
               width='full'
+              touched={touched}
               schemas={schemas}
               customProps={{
                 description:
