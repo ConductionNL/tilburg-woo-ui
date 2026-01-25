@@ -1533,7 +1533,7 @@ const AcFormsKoppeling = ({ store }) => {
           if (!value) return null;
           if (typeof value === 'string') return value;
           if (typeof value === 'object') {
-            return value.id || value.value || value?.['@self']?.id || null;
+            return value.uuid || value.id || value.value || value?.['@self']?.id || null;
           }
           return null;
         };
