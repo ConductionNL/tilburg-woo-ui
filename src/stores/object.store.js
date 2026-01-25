@@ -1396,8 +1396,10 @@ export class ObjectStore {
     try {
       const endpoint = `/openregister/api/schemas/${schemaId}`;
 
+      // Schema endpoints don't need pagination parameters (_limit, _page)
+      // Pass params directly without constructQueryParams to avoid adding pagination
       const response = await nextcloudApi.get(endpoint, {
-        params: this._constructQueryParams(params),
+        params: params,
         signal: controller.signal,
       });
 
