@@ -1,4 +1,5 @@
 import { useLocation, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 
 import { LABELS, VISUALS } from '@constants';
 import { SkipLink } from '@utrecht/component-library-react/dist/css-module';
@@ -11,7 +12,7 @@ import { withStore } from '@stores';
 import { getTitle } from '@services/con-get-title';
 import { useWindowSize } from '@hooks';
 
-const AcHeader = ({ store: { menu, user } }) => {
+const AcHeader = ({ store: { menu, user, object } }) => {
   const location = useLocation();
   const isHomePage = location.pathname === '/';
   const isAdminRoute = location.pathname.startsWith('/beheer');
@@ -30,6 +31,34 @@ const AcHeader = ({ store: { menu, user } }) => {
     user.userGroups || []
   );
 
+  // State to store full organization data
+  const [fullActiveOrganisation, setFullActiveOrganisation] = useState(null);
+
+  // Fetch full organization data to get the correct organization name
+  useEffect(() => {
+    const fetchFullOrganisationData = async () => {
+      const activeOrg = user?.activeOrganization;
+      if (!activeOrg) return;
+
+      const orgId = activeOrg?.uuid || activeOrg?.id;
+      if (!orgId) return;
+
+      try {
+        await object.fetchObject('voorzieningen', 'organisatie', String(orgId), {
+          '_extend[]': ['_schema'],
+        });
+        const fullOrgData = object.getObject('voorzieningen_organisatie', orgId);
+        setFullActiveOrganisation(fullOrgData);
+      } catch (error) {
+        console.error('Failed to fetch full organization data:', error);
+      }
+    };
+
+    if (user.isAuthenticated) {
+      fetchFullOrganisationData();
+    }
+  }, [user?.activeOrganization?.uuid, user?.activeOrganization?.id, user.isAuthenticated, object]);
+
   // Get user display name and organization
   const getUserDisplayName = () => {
     if (!user.user) return null;
@@ -42,7 +71,16 @@ const AcHeader = ({ store: { menu, user } }) => {
   };
 
   const getOrganizationName = () => {
-    return user.user?.organisations?.active?.naam || null;
+    // Prefer the name from the full organization data (correct name from the organization object)
+    // Fall back to the name from the user's active organization session data
+    const activeOrg = user.activeOrganization;
+    return (
+      fullActiveOrganisation?.['@self']?.name ||
+      fullActiveOrganisation?.naam ||
+      activeOrg?.name ||
+      activeOrg?.naam ||
+      null
+    );
   };
 
   const userDisplayName = getUserDisplayName();
