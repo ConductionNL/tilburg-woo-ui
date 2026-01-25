@@ -295,7 +295,7 @@ export const useRefOptions = (
         // Only add _source filter for non-module schemas
         // Modules/applications should be visible across all organisations
         if (collectionSlug !== 'module' && collectionSlug !== 'moduleversie') {
-          fetchParams._source = 'database'; // Only show data from own organisation
+          fetchParams._multi = true; // Enable multitenancy
         }
 
         await object.fetchCollection(
