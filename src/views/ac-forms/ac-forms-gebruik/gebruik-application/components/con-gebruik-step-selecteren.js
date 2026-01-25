@@ -27,21 +27,21 @@ const ConGebruikStepSelecteren = ({
   // Merge selected options with search results to ensure selected items are always visible
   const mergedKlantenOptions = useMemo(() => {
     const optionsMap = new Map();
-    
+
     // First add selected options
     (selectedKlantenOptions || []).forEach((option) => {
       if (option?.value) {
         optionsMap.set(String(option.value), option);
       }
     });
-    
+
     // Then add/override with current search results
     (klantenOptions || []).forEach((option) => {
       if (option?.value) {
         optionsMap.set(String(option.value), option);
       }
     });
-    
+
     return Array.from(optionsMap.values());
   }, [klantenOptions, selectedKlantenOptions]);
 
@@ -93,7 +93,7 @@ const ConGebruikStepSelecteren = ({
               onChange={(value) => {
                 // Handle multi-select: value is array of option objects from ReactSelect
                 const optionsArray = Array.isArray(value) ? value : [];
-                
+
                 // Extract IDs
                 const klantenIds = optionsArray
                   .map((v) => {
@@ -106,12 +106,12 @@ const ConGebruikStepSelecteren = ({
                     return String(v || '');
                   })
                   .filter((id) => id && id !== ''); // Filter out empty values
-                
+
                 // Store both IDs and full options
                 setSelectedKlanten(klantenIds);
                 setSelectedKlantenOptions(optionsArray);
               }}
-              isDisabled={klantenLoading || loading}
+              isDisabled={loading}
               isLoading={klantenLoading}
               width='full'
               schemas={schemas}
