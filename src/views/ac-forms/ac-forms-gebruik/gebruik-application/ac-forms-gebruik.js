@@ -1262,7 +1262,7 @@ const AcFormsGebruik = ({ store }) => {
         const params = {
           _limit: '50',
           _page: '1',
-          _source: 'database', // Only show data from own organisation
+          _multi: true, // Enable multitenancy
         };
 
         // Add search parameter if query is provided

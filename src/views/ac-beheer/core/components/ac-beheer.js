@@ -49,9 +49,12 @@ const AcBeheer = ({ store }) => {
     checkAuth();
   }, [user, navigate]);
 
-  // Trigger beheer data warmup when component mounts
+  // Trigger beheer data warmup when component mounts (non-blocking)
+  // Fire and forget - dashboard renders immediately, data loads in background
   useEffect(() => {
-    object.warmupBeheerData();
+    object.warmupBeheerData().catch((error) => {
+      console.warn('⚠️ Background data warmup failed:', error);
+    });
   }, [object]);
 
   const { type, id } = useParams();
