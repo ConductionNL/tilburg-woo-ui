@@ -1262,7 +1262,7 @@ const AcFormsGebruik = ({ store }) => {
         const params = {
           _limit: '50',
           _page: '1',
-          _source: 'database', // Only show data from own organisation
+          _multi: true, // Enable multitenancy
         };
 
         // Add search parameter if query is provided
@@ -1579,8 +1579,9 @@ const AcFormsGebruik = ({ store }) => {
     if (!Array.isArray(versiesArray) || versiesArray.length === 0) {
       setVersionsLoading(false);
       setVersionOptions([]);
-      // Don't clear moduleVersie in edit mode during initial load
+      // Clear moduleVersie when there are no versions available
       if (gebruik?.moduleVersie != null && !(isEditMode && isInitialLoad)) {
+        console.info('Clearing moduleVersie because no versions are available');
         setGebruikData('moduleVersie', null);
       }
       return;
@@ -1602,11 +1603,16 @@ const AcFormsGebruik = ({ store }) => {
 
     const current = String(gebruik?.moduleVersie || '');
     if (current && !options.some((o) => o.value === current)) {
-      // Don't clear moduleVersie in edit mode during initial load
+      // Clear moduleVersie when current value doesn't match available options
       if (!(isEditMode && isInitialLoad)) {
+        console.info(
+          'Clearing moduleVersie because current value is not in available options',
+          { current, availableOptions: options.map((o) => o.value) }
+        );
         setGebruikData('moduleVersie', null);
       }
     }
+    // Auto-select when only one version available
     if (options.length === 1 && current !== options[0].value) {
       setGebruikData('moduleVersie', options[0].value);
     }

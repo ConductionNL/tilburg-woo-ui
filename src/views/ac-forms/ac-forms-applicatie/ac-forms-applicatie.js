@@ -813,7 +813,8 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
             item?.['@self']?.id || item?.identifier || item?.value || item?.id || item?.slug || label;
           return { value: String(value), label: String(label), data: item };
         })
-        .filter((o) => o.label && o.value);
+        .filter((o) => o.label && o.value)
+        .sort((a, b) => a.label.localeCompare(b.label));
 
       setStandaardenversiesOptions(options);
       console.info(`✅ Loaded ${options.length} standaardversies options for dropdown`);
@@ -1127,7 +1128,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         const queryParams = {
           _limit: '50',
           _page: '1',
-          _source: 'database', // Only show data from own organisation
+          _multi: true, // Enable multitenancy
         };
 
         // Add search parameter if provided
@@ -1212,7 +1213,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         const queryParams = {
           _limit: '50',
           _page: '1',
-          _source: 'database', // Only show data from own organisation
+          _multi: true, // Enable multitenancy
           '_extend[]': '_schema',
         };
 

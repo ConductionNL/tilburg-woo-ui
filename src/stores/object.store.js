@@ -1396,8 +1396,10 @@ export class ObjectStore {
     try {
       const endpoint = `/openregister/api/schemas/${schemaId}`;
 
+      // Schema endpoints don't need pagination parameters (_limit, _page)
+      // Pass params directly without constructQueryParams to avoid adding pagination
       const response = await nextcloudApi.get(endpoint, {
-        params: this._constructQueryParams(params),
+        params: params,
         signal: controller.signal,
       });
 
@@ -3716,6 +3718,14 @@ export class ObjectStore {
   initialCacheWarmingCompleted = false;
 
   /**
+   * Flag to track if beheer data warmup has been completed for this session
+   * Prevents redundant warmup on every /beheer page visit
+   * @type {boolean}
+   */
+  @observable
+  beheerDataWarmedUp = false;
+
+  /**
    * Fetches all core registers and populates the registerCache
    * Called during warmupBeheerData to ensure ConRegisterResolver works
    */
@@ -3988,6 +3998,7 @@ export class ObjectStore {
   @action
   resetCacheWarmingFlag = () => {
     this.initialCacheWarmingCompleted = false;
+    this.beheerDataWarmedUp = false;
   };
 
   /**
@@ -4260,6 +4271,12 @@ export class ObjectStore {
    */
   @action
   warmupBeheerData = async () => {
+    // Guard: Skip if already warmed up for this session
+    if (this.beheerDataWarmedUp) {
+      console.info('ℹ️ Beheer data already warmed up, skipping...');
+      return;
+    }
+
     try {
       // Fetch registers first to populate registerCache
       // This ensures ConRegisterResolver works correctly
@@ -4312,7 +4329,7 @@ export class ObjectStore {
           // Fetch objects with limit 10000
           await this.fetchCollection(register, schemaSlug, {
             _limit: 10000,
-            _source: 'database', // Only fetch data from own organisation
+            _multi: true, // Enable multitenancy
           });
         } catch (error) {
           console.error(`Error fetching data for ${schemaSlug}:`, error);
@@ -4373,6 +4390,12 @@ export class ObjectStore {
           });
         }
       }
+
+      // Mark beheer data as warmed up for this session
+      runInAction(() => {
+        this.beheerDataWarmedUp = true;
+      });
+      console.info('✅ Beheer data warmup completed');
     } catch (error) {
       console.error('Error in warmupBeheerData:', error);
       AcFormatErrorMessage(error);
@@ -4414,7 +4437,7 @@ export class ObjectStore {
         // Fetch objects with limit 10000
         await this.fetchCollection(register, schemaSlug, {
           _limit: 10000,
-          _source: 'database', // Only fetch data from own organisation
+          _multi: true, // Enable multitenancy
         });
 
         // Mark as completed now that data has arrived

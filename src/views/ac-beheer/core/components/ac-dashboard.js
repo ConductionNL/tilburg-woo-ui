@@ -24,7 +24,7 @@ const AcDashboard = ({ store }) => {
   const { user, object } = store;
 
   const [userOrganization, setUserOrganization] = useState(null);
-  const [hasSuggestions, setHasSuggestions] = useState(false); // Start as false, show only when data confirms
+  const [hasSuggestions, setHasSuggestions] = useState(null); // null = checking, true = has suggestions, false = no suggestions
   const [refreshKey, setRefreshKey] = useState(0); // Key to force component refresh
   const [isLoadingOrganization, setIsLoadingOrganization] = useState(true);
 
@@ -79,8 +79,8 @@ const AcDashboard = ({ store }) => {
     (updatedUserData) => {
       console.info('Organization switched successfully:', updatedUserData);
 
-      // Reset suggestions state - hide initially until new data loads
-      setHasSuggestions(false);
+      // Reset suggestions state to checking mode
+      setHasSuggestions(null);
 
       // Refresh organization data for new organization
       fetchOrganisatieData();
@@ -167,7 +167,17 @@ const AcDashboard = ({ store }) => {
             </div>
 
             {/* Aangeboden Suggesties Table - Shows suggestions from other organizations */}
-            {hasSuggestions && (
+            {/* Hidden table to check for suggestions - renders off-screen */}
+            <div style={{ position: 'absolute', visibility: 'hidden', pointerEvents: 'none' }}>
+              <ConAangebodenSuggestiesTable
+                id={user?.activeOrganization?.uuid}
+                key={refreshKey}
+                onDataChange={setHasSuggestions}
+              />
+            </div>
+
+            {/* Visible suggestions section - only shows when hasSuggestions is true */}
+            {hasSuggestions === true && (
               <div className='ac-dashboard-suggestions-fade-in'>
                 <Alert type='info'>
                   <Heading level={4}>Aangeboden Suggesties</Heading>
@@ -180,8 +190,7 @@ const AcDashboard = ({ store }) => {
                   <div style={{ marginTop: 'var(--tilburg-space-block-md)' }}>
                     <ConAangebodenSuggestiesTable
                       id={user?.activeOrganization?.uuid}
-                      key={refreshKey}
-                      onDataChange={setHasSuggestions}
+                      key={`visible-${refreshKey}`}
                     />
                   </div>
                 </Alert>

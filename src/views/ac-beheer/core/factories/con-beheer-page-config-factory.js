@@ -430,13 +430,10 @@ const BeheerPageConfigFactory = {
               label: 'Applicatie',
               key: 'module',
               customContent: (row) => {
-                return (
-                  (
-                    <ConUuidResolver>
-                      {row['@self']?.relations?.module || '-'}
-                    </ConUuidResolver>
-                  ) || '-'
-                );
+                // Try direct property first, then fallback to relations
+                const moduleId = row.module || row['@self']?.relations?.module;
+                if (!moduleId) return '-';
+                return <ConUuidResolver>{String(moduleId)}</ConUuidResolver>;
               },
             },
             moduleVersie: {
@@ -444,13 +441,10 @@ const BeheerPageConfigFactory = {
               label: 'Applicatie versie',
               key: 'moduleVersie',
               customContent: (row) => {
-                return (
-                  (
-                    <ConUuidResolver>
-                      {row['@self']?.relations?.moduleVersie || '-'}
-                    </ConUuidResolver>
-                  ) || '-'
-                );
+                // Try direct property first, then fallback to relations
+                const moduleVersieId = row.moduleVersie || row['@self']?.relations?.moduleVersie;
+                if (!moduleVersieId) return '-';
+                return <ConUuidResolver>{String(moduleVersieId)}</ConUuidResolver>;
               },
             },
           },
