@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { AcFlex } from '@src/atoms';
 import { AcCheckbox, AcButton } from '@src/molecules';
 import {
@@ -43,21 +43,6 @@ const ConFormDienstZoekenStage = ({
   gebruik = {},
   setGebruikData,
 }) => {
-  // Memoize the computed options to ensure selected option is always in the list
-  const computedAppOptions = useMemo(() => {
-    // Ensure the selected option is always in the options list
-    // This handles the case where the option is prefilled but not yet in ownAppOptions
-    if (ownApp?.value && ownApp?.label) {
-      const existsInOptions = ownAppOptions.some(
-        (opt) => String(opt.value) === String(ownApp.value)
-      );
-      if (!existsInOptions) {
-        return [ownApp, ...ownAppOptions];
-      }
-    }
-    return ownAppOptions;
-  }, [ownApp, ownAppOptions]);
-
   const idToLabel = Object.fromEntries(
     (resolvedModulesFromResults || []).map((o) => [String(o.value), String(o.label)])
   );
@@ -428,8 +413,8 @@ const ConFormDienstZoekenStage = ({
       <div className='ac-register-form-grid'>
         <div style={{ gridColumn: 'span 2', maxWidth: '640px' }}>
           <ConSchemaEnhancedField
-            schemaType='dienst'
-            schemaProperty='modules'
+            schemaType='gebruik'
+            schemaProperty='module'
             value={gebruik?.module || null}
             onChange={(value) => {
               // Handle array case (when schema type is array but we want single-select)
@@ -472,7 +457,7 @@ const ConFormDienstZoekenStage = ({
             isLoading={ownAppLoading}
             width='full'
             schemas={schemas}
-            optionsProvider={computedAppOptions}
+            optionsProvider={ownAppOptions}
             onSearch={(_path, _refSlug, q) => onSearchModules && onSearchModules(q)}
             customProps={{
               label: 'Applicatie',

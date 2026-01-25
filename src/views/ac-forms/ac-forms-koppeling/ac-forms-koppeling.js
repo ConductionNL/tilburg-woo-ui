@@ -1533,7 +1533,7 @@ const AcFormsKoppeling = ({ store }) => {
           if (!value) return null;
           if (typeof value === 'string') return value;
           if (typeof value === 'object') {
-            return value.id || value.value || value?.['@self']?.id || null;
+            return value.uuid || value.id || value.value || value?.['@self']?.id || null;
           }
           return null;
         };
@@ -1607,7 +1607,8 @@ const AcFormsKoppeling = ({ store }) => {
             item?.identifier || item?.value || item?.id || item?.slug || label;
           return { value: String(value), label: String(label), data: item };
         })
-        .filter((o) => o.label && o.value);
+        .filter((o) => o.label && o.value)
+        .sort((a, b) => a.label.localeCompare(b.label));
 
       setStandaardenOptions(options);
       console.info(`✅ Loaded ${options.length} standaardversies`);

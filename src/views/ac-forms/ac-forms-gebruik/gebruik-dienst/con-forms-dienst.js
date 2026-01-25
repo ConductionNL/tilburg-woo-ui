@@ -249,36 +249,8 @@ const ConFormsDienst = ({ store }) => {
           deelnemers: deelnemersIds,
         });
 
-        // If we have a module (applicatie), fetch and set it for the first step
-        if (moduleId) {
-          try {
-            await store.object.fetchObject('voorzieningen', 'module', moduleId, {
-              '_extend[]': ['_schema'],
-            });
-            const moduleData = store.object.getObject(
-              'voorzieningen_module',
-              moduleId
-            );
-            if (moduleData) {
-              const applicatieOption = mapToOption(moduleData, 0);
-              // Add to options if not already present
-              setOwnAppOptions((prev) => {
-                const exists = prev.some((o) => o.value === applicatieOption.value);
-                return exists ? prev : [...prev, applicatieOption];
-              });
-              // Set the selected applicatie (pre-fills the first step)
-              setSelectedApplicatie(applicatieOption);
-
-              // Trigger loading diensten for the selected applicatie
-              // This will populate the search results in the first step
-              if (!cancelled) {
-                fetchDienstenForApplicatie(moduleId);
-              }
-            }
-          } catch (moduleError) {
-            console.error('Error fetching module for edit mode:', moduleError);
-          }
-        }
+        // Note: The module will be fetched and added to options by the dedicated
+        // useEffect below (lines ~550-635) which handles all the edge cases
 
         // Fetch diensten to populate the search results for display
         if (dienstenIds.length > 0) {
@@ -489,15 +461,16 @@ const ConFormsDienst = ({ store }) => {
         );
         const list = collection?.results || collection || [];
         const options = list.map(mapToOption);
-        // Merge with existing options (e.g., from prefill) to avoid overwriting
+        // Merge with existing options to preserve modules added by edit mode fetch
         setOwnAppOptions((prev) => {
-          // Create a Set of existing option values to avoid duplicates
-          const existingValues = new Set(prev.map((opt) => String(opt.value)));
-          // Add new options that don't already exist
-          const newOptions = options.filter(
-            (opt) => !existingValues.has(String(opt.value))
-          );
-          return [...prev, ...newOptions];
+          const existingMap = new Map(prev.map((opt) => [opt.value, opt]));
+          // Add new options, preferring existing ones if they exist
+          options.forEach((opt) => {
+            if (!existingMap.has(opt.value)) {
+              existingMap.set(opt.value, opt);
+            }
+          });
+          return Array.from(existingMap.values());
         });
       } catch (e) {
         console.error('Failed to load modules for gebruik beheerder:', e);
@@ -528,34 +501,70 @@ const ConFormsDienst = ({ store }) => {
     );
     if (alreadyInOptions) return;
 
-    // Try to find module from various sources
-    let moduleData = null;
+    let cancelled = false;
+    
+    const fetchAndAddModule = async () => {
+      // Try to find module from various sources
+      let moduleData = null;
 
-    // Check if selectedApplicatie has the data
-    if (
-      selectedApplicatie?.data &&
-      String(getIdString(selectedApplicatie.data)) === String(moduleId)
-    ) {
-      moduleData = selectedApplicatie.data;
-    }
-
-    // Check store (module might have been fetched by the prefill useEffect)
-    if (!moduleData) {
-      moduleData = store.object.getObject('voorzieningen_module', String(moduleId));
-    }
-
-    // Add to options if found
-    if (moduleData) {
-      const option = mapToOption(moduleData, 0);
-      setOwnAppOptions((prev) => {
-        const exists = prev.some((o) => String(o.value) === String(option.value));
-        return exists ? prev : [...prev, option];
-      });
-      // Also ensure selectedApplicatie is set
-      if (!selectedApplicatie || String(selectedApplicatie.value) !== String(option.value)) {
-        setSelectedApplicatie(option);
+      // Check if selectedApplicatie has the data
+      if (
+        selectedApplicatie?.data &&
+        String(getIdString(selectedApplicatie.data)) === String(moduleId)
+      ) {
+        moduleData = selectedApplicatie.data;
       }
-    }
+
+      // Check collection (modules loaded by loadModulesForGebruikBeheerder)
+      if (!moduleData) {
+        const collection = store.object.getCollection(
+          'voorzieningen_module_dienst_zoeken_initial'
+        );
+        const list = collection?.results || collection || [];
+        moduleData = list.find(
+          (item) => String(getIdString(item)) === String(moduleId)
+        );
+      }
+
+      // Check store (module might have been fetched by the prefill useEffect)
+      if (!moduleData) {
+        moduleData = store.object.getObject('voorzieningen_module', String(moduleId));
+      }
+
+      // If still not found, fetch it
+      if (!moduleData) {
+        try {
+          await store.object.fetchObject('voorzieningen', 'module', String(moduleId), {
+            '_extend[]': ['_schema'],
+            _published: 'false',
+          });
+          if (cancelled) return;
+          moduleData = store.object.getObject('voorzieningen_module', String(moduleId));
+        } catch (error) {
+          console.error('Failed to fetch module for options:', error);
+          return;
+        }
+      }
+
+      // Add to options if found
+      if (moduleData && !cancelled) {
+        const option = mapToOption(moduleData, 0);
+        setOwnAppOptions((prev) => {
+          const exists = prev.some((o) => String(o.value) === String(option.value));
+          return exists ? prev : [...prev, option];
+        });
+        // Also ensure selectedApplicatie is set
+        if (!selectedApplicatie || String(selectedApplicatie.value) !== String(option.value)) {
+          setSelectedApplicatie(option);
+        }
+      }
+    };
+
+    fetchAndAddModule();
+
+    return () => {
+      cancelled = true;
+    };
   }, [
     isEditMode,
     gebruik?.module,
