@@ -424,7 +424,7 @@ const AcPublicationProduct = ({
     setUsedLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=_schema`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=_schema&_extend[]=compliancy`,
         {
           method: 'GET',
           headers: {
@@ -500,6 +500,18 @@ const AcPublicationProduct = ({
   if (loading.status || !get_single) {
     return <AcLoader />;
   }
+
+  // Extract compliancy objects from used data (schema ID 18 is compliancy schema)
+  const compliancyFromUsed = useMemo(() => {
+    if (!used || !Array.isArray(used)) return [];
+    
+    // Filter for compliancy objects (schema ID 18)
+    const compliancySchemaId = aggregatedSchemas?.['18']?.id || '18';
+    return used.filter(item => {
+      const itemSchemaId = item?.['@self']?.schema?.id || item?.['@self']?.schema;
+      return String(itemSchemaId) === String(compliancySchemaId);
+    });
+  }, [used, aggregatedSchemas]);
 
   return (
     <AcContainer margin='xl'>
@@ -774,7 +786,7 @@ const AcPublicationProduct = ({
             render: () => (
               <ConStandardsTable
                 referentieComponenten={get_single.referentieComponenten}
-                complianceStandards={get_single.compliancy}
+                complianceStandards={compliancyFromUsed}
                 compliantVersieIds={
                   get_single.standaardVersies || get_single.standaardversies || []
                 }

@@ -1227,7 +1227,7 @@ export class ObjectStore {
       const response = await nextcloudApi.get(
         this._constructApiUrl(register, schema, id),
         {
-          params: this._constructQueryParams(queryParams),
+          params: queryParams, // Pass params directly, don't add _limit/_page for single object fetches
           signal: controller.signal,
         }
       );

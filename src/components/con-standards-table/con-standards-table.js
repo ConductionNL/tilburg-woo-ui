@@ -1023,46 +1023,78 @@ const ConStandardsTable = ({
                         </span>
                       )
                     ) : // Always show download button when not editing
-                    hasBewijs ? (
-                      <Link
-                        href='#'
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleFileClick(complianceStandard.bewijs);
-                        }}
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'left',
-                          cursor: 'pointer',
-                        }}
-                        title='Download bewijs bestand'
-                      >
-                        <VISUALS.DOWNLOAD />
-                      </Link>
-                    ) : hasUrl ? (
-                      <Link
-                        href={complianceStandard.url}
-                        target='_blank'
-                        rel='noopener noreferrer'
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'left',
-                          cursor: 'pointer',
-                        }}
-                        title={`Open bewijs URL: ${complianceStandard.url}`}
-                      >
-                        <VISUALS.EXTERNAL_LINK />
-                      </Link>
-                    ) : (
-                      <span
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'left',
-                        }}
-                      >
-                        -
-                      </span>
-                    )}
+                    (() => {
+                      // Check for file metadata in @self.files
+                      const fileInfo = complianceStandard?.['@self']?.files?.[0];
+                      const fileTitle = fileInfo?.title;
+                      const fileDownloadUrl = fileInfo?.downloadUrl;
+
+                      if (fileTitle && fileDownloadUrl) {
+                        return (
+                          <Link
+                            href={fileDownloadUrl}
+                            target='_blank'
+                            rel='noopener noreferrer'
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              justifyContent: 'left',
+                              cursor: 'pointer',
+                            }}
+                            title={`Download: ${fileTitle}`}
+                          >
+                            <VISUALS.DOWNLOAD />
+                            <span style={{ fontSize: '0.85rem' }}>{fileTitle}</span>
+                          </Link>
+                        );
+                      } else if (hasBewijs) {
+                        return (
+                          <Link
+                            href='#'
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleFileClick(complianceStandard.bewijs);
+                            }}
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'left',
+                              cursor: 'pointer',
+                            }}
+                            title='Download bewijs bestand'
+                          >
+                            <VISUALS.DOWNLOAD />
+                          </Link>
+                        );
+                      } else if (hasUrl) {
+                        return (
+                          <Link
+                            href={complianceStandard.url}
+                            target='_blank'
+                            rel='noopener noreferrer'
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'left',
+                              cursor: 'pointer',
+                            }}
+                            title={`Open bewijs URL: ${complianceStandard.url}`}
+                          >
+                            <VISUALS.EXTERNAL_LINK />
+                          </Link>
+                        );
+                      } else {
+                        return (
+                          <span
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'left',
+                            }}
+                          >
+                            -
+                          </span>
+                        );
+                      }
+                    })()}
                   </TableCell>
                 </TableRow>
               );

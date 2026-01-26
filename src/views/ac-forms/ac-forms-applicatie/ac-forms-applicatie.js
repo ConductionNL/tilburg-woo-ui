@@ -117,6 +117,10 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     beoordelingen: [],
     kwetsbaarheden: [],
     licentieType: '',
+    compliancy: [],
+    standaarden: [],
+    standaardVersies: [],
+    standaardenGemma: [],
   });
 
   // Ref for ProcessSteps container
@@ -461,6 +465,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
               'koppelingen',
               'diensten',
               'moduleVersies',
+              'compliancy',
             ],
             _published: 'false',
           }
@@ -536,6 +541,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
           moduleVersies: fetched.moduleVersies || [],
           compliancy: fetched.compliancy || [],
           standaarden: fetched.standaarden || [],
+          standaardVersies: fetched.standaardVersies || [],
           standaardenGemma: fetched.standaardenGemma || [],
           koppelingen: prefilledKoppelingen,
           diensten: prefilledDiensten,
@@ -878,16 +884,10 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
   }, [schemas?.module, standaardenversiesOptions.length, standaardenversiesOptionsLoading, loadAllStandaardenversies]);
 
   // Initialize selectedExtraStandards from existing compliancy and standaardVersies data
-  // This should only run once on mount, not react to compliance checkbox changes
+  // This runs when editing to restore the previously selected extra standards
   useEffect(() => {
     if (standaardenversiesOptions.length === 0) return;
     if (standaardenOptions.length === 0) return; // Need standards to check standaardVersies
-    if (selectedExtraStandardsInitializedRef.current) return; // Already initialized
-    if (selectedExtraStandards.length > 0) {
-      // If already has values, mark as initialized
-      selectedExtraStandardsInitializedRef.current = true;
-      return;
-    }
 
     // Get all standaardversie IDs from compliancy and standaardVersies arrays
     const existingCompliancy = applicatie.compliancy || [];
@@ -907,10 +907,27 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       }
     });
 
+    // If no existing data, mark as initialized and return
     if (allVersieIds.size === 0) {
-      // Mark as initialized even if no data, to prevent re-running
-      selectedExtraStandardsInitializedRef.current = true;
+      if (!selectedExtraStandardsInitializedRef.current) {
+        selectedExtraStandardsInitializedRef.current = true;
+      }
       return;
+    }
+
+    // If already initialized and selectedExtraStandards matches existing data, skip
+    if (selectedExtraStandardsInitializedRef.current) {
+      const currentExtraIds = new Set(
+        selectedExtraStandards.map((s) => String(s.value))
+      );
+      // Check if the sets are identical
+      if (
+        currentExtraIds.size === allVersieIds.size &&
+        [...allVersieIds].every((id) => currentExtraIds.has(id))
+      ) {
+        return; // Already correctly initialized
+      }
+      // If data changed (e.g., when switching to edit mode), allow re-initialization
     }
 
     // Get all standaardversie IDs from referentieComponentenWithStandards
@@ -1022,9 +1039,9 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     standaardenOptions,
     standaardenversiesOptions,
     referentieComponentenWithStandards,
-    // Removed applicatie.compliancy, applicatie.standaardVersies, applicatie.standaardversies
-    // from dependencies to prevent re-running when compliance checkboxes are toggled
-    // This effect should only initialize once from existing data
+    applicatie.compliancy, // Include to reinitialize when editing
+    applicatie.standaardVersies, // Include to reinitialize when editing
+    selectedExtraStandards, // Include to check if already correct
   ]);
 
   // Function to search modules with debouncing using object store cache
