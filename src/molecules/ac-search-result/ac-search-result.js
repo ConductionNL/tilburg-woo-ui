@@ -30,6 +30,8 @@ const AcSearchResult = ({
         return NAVIGATE_TO.PUBLICATION(id);
       case 'beheer':
         return NAVIGATE_TO.BEHEER_TYPE_DETAILS(category, id);
+      case 'view':
+        return `/beheer/view/${id}`;
       default:
         return NAVIGATE_TO.PUBLICATION(id);
     }
