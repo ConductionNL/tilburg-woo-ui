@@ -82,6 +82,9 @@ export class PublicationsStore {
   relations = null;
 
   @observable
+  usedData = null;
+
+  @observable
   categories = [];
 
   @observable
@@ -203,6 +206,11 @@ export class PublicationsStore {
   @computed
   get get_relations() {
     return toJS(this.relations);
+  }
+
+  @computed
+  get get_used_data() {
+    return toJS(this.usedData);
   }
 
   @computed
@@ -355,6 +363,11 @@ export class PublicationsStore {
   @action
   setRelations = (relations) => {
     this.relations = relations;
+  };
+
+  @action
+  setUsedData = (usedData) => {
+    this.usedData = usedData;
   };
 
   @action
@@ -911,6 +924,21 @@ export class PublicationsStore {
   };
 
   @action
+  fetchUsed = async (id) => {
+    this.loading.status = true;
+
+    app.store.api.publications
+      .used(id)
+      .then((response) => {
+        this.setUsedData(response);
+      })
+      .catch((e) => console.error(e))
+      .finally(() => {
+        this.setLoadingStatus(false);
+      });
+  };
+
+  @action
   resetPublication = () => {
     this.single = null;
     this.setError(null);
@@ -924,6 +952,11 @@ export class PublicationsStore {
   @action
   resetRelations = () => {
     this.relations = null;
+  };
+
+  @action
+  resetUsedData = () => {
+    this.usedData = null;
   };
 
   @action
