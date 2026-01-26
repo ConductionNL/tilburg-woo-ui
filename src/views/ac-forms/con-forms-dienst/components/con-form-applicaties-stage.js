@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import {
   ConSchemaEnhancedField,
   ConUuidResolver,
@@ -84,7 +84,11 @@ const ConFormApplicatiesStage = memo(
               width='full'
               schemas={schemas}
               optionsProvider={moduleOptions}
-              onSearch={(_path, _refSlug, q) => searchModules && searchModules(q)}
+              // function memoized to prevent unnecessary re-renders (Cursor fix, I honestly have no clue why this is an issue)
+              onSearch={useMemo(
+                () => (_path, _refSlug, q) => searchModules && searchModules(q),
+                [searchModules]
+              )}
               customProps={{
                 label: 'Applicaties',
                 placeholder: 'Selecteer applicaties',

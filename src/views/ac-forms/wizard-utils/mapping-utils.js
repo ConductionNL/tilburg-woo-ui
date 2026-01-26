@@ -244,3 +244,20 @@ export const createStandaardversieMapper = (options = {}) => {
 export const filterValidOptions = (options) => {
   return options.filter((o) => o && o.label && o.value);
 };
+
+/**
+ * Extracts ID from an item (object or string)
+ * Handles various ID field formats: id, value, uuid, slug
+ * @param {Object|string} item - The item to extract ID from
+ * @returns {string} The extracted ID as a string, or empty string if not found
+ */
+export const mapId = (item) => {
+  if (!item) return '';
+  if (typeof item === 'string') return String(item);
+  if (typeof item === 'object') {
+    return String(
+      item.id || item.value || item.uuid || item.slug || item['@self']?.id || ''
+    );
+  }
+  return String(item || '');
+};

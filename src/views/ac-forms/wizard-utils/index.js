@@ -13,6 +13,7 @@ export {
   createBuitengemeentelijkeMapper,
   createStandaardversieMapper,
   filterValidOptions,
+  mapId,
 } from './mapping-utils';
 
 // Loading utilities
@@ -33,4 +34,6 @@ export {
   createOrganisatieSearchConfig,
   createEntitySearchConfig,
   useEntitySearch,
+  fetchMissingEntities,
+  createRelatedEntitiesFetcher,
 } from './search-utils';

@@ -158,9 +158,9 @@ const ConKoppelingStageZoeken = ({
               width='full'
               schemas={schemas}
               optionsProvider={ownAppOptions}
-              onSearch={(_path, _refSlug, q) =>
-                onSearchModules && onSearchModules(q)
-              }
+              onSearch={(_path, _refSlug, q) => {
+                onSearchModules && onSearchModules(q);
+              }}
               customProps={{
                 label: 'Applicatie',
                 placeholder: 'Selecteer een applicatie',

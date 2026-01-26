@@ -23,6 +23,9 @@ import {
   createModuleMapper,
   createModuleSearchConfig,
   useEntitySearch,
+  fetchMissingEntities,
+  createRelatedEntitiesFetcher,
+  mapId,
 } from '../wizard-utils';
 
 // Stage components
@@ -102,32 +105,40 @@ const ConFormsDienst = ({ store, userStore }) => {
   // productId -> module options derived from product details
   const [productToModulesLookup, setProductToModulesLookup] = useState({});
   const [selectedModuleIds, setSelectedModuleIds] = useState([]);
-  const [modulesLoading, setModulesLoading] = useState(false);
   const [applicatiePreloadLoading, setApplicatiePreloadLoading] = useState(false);
   
   // Module search with utilities
-  const moduleMapper = createModuleMapper();
-  const moduleSearchConfig = createModuleSearchConfig(store, {
-    mapToOption: moduleMapper,
-    cacheKey: 'dienst_form_search',
-    queryParamsBuilder: (searchTerm) => ({
-      _limit: '50',
-      _page: '1',
-      _published: 'false',
-      _source: 'index',
-      ...(searchTerm && searchTerm.trim() ? { _search: searchTerm.trim() } : {}),
-    }),
-  });
+  const moduleMapper = useMemo(() => createModuleMapper(), []);
+  const moduleSearchConfig = useMemo(
+    () =>
+      createModuleSearchConfig(store, {
+        mapToOption: moduleMapper,
+        cacheKey: 'dienst_form',
+        queryParamsBuilder: (searchTerm) => ({
+          _limit: '50',
+          _page: '1',
+          _published: 'false',
+          _source: 'index',
+          ...(searchTerm && searchTerm.trim() ? { _search: searchTerm.trim() } : {}),
+        }),
+      }),
+    [store, moduleMapper]
+  );
   const {
     search: searchModules,
-    loading: searchLoading,
+    loading: modulesLoading,
     options: moduleOptions,
     setOptions: setModuleOptions,
   } = useEntitySearch(moduleSearchConfig, {
     debounceDelay: 250,
-    mergeStrategy: 'replace-existing',
+    mergeStrategy: 'update-existing',
   });
   const moduleOptionsRef = useRef([]);
+
+  // Update productToModulesLookup when moduleOptions change
+  useEffect(() => {
+    setProductToModulesLookup({ all: moduleOptions });
+  }, [moduleOptions]);
 
   const [koppelingOptions, setKoppelingOptions] = useState([]);
   const [selectedKoppelingIds, setSelectedKoppelingIds] = useState([]);
@@ -165,11 +176,6 @@ const ConFormsDienst = ({ store, userStore }) => {
         if (!fetched) return;
 
         // Map fetched dienst to local state shape
-        const mapId = (item) =>
-          item && typeof item === 'object'
-            ? String(item.id || item.value || item.uuid || item.slug || '')
-            : String(item || '');
-
         const prefilledModuleIds = Array.isArray(fetched.modules)
           ? fetched.modules.map((m) => mapId(m)).filter(Boolean)
           : [];
@@ -178,53 +184,20 @@ const ConFormsDienst = ({ store, userStore }) => {
           : [];
 
         // Fetch missing modules from edit data and add to options
-        if (prefilledModuleIds.length > 0) {
-          const currentModuleOptions = moduleOptionsRef.current;
-          const existingModuleIds = new Set(
-            currentModuleOptions.map((opt) => opt.value)
+        if (prefilledModuleIds.length > 0 && !cancelled) {
+          await fetchMissingEntities(
+            store,
+            'voorzieningen',
+            'module',
+            prefilledModuleIds,
+            moduleOptionsRef.current,
+            moduleMapper,
+            setModuleOptions,
+            { extendParams: ['@self.schema'], source: 'index' }
           );
-          const missingModuleIds = prefilledModuleIds.filter(
-            (id) => !existingModuleIds.has(id)
-          );
-
-          if (missingModuleIds.length > 0 && !cancelled) {
-            const moduleFetches = missingModuleIds.map((id) =>
-              store.object
-                .fetchObject('voorzieningen', 'module', String(id), {
-                  '_extend[]': ['@self.schema'],
-                  _published: 'false',
-                  _source: 'index',
-                })
-                .then(() => {
-                  if (cancelled) return null;
-                  return store.object.getObject('voorzieningen_module', String(id));
-                })
-                .catch(() => null)
-            );
-
-            const moduleResults = await Promise.allSettled(moduleFetches);
-            if (!cancelled) {
-              const newOptions = moduleResults
-                .map((result, index) => {
-                  if (result.status === 'fulfilled' && result.value) {
-                    return moduleMapper(result.value, index);
-                  }
-                  return null;
-                })
-                .filter(Boolean);
-
-              if (newOptions.length > 0) {
-                setModuleOptions((prev) => {
-                  const existingValues = new Set(prev.map((opt) => opt.value));
-                  const uniqueNewOptions = newOptions.filter(
-                    (opt) => !existingValues.has(opt.value)
-                  );
-                  return [...prev, ...uniqueNewOptions];
-                });
-              }
-            }
-          }
         }
+
+        if (cancelled) return;
 
         // Convert type to array if it comes as a string (for backward compatibility)
         const prefilledType = Array.isArray(fetched.type)
@@ -291,64 +264,6 @@ const ConFormsDienst = ({ store, userStore }) => {
     ['dienst', 'product', 'module', 'koppeling', 'organisatie']
   );
 
-  // Fetch all modules (not product-based anymore)
-  const loadAllModules = async () => {
-    setModulesLoading(true);
-    try {
-      await store.object.fetchCollection(
-        'voorzieningen',
-        'module',
-        {
-          _limit: '50',
-          _page: '1',
-          _published: 'false',
-          _source: 'index',
-        },
-        null,
-        'dienst_form'
-      );
-      const collection = store.object.getCollection(
-        'voorzieningen_module_dienst_form'
-      );
-      const list = collection?.results || collection || [];
-      const options = list.map(moduleMapper);
-
-      // Merge with existing options to preserve search results and manually fetched modules
-      setModuleOptions((prevOptions) => {
-        const existingOptionsMap = new Map(
-          prevOptions.map((opt) => [opt.value, opt])
-        );
-        const newOptionsMap = new Map(options.map((opt) => [opt.value, opt]));
-
-        // Start with existing options
-        const mergedOptions = [...prevOptions];
-
-        // Add new options that don't already exist
-        newOptionsMap.forEach((newOpt, value) => {
-          if (!existingOptionsMap.has(value)) {
-            mergedOptions.push(newOpt);
-          } else {
-            // Update existing option with new data (in case it changed)
-            const index = mergedOptions.findIndex((opt) => opt.value === value);
-            if (index !== -1) {
-              mergedOptions[index] = newOpt;
-            }
-          }
-        });
-
-        // Store as a flat list for backward compatibility
-        setProductToModulesLookup({ all: mergedOptions });
-
-        return mergedOptions;
-      });
-    } catch {
-      setModuleOptions([]);
-      setProductToModulesLookup({ all: [] });
-    } finally {
-      setModulesLoading(false);
-    }
-  };
-
   // Keep ref in sync with moduleOptions state
   useEffect(() => {
     moduleOptionsRef.current = moduleOptions;
@@ -356,7 +271,7 @@ const ConFormsDienst = ({ store, userStore }) => {
 
   // Load modules on mount (step 0 is now Applicaties)
   useEffect(() => {
-    loadAllModules();
+    searchModules('');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -381,35 +296,24 @@ const ConFormsDienst = ({ store, userStore }) => {
             return [...prev, applicatieOption.value];
           });
         } else {
-          // If applicatie not in initial list, fetch it directly
+          // If applicatie not in initial list, fetch it using utility
           setApplicatiePreloadLoading(true);
           try {
-            await store.object.fetchObject(
+            await fetchMissingEntities(
+              store,
               'voorzieningen',
               'module',
-              String(applicatieFromUrl),
-              {
-                '_extend[]': ['@self.schema'],
-                _published: 'false',
-                _source: 'index',
-              }
+              [applicatieFromUrl],
+              moduleOptions,
+              moduleMapper,
+              setModuleOptions,
+              { extendParams: ['@self.schema'], source: 'index' }
             );
-            const fetched = store.object.getObject(
-              'voorzieningen_module',
-              String(applicatieFromUrl)
-            );
-            if (fetched) {
-              const option = moduleMapper(fetched, 0);
-              setModuleOptions((prev) => {
-                const exists = prev.some((o) => o.value === option.value);
-                if (exists) return prev;
-                return [...prev, option];
-              });
-              setSelectedModuleIds((prev) => {
-                if (prev.includes(option.value)) return prev;
-                return [...prev, option.value];
-              });
-            }
+            // After fetching, select it
+            setSelectedModuleIds((prev) => {
+              if (prev.includes(applicatieFromUrl)) return prev;
+              return [...prev, applicatieFromUrl];
+            });
           } catch (error) {
             console.error('Error pre-selecting applicatie from URL:', error);
           } finally {
@@ -423,10 +327,10 @@ const ConFormsDienst = ({ store, userStore }) => {
     };
 
     preSelectApplicatie();
-  }, [applicatieFromUrl, moduleOptions, isEditMode, store]);
+  }, [applicatieFromUrl, moduleOptions, isEditMode, store, moduleMapper]);
 
   // Debounced search function (searchModules is already debounced by useEntitySearch)
-  const debouncedSearchModules = searchModules;
+  const debouncedSearchModules = useMemo(() => searchModules, [searchModules]);
 
   // Keep dienst.modules in sync with current selection
   useEffect(() => {
@@ -451,101 +355,29 @@ const ConFormsDienst = ({ store, userStore }) => {
 
       setDienstenResultsLoading(true);
       try {
-        // Collect all diensten for all selected applicaties
-        const allDiensten = [];
-        const seenDienstIds = new Set();
+        const getModuleIds = (dienstItem) => {
+          const modules = Array.isArray(dienstItem.modules) ? dienstItem.modules : [];
+          return modules.map((m) => mapId(m)).filter(Boolean);
+        };
 
-        for (const applicatieId of applicatieIds) {
-          // Query diensten where modules array contains applicatie ID
-          const params = new URLSearchParams({
-            _limit: '50',
-            _page: '1',
-            _published: 'false',
-            _source: 'index',
-          });
-          params.append('modules', String(applicatieId));
+        const fetcher = createRelatedEntitiesFetcher(
+          store,
+          'voorzieningen',
+          'dienst',
+          'modules',
+          'module',
+          moduleMapper,
+          getModuleIds,
+          { extendParams: ['@self.schema'], source: 'index' }
+        );
 
-          await store.object.fetchCollection(
-            'voorzieningen',
-            'dienst',
-            Object.fromEntries(params),
-            null,
-            `dienst_for_app_${applicatieId}`
-          );
-          const collection = store.object.getCollection(
-            `voorzieningen_dienst_dienst_for_app_${applicatieId}`
-          );
-          const list = collection?.results || collection || [];
+        const { entities, resolvedLabels } = await fetcher(
+          applicatieIds,
+          moduleOptionsRef.current
+        );
 
-          // Add unique diensten
-          list.forEach((dienstItem) => {
-            const dienstId = dienstItem?.id || dienstItem?.['@self']?.id || '';
-            if (dienstId && !seenDienstIds.has(dienstId)) {
-              seenDienstIds.add(dienstId);
-              allDiensten.push(dienstItem);
-            }
-          });
-        }
-
-        setDienstenResults(allDiensten);
-
-        // Collect module IDs from diensten for resolution
-        const moduleIds = new Set();
-        allDiensten.forEach((dienstItem) => {
-          const modules = Array.isArray(dienstItem.modules)
-            ? dienstItem.modules
-            : [];
-          modules.forEach((m) => {
-            const id =
-              typeof m === 'string'
-                ? m
-                : String(m?.id || m?.value || m?.['@self']?.id || '');
-            if (id) moduleIds.add(id);
-          });
-        });
-
-        // Resolve module labels using current moduleOptionsRef
-        const currentModuleOptions = moduleOptionsRef.current;
-        const resolved = [];
-        for (const moduleId of Array.from(moduleIds)) {
-          // Check if already in moduleOptions
-          const existing = currentModuleOptions.find(
-            (opt) => String(opt.value) === String(moduleId)
-          );
-          if (existing) {
-            resolved.push({ value: moduleId, label: existing.label });
-          } else {
-            // Try to fetch if not available
-            try {
-              await store.object.fetchObject(
-                'voorzieningen',
-                'module',
-                String(moduleId),
-                {
-                  '_extend[]': ['@self.schema'],
-                  _published: 'false',
-                  _source: 'index',
-                }
-              );
-              const moduleData = store.object.getObject(
-                'voorzieningen_module',
-                String(moduleId)
-              );
-              if (moduleData) {
-                const label =
-                  moduleData?.naam ||
-                  moduleData?.name ||
-                  moduleData?.['@self']?.name ||
-                  moduleId;
-                resolved.push({ value: moduleId, label });
-              }
-            } catch {
-              // If fetch fails, use ID as label
-              resolved.push({ value: moduleId, label: moduleId });
-            }
-          }
-        }
-        setResolvedModulesFromDiensten(resolved);
+        setDienstenResults(entities);
+        setResolvedModulesFromDiensten(resolvedLabels);
       } catch (e) {
         console.error('Failed to fetch diensten:', e);
         setDienstenResults([]);
@@ -554,7 +386,7 @@ const ConFormsDienst = ({ store, userStore }) => {
         setDienstenResultsLoading(false);
       }
     },
-    [store]
+    [store, moduleMapper]
   );
 
   // Fetch diensten when applicaties selection changes
@@ -565,7 +397,7 @@ const ConFormsDienst = ({ store, userStore }) => {
       setDienstenResults([]);
       setResolvedModulesFromDiensten([]);
     }
-  }, [selectedModuleIds]);
+  }, [selectedModuleIds, fetchDienstenForApplicaties]);
 
   // TODO: remove eslint-disable if koppelingen are needed
   // eslint-disable-next-line no-unused-vars
@@ -659,7 +491,7 @@ const ConFormsDienst = ({ store, userStore }) => {
             selectedModuleIds={selectedModuleIds}
             setSelectedModuleIds={setSelectedModuleIds}
             loadingModules={modulesLoading || applicatiePreloadLoading}
-            searchLoading={searchLoading}
+            searchLoading={modulesLoading}
             moduleOptions={moduleOptions}
             searchModules={debouncedSearchModules}
             schemas={schemas}

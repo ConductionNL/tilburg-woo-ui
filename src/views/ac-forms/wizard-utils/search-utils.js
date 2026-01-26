@@ -13,7 +13,7 @@ import { filterValidOptions } from './mapping-utils';
  * Merges search options with existing options
  * @param {Array<Object>} prevOptions - Previous options array
  * @param {Array<Object>} newOptions - New options from search
- * @param {string} strategy - Merge strategy: 'preserve-existing' (default) or 'replace-existing'
+ * @param {string} strategy - Merge strategy: 'preserve-existing' (default), 'replace-existing', or 'update-existing'
  * @returns {Array<Object>} Merged options array
  */
 export const mergeSearchOptions = (
@@ -36,7 +36,35 @@ export const mergeSearchOptions = (
     return mergedOptions;
   }
 
-  // Default: preserve-existing - keep all existing, add new ones
+  if (strategy === 'update-existing') {
+    // Preserve all existing options (maintains order), add new ones, and update existing ones with new data
+    const existingOptionsMap = new Map(
+      prevOptions.map((opt) => [String(opt.value), opt])
+    );
+    const newOptionsMap = new Map(newOptions.map((opt) => [String(opt.value), opt]));
+
+    // Start with all existing options (preserves order)
+    const mergedOptions = [...prevOptions];
+
+    // Process new options
+    newOptionsMap.forEach((newOpt, value) => {
+      const stringValue = String(value);
+      if (!existingOptionsMap.has(stringValue)) {
+        // Add new options that don't exist
+        mergedOptions.push(newOpt);
+      } else {
+        // Update existing option with new data (in case it changed)
+        const index = mergedOptions.findIndex((opt) => String(opt.value) === stringValue);
+        if (index !== -1) {
+          mergedOptions[index] = newOpt;
+        }
+      }
+    });
+
+    return mergedOptions;
+  }
+
+  // Default: preserve-existing - keep all existing, add new ones (don't update existing)
   const existingValuesSet = new Set(prevOptions.map((opt) => String(opt.value)));
   const mergedOptions = [...prevOptions];
 
@@ -120,9 +148,15 @@ export const createModuleSearchConfig = (store, options = {}) => {
             null,
             `module_${cacheKey}`
           );
-          const collection = store.object.getCollection(
-            `${collectionKey}_module_${cacheKey}`
+          // Use getTypeFromParams to construct the correct collection key (register_schema_suffix format)
+          // This matches how fetchCollection internally constructs the type key
+          const collectionType = store.object.getTypeFromParams(
+            collectionKey,
+            'module',
+            null,
+            `module_${cacheKey}`
           );
+          const collection = store.object.getCollection(collectionType);
           return collection?.results || collection || [];
         },
   };
@@ -212,6 +246,227 @@ export const createOrganisatieSearchConfig = (store, options = {}) => {
     extendParams: ['@self.schema'],
     source: options.source || 'database',
   });
+};
+
+/**
+ * Fetches missing entities and adds them to options
+ * @param {Object} store - The MobX store instance
+ * @param {string} collectionKey - Collection key (e.g., 'voorzieningen')
+ * @param {string} entityType - Entity type (e.g., 'module', 'dienst')
+ * @param {Array<string>} ids - Array of entity IDs to fetch
+ * @param {Array<Object>} currentOptions - Current options array to check against
+ * @param {Function} mapper - Function to map fetched items to options
+ * @param {Function} setOptions - Function to update options state
+ * @param {Object} fetchOptions - Additional fetch options
+ * @param {Array<string>} fetchOptions.extendParams - Extend parameters for fetch
+ * @param {string} fetchOptions.source - Source type: 'index' or 'database' (default: 'index')
+ * @returns {Promise<Array<Object>>} Array of newly fetched and mapped options
+ */
+export const fetchMissingEntities = async (
+  store,
+  collectionKey,
+  entityType,
+  ids,
+  currentOptions,
+  mapper,
+  setOptions,
+  fetchOptions = {}
+) => {
+  if (!ids || ids.length === 0) return [];
+
+  const { extendParams = ['@self.schema'], source = 'index' } = fetchOptions;
+
+  // Find which IDs are missing from current options
+  const existingValues = new Set(currentOptions.map((opt) => String(opt.value)));
+  const missingIds = ids.filter((id) => !existingValues.has(String(id)));
+
+  if (missingIds.length === 0) return [];
+
+  // Fetch missing entities
+  const fetchPromises = missingIds.map(async (id) => {
+    try {
+      const fetchParams = {
+        _published: 'false',
+        _source: source,
+      };
+
+      if (extendParams.length > 0) {
+        fetchParams['_extend[]'] = extendParams;
+      }
+
+      await store.object.fetchObject(collectionKey, entityType, String(id), fetchParams);
+      return store.object.getObject(
+        `${collectionKey}_${entityType}`,
+        String(id)
+      );
+    } catch (error) {
+      console.error(`Failed to fetch ${entityType} ${id}:`, error);
+      return null;
+    }
+  });
+
+  const fetchedEntities = await Promise.allSettled(fetchPromises);
+  const newOptions = fetchedEntities
+    .map((result, index) => {
+      if (result.status === 'fulfilled' && result.value) {
+        return mapper(result.value, index);
+      }
+      return null;
+    })
+    .filter(Boolean)
+    .filter((opt) => opt.label && opt.value);
+
+  // Add new options to state
+  if (newOptions.length > 0) {
+    setOptions((prev) => {
+      const existingValuesSet = new Set(prev.map((opt) => String(opt.value)));
+      const uniqueNewOptions = newOptions.filter(
+        (opt) => !existingValuesSet.has(String(opt.value))
+      );
+      return [...prev, ...uniqueNewOptions];
+    });
+  }
+
+  return newOptions;
+};
+
+/**
+ * Creates a function to fetch related entities based on filter criteria and resolve their labels
+ * @param {Object} store - The MobX store instance
+ * @param {string} collectionKey - Collection key (e.g., 'voorzieningen')
+ * @param {string} entityType - Entity type to fetch (e.g., 'dienst')
+ * @param {string} filterField - Field to filter by (e.g., 'modules')
+ * @param {string} relatedEntityType - Related entity type for label resolution (e.g., 'module')
+ * @param {Function} relatedMapper - Mapper function for related entities
+ * @param {Function} getRelatedIds - Function to extract related IDs from fetched entities
+ * @param {Object} options - Additional options
+ * @param {Array<string>} options.extendParams - Extend parameters for fetch
+ * @param {string} options.source - Source type: 'index' or 'database' (default: 'index')
+ * @returns {Function} Function that accepts filterIds and returns { entities, resolvedLabels }
+ */
+export const createRelatedEntitiesFetcher = (
+  store,
+  collectionKey,
+  entityType,
+  filterField,
+  relatedEntityType,
+  relatedMapper,
+  getRelatedIds,
+  options = {}
+) => {
+  const { extendParams = ['@self.schema'], source = 'index' } = options;
+
+  return async (filterIds, currentRelatedOptions = []) => {
+    if (!filterIds || filterIds.length === 0) {
+      return { entities: [], resolvedLabels: [] };
+    }
+
+    // Collect all entities for all filter IDs
+    const allEntities = [];
+    const seenEntityIds = new Set();
+
+    for (const filterId of filterIds) {
+      // Query entities where filterField array contains filter ID
+      const params = {
+        _limit: '50',
+        _page: '1',
+        _published: 'false',
+        _source: source,
+      };
+
+      if (extendParams.length > 0) {
+        params['_extend[]'] = extendParams;
+      }
+
+      // Add filter field (e.g., modules=filterId)
+      params[filterField] = String(filterId);
+
+      const cacheKey = `${entityType}_for_${filterField}_${filterId}`;
+      await store.object.fetchCollection(
+        collectionKey,
+        entityType,
+        params,
+        null,
+        cacheKey
+      );
+
+      const collectionType = store.object.getTypeFromParams(
+        collectionKey,
+        entityType,
+        null,
+        cacheKey
+      );
+      const collection = store.object.getCollection(collectionType);
+      const list = collection?.results || collection || [];
+
+      // Add unique entities
+      list.forEach((entityItem) => {
+        const entityId =
+          entityItem?.id || entityItem?.['@self']?.id || '';
+        if (entityId && !seenEntityIds.has(entityId)) {
+          seenEntityIds.add(entityId);
+          allEntities.push(entityItem);
+        }
+      });
+    }
+
+    // Collect related entity IDs from fetched entities for resolution
+    const relatedIds = new Set();
+    allEntities.forEach((entityItem) => {
+      const relatedIdsFromEntity = getRelatedIds(entityItem);
+      relatedIdsFromEntity.forEach((id) => {
+        if (id) relatedIds.add(String(id));
+      });
+    });
+
+    // Resolve related entity labels
+    const resolvedLabels = [];
+    const relatedIdsArray = Array.from(relatedIds);
+
+    for (const relatedId of relatedIdsArray) {
+      // Check if already in current related options
+      const existing = currentRelatedOptions.find(
+        (opt) => String(opt.value) === String(relatedId)
+      );
+      if (existing) {
+        resolvedLabels.push({ value: relatedId, label: existing.label });
+      } else {
+        // Try to fetch if not available
+        try {
+          const fetchParams = {
+            '_extend[]': ['@self.schema'],
+            _published: 'false',
+            _source: source,
+          };
+          await store.object.fetchObject(
+            collectionKey,
+            relatedEntityType,
+            String(relatedId),
+            fetchParams
+          );
+          const relatedData = store.object.getObject(
+            `${collectionKey}_${relatedEntityType}`,
+            String(relatedId)
+          );
+          if (relatedData) {
+            const mapped = relatedMapper(relatedData, 0);
+            const label =
+              mapped?.label ||
+              relatedData?.naam ||
+              relatedData?.name ||
+              relatedData?.['@self']?.name ||
+              relatedId;
+            resolvedLabels.push({ value: relatedId, label });
+          }
+        } catch {
+          // If fetch fails, use ID as label
+          resolvedLabels.push({ value: relatedId, label: relatedId });
+        }
+      }
+    }
+
+    return { entities: allEntities, resolvedLabels };
+  };
 };
 
 /**

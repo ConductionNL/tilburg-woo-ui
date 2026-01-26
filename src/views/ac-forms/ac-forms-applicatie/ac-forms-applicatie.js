@@ -53,6 +53,8 @@ import {
   createEntitySearchConfig,
   mapToOption,
   useEntitySearch,
+  fetchMissingEntities,
+  mapId,
 } from '../wizard-utils';
 
 /**
@@ -479,11 +481,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
           return;
         }
 
-        // Helper function to extract ID from object or string
-        const mapId = (item) =>
-          item && typeof item === 'object'
-            ? String(item.id || item.value || item.uuid || item.slug || '')
-            : String(item || '');
 
         // Map referentieComponenten
         const prefilledReferentieComponenten = Array.isArray(
@@ -1071,68 +1068,26 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       // Mark these IDs as being fetched
       missingIds.forEach((id) => fetchedModuleBIdsRef.current.add(String(id)));
 
-      // Fetch missing modules individually
-      const fetchPromises = missingIds.map(async (moduleId) => {
-        try {
-          await store.object.fetchObject(
-            'voorzieningen',
-            'module',
-            String(moduleId),
-            {
-              _extend: '@self.schema',
-              _published: 'false',
-            }
-          );
-          if (cancelled) return null;
-
-          const moduleData = store.object.getObject(
-            'voorzieningen_module',
-            String(moduleId)
-          );
-          return moduleData;
-        } catch (error) {
-          console.error(`Failed to fetch module ${moduleId}:`, error);
-          // Remove from fetched set on error so we can retry later if needed
-          fetchedModuleBIdsRef.current.delete(String(moduleId));
-          return null;
-        }
-      });
-
-      const fetchedModules = await Promise.all(fetchPromises);
       if (cancelled) return;
 
-      // Map fetched modules to options format (matching performModulesSearch format)
-      const newOptions = fetchedModules
-        .map(moduleMapper)
-        .filter(Boolean)
-        .filter((o) => o.label && o.value);
-
-      // Add missing modules to modulesOptions
-      if (newOptions.length > 0) {
-        setModulesOptions((prevOptions) => {
-          const existingValuesSet = new Set(
-            prevOptions.map((opt) => String(opt.value))
-          );
-
-          const mergedOptions = [...prevOptions];
-          newOptions.forEach((newOpt) => {
-            const newValue = String(newOpt.value);
-            if (!existingValuesSet.has(newValue)) {
-              mergedOptions.push(newOpt);
-              existingValuesSet.add(newValue);
-            }
-          });
-
-          return mergedOptions;
-        });
-      }
+      // Use fetchMissingEntities utility
+      await fetchMissingEntities(
+        store,
+        'voorzieningen',
+        'module',
+        missingIds,
+        modulesOptions,
+        moduleMapper,
+        setModulesOptions,
+        { extendParams: ['@self.schema'], source: 'index' }
+      );
     };
 
     run();
     return () => {
       cancelled = true;
     };
-  }, [koppelingenFormState.selectedAppBByRow, modulesOptions, store.object]);
+  }, [koppelingenFormState.selectedAppBByRow, modulesOptions, store, moduleMapper]);
 
   // Initialize diensten form state from applicatie.diensten (for edit mode)
   useEffect(() => {
