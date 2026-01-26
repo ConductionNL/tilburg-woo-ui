@@ -44,7 +44,7 @@ export const ENDPOINTS = AcLockObject({
     INDEX: `/opencatalogi/api/themes`, // GET
   },
   GEMMA: {
-    VIEWS: `/openregister/api/objects/vng-gemma/views`,
+    VIEWS: `/openregister/api/objects/vng-gemma/view`,
     VIEW: (_id) => `/openregister/api/objects/vng-gemma/view/${_id}`,
     ELEMENT_REFERENCES: (_id) =>
       `/openregister/api/objects/vng-gemma/element?identifier=${_id}`,

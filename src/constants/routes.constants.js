@@ -31,6 +31,7 @@ import {
   ConFormsGebruikDienst,
   ConViewsList,
   ConBeheerViews,
+  ConBeheerViewsList,
   ConFormsIndex,
   ConPasswordReminder,
   AcChat,
@@ -52,6 +53,7 @@ export const PATHS = AcLockObject({
   NEXTCLOUD_LOGIN: '/login',
   NEXTCLOUD_AUTHORIZATION: '/authorization',
   BEHEER: '/beheer',
+  BEHEER_VIEW: '/beheer/view',
   BEHEER_TYPE: '/beheer/:type',
   BEHEER_TYPE_DETAILS: '/beheer/:type/:id',
   OBJECTS: '/objects/:register/:schema',
@@ -80,6 +82,7 @@ export const PATHS = AcLockObject({
 
 export const NAVIGATE_TO = AcLockObject({
   PUBLICATION: (id) => PATHS.PUBLICATION.replace(':id', id),
+  BEHEER_VIEW: () => PATHS.BEHEER_VIEW,
   BEHEER_TYPE: (type) => PATHS.BEHEER_TYPE.replace(':type', type),
   BEHEER_TYPE_DETAILS: (type, id) =>
     PATHS.BEHEER_TYPE_DETAILS.replace(':type', type).replace(':id', id),
@@ -247,6 +250,16 @@ export const ROUTES = {
     path: PATHS.BEHEER,
     title: 'Beheer',
     component: AcBeheer,
+  },
+  BEHEER_VIEW: {
+    id: AcUUID(),
+    name: 'Beheer View List',
+    label: 'AMEF Views',
+    path: PATHS.BEHEER_VIEW,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | AMEF Views`,
+    component: ConBeheerViewsList,
   },
   BEHEER_TYPE: {
     id: AcUUID(),
