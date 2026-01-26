@@ -22,6 +22,7 @@ export const ENDPOINTS = AcLockObject({
     RELATIONS: (_uri) =>
       `/opencatalogi/api/publications?_extend[]=publicationType&_extend[]=catalog&_relations=${_uri}`, // GET
     ATTACHMENTS: (_id) => `/opencatalogi/api/publications/${_id}/attachments`, // GET
+    USED: (_id) => `/opencatalogi/api/publications/${_id}/used?_extend[]=_schema`, // GET
   },
   MIJN_OMGEVING: {
     SEARCH: `/mijn-omgeving`, // GET
@@ -43,7 +44,7 @@ export const ENDPOINTS = AcLockObject({
     INDEX: `/opencatalogi/api/themes`, // GET
   },
   GEMMA: {
-    VIEWS: `/openregister/api/objects/vng-gemma/views`,
+    VIEWS: `/openregister/api/objects/vng-gemma/view`,
     VIEW: (_id) => `/openregister/api/objects/vng-gemma/view/${_id}`,
     ELEMENT_REFERENCES: (_id) =>
       `/openregister/api/objects/vng-gemma/element?identifier=${_id}`,

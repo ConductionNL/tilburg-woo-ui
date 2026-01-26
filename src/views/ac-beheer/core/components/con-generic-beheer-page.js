@@ -1265,16 +1265,20 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
                         </ConActionMenu.Button>
                       </ConActionMenu.SubMenu>
 
-                      <ConActionMenu.Button
-                        icon={<VISUALS.UPLOAD />}
-                        onClick={() => setOpenModal('import')}
-                      >
-                        Importeren
-                      </ConActionMenu.Button>
+                      {!config.disableImport && (
+                        <ConActionMenu.Button
+                          icon={<VISUALS.UPLOAD />}
+                          onClick={() => setOpenModal('import')}
+                        >
+                          Importeren
+                        </ConActionMenu.Button>
+                      )}
 
-                      <ConActionMenu.Button icon={<VISUALS.EYE />} disabled={true}>
-                        Weergeven als view
-                      </ConActionMenu.Button>
+                      {!config.disableView && (
+                        <ConActionMenu.Button icon={<VISUALS.EYE />} disabled={true}>
+                          Weergeven als view
+                        </ConActionMenu.Button>
+                      )}
 
                       <ConActionMenu.Divider />
 

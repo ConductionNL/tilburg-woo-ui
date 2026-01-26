@@ -297,20 +297,16 @@ export class UserStore {
       this.setAuthMethod('session');
 
       // If login response includes user data, use it directly
+      // The login endpoint returns complete user data, so we don't need to call /me
       if (data.user) {
         this.setUser(data.user);
-      }
-
-      // Try to fetch full user profile (/me endpoint) as additional verification
-      try {
-        await this.fetchUserProfile();
-      } catch (profileError) {
-        console.warn(
-          'Failed to fetch user profile after login, using login response data:',
-          profileError
-        );
-        // If /me fails but login succeeded and returned user data, that's still a successful login
-        if (!data.user) {
+      } else {
+        // Fallback: If login didn't include user data, fetch it from /me
+        // This should rarely happen, but we keep it as a safety net
+        try {
+          await this.fetchUserProfile();
+        } catch (profileError) {
+          console.error('Failed to fetch user profile after login:', profileError);
           this.setError(
             'Login successful but failed to load user profile. Please refresh the page.'
           );

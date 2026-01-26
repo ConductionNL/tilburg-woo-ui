@@ -89,6 +89,8 @@ const BeheerPageConfigFactory = {
           routeType: 'applicaties',
           disableRelatedCreateActions: true, // Enable koppeling toevoegen voor applicaties
           disableDeleteAction: false, // Enable delete action voor applicaties
+          disableImport: true, // Import not needed for applicaties
+          disableView: true, // View not needed for applicaties
           extend: ['moduleVersies'],
           defaultHeaders: [
             'naam',
@@ -203,6 +205,8 @@ const BeheerPageConfigFactory = {
           paginationKey: 'diensten',
           title: 'Diensten',
           routeType: 'diensten',
+          disableImport: true, // Import not needed for diensten
+          disableView: true, // View not needed for diensten
           defaultHeaders: ['name', 'voorzieningName', 'email'],
           customHeaders: {
             voorziening: {
@@ -293,6 +297,8 @@ const BeheerPageConfigFactory = {
           title: 'Gebruik',
           routeType: 'gebruik',
           disableRelatedCreateActions: true,
+          disableImport: true, // Import not needed for gebruik
+          disableView: true, // View not needed for gebruik
           defaultHeaders: ['type', 'voorzieningId', 'diensten', 'status', 'contact'],
           /**
            * Custom edit URL handler for gebruik
@@ -459,6 +465,8 @@ const BeheerPageConfigFactory = {
           paginationKey: 'koppeling',
           title: 'Koppelingen',
           routeType: 'koppeling',
+          disableImport: true, // Import not needed for koppelingen
+          disableView: true, // View not needed for koppelingen
           // Ensure relations are present to compensate for backend bug (moduleA/moduleB null)
           extend: ['@self.relations'],
           defaultHeaders: [
@@ -508,6 +516,8 @@ const BeheerPageConfigFactory = {
           title: 'Contactpersoon',
           routeType: 'contactpersoon',
           disableRelatedCreateActions: true, // Only show basic actions for contactpersonen
+          disableImport: true, // Import not needed for contactpersonen
+          disableView: true, // View not needed for contactpersonen
           defaultHeaders: [
             'username',
             'name',

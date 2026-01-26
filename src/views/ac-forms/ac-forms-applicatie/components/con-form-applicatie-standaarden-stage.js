@@ -43,6 +43,9 @@ const ConFormApplicatieStandaardenStage = ({
 
   // Ref to track previous allStandaardVersies IDs to prevent unnecessary cleanup
   const prevAllStandardsIdsRef = useRef(new Set());
+  
+  // Ref to prevent cleanup on initial mount (edit mode protection)
+  const isInitialMountRef = useRef(true);
 
   // Enhanced function to get ID with better matching
   const getStandardId = (item) => {
@@ -450,6 +453,12 @@ const ConFormApplicatieStandaardenStage = ({
 
   // Clean up orphaned compliancy entries when referentieComponenten or selectedExtraStandards change
   useEffect(() => {
+    // Skip cleanup on initial mount to preserve saved data in edit mode
+    if (isInitialMountRef.current) {
+      isInitialMountRef.current = false;
+      return;
+    }
+    
     // Get all valid standaardversie IDs (from both referentieComponenten and selectedExtraStandards)
     const validStandaardversieIds = new Set();
 
@@ -483,6 +492,24 @@ const ConFormApplicatieStandaardenStage = ({
             validStandaardversieIds.add(String(fetchedData[key]));
         });
       }
+    });
+
+    // IMPORTANT: Also preserve existing standaardversies from applicatie data (edit mode)
+    // This prevents cleanup from removing saved IDs before they're properly initialized
+    const currentStandaardversiesForValidation = Array.isArray(
+      applicatie.standaardVersies
+    )
+      ? applicatie.standaardVersies
+      : [];
+    
+    currentStandaardversiesForValidation.forEach((versieId) => {
+      validStandaardversieIds.add(String(versieId));
+      // Also add with/without id- prefix variations
+      const idStr = String(versieId);
+      validStandaardversieIds.add(idStr.replace(/^id-/, ''));
+      validStandaardversieIds.add(
+        idStr.startsWith('id-') ? idStr : `id-${idStr}`
+      );
     });
 
     // Check if any compliancy entries need to be removed
@@ -579,8 +606,22 @@ const ConFormApplicatieStandaardenStage = ({
         (compliancy) => compliancy.standaardversie === standaardversie.id
       );
 
+      // Extract file info from compliancy @self.files if available
+      const fileInfo = existingCompliancy?.['@self']?.files?.[0] || null;
+      const fileTitle = fileInfo?.title || null;
+      const fileDownloadUrl = fileInfo?.downloadUrl || null;
+
       // Check standaardversies and legacy standaarden arrays to determine compliance status
-      const isCompliant = allCompliantIds.has(String(standaardversie.id));
+      // Need to check with and without 'id-' prefix
+      const idWithoutPrefix = String(standaardversie.id).replace(/^id-/, '');
+      const idWithPrefix = String(standaardversie.id).startsWith('id-') 
+        ? String(standaardversie.id) 
+        : `id-${standaardversie.id}`;
+      
+      const isCompliant = 
+        allCompliantIds.has(String(standaardversie.id)) ||
+        allCompliantIds.has(idWithoutPrefix) ||
+        allCompliantIds.has(idWithPrefix);
 
       // Determine the primary type (verplicht takes precedence)
       const primaryType =
@@ -614,6 +655,9 @@ const ConFormApplicatieStandaardenStage = ({
         bewijs: existingCompliancy?.bewijs || null,
         bewijsFilename: existingCompliancy?.bewijsFilename || null,
         url: existingCompliancy?.url || null,
+        // Store file metadata from API
+        fileTitle,
+        fileDownloadUrl,
       };
     });
 
@@ -655,6 +699,11 @@ const ConFormApplicatieStandaardenStage = ({
           }
         );
 
+        // Extract file info from compliancy @self.files if available
+        const fileInfo = existingCompliancy?.['@self']?.files?.[0] || null;
+        const fileTitle = fileInfo?.title || null;
+        const fileDownloadUrl = fileInfo?.downloadUrl || null;
+
         // Check standaardversies and legacy standaarden arrays to determine compliance status
         // Check both possible ID formats
         const isCompliant =
@@ -675,6 +724,9 @@ const ConFormApplicatieStandaardenStage = ({
           bewijs: existingCompliancy?.bewijs || null,
           bewijsFilename: existingCompliancy?.bewijsFilename || null,
           url: existingCompliancy?.url || null,
+          // Store file metadata from API
+          fileTitle,
+          fileDownloadUrl,
         };
       }
     });
@@ -702,12 +754,54 @@ const ConFormApplicatieStandaardenStage = ({
     }
 
     setTableState(initialState);
+    
+    // ✅ CRITICAL FIX: Ensure compliancy entries exist for all compliant standards in edit mode
+    // When loading an existing application, checkboxes are marked as checked based on standaardVersies,
+    // but compliancy entries might not exist. We need to create them here.
+    const compliantStandards = Object.values(initialState).filter(entry => entry.isCompliant);
+    
+    if (compliantStandards.length > 0) {
+      const currentCompliancy = Array.isArray(applicatie.compliancy)
+        ? [...applicatie.compliancy]
+        : [];
+      
+      let compliancyNeedsUpdate = false;
+      
+      compliantStandards.forEach((entry) => {
+        // Check if compliancy entry already exists
+        const existingIndex = currentCompliancy.findIndex(
+          (c) => c.standaardversie === entry.standardId
+        );
+        
+        if (existingIndex < 0) {
+          // Create compliancy entry for this compliant standard
+          const versieData = findMatchingStandaardversieData({ id: entry.standardId });
+          const objectId = versieData?.identifier || versieData?.id || versieData?.objectId || null;
+          
+          currentCompliancy.push({
+            standaardversie: entry.standardId,
+            standaardGemma: objectId,
+            standaardnaam: entry.standardName,
+            bewijs: entry.bewijs || null,
+            bewijsFilename: entry.bewijsFilename || null,
+            url: entry.url || null,
+          });
+          
+          compliancyNeedsUpdate = true;
+        }
+      });
+      
+      if (compliancyNeedsUpdate) {
+        setApplicatieData('compliancy', currentCompliancy);
+      }
+    }
   }, [
     applicatie.compliancy,
     applicatie.standaardVersies,
     referentieComponentenWithStandards,
     standaardenversiesMap,
     selectedExtraStandards,
+    setApplicatieData,
   ]);
 
   // Force re-sync table state when selectedExtraStandards changes
@@ -751,6 +845,11 @@ const ConFormApplicatieStandaardenStage = ({
             }
           );
 
+          // Extract file info from compliancy @self.files if available
+          const fileInfo = existingCompliancy?.['@self']?.files?.[0] || null;
+          const fileTitle = fileInfo?.title || null;
+          const fileDownloadUrl = fileInfo?.downloadUrl || null;
+
           // Update the entry if it exists and has compliancy data to load
           if (updated[versieId] && existingCompliancy) {
             updated[versieId] = {
@@ -762,6 +861,8 @@ const ConFormApplicatieStandaardenStage = ({
                 updated[versieId].bewijsFilename ||
                 null,
               url: existingCompliancy.url || updated[versieId].url || null,
+              fileTitle: fileTitle || updated[versieId].fileTitle || null,
+              fileDownloadUrl: fileDownloadUrl || updated[versieId].fileDownloadUrl || null,
             };
           }
         });
@@ -1552,6 +1653,27 @@ const ConFormApplicatieStandaardenStage = ({
                 gap: '8px',
               }}
             >
+              {/* Display file info if available from API */}
+              {entry.fileTitle && entry.fileDownloadUrl && (
+                <div
+                  style={{
+                    padding: '8px',
+                    backgroundColor: '#e7f5ff',
+                    borderRadius: '4px',
+                    fontSize: '0.9rem',
+                  }}
+                >
+                  <strong>Geüpload bestand:</strong>{' '}
+                  <Link
+                    href={entry.fileDownloadUrl}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                  >
+                    {entry.fileTitle}
+                  </Link>
+                </div>
+              )}
+              
               <LogoUploadField
                 fieldConfig={{
                   label: '',
@@ -1579,13 +1701,11 @@ const ConFormApplicatieStandaardenStage = ({
                   onChange={(value) => updateUrl(entryKey, value)}
                   disabled={!!entry.bewijs}
                   className='ac-register-form-field__no-width-limit'
-                  hasError={validateWebsite(entry.url)}
+                  hasError={entry.url && !validateWebsite(entry.url)}
                 />
-                {entry.url && (!entry.url || !validateWebsite(entry.url)) && (
+                {entry.url && !validateWebsite(entry.url) && (
                   <span className='ac-register-form-field-error'>
-                    {entry.url &&
-                      !validateWebsite(entry.url) &&
-                      'URL heeft een ongeldig formaat'}
+                    URL heeft een ongeldig formaat
                   </span>
                 )}
               </div>

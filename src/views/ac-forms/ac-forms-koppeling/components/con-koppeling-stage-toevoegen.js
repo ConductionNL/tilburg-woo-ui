@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
 import clsx from 'clsx';
 import ReactSelect from 'react-select';
 import { AcButton } from '@src/molecules';
@@ -295,6 +295,88 @@ const ConKoppelingStageToevoegen = ({
     });
     return merged;
   };
+
+  // In edit mode, ensure moduleB option is available in the select
+  useEffect(() => {
+    if (!isEditMode) return;
+    
+    // Check if row 0 has a selectedAppB but no options yet
+    const selectedModuleBId = selectedAppBByRow[0];
+    if (!selectedModuleBId) return;
+    
+    // Check if the option already exists in modulesOptions
+    const existingOption = modulesOptions.find(
+      (opt) => String(opt.value) === String(selectedModuleBId)
+    );
+    
+    if (existingOption) {
+      // Option exists in modulesOptions, make sure it's also in appBOptionsByRow for row 0
+      setAppBOptionsByRow((prev) => {
+        const rowOptions = prev[0] || [];
+        const hasOption = rowOptions.some(
+          (opt) => String(opt.value) === String(selectedModuleBId)
+        );
+        
+        if (hasOption) return prev;
+        
+        return {
+          ...prev,
+          0: [...rowOptions, existingOption],
+        };
+      });
+    } else {
+      // Option doesn't exist yet in modulesOptions, fetch it directly
+      const fetchModuleB = async () => {
+        try {
+          const res = await fetch(
+            `/api/apps/openregister/api/objects/voorzieningen/module/${encodeURIComponent(
+              String(selectedModuleBId)
+            )}`,
+            { headers: { Accept: 'application/json' } }
+          );
+          if (!res.ok) return;
+          const item = await res.json();
+          const label =
+            item?.naam ||
+            item?.name ||
+            item?.title ||
+            item?.label ||
+            item?.['@self']?.name ||
+            String(selectedModuleBId);
+          const option = {
+            value: String(selectedModuleBId),
+            label: String(label),
+            data: item,
+            type: 'applicatie',
+          };
+          
+          // Add to modulesOptions
+          setModulesOptions((prev) => {
+            const exists = (prev || []).some(
+              (o) => String(o.value) === String(selectedModuleBId)
+            );
+            return exists ? prev : [...(prev || []), option];
+          });
+          
+          // Add to appBOptionsByRow for row 0
+          setAppBOptionsByRow((prev) => ({
+            ...prev,
+            0: [...(prev[0] || []), option],
+          }));
+          
+          // Also update selected module labels
+          setSelectedModuleLabels((prev) => ({
+            ...prev,
+            [String(selectedModuleBId)]: String(label),
+          }));
+        } catch (error) {
+          console.error('Error fetching moduleB:', error);
+        }
+      };
+      
+      fetchModuleB();
+    }
+  }, [isEditMode, selectedAppBByRow, modulesOptions, setModulesOptions, setSelectedModuleLabels]);
 
   const fetchModuleOptions = async (q, signal) => {
     try {

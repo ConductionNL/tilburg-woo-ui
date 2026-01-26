@@ -82,6 +82,9 @@ export class PublicationsStore {
   relations = null;
 
   @observable
+  usedData = null;
+
+  @observable
   categories = [];
 
   @observable
@@ -203,6 +206,11 @@ export class PublicationsStore {
   @computed
   get get_relations() {
     return toJS(this.relations);
+  }
+
+  @computed
+  get get_used_data() {
+    return toJS(this.usedData);
   }
 
   @computed
@@ -355,6 +363,11 @@ export class PublicationsStore {
   @action
   setRelations = (relations) => {
     this.relations = relations;
+  };
+
+  @action
+  setUsedData = (usedData) => {
+    this.usedData = usedData;
   };
 
   @action
@@ -599,9 +612,10 @@ export class PublicationsStore {
     this.loading.status = true;
 
     // Build query including current filters/facets and extend parameters
+    // Include _names to get UUID-to-name mappings in response
     const baseQuery = {
       ...this.search_query,
-      _extend: '_schema,_register',
+      _extend: '_schema,_register,_names',
     };
     const queryString = AcBuildURLSearchParams(baseQuery);
     const fullUrl = `${commongroundApiUrl()}/opencatalogi/api/publications?${queryString}`;
@@ -634,19 +648,22 @@ export class PublicationsStore {
         this.setItems(enrichedResults);
 
         // Process related names data to populate the names cache
-        if (response.relatedNames && app.store?.object) {
-          console.group('🏷️ PROCESSING RELATED NAMES FROM SEARCH');
+        // API may return names in response['@self'].names or response.relatedNames
+        const namesData = response['@self']?.names || response.relatedNames;
+        
+        if (namesData && app.store?.object) {
+          console.group('🏷️ PROCESSING NAMES FROM SEARCH (_extend=_names)');
           console.info(
-            'Related names received:',
-            Object.keys(response.relatedNames).length,
+            'Names received:',
+            Object.keys(namesData).length,
             'entries'
           );
-          console.info('Names data:', response.relatedNames);
-          app.store.object.processRelatedNamesFromResponse(response);
+          console.info('Names data sample:', Object.keys(namesData).slice(0, 5));
+          app.store.object.setNamesInCache(namesData);
           console.info(
             'Names cache after processing:',
             Object.keys(app.store.object.namesCache).length,
-            'entries'
+            'total entries'
           );
           console.groupEnd();
         } else if (app.store?.object && response.results?.length > 0) {
@@ -695,6 +712,7 @@ export class PublicationsStore {
           console.info('No names processing needed');
           console.info('Has object store:', !!app.store?.object);
           console.info('Results count:', response.results?.length || 0);
+          console.info('Has names in @self:', !!response['@self']?.names);
           console.info('Has relatedNames:', !!response.relatedNames);
           console.groupEnd();
         }
@@ -702,6 +720,9 @@ export class PublicationsStore {
         // Clean up response and set pagination
         delete response.results;
         delete response.relatedNames;
+        if (response['@self']) {
+          delete response['@self'].names;
+        }
         this.setPagination(response);
       })
       .catch((e) => console.error(e))
@@ -903,6 +924,21 @@ export class PublicationsStore {
   };
 
   @action
+  fetchUsed = async (id) => {
+    this.loading.status = true;
+
+    app.store.api.publications
+      .used(id)
+      .then((response) => {
+        this.setUsedData(response);
+      })
+      .catch((e) => console.error(e))
+      .finally(() => {
+        this.setLoadingStatus(false);
+      });
+  };
+
+  @action
   resetPublication = () => {
     this.single = null;
     this.setError(null);
@@ -916,6 +952,11 @@ export class PublicationsStore {
   @action
   resetRelations = () => {
     this.relations = null;
+  };
+
+  @action
+  resetUsedData = () => {
+    this.usedData = null;
   };
 
   @action
