@@ -46,6 +46,8 @@ import {
   createModuleMapper,
   createOrganisatieMapper,
   createReferentieComponentMapper,
+  createBuitengemeentelijkeMapper,
+  createStandaardversieMapper,
   createModuleSearchConfig,
   createOrganisatieSearchConfig,
   createEntitySearchConfig,
@@ -143,16 +145,14 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
    * Check if Versies step should be shown based on cloud service model
    * @returns {boolean} True if Versies step should be shown
    */
-  const shouldShowVersiesStep = useCallback(() => {
-    return (applicatie?.cloudDienstverleningsmodel || '').includes(
-      'On-premises (self-managed)'
-    );
-  }, [applicatie?.cloudDienstverleningsmodel]);
+  const shouldShowVersiesStep = (
+    applicatie?.cloudDienstverleningsmodel || ''
+  ).includes('On-premises (self-managed)');
 
   // ProcessSteps configuration - must be created early to define steps with stepper
   const processStepsConfig = useMemo(() => {
     const needsAanbiederStep = formType === 'ontbrekend-applicatie';
-    const needsVersiesStep = shouldShowVersiesStep();
+    const needsVersiesStep = shouldShowVersiesStep;
 
     if (needsAanbiederStep) {
       // For ontbrekend-applicatie: Aanbieder step + multi-step group
@@ -199,6 +199,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
   }, [stepper.getCurrentStep(), formType, shouldShowVersiesStep]);
 
   // Add click handlers to steps
+  // This ensures that that clicking on a individual step or sub-step will navigate to the correct step
   useEffect(() => {
     return addStepperClickHandlers({
       processStepsRef,
@@ -216,13 +217,37 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
   ]);
 
   // Referentiecomponenten options with search functionality
-  const [referentieComponentenOptions, setReferentieComponentenOptions] = useState(
-    []
+  const referentieComponentMapper = createReferentieComponentMapper();
+  const referentieComponentenSearchConfig = createEntitySearchConfig(
+    store,
+    'element',
+    {
+      collectionKey: 'vng-gemma',
+      mapToOption: referentieComponentMapper,
+      queryParamsBuilder: (searchTerm, additionalParams = {}) => ({
+        _limit: '500',
+        _page: '1',
+        _published: 'false',
+        gemmaType: 'Referentiecomponent',
+        ...(searchTerm && searchTerm.trim() ? { _search: searchTerm.trim() } : {}),
+        ...additionalParams,
+      }),
+      extendParams: [
+        '@self.schema',
+        'aanbevolenStandaarden',
+        'verplichteStandaarden',
+        'gekoppeldeStandaardVersies',
+      ],
+    }
   );
-  const [referentieComponentenLoading, setReferentieComponentenLoading] =
-    useState(false);
-  const [referentieComponentenLoaded, setReferentieComponentenLoaded] =
-    useState(false);
+  const {
+    search: searchReferentieComponenten,
+    loading: referentieComponentenLoading,
+    options: referentieComponentenOptions,
+  } = useEntitySearch(referentieComponentenSearchConfig, {
+    debounceDelay: 500,
+    mergeStrategy: 'preserve-existing',
+  });
 
   // Separate array to track chosen referentieComponenten with their standards
   // Structure: [{ id, naam, aanbevolenStandaarden: [], verplichteStandaarden: [], applicatieId }]
@@ -238,10 +263,32 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
   const selectedExtraStandardsInitializedRef = useRef(false);
 
   // Standaardenversies options with search functionality
-  const [standaardenversiesOptions, setStandaardenversiesOptions] = useState([]);
-  const [standaardenversiesOptionsLoading, setStandaardenversiesOptionsLoading] =
-    useState(false);
-  const [standaardenversiesLoaded, setStandaardenversiesLoaded] = useState(false);
+  const standaardversieMapper = createStandaardversieMapper();
+  const standaardenversiesSearchConfig = createEntitySearchConfig(
+    store,
+    'element',
+    {
+      collectionKey: 'vng-gemma',
+      mapToOption: standaardversieMapper,
+      queryParamsBuilder: (searchTerm, additionalParams = {}) => ({
+        _limit: '500',
+        _page: '1',
+        _published: 'false',
+        gemmaType: 'Standaardversie',
+        ...(searchTerm && searchTerm.trim() ? { _search: searchTerm.trim() } : {}),
+        ...additionalParams,
+      }),
+      extendParams: ['@self.schema'],
+    }
+  );
+  const {
+    search: searchStandaardenversies,
+    loading: standaardenversiesOptionsLoading,
+    options: standaardenversiesOptions,
+  } = useEntitySearch(standaardenversiesSearchConfig, {
+    debounceDelay: 500,
+    mergeStrategy: 'preserve-existing',
+  });
 
   // Modules options with search functionality for koppelingen
   const moduleMapper = createModuleMapper({ type: 'applicatie' });
@@ -267,10 +314,33 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
   // Ref to track which moduleB IDs we've already fetched (to avoid duplicate fetches)
   const fetchedModuleBIdsRef = useRef(new Set());
 
-  // Add state for external facilities options
-  const [buitengemeentelijkeOptions, setBuitengemeentelijkeOptions] = useState([]);
-  const [buitengemeentelijkeOptionsLoading, setBuitengemeentelijkeOptionsLoading] =
-    useState(false);
+  // Buitengemeentelijke voorzieningen options with search functionality
+  const buitengemeentelijkeMapper = createBuitengemeentelijkeMapper();
+  const buitengemeentelijkeSearchConfig = createEntitySearchConfig(
+    store,
+    'element',
+    {
+      collectionKey: 'vng-gemma',
+      mapToOption: buitengemeentelijkeMapper,
+      queryParamsBuilder: (searchTerm, additionalParams = {}) => ({
+        _limit: '500',
+        _page: '1',
+        _published: 'false',
+        gemmaType: 'Buitengemeentelijke voorziening',
+        ...(searchTerm && searchTerm.trim() ? { _search: searchTerm.trim() } : {}),
+        ...additionalParams,
+      }),
+      extendParams: ['@self.schema'],
+    }
+  );
+  const {
+    search: searchBuitengemeentelijkeVoorzieningen,
+    loading: buitengemeentelijkeOptionsLoading,
+    options: buitengemeentelijkeOptions,
+  } = useEntitySearch(buitengemeentelijkeSearchConfig, {
+    debounceDelay: 500,
+    mergeStrategy: 'preserve-existing',
+  });
 
   // Contactpersoon options with search functionality
   // Simple mapper - component handles display via getOptionLabel
@@ -280,10 +350,14 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       fallbackLabel: `Contactpersoon ${index + 1}`,
     });
   };
-  const contactpersoonSearchConfig = createEntitySearchConfig(store, 'contactpersoon', {
-    mapToOption: contactpersoonMapper,
-    source: 'database',
-  });
+  const contactpersoonSearchConfig = createEntitySearchConfig(
+    store,
+    'contactpersoon',
+    {
+      mapToOption: contactpersoonMapper,
+      source: 'database',
+    }
+  );
   const {
     search: searchContactpersonen,
     loading: contactpersoonSearchLoading,
@@ -533,55 +607,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     fetchUserOrganization();
   }, [formType, schemasLoading, isEditMode]);
 
-  // Function to load referentiecomponenten
-  const loadReferentieComponenten = useCallback(async () => {
-    if (!schemas?.module) return; // Wait for schemas to load
-
-    console.info('📋 Loading referentiecomponenten...');
-    setReferentieComponentenLoading(true);
-    setReferentieComponentenLoaded(true);
-
-    try {
-      const queryParams = new URLSearchParams({
-        _limit: '500',
-        _page: '1',
-        gemmaType: 'Referentiecomponent',
-        _published: 'false',
-      });
-
-      // Add multiple extend parameters to include standards and their versions in one go
-      queryParams.append('_extend[]', '@self.schema');
-      queryParams.append('_extend[]', 'aanbevolenStandaarden');
-      queryParams.append('_extend[]', 'verplichteStandaarden');
-      queryParams.append('_extend[]', 'gekoppeldeStandaardVersies'); // ✨ NEW: Get all standard versions in one call
-
-      // Fetch referentiecomponenten from openconnector endpoint
-      const response = await fetch(
-        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      const list = await response.json();
-
-      const referentieComponentMapper = createReferentieComponentMapper();
-      const options = (list.results || [])
-        .map(referentieComponentMapper)
-        .filter((o) => o.label && o.value);
-
-      setReferentieComponentenOptions(options);
-      console.info(`✅ Loaded ${options.length} referentiecomponenten`);
-    } catch (e) {
-      console.error('Failed to load referentie componenten:', e);
-      setReferentieComponentenOptions([]);
-    } finally {
-      setReferentieComponentenLoading(false);
-    }
-  }, [schemas?.module]);
-
   // Function to load standaarden based on selected referentiecomponenten
   const loadStandaardenFromReferentieComponenten = useCallback(
     async (selectedRefComps) => {
@@ -695,97 +720,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     [schemas?.module, referentieComponentenOptions]
   );
 
-  // Function to load ALL standaardversies (for extra standaardversies dropdown)
-  const loadAllStandaardenversies = useCallback(async () => {
-    if (!schemas?.module) return;
-
-    console.info(
-      '📋 Loading ALL standaardversies for extra standaardversies dropdown...'
-    );
-    setStandaardenversiesOptionsLoading(true);
-    setStandaardenversiesLoaded(true);
-
-    try {
-      const queryParams = new URLSearchParams({
-        _limit: '500',
-        _page: '1',
-        gemmaType: 'Standaardversie',
-        _published: 'false',
-      });
-
-      // Add extend parameter for schema
-      queryParams.append('_extend[]', '@self.schema');
-
-      // Fetch ALL standaardversies from openconnector endpoint
-      const response = await fetch(
-        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      const list = await response.json();
-
-      console.info(
-        `📊 Received ${list.results?.length || 0} standaardversies from API`
-      );
-
-      // Map to options
-      const options = (list.results || [])
-        .map((item, index) => {
-          const label =
-            item?.['@self']?.name ||
-            item?.xml?.name?._value ||
-            item?.naam ||
-            item?.name ||
-            item?.title ||
-            item?.label ||
-            `Standaardversie ${index + 1}`;
-          // Use identifier first (id- prefixed format) to match what we store in compliancy/standaardVersies
-          const value =
-            item?.['@self']?.id ||
-            item?.identifier ||
-            item?.value ||
-            item?.id ||
-            item?.slug ||
-            label;
-          return { value: String(value), label: String(label), data: item };
-        })
-        .filter((o) => o.label && o.value);
-
-      setStandaardenversiesOptions(options);
-      console.info(
-        `✅ Loaded ${options.length} standaardversies options for dropdown`
-      );
-
-      if (options.length === 0) {
-        console.warn(
-          '⚠️ No standaardversies found - API might be empty or filtered'
-        );
-      }
-    } catch (e) {
-      console.error('Failed to load standaardversies:', e);
-      setStandaardenversiesOptions([]);
-    } finally {
-      setStandaardenversiesOptionsLoading(false);
-    }
-  }, [schemas?.module]);
-
-  // ✅ Load referentiecomponenten when schemas are available
-  useEffect(() => {
-    if (!schemas?.module) return;
-    if (referentieComponentenLoaded) return; // Already loaded (even if 0 results)
-    if (referentieComponentenLoading) return; // Currently loading
-
-    loadReferentieComponenten();
-  }, [
-    schemas?.module,
-    referentieComponentenLoaded,
-    referentieComponentenLoading,
-    loadReferentieComponenten,
-  ]);
 
   // ✅ Load standaarden when referentiecomponenten are selected
   useEffect(() => {
@@ -810,19 +744,21 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     loadStandaardenFromReferentieComponenten,
   ]);
 
-  // ✅ Load ALL standaardversies when schemas are available (for extra standaardversies dropdown)
+  // Load ALL standaardversies when schemas are available (for extra standaardversies dropdown)
   useEffect(() => {
     if (!schemas?.module) return;
-    if (standaardenversiesLoaded) return; // Already loaded (even if 0 results)
     if (standaardenversiesOptionsLoading) return; // Currently loading
 
-    loadAllStandaardenversies();
-  }, [
-    schemas?.module,
-    standaardenversiesLoaded,
-    standaardenversiesOptionsLoading,
-    loadAllStandaardenversies,
-  ]);
+    searchStandaardenversies('');
+  }, [schemas?.module]);
+
+  // Load referentiecomponenten when schemas are available
+  useEffect(() => {
+    if (!schemas?.module) return;
+    if (referentieComponentenLoading) return; // Currently loading
+
+    searchReferentieComponenten('');
+  }, [schemas?.module]);
 
   // Initialize selectedExtraStandards from existing compliancy and standaardVersies data
   // This should only run once on mount, not react to compliance checkbox changes
@@ -979,6 +915,12 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     searchModules('');
   }, []);
 
+  // Load buitengemeentelijke voorzieningen on mount
+  useEffect(() => {
+    if (buitengemeentelijkeOptionsLoading) return; // Currently loading
+    searchBuitengemeentelijkeVoorzieningen('');
+  }, []);
+
   // Pre-load contactpersonen once so dropdown has initial options
   useEffect(() => {
     const loadInitialContactpersonen = async () => {
@@ -991,7 +933,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     };
     loadInitialContactpersonen();
   }, []);
-
 
   // Pre-load organisaties once so dropdown has initial options (only for ontbrekend-applicatie)
   useEffect(() => {
@@ -1007,67 +948,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     };
     loadInitialAanbieders();
   }, [formType]);
-
-  // Function to load buitengemeentelijke voorzieningen
-  const loadBuitengemeentelijkeVoorzieningen = useCallback(async () => {
-    console.info('📋 Loading external facilities via object store cache...');
-    setBuitengemeentelijkeOptionsLoading(true);
-
-    try {
-      const queryParams = new URLSearchParams({
-        _limit: '500',
-        _page: '1',
-        gemmaType: 'Buitengemeentelijke voorziening',
-        '_extend[]': '@self.schema',
-        _published: 'false',
-      });
-
-      console.info('📋 Fetching external facilities from openconnector endpoint...');
-
-      const response = await fetch(
-        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      const list = await response.json();
-
-      const options = list.results
-        .map((item, index) => {
-          const label =
-            item?.xml?.name?._value ||
-            item?.naam ||
-            item?.name ||
-            item?.title ||
-            item?.label ||
-            `Facility ${index + 1}`;
-          const value = item?.value || item?.id || item?.slug || label;
-          return {
-            value: String(value),
-            label: String(label),
-            data: item,
-            type: 'buitengemeentelijke',
-          };
-        })
-        .filter((o) => o.label && o.value);
-
-      setBuitengemeentelijkeOptions(options);
-      console.info(`✅ Loaded ${options.length} external facilities (cache-first)`);
-    } catch (e) {
-      console.error('Failed to load external facilities:', e);
-      setBuitengemeentelijkeOptions([]);
-    } finally {
-      setBuitengemeentelijkeOptionsLoading(false);
-    }
-  }, []);
-
-  // Load buitengemeentelijke voorzieningen on mount
-  useEffect(() => {
-    loadBuitengemeentelijkeVoorzieningen();
-  }, [loadBuitengemeentelijkeVoorzieningen]);
 
   // Initialize koppelingen form state from applicatie.koppelingen (for edit mode)
   useEffect(() => {

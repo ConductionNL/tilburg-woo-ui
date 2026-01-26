@@ -10,6 +10,8 @@ export {
   createModuleMapper,
   createOrganisatieMapper,
   createReferentieComponentMapper,
+  createBuitengemeentelijkeMapper,
+  createStandaardversieMapper,
   filterValidOptions,
 } from './mapping-utils';
 

@@ -163,6 +163,80 @@ export const createReferentieComponentMapper = (options = {}) => {
 };
 
 /**
+ * Creates a buitengemeentelijke voorziening-specific mapper function
+ * @param {Object} options - Configuration options (same as mapToOption)
+ * @returns {Function} Mapper function for buitengemeentelijke voorzieningen
+ */
+export const createBuitengemeentelijkeMapper = (options = {}) => {
+  return (item, index) => {
+    return mapToOption(item, index, {
+      labelFields: [
+        'xml.name._value',
+        '@self.name',
+        'naam',
+        'name',
+        'title',
+        'label',
+      ],
+      valueFields: ['value', 'id', 'slug'],
+      fallbackLabel: `Facility ${index + 1}`,
+      type: 'buitengemeentelijke',
+      ...options,
+    });
+  };
+};
+
+/**
+ * Creates a standaardversie-specific mapper function
+ * @param {Object} options - Configuration options (same as mapToOption)
+ * @returns {Function} Mapper function for standaardversies
+ */
+export const createStandaardversieMapper = (options = {}) => {
+  return (item, index) => {
+    // Custom value extraction to prioritize @self.id and identifier
+    let value = null;
+    if (item?.['@self']?.id) {
+      value = String(item['@self'].id);
+    } else if (item?.identifier) {
+      value = String(item.identifier);
+    } else {
+      // Fall back to standard value extraction
+      const standardValue = mapToOption(item, index, {
+        valueFields: ['value', 'id', 'slug'],
+        ...options,
+      }).value;
+      value = standardValue;
+    }
+
+    // Use standard label extraction
+    const labelResult = mapToOption(item, index, {
+      labelFields: [
+        '@self.name',
+        'xml.name._value',
+        'naam',
+        'name',
+        'title',
+        'label',
+      ],
+      fallbackLabel: `Standaardversie ${index + 1}`,
+      ...options,
+    });
+
+    const result = {
+      value: String(value || labelResult.label),
+      label: String(labelResult.label),
+      data: item,
+    };
+
+    if (options.type) {
+      result.type = options.type;
+    }
+
+    return result;
+  };
+};
+
+/**
  * Filters options to ensure they have valid label and value
  * @param {Array<Object>} options - Array of option objects
  * @returns {Array<Object>} Filtered options

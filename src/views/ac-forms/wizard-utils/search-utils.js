@@ -186,11 +186,7 @@ export const createEntitySearchConfig = (store, entityType, options = {}) => {
     mapToOption,
     useCacheFirst: false,
     fetchMethod: async (queryParams) => {
-      await store.object.fetchCollection(
-        collectionKey,
-        entityType,
-        queryParams
-      );
+      await store.object.fetchCollection(collectionKey, entityType, queryParams);
       const collection = store.object.getCollection(
         `${collectionKey}_${entityType}`
       );
