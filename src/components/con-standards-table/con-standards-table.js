@@ -10,6 +10,7 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 import { AcCheckbox, AcFormField } from '@src/molecules';
 import { LogoUploadField } from '@views/ac-beheer/shared/components/con-logo-upload-field';
+import { ConUuidResolver } from '@components';
 import { VISUALS } from '@constants';
 import { handleFileClick } from '@utils';
 import { commongroundApiUrl } from '@config';
@@ -469,7 +470,7 @@ const ConStandardsTable = ({
     };
 
     // Helper function to add a toegevoegd versie
-    const addToegeveogdVersie = (versieId) => {
+    const addToegeveogdVersie = (versieId, providedName = null) => {
       if (toegevoegdMap.has(versieId)) return;
 
       const versieData = effectiveStandaardversies?.find(
@@ -483,10 +484,13 @@ const ConStandardsTable = ({
       const resolverIdentifier =
         versieData?.identifier || versieData?.id || versieData?.value || versieId;
 
+      // Prefer fetched data with actual names, then fall back to provided name or identifier
+      // This ensures we use the real name from the API if available, not the UUID from compliancy.standaardnaam
       const versieName =
         versieData?.xml?.name?._value ||
         versieData?.name ||
         versieData?.naam ||
+        providedName ||
         resolverIdentifier;
 
       toegevoegdMap.set(versieId, {
@@ -512,7 +516,8 @@ const ConStandardsTable = ({
       complianceStandards.forEach((compliancy) => {
         const versieId = compliancy.standaardversie;
         if (versieId && !isInReferentieComponenten(versieId)) {
-          addToegeveogdVersie(versieId);
+          // Pass the standaardnaam from compliancy if available
+          addToegeveogdVersie(versieId, compliancy.standaardnaam);
         }
       });
     }
@@ -823,14 +828,32 @@ const ConStandardsTable = ({
                 return false;
               });
 
-              const hasBewijs = !!complianceStandard?.bewijs;
+              // Extract the actual URL from bewijs field
+              // bewijs can be:
+              // 1. A data URL string (data:application/pdf;base64,...)
+              // 2. An object with url property: { url: "https://..." } or { url: "data:..." }
+              // 3. null/undefined
+              const bewijsValue = complianceStandard?.bewijs;
+              const bewijsUrl = typeof bewijsValue === 'object' && bewijsValue?.url 
+                ? bewijsValue.url 
+                : typeof bewijsValue === 'string' 
+                ? bewijsValue 
+                : null;
+              
+              // Check if we have a data URL (base64 encoded file)
+              const hasBewijsDataUrl = bewijsUrl && bewijsUrl.startsWith('data:');
+              // Check if we have an HTTP(S) URL in bewijs
+              const hasBewijsHttpUrl = bewijsUrl && (bewijsUrl.startsWith('http://') || bewijsUrl.startsWith('https://'));
+              // Check if we have a separate url field
               const hasUrl = !!complianceStandard?.url;
+              
               // For display purposes: compliant means has evidence
-              const isCompliant = hasBewijs || hasUrl;
+              const isCompliant = hasBewijsDataUrl || hasBewijsHttpUrl || hasUrl;
               // Ondersteund means in compliancy or compliantVersieIds but no evidence yet
               const isOndersteund =
                 (!!complianceStandard || isInCompliantVersieIds) &&
-                !hasBewijs &&
+                !hasBewijsDataUrl &&
+                !hasBewijsHttpUrl &&
                 !hasUrl;
               // For checkbox: checked if in compliancy array or compliantVersieIds
               const isChecked = !!complianceStandard || isInCompliantVersieIds;
@@ -871,7 +894,7 @@ const ConStandardsTable = ({
                         href={`https://www.gemmaonline.nl/wiki/GEMMA/id-${versieObjectId}`}
                         target='_blank'
                       >
-                        {versieName}
+                        <ConUuidResolver>{versieName}</ConUuidResolver>
                       </Link>
                       <div style={{ marginTop: '4px' }}>
                         <span
@@ -889,7 +912,7 @@ const ConStandardsTable = ({
                           wordWrap: 'break-word',
                         }}
                       >
-                        {versieEntry.referentieComponent}
+                        <ConUuidResolver>{versieEntry.referentieComponent}</ConUuidResolver>
                       </div>
                     </div>
                   </TableCell>
@@ -1022,7 +1045,7 @@ const ConStandardsTable = ({
                           -
                         </span>
                       )
-                    ) : // Always show download button when not editing
+                    ) : // Always show download/link button when not editing
                     (() => {
                       // Check for file metadata in @self.files
                       const fileInfo = complianceStandard?.['@self']?.files?.[0];
@@ -1048,13 +1071,14 @@ const ConStandardsTable = ({
                             <span style={{ fontSize: '0.85rem' }}>{fileTitle}</span>
                           </Link>
                         );
-                      } else if (hasBewijs) {
+                      } else if (hasBewijsDataUrl) {
+                        // Data URL (base64 encoded file) - handle with handleFileClick
                         return (
                           <Link
                             href='#'
                             onClick={(e) => {
                               e.preventDefault();
-                              handleFileClick(complianceStandard.bewijs);
+                              handleFileClick(bewijsUrl);
                             }}
                             style={{
                               display: 'flex',
@@ -1066,7 +1090,29 @@ const ConStandardsTable = ({
                             <VISUALS.DOWNLOAD />
                           </Link>
                         );
+                      } else if (hasBewijsHttpUrl) {
+                        // HTTP(S) URL in bewijs field - display the URL
+                        return (
+                          <Link
+                            href={bewijsUrl}
+                            target='_blank'
+                            rel='noopener noreferrer'
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              justifyContent: 'left',
+                              cursor: 'pointer',
+                              wordBreak: 'break-all',
+                            }}
+                            title={`Open bewijs URL: ${bewijsUrl}`}
+                          >
+                            <VISUALS.EXTERNAL_LINK />
+                            <span style={{ fontSize: '0.85rem' }}>{bewijsUrl}</span>
+                          </Link>
+                        );
                       } else if (hasUrl) {
+                        // Separate url field - display the URL
                         return (
                           <Link
                             href={complianceStandard.url}
@@ -1074,12 +1120,16 @@ const ConStandardsTable = ({
                             rel='noopener noreferrer'
                             style={{
                               display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
                               justifyContent: 'left',
                               cursor: 'pointer',
+                              wordBreak: 'break-all',
                             }}
                             title={`Open bewijs URL: ${complianceStandard.url}`}
                           >
                             <VISUALS.EXTERNAL_LINK />
+                            <span style={{ fontSize: '0.85rem' }}>{complianceStandard.url}</span>
                           </Link>
                         );
                       } else {
