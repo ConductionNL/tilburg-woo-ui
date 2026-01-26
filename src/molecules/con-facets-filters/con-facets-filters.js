@@ -98,10 +98,8 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
       // Update store
       updateQuery(withPageReset);
 
-      // Trigger facets fetch to update counts with new filters
-      publications.fetchFacets();
-
-      // Fetch is triggered by URL change effect in AcSearch
+      // Note: Facets fetch is triggered by URL change effect in AcSearch
+      // No need to call fetchFacets() here to avoid duplicate API calls
     } else {
       // Use the existing function for regular keys
       toggleSearchArrayValue(facetKey, value);
@@ -110,10 +108,8 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
       const paramsString = AcBuildURLSearchParams(nextQuery);
       setSearchParams(new URLSearchParams(paramsString));
 
-      // Trigger facets fetch to update counts with new filters
-      publications.fetchFacets();
-
-      // Fetch is triggered by URL change effect in AcSearch
+      // Note: Facets fetch is triggered by URL change effect in AcSearch
+      // No need to call fetchFacets() here to avoid duplicate API calls
     }
   };
 
@@ -691,10 +687,8 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
                             const paramsString = AcBuildURLSearchParams(nextQuery);
                             setSearchParams(new URLSearchParams(paramsString));
 
-                            // Trigger facets fetch to update counts with new filters
-                            publications.fetchFacets();
-
-                            // Fetch is triggered by URL change effect in AcSearch
+                            // Note: Facets fetch is triggered by URL change effect in AcSearch
+                            // No need to call fetchFacets() here to avoid duplicate API calls
                           }}
                           title={
                             bucketValue.originalLabel

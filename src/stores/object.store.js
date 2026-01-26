@@ -3768,7 +3768,40 @@ export class ObjectStore {
    */
   @action
   fetchRegister = async (registerSlug) => {
+    // Check if register is already cached
+    const cachedRegister = this.getRegister(registerSlug);
+    if (cachedRegister) {
+      console.info(`ℹ️ Register ${registerSlug} already cached, skipping fetch`);
+      return cachedRegister;
+    }
+
     const requestType = `register_${registerSlug}`;
+    
+    // Check if a request is already in progress for this register
+    if (this.isLoading(requestType)) {
+      console.info(`ℹ️ Register ${registerSlug} fetch already in progress, waiting...`);
+      // Wait for existing request to complete by checking loading state periodically
+      return new Promise((resolve, reject) => {
+        const checkInterval = setInterval(() => {
+          if (!this.isLoading(requestType)) {
+            clearInterval(checkInterval);
+            const result = this.getRegister(registerSlug);
+            if (result) {
+              resolve(result);
+            } else {
+              reject(new Error(`Register ${registerSlug} fetch failed`));
+            }
+          }
+        }, 100);
+        
+        // Timeout after 10 seconds
+        setTimeout(() => {
+          clearInterval(checkInterval);
+          reject(new Error(`Timeout waiting for register ${registerSlug} fetch`));
+        }, 10000);
+      });
+    }
+    
     this.setLoading(requestType, true);
     this.setError(requestType, null);
 

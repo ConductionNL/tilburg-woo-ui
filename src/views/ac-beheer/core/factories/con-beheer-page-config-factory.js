@@ -575,6 +575,16 @@ const BeheerPageConfigFactory = {
                 return fullName || '-';
               },
             },
+            eMailadres: {
+              id: 'e-mailadres',  
+              label: 'E-mailadres',
+              key: 'eMailadres',
+              customContent: (row) => {
+                // Display email address from API response
+                const email = row.eMailadres || row['eMailadres'] || row['e-mailadres'] || 'NO EMAIL FOUND';
+                return email;
+              },
+            },
           },
           uniqueActions: [],
           modals: [...baseConfig.modals, 'addAccount'],
@@ -600,3 +610,4 @@ const BeheerPageConfigFactory = {
 };
 
 export default BeheerPageConfigFactory;
+
