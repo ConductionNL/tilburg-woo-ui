@@ -1010,7 +1010,10 @@ export class ObjectStore {
     try {
       const endpoint = `${this._constructApiUrl(registerId, schemaId)}/export`;
       const response = await nextcloudApi.get(endpoint, {
-        params: { type },
+        params: { 
+          type,
+          _multi: true, // Force multitenancy for exports
+        },
         responseType: 'blob',
         signal: controller.signal,
       });
