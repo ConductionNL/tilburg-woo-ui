@@ -636,20 +636,7 @@ const AcFormsKoppeling = ({ store }) => {
               'module',
               [applicatieFromUrl],
               ownAppOptions,
-              (item) => ({
-                value: String(item?.id || item?.['@self']?.id || applicatieFromUrl),
-                label:
-                  String(
-                    item?.naam ||
-                      item?.name ||
-                      item?.title ||
-                      item?.label ||
-                      item?.['@self']?.name ||
-                      applicatieFromUrl
-                  ),
-                data: item,
-                type: 'applicatie',
-              }),
+              createModuleMapper({ type: 'applicatie' }),
               setOwnAppOptions,
               { extendParams: ['@self.schema'], source: 'index' }
             );
