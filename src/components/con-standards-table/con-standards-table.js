@@ -487,6 +487,7 @@ const ConStandardsTable = ({
       // Prefer fetched data with actual names, then fall back to provided name or identifier
       // This ensures we use the real name from the API if available, not the UUID from compliancy.standaardnaam
       const versieName =
+        versieData?.['@self']?.name ||
         versieData?.xml?.name?._value ||
         versieData?.name ||
         versieData?.naam ||
@@ -599,6 +600,7 @@ const ConStandardsTable = ({
         const versieEntry = allStandards.find((entry) => entry.id === versieId);
         const versieName =
           versieEntry?.name ||
+          versieData?.['@self']?.name ||
           versieData?.xml?.name?._value ||
           versieData?.name ||
           versieData?.naam ||
@@ -872,6 +874,7 @@ const ConStandardsTable = ({
               // Get the display name for the standaardversie
               const versieName =
                 versieEntry.name ||
+                actualVersie?.['@self']?.name ||
                 actualVersie?.xml?.name?._value ||
                 actualVersie?.name ||
                 actualVersie?.naam ||
