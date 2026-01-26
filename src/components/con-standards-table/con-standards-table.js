@@ -66,6 +66,9 @@ const ConStandardsTable = ({
   const [referentieComponentenWithStandards, setReferentieComponentenWithStandards] =
     useState([]);
 
+  // Track if user is authenticated (can access element endpoints)
+  const [isAuthenticated, setIsAuthenticated] = useState(true); // Assume authenticated initially
+
   // Memoize the referentieComponenten array to prevent unnecessary refetches
   // when the parent component re-renders with a new array reference but same content
   const memoizedReferentieComponenten = useMemo(() => {
@@ -79,8 +82,6 @@ const ConStandardsTable = ({
       setReferentieComponentenWithStandards([]);
       return;
     }
-
-    console.info('📋 Fetching referentieComponenten with standards data...');
 
     try {
       const queryParams = new URLSearchParams({
@@ -102,9 +103,13 @@ const ConStandardsTable = ({
       );
 
       if (!response.ok) {
-        console.error('Error fetching referentieComponenten:', response.statusText);
+        if (response.status === 401 || response.status === 403) {
+          setIsAuthenticated(false);
+        }
         return;
       }
+
+      setIsAuthenticated(true);
 
       const data = await response.json();
       const allReferentieComponenten = data.results || data;
@@ -143,14 +148,7 @@ const ConStandardsTable = ({
         .filter(Boolean);
 
       setReferentieComponentenWithStandards(objectReferentieComponenten);
-      console.info(
-        `✅ Loaded ${objectReferentieComponenten?.length} referentieComponenten with standards data`
-      );
     } catch (error) {
-      console.warn(
-        '⚠️ Failed to fetch referentieComponenten with standards:',
-        error
-      );
       setReferentieComponentenWithStandards([]);
     }
   }, [memoizedReferentieComponenten]);
@@ -165,8 +163,6 @@ const ConStandardsTable = ({
         gemmaType: 'Standaard',
       });
 
-      console.info('📋 Fetching standards from openconnector endpoint...');
-
       const response = await fetch(
         `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
         {
@@ -178,22 +174,19 @@ const ConStandardsTable = ({
       );
 
       if (!response.ok) {
-        console.error(
-          'Error fetching openconnector standards:',
-          response.statusText
-        );
+        if (response.status === 401 || response.status === 403) {
+          setIsAuthenticated(false);
+        }
         return;
       }
+
+      setIsAuthenticated(true);
 
       const data = await response.json();
       const fetchedStandards = data.results || data;
 
       setStandards(fetchedStandards);
-      console.info(
-        `✅ Loaded ${fetchedStandards?.length} standards for standards table`
-      );
     } catch (error) {
-      console.warn('⚠️ Failed to fetch standards:', error);
       setStandards([]);
     } finally {
       setStandardsLoading(false);
@@ -210,8 +203,6 @@ const ConStandardsTable = ({
         gemmaType: 'Standaardversie',
       });
 
-      console.info('📋 Fetching standaardversies from openconnector endpoint...');
-
       const response = await fetch(
         `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
         {
@@ -223,22 +214,19 @@ const ConStandardsTable = ({
       );
 
       if (!response.ok) {
-        console.error(
-          'Error fetching openconnector standaardversies:',
-          response.statusText
-        );
+        if (response.status === 401 || response.status === 403) {
+          setIsAuthenticated(false);
+        }
         return;
       }
+
+      setIsAuthenticated(true);
 
       const data = await response.json();
       const fetchedStandaardversies = data.results || data;
 
       setStandaardversies(fetchedStandaardversies);
-      console.info(
-        `✅ Loaded ${fetchedStandaardversies?.length} standaardversies for standards table`
-      );
     } catch (error) {
-      console.warn('⚠️ Failed to fetch standaardversies:', error);
       setStandaardversies([]);
     } finally {
       setStandaardversiesLoading(false);
@@ -246,16 +234,34 @@ const ConStandardsTable = ({
   }, []);
 
   // Use external data if provided, otherwise use internal state
-  const effectiveStandards = externalStandards || standards;
-  const effectiveStandaardversies = externalStandaardversies || standaardversies;
+  // Priority: Internal fetched data (when available) > External data > Empty
+  // This ensures that when we successfully fetch 321 items, we use those instead of the 5 from external
+  const effectiveStandards = 
+    standards.length > 0 
+      ? standards 
+      : (externalStandards || standards);
+      
+  const effectiveStandaardversies = 
+    standaardversies.length > 0 
+      ? standaardversies 
+      : (externalStandaardversies || standaardversies);
+      
   const effectiveReferentieComponentenWithStandards =
-    externalReferentieComponentenWithStandards || referentieComponentenWithStandards;
+    referentieComponentenWithStandards.length > 0
+      ? referentieComponentenWithStandards
+      : (externalReferentieComponentenWithStandards || referentieComponentenWithStandards);
+      
   const effectiveLoading =
     externalLoading || standardsLoading || standaardversiesLoading;
 
-  // Only fetch data if external data is not provided
+  // Always try to fetch full data when authenticated, unless we already have it
+  // Only skip fetching if:
+  // 1. We already have internal data (standaardversies.length > 0), OR
+  // 2. We've confirmed we're not authenticated (isAuthenticated === false)
   const shouldFetchData =
-    !externalStandards && !externalReferentieComponentenWithStandards;
+    standaardversies.length === 0 && 
+    referentieComponentenWithStandards.length === 0 &&
+    isAuthenticated;
 
   useEffect(() => {
     if (shouldFetchData) {
@@ -325,13 +331,6 @@ const ConStandardsTable = ({
       if (!referentieComponentenWithStandardsData?.length) return [];
       if (!effectiveStandaardversies?.length) return [];
 
-      console.info(
-        '🔍 Finding standaardversies that match referentieComponenten standards...'
-      );
-      console.info(
-        `📊 Have ${effectiveStandaardversies.length} standaardversies to search through`
-      );
-
       const allVersies = [];
 
       referentieComponentenWithStandardsData.forEach((refComp) => {
@@ -347,34 +346,14 @@ const ConStandardsTable = ({
             const standardId = getItemId(standard);
             if (!standardId) return;
 
-            console.info(
-              `🔍 Looking for versions of standard ${standardId} (${
-                isVerplicht ? 'VERPLICHT' : 'AANBEVOLEN'
-              })...`
-            );
-
             // Find all standaardversies that have this standard as their parent
             const matchingVersies = effectiveStandaardversies.filter((versie) => {
               const versieStandaardId = getItemId(versie.standaard);
               if (!versieStandaardId) return false;
 
               // Match by ID
-              const matches = String(versieStandaardId) === String(standardId);
-
-              if (matches) {
-                console.info(
-                  `   ✅ Found matching version: ${
-                    versie?.xml?.name?._value || versie?.name || versie?.id
-                  }`
-                );
-              }
-
-              return matches;
+              return String(versieStandaardId) === String(standardId);
             });
-
-            console.info(
-              `   📊 Found ${matchingVersies.length} version(s) for standard ${standardId}`
-            );
 
             // Process each matching standaardversie
             matchingVersies.forEach((versie) => {
@@ -417,8 +396,6 @@ const ConStandardsTable = ({
         // Process aanbevolen standaarden (isVerplicht = false)
         processStandards(refComp.aanbevolenStandaarden, false);
       });
-
-      console.info(`✅ Total standaardversies found: ${allVersies.length}`);
 
       return allVersies;
     },
