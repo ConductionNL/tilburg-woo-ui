@@ -11,6 +11,9 @@ const LIMIT = 20;
 export const DEFAULT_SEARCH_QUERY = {
   extend: 'themes',
   _limit: LIMIT,
+  _order: {
+    '_name': 'asc', // Default to alphabetical A-Z
+  },
 };
 
 const DEFAULT_QUERY = {
@@ -312,7 +315,8 @@ export class PublicationsStore {
     console.info(key, value);
     console.info('VALUE', value);
     this.query._order = {};
-    this.query._order[key] = value;
+    // Metadata properties use _property format (e.g., _name, _published)
+    this.query._order[`_${key}`] = value;
     console.groupEnd();
   };
 
