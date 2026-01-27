@@ -7,12 +7,14 @@ on:
       - development
       - softwarecatalog-gebruik
       - softwarecatalogus-performance
+      - hotfix-performance-vng
   pull_request:
     branches:
       - softwarecatalogus
       - development
       - softwarecatalog-gebruik
       - softwarecatalogus-performance
+      - hotfix-performance-vng
 
 env:
   REGISTRY: ghcr.io
@@ -124,6 +126,7 @@ jobs:
             type=raw,value=gebruik,enable=${{ github.ref == 'refs/heads/softwarecatalog-gebruik' }}
             type=raw,value=dev,enable=${{ github.ref == 'refs/heads/development' }}
             type=raw,value=performance,enable=${{ github.ref == 'refs/heads/softwarecatalogus-performance' }}
+            type=raw,value=performance,enable=${{ github.ref == 'refs/heads/hotfix-performance-vng' }}
 
       - name: Build and push Docker image
         id: build-and-push
