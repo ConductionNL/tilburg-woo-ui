@@ -3,7 +3,7 @@ import { AcLink } from '@molecules';
 import { ConUuidResolver } from '@components';
 import { LABELS, VISUALS } from '@constants';
 import { AcCard, AcFlex } from '@atoms';
-import { Heading, Paragraph, StatusBadge } from '@utrecht/component-library-react';
+import { Heading, Paragraph } from '@utrecht/component-library-react';
 import { NAVIGATE_TO } from '@constants/routes.constants';
 import { extractTitle, extractSummary } from '@src/utilities/con-extract-text';
 import ConLogoPreview from '@src/views/ac-register/con-logo-preview';
@@ -24,12 +24,11 @@ const ConCardOrganisationApplication = ({
   published,
   navigateTo = 'publication',
   user,
-  self, // Add self prop for relevance
+  // self, // Add self prop for relevance
 }) => {
-
   // Extract relevance score if present (fuzzy search)
-  const relevanceScore = self?.relevance;
-  const hasRelevance = typeof relevanceScore === 'number';
+  // const relevanceScore = self?.relevance;
+  // const hasRelevance = typeof relevanceScore === 'number';
 
   const getTypeLabel = (type) => {
     switch (type) {
@@ -92,18 +91,18 @@ const ConCardOrganisationApplication = ({
   };
 
   return (
-    <AcCard organisation padding='md' skeleton={skeleton} style={{ position: 'relative' }}>
-      {hasRelevance && (
+    <AcCard organisation padding='md' skeleton={skeleton}>
+      {/* {hasRelevance && (
         <div style={{ position: 'absolute', top: '1rem', right: '1rem', zIndex: 10 }}>
           <StatusBadge status='success'>
             {relevanceScore}%
           </StatusBadge>
         </div>
-      )}
+      )} */}
       <AcFlex alignItems='center' justifyContent='space-between'>
-        <AcFlex alignItems='center' spacing='xs' style={{ flex: 1 }}>
+        <AcFlex alignItems='center' spacing='xs'>
           {icon}
-          <Heading level={3} style={{ margin: 0 }}>{extractTitle(title)}</Heading>
+          <Heading level={3}>{extractTitle(title)}</Heading>
           {organisation && (cardType === 'product' || cardType === 'module') && (
             <Paragraph small>
               (Aangeboden door <ConUuidResolver>{organisation}</ConUuidResolver>)
