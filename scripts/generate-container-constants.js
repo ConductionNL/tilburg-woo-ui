@@ -335,28 +335,45 @@ const getEnvConfig = () => {
 };
 // Generate the constants file content
 const generateConstantsFile = (config) => {
+  // Generate getRuntimeOrDefault calls for each config entry
   const configEntries = Object.entries(config)
     .map(([key, value]) => {
+      let defaultValue;
       if (typeof value === 'string') {
-        return `  ${key}: '${value}',`;
+        // Escape single quotes in strings
+        defaultValue = `'${value.replace(/'/g, "\\'")}'`;
       } else if (typeof value === 'number') {
-        return `  ${key}: ${value},`;
+        defaultValue = value;
       } else if (typeof value === 'boolean') {
-        return `  ${key}: ${value},`;
+        defaultValue = value;
+      } else if (value === null) {
+        defaultValue = 'null';
       } else {
-        return `  ${key}: '${String(value)}',`;
+        defaultValue = `'${String(value)}'`;
       }
+      return `  ${key}: getRuntimeOrDefault('${key}', ${defaultValue}),`;
     })
     .join('\n');
   return `// Auto-generated container constants
 // This file is generated from values.yaml and environment variables during container startup
-// Priority: 1. values.yaml (env/extraEnvVars) -> 2. Environment variables -> 3. Defaults
+// Priority: 1. window.RUNTIME_CONFIG (runtime) -> 2. Build-time defaults
 // DO NOT EDIT MANUALLY - changes will be overwritten
 import { AcLockObject } from '@utils/ac-lock-object';
-// Container configuration
+
+// Read configuration from window.RUNTIME_CONFIG (loaded before React bundle)
+// Falls back to build-time defaults if runtime config is not available
+const getRuntimeOrDefault = (key, defaultValue) => {
+  if (typeof window !== 'undefined' && window.RUNTIME_CONFIG && window.RUNTIME_CONFIG[key] !== undefined) {
+    return window.RUNTIME_CONFIG[key];
+  }
+  return defaultValue;
+};
+
+// Container configuration - reads from window.RUNTIME_CONFIG at runtime
 export const CONTAINER_CONFIG = AcLockObject({
 ${configEntries}
 });
+
 // Helper functions to replace hostname-based logic
 export const getTitle = () => CONTAINER_CONFIG.SITE_TITLE;
 export const getSiteDescription = () => CONTAINER_CONFIG.SITE_DESCRIPTION;
