@@ -209,9 +209,11 @@ const getEnvConfig = () => {
   // Load values from values.yaml
   const yamlConfig = loadValuesYaml();
 
+  console.info({ yamlConfig });
+
   const baseConfig = {
     // Site Configuration
-    SITE_TITLE: getConfigValue(yamlConfig, 'SITE_TITLE', 'Development Catalogus'),
+    SITE_TITLE: getConfigValue(yamlConfig, 'SITE_TITLE', 'Test Catalogus'),
     SITE_DESCRIPTION: getConfigValue(
       yamlConfig,
       'SITE_DESCRIPTION',
