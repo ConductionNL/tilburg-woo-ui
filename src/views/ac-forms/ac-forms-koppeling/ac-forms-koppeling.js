@@ -621,51 +621,42 @@ const AcFormsKoppeling = ({ store }) => {
         // Wait for modules to be loaded first
         if (ownAppOptions.length === 0) return;
 
-        // Check if the applicatie exists in options
-        let applicatieOption = ownAppOptions.find(
-          (opt) => String(opt.value) === String(applicatieFromUrl)
-        );
+        setApplicatiePreloadLoading(true);
+        try {
+          const newOptions = await fetchMissingEntities(
+            store,
+            'voorzieningen',
+            'module',
+            [applicatieFromUrl],
+            ownAppOptions,
+            createModuleMapper({ type: 'applicatie' }),
+            setOwnAppOptions,
+            { extendParams: ['@self.schema'], source: 'index' }
+          );
 
-        if (!applicatieOption) {
-          // If applicatie not in initial list, fetch it using utility
-          setApplicatiePreloadLoading(true);
-          try {
-            const newOptions = await fetchMissingEntities(
-              store,
-              'voorzieningen',
-              'module',
-              [applicatieFromUrl],
-              ownAppOptions,
-              createModuleMapper({ type: 'applicatie' }),
-              setOwnAppOptions,
-              { extendParams: ['@self.schema'], source: 'index' }
-            );
-            // Use the fetched option if available
-            if (newOptions.length > 0) {
-              applicatieOption = newOptions[0];
-            }
-          } catch (error) {
-            console.error('Error pre-selecting applicatie from URL:', error);
-            setApplicatiePreloadLoading(false);
-            return;
-          } finally {
-            setApplicatiePreloadLoading(false);
+          // Prefer the freshly fetched option, but fallback to existing in ownAppOptions
+          let applicatieOption =
+            newOptions.length > 0
+              ? newOptions[0]
+              : ownAppOptions.find(
+                  (opt) => String(opt.value) === String(applicatieFromUrl)
+                );
+
+          if (applicatieOption) {
+            setOwnApp({
+              value: applicatieOption.value,
+              label: applicatieOption.label,
+            });
+            setSelectedAppAByRow((prev) => ({ ...prev, [0]: applicatieOption.value }));
+            setSelectedModuleLabels((prev) => ({
+              ...prev,
+              [applicatieOption.value]: applicatieOption.label,
+            }));
           }
-        }
-
-        // Pre-select the applicatie (use the exact option object from the array)
-        if (applicatieOption) {
-          // fetchMissingEntities already added it to ownAppOptions, so we can use it directly
-          // Set ownApp using the exact option object
-          setOwnApp({
-            value: applicatieOption.value,
-            label: applicatieOption.label,
-          });
-          setSelectedAppAByRow((prev) => ({ ...prev, [0]: applicatieOption.value }));
-          setSelectedModuleLabels((prev) => ({
-            ...prev,
-            [applicatieOption.value]: applicatieOption.label,
-          }));
+        } catch (error) {
+          console.error('Error pre-selecting applicatie from URL:', error);
+        } finally {
+          setApplicatiePreloadLoading(false);
         }
       } catch (error) {
         console.error('Error pre-selecting applicatie from URL:', error);

@@ -4,13 +4,16 @@
  * Provides hooks and utilities for entity searching with debouncing, loading states, and option merging.
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useDebouncedInput } from '@src/hooks';
 import { useLoadingState } from './loading-utils';
 import { filterValidOptions } from './mapping-utils';
 
 /**
  * Merges search options with existing options
+ * 
+ * RESULT IS NOT MEMOIZED
+ * 
  * @param {Array<Object>} prevOptions - Previous options array
  * @param {Array<Object>} newOptions - New options from search
  * @param {string} strategy - Merge strategy: 'preserve-existing' (default), 'replace-existing', or 'update-existing'
@@ -81,6 +84,9 @@ export const mergeSearchOptions = (
 
 /**
  * Creates a module search configuration
+ * 
+ * RESULT IS NOT MEMOIZED
+ * 
  * @param {Object} store - The MobX store instance
  * @param {Object} options - Configuration options
  * @param {string} options.collectionKey - Collection key for storing results (default: 'voorzieningen_module')
@@ -164,6 +170,9 @@ export const createModuleSearchConfig = (store, options = {}) => {
 
 /**
  * Creates a generic entity search configuration for any entity type
+ * 
+ * RESULT IS NOT MEMOIZED
+ * 
  * @param {Object} store - The MobX store instance
  * @param {string} entityType - Entity type (e.g., 'contactpersoon', 'organisatie', 'module')
  * @param {Object} options - Configuration options
@@ -231,6 +240,9 @@ export const createEntitySearchConfig = (store, entityType, options = {}) => {
 
 /**
  * Creates an organisatie search configuration
+ * 
+ * RESULT IS NOT MEMOIZED
+ * 
  * @param {Object} store - The MobX store instance
  * @param {Object} options - Configuration options
  * @param {string} options.collectionKey - Collection key (default: 'voorzieningen')
@@ -471,6 +483,9 @@ export const createRelatedEntitiesFetcher = (
 
 /**
  * Custom hook for entity searching
+ * 
+ * RESULT IS MEMOIZED
+ * 
  * @param {Object} config - Search configuration (from createModuleSearchConfig, etc.)
  * @param {Object} options - Hook options
  * @param {number} options.debounceDelay - Debounce delay in ms (default: 500)
@@ -532,10 +547,34 @@ export const useEntitySearch = (config, options = {}) => {
     [debouncedSearch]
   );
 
-  return {
+  /* memoize results based on params.
+   * config should be memoized externally if implementation was done correctly.
+   * e.g. 
+   * ```js
+    const organisatieMapper = useMemo(() => createOrganisatieMapper(), []);
+    const organisatieSearchConfig = useMemo(
+        () => createOrganisatieSearchConfig(store, {
+            mapToOption: organisatieMapper,
+            source: 'index',
+        }
+    ), [store, organisatieMapper]);
+
+    const {
+        search: searchOrganisaties,
+        loading: organisatieSearchLoading,
+        options: organisatieSearchOptions,
+    } = useEntitySearch(organisatieSearchConfig, {
+        debounceDelay: 500,
+        mergeStrategy: 'preserve-existing',
+    });
+   ```
+   */
+  const returnValue = useMemo(() => ({
     search,
     loading,
     options: optionsState,
     setOptions: setOptionsState,
-  };
+  }), [config, JSON.stringify(options)]);
+
+  return returnValue;
 };

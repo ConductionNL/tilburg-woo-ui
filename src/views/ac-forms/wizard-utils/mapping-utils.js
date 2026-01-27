@@ -155,7 +155,7 @@ export const createReferentieComponentMapper = (options = {}) => {
         'title',
         'label',
       ],
-      valueFields: ['value', 'id', 'slug'],
+      valueFields: ['value', '@self.id', 'id', 'slug'],
       fallbackLabel: `Component ${index + 1}`,
       ...options,
     });
@@ -253,7 +253,7 @@ export const filterValidOptions = (options) => {
  */
 export const mapId = (item) => {
   if (!item) return '';
-  if (typeof item === 'string') return String(item);
+  if (typeof item === 'string') return item;
   if (typeof item === 'object') {
     return String(
       item.id || item.value || item.uuid || item.slug || item['@self']?.id || ''

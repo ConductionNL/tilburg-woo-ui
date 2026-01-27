@@ -313,8 +313,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     debounceDelay: 500,
     mergeStrategy: 'preserve-existing',
   });
-  // Ref to track which moduleB IDs we've already fetched (to avoid duplicate fetches)
-  const fetchedModuleBIdsRef = useRef(new Set());
 
   // Buitengemeentelijke voorzieningen options with search functionality
   const buitengemeentelijkeMapper = createBuitengemeentelijkeMapper();
@@ -1046,7 +1044,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
 
   // Fetch missing selected moduleB IDs and add them to modulesOptions (for edit mode)
   useEffect(() => {
-    let cancelled = false;
     const run = async () => {
       // Only run if we have koppelingen form state initialized
       const selectedModuleBIds = Object.values(
@@ -1055,27 +1052,12 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
 
       if (selectedModuleBIds.length === 0) return;
 
-      // Find which moduleB IDs are missing from modulesOptions and haven't been fetched yet
-      const existingValues = new Set(modulesOptions.map((opt) => String(opt.value)));
-      const missingIds = selectedModuleBIds.filter(
-        (id) =>
-          !existingValues.has(String(id)) &&
-          !fetchedModuleBIdsRef.current.has(String(id))
-      );
-
-      if (missingIds.length === 0) return;
-
-      // Mark these IDs as being fetched
-      missingIds.forEach((id) => fetchedModuleBIdsRef.current.add(String(id)));
-
-      if (cancelled) return;
-
-      // Use fetchMissingEntities utility
+      // Directly ask fetchMissingEntities to handle missing IDs, with all current ones
       await fetchMissingEntities(
         store,
         'voorzieningen',
         'module',
-        missingIds,
+        selectedModuleBIds,
         modulesOptions,
         moduleMapper,
         setModulesOptions,
@@ -1084,9 +1066,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     };
 
     run();
-    return () => {
-      cancelled = true;
-    };
   }, [koppelingenFormState.selectedAppBByRow, modulesOptions, store, moduleMapper]);
 
   // Initialize diensten form state from applicatie.diensten (for edit mode)

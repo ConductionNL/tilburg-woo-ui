@@ -280,48 +280,29 @@ const ConFormsDienst = ({ store, userStore }) => {
     if (!applicatieFromUrl || isEditMode) return; // Skip if editing or no applicatie in URL
 
     const preSelectApplicatie = async () => {
+      // Wait for modules to be loaded first
+      if (moduleOptions.length === 0) return;
+
+      setApplicatiePreloadLoading(true);
       try {
-        // Wait for modules to be loaded first
-        if (moduleOptions.length === 0) return;
-
-        // Check if the applicatie exists in options
-        const applicatieOption = moduleOptions.find(
-          (opt) => String(opt.value) === String(applicatieFromUrl)
+        // fetchMissingEntities will check if the module needs fetching/adding
+        await fetchMissingEntities(
+          store,
+          'voorzieningen',
+          'module',
+          [applicatieFromUrl],
+          moduleOptions,
+          moduleMapper,
+          setModuleOptions,
+          { extendParams: ['@self.schema'], source: 'index' }
         );
-
-        if (applicatieOption) {
-          // Pre-select the applicatie (already in options, no fetch needed)
-          setSelectedModuleIds((prev) => {
-            if (prev.includes(applicatieOption.value)) return prev;
-            return [...prev, applicatieOption.value];
-          });
-        } else {
-          // If applicatie not in initial list, fetch it using utility
-          setApplicatiePreloadLoading(true);
-          try {
-            await fetchMissingEntities(
-              store,
-              'voorzieningen',
-              'module',
-              [applicatieFromUrl],
-              moduleOptions,
-              moduleMapper,
-              setModuleOptions,
-              { extendParams: ['@self.schema'], source: 'index' }
-            );
-            // After fetching, select it
-            setSelectedModuleIds((prev) => {
-              if (prev.includes(applicatieFromUrl)) return prev;
-              return [...prev, applicatieFromUrl];
-            });
-          } catch (error) {
-            console.error('Error pre-selecting applicatie from URL:', error);
-          } finally {
-            setApplicatiePreloadLoading(false);
-          }
-        }
+        setSelectedModuleIds((prev) => {
+          if (prev.includes(applicatieFromUrl)) return prev;
+          return [...prev, applicatieFromUrl];
+        });
       } catch (error) {
         console.error('Error pre-selecting applicatie from URL:', error);
+      } finally {
         setApplicatiePreloadLoading(false);
       }
     };
