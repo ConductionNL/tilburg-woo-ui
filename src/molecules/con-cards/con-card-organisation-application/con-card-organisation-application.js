@@ -24,7 +24,11 @@ const ConCardOrganisationApplication = ({
   published,
   navigateTo = 'publication',
   user,
+  // self, // Add self prop for relevance
 }) => {
+  // Extract relevance score if present (fuzzy search)
+  // const relevanceScore = self?.relevance;
+  // const hasRelevance = typeof relevanceScore === 'number';
 
   const getTypeLabel = (type) => {
     switch (type) {
@@ -88,6 +92,13 @@ const ConCardOrganisationApplication = ({
 
   return (
     <AcCard organisation padding='md' skeleton={skeleton}>
+      {/* {hasRelevance && (
+        <div style={{ position: 'absolute', top: '1rem', right: '1rem', zIndex: 10 }}>
+          <StatusBadge status='success'>
+            {relevanceScore}%
+          </StatusBadge>
+        </div>
+      )} */}
       <AcFlex alignItems='center' justifyContent='space-between'>
         <AcFlex alignItems='center' spacing='xs'>
           {icon}
