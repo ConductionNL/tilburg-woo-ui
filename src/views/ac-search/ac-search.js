@@ -135,22 +135,24 @@ const AcSearch = ({ store: { publications, user, object } }) => {
         case 'product':
         case 'module':
         case 'organisatie':
+          const selfData1 = publication['@self'];
           return (
             <ConCardOrganisationApplication
               {...publication}
-              id={publication.id || publication['@self']?.id}
-              title={extractTitle(publication['@self'].name)}
+              self={selfData1}
+              id={publication.id || selfData1?.id}
+              title={extractTitle(selfData1.name)}
               summary={extractSummary(
-                publication['@self']?.summary || publication?.beschrijvingKort
+                selfData1?.summary || publication?.beschrijvingKort
               )}
               logo={getImageFromPublication(publication)}
-              cardType={publication['@self'].schema.slug}
-              type={publication['@self'].schema.title}
+              cardType={selfData1.schema.slug}
+              type={selfData1.schema.title}
               user={user}
               referenceComponents={publication.referentieComponenten}
-              updated={publication['@self'].updated}
-              published={publication['@self'].published}
-              organisation={publication['@self'].organisation}
+              updated={selfData1.updated}
+              published={selfData1.published}
+              organisation={selfData1.organisation}
               objectStore={object}
               key={index}
             />
@@ -254,13 +256,13 @@ const AcSearch = ({ store: { publications, user, object } }) => {
             />
           );
         default:
+          const selfData = publication['@self'];
           return (
             <AcSearchResult
-              {...publication}
-              id={publication.id || publication['@self']?.id}
-              published={publication['@self'].published}
-              updated={publication['@self'].updated}
-              category={publication['@self'].schema.title}
+              id={publication.id || selfData?.id}
+              published={selfData.published}
+              updated={selfData.updated}
+              category={selfData.schema.title}
               title={extractTitle(
                 publication.title ??
                   publication.titel ??
@@ -271,8 +273,10 @@ const AcSearch = ({ store: { publications, user, object } }) => {
               summary={extractSummary(
                 publication?.summary || publication?.beschrijving
               )}
+              themes={publication.themes}
               user={user}
-              schemaSlug={publication['@self']?.schema?.slug}
+              schemaSlug={selfData?.schema?.slug}
+              self={selfData}
               key={index}
             />
           );
