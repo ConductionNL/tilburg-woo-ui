@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { VISUALS } from '@constants';
@@ -17,6 +17,14 @@ import {
 const ConDynamicSidenav = ({ store: { menu, user } }) => {
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Fetch menus only once on component mount if not already loaded
+  // This prevents the sidenav from disappearing when page is reloaded
+  useEffect(() => {
+    if (!menu.all_menu_items || menu.all_menu_items.length === 0) {
+      menu.fetchMenus();
+    }
+  }, [menu]);
 
   // Get admin dashboard menu from position 7 with user groups
   const dashboardMenu = menu.getAdminDashboardMenu(
