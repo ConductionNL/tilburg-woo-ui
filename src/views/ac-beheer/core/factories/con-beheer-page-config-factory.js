@@ -576,12 +576,13 @@ const BeheerPageConfigFactory = {
               },
             },
             eMailadres: {
-              id: 'e-mailadres',
+              id: 'e-mailadres',  
               label: 'E-mailadres',
               key: 'eMailadres',
               customContent: (row) => {
                 // Display email address from API response
-                return row.eMailadres || '-';
+                const email = row.eMailadres || row['eMailadres'] || row['e-mailadres'] || 'NO EMAIL FOUND';
+                return email;
               },
             },
           },
@@ -609,3 +610,4 @@ const BeheerPageConfigFactory = {
 };
 
 export default BeheerPageConfigFactory;
+

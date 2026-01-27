@@ -65,14 +65,14 @@ const AcSearchSort = ({ store: { publications }, type }) => {
             Meest relevant
           </SelectOption>
           <SelectOption
-            selected={get_order?._published === 'asc'}
-            value='published|asc'
+            selected={get_order?._published === 'desc'}
+            value='published|desc'
           >
             Datum - oud naar nieuw
           </SelectOption>
           <SelectOption
-            selected={get_order?._published === 'desc'}
-            value='published|desc'
+            selected={get_order?._published === 'asc'}
+            value='published|asc'
           >
             Datum - nieuw naar oud
           </SelectOption>
