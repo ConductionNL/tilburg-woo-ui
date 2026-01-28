@@ -520,7 +520,11 @@ export const renderField = ({
         touchedKey={path}
         minLength={propertySchema?.minLength ?? undefined}
         maxLength={propertySchema?.maxLength ?? undefined}
-        pattern={fieldConfig.pattern !== undefined ? fieldConfig.pattern : (propertySchema?.pattern || undefined)}
+        pattern={
+          fieldConfig.pattern !== undefined
+            ? fieldConfig.pattern
+            : propertySchema?.pattern || undefined
+        }
         {...validation}
         style={inputStyle}
       />
@@ -558,7 +562,8 @@ export const renderField = ({
   }
 
   // Array comma list fallback when array has no enum/optionsProviders
-  if (propertySchema.type === 'array') {
+  // BUT: Check if fieldConfig explicitly sets component to ReactSelect first
+  if (propertySchema.type === 'array' && fieldConfig.component !== 'ReactSelect') {
     const fieldOptions = getFieldOptions(
       path,
       propertySchema,
@@ -668,10 +673,7 @@ export const renderField = ({
             handleSearch
               ? (inputValue, actionMeta) => {
                   // Only trigger search for user input
-                  if (
-                    actionMeta.action === 'input-change' &&
-                    !isLoading
-                  ) {
+                  if (actionMeta.action === 'input-change' && !isLoading) {
                     const refSchemaSlug = getFieldRefSchemaSlug(propertySchema);
                     handleSearch(path, refSchemaSlug, inputValue);
                   }
