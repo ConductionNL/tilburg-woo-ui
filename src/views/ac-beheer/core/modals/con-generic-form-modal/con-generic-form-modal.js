@@ -11,6 +11,7 @@ import { Alert, Paragraph } from '@utrecht/component-library-react/dist/css-modu
 import { collapseExtendedObjects, normalizeSchemaName } from '@src/utilities';
 import FormModalConfigFactory from '@views/ac-beheer/core/factories/con-form-modal-config-factory.js';
 import { useRefOptions } from '@src/hooks/use-ref-options';
+import { filterFormDataByAuthorization } from '@utils/field-authorization';
 import _ from 'lodash';
 
 const DEFAULT_CONFIG_OVERRIDES = {};
@@ -551,6 +552,14 @@ const ConGenericFormModal = ({
         ? config.transformSubmitData(formData)
         : formData;
 
+      // Filter out fields that the user doesn't have permission to update
+      const authorizedSubmitData = filterFormDataByAuthorization(
+        submitData,
+        schema,
+        user,
+        !isEdit // isCreate = true when not editing
+      );
+
       let response;
 
       if (isEdit) {
@@ -559,14 +568,14 @@ const ConGenericFormModal = ({
           config.beheerConfig.registerSlug,
           config.beheerConfig.schemaSlug,
           data.id,
-          submitData
+          authorizedSubmitData
         );
       } else {
         // Create new object using object store
         response = await object.createObject(
           config.beheerConfig.registerSlug,
           config.beheerConfig.schemaSlug,
-          submitData
+          authorizedSubmitData
         );
       }
 

@@ -29,9 +29,20 @@ export const canReadField = (user, fieldSchema) => {
   }
 
   const readGroups = authorization.read || [];
+  const updateGroups = authorization.update || [];
+  const createGroups = authorization.create || [];
   
-  // If no read groups are defined, deny access
+  // If no read groups are defined, check if user has update/create permissions
+  // This allows fields with only update/create authorization to be visible to those who can edit them
   if (!Array.isArray(readGroups) || readGroups.length === 0) {
+    // If there are update or create groups, check if user is in those groups
+    if ((Array.isArray(updateGroups) && updateGroups.length > 0)) {
+      return updateGroups.some(group => userGroups.includes(group));
+    }
+    if ((Array.isArray(createGroups) && createGroups.length > 0)) {
+      return createGroups.some(group => userGroups.includes(group));
+    }
+    // No authorization groups defined at all, deny access
     return false;
   }
   
@@ -108,4 +119,35 @@ export const getFieldAuthorizationState = (user, fieldSchema, isCreate = false) 
     editable: canEdit,
     reason: canEdit ? null : `Geen ${isCreate ? 'aanmaak' : 'bewerk'}rechten voor dit veld`
   };
+};
+
+/**
+ * Filters form data to remove fields that the user doesn't have permission to update
+ * @param {Object} formData - The form data to filter
+ * @param {Object} schema - The full schema object with properties
+ * @param {Object} user - User store object
+ * @param {boolean} isCreate - Whether this is a create operation
+ * @returns {Object} - Filtered form data with unauthorized fields removed
+ */
+export const filterFormDataByAuthorization = (formData, schema, user, isCreate = false) => {
+  if (!schema?.properties || !user) {
+    return formData;
+  }
+
+  const filteredData = { ...formData };
+
+  // Check each property in the schema
+  Object.keys(schema.properties).forEach((fieldName) => {
+    const fieldSchema = schema.properties[fieldName];
+    
+    // Check if user can edit this field
+    const canEdit = canEditField(user, fieldSchema, isCreate);
+    
+    // If user cannot edit, remove the field from submit data
+    if (!canEdit && fieldName in filteredData) {
+      delete filteredData[fieldName];
+    }
+  });
+
+  return filteredData;
 };

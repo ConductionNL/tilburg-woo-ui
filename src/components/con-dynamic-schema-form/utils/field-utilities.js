@@ -438,6 +438,7 @@ export const getFieldDisabled = (
   // Priority 3: Check field-level authorization if user object is available
   if (user && propertySchema) {
     const authState = getFieldAuthorizationState(user, propertySchema, isCreateMode);
+    
     if (!authState.editable) {
       return true;
     }

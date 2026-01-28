@@ -12,7 +12,7 @@ export const DEFAULT_SEARCH_QUERY = {
   extend: 'themes',
   _limit: LIMIT,
   _order: {
-    '_relevance': 'desc', // Default to most relevant
+    '_name': 'asc', // Default to alphabetical A-Z
   },
 };
 
