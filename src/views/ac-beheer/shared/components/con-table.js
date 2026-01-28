@@ -4,6 +4,7 @@ import React, {
   useEffect,
   useImperativeHandle,
   useMemo,
+  useRef,
   useState,
   // eslint-disable-next-line import/no-unresolved
 } from 'react';
@@ -55,6 +56,11 @@ import { extractUUIDs } from '@src/utilities/con-resolve-uuids-in-text';
  * - When `schema` and `objectStore` are provided, reference fields (single or array) are resolved to names using the names cache and displayed; the original ID(s) are available as a tooltip.
  * - For generic string and array values (not declared as references in `schema`), any UUIDs present in the text are resolved via a lightweight cache lookup at render time.
  * - If a UUID is not present in the cache yet, the original value is shown until the cache is populated.
+ * - **IMPORTANT**: The table maintains TWO data structures internally:
+ *   1. **Display Data**: Used for rendering, searching, and sorting - contains resolved names
+ *   2. **Original Data**: Preserved snapshot with UUIDs - used for edit/delete operations
+ * - When clicking "edit" or using `customContent` callbacks, you ALWAYS receive original UUID values
+ * - This dual-structure approach ensures data integrity for API operations while allowing proper search/sort on human-readable names
  *
  * **Sorting:**
  * - Enable sorting by setting `showSortButtons` prop to true
@@ -110,12 +116,14 @@ import { extractUUIDs } from '@src/utilities/con-resolve-uuids-in-text';
  * 2. **Custom Content**
  *    - Accepts either a React element or a function that receives the row data
  *    - Overrides automatic data type handling and the `-` for empty cells
+ *    - **IMPORTANT**: When using a function, the row data passed contains original UUID values, not resolved names
  *    ```jsx
  *    // As an element
  *    customContent: <button>Click me</button>
  *
- *    // As a function with row data
- *    customContent: (row) => <button onClick={() => alert(row.name)}>Edit {row.name}</button>
+ *    // As a function with row data (row contains UUIDs, not resolved names)
+ *    customContent: (row) => <button onClick={() => handleEdit(row)}>Edit</button>
+ *    // row.someUuidField will be "abc-123-def-456", NOT the resolved name
  *    ```
  *
  * @example
@@ -195,6 +203,7 @@ import { extractUUIDs } from '@src/utilities/con-resolve-uuids-in-text';
  *
  * @note Row selection state is not preserved when new data is provided, even if it contains some of the same records.
  * @note Keys referencing deeply nested objects can not be used. e.g. `{ a: { b: 'test' } }` `key: 'a.b'` will not work.
+ * @note UUID-to-name resolution is purely visual. All row data passed via callbacks (`customContent`, `getSelectedRows`) contains original UUID values for data integrity.
  *
  * @author Thijn Douwma
  *
@@ -231,11 +240,65 @@ const ConTable = (
    */
   const [headerSort, setHeaderSort] = useState([null, null]);
 
-  // make a deepclone of the data to avoid mutating the original data
-  const data = useMemo(() => {
-    if (!_data || !Array.isArray(_data)) return [];
-    return JSON.parse(JSON.stringify(_data));
+  /**
+   * DUAL DATA STRUCTURE APPROACH:
+   * We maintain TWO copies of the data:
+   * 1. originalData - Immutable snapshot with UUIDs for edit operations
+   * 2. displayData - With resolved names for search/sort functionality
+   *
+   * Strategy:
+   * - On FIRST render with new data: capture original UUIDs
+   * - On subsequent renders: reuse original, update display
+   * - Use @self.id or a stable identifier to link rows between structures
+   */
+
+  // Map to store original data by row identifier
+  const originalDataMapRef = useRef(new Map());
+
+  // Create/update the dual data structure
+  const { originalData, displayData } = useMemo(() => {
+    if (!_data || !Array.isArray(_data)) {
+      return { originalData: [], displayData: [] };
+    }
+
+    const display = [];
+    const original = [];
+
+    _data.forEach((row, index) => {
+      // Get a stable identifier for this row (prefer @self.id, fallback to index)
+      const rowId = row?.['@self']?.id || `row-${index}`;
+
+      // Deep clone for display (will have resolved names)
+      const displayRow = JSON.parse(JSON.stringify(row));
+      display.push(displayRow);
+
+      // Check if we already have original data for this row
+      if (originalDataMapRef.current.has(rowId)) {
+        // Reuse the captured original
+        original.push(originalDataMapRef.current.get(rowId));
+      } else {
+        // New row: capture original with UUIDs
+        const originalRow = JSON.parse(JSON.stringify(row));
+        originalDataMapRef.current.set(rowId, originalRow);
+        original.push(originalRow);
+      }
+    });
+
+    // Clean up stale entries (rows that no longer exist)
+    const currentIds = new Set(
+      _data.map((row, idx) => row?.['@self']?.id || `row-${idx}`)
+    );
+    for (const [id] of originalDataMapRef.current) {
+      if (!currentIds.has(id)) {
+        originalDataMapRef.current.delete(id);
+      }
+    }
+
+    return { originalData: original, displayData: display };
   }, [_data]);
+
+  // Use displayData for rendering and sorting (has resolved names)
+  const data = displayData;
   const sortedData = useMemo(() => {
     // if no id is set, do not sort
     if (!headerSort[0]) return data;
@@ -330,13 +393,18 @@ const ConTable = (
   const uniqueSymbol = useMemo(() => Symbol(), []);
 
   // add the unique symbol to each row as the key, which then contains a unique id
-  // this should take place before the data is sorted
+  // this must be added to BOTH originalData and displayData so we can link them
   useEffect(() => {
-    data.forEach((row) => {
-      row[uniqueSymbol] = AcUUID('CD');
+    originalData.forEach((row, index) => {
+      // Use consistent IDs across both data structures
+      const rowId = AcUUID('CD');
+      originalData[index][uniqueSymbol] = rowId;
+      if (displayData[index]) {
+        displayData[index][uniqueSymbol] = rowId;
+      }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data]);
+  }, [originalData, displayData]);
 
   const removeUniqueSymbol = useMemo(
     () => (row) => {
@@ -345,6 +413,53 @@ const ConTable = (
       return cleanRow;
     },
     [uniqueSymbol]
+  );
+
+  /**
+   * Maps a display row (with resolved names) back to its original row (with UUIDs)
+   * Uses @self.id as the stable identifier to link between structures.
+   * Falls back to uniqueSymbol if @self.id is not available.
+   *
+   * This ensures that when users click "edit", they always get the original UUID values,
+   * while the table can still use resolved names for search and sort functionality.
+   */
+  const getOriginalRowData = useMemo(
+    () => (displayRow) => {
+      // Get identifier from display row
+      const displayId = displayRow?.['@self']?.id;
+
+      // Find matching original row by @self.id or by uniqueSymbol fallback
+      const matchingOriginal = originalData.find((origRow) => {
+        if (displayId && origRow?.['@self']?.id) {
+          return origRow['@self'].id === displayId;
+        }
+        // Fallback: match by uniqueSymbol
+        return origRow[uniqueSymbol] === displayRow[uniqueSymbol];
+      });
+
+      if (!matchingOriginal) {
+        console.warn(
+          '[ConTable] Could not find original row data, using display row'
+        );
+        return removeUniqueSymbol(displayRow);
+      }
+
+      return removeUniqueSymbol(matchingOriginal);
+    },
+    [originalData, uniqueSymbol, removeUniqueSymbol]
+  );
+
+  /**
+   * Ensures that row data passed to external handlers (like modal callbacks)
+   * contains original UUID values, not resolved names.
+   *
+   * NOTE: We return data from originalData (captured with UUIDs), not displayData.
+   */
+  const getCleanRowDataForExternal = useMemo(
+    () => (row) => {
+      return getOriginalRowData(row);
+    },
+    [getOriginalRowData]
   );
 
   // When the data changes, drop selections that no longer exist and announce via getSelectedRows
@@ -377,12 +492,12 @@ const ConTable = (
         return element;
       }
       if (typeof element === 'function') {
-        return element(removeUniqueSymbol(row));
+        // Pass clean row data (with UUIDs, not resolved names) to custom content callbacks
+        return element(getCleanRowDataForExternal(row));
       }
       return element;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [getCleanRowDataForExternal]);
 
   const handleSelectAll = useMemo(() => {
     return (checked) => {
@@ -412,7 +527,8 @@ const ConTable = (
   useEffect(() => {
     if (typeof getSelectedRows === 'function') {
       // Remove the unique symbol from selected rows before passing them
-      const cleanSelectedRows = selectedRows.map(removeUniqueSymbol);
+      // Ensures that selected rows contain original UUID values for API operations
+      const cleanSelectedRows = selectedRows.map(getCleanRowDataForExternal);
       getSelectedRows(cleanSelectedRows);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
