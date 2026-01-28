@@ -34,6 +34,7 @@ const AcSearchSort = ({ store: { publications }, type }) => {
       // Remove all _order parameters from URL
       params.delete('_order[_published]');
       params.delete('_order[_name]');
+      params.delete('_order[_relevance]');
       setSearchParams(params);
       return;
     }
@@ -44,9 +45,10 @@ const AcSearchSort = ({ store: { publications }, type }) => {
     // Remove any existing _order parameters before setting the new one
     params.delete('_order[_published]');
     params.delete('_order[_name]');
+    params.delete('_order[_relevance]');
 
     // Update URL with new _order parameter
-    // Metadata properties use _property format (e.g., _name, _published)
+    // Metadata properties use _property format (e.g., _name, _published, _relevance)
     params.set(`_order[_${key}]`, order);
     params.set('_page', '1'); // Reset to first page when sorting changes
     setSearchParams(params);
@@ -61,9 +63,19 @@ const AcSearchSort = ({ store: { publications }, type }) => {
       >
         <FormLabel for='sorting'>{label}</FormLabel>
         <Select id='sorting' onChange={onChangeCallback}>
-          <SelectOption selected={!get_order || Object.keys(get_order).length === 0} value='default'>
+          <SelectOption
+            selected={get_order?._relevance === 'desc'}
+            value='relevance|desc'
+          >
             Meest relevant
           </SelectOption>
+          {/* For debug */}
+          {/* <SelectOption
+            selected={get_order?._relevance === 'asc'}
+            value='relevance|asc'
+          >
+            Minst relevant
+          </SelectOption> */}
           <SelectOption
             selected={get_order?._published === 'desc'}
             value='published|desc'

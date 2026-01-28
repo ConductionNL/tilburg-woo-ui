@@ -22,12 +22,13 @@ COPY . .
 # Install curl for health checks and script execution in builder stage
 RUN apk add --no-cache curl
 
-# Note: We no longer generate container.constants.js at build time
-# The file now reads from window.RUNTIME_CONFIG which is generated at container startup
-# This allows runtime configuration without rebuilding the Docker image
-RUN echo "ℹ️  Skipping build-time container constants generation (using runtime config instead)"
+# Generate runtime-aware container.constants.js before webpack build
+# This file will contain code that reads from window.RUNTIME_CONFIG at runtime
+# The generated code is bundled by webpack, but reads config dynamically from window.RUNTIME_CONFIG
+RUN echo "🔧 Generating runtime-aware container constants..."
+RUN node scripts/generate-container-constants.js
 
-# Build the application
+# Build the application with the runtime-aware constants
 RUN yarn build:web
 
 # Production stage with Nginx
