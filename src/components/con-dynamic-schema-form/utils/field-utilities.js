@@ -350,13 +350,25 @@ export const getFieldOptions = (
 ) => {
   // Priority 1: Check if we have enum options from schema (ALWAYS FIRST)
   let baseEnumOptions = null;
-  if (propertySchema?.enum) {
-    baseEnumOptions = propertySchema.enum.map((option) => ({
+
+  // For arrays, prefer items.enum over top-level enum
+  if (
+    propertySchema?.type === 'array' &&
+    propertySchema?.items?.enum &&
+    Array.isArray(propertySchema.items.enum) &&
+    propertySchema.items.enum.length > 0
+  ) {
+    baseEnumOptions = propertySchema.items.enum.map((option) => ({
       value: option,
       label: option,
     }));
-  } else if (propertySchema?.type === 'array' && propertySchema?.items?.enum) {
-    baseEnumOptions = propertySchema.items.enum.map((option) => ({
+  } else if (
+    propertySchema?.enum &&
+    Array.isArray(propertySchema.enum) &&
+    propertySchema.enum.length > 0
+  ) {
+    // Only use top-level enum if it's not empty
+    baseEnumOptions = propertySchema.enum.map((option) => ({
       value: option,
       label: option,
     }));
@@ -381,13 +393,22 @@ export const getFieldOptions = (
 
       if (optionConfig.enumFilter === 'include') {
         // Include mode: Only show enum options that are in the filter values
+        // Use case-insensitive comparison for robustness
+        const normalizedFilterValues = filterValues.map((v) =>
+          String(v).toLowerCase()
+        );
         return baseEnumOptions.filter((option) =>
-          filterValues.includes(option.value)
+          normalizedFilterValues.includes(String(option.value).toLowerCase())
         );
       } else if (optionConfig.enumFilter === 'exclude') {
         // Exclude mode: Show all enum options except those in the filter values
+        // Use case-insensitive comparison for robustness
+        const normalizedFilterValues = filterValues.map((v) =>
+          String(v).toLowerCase()
+        );
         return baseEnumOptions.filter(
-          (option) => !filterValues.includes(option.value)
+          (option) =>
+            !normalizedFilterValues.includes(String(option.value).toLowerCase())
         );
       }
     }
@@ -438,7 +459,7 @@ export const getFieldDisabled = (
   // Priority 3: Check field-level authorization if user object is available
   if (user && propertySchema) {
     const authState = getFieldAuthorizationState(user, propertySchema, isCreateMode);
-    
+
     if (!authState.editable) {
       return true;
     }
