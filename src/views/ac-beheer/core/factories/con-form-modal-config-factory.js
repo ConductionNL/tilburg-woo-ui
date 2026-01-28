@@ -241,11 +241,10 @@ const FormModalConfigFactory = {
                   });
 
                   // Get voorzieningen with selected reference components using object store
-                  await objectStore.fetchCollection(
-                    'voorzieningen',
-                    'voorziening',
-                    { ...voorzieningParams, _published: 'false' }
-                  );
+                  await objectStore.fetchCollection('voorzieningen', 'voorziening', {
+                    ...voorzieningParams,
+                    _published: 'false',
+                  });
 
                   const voorzieningType = objectStore.getTypeFromParams(
                     'voorzieningen',
@@ -275,11 +274,10 @@ const FormModalConfigFactory = {
                   };
 
                   // Get the standaarden using object store
-                  await objectStore.fetchCollection(
-                    'voorzieningen',
-                    'standaard',
-                    { ...standaardenParams, _published: 'false' }
-                  );
+                  await objectStore.fetchCollection('voorzieningen', 'standaard', {
+                    ...standaardenParams,
+                    _published: 'false',
+                  });
 
                   const standaardenType = objectStore.getTypeFromParams(
                     'voorzieningen',

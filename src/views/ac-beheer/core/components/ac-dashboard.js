@@ -167,17 +167,13 @@ const AcDashboard = ({ store }) => {
             </div>
 
             {/* Aangeboden Suggesties Table - Shows suggestions from other organizations */}
-            {/* Hidden table to check for suggestions - renders off-screen */}
-            <div style={{ position: 'absolute', visibility: 'hidden', pointerEvents: 'none' }}>
-              <ConAangebodenSuggestiesTable
-                id={user?.activeOrganization?.uuid}
-                key={refreshKey}
-                onDataChange={setHasSuggestions}
-              />
-            </div>
-
-            {/* Visible suggestions section - only shows when hasSuggestions is true */}
-            {hasSuggestions === true && (
+            <div
+              style={{
+                visibility: hasSuggestions === true ? 'visible' : 'hidden',
+                height: hasSuggestions === true ? 'auto' : 0,
+                overflow: 'hidden',
+              }}
+            >
               <div className='ac-dashboard-suggestions-fade-in'>
                 <Alert type='info'>
                   <Heading level={4}>Aangeboden Suggesties</Heading>
@@ -190,12 +186,13 @@ const AcDashboard = ({ store }) => {
                   <div style={{ marginTop: 'var(--tilburg-space-block-md)' }}>
                     <ConAangebodenSuggestiesTable
                       id={user?.activeOrganization?.uuid}
-                      key={`visible-${refreshKey}`}
+                      key={refreshKey}
+                      onDataChange={setHasSuggestions}
                     />
                   </div>
                 </Alert>
               </div>
-            )}
+            </div>
 
             {/* Welcome Section */}
             <div className='ac-register-review__section'>

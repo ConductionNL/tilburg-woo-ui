@@ -249,14 +249,16 @@ const BeheerPageConfigFactory = {
               customContent: (row) => {
                 const rawType = row?.type;
                 if (!rawType) return '-';
-                
+
                 // Check if it's a string that looks like a JSON array
                 if (typeof rawType === 'string' && rawType.trim().startsWith('[')) {
                   try {
                     const parsed = JSON.parse(rawType);
                     if (Array.isArray(parsed)) {
                       return parsed
-                        .map((item) => (typeof item === 'string' ? item : String(item)))
+                        .map((item) =>
+                          typeof item === 'string' ? item : String(item)
+                        )
                         .join(', ');
                     }
                   } catch (e) {
@@ -264,23 +266,28 @@ const BeheerPageConfigFactory = {
                     return rawType;
                   }
                 }
-                
+
                 // Handle actual arrays
                 if (Array.isArray(rawType) && rawType.length > 0) {
                   return rawType
                     .map((typeItem) =>
                       typeof typeItem === 'object'
-                        ? typeItem.naam || typeItem.name || typeItem.label || typeItem
+                        ? typeItem.naam ||
+                          typeItem.name ||
+                          typeItem.label ||
+                          typeItem
                         : String(typeItem)
                     )
                     .join(', ');
                 }
-                
+
                 // Handle objects
                 if (typeof rawType === 'object') {
-                  return String(rawType.naam || rawType.name || rawType.label || rawType);
+                  return String(
+                    rawType.naam || rawType.name || rawType.label || rawType
+                  );
                 }
-                
+
                 return String(rawType);
               },
             },
@@ -448,7 +455,8 @@ const BeheerPageConfigFactory = {
               key: 'moduleVersie',
               customContent: (row) => {
                 // Try direct property first, then fallback to relations
-                const moduleVersieId = row.moduleVersie || row['@self']?.relations?.moduleVersie;
+                const moduleVersieId =
+                  row.moduleVersie || row['@self']?.relations?.moduleVersie;
                 if (!moduleVersieId) return '-';
                 return <ConUuidResolver>{String(moduleVersieId)}</ConUuidResolver>;
               },
@@ -576,12 +584,16 @@ const BeheerPageConfigFactory = {
               },
             },
             eMailadres: {
-              id: 'e-mailadres',  
+              id: 'e-mailadres',
               label: 'E-mailadres',
               key: 'eMailadres',
               customContent: (row) => {
                 // Display email address from API response
-                const email = row.eMailadres || row['eMailadres'] || row['e-mailadres'] || 'NO EMAIL FOUND';
+                const email =
+                  row.eMailadres ||
+                  row['eMailadres'] ||
+                  row['e-mailadres'] ||
+                  'NO EMAIL FOUND';
                 return email;
               },
             },
@@ -610,4 +622,3 @@ const BeheerPageConfigFactory = {
 };
 
 export default BeheerPageConfigFactory;
-
