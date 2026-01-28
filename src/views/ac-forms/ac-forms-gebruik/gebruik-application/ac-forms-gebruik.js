@@ -93,7 +93,6 @@ const AcFormsGebruik = ({ store }) => {
         if (!contactpersoonData) return '';
 
         // If it's already a string (ID), we'll return it as is for now
-        // The component will handle resolving the display name when contactpersoonOptions are available
         if (typeof contactpersoonData === 'string') {
           return {
             id: contactpersoonData,
@@ -280,7 +279,7 @@ const AcFormsGebruik = ({ store }) => {
           'organisatie',
           organisationId,
           {
-            '_extend[]': ['@self.schema', 'deelnemers'],
+            '_extend[]': ['_schema', 'deelnemers'],
           }
         );
 
@@ -462,8 +461,6 @@ const AcFormsGebruik = ({ store }) => {
     mergeStrategy: 'preserve-existing',
   });
 
-  // Deelnemers (organisaties) options - for andere organisatie flow
-  const [organisatieOptions, setOrganisatieOptions] = useState([]);
   // Deelnemers options - for Samenwerking/Community organizations
   const [deelnemerOptions, setDeelnemerOptions] = useState([]);
   const [deelnemersLoading, setDeelnemersLoading] = useState(false);
@@ -673,7 +670,7 @@ const AcFormsGebruik = ({ store }) => {
           'gebruik',
           String(gebruikId),
           {
-            '_extend[]': ['@self.schema'],
+            '_extend[]': ['_schema'],
             _published: 'false',
           }
         );
@@ -856,7 +853,7 @@ const AcFormsGebruik = ({ store }) => {
     if (isAanbodBeheerdersFlow) {
       searchKlanten('');
     }
-  }, [isAanbodBeheerdersFlow]);
+  }, [isAanbodBeheerdersFlow, searchKlanten]);
 
   // Resolve selected module object whenever selection changes
   useEffect(() => {
@@ -893,9 +890,7 @@ const AcFormsGebruik = ({ store }) => {
       if (!modData || !Array.isArray(versiesArray) || versiesArray.length === 0) {
         try {
           await store.object.fetchObject('voorzieningen', 'module', String(mod), {
-            '_extend[]': ['@self.schema', '@self.relations', 'moduleVersies'],
-            _published: 'false',
-            _source: 'index', // Use index to get applications from all tenants
+            '_extend[]': ['_schema', '@self.relations', 'moduleVersies'],
           });
           if (cancelled) return;
           modData = store.object.getObject('voorzieningen_module', String(mod));
@@ -970,8 +965,9 @@ const AcFormsGebruik = ({ store }) => {
     if (!Array.isArray(versiesArray) || versiesArray.length === 0) {
       setVersionsLoading(false);
       setVersionOptions([]);
-      // Don't clear moduleVersie in edit mode during initial load
+      // Clear moduleVersie when there are no versions available
       if (gebruik?.moduleVersie != null && !(isEditMode && isInitialLoad)) {
+        console.info('Clearing moduleVersie because no versions are available');
         setGebruikData('moduleVersie', null);
       }
       return;
@@ -993,11 +989,16 @@ const AcFormsGebruik = ({ store }) => {
 
     const current = String(gebruik?.moduleVersie || '');
     if (current && !options.some((o) => o.value === current)) {
-      // Don't clear moduleVersie in edit mode during initial load
+      // Clear moduleVersie when current value doesn't match available options
       if (!(isEditMode && isInitialLoad)) {
+        console.info(
+          'Clearing moduleVersie because current value is not in available options',
+          { current, availableOptions: options.map((o) => o.value) }
+        );
         setGebruikData('moduleVersie', null);
       }
     }
+    // Auto-select when only one version available
     if (options.length === 1 && current !== options[0].value) {
       setGebruikData('moduleVersie', options[0].value);
     }
@@ -1405,7 +1406,7 @@ const AcFormsGebruik = ({ store }) => {
               gebruik={gebruik}
               versionOptions={versionOptions}
               refCompOptions={referentieComponentenOptions}
-              organisatieOptions={organisatieOptions}
+              organisatieOptions={organisatieSearchOptions}
               moduleOptions={modulesOptions}
               selectedReferentieComponenten={selectedReferentieComponenten}
               applicatieKeuze={applicatieKeuze}
@@ -1517,7 +1518,7 @@ const AcFormsGebruik = ({ store }) => {
             gebruik={gebruik}
             versionOptions={versionOptions}
             refCompOptions={referentieComponentenOptions}
-            organisatieOptions={organisatieOptions}
+            organisatieOptions={organisatieSearchOptions}
             moduleOptions={modulesOptions}
             selectedReferentieComponenten={selectedReferentieComponenten}
             applicatieKeuze={applicatieKeuze}

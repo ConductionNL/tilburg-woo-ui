@@ -187,6 +187,29 @@ export const createBuitengemeentelijkeMapper = (options = {}) => {
 };
 
 /**
+ * Creates a standaard-specific mapper function
+ * @param {Object} options - Configuration options (same as mapToOption)
+ * @returns {Function} Mapper function for standaarden
+ */
+export const createStandaardMapper = (options = {}) => {
+  return (item, index) => {
+    return mapToOption(item, index, {
+      labelFields: [
+        '@self.name',
+        'xml.name._value',
+        'naam',
+        'name',
+        'title',
+        'label',
+      ],
+      valueFields: ['@self.id', 'id', 'value', 'slug'],
+      fallbackLabel: `Standaard ${index + 1}`,
+      ...options,
+    });
+  };
+};
+
+/**
  * Creates a standaardversie-specific mapper function
  * @param {Object} options - Configuration options (same as mapToOption)
  * @returns {Function} Mapper function for standaardversies

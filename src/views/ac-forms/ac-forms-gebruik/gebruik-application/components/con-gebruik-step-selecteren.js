@@ -69,23 +69,24 @@ const ConGebruikStepSelecteren = ({
               value={selectedKlanten || []}
               onChange={(value) => {
                 // Handle multi-select: value is array of option objects from ReactSelect
-                // The field renderer converts IDs to option objects, but onChange receives option objects
-                const klantenIds = Array.isArray(value)
-                  ? value
-                      .map((v) => {
-                        // Extract ID from option object
-                        if (v && typeof v === 'object') {
-                          return String(
-                            v.value || v.data?.id || v.data?.value || v.id || ''
-                          );
-                        }
-                        return String(v || '');
-                      })
-                      .filter((id) => id && id !== '') // Filter out empty values
-                  : [];
+                const optionsArray = Array.isArray(value) ? value : [];
+
+                // Extract IDs
+                const klantenIds = optionsArray
+                  .map((v) => {
+                    // Extract ID from option object
+                    if (v && typeof v === 'object') {
+                      return String(
+                        v.value || v.data?.id || v.data?.value || v.id || ''
+                      );
+                    }
+                    return String(v || '');
+                  })
+                  .filter((id) => id && id !== ''); // Filter out empty values
+
                 setSelectedKlanten(klantenIds);
               }}
-              isDisabled={klantenLoading || loading}
+              isDisabled={loading}
               isLoading={klantenLoading}
               width='full'
               schemas={schemas}

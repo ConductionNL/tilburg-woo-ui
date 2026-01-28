@@ -11,6 +11,7 @@ export {
   createOrganisatieMapper,
   createReferentieComponentMapper,
   createBuitengemeentelijkeMapper,
+  createStandaardMapper,
   createStandaardversieMapper,
   filterValidOptions,
   mapId,
@@ -30,6 +31,7 @@ export {
 // Search utilities
 export {
   mergeSearchOptions,
+  buildTypeSuffix,
   createModuleSearchConfig,
   createOrganisatieSearchConfig,
   createEntitySearchConfig,

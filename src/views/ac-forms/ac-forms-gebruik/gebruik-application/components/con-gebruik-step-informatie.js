@@ -188,37 +188,34 @@ const ConGebruikStepInformatie = ({
         {/* Hosting field - filtered from applicatie's cloudDienstverleningsmodel */}
         <div>
           {(() => {
-            // Get hosting options from selected applicatie or module schema enum
-            const hostingOptions = [];
+            // Get hosting options ONLY from selected applicatie (not from schema)
+            let hostingFilterValues = [];
             if (
               applicatieKeuze === 'bestaand' &&
               selectedApplicatieData?.cloudDienstverleningsmodel
             ) {
+              // Only use hosting options from the selected application
               const hostingArray = Array.isArray(
                 selectedApplicatieData.cloudDienstverleningsmodel
               )
                 ? selectedApplicatieData.cloudDienstverleningsmodel
                 : [selectedApplicatieData.cloudDienstverleningsmodel];
-              hostingOptions.push(
-                ...hostingArray.map((h) => ({ value: h, label: h }))
-              );
+              hostingFilterValues = hostingArray;
             } else if (applicatieKeuze === 'nieuw') {
-              // Get enum values from module schema for new applicatie flow
-              const moduleSchema = schemas?.module;
-              const cloudDienstverleningsmodelProperty =
-                moduleSchema?.properties?.cloudDienstverleningsmodel;
-              if (
-                cloudDienstverleningsmodelProperty?.type === 'array' &&
-                cloudDienstverleningsmodelProperty?.items?.enum
-              ) {
-                hostingOptions.push(
-                  ...cloudDienstverleningsmodelProperty.items.enum.map((h) => ({
-                    value: h,
-                    label: h,
-                  }))
-                );
-              }
+              // For new applicatie, allow all enum values from schema
+              hostingFilterValues = null; // null means show all enum values
             }
+
+            // Use enumFilter to filter the schema enum values
+            const hostingOptionsConfig =
+              applicatieKeuze === 'bestaand' && hostingFilterValues.length > 0
+                ? {
+                    enumFilter: 'include',
+                    values: hostingFilterValues,
+                  }
+                : hostingFilterValues === null
+                ? null // No filter for new applicatie
+                : []; // Empty array for no options
 
             return (
               <ConSchemaEnhancedField
@@ -232,17 +229,23 @@ const ConGebruikStepInformatie = ({
                     setNieuweApplicatieData('cloudDienstverleningsmodel', value);
                   }
                 }}
-                isDisabled={loading || hostingOptions.length === 0}
+                isDisabled={
+                  loading ||
+                  (applicatieKeuze === 'bestaand' && hostingFilterValues.length === 0)
+                }
                 width='full'
                 schemas={schemas}
-                optionsProvider={hostingOptions}
+                optionsProvider={hostingOptionsConfig}
                 customProps={{
                   label: 'Hosting',
                   placeholder:
-                    hostingOptions.length === 0
+                    applicatieKeuze === 'bestaand' && hostingFilterValues.length === 0
                       ? 'Geen hosting opties beschikbaar'
                       : 'Selecteer hosting',
-                  description: 'Hosting type zoals gedefinieerd door de applicatie',
+                  description:
+                    applicatieKeuze === 'bestaand'
+                      ? 'Hosting type zoals gedefinieerd door de applicatie'
+                      : 'Selecteer het hosting type voor de nieuwe applicatie',
                 }}
               />
             );
@@ -307,10 +310,7 @@ const ConGebruikStepInformatie = ({
               schemaType='gebruik'
               inputStyle={{ height: '40px', minHeight: '40px' }}
               schemaProperty={getStartDatumPropertyName(gebruik.status)}
-              value={
-                gebruik?.[getStartDatumPropertyName(gebruik.status)] ||
-                getTodayDateString()
-              }
+              value={gebruik?.[getStartDatumPropertyName(gebruik.status)] || ''}
               onChange={(value) => {
                 const startDatumProperty = getStartDatumPropertyName(gebruik.status);
                 if (startDatumProperty) {
@@ -334,17 +334,24 @@ const ConGebruikStepInformatie = ({
             <ConSchemaEnhancedField
               schemaType='gebruik'
               schemaProperty='moduleVersie'
-              value={gebruik?.moduleVersie || null}
+              value={
+                versionOptions.length === 0
+                  ? null
+                  : gebruik?.moduleVersie || null
+              }
               onChange={(value) => setGebruikData('moduleVersie', value)}
-              isDisabled={versionsLoading}
+              isDisabled={versionsLoading || versionOptions.length === 0}
               isLoading={versionsLoading}
               schemas={schemas}
               optionsProvider={versionOptions}
-              onSearch={() => {}}
+              onSearch={() => {}} // Disable automatic $ref search by providing empty handler
               width='full'
               customProps={{
                 label: 'Applicatie versie',
-                placeholder: 'Selecteer een applicatie versie',
+                placeholder:
+                  versionOptions.length === 0
+                    ? 'Geen versies beschikbaar'
+                    : 'Selecteer een applicatie versie',
               }}
             />
           </div>

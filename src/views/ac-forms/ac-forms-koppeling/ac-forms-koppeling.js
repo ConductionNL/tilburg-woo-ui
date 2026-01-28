@@ -77,12 +77,13 @@ const AcFormsKoppeling = ({ store }) => {
   // Ref for ProcessSteps to add click handlers
   const processStepsRef = useRef(null);
 
-
   // Schema management state - will be set by useSchemaFetcher
-  const { schemas, loading: schemasLoading } = useSchemaFetcher(
-    store,
-    ['koppeling', 'organisatie', 'gebruik', 'module']
-  );
+  const { schemas, loading: schemasLoading } = useSchemaFetcher(store, [
+    'koppeling',
+    'organisatie',
+    'gebruik',
+    'module',
+  ]);
 
   // Options for modules (applications)
   const [modulesOptions, setModulesOptions] = useState([]);
@@ -101,23 +102,19 @@ const AcFormsKoppeling = ({ store }) => {
 
   // Standaarden options (fetched similarly to referentiecomponenten) - using useEntitySearch
   const standaardversieMapper = createStandaardversieMapper();
-  const standaardversiesSearchConfig = createEntitySearchConfig(
-    store,
-    'element',
-    {
-      collectionKey: 'vng-gemma',
-      mapToOption: standaardversieMapper,
-      queryParamsBuilder: (searchTerm, additionalParams = {}) => ({
-        _limit: '500',
-        _page: '1',
-        _published: 'false',
-        gemmaType: 'Standaardversie',
-        ...(searchTerm && searchTerm.trim() ? { _search: searchTerm.trim() } : {}),
-        ...additionalParams,
-      }),
-      extendParams: ['@self.schema'],
-    }
-  );
+  const standaardversiesSearchConfig = createEntitySearchConfig(store, 'element', {
+    collectionKey: 'vng-gemma',
+    mapToOption: standaardversieMapper,
+    queryParamsBuilder: (searchTerm, additionalParams = {}) => ({
+      _limit: '500',
+      _page: '1',
+      _published: 'false',
+      gemmaType: 'Standaardversie',
+      ...(searchTerm && searchTerm.trim() ? { _search: searchTerm.trim() } : {}),
+      ...additionalParams,
+    }),
+    extendParams: ['@self.schema'],
+  });
   const {
     search: searchStandaardversies,
     loading: standaardenOptionsLoading,
@@ -212,6 +209,7 @@ const AcFormsKoppeling = ({ store }) => {
   const organisatieSearchConfig = createOrganisatieSearchConfig(store, {
     mapToOption: organisatieMapper,
     source: 'index',
+    extendParams: ['_schema'],
   });
   const {
     search: searchOrganisaties,
@@ -360,7 +358,6 @@ const AcFormsKoppeling = ({ store }) => {
     }));
   }, []);
 
-
   // Fetch full organization data to get the type
   useEffect(() => {
     const fetchFullOrganisationData = async () => {
@@ -376,8 +373,7 @@ const AcFormsKoppeling = ({ store }) => {
           'organisatie',
           String(orgId),
           {
-            '_extend[]': ['@self.schema'],
-            _published: 'false',
+            '_extend[]': ['_schema'],
           }
         );
         const fullOrgData = store.object.getObject(
@@ -402,7 +398,6 @@ const AcFormsKoppeling = ({ store }) => {
     searchModules('');
   }, []);
 
-
   // Helper to ensure a module option exists and return its label
   const ensureModuleOptionAndGetLabel = async (id) => {
     if (!id) return '';
@@ -414,7 +409,7 @@ const AcFormsKoppeling = ({ store }) => {
       const res = await fetch(
         `/api/apps/openregister/api/objects/voorzieningen/module/${encodeURIComponent(
           String(id)
-        )}?_published=false`,
+        )}`,
         { headers: { Accept: 'application/json' } }
       );
       if (!res.ok) return String(id);
@@ -454,7 +449,7 @@ const AcFormsKoppeling = ({ store }) => {
       try {
         const url = `/api/apps/openregister/api/objects/voorzieningen/koppeling/${encodeURIComponent(
           koppelingId
-        )}?_extend[]=@self.schema&_extend[]=@self.relations&_published=false`;
+        )}?_extend[]=_schema&_extend[]=_relations`;
         const res = await fetch(url, { headers: { Accept: 'application/json' } });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
@@ -507,8 +502,21 @@ const AcFormsKoppeling = ({ store }) => {
         }));
 
         // Set own app to moduleA for anchor behavior
+        // Use setTimeout to ensure options are updated before setting ownApp
+        // Capture variables in closure to avoid stale values
         if (moduleAId) {
-          setOwnApp({ value: moduleAId, label: labelA || moduleAId });
+          const moduleIdToSet = String(moduleAId);
+          const moduleLabelToSet = String(labelA || moduleAId);
+
+          setTimeout(() => {
+            if (cancelled) return;
+            const ownAppOption = {
+              value: moduleIdToSet,
+              label: moduleLabelToSet,
+              type: 'applicatie',
+            };
+            setOwnApp(ownAppOption);
+          }, 100);
         }
 
         // Prefill single row
@@ -647,7 +655,10 @@ const AcFormsKoppeling = ({ store }) => {
               value: applicatieOption.value,
               label: applicatieOption.label,
             });
-            setSelectedAppAByRow((prev) => ({ ...prev, [0]: applicatieOption.value }));
+            setSelectedAppAByRow((prev) => ({
+              ...prev,
+              [0]: applicatieOption.value,
+            }));
             setSelectedModuleLabels((prev) => ({
               ...prev,
               [applicatieOption.value]: applicatieOption.label,
@@ -667,8 +678,23 @@ const AcFormsKoppeling = ({ store }) => {
     preSelectApplicatie();
   }, [applicatieFromUrl, ownAppOptions, isEditMode, store]);
 
-  // Debounced search function for modules (searchModules is already debounced by useEntitySearch)
-  const debouncedSearchModules = searchModules;
+  // Separate useEffect to set ownApp when the option becomes available in ownAppOptions
+  // This ensures React Select can match the value to an option in the array
+  useEffect(() => {
+    if (!isEditMode || !selectedAppAByRow[0]) return;
+
+    // Check if ownApp is already correctly set
+    const moduleAId = selectedAppAByRow[0];
+    if (ownApp && ownApp.value === moduleAId) return;
+
+    const matchingOption = ownAppOptions.find(
+      (opt) => String(opt.value) === String(moduleAId)
+    );
+
+    if (matchingOption) {
+      setOwnApp(matchingOption);
+    }
+  }, [isEditMode, selectedAppAByRow, ownAppOptions, ownApp]);
 
   // Helper: extract relation id from various shapes (mirrors example.js)
   const extractRelationId = (rel) => {
@@ -731,7 +757,6 @@ const AcFormsKoppeling = ({ store }) => {
             const params = new URLSearchParams({
               _limit: '100',
               _page: '1',
-              _published: 'false',
             });
             for (const id of missingIds) params.append('_search', id);
             const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module?${params}`;
@@ -806,20 +831,16 @@ const AcFormsKoppeling = ({ store }) => {
         const paramsA = new URLSearchParams({
           _limit: '20',
           _page: '1',
-          _published: 'false',
         });
         paramsA.append('moduleA', moduleId);
-        paramsA.append('_source', 'index');
         const endpointA = `${BASE_URL}/openregister/api/objects/voorzieningen/koppeling?${paramsA}`;
 
         // Fetch koppelingen where moduleB = moduleId
         const paramsB = new URLSearchParams({
           _limit: '20',
           _page: '1',
-          _published: 'false',
         });
         paramsB.append('moduleB', moduleId);
-        paramsB.append('_source', 'index');
         const endpointB = `${BASE_URL}/openregister/api/objects/voorzieningen/koppeling?${paramsB}`;
 
         // Execute both fetches in parallel
@@ -897,7 +918,6 @@ const AcFormsKoppeling = ({ store }) => {
   useEffect(() => {
     searchBuitengemeentelijkeVoorzieningen('');
   }, []);
-
 
   // Trigger initial organization search when switching to 'aanbieden-koppeling'
   useEffect(() => {
@@ -1310,7 +1330,9 @@ const AcFormsKoppeling = ({ store }) => {
           if (!value) return null;
           if (typeof value === 'string') return value;
           if (typeof value === 'object') {
-            return value.id || value.value || value?.['@self']?.id || null;
+            return (
+              value.uuid || value.id || value.value || value?.['@self']?.id || null
+            );
           }
           return null;
         };
@@ -1343,8 +1365,6 @@ const AcFormsKoppeling = ({ store }) => {
       .filter(Boolean);
   };
 
-
-
   /**
    * Load intermediair options - applications (modules) that have specific referentiecomponenten:
    * - Notificatierouteringcomponent
@@ -1372,12 +1392,11 @@ const AcFormsKoppeling = ({ store }) => {
         _limit: '500',
         _page: '1',
         gemmaType: 'Referentiecomponent',
-        '_extend[]': '@self.schema',
-        _published: 'false',
+        '_extend[]': '_schema',
       });
 
       const refCompResponse = await fetch(
-        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${refCompQueryParams}`,
+        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${refCompQueryParams}`,
         {
           method: 'GET',
           headers: {
@@ -1423,7 +1442,6 @@ const AcFormsKoppeling = ({ store }) => {
       const moduleParams = new URLSearchParams({
         _limit: '100',
         _page: '1',
-        _published: 'false',
       });
 
       // Add each referentiecomponent ID as a separate parameter
@@ -1853,7 +1871,7 @@ const AcFormsKoppeling = ({ store }) => {
             getArrowForDirection={getArrowForDirection}
             isEditMode={isEditMode}
             editingKoppelingId={koppelingId}
-            onSearchModules={debouncedSearchModules}
+            onSearchModules={searchModules}
             schemas={schemas}
             ownAppKeuze={ownAppKeuze}
             nieuweOwnApp={nieuweOwnApp}

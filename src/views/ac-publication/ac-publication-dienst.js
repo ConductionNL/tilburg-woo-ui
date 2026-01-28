@@ -294,7 +294,7 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
                   object={get_single}
                   showViewAction={false}
                   showEditAction={true}
-                  showPublishActions={true}
+                  showPublishActions={false} // LEGACY: Changed from true - Publish actions no longer needed
                   onDelete={handleDelete}
                   onEdit={() => {
                     if (schemaSlug) {
@@ -322,7 +322,8 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
             })()}
         </AcFlex>
 
-        {!get_single?.['@self']?.published && (
+        {/* Unpublished warning - LEGACY: No longer needed */}
+        {/* {!get_single?.['@self']?.published && (
           <Alert type='warning' style={{ marginBottom: '1rem' }}>
             <Heading level={4}>Dienst is nog niet gepubliceerd</Heading>
             <Paragraph>
@@ -330,7 +331,7 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
               &quot;Publiceren&quot; actie om deze gegevens zichtbaar te maken.
             </Paragraph>
           </Alert>
-        )}
+        )} */}
 
         <div style={{ flex: 2 }}>
           {!!get_single?.beschrijvingKort && (
@@ -423,7 +424,41 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
                 {get_single?.type && (
                   <div style={{ marginBottom: '8px' }}>
                     <strong>Type: </strong>
-                    {get_single.type}
+                    {(() => {
+                      const rawType = get_single.type;
+                      
+                      // Check if it's a string that looks like a JSON array
+                      if (typeof rawType === 'string' && rawType.trim().startsWith('[')) {
+                        try {
+                          const parsed = JSON.parse(rawType);
+                          if (Array.isArray(parsed)) {
+                            return parsed
+                              .map((item, index) => (
+                                <React.Fragment key={index}>
+                                  <ConUuidResolver>{String(item)}</ConUuidResolver>
+                                  {index < parsed.length - 1 ? ', ' : ''}
+                                </React.Fragment>
+                              ));
+                          }
+                        } catch (e) {
+                          // If parsing fails, display as-is
+                          return <ConUuidResolver>{String(rawType)}</ConUuidResolver>;
+                        }
+                      }
+                      
+                      // Handle actual arrays
+                      if (Array.isArray(rawType)) {
+                        return rawType.map((typeId, index) => (
+                          <React.Fragment key={index}>
+                            <ConUuidResolver>{String(typeId)}</ConUuidResolver>
+                            {index < rawType.length - 1 ? ', ' : ''}
+                          </React.Fragment>
+                        ));
+                      }
+                      
+                      // Handle single value
+                      return <ConUuidResolver>{String(rawType)}</ConUuidResolver>;
+                    })()}
                   </div>
                 )}
                 {get_single?.dienstType && (

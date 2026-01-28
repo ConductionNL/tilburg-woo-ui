@@ -10,10 +10,34 @@ import { useLoadingState } from './loading-utils';
 import { filterValidOptions } from './mapping-utils';
 
 /**
+ * Builds a type suffix that includes distinguishing query parameters
+ * to prevent request cancellation between different parameter combinations
+ * @param {string} baseSuffix - Base suffix (e.g., 'module_search')
+ * @param {Object} queryParams - Query parameters
+ * @returns {string} Suffix with distinguishing params included
+ */
+export const buildTypeSuffix = (baseSuffix, queryParams) => {
+  const distinguishingParams = [];
+
+  // Include gemmaType in suffix to prevent cancellation between different gemmaType fetches
+  if (queryParams?.gemmaType) {
+    distinguishingParams.push(`gemmaType-${queryParams.gemmaType}`);
+  }
+
+  if (distinguishingParams.length > 0) {
+    return baseSuffix
+      ? `${baseSuffix}_${distinguishingParams.join('_')}`
+      : distinguishingParams.join('_');
+  }
+
+  return baseSuffix;
+};
+
+/**
  * Merges search options with existing options
- * 
+ *
  * RESULT IS NOT MEMOIZED
- * 
+ *
  * @param {Array<Object>} prevOptions - Previous options array
  * @param {Array<Object>} newOptions - New options from search
  * @param {string} strategy - Merge strategy: 'preserve-existing' (default), 'replace-existing', or 'update-existing'
@@ -57,7 +81,9 @@ export const mergeSearchOptions = (
         mergedOptions.push(newOpt);
       } else {
         // Update existing option with new data (in case it changed)
-        const index = mergedOptions.findIndex((opt) => String(opt.value) === stringValue);
+        const index = mergedOptions.findIndex(
+          (opt) => String(opt.value) === stringValue
+        );
         if (index !== -1) {
           mergedOptions[index] = newOpt;
         }
@@ -84,9 +110,9 @@ export const mergeSearchOptions = (
 
 /**
  * Creates a module search configuration
- * 
+ *
  * RESULT IS NOT MEMOIZED
- * 
+ *
  * @param {Object} store - The MobX store instance
  * @param {Object} options - Configuration options
  * @param {string} options.collectionKey - Collection key for storing results (default: 'voorzieningen_module')
@@ -147,12 +173,16 @@ export const createModuleSearchConfig = (store, options = {}) => {
           return await store.object.fetchModulesCacheFirst(queryParams);
         }
       : async (queryParams) => {
+          // Build type suffix including distinguishing params (like gemmaType)
+          // to prevent cancellation between different parameter combinations
+          const typeSuffix = buildTypeSuffix(`module_${cacheKey}`, queryParams);
+
           await store.object.fetchCollection(
             collectionKey,
             'module',
             queryParams,
             null,
-            `module_${cacheKey}`
+            typeSuffix
           );
           // Use getTypeFromParams to construct the correct collection key (register_schema_suffix format)
           // This matches how fetchCollection internally constructs the type key
@@ -160,7 +190,7 @@ export const createModuleSearchConfig = (store, options = {}) => {
             collectionKey,
             'module',
             null,
-            `module_${cacheKey}`
+            typeSuffix
           );
           const collection = store.object.getCollection(collectionType);
           return collection?.results || collection || [];
@@ -170,9 +200,9 @@ export const createModuleSearchConfig = (store, options = {}) => {
 
 /**
  * Creates a generic entity search configuration for any entity type
- * 
+ *
  * RESULT IS NOT MEMOIZED
- * 
+ *
  * @param {Object} store - The MobX store instance
  * @param {string} entityType - Entity type (e.g., 'contactpersoon', 'organisatie', 'module')
  * @param {Object} options - Configuration options
@@ -229,10 +259,24 @@ export const createEntitySearchConfig = (store, entityType, options = {}) => {
     mapToOption,
     useCacheFirst: false,
     fetchMethod: async (queryParams) => {
-      await store.object.fetchCollection(collectionKey, entityType, queryParams);
-      const collection = store.object.getCollection(
-        `${collectionKey}_${entityType}`
+      // Build type suffix including distinguishing params (like gemmaType)
+      // to prevent cancellation between different parameter combinations
+      const typeSuffix = buildTypeSuffix(`${entityType}_${cacheKey}`, queryParams);
+
+      await store.object.fetchCollection(
+        collectionKey,
+        entityType,
+        queryParams,
+        null,
+        typeSuffix
       );
+      const collectionType = store.object.getTypeFromParams(
+        collectionKey,
+        entityType,
+        null,
+        typeSuffix
+      );
+      const collection = store.object.getCollection(collectionType);
       return collection?.results || collection || [];
     },
   };
@@ -240,9 +284,9 @@ export const createEntitySearchConfig = (store, entityType, options = {}) => {
 
 /**
  * Creates an organisatie search configuration
- * 
+ *
  * RESULT IS NOT MEMOIZED
- * 
+ *
  * @param {Object} store - The MobX store instance
  * @param {Object} options - Configuration options
  * @param {string} options.collectionKey - Collection key (default: 'voorzieningen')
@@ -253,9 +297,15 @@ export const createEntitySearchConfig = (store, entityType, options = {}) => {
  * @returns {Object} Search configuration object
  */
 export const createOrganisatieSearchConfig = (store, options = {}) => {
+  // Merge extendParams if provided, otherwise use default
+  const defaultExtendParams = ['@self.schema'];
+  const extendParams = options.extendParams
+    ? [...new Set([...defaultExtendParams, ...options.extendParams])]
+    : defaultExtendParams;
+
   return createEntitySearchConfig(store, 'organisatie', {
     ...options,
-    extendParams: ['@self.schema'],
+    extendParams,
     source: options.source || 'database',
   });
 };
@@ -306,11 +356,13 @@ export const fetchMissingEntities = async (
         fetchParams['_extend[]'] = extendParams;
       }
 
-      await store.object.fetchObject(collectionKey, entityType, String(id), fetchParams);
-      return store.object.getObject(
-        `${collectionKey}_${entityType}`,
-        String(id)
+      await store.object.fetchObject(
+        collectionKey,
+        entityType,
+        String(id),
+        fetchParams
       );
+      return store.object.getObject(`${collectionKey}_${entityType}`, String(id));
     } catch (error) {
       console.error(`Failed to fetch ${entityType} ${id}:`, error);
       return null;
@@ -393,28 +445,31 @@ export const createRelatedEntitiesFetcher = (
       // Add filter field (e.g., modules=filterId)
       params[filterField] = String(filterId);
 
-      const cacheKey = `${entityType}_for_${filterField}_${filterId}`;
+      const baseCacheKey = `${entityType}_for_${filterField}_${filterId}`;
+      // Build type suffix including distinguishing params (like gemmaType)
+      // to prevent cancellation between different parameter combinations
+      const typeSuffix = buildTypeSuffix(baseCacheKey, params);
+
       await store.object.fetchCollection(
         collectionKey,
         entityType,
         params,
         null,
-        cacheKey
+        typeSuffix
       );
 
       const collectionType = store.object.getTypeFromParams(
         collectionKey,
         entityType,
         null,
-        cacheKey
+        typeSuffix
       );
       const collection = store.object.getCollection(collectionType);
       const list = collection?.results || collection || [];
 
       // Add unique entities
       list.forEach((entityItem) => {
-        const entityId =
-          entityItem?.id || entityItem?.['@self']?.id || '';
+        const entityId = entityItem?.id || entityItem?.['@self']?.id || '';
         if (entityId && !seenEntityIds.has(entityId)) {
           seenEntityIds.add(entityId);
           allEntities.push(entityItem);
@@ -483,9 +538,9 @@ export const createRelatedEntitiesFetcher = (
 
 /**
  * Custom hook for entity searching
- * 
+ *
  * RESULT IS MEMOIZED
- * 
+ *
  * @param {Object} config - Search configuration (from createModuleSearchConfig, etc.)
  * @param {Object} options - Hook options
  * @param {number} options.debounceDelay - Debounce delay in ms (default: 500)
@@ -569,12 +624,15 @@ export const useEntitySearch = (config, options = {}) => {
     });
    ```
    */
-  const returnValue = useMemo(() => ({
-    search,
-    loading,
-    options: optionsState,
-    setOptions: setOptionsState,
-  }), [config, JSON.stringify(options)]);
+  const returnValue = useMemo(
+    () => ({
+      search,
+      loading,
+      options: optionsState,
+      setOptions: setOptionsState,
+    }),
+    [config, JSON.stringify(options), optionsState, loading]
+  );
 
   return returnValue;
 };

@@ -180,12 +180,13 @@ nextcloudApi.interceptors.response.use(
  * - `getTypeFromParams(register, schema, id, suffix)` - Gets object type from register, schema, id, suffix (uses unified type creation)
  *
  * ### Names Cache System for UUID → Name Resolution
+ * Names are now automatically loaded via _extend=_names on collection/search endpoints.
  * - `getNamesForSingleId(id)` - Gets single name from cache or backend fallback
  * - `getNamesForMultipleIds(ids)` - Gets multiple names from cache or backend fallback
  * - `setNamesInCacheSingle(id, name)` - Sets single name in cache
  * - `setNamesInCache(nameMap)` - Sets multiple names in cache
  * - `processRelatedNamesFromResponse(apiResponse)` - Processes related names from API responses
- * - `warmupNamesCache()` - Warms up cache by fetching all available names
+ * - `warmupNamesCache()` - DEPRECATED: Use _extend=_names instead
  * - `triggerNamesWarmup()` - Triggers manual backend warmup via POST endpoint
  * - `getNamesStatsFromBackend()` - Gets cache statistics from backend
  * - `clearNamesCache()` - Clears all names from cache
@@ -317,12 +318,12 @@ nextcloudApi.interceptors.response.use(
  * await store.object.cacheLoad();
  *
  * // Names cache system for UUID to name resolution
+ * // Names are automatically populated via _extend=_names on collection/search endpoints
  * const name = await store.object.getNamesForSingleId('uuid-123');
  * const names = await store.object.getNamesForMultipleIds(['uuid-123', 'uuid-456']);
  * store.object.setNamesInCache({ 'uuid-123': 'Product Name' });
  * store.object.processRelatedNamesFromResponse(apiResponse);
- * await store.object.warmupNamesCache();
- * await store.object.triggerNamesWarmup();
+ * // warmupNamesCache() is DEPRECATED - use _extend=_names instead
  * const backendStats = await store.object.getNamesStatsFromBackend();
  *
  * // Register cache system for UUID to slug resolution
@@ -1009,7 +1010,10 @@ export class ObjectStore {
     try {
       const endpoint = `${this._constructApiUrl(registerId, schemaId)}/export`;
       const response = await nextcloudApi.get(endpoint, {
-        params: { type },
+        params: {
+          type,
+          _multi: true, // Force multitenancy for exports
+        },
         responseType: 'blob',
         signal: controller.signal,
       });
@@ -1141,7 +1145,7 @@ export class ObjectStore {
         if (Object.keys(namesToCache).length > 0) {
           this.setNamesInCache(namesToCache);
         }
-          }
+      }
 
       const paginationInfo = {
         total: data.total || 0,
@@ -1226,7 +1230,7 @@ export class ObjectStore {
       const response = await nextcloudApi.get(
         this._constructApiUrl(register, schema, id),
         {
-          params: this._constructQueryParams(queryParams),
+          params: queryParams, // Pass params directly, don't add _limit/_page for single object fetches
           signal: controller.signal,
         }
       );
@@ -1395,8 +1399,10 @@ export class ObjectStore {
     try {
       const endpoint = `/openregister/api/schemas/${schemaId}`;
 
+      // Schema endpoints don't need pagination parameters (_limit, _page)
+      // Pass params directly without constructQueryParams to avoid adding pagination
       const response = await nextcloudApi.get(endpoint, {
-        params: this._constructQueryParams(params),
+        params: params,
         signal: controller.signal,
       });
 
@@ -3149,11 +3155,11 @@ export class ObjectStore {
 
   /**
    * Waits for names cache warmup to complete if it's in progress
-   * 
+   *
    * **Note:** This is no longer used by getNamesForSingleId/getNamesForMultipleIds
    * to avoid blocking UI rendering. Kept for potential future use cases where
    * explicit warmup waiting might be desired.
-   * 
+   *
    * @returns {Promise<void>}
    */
   async waitForNamesWarmup() {
@@ -3185,13 +3191,13 @@ export class ObjectStore {
 
   /**
    * Gets a single name from cache, falls back to backend if not found
-   * 
+   *
    * **Optimized behavior (no warmup blocking):**
    * - Checks cache first for instant response
    * - If not found, immediately fetches from backend (doesn't wait for warmup)
    * - Background warmup will populate cache for future requests
    * - This ensures components can load filters/UI immediately without delay
-   * 
+   *
    * @param {string} id - The UUID to resolve to a name
    * @returns {Promise<string>} The name for the given ID, or the ID if no name found
    */
@@ -3271,13 +3277,13 @@ export class ObjectStore {
 
   /**
    * Gets multiple names from cache, falls back to backend for missing ones
-   * 
+   *
    * **Optimized behavior (no warmup blocking):**
    * - Checks cache first for all IDs
    * - Immediately fetches missing IDs from backend (doesn't wait for warmup)
    * - Background warmup will populate cache for future requests
    * - Bulk fetches missing IDs in a single API call for efficiency
-   * 
+   *
    * @param {string[]} ids - Array of UUIDs to resolve to names
    * @returns {Promise<{[id: string]: string}>} Object with id -> name mappings
    */
@@ -3318,9 +3324,7 @@ export class ObjectStore {
     // Fetch missing names from backend
     if (missingIds.length > 0) {
       try {
-        console.info(
-          `🌐 Fetching names for ${missingIds.length} IDs from backend`
-        );
+        console.info(`🌐 Fetching names for ${missingIds.length} IDs from backend`);
         const response = await nextcloudApi.post('/openregister/api/names', {
           ids: missingIds,
         });
@@ -3499,44 +3503,17 @@ export class ObjectStore {
   };
 
   /**
-   * Warms up the names cache by fetching all available names
+   * DEPRECATED: Names are now efficiently loaded via _extend=_names on collection endpoints.
+   * This method is kept for backwards compatibility but should not be used.
    * @returns {Promise<number>} Number of names loaded into cache
+   * @deprecated Use _extend=_names on API calls instead of bulk warmup
    */
   @action
   warmupNamesCache = async () => {
-    const requestType = 'names_warmup';
-    this.setLoading(requestType, true);
-    this.setError(requestType, null);
-
-    try {
-      console.info('🔥 Starting names cache warmup');
-      const response = await nextcloudApi.get('/openregister/api/names');
-
-      if (!response.ok) {
-        throw new Error(
-          `Failed to warmup names cache: ${response.status} ${response.statusText}`
-        );
-      }
-
-      const allNames = response.data?.names || {};
-      const count = Object.keys(allNames).length;
-
-      this.setNamesInCache(allNames);
-
-      console.info(`✅ Names cache warmed up with ${count} names:`, {
-        total: response.data?.total,
-        cached: response.data?.cached,
-        executionTime: response.data?.execution_time,
-        cacheStats: response.data?.cache_stats,
-      });
-      return count;
-    } catch (error) {
-      console.error('❌ Names cache warmup failed:', error);
-      this.setError(requestType, error.message);
-      throw error;
-    } finally {
-      this.setLoading(requestType, false);
-    }
+    console.warn(
+      '⚠️ warmupNamesCache is deprecated - names are now loaded via _extend=_names on API calls'
+    );
+    return 0;
   };
 
   /**
@@ -3742,6 +3719,14 @@ export class ObjectStore {
   initialCacheWarmingCompleted = false;
 
   /**
+   * Flag to track if beheer data warmup has been completed for this session
+   * Prevents redundant warmup on every /beheer page visit
+   * @type {boolean}
+   */
+  @observable
+  beheerDataWarmedUp = false;
+
+  /**
    * Fetches all core registers and populates the registerCache
    * Called during warmupBeheerData to ensure ConRegisterResolver works
    */
@@ -3781,7 +3766,42 @@ export class ObjectStore {
    */
   @action
   fetchRegister = async (registerSlug) => {
+    // Check if register is already cached
+    const cachedRegister = this.getRegister(registerSlug);
+    if (cachedRegister) {
+      console.info(`ℹ️ Register ${registerSlug} already cached, skipping fetch`);
+      return cachedRegister;
+    }
+
     const requestType = `register_${registerSlug}`;
+
+    // Check if a request is already in progress for this register
+    if (this.isLoading(requestType)) {
+      console.info(
+        `ℹ️ Register ${registerSlug} fetch already in progress, waiting...`
+      );
+      // Wait for existing request to complete by checking loading state periodically
+      return new Promise((resolve, reject) => {
+        const checkInterval = setInterval(() => {
+          if (!this.isLoading(requestType)) {
+            clearInterval(checkInterval);
+            const result = this.getRegister(registerSlug);
+            if (result) {
+              resolve(result);
+            } else {
+              reject(new Error(`Register ${registerSlug} fetch failed`));
+            }
+          }
+        }, 100);
+
+        // Timeout after 10 seconds
+        setTimeout(() => {
+          clearInterval(checkInterval);
+          reject(new Error(`Timeout waiting for register ${registerSlug} fetch`));
+        }, 10000);
+      });
+    }
+
     this.setLoading(requestType, true);
     this.setError(requestType, null);
 
@@ -4014,6 +4034,7 @@ export class ObjectStore {
   @action
   resetCacheWarmingFlag = () => {
     this.initialCacheWarmingCompleted = false;
+    this.beheerDataWarmedUp = false;
   };
 
   /**
@@ -4270,50 +4291,14 @@ export class ObjectStore {
   };
 
   /**
-   * Waits for names cache warmup to complete
-   * If warmup is in progress, waits for it. If not started, triggers it.
+   * Names cache warmup removed - names are now efficiently loaded via _extend=_names
+   * on search and collection endpoints. This method is kept as a no-op for backwards compatibility.
    * @returns {Promise<void>}
+   * @deprecated Names are now loaded automatically via _extend=_names
    */
   waitForNamesCacheWarmup = async () => {
-    const warmupType = 'names_warmup';
-
-    // Check if warmup is already in progress
-    if (this.isLoading(warmupType)) {
-      console.info('Names cache warmup in progress, waiting...');
-      // Poll until warmup completes, max 30 seconds
-      let c = 0;
-      while (this.isLoading(warmupType)) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        c++;
-        if (c >= 300) {
-          console.warn(
-            'Names cache warmup timed out (30 seconds), continuing anyway'
-          );
-          break;
-        }
-      }
-      console.info('Names cache warmup completed');
-      return;
-    }
-
-    // Check if names cache has data (warmup might have completed already)
-    const cacheStats = this.getNamesStats();
-    if (cacheStats.totalNames > 0) {
-      console.info(
-        `Names cache already has ${cacheStats.totalNames} names, skipping warmup`
-      );
-      return;
-    }
-
-    // Trigger warmup if not started
-    console.info('Starting names cache warmup...');
-    try {
-      await this.warmupNamesCache();
-      console.info('Names cache warmup completed successfully');
-    } catch (error) {
-      console.warn('Names cache warmup failed, continuing anyway:', error);
-      // Continue even if warmup fails - getNamesForMultipleIds will fallback to backend
-    }
+    console.info('ℹ️ Names cache warmup skipped - names loaded via _extend=_names');
+    return;
   };
 
   /**
@@ -4322,6 +4307,12 @@ export class ObjectStore {
    */
   @action
   warmupBeheerData = async () => {
+    // Guard: Skip if already warmed up for this session
+    if (this.beheerDataWarmedUp) {
+      console.info('ℹ️ Beheer data already warmed up, skipping...');
+      return;
+    }
+
     try {
       // Fetch registers first to populate registerCache
       // This ensures ConRegisterResolver works correctly
@@ -4374,7 +4365,7 @@ export class ObjectStore {
           // Fetch objects with limit 10000
           await this.fetchCollection(register, schemaSlug, {
             _limit: 10000,
-            _source: 'database', // Only fetch data from own organisation
+            _multi: true, // Enable multitenancy
           });
         } catch (error) {
           console.error(`Error fetching data for ${schemaSlug}:`, error);
@@ -4435,6 +4426,12 @@ export class ObjectStore {
           });
         }
       }
+
+      // Mark beheer data as warmed up for this session
+      runInAction(() => {
+        this.beheerDataWarmedUp = true;
+      });
+      console.info('✅ Beheer data warmup completed');
     } catch (error) {
       console.error('Error in warmupBeheerData:', error);
       AcFormatErrorMessage(error);
@@ -4476,7 +4473,7 @@ export class ObjectStore {
         // Fetch objects with limit 10000
         await this.fetchCollection(register, schemaSlug, {
           _limit: 10000,
-          _source: 'database', // Only fetch data from own organisation
+          _multi: true, // Enable multitenancy
         });
 
         // Mark as completed now that data has arrived

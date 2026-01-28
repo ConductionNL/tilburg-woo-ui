@@ -130,45 +130,51 @@ const ConKoppelingStageZoeken = ({
 
       {ownAppKeuze === 'bestaand' ? (
         <div className='ac-register-form-grid'>
-          <div style={{ gridColumn: 'span 2', maxWidth: '640px' }}>
-            <ConSchemaEnhancedField
-              schemaType='koppeling'
-              schemaProperty='moduleA'
-              value={ownApp?.value || null}
-              onChange={(value) => {
-                // ConSchemaEnhancedField returns the option object directly when using optionsProvider
-                // Handle both object and string formats
-                if (!value) {
-                  setOwnApp(null);
-                } else if (typeof value === 'object' && value.value !== undefined) {
-                  // It's an option object with value property
-                  setOwnApp(value);
-                } else if (typeof value === 'string') {
-                  // It's just the ID string, find the option
-                  const option = ownAppOptions.find(
-                    (opt) => String(opt.value) === String(value)
-                  );
-                  setOwnApp(option || null);
-                } else {
-                  setOwnApp(null);
+          {/* Only show applicatie select when NOT in edit mode */}
+          {!isEditMode && (
+            <div style={{ gridColumn: 'span 2', maxWidth: '640px' }}>
+              <ConSchemaEnhancedField
+                schemaType='koppeling'
+                schemaProperty='moduleA'
+                value={ownApp?.value || null}
+                onChange={(value) => {
+                  // ConSchemaEnhancedField returns the option object directly when using optionsProvider
+                  // Handle both object and string formats
+                  if (!value) {
+                    setOwnApp(null);
+                  } else if (
+                    typeof value === 'object' &&
+                    value.value !== undefined
+                  ) {
+                    // It's an option object with value property
+                    setOwnApp(value);
+                  } else if (typeof value === 'string') {
+                    // It's just the ID string, find the option
+                    const option = ownAppOptions.find(
+                      (opt) => String(opt.value) === String(value)
+                    );
+                    setOwnApp(option || null);
+                  } else {
+                    setOwnApp(null);
+                  }
+                }}
+                isDisabled={loading}
+                isLoading={ownAppLoading}
+                width='full'
+                schemas={schemas}
+                optionsProvider={ownAppOptions}
+                onSearch={(_path, _refSlug, q) =>
+                  onSearchModules && onSearchModules(q)
                 }
-              }}
-              isDisabled={loading || isEditMode}
-              isLoading={ownAppLoading}
-              width='full'
-              schemas={schemas}
-              optionsProvider={ownAppOptions}
-              onSearch={(_path, _refSlug, q) => {
-                onSearchModules && onSearchModules(q);
-              }}
-              customProps={{
-                label: 'Applicatie',
-                placeholder: 'Selecteer een applicatie',
-                isClearable: false,
-                required: true,
-              }}
-            />
-          </div>
+                customProps={{
+                  label: 'Applicatie',
+                  placeholder: 'Selecteer een applicatie',
+                  isClearable: false,
+                  required: true,
+                }}
+              />
+            </div>
+          )}
         </div>
       ) : (
         <div className='con-dynamic-form-container'>

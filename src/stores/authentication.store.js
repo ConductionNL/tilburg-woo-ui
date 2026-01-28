@@ -205,7 +205,8 @@ export class AuthenticationStore {
     console.info(key, value);
     console.info('VALUE', value);
     this.query._order = {};
-    this.query._order[key] = value;
+    // Metadata properties use _property format (e.g., _name, _published)
+    this.query._order[`_${key}`] = value;
     console.groupEnd();
   };
 

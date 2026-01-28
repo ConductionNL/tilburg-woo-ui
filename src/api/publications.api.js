@@ -31,6 +31,12 @@ export class PublicationsAPI {
     );
   }
 
+  used(id) {
+    return this.Client.get(ENDPOINTS.PUBLICATIONS.USED(id)).then(
+      (response) => response.data
+    );
+  }
+
   themes(params) {
     return this.Client.get(ENDPOINTS.THEMES, { params }).then(
       (response) => response.data

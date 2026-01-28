@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import RelatedTabs from './con-related-tabs-new';
 import ConLogoPreview from '../ac-register/con-logo-preview';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
@@ -31,7 +31,6 @@ import remarkEmoji from 'remark-emoji';
 import remarkSupersub from 'remark-supersub';
 import rehypeSlug from 'rehype-slug';
 import rehypeSanitize from 'rehype-sanitize';
-import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
 
 /**
  * Product Details Page (simplified for fixed type)
@@ -198,17 +197,13 @@ const AcPublicationProduct = ({
   // Process vng-gemma/element data from uses response
   const processVngGemmaData = useCallback((usesData) => {
     if (!usesData || !Array.isArray(usesData)) {
-      console.info('No uses data to process');
       return;
     }
-
-    console.info('📋 Processing vng-gemma/element data from uses response...');
 
     // Find vng-gemma/element items by looking for items with a gemmaType property
     const elementItems = usesData.filter((item) => item?.gemmaType);
 
     if (!elementItems.length) {
-      console.info('No vng-gemma/element items found in uses data');
       return;
     }
 
@@ -267,16 +262,9 @@ const AcPublicationProduct = ({
         .filter(Boolean);
 
       setReferentieComponentenWithStandards(productReferentieComponenten);
-      console.info(
-        `✅ Processed ${productReferentieComponenten?.length} referentieComponenten with standards data`
-      );
     } else {
       setReferentieComponentenWithStandards([]);
     }
-
-    console.info(
-      `✅ Processed vng-gemma data: ${standardsData.length} standards, ${standaardversiesData.length} standaardversies, ${referentieComponentenData.length} referentiecomponenten`
-    );
   }, [get_single?.referentieComponenten]);
 
   const [uses, setUses] = useState([]);
@@ -424,7 +412,7 @@ const AcPublicationProduct = ({
     setUsedLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=_schema`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=_schema&_extend[]=compliancy`,
         {
           method: 'GET',
           headers: {
@@ -495,6 +483,25 @@ const AcPublicationProduct = ({
     fetchUsed();
     fetchGebruik();
   }, [id, fetchUses, fetchUsed, fetchGebruik]);
+
+  // Extract compliancy data - must be before early return to satisfy React Hooks rules
+  const compliancyFromUsed = useMemo(() => {
+    // First, check if compliancy is directly extended in get_single
+    if (get_single?.compliancy && Array.isArray(get_single.compliancy)) {
+      return get_single.compliancy;
+    }
+    
+    // Fallback: Extract from used data (schema ID 18 is compliancy schema)
+    if (!used || !Array.isArray(used)) return [];
+    
+    const compliancySchemaId = aggregatedSchemas?.['18']?.id || '18';
+    const compliancyObjects = used.filter(item => {
+      const itemSchemaId = item?.['@self']?.schema?.id || item?.['@self']?.schema;
+      return String(itemSchemaId) === String(compliancySchemaId);
+    });
+    
+    return compliancyObjects;
+  }, [get_single?.compliancy, used, aggregatedSchemas]);
 
   // Loading
   if (loading.status || !get_single) {
@@ -774,15 +781,17 @@ const AcPublicationProduct = ({
             render: () => (
               <ConStandardsTable
                 referentieComponenten={get_single.referentieComponenten}
-                complianceStandards={get_single.compliancy}
+                complianceStandards={compliancyFromUsed}
                 compliantVersieIds={
                   get_single.standaardVersies || get_single.standaardversies || []
                 }
                 enableScrolling={true}
-                standards={standards}
-                standaardversies={standaardversies}
+                standards={standards.length > 0 ? standards : undefined}
+                standaardversies={standaardversies.length > 0 ? standaardversies : undefined}
                 referentieComponentenWithStandards={
-                  referentieComponentenWithStandards
+                  referentieComponentenWithStandards.length > 0 
+                    ? referentieComponentenWithStandards 
+                    : undefined
                 }
                 loading={usesLoading}
                 onStandardsCountChange={(n) => setStandardsCount(n)}

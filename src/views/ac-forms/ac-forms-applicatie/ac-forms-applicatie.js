@@ -47,6 +47,7 @@ import {
   createOrganisatieMapper,
   createReferentieComponentMapper,
   createBuitengemeentelijkeMapper,
+  createStandaardMapper,
   createStandaardversieMapper,
   createModuleSearchConfig,
   createOrganisatieSearchConfig,
@@ -130,14 +131,13 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     onderdeelVan: [],
     diensten: [],
     koppelingen: [],
-    compliancy: [],
-    standaarden: [],
-    standaardenGemma: [],
-    moduleVersies: [],
-    gebruiken: [],
     beoordelingen: [],
     kwetsbaarheden: [],
     licentieType: '',
+    compliancy: [],
+    standaarden: [],
+    standaardVersies: [],
+    standaardenGemma: [],
   });
 
   // Ref for ProcessSteps container
@@ -219,28 +219,31 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
   ]);
 
   // Referentiecomponenten options with search functionality
-  const referentieComponentMapper = createReferentieComponentMapper();
-  const referentieComponentenSearchConfig = createEntitySearchConfig(
-    store,
-    'element',
-    {
-      collectionKey: 'vng-gemma',
-      mapToOption: referentieComponentMapper,
-      queryParamsBuilder: (searchTerm, additionalParams = {}) => ({
-        _limit: '500',
-        _page: '1',
-        _published: 'false',
-        gemmaType: 'Referentiecomponent',
-        ...(searchTerm && searchTerm.trim() ? { _search: searchTerm.trim() } : {}),
-        ...additionalParams,
+  const referentieComponentMapper = useMemo(
+    () => createReferentieComponentMapper(),
+    []
+  );
+  const referentieComponentenSearchConfig = useMemo(
+    () =>
+      createEntitySearchConfig(store, 'element', {
+        collectionKey: 'vng-gemma',
+        mapToOption: referentieComponentMapper,
+        queryParamsBuilder: (searchTerm, additionalParams = {}) => ({
+          _limit: '500',
+          _page: '1',
+          _published: 'false',
+          gemmaType: 'Referentiecomponent',
+          ...(searchTerm && searchTerm.trim() ? { _search: searchTerm.trim() } : {}),
+          ...additionalParams,
+        }),
+        extendParams: [
+          '@self.schema',
+          'aanbevolenStandaarden',
+          'verplichteStandaarden',
+          'gekoppeldeStandaardVersies',
+        ],
       }),
-      extendParams: [
-        '@self.schema',
-        'aanbevolenStandaarden',
-        'verplichteStandaarden',
-        'gekoppeldeStandaardVersies',
-      ],
-    }
+    [store, referentieComponentMapper]
   );
   const {
     search: searchReferentieComponenten,
@@ -265,23 +268,23 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
   const selectedExtraStandardsInitializedRef = useRef(false);
 
   // Standaardenversies options with search functionality
-  const standaardversieMapper = createStandaardversieMapper();
-  const standaardenversiesSearchConfig = createEntitySearchConfig(
-    store,
-    'element',
-    {
-      collectionKey: 'vng-gemma',
-      mapToOption: standaardversieMapper,
-      queryParamsBuilder: (searchTerm, additionalParams = {}) => ({
-        _limit: '500',
-        _page: '1',
-        _published: 'false',
-        gemmaType: 'Standaardversie',
-        ...(searchTerm && searchTerm.trim() ? { _search: searchTerm.trim() } : {}),
-        ...additionalParams,
+  const standaardversieMapper = useMemo(() => createStandaardversieMapper(), []);
+  const standaardenversiesSearchConfig = useMemo(
+    () =>
+      createEntitySearchConfig(store, 'element', {
+        collectionKey: 'vng-gemma',
+        mapToOption: standaardversieMapper,
+        queryParamsBuilder: (searchTerm, additionalParams = {}) => ({
+          _limit: '500',
+          _page: '1',
+          _published: 'false',
+          gemmaType: 'Standaardversie',
+          ...(searchTerm && searchTerm.trim() ? { _search: searchTerm.trim() } : {}),
+          ...additionalParams,
+        }),
+        extendParams: ['@self.schema'],
       }),
-      extendParams: ['@self.schema'],
-    }
+    [store, standaardversieMapper]
   );
   const {
     search: searchStandaardenversies,
@@ -293,17 +296,21 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
   });
 
   // Modules options with search functionality for koppelingen
-  const moduleMapper = createModuleMapper({ type: 'applicatie' });
-  const moduleSearchConfig = createModuleSearchConfig(store, {
-    useCacheFirst: true,
-    mapToOption: moduleMapper,
-    queryParamsBuilder: (searchTerm) => ({
-      _limit: '20',
-      _page: '1',
-      _published: 'false',
-      ...(searchTerm && searchTerm.trim() ? { _search: searchTerm.trim() } : {}),
-    }),
-  });
+  const moduleMapper = useMemo(() => createModuleMapper({ type: 'applicatie' }), []);
+  const moduleSearchConfig = useMemo(
+    () =>
+      createModuleSearchConfig(store, {
+        useCacheFirst: true,
+        mapToOption: moduleMapper,
+        queryParamsBuilder: (searchTerm) => ({
+          _limit: '20',
+          _page: '1',
+          _published: 'false',
+          ...(searchTerm && searchTerm.trim() ? { _search: searchTerm.trim() } : {}),
+        }),
+      }),
+    [store, moduleMapper]
+  );
   const {
     search: searchModules,
     loading: modulesLoading,
@@ -315,23 +322,26 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
   });
 
   // Buitengemeentelijke voorzieningen options with search functionality
-  const buitengemeentelijkeMapper = createBuitengemeentelijkeMapper();
-  const buitengemeentelijkeSearchConfig = createEntitySearchConfig(
-    store,
-    'element',
-    {
-      collectionKey: 'vng-gemma',
-      mapToOption: buitengemeentelijkeMapper,
-      queryParamsBuilder: (searchTerm, additionalParams = {}) => ({
-        _limit: '500',
-        _page: '1',
-        _published: 'false',
-        gemmaType: 'Buitengemeentelijke voorziening',
-        ...(searchTerm && searchTerm.trim() ? { _search: searchTerm.trim() } : {}),
-        ...additionalParams,
+  const buitengemeentelijkeMapper = useMemo(
+    () => createBuitengemeentelijkeMapper(),
+    []
+  );
+  const buitengemeentelijkeSearchConfig = useMemo(
+    () =>
+      createEntitySearchConfig(store, 'element', {
+        collectionKey: 'vng-gemma',
+        mapToOption: buitengemeentelijkeMapper,
+        queryParamsBuilder: (searchTerm, additionalParams = {}) => ({
+          _limit: '500',
+          _page: '1',
+          _published: 'false',
+          gemmaType: 'Buitengemeentelijke voorziening',
+          ...(searchTerm && searchTerm.trim() ? { _search: searchTerm.trim() } : {}),
+          ...additionalParams,
+        }),
+        extendParams: ['@self.schema'],
       }),
-      extendParams: ['@self.schema'],
-    }
+    [store, buitengemeentelijkeMapper]
   );
   const {
     search: searchBuitengemeentelijkeVoorzieningen,
@@ -344,19 +354,29 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
 
   // Contactpersoon options with search functionality
   // Simple mapper - component handles display via getOptionLabel
-  const contactpersoonMapper = (item, index) => {
-    return mapToOption(item, index, {
-      valueFields: ['@self.id', 'id'],
-      fallbackLabel: `Contactpersoon ${index + 1}`,
-    });
-  };
-  const contactpersoonSearchConfig = createEntitySearchConfig(
-    store,
-    'contactpersoon',
-    {
-      mapToOption: contactpersoonMapper,
-      source: 'database',
-    }
+  const contactpersoonMapper = useMemo(
+    () => (item, index) => {
+      return mapToOption(item, index, {
+        valueFields: ['@self.id', 'id'],
+        fallbackLabel: `Contactpersoon ${index + 1}`,
+      });
+    },
+    []
+  );
+  const contactpersoonSearchConfig = useMemo(
+    () =>
+      createEntitySearchConfig(store, 'contactpersoon', {
+        mapToOption: contactpersoonMapper,
+        source: 'database',
+        queryParamsBuilder: (searchTerm, additionalParams = {}) => ({
+          _limit: '50',
+          _page: '1',
+          _multi: true, // Enable multitenancy
+          ...(searchTerm && searchTerm.trim() ? { _search: searchTerm.trim() } : {}),
+          ...additionalParams,
+        }),
+      }),
+    [store, contactpersoonMapper]
   );
   const {
     search: searchContactpersonen,
@@ -369,11 +389,22 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
   const [contactpersoonLoading, setContactpersoonLoading] = useState(false);
 
   // Aanbieder (organisatie) options with search functionality
-  const organisatieMapper = createOrganisatieMapper();
-  const organisatieSearchConfig = createOrganisatieSearchConfig(store, {
-    mapToOption: organisatieMapper,
-    source: 'database',
-  });
+  const organisatieMapper = useMemo(() => createOrganisatieMapper(), []);
+  const organisatieSearchConfig = useMemo(
+    () =>
+      createOrganisatieSearchConfig(store, {
+        mapToOption: organisatieMapper,
+        source: 'database',
+        queryParamsBuilder: (searchTerm, additionalParams = {}) => ({
+          _limit: '50',
+          _page: '1',
+          _multi: true, // Enable multitenancy
+          ...(searchTerm && searchTerm.trim() ? { _search: searchTerm.trim() } : {}),
+          ...additionalParams,
+        }),
+      }),
+    [store, organisatieMapper]
+  );
   const {
     search: searchAanbieders,
     loading: aanbiederSearchLoading,
@@ -460,10 +491,11 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
           String(applicatieId),
           {
             '_extend[]': [
-              '@self.schema',
+              '_schema',
               'koppelingen',
               'diensten',
               'moduleVersies',
+              'compliancy',
             ],
             _published: 'false',
           }
@@ -478,7 +510,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
           setPrefillError('Applicatie niet gevonden');
           return;
         }
-
 
         // Map referentieComponenten
         const prefilledReferentieComponenten = Array.isArray(
@@ -534,6 +565,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
           moduleVersies: fetched.moduleVersies || [],
           compliancy: fetched.compliancy || [],
           standaarden: fetched.standaarden || [],
+          standaardVersies: fetched.standaardVersies || [],
           standaardenGemma: fetched.standaardenGemma || [],
           koppelingen: prefilledKoppelingen,
           diensten: prefilledDiensten,
@@ -679,26 +711,11 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
           return;
         }
 
-        // Map to options
+        // Map to options using mapper function
         const standaarden = Array.from(standaardenMap.values());
+        const standaardMapper = createStandaardMapper();
         const options = standaarden
-          .map((item, index) => {
-            const label =
-              item?.['@self']?.name ||
-              item?.xml?.name?._value ||
-              item?.naam ||
-              item?.name ||
-              item?.title ||
-              item?.label ||
-              `Standaard ${index + 1}`;
-            const value =
-              item?.['@self']?.id || item?.id || item?.value || item?.slug || label;
-            return {
-              value: String(value),
-              label: String(label),
-              data: item, // Contains standaardVersies array populated from gekoppeldeStandaardVersies
-            };
-          })
+          .map((item, index) => standaardMapper(item, index))
           .filter((o) => o.label && o.value);
 
         setStandaardenOptions(options);
@@ -714,7 +731,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     },
     [schemas?.module, referentieComponentenOptions]
   );
-
 
   // ✅ Load standaarden when referentiecomponenten are selected
   useEffect(() => {
@@ -756,16 +772,10 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
   }, [schemas?.module]);
 
   // Initialize selectedExtraStandards from existing compliancy and standaardVersies data
-  // This should only run once on mount, not react to compliance checkbox changes
+  // This runs when editing to restore the previously selected extra standards
   useEffect(() => {
     if (standaardenversiesOptions.length === 0) return;
     if (standaardenOptions.length === 0) return; // Need standards to check standaardVersies
-    if (selectedExtraStandardsInitializedRef.current) return; // Already initialized
-    if (selectedExtraStandards.length > 0) {
-      // If already has values, mark as initialized
-      selectedExtraStandardsInitializedRef.current = true;
-      return;
-    }
 
     // Get all standaardversie IDs from compliancy and standaardVersies arrays
     const existingCompliancy = applicatie.compliancy || [];
@@ -785,10 +795,27 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       }
     });
 
+    // If no existing data, mark as initialized and return
     if (allVersieIds.size === 0) {
-      // Mark as initialized even if no data, to prevent re-running
-      selectedExtraStandardsInitializedRef.current = true;
+      if (!selectedExtraStandardsInitializedRef.current) {
+        selectedExtraStandardsInitializedRef.current = true;
+      }
       return;
+    }
+
+    // If already initialized and selectedExtraStandards matches existing data, skip
+    if (selectedExtraStandardsInitializedRef.current) {
+      const currentExtraIds = new Set(
+        selectedExtraStandards.map((s) => String(s.value))
+      );
+      // Check if the sets are identical
+      if (
+        currentExtraIds.size === allVersieIds.size &&
+        [...allVersieIds].every((id) => currentExtraIds.has(id))
+      ) {
+        return; // Already correctly initialized
+      }
+      // If data changed (e.g., when switching to edit mode), allow re-initialization
     }
 
     // Get all standaardversie IDs from referentieComponentenWithStandards
@@ -900,9 +927,9 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     standaardenOptions,
     standaardenversiesOptions,
     referentieComponentenWithStandards,
-    // Removed applicatie.compliancy, applicatie.standaardVersies, applicatie.standaardversies
-    // from dependencies to prevent re-running when compliance checkboxes are toggled
-    // This effect should only initialize once from existing data
+    applicatie.compliancy, // Include to reinitialize when editing
+    applicatie.standaardVersies, // Include to reinitialize when editing
+    selectedExtraStandards, // Include to check if already correct
   ]);
 
   // Pre-load modules once so Applicatie B has initial options
@@ -927,7 +954,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       }
     };
     loadInitialContactpersonen();
-  }, []);
+  }, [searchContactpersonen]);
 
   // Pre-load organisaties once so dropdown has initial options (only for ontbrekend-applicatie)
   useEffect(() => {
@@ -942,7 +969,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       }
     };
     loadInitialAanbieders();
-  }, [formType]);
+  }, [formType, searchAanbieders]);
 
   // Initialize koppelingen form state from applicatie.koppelingen (for edit mode)
   useEffect(() => {
@@ -1183,6 +1210,15 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         ...applicatie,
         aanbieder: finalAanbieder,
       };
+
+      // Filter out empty moduleVersies entries before submitting
+      // Only keep versions that have at least a version number or status
+      if (Array.isArray(applicatieData.moduleVersies)) {
+        applicatieData.moduleVersies = applicatieData.moduleVersies.filter(
+          (versie) => versie && (versie.versie || versie.status)
+        );
+      }
+
       const sanitized = stripLocalIds(applicatieData);
 
       let createdApplicatie = null;
@@ -1258,6 +1294,19 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
   const renderStep = () => {
     const stepLabel = stepper.getLabelFromStep(stepper.getCurrentStep());
 
+    // Show loading state while schemas are being fetched (except for type selection step)
+    if (
+      schemasLoading &&
+      stepLabel !== 'aanbieder' &&
+      formType !== 'ontbrekend-applicatie'
+    ) {
+      return (
+        <div style={{ padding: '2rem', textAlign: 'center' }}>
+          <Paragraph>Schema&apos;s laden...</Paragraph>
+        </div>
+      );
+    }
+
     switch (stepLabel) {
       case 'aanbieder':
         return (
@@ -1305,6 +1354,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
             setApplicatieData={setApplicatieData}
             loading={loading}
             schemas={schemas}
+            isEditMode={isEditMode}
           />
         );
       case 'referentiecomponenten':
@@ -1451,12 +1501,25 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       return missingNewOrgFields.length > 0;
     }
 
-    // Applicatie informatie: naam is required
+    // Applicatie informatie: naam, website, and beschrijvingKort are required
     if (stepLabel === 'applicatie-informatie') {
-      return (
-        !applicatie.naam?.trim?.() ||
-        (applicatie.website && !validateWebsite(applicatie.website))
-      );
+      // Check naam is filled
+      if (!applicatie.naam?.trim?.()) {
+        return true;
+      }
+      // Check website is filled
+      if (!applicatie.website?.trim?.()) {
+        return true;
+      }
+      // Check beschrijvingKort is filled
+      if (!applicatie.beschrijvingKort?.trim?.()) {
+        return true;
+      }
+      // Validate website format if provided
+      if (applicatie.website && !validateWebsite(applicatie.website)) {
+        return true;
+      }
+      return false;
     }
     // licentie: licentietype is required, and licentie is required when open source is selected
     if (stepLabel === 'licentie') {
@@ -1467,6 +1530,41 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       // If open source is selected, licentie is also required
       if (applicatie.licentietype === 'Open source') {
         return !applicatie.licentie || applicatie.licentie.trim() === '';
+      }
+    }
+
+    // Versies step: versie, status, and startdatum are required for each version
+    if (stepLabel === 'versies' && shouldShowVersiesStep()) {
+      if (
+        Array.isArray(applicatie.moduleVersies) &&
+        applicatie.moduleVersies.length > 0
+      ) {
+        // Check if all versions have versie, status, and corresponding datum filled
+        const hasInvalidVersions = applicatie.moduleVersies.some((versie) => {
+          const missingVersie = !versie.versie || !String(versie.versie).trim();
+          const missingStatus = !versie.status || !String(versie.status).trim();
+
+          // Check if the corresponding datum field is filled based on status
+          let missingDatum = false;
+          if (versie.status) {
+            const datumProperty = {
+              'in gebruik': 'datumInGebruik',
+              'in ontwikkeling': 'datumInOntwikkeling',
+              'einde ondersteuning': 'datumEindeOndersteuning',
+              teruggetrokken: 'datumTeruggetrokken',
+            }[versie.status];
+
+            if (datumProperty) {
+              missingDatum =
+                !versie[datumProperty] || !String(versie[datumProperty]).trim();
+            }
+          }
+
+          return missingVersie || missingStatus || missingDatum;
+        });
+        if (hasInvalidVersions) {
+          return true;
+        }
       }
     }
 
@@ -1551,6 +1649,15 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       if (!applicatie.naam || applicatie.naam.trim() === '') {
         return 'Vul de naam van de applicatie in';
       }
+      if (!applicatie.website || applicatie.website.trim() === '') {
+        return 'Vul de website van de applicatie in';
+      }
+      if (
+        !applicatie.beschrijvingKort ||
+        applicatie.beschrijvingKort.trim() === ''
+      ) {
+        return 'Vul een korte beschrijving van de applicatie in';
+      }
       if (applicatie.website && !validateWebsite(applicatie.website)) {
         return 'Website heeft een ongeldig formaat';
       }
@@ -1565,6 +1672,42 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         (!applicatie.licentie || applicatie.licentie.trim() === '')
       ) {
         return 'Selecteer een licentie';
+      }
+    }
+
+    // Versies step validation messages
+    if (stepLabel === 'versies' && shouldShowVersiesStep()) {
+      if (
+        Array.isArray(applicatie.moduleVersies) &&
+        applicatie.moduleVersies.length > 0
+      ) {
+        const versieWithoutVersie = applicatie.moduleVersies.find(
+          (versie) => !versie.versie || !String(versie.versie).trim()
+        );
+        if (versieWithoutVersie) {
+          return 'Vul het versienummer in voor alle versies';
+        }
+        const versieWithoutStatus = applicatie.moduleVersies.find(
+          (versie) => !versie.status || !String(versie.status).trim()
+        );
+        if (versieWithoutStatus) {
+          return 'Selecteer een status voor alle versies';
+        }
+        // Check for missing datum based on status
+        const versieWithoutDatum = applicatie.moduleVersies.find((versie) => {
+          if (!versie.status) return false;
+          const datumProperty = {
+            'in gebruik': 'datumInGebruik',
+            'in ontwikkeling': 'datumInOntwikkeling',
+            'einde ondersteuning': 'datumEindeOndersteuning',
+            teruggetrokken: 'datumTeruggetrokken',
+          }[versie.status];
+          if (!datumProperty) return false;
+          return !versie[datumProperty] || !String(versie[datumProperty]).trim();
+        });
+        if (versieWithoutDatum) {
+          return 'Vul de startdatum status in voor alle versies';
+        }
       }
     }
 

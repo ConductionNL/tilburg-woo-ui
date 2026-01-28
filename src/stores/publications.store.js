@@ -11,6 +11,9 @@ const LIMIT = 20;
 export const DEFAULT_SEARCH_QUERY = {
   extend: 'themes',
   _limit: LIMIT,
+  _order: {
+    '_relevance': 'desc', // Default to most relevant
+  },
 };
 
 const DEFAULT_QUERY = {
@@ -66,6 +69,22 @@ export class PublicationsStore {
     app.store = store;
   }
 
+  /**
+   * AbortController for cancelling in-flight publications fetch requests.
+   * When a new search is triggered before the previous one completes,
+   * the old request is cancelled to prevent race conditions and unnecessary API calls.
+   * @type {AbortController|null}
+   */
+  publicationsAbortController = null;
+
+  /**
+   * AbortController for cancelling in-flight facets fetch requests.
+   * When facets are re-fetched (e.g., user changes filters quickly),
+   * the old request is cancelled to prevent outdated facet data from being displayed.
+   * @type {AbortController|null}
+   */
+  facetsAbortController = null;
+
   @observable
   mobileFiltersOpen = false;
 
@@ -80,6 +99,9 @@ export class PublicationsStore {
 
   @observable
   relations = null;
+
+  @observable
+  usedData = null;
 
   @observable
   categories = [];
@@ -206,6 +228,11 @@ export class PublicationsStore {
   }
 
   @computed
+  get get_used_data() {
+    return toJS(this.usedData);
+  }
+
+  @computed
   get all_publications() {
     return this.items;
   }
@@ -304,7 +331,8 @@ export class PublicationsStore {
     console.info(key, value);
     console.info('VALUE', value);
     this.query._order = {};
-    this.query._order[key] = value;
+    // Metadata properties use _property format (e.g., _name, _published)
+    this.query._order[`_${key}`] = value;
     console.groupEnd();
   };
 
@@ -355,6 +383,11 @@ export class PublicationsStore {
   @action
   setRelations = (relations) => {
     this.relations = relations;
+  };
+
+  @action
+  setUsedData = (usedData) => {
+    this.usedData = usedData;
   };
 
   @action
@@ -420,6 +453,16 @@ export class PublicationsStore {
    */
   @action
   fetchFacets = async () => {
+    // Cancel any in-flight facets request
+    if (this.facetsAbortController) {
+      console.info('⚠️ Cancelling previous facets request');
+      this.facetsAbortController.abort();
+    }
+
+    // Create new AbortController for this request
+    this.facetsAbortController = new AbortController();
+    const signal = this.facetsAbortController.signal;
+
     this.setFacetsLoadingStatus(true);
 
     try {
@@ -430,6 +473,11 @@ export class PublicationsStore {
         _facets: 'extend', // Request extended facets
         _extend: '_schema,_register',
       };
+
+      // If _search is present, add _fuzzy=true for fuzzy relevance scoring
+      if (baseQuery._search) {
+        baseQuery._fuzzy = true;
+      }
 
       // Remove pagination parameters since we're not fetching results
       delete baseQuery._page;
@@ -446,6 +494,7 @@ export class PublicationsStore {
         method: 'GET',
         headers: getAuthHeaders(),
         credentials: 'include',
+        signal, // Add abort signal
       }).then((res) => {
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);
@@ -530,10 +579,17 @@ export class PublicationsStore {
         this.setFacets({});
       }
     } catch (error) {
+      // Don't log error if request was aborted (expected behavior)
+      if (error.name === 'AbortError') {
+        console.info('✅ Facets request cancelled');
+        return;
+      }
       console.error('Error fetching facets:', error);
       this.setFacets({});
     } finally {
       this.setFacetsLoadingStatus(false);
+      // Clear the controller reference after request completes
+      this.facetsAbortController = null;
     }
   };
 
@@ -596,13 +652,30 @@ export class PublicationsStore {
 
   @action
   fetchPublications = async () => {
+    // Cancel any in-flight publications request
+    if (this.publicationsAbortController) {
+      console.info('⚠️ Cancelling previous publications request');
+      this.publicationsAbortController.abort();
+    }
+
+    // Create new AbortController for this request
+    this.publicationsAbortController = new AbortController();
+    const signal = this.publicationsAbortController.signal;
+
     this.loading.status = true;
 
     // Build query including current filters/facets and extend parameters
+    // Include _names to get UUID-to-name mappings in response
     const baseQuery = {
       ...this.search_query,
-      _extend: '_schema,_register',
+      _extend: '_schema,_register,_names',
     };
+
+    // If _search is present, add _fuzzy=true for fuzzy relevance scoring
+    if (baseQuery._search) {
+      baseQuery._fuzzy = true;
+    }
+
     const queryString = AcBuildURLSearchParams(baseQuery);
     const fullUrl = `${commongroundApiUrl()}/opencatalogi/api/publications?${queryString}`;
 
@@ -616,6 +689,7 @@ export class PublicationsStore {
       method: 'GET',
       headers: getAuthHeaders(),
       credentials: 'include', // Include cookies like the browser
+      signal, // Add abort signal
     })
       .then((response) => {
         if (!response.ok) {
@@ -634,19 +708,22 @@ export class PublicationsStore {
         this.setItems(enrichedResults);
 
         // Process related names data to populate the names cache
-        if (response.relatedNames && app.store?.object) {
-          console.group('🏷️ PROCESSING RELATED NAMES FROM SEARCH');
+        // API may return names in response['@self'].names or response.relatedNames
+        const namesData = response['@self']?.names || response.relatedNames;
+        
+        if (namesData && app.store?.object) {
+          console.group('🏷️ PROCESSING NAMES FROM SEARCH (_extend=_names)');
           console.info(
-            'Related names received:',
-            Object.keys(response.relatedNames).length,
+            'Names received:',
+            Object.keys(namesData).length,
             'entries'
           );
-          console.info('Names data:', response.relatedNames);
-          app.store.object.processRelatedNamesFromResponse(response);
+          console.info('Names data sample:', Object.keys(namesData).slice(0, 5));
+          app.store.object.setNamesInCache(namesData);
           console.info(
             'Names cache after processing:',
             Object.keys(app.store.object.namesCache).length,
-            'entries'
+            'total entries'
           );
           console.groupEnd();
         } else if (app.store?.object && response.results?.length > 0) {
@@ -695,6 +772,7 @@ export class PublicationsStore {
           console.info('No names processing needed');
           console.info('Has object store:', !!app.store?.object);
           console.info('Results count:', response.results?.length || 0);
+          console.info('Has names in @self:', !!response['@self']?.names);
           console.info('Has relatedNames:', !!response.relatedNames);
           console.groupEnd();
         }
@@ -702,11 +780,23 @@ export class PublicationsStore {
         // Clean up response and set pagination
         delete response.results;
         delete response.relatedNames;
+        if (response['@self']) {
+          delete response['@self'].names;
+        }
         this.setPagination(response);
       })
-      .catch((e) => console.error(e))
+      .catch((e) => {
+        // Don't log error if request was aborted (expected behavior)
+        if (e.name === 'AbortError') {
+          console.info('✅ Publications request cancelled');
+          return;
+        }
+        console.error(e);
+      })
       .finally(() => {
         this.setLoadingStatus(false);
+        // Clear the controller reference after request completes
+        this.publicationsAbortController = null;
       });
   };
 
@@ -747,7 +837,7 @@ export class PublicationsStore {
             ...this.defaultQuery,
             _related: true,
             _relatedNames: true,
-            '_extend[]': '_schema',
+            '_extend[]': ['_schema', 'compliancy'],
           })
         ).toString()
       )
@@ -903,6 +993,21 @@ export class PublicationsStore {
   };
 
   @action
+  fetchUsed = async (id) => {
+    this.loading.status = true;
+
+    app.store.api.publications
+      .used(id)
+      .then((response) => {
+        this.setUsedData(response);
+      })
+      .catch((e) => console.error(e))
+      .finally(() => {
+        this.setLoadingStatus(false);
+      });
+  };
+
+  @action
   resetPublication = () => {
     this.single = null;
     this.setError(null);
@@ -916,6 +1021,11 @@ export class PublicationsStore {
   @action
   resetRelations = () => {
     this.relations = null;
+  };
+
+  @action
+  resetUsedData = () => {
+    this.usedData = null;
   };
 
   @action

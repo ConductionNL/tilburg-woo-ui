@@ -350,7 +350,7 @@ const AcFormsKoppeling = ({ store }) => {
               'module',
               String(applicatieFromUrl),
               {
-                '_extend[]': ['@self.schema'],
+                '_extend[]': ['_schema'],
                 _published: 'false',
               }
             );
@@ -484,7 +484,7 @@ const AcFormsKoppeling = ({ store }) => {
           'gebruik',
           String(gebruikId),
           {
-            '_extend[]': ['@self.schema'],
+            '_extend[]': ['_schema'],
             _published: 'false',
           }
         );
@@ -607,8 +607,6 @@ const AcFormsKoppeling = ({ store }) => {
         const queryParams = {
           _limit: '50',
           _page: '1',
-          _published: 'false',
-          _source: 'index',
         };
 
         // Add search parameter if provided
@@ -672,7 +670,7 @@ const AcFormsKoppeling = ({ store }) => {
           _limit: '50',
           _page: '1',
           _source: 'index',
-          '_extend[]': '@self.schema',
+          '_extend[]': '_schema',
           _published: 'false',
         };
 
@@ -769,7 +767,7 @@ const AcFormsKoppeling = ({ store }) => {
         _limit: '500',
         _page: '1',
         gemmaType: 'Buitengemeentelijke voorziening',
-        '_extend[]': '@self.schema',
+        '_extend[]': '_schema',
         _published: 'false',
       });
 
@@ -973,20 +971,16 @@ const AcFormsKoppeling = ({ store }) => {
         const paramsA = new URLSearchParams({
           _limit: '20',
           _page: '1',
-          _published: 'false',
         });
         paramsA.append('moduleA', moduleId);
-        paramsA.append('_source', 'index');
         const endpointA = `${BASE_URL}/openregister/api/objects/voorzieningen/koppeling?${paramsA}`;
 
         // Fetch koppelingen where moduleB = moduleId
         const paramsB = new URLSearchParams({
           _limit: '20',
           _page: '1',
-          _published: 'false',
         });
         paramsB.append('moduleB', moduleId);
-        paramsB.append('_source', 'index');
         const endpointB = `${BASE_URL}/openregister/api/objects/voorzieningen/koppeling?${paramsB}`;
 
         // Execute both fetches in parallel
@@ -1142,7 +1136,7 @@ const AcFormsKoppeling = ({ store }) => {
           'organisatie',
           organisationId,
           {
-            '_extend[]': ['@self.schema', 'deelnemers'],
+            '_extend[]': ['_schema', 'deelnemers'],
           }
         );
 
@@ -1440,7 +1434,7 @@ const AcFormsKoppeling = ({ store }) => {
         _limit: '500',
         _page: '1',
         gemmaType: 'Standaard',
-        '_extend[]': '@self.schema',
+        '_extend[]': '_schema',
         _published: 'false',
       });
 
@@ -1470,7 +1464,8 @@ const AcFormsKoppeling = ({ store }) => {
           const value = item?.value || item?.id || item?.slug || label;
           return { value: String(value), label: String(label), data: item };
         })
-        .filter((o) => o.label && o.value);
+        .filter((o) => o.label && o.value)
+        .sort((a, b) => a.label.localeCompare(b.label));
 
       setStandaardenOptions(options);
       console.info(`✅ Loaded ${options.length} standaarden (cache-first)`);
