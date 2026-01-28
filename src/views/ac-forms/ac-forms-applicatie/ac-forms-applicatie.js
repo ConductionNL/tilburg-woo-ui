@@ -101,7 +101,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     beschrijvingLang: '',
     website: '',
     contactpersoon: '',
-    cloudDienstverleningsmodel: [], 
+    cloudDienstverleningsmodel: [],
     hostingJurisdictie: '',
     hostingLocatie: '',
     aanbieder: '',
@@ -497,28 +497,28 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         // Map koppelingen with _localId for tracking (same pattern as product form)
         const prefilledKoppelingen = Array.isArray(fetched.koppelingen)
           ? fetched.koppelingen.map((kpl) => ({
-            // Preserve existing ID if present, otherwise generate local ID
-            _localId: kpl.id
-              ? `existing_${kpl.id}`
-              : `kpl_${Date.now().toString(36)}_${Math.random()
-                .toString(36)
-                .slice(2, 8)}`,
-            ...kpl,
-          }))
+              // Preserve existing ID if present, otherwise generate local ID
+              _localId: kpl.id
+                ? `existing_${kpl.id}`
+                : `kpl_${Date.now().toString(36)}_${Math.random()
+                    .toString(36)
+                    .slice(2, 8)}`,
+              ...kpl,
+            }))
           : [];
 
         // Map diensten with _localId for tracking (same pattern as product form)
         const prefilledDiensten = Array.isArray(fetched.diensten)
           ? fetched.diensten.map((dienst) => ({
-            // Preserve existing dienst ID if present, otherwise generate local ID
-            _localId:
-              typeof dienst === 'object' && dienst.id
-                ? `existing_${dienst.id}`
-                : `dienst_${Date.now().toString(36)}_${Math.random()
-                  .toString(36)
-                  .slice(2, 8)}`,
-            ...(typeof dienst === 'object' ? dienst : { type: dienst }),
-          }))
+              // Preserve existing dienst ID if present, otherwise generate local ID
+              _localId:
+                typeof dienst === 'object' && dienst.id
+                  ? `existing_${dienst.id}`
+                  : `dienst_${Date.now().toString(36)}_${Math.random()
+                      .toString(36)
+                      .slice(2, 8)}`,
+              ...(typeof dienst === 'object' ? dienst : { type: dienst }),
+            }))
           : [];
 
         // Update applicatie object with fetched data
@@ -674,100 +674,117 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
   }, [schemas?.module]);
 
   // Function to load standaarden based on selected referentiecomponenten
-  const loadStandaardenFromReferentieComponenten = useCallback(async (selectedRefComps) => {
-    if (!schemas?.module || !selectedRefComps || selectedRefComps.length === 0) {
-      console.info('⏭️ No referentiecomponenten selected, skipping standaarden load');
-      setStandaardenOptions([]);
-      return;
-    }
-
-    console.info('📋 Loading standaarden from selected referentiecomponenten...');
-    setStandaardenOptionsLoading(true);
-
-    try {
-      // ✨ REFACTORED: Use gekoppeldeStandaardVersies from the initial fetch
-      // instead of making N+1 API calls
-      const standaardenMap = new Map(); // Use Map to deduplicate and store full data
-
-      selectedRefComps.forEach((refCompValue) => {
-        // Find the full referentiecomponent data
-        const refCompOption = referentieComponentenOptions.find(opt => opt.value === refCompValue);
-        if (!refCompOption?.data) return;
-
-        const refCompData = refCompOption.data;
-
-        // Helper to process standaarden and extract their versions from gekoppeldeStandaardVersies
-        const processStandaarden = (standaardenList) => {
-          if (!Array.isArray(standaardenList)) return;
-
-          standaardenList.forEach(standaard => {
-            const standaardId = standaard?.['@self']?.id || standaard?.id || standaard;
-            if (!standaardId) return;
-
-            // If we haven't seen this standaard yet, initialize it
-            if (!standaardenMap.has(standaardId)) {
-              // Get gekoppeldeStandaardVersies for this referentiecomponent
-              const gekoppeldeVersies = refCompData.gekoppeldeStandaardVersies || [];
-
-              // Filter versions that belong to this standard
-              const standaardVersies = gekoppeldeVersies.filter(versie => {
-                // Check if this version belongs to this standard
-                const versieStandaardId = versie?.standaard?.['@self']?.id ||
-                  versie?.standaard?.id ||
-                  versie?.standaard;
-                return String(versieStandaardId) === String(standaardId);
-              });
-
-              standaardenMap.set(standaardId, {
-                ...standaard,
-                standaardVersies: standaardVersies
-              });
-            }
-          });
-        };
-
-        // Collect from both aanbevolen and verplichte standaarden
-        processStandaarden(refCompData.aanbevolenStandaarden);
-        processStandaarden(refCompData.verplichteStandaarden);
-      });
-
-      console.info(`📊 Found ${standaardenMap.size} unique standaarden from selected components`);
-
-      if (standaardenMap.size === 0) {
-        console.warn('⚠️ No standaarden found in selected referentiecomponenten');
+  const loadStandaardenFromReferentieComponenten = useCallback(
+    async (selectedRefComps) => {
+      if (!schemas?.module || !selectedRefComps || selectedRefComps.length === 0) {
+        console.info(
+          '⏭️ No referentiecomponenten selected, skipping standaarden load'
+        );
         setStandaardenOptions([]);
-        setStandaardenOptionsLoading(false);
         return;
       }
 
-      // Map to options
-      const standaarden = Array.from(standaardenMap.values());
-      const options = standaarden.map((item, index) => {
-        const label =
-          item?.['@self']?.name ||
-          item?.xml?.name?._value ||
-          item?.naam ||
-          item?.name ||
-          item?.title ||
-          item?.label ||
-          `Standaard ${index + 1}`;
-        const value = item?.['@self']?.id || item?.id || item?.value || item?.slug || label;
-        return {
-          value: String(value),
-          label: String(label),
-          data: item // Contains standaardVersies array populated from gekoppeldeStandaardVersies
-        };
-      }).filter((o) => o.label && o.value);
+      console.info('📋 Loading standaarden from selected referentiecomponenten...');
+      setStandaardenOptionsLoading(true);
 
-      setStandaardenOptions(options);
-      console.info(`✅ Loaded ${options.length} standaarden with versions from gekoppeldeStandaardVersies (eliminated N+1 queries)`);
-    } catch (e) {
-      console.error('Failed to load standaarden:', e);
-      setStandaardenOptions([]);
-    } finally {
-      setStandaardenOptionsLoading(false);
-    }
-  }, [schemas?.module, referentieComponentenOptions]);
+      try {
+        // ✨ REFACTORED: Use gekoppeldeStandaardVersies from the initial fetch
+        // instead of making N+1 API calls
+        const standaardenMap = new Map(); // Use Map to deduplicate and store full data
+
+        selectedRefComps.forEach((refCompValue) => {
+          // Find the full referentiecomponent data
+          const refCompOption = referentieComponentenOptions.find(
+            (opt) => opt.value === refCompValue
+          );
+          if (!refCompOption?.data) return;
+
+          const refCompData = refCompOption.data;
+
+          // Helper to process standaarden and extract their versions from gekoppeldeStandaardVersies
+          const processStandaarden = (standaardenList) => {
+            if (!Array.isArray(standaardenList)) return;
+
+            standaardenList.forEach((standaard) => {
+              const standaardId =
+                standaard?.['@self']?.id || standaard?.id || standaard;
+              if (!standaardId) return;
+
+              // If we haven't seen this standaard yet, initialize it
+              if (!standaardenMap.has(standaardId)) {
+                // Get gekoppeldeStandaardVersies for this referentiecomponent
+                const gekoppeldeVersies =
+                  refCompData.gekoppeldeStandaardVersies || [];
+
+                // Filter versions that belong to this standard
+                const standaardVersies = gekoppeldeVersies.filter((versie) => {
+                  // Check if this version belongs to this standard
+                  const versieStandaardId =
+                    versie?.standaard?.['@self']?.id ||
+                    versie?.standaard?.id ||
+                    versie?.standaard;
+                  return String(versieStandaardId) === String(standaardId);
+                });
+
+                standaardenMap.set(standaardId, {
+                  ...standaard,
+                  standaardVersies: standaardVersies,
+                });
+              }
+            });
+          };
+
+          // Collect from both aanbevolen and verplichte standaarden
+          processStandaarden(refCompData.aanbevolenStandaarden);
+          processStandaarden(refCompData.verplichteStandaarden);
+        });
+
+        console.info(
+          `📊 Found ${standaardenMap.size} unique standaarden from selected components`
+        );
+
+        if (standaardenMap.size === 0) {
+          console.warn('⚠️ No standaarden found in selected referentiecomponenten');
+          setStandaardenOptions([]);
+          setStandaardenOptionsLoading(false);
+          return;
+        }
+
+        // Map to options
+        const standaarden = Array.from(standaardenMap.values());
+        const options = standaarden
+          .map((item, index) => {
+            const label =
+              item?.['@self']?.name ||
+              item?.xml?.name?._value ||
+              item?.naam ||
+              item?.name ||
+              item?.title ||
+              item?.label ||
+              `Standaard ${index + 1}`;
+            const value =
+              item?.['@self']?.id || item?.id || item?.value || item?.slug || label;
+            return {
+              value: String(value),
+              label: String(label),
+              data: item, // Contains standaardVersies array populated from gekoppeldeStandaardVersies
+            };
+          })
+          .filter((o) => o.label && o.value);
+
+        setStandaardenOptions(options);
+        console.info(
+          `✅ Loaded ${options.length} standaarden with versions from gekoppeldeStandaardVersies (eliminated N+1 queries)`
+        );
+      } catch (e) {
+        console.error('Failed to load standaarden:', e);
+        setStandaardenOptions([]);
+      } finally {
+        setStandaardenOptionsLoading(false);
+      }
+    },
+    [schemas?.module, referentieComponentenOptions]
+  );
 
   // Legacy function kept for backward compatibility (now unused)
   // const loadStandaarden = useCallback(async () => {
@@ -778,7 +795,9 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
   const loadAllStandaardenversies = useCallback(async () => {
     if (!schemas?.module) return;
 
-    console.info('📋 Loading ALL standaardversies for extra standaardversies dropdown...');
+    console.info(
+      '📋 Loading ALL standaardversies for extra standaardversies dropdown...'
+    );
     setStandaardenversiesOptionsLoading(true);
 
     try {
@@ -801,7 +820,9 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       );
       const list = await response.json();
 
-      console.info(`📊 Received ${list.results?.length || 0} standaardversies from API`);
+      console.info(
+        `📊 Received ${list.results?.length || 0} standaardversies from API`
+      );
 
       // Map to options
       const options = (list.results || [])
@@ -816,17 +837,26 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
             `Standaardversie ${index + 1}`;
           // Use identifier first (id- prefixed format) to match what we store in compliancy/standaardVersies
           const value =
-            item?.['@self']?.id || item?.identifier || item?.value || item?.id || item?.slug || label;
+            item?.['@self']?.id ||
+            item?.identifier ||
+            item?.value ||
+            item?.id ||
+            item?.slug ||
+            label;
           return { value: String(value), label: String(label), data: item };
         })
         .filter((o) => o.label && o.value)
         .sort((a, b) => a.label.localeCompare(b.label));
 
       setStandaardenversiesOptions(options);
-      console.info(`✅ Loaded ${options.length} standaardversies options for dropdown`);
+      console.info(
+        `✅ Loaded ${options.length} standaardversies options for dropdown`
+      );
 
       if (options.length === 0) {
-        console.warn('⚠️ No standaardversies found - API might be empty or filtered');
+        console.warn(
+          '⚠️ No standaardversies found - API might be empty or filtered'
+        );
       }
     } catch (e) {
       console.error('Failed to load standaardversies:', e);
@@ -852,7 +882,12 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     if (shouldLoadRefs) {
       loadReferentieComponenten();
     }
-  }, [schemas?.module, referentieComponentenOptions.length, referentieComponentenLoading, loadReferentieComponenten]);
+  }, [
+    schemas?.module,
+    referentieComponentenOptions.length,
+    referentieComponentenLoading,
+    loadReferentieComponenten,
+  ]);
 
   // ✅ Load standaarden when referentiecomponenten are selected
   useEffect(() => {
@@ -860,7 +895,9 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     if (referentieComponentenOptions.length === 0) return; // Wait for options to load
 
     // Get the IDs/values from referentieComponentenWithStandards
-    const selectedRefCompValues = referentieComponentenWithStandards.map(rc => rc.id || rc.value);
+    const selectedRefCompValues = referentieComponentenWithStandards.map(
+      (rc) => rc.id || rc.value
+    );
 
     if (selectedRefCompValues.length > 0) {
       loadStandaardenFromReferentieComponenten(selectedRefCompValues);
@@ -868,7 +905,12 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       // Clear standaarden if no referentiecomponenten selected
       setStandaardenOptions([]);
     }
-  }, [referentieComponentenWithStandards, referentieComponentenOptions, schemas?.module, loadStandaardenFromReferentieComponenten]);
+  }, [
+    referentieComponentenWithStandards,
+    referentieComponentenOptions,
+    schemas?.module,
+    loadStandaardenFromReferentieComponenten,
+  ]);
 
   // ✅ Load ALL standaardversies when schemas are available (for extra standaardversies dropdown)
   useEffect(() => {
@@ -881,7 +923,12 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     if (shouldLoadStandaardversies) {
       loadAllStandaardenversies();
     }
-  }, [schemas?.module, standaardenversiesOptions.length, standaardenversiesOptionsLoading, loadAllStandaardenversies]);
+  }, [
+    schemas?.module,
+    standaardenversiesOptions.length,
+    standaardenversiesOptionsLoading,
+    loadAllStandaardenversies,
+  ]);
 
   // Initialize selectedExtraStandards from existing compliancy and standaardVersies data
   // This runs when editing to restore the previously selected extra standards
@@ -1396,8 +1443,8 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
           kpl && kpl._localId
             ? kpl._localId
             : kpl?.id
-              ? `existing_${kpl.id}`
-              : `kpl_${Date.now().toString(36)}_${Math.random()
+            ? `existing_${kpl.id}`
+            : `kpl_${Date.now().toString(36)}_${Math.random()
                 .toString(36)
                 .slice(2, 8)}`;
         nextKoppelingIdByRow[rowId] = localId;
@@ -1601,8 +1648,8 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
           dienst && dienst._localId
             ? dienst._localId
             : dienst?.id
-              ? `existing_${dienst.id}`
-              : `dienst_${Date.now().toString(36)}_${Math.random()
+            ? `existing_${dienst.id}`
+            : `dienst_${Date.now().toString(36)}_${Math.random()
                 .toString(36)
                 .slice(2, 8)}`;
         nextDienstIdByRow[rowId] = localId;
@@ -1782,8 +1829,9 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
             redirectParams.set('applicatie', String(applicatieIdValue));
 
             // Reconstruct the relative URL with the new parameter
-            const redirectUrl = `${url.pathname}${redirectParams.toString() ? `?${redirectParams.toString()}` : ''
-              }`;
+            const redirectUrl = `${url.pathname}${
+              redirectParams.toString() ? `?${redirectParams.toString()}` : ''
+            }`;
 
             // Navigate to the redirect URL
             navigate(redirectUrl);
@@ -1832,7 +1880,11 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     const logicalStep = getLogicalStepFromPhysical(step);
 
     // Show loading state while schemas are being fetched (except for type selection step)
-    if (schemasLoading && logicalStep !== 0 && formType !== 'ontbrekend-applicatie') {
+    if (
+      schemasLoading &&
+      logicalStep !== 0 &&
+      formType !== 'ontbrekend-applicatie'
+    ) {
       return (
         <div style={{ padding: '2rem', textAlign: 'center' }}>
           <Paragraph>Schema&apos;s laden...</Paragraph>
@@ -2076,7 +2128,10 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
 
     // Versies step: versie, status, and startdatum are required for each version
     if (logicalStep === 3 && shouldShowVersiesStep()) {
-      if (Array.isArray(applicatie.moduleVersies) && applicatie.moduleVersies.length > 0) {
+      if (
+        Array.isArray(applicatie.moduleVersies) &&
+        applicatie.moduleVersies.length > 0
+      ) {
         // Check if all versions have versie, status, and corresponding datum filled
         const hasInvalidVersions = applicatie.moduleVersies.some((versie) => {
           const missingVersie = !versie.versie || !String(versie.versie).trim();
@@ -2093,7 +2148,8 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
             }[versie.status];
 
             if (datumProperty) {
-              missingDatum = !versie[datumProperty] || !String(versie[datumProperty]).trim();
+              missingDatum =
+                !versie[datumProperty] || !String(versie[datumProperty]).trim();
             }
           }
 
@@ -2120,22 +2176,88 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       }
     }
 
-    // Koppelingen step: validate that all started koppelingen have a naam
-    // A koppeling is considered "started" if it has moduleB filled in
-    // Empty koppelingen (no moduleB) are ignored - koppelingen are optional
+    // Koppelingen step: validate based on complex business rules
+    // Rules:
+    // 1. If moduleB is selected BUT naam OR richting is missing → INVALID
+    // 2. If naam is filled BUT moduleB OR richting is missing → INVALID
+    // 3. If moduleB AND naam are filled BUT richting is missing → INVALID
+    // 4. If only richting is selected (no moduleB, no naam) → VALID (can progress)
+    // 5. If nothing is selected → VALID (koppelingen are optional)
+    // 6. If all three are filled → VALID
     if (logicalStep === 6) {
-      if (Array.isArray(applicatie.koppelingen)) {
-        const startedKoppelingenWithoutNaam = applicatie.koppelingen.filter((kp) => {
-          // Check if koppeling has moduleB (meaning it was started)
-          const hasModuleB = kp.moduleB != null && String(kp.moduleB).trim() !== '';
-          // Check if naam is missing
-          const missingNaam = !kp.naam || !String(kp.naam).trim();
-          // Only flag as invalid if started but missing naam
-          return hasModuleB && missingNaam;
-        });
-        if (startedKoppelingenWithoutNaam.length > 0) {
-          return true;
+      // Check BOTH persisted koppelingen AND UI state (naamByRow, selectedAppBByRow, directionByRow)
+      // The naam field is stored separately in naamByRow and may not be in koppelingen yet
+      const naamByRow = koppelingenFormState.naamByRow || {};
+      const selectedAppBByRow = koppelingenFormState.selectedAppBByRow || {};
+      const directionByRow = koppelingenFormState.directionByRow || {};
+      const koppelingIdByRow = koppelingenFormState.koppelingIdByRow || {};
+      const rows = koppelingenFormState.rows || [];
+
+      // Validate each row by combining persisted data with UI state
+      const hasInvalidRow = rows.some((rowId) => {
+        const localId = koppelingIdByRow[rowId];
+
+        // Find the persisted koppeling for this row
+        const persistedKoppeling = Array.isArray(applicatie.koppelingen)
+          ? applicatie.koppelingen.find((k) => k._localId === localId)
+          : null;
+
+        // Check naam from BOTH persisted data AND UI state
+        const persistedNaam =
+          persistedKoppeling?.naam && String(persistedKoppeling.naam).trim() !== ''
+            ? String(persistedKoppeling.naam).trim()
+            : '';
+        const uiNaam =
+          naamByRow[rowId] && String(naamByRow[rowId]).trim() !== ''
+            ? String(naamByRow[rowId]).trim()
+            : '';
+        const hasNaam = persistedNaam !== '' || uiNaam !== '';
+
+        // Check moduleB from BOTH persisted data AND UI state
+        const persistedModuleB =
+          persistedKoppeling?.moduleB != null &&
+          String(persistedKoppeling.moduleB).trim() !== ''
+            ? String(persistedKoppeling.moduleB).trim()
+            : '';
+        const uiModuleB =
+          selectedAppBByRow[rowId] != null &&
+          String(selectedAppBByRow[rowId]).trim() !== ''
+            ? String(selectedAppBByRow[rowId]).trim()
+            : '';
+        const hasModuleB = persistedModuleB !== '' || uiModuleB !== '';
+
+        // Check richting from BOTH persisted data AND UI state
+        const persistedRichting =
+          persistedKoppeling?.gegevensuitwisselingRichting &&
+          String(persistedKoppeling.gegevensuitwisselingRichting).trim() !== ''
+            ? String(persistedKoppeling.gegevensuitwisselingRichting).trim()
+            : '';
+        const uiRichting =
+          directionByRow[rowId] != null &&
+          String(directionByRow[rowId]).trim() !== ''
+            ? String(directionByRow[rowId]).trim()
+            : '';
+        const hasRichting = persistedRichting !== '' || uiRichting !== '';
+
+        // Case: moduleB is filled but naam OR richting is missing
+        if (hasModuleB && (!hasNaam || !hasRichting)) {
+          return true; // Invalid
         }
+
+        // Case: naam is filled but moduleB OR richting is missing
+        if (hasNaam && (!hasModuleB || !hasRichting)) {
+          return true; // Invalid
+        }
+
+        // All other cases are valid:
+        // - Nothing filled (empty row)
+        // - Only richting filled
+        // - All three filled
+        return false;
+      });
+
+      if (hasInvalidRow) {
+        return true;
       }
     }
 
@@ -2190,7 +2312,10 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       if (!applicatie.website || applicatie.website.trim() === '') {
         return 'Vul de website van de applicatie in';
       }
-      if (!applicatie.beschrijvingKort || applicatie.beschrijvingKort.trim() === '') {
+      if (
+        !applicatie.beschrijvingKort ||
+        applicatie.beschrijvingKort.trim() === ''
+      ) {
         return 'Vul een korte beschrijving van de applicatie in';
       }
       if (applicatie.website && !validateWebsite(applicatie.website)) {
@@ -2212,7 +2337,10 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
 
     // Versies step validation messages
     if (logicalStep === 3 && shouldShowVersiesStep()) {
-      if (Array.isArray(applicatie.moduleVersies) && applicatie.moduleVersies.length > 0) {
+      if (
+        Array.isArray(applicatie.moduleVersies) &&
+        applicatie.moduleVersies.length > 0
+      ) {
         const versieWithoutVersie = applicatie.moduleVersies.find(
           (versie) => !versie.versie || !String(versie.versie).trim()
         );
@@ -2258,18 +2386,93 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     }
 
     if (logicalStep === 6) {
-      if (Array.isArray(applicatie.koppelingen)) {
-        const startedKoppelingWithoutNaam = applicatie.koppelingen.find((kp) => {
-          // Check if koppeling has moduleB (meaning it was started)
-          const hasModuleB = kp.moduleB != null && String(kp.moduleB).trim() !== '';
-          // Check if naam is missing
-          const missingNaam = !kp.naam || !String(kp.naam).trim();
-          // Only flag as invalid if started but missing naam
-          return hasModuleB && missingNaam;
-        });
-        if (startedKoppelingWithoutNaam) {
-          return 'Vul voor alle koppelingen de naam in';
+      // Check BOTH persisted koppelingen AND UI state (naamByRow, selectedAppBByRow, directionByRow)
+      // The naam field is stored separately in naamByRow and may not be in koppelingen yet
+      const naamByRow = koppelingenFormState.naamByRow || {};
+      const selectedAppBByRow = koppelingenFormState.selectedAppBByRow || {};
+      const directionByRow = koppelingenFormState.directionByRow || {};
+      const koppelingIdByRow = koppelingenFormState.koppelingIdByRow || {};
+      const rows = koppelingenFormState.rows || [];
+
+      // Find the first invalid row to provide specific error message
+      let invalidRowData = null;
+
+      for (const rowId of rows) {
+        const localId = koppelingIdByRow[rowId];
+
+        // Find the persisted koppeling for this row
+        const persistedKoppeling = Array.isArray(applicatie.koppelingen)
+          ? applicatie.koppelingen.find((k) => k._localId === localId)
+          : null;
+
+        // Check naam from BOTH persisted data AND UI state
+        const persistedNaam =
+          persistedKoppeling?.naam && String(persistedKoppeling.naam).trim() !== ''
+            ? String(persistedKoppeling.naam).trim()
+            : '';
+        const uiNaam =
+          naamByRow[rowId] && String(naamByRow[rowId]).trim() !== ''
+            ? String(naamByRow[rowId]).trim()
+            : '';
+        const hasNaam = persistedNaam !== '' || uiNaam !== '';
+
+        // Check moduleB from BOTH persisted data AND UI state
+        const persistedModuleB =
+          persistedKoppeling?.moduleB != null &&
+          String(persistedKoppeling.moduleB).trim() !== ''
+            ? String(persistedKoppeling.moduleB).trim()
+            : '';
+        const uiModuleB =
+          selectedAppBByRow[rowId] != null &&
+          String(selectedAppBByRow[rowId]).trim() !== ''
+            ? String(selectedAppBByRow[rowId]).trim()
+            : '';
+        const hasModuleB = persistedModuleB !== '' || uiModuleB !== '';
+
+        // Check richting from BOTH persisted data AND UI state
+        const persistedRichting =
+          persistedKoppeling?.gegevensuitwisselingRichting &&
+          String(persistedKoppeling.gegevensuitwisselingRichting).trim() !== ''
+            ? String(persistedKoppeling.gegevensuitwisselingRichting).trim()
+            : '';
+        const uiRichting =
+          directionByRow[rowId] != null &&
+          String(directionByRow[rowId]).trim() !== ''
+            ? String(directionByRow[rowId]).trim()
+            : '';
+        const hasRichting = persistedRichting !== '' || uiRichting !== '';
+
+        // Check if this row is invalid
+        const isInvalid =
+          (hasModuleB && (!hasNaam || !hasRichting)) ||
+          (hasNaam && (!hasModuleB || !hasRichting));
+
+        if (isInvalid) {
+          invalidRowData = { hasModuleB, hasNaam, hasRichting };
+          break;
         }
+      }
+
+      if (invalidRowData) {
+        const { hasModuleB, hasNaam, hasRichting } = invalidRowData;
+
+        // Build list of missing fields
+        const missingFields = [];
+
+        if (hasModuleB || hasNaam) {
+          // If either moduleB or naam is filled, all three are required
+          if (!hasModuleB) missingFields.push('Applicatie B of BGV');
+          if (!hasNaam) missingFields.push('Naam');
+          if (!hasRichting) missingFields.push('Richting');
+        }
+
+        if (missingFields.length > 0) {
+          return `${missingFields.join(', ')} ${
+            missingFields.length === 1 ? 'is' : 'zijn'
+          } verplicht`;
+        }
+
+        return 'Vul alle velden in voor koppelingen met een naam of Applicatie B';
       }
     }
 
@@ -2379,36 +2582,36 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
                                 status:
                                   formType === 'ontbrekend-applicatie'
                                     ? getStatusMultiStep(
-                                      currentStep,
-                                      getAdjustedStepIndex(0),
-                                      getAdjustedStepIndex(0),
-                                      getAdjustedStepIndex(1)
-                                    )
+                                        currentStep,
+                                        getAdjustedStepIndex(0),
+                                        getAdjustedStepIndex(0),
+                                        getAdjustedStepIndex(1)
+                                      )
                                     : getStatus(
-                                      currentStep,
-                                      getAdjustedStepIndex(1)
-                                    ),
+                                        currentStep,
+                                        getAdjustedStepIndex(1)
+                                      ),
                                 title: 'Applicatie informatie',
                                 steps:
                                   formType === 'ontbrekend-applicatie'
                                     ? [
-                                      {
-                                        id: 'aanbieder-substep',
-                                        status: getStatus(
-                                          currentStep,
-                                          getAdjustedStepIndex(0)
-                                        ),
-                                        title: 'Aanbieder',
-                                      },
-                                      {
-                                        id: 'applicatie-info-substep',
-                                        status: getStatus(
-                                          currentStep,
-                                          getAdjustedStepIndex(1)
-                                        ),
-                                        title: 'Applicatie gegevens',
-                                      },
-                                    ]
+                                        {
+                                          id: 'aanbieder-substep',
+                                          status: getStatus(
+                                            currentStep,
+                                            getAdjustedStepIndex(0)
+                                          ),
+                                          title: 'Aanbieder',
+                                        },
+                                        {
+                                          id: 'applicatie-info-substep',
+                                          status: getStatus(
+                                            currentStep,
+                                            getAdjustedStepIndex(1)
+                                          ),
+                                          title: 'Applicatie gegevens',
+                                        },
+                                      ]
                                     : undefined,
                               },
                               {
@@ -2433,15 +2636,15 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
                                   // Conditionally include Versies step for On-premises
                                   ...(shouldShowVersiesStep()
                                     ? [
-                                      {
-                                        id: 'versies-substep',
-                                        status: getStatus(
-                                          currentStep,
-                                          getAdjustedStepIndex(3)
-                                        ),
-                                        title: 'Versies',
-                                      },
-                                    ]
+                                        {
+                                          id: 'versies-substep',
+                                          status: getStatus(
+                                            currentStep,
+                                            getAdjustedStepIndex(3)
+                                          ),
+                                          title: 'Versies',
+                                        },
+                                      ]
                                     : []),
                                   {
                                     id: 'referentiecomponenten-substep',
@@ -2540,7 +2743,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
                             className={clsx(
                               'ac-register-form-buttons',
                               currentStep !== 0 &&
-                              'ac-register-form-buttons-not-first-step'
+                                'ac-register-form-buttons-not-first-step'
                             )}
                           >
                             {currentStep !== 0 && (
@@ -2623,8 +2826,8 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
                                 {isEditMode
                                   ? 'Applicatie updaten'
                                   : redirect
-                                    ? 'Applicatie aanmelden en terug naar vorige wizard'
-                                    : 'Applicatie aanmelden'}
+                                  ? 'Applicatie aanmelden en terug naar vorige wizard'
+                                  : 'Applicatie aanmelden'}
                               </AcButton>
                             )}
                           </div>
