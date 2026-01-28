@@ -131,28 +131,29 @@ const AcSearch = ({ store: { publications, user, object } }) => {
     }
 
     return all_publications?.map((publication, index) => {
-      switch (publication['@self'].schema.slug) {
+      const selfData = publication['@self'];
+
+      switch (selfData.schema.slug) {
         case 'product':
         case 'module':
         case 'organisatie':
-          const selfData1 = publication['@self'];
           return (
             <ConCardOrganisationApplication
               {...publication}
-              self={selfData1}
-              id={publication.id || selfData1?.id}
-              title={extractTitle(selfData1.name)}
+              self={selfData}
+              id={publication.id || selfData?.id}
+              title={extractTitle(selfData.name)}
               summary={extractSummary(
-                selfData1?.summary || publication?.beschrijvingKort
+                selfData?.summary || publication?.beschrijvingKort
               )}
               logo={getImageFromPublication(publication)}
-              cardType={selfData1.schema.slug}
-              type={selfData1.schema.title}
+              cardType={selfData.schema.slug}
+              type={selfData.schema.title}
               user={user}
               referenceComponents={publication.referentieComponenten}
-              updated={selfData1.updated}
-              published={selfData1.published}
-              organisation={selfData1.organisation}
+              updated={selfData.updated}
+              published={selfData.published}
+              organisation={selfData.organisation}
               objectStore={object}
               key={index}
             />
@@ -256,7 +257,6 @@ const AcSearch = ({ store: { publications, user, object } }) => {
             />
           );
         default:
-          const selfData = publication['@self'];
           return (
             <AcSearchResult
               id={publication.id || selfData?.id}
