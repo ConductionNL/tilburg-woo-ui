@@ -46,9 +46,7 @@ const ConActiveFilters = ({ activeFilters, onClearAllFilters }) => {
               onClick={() => filter.onRemove()}
               aria-label={`Verwijder filter: ${filter.label}`}
             >
-              <ConUuidResolver>
-                {filter.label}
-              </ConUuidResolver>{' '}
+              <ConUuidResolver>{filter.label}</ConUuidResolver>
               <VISUALS.CLOSE style={{ width: '14px', height: '14px' }} />
             </AcButton>
           ))}

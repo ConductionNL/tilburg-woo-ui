@@ -22,6 +22,7 @@
       white-space: nowrap;
       flex: 1;
       min-width: 0; // Allow shrinking
+      text-decoration: none !important;
     }
 
     // X icon styling - ensure it stays visible
