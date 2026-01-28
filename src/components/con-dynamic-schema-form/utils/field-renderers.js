@@ -537,7 +537,7 @@ export const renderField = ({
         touchedKey={path}
         minLength={propertySchema?.minLength ?? undefined}
         maxLength={propertySchema?.maxLength ?? undefined}
-        pattern={propertySchema?.pattern || undefined}
+        pattern={fieldConfig.pattern !== undefined ? fieldConfig.pattern : (propertySchema?.pattern || undefined)}
         {...validation}
         style={inputStyle}
       />
@@ -682,7 +682,7 @@ export const renderField = ({
             getOptionLabel: fieldConfig.getOptionLabel,
           })}
           onInputChange={
-            handleSearch && getFieldRefSchemaSlug(propertySchema)
+            handleSearch
               ? (inputValue, actionMeta) => {
                   // Only trigger search for user input
                   if (actionMeta.action === 'input-change' && !isLoading) {

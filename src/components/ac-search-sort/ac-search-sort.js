@@ -32,8 +32,9 @@ const AcSearchSort = ({ store: { publications }, type }) => {
     if (value.length !== 2) {
       resetSort();
       // Remove all _order parameters from URL
-      params.delete('_order[@self.published]');
-      params.delete('_order[@self.name]');
+      params.delete('_order[_published]');
+      params.delete('_order[_name]');
+      params.delete('_order[_relevance]');
       setSearchParams(params);
       return;
     }
@@ -42,11 +43,13 @@ const AcSearchSort = ({ store: { publications }, type }) => {
     setSort(key, order);
 
     // Remove any existing _order parameters before setting the new one
-    params.delete('_order[@self.published]');
-    params.delete('_order[@self.name]');
+    params.delete('_order[_published]');
+    params.delete('_order[_name]');
+    params.delete('_order[_relevance]');
 
     // Update URL with new _order parameter
-    params.set(`_order[@self.${key}]`, order);
+    // Metadata properties use _property format (e.g., _name, _published, _relevance)
+    params.set(`_order[_${key}]`, order);
     params.set('_page', '1'); // Reset to first page when sorting changes
     setSearchParams(params);
   };
@@ -60,23 +63,35 @@ const AcSearchSort = ({ store: { publications }, type }) => {
       >
         <FormLabel for='sorting'>{label}</FormLabel>
         <Select id='sorting' onChange={onChangeCallback}>
-          <SelectOption value='default'>Meest relevant</SelectOption>
           <SelectOption
-            selected={get_order?.published === 'ASC'}
-            value='published|asc'
+            selected={get_order?._relevance === 'desc'}
+            value='relevance|desc'
+          >
+            Meest relevant
+          </SelectOption>
+          {/* For debug */}
+          {/* <SelectOption
+            selected={get_order?._relevance === 'asc'}
+            value='relevance|asc'
+          >
+            Minst relevant
+          </SelectOption> */}
+          <SelectOption
+            selected={get_order?._published === 'desc'}
+            value='published|desc'
           >
             Datum - oud naar nieuw
           </SelectOption>
           <SelectOption
-            selected={get_order?.published === 'DESC'}
-            value='published|desc'
+            selected={get_order?._published === 'asc'}
+            value='published|asc'
           >
             Datum - nieuw naar oud
           </SelectOption>
-          <SelectOption selected={get_order?.name === 'ASC'} value='name|asc'>
+          <SelectOption selected={get_order?._name === 'asc'} value='name|asc'>
             Naam - A naar Z
           </SelectOption>
-          <SelectOption selected={get_order?.name === 'DESC'} value='name|desc'>
+          <SelectOption selected={get_order?._name === 'desc'} value='name|desc'>
             Naam - Z naar A
           </SelectOption>
         </Select>

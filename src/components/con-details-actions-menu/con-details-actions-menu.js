@@ -175,8 +175,8 @@ const ConDetailsActionsMenu = ({
               </ConActionMenu.Button>
             )}
 
-            {/* Publish/Depublish actions */}
-            {showPublishActions && !published && (
+            {/* Publish/Depublish actions - LEGACY: No longer needed */}
+            {/* {showPublishActions && !published && (
               <ConActionMenu.Button
                 icon={<VISUALS.PUBLISH />}
                 onClick={canEdit ? handlePublish : undefined}
@@ -204,7 +204,7 @@ const ConDetailsActionsMenu = ({
               >
                 Depubliceren
               </ConActionMenu.Button>
-            )}
+            )} */}
 
             {/* Delete action */}
             {onDelete && (

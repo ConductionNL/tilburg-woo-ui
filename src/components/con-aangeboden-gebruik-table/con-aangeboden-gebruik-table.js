@@ -288,14 +288,10 @@ const ConAangebodenSuggestiesTable = ({ store, onDataChange, id }) => {
       key: '',
       static: true,
       customContent: (row) => {
-        // Hack because id does not give back the correct uuid TODO: if fixed in the api remove this
-        // const rowId = row?.['@self']?.id;
-        const rowId = row?.['@self']?.uuid;
+        const rowId = row?.['@self']?.uuid || row?.['@self']?.id;
         const isThisRowProcessing = processingAction?.id === rowId;
-        const isClaimLoading =
-          isThisRowProcessing && processingAction?.action === 'claim';
-        const isDenyLoading =
-          isThisRowProcessing && processingAction?.action === 'deny';
+        const isClaimLoading = isThisRowProcessing && processingAction?.action === 'claim';
+        const isDenyLoading = isThisRowProcessing && processingAction?.action === 'deny';
 
         return (
           <AcFlex spacing='xs'>

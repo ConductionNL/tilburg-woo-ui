@@ -4,6 +4,7 @@ import { observer } from 'mobx-react-lite';
 import { AcCheckbox, ConAccordion, ConActiveFilters } from '@molecules';
 import { withStore } from '@stores';
 import { useFacetNameResolution } from '@hooks';
+import { schemaCache } from '@services/schemaCache.service';
 
 import { Heading, Textbox } from '@utrecht/component-library-react/dist/css-module';
 import { AcFlex, AcCard } from '@atoms';
@@ -97,10 +98,8 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
       // Update store
       updateQuery(withPageReset);
 
-      // Trigger facets fetch to update counts with new filters
-      publications.fetchFacets();
-
-      // Fetch is triggered by URL change effect in AcSearch
+      // Note: Facets fetch is triggered by URL change effect in AcSearch
+      // No need to call fetchFacets() here to avoid duplicate API calls
     } else {
       // Use the existing function for regular keys
       toggleSearchArrayValue(facetKey, value);
@@ -109,10 +108,8 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
       const paramsString = AcBuildURLSearchParams(nextQuery);
       setSearchParams(new URLSearchParams(paramsString));
 
-      // Trigger facets fetch to update counts with new filters
-      publications.fetchFacets();
-
-      // Fetch is triggered by URL change effect in AcSearch
+      // Note: Facets fetch is triggered by URL change effect in AcSearch
+      // No need to call fetchFacets() here to avoid duplicate API calls
     }
   };
 
@@ -251,7 +248,51 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
       const bucket = facets[mainKey]?.[cleanSubKey]?.buckets?.find(
         (b) => String(b.value || b.key) === String(value)
       );
-      return bucket?.label || value;
+      
+      if (bucket?.label) {
+        return bucket.label;
+      }
+      
+      // Fallback: Check if this is a schema slug/ID and try to get the title from schemas in store
+      if (cleanSubKey === 'schema' && object?.schemas) {
+        console.log('🔍 Looking for schema label for value:', value);
+        console.log('📚 Available schemas:', Object.keys(object.schemas));
+        
+        // First, try to convert ID to slug using schemaCache if value looks like an ID
+        let searchValue = value;
+        if (/^\d+$/.test(value)) {
+          // Value is numeric - probably an ID, try to get slug
+          const slug = schemaCache.get(value);
+          console.log(`🔄 Converted ID ${value} to slug:`, slug);
+          if (slug) {
+            searchValue = slug;
+          }
+        }
+        
+        // Look through all schemas to find one that matches
+        const schemaEntry = Object.values(object.schemas).find((schema) => {
+          const matches = 
+            schema?.slug === searchValue || 
+            schema?.name === searchValue ||
+            String(schema?.id) === String(value) ||
+            String(schema?.['@self']?.id) === String(value);
+          
+          if (matches) {
+            console.log('✅ Found matching schema:', schema);
+          }
+          
+          return matches;
+        });
+        
+        if (schemaEntry?.title) {
+          console.log('✅ Returning schema title:', schemaEntry.title);
+          return schemaEntry.title;
+        }
+        
+        console.log('❌ No schema title found, using value:', value);
+      }
+      
+      return value;
     }
 
     // Handle regular facets
@@ -376,36 +417,6 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
     return value.buckets && value.buckets.length > 0;
   });
 
-  if (!hasAnyFacetData) {
-    return (
-      <AcFlex column spacing='sm'>
-        <p
-          style={{
-            color: '#6c757d',
-            margin: '0 0 0.5rem 0',
-            fontWeight: '500',
-            textAlign: 'left',
-          }}
-        >
-          Geen filters beschikbaar
-        </p>
-        <p
-          style={{
-            color: '#6c757d',
-            fontSize: '0.9em',
-            margin: '0',
-            lineHeight: '1.4',
-            textAlign: 'left',
-          }}
-        >
-          Er zijn momenteel geen filteropties beschikbaar voor deze zoekopdracht. Dit
-          kan komen doordat er geen publicaties zijn gevonden met faceteerbare
-          gegevens.
-        </p>
-      </AcFlex>
-    );
-  }
-
   // Filter out disabled and empty facets from the facets object.
   // For '@self' facets, only keep them if they have buckets and are enabled.
   // For all other facets, keep them if they have buckets and are enabled.
@@ -481,7 +492,34 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
         activeFilters={activeFilters}
         onClearAllFilters={clearAllFilters}
       />
-      {sortedFacets.map(([key, value]) => {
+      {!hasAnyFacetData ? (
+        <AcFlex column spacing='sm'>
+          <p
+            style={{
+              color: '#6c757d',
+              margin: '0 0 0.5rem 0',
+              fontWeight: '500',
+              textAlign: 'left',
+            }}
+          >
+            Geen filters beschikbaar
+          </p>
+          <p
+            style={{
+              color: '#6c757d',
+              fontSize: '0.9em',
+              margin: '0',
+              lineHeight: '1.4',
+              textAlign: 'left',
+            }}
+          >
+            Er zijn momenteel geen filteropties beschikbaar voor deze zoekopdracht. Dit
+            kan komen doordat er geen publicaties zijn gevonden met faceteerbare
+            gegevens.
+          </p>
+        </AcFlex>
+      ) : (
+        sortedFacets.map(([key, value]) => {
         return key === '@self' ? (
           <React.Fragment key={key}>
             {Object.entries(value)
@@ -649,10 +687,8 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
                             const paramsString = AcBuildURLSearchParams(nextQuery);
                             setSearchParams(new URLSearchParams(paramsString));
 
-                            // Trigger facets fetch to update counts with new filters
-                            publications.fetchFacets();
-
-                            // Fetch is triggered by URL change effect in AcSearch
+                            // Note: Facets fetch is triggered by URL change effect in AcSearch
+                            // No need to call fetchFacets() here to avoid duplicate API calls
                           }}
                           title={
                             bucketValue.originalLabel
@@ -675,7 +711,7 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
             })()}
           </AcFlex>
         );
-      })}
+      }))}
     </>
   );
 };

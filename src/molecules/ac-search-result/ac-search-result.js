@@ -19,10 +19,9 @@ const AcSearchResult = ({
   category,
   themes,
   id,
-  // user,
-  // schemaSlug,
+  // self, // Regular prop name for @self data
   navigateTo = 'publication',
-  // ...rest // This will capture the full object data
+  // ...rest // Capture all other properties
 }) => {
   const onClick = () => {
     switch (navigateTo) {
@@ -30,16 +29,32 @@ const AcSearchResult = ({
         return NAVIGATE_TO.PUBLICATION(id);
       case 'beheer':
         return NAVIGATE_TO.BEHEER_TYPE_DETAILS(category, id);
+      case 'view':
+        return `/beheer/view/${id}`;
       default:
         return NAVIGATE_TO.PUBLICATION(id);
     }
   };
 
+  // Extract relevance score if present (fuzzy search)
+  // const relevanceScore = self?.relevance;
+  // const hasRelevance = typeof relevanceScore === 'number';
+
   return (
     <AcCard searchResult padding='md' skeleton={skeleton}>
-      <Heading level={3}>
+      <Heading level={3} style={{ margin: 0, flex: 1 }}>
         <ConUuidResolver>{extractTitle(title)}</ConUuidResolver>
       </Heading>
+      {/* <AcFlex justifyContent='between' alignItems='start' style={{ marginBottom: '0.5rem' }}>
+        <Heading level={3} style={{ margin: 0, flex: 1 }}>
+          <ConUuidResolver>{extractTitle(title)}</ConUuidResolver>
+        </Heading>
+        {hasRelevance && (
+          <StatusBadge status='success' style={{ marginLeft: '1rem', flexShrink: 0 }}>
+            {relevanceScore}%
+          </StatusBadge>
+        )}
+      </AcFlex> */}
       <Paragraph>{extractSummary(summary)}</Paragraph>
       <AcFlex justifyContent='between' className='meta'>
         <AcFlex alignItems='center' spacing='sm'>

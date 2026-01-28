@@ -39,6 +39,9 @@ const ConFormDienstZoekenStage = ({
   searchLeveranciers,
   // Type options
   dienstTypeOptions = [],
+  // Gebruik state for module binding
+  gebruik = {},
+  setGebruikData,
 }) => {
   const idToLabel = Object.fromEntries(
     (resolvedModulesFromResults || []).map((o) => [String(o.value), String(o.label)])
@@ -410,9 +413,9 @@ const ConFormDienstZoekenStage = ({
       <div className='ac-register-form-grid'>
         <div style={{ gridColumn: 'span 2', maxWidth: '640px' }}>
           <ConSchemaEnhancedField
-            schemaType='dienst'
-            schemaProperty='modules'
-            value={ownApp?.value || null}
+            schemaType='gebruik'
+            schemaProperty='module'
+            value={gebruik?.module || null}
             onChange={(value) => {
               // Handle array case (when schema type is array but we want single-select)
               let actualValue = value;
@@ -420,7 +423,18 @@ const ConFormDienstZoekenStage = ({
                 actualValue = value.length > 0 ? value[0] : null;
               }
 
-              // Handle both object and string formats
+              // Extract ID from value (could be object or string)
+              const nextId =
+                (actualValue && actualValue.data && (actualValue.data.id || actualValue.data.value)) ||
+                (actualValue && actualValue.value) ||
+                actualValue;
+
+              // Update gebruik.module
+              if (setGebruikData) {
+                setGebruikData('module', nextId);
+              }
+
+              // Handle both object and string formats for ownApp state
               if (!actualValue) {
                 setOwnApp(null);
               } else if (
@@ -443,19 +457,7 @@ const ConFormDienstZoekenStage = ({
             isLoading={ownAppLoading}
             width='full'
             schemas={schemas}
-            optionsProvider={(() => {
-              // Ensure the selected option is always in the options list
-              // This handles the case where the option is prefilled but not yet in ownAppOptions
-              if (ownApp?.value && ownApp?.label) {
-                const existsInOptions = ownAppOptions.some(
-                  (opt) => String(opt.value) === String(ownApp.value)
-                );
-                if (!existsInOptions) {
-                  return [ownApp, ...ownAppOptions];
-                }
-              }
-              return ownAppOptions;
-            })()}
+            optionsProvider={ownAppOptions}
             onSearch={(_path, _refSlug, q) => onSearchModules && onSearchModules(q)}
             customProps={{
               label: 'Applicatie',
@@ -504,12 +506,24 @@ const ConFormDienstZoekenStage = ({
                     d?.beschrijvingKort || d?.beschrijving || d?.omschrijving || ''
                   ).trim();
                   const website = String(d?.website || '').trim();
-                  // d?.type can be a string or array of strings; handle both and turn into array
+                  // d?.type can be a string, array of strings, or string containing JSON array; handle all cases
                   let type = [];
                   if (Array.isArray(d?.type)) {
                     type = d.type.map((t) => String(t).trim()).filter(Boolean);
-                  } else {
-                    type = [String(d?.type || '').trim()];
+                  } else if (typeof d?.type === 'string' && d.type.trim().startsWith('[')) {
+                    // Handle string containing JSON array like "['id1', 'id2']"
+                    try {
+                      const parsed = JSON.parse(d.type);
+                      if (Array.isArray(parsed)) {
+                        type = parsed.map((t) => String(t).trim()).filter(Boolean);
+                      } else {
+                        type = [String(d.type).trim()];
+                      }
+                    } catch (e) {
+                      type = [String(d.type).trim()];
+                    }
+                  } else if (d?.type) {
+                    type = [String(d.type).trim()];
                   }
                   const status = String(d?.status || '').trim();
                   const aanbieder = d?.aanbieder ? String(d.aanbieder).trim() : null;
@@ -632,23 +646,21 @@ const ConFormDienstZoekenStage = ({
                               justifyContent: 'flex-end',
                             }}
                           >
-                            {type.length > 0 &&
-                              type.map((t) => (
-                                <span
-                                  key={t}
-                                  style={{
-                                    display: 'inline-block',
-                                    padding: '0.125rem 0.5rem',
-                                    backgroundColor: '#e5e7eb',
-                                    borderRadius: '9999px',
-                                    fontSize: '0.75rem',
-                                    fontWeight: '500',
-                                    color: '#374151',
-                                  }}
-                                >
-                                  {t}
-                                </span>
-                              ))}
+                            {type.length > 0 && (
+                              <span
+                                style={{
+                                  display: 'inline-block',
+                                  padding: '0.125rem 0.5rem',
+                                  backgroundColor: '#e5e7eb',
+                                  borderRadius: '9999px',
+                                  fontSize: '0.75rem',
+                                  fontWeight: '500',
+                                  color: '#374151',
+                                }}
+                              >
+                                {type.join(', ')}
+                              </span>
+                            )}
                             {status && (
                               <span
                                 style={{

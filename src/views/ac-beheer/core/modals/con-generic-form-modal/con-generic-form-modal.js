@@ -200,7 +200,7 @@ const ConGenericFormModal = ({
           await object.fetchCollection(
             optionConfig.register,
             optionConfig.schema,
-            { ...optionConfig.params, page: 1, limit: 9999, _source: 'database' },
+            { ...optionConfig.params, page: 1, limit: 9999, _multi: true },
             false,
             'form-options'
           );
@@ -353,6 +353,16 @@ const ConGenericFormModal = ({
               mappedData[key].id
             ) {
               mappedData[key] = collapseExtendedObjects(mappedData[key]);
+            }
+          });
+
+          // Format date fields: strip timestamps for HTML date inputs
+          // (e.g., "2026-01-01 00:00:00" -> "2026-01-01")
+          Object.keys(mappedData).forEach((key) => {
+            const property = schema?.properties?.[key];
+            if (property?.format === 'date' && mappedData[key] && typeof mappedData[key] === 'string') {
+              // Strip timestamp by taking only the date part
+              mappedData[key] = mappedData[key].split(' ')[0];
             }
           });
 

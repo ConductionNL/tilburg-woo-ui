@@ -1,0 +1,84 @@
+/**
+ * Beheer Views List Styles
+ * Using search result card layout for consistency
+ */
+
+.con-beheer-views-list-content {
+  width: 100%;
+  max-width: 1200px;
+}
+
+.con-beheer-views-list-header {
+  margin-bottom: var(--tilburg-space-block-md);
+
+  h1 {
+    margin-bottom: var(--tilburg-space-block-xs);
+  }
+
+  p {
+    color: var(--tilburg-color-text-secondary, #666);
+    font-size: 1.1rem;
+  }
+}
+
+/* Info Alert Styling */
+.con-beheer-views-info-alert {
+  margin-bottom: var(--tilburg-space-block-lg);
+
+  h4 {
+    margin-bottom: var(--tilburg-space-block-sm);
+  }
+}
+
+/* Search Box Styling */
+.con-beheer-views-search {
+  position: relative;
+  margin-bottom: var(--tilburg-space-block-lg);
+  width: 100%;
+  max-width: 100%;
+
+  .con-beheer-views-search-input {
+    width: 100%;
+    max-width: 100%;
+    padding-right: 45px;
+    box-sizing: border-box;
+  }
+
+  .con-beheer-views-search-icon {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: var(--tilburg-color-text-secondary, #666);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+  }
+}
+
+/* Views Results - using search result cards */
+.con-beheer-views-results {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  column-gap: 32px;
+  row-gap: 32px;
+  width: 100%;
+
+  // Ensure cards don't have conflicting margins
+  .ac-card--search-result {
+    margin: 0 !important;
+  }
+}
+
+/* Responsive: single column on mobile */
+@media (max-width: 768px) {
+  .con-beheer-views-results {
+    grid-template-columns: 1fr;
+  }
+}

@@ -89,6 +89,8 @@ const BeheerPageConfigFactory = {
           routeType: 'applicaties',
           disableRelatedCreateActions: true, // Enable koppeling toevoegen voor applicaties
           disableDeleteAction: false, // Enable delete action voor applicaties
+          disableImport: true, // Import not needed for applicaties
+          disableView: true, // View not needed for applicaties
           extend: ['moduleVersies'],
           defaultHeaders: [
             'naam',
@@ -203,6 +205,8 @@ const BeheerPageConfigFactory = {
           paginationKey: 'diensten',
           title: 'Diensten',
           routeType: 'diensten',
+          disableImport: true, // Import not needed for diensten
+          disableView: true, // View not needed for diensten
           defaultHeaders: ['name', 'voorzieningName', 'email'],
           customHeaders: {
             voorziening: {
@@ -238,6 +242,48 @@ const BeheerPageConfigFactory = {
                 (r) => r?.leverancier?.contactgegevens?.email
               ),
             },
+            type: {
+              id: 'type',
+              label: 'Type',
+              key: 'type',
+              customContent: (row) => {
+                const rawType = row?.type;
+                if (!rawType) return '-';
+                
+                // Check if it's a string that looks like a JSON array
+                if (typeof rawType === 'string' && rawType.trim().startsWith('[')) {
+                  try {
+                    const parsed = JSON.parse(rawType);
+                    if (Array.isArray(parsed)) {
+                      return parsed
+                        .map((item) => (typeof item === 'string' ? item : String(item)))
+                        .join(', ');
+                    }
+                  } catch (e) {
+                    // If parsing fails, return as-is
+                    return rawType;
+                  }
+                }
+                
+                // Handle actual arrays
+                if (Array.isArray(rawType) && rawType.length > 0) {
+                  return rawType
+                    .map((typeItem) =>
+                      typeof typeItem === 'object'
+                        ? typeItem.naam || typeItem.name || typeItem.label || typeItem
+                        : String(typeItem)
+                    )
+                    .join(', ');
+                }
+                
+                // Handle objects
+                if (typeof rawType === 'object') {
+                  return String(rawType.naam || rawType.name || rawType.label || rawType);
+                }
+                
+                return String(rawType);
+              },
+            },
           },
           modals: [...baseConfig.modals],
         };
@@ -251,6 +297,8 @@ const BeheerPageConfigFactory = {
           title: 'Gebruik',
           routeType: 'gebruik',
           disableRelatedCreateActions: true,
+          disableImport: true, // Import not needed for gebruik
+          disableView: true, // View not needed for gebruik
           defaultHeaders: ['type', 'voorzieningId', 'diensten', 'status', 'contact'],
           /**
            * Custom edit URL handler for gebruik
@@ -388,13 +436,10 @@ const BeheerPageConfigFactory = {
               label: 'Applicatie',
               key: 'module',
               customContent: (row) => {
-                return (
-                  (
-                    <ConUuidResolver>
-                      {row['@self']?.relations?.module || '-'}
-                    </ConUuidResolver>
-                  ) || '-'
-                );
+                // Try direct property first, then fallback to relations
+                const moduleId = row.module || row['@self']?.relations?.module;
+                if (!moduleId) return '-';
+                return <ConUuidResolver>{String(moduleId)}</ConUuidResolver>;
               },
             },
             moduleVersie: {
@@ -402,13 +447,10 @@ const BeheerPageConfigFactory = {
               label: 'Applicatie versie',
               key: 'moduleVersie',
               customContent: (row) => {
-                return (
-                  (
-                    <ConUuidResolver>
-                      {row['@self']?.relations?.moduleVersie || '-'}
-                    </ConUuidResolver>
-                  ) || '-'
-                );
+                // Try direct property first, then fallback to relations
+                const moduleVersieId = row.moduleVersie || row['@self']?.relations?.moduleVersie;
+                if (!moduleVersieId) return '-';
+                return <ConUuidResolver>{String(moduleVersieId)}</ConUuidResolver>;
               },
             },
           },
@@ -423,6 +465,8 @@ const BeheerPageConfigFactory = {
           paginationKey: 'koppeling',
           title: 'Koppelingen',
           routeType: 'koppeling',
+          disableImport: true, // Import not needed for koppelingen
+          disableView: true, // View not needed for koppelingen
           // Ensure relations are present to compensate for backend bug (moduleA/moduleB null)
           extend: ['@self.relations'],
           defaultHeaders: [
@@ -472,6 +516,8 @@ const BeheerPageConfigFactory = {
           title: 'Contactpersoon',
           routeType: 'contactpersoon',
           disableRelatedCreateActions: true, // Only show basic actions for contactpersonen
+          disableImport: true, // Import not needed for contactpersonen
+          disableView: true, // View not needed for contactpersonen
           defaultHeaders: [
             'username',
             'name',
@@ -529,6 +575,16 @@ const BeheerPageConfigFactory = {
                 return fullName || '-';
               },
             },
+            eMailadres: {
+              id: 'e-mailadres',  
+              label: 'E-mailadres',
+              key: 'eMailadres',
+              customContent: (row) => {
+                // Display email address from API response
+                const email = row.eMailadres || row['eMailadres'] || row['e-mailadres'] || 'NO EMAIL FOUND';
+                return email;
+              },
+            },
           },
           uniqueActions: [],
           modals: [...baseConfig.modals, 'addAccount'],
@@ -554,3 +610,4 @@ const BeheerPageConfigFactory = {
 };
 
 export default BeheerPageConfigFactory;
+

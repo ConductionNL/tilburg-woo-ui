@@ -88,12 +88,13 @@ import { getActiveWizard } from '@src/constants/wizards.constants';
  * - This file performs multiple read-only fetches for form setup and options:
  *
  *   **Schema Definitions** (fetched on component mount):
- *   - Product:        `${BASE_URL}/openregister/api/schemas/product`
+ *   - Suite:          `${BASE_URL}/openregister/api/schemas/suite`
  *   - Module:         `${BASE_URL}/openregister/api/schemas/module`
  *   - ModuleVersie:   `${BASE_URL}/openregister/api/schemas/moduleversie`
  *   - Dienst:         `${BASE_URL}/openregister/api/schemas/dienst`
  *   - Koppeling:      `${BASE_URL}/openregister/api/schemas/koppeling`
  *   - Compliancy:     `${BASE_URL}/openregister/api/schemas/compliancy`
+ *   - Organisatie:    `${BASE_URL}/openregister/api/schemas/organisatie`
  *   Used to provide field types, validation, descriptions, and enhanced form generation.
  *
  *   **Select Options** (for dropdown fields):
@@ -976,7 +977,7 @@ const AcFormsProductInner = ({
       });
       
       // Add multiple extend parameters to include standards
-      queryParams.append('_extend[]', '@self.schema');
+      queryParams.append('_extend[]', '_schema');
       queryParams.append('_extend[]', 'aanbevolenStandaarden');
       queryParams.append('_extend[]', 'verplichteStandaarden');
 
@@ -1390,7 +1391,7 @@ const AcFormsProductInner = ({
           String(productId),
           {
             '_extend[]': [
-              '@self.schema',
+              '_schema',
               'modules',
               'modules.koppelingen',
               'modules.diensten',

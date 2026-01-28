@@ -356,6 +356,16 @@ const FormModalConfigFactory = {
             gebruiken: {
               visible: false,
             },
+            pakketversie_beschrijving: {
+              visible: false,
+            },
+            geregistreerdDoor: {
+              visible: false,
+            },
+            // Remove schema pattern from versie field as it uses advanced regex not supported by HTML5
+            versie: {
+              pattern: undefined,
+            },
             // Hide description fields - they are edited inline via action menu
             beschrijvingKort: {
               visible: false,
@@ -475,6 +485,7 @@ const FormModalConfigFactory = {
         };
 
       case 'organisaties':
+      case 'organisatie':
         return {
           ...baseConfig,
           // Initial data is now automatically generated from schema properties
@@ -503,6 +514,8 @@ const FormModalConfigFactory = {
             beschrijvingKort: { visible: false },
             beschrijvingLang: { visible: false },
             type: { visible: (formData, isEdit) => !isEdit }, // Only show type field when adding new organisation
+            organisatieType: { visible: false }, // Hide organisatieType - it's derived from type field
+            geregistreerdDoor: { visible: false },
             links: { visible: false },
             oin: { visible: false },
             rol: { visible: false },

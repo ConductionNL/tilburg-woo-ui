@@ -107,7 +107,7 @@ services:
     volumes:
       # Mount source code for live updates (read-write for hot reload)
       - ./src:/app/src
-      - ./public:/app/public:ro
+      - ./public:/app/public
       - ./package.json:/app/package.json:ro
       - ./yarn.lock:/app/yarn.lock:ro
       - ./scripts:/app/scripts:ro

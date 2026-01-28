@@ -207,7 +207,7 @@ const ConFormsDienst = ({ store }) => {
           'gebruik',
           String(gebruikId),
           {
-            '_extend[]': ['@self.schema'],
+            '_extend[]': ['_schema'],
             _published: 'false',
           }
         );
@@ -242,44 +242,15 @@ const ConFormsDienst = ({ store }) => {
 
         // Update gebruik state with the fetched data (same fields as create flow)
         setGebruik({
+          module: moduleId, // Add module to gebruik state for field binding
           diensten: dienstenIds,
           status: fetched.status || '',
           interneAantekening: fetched.interneAantekening || '',
           deelnemers: deelnemersIds,
         });
 
-        // If we have a module (applicatie), fetch and set it for the first step
-        if (moduleId) {
-          try {
-            await store.object.fetchObject('voorzieningen', 'module', moduleId, {
-              '_extend[]': ['@self.schema'],
-              _published: 'false',
-              _source: 'index',
-            });
-            const moduleData = store.object.getObject(
-              'voorzieningen_module',
-              moduleId
-            );
-            if (moduleData) {
-              const applicatieOption = mapToOption(moduleData, 0);
-              // Add to options if not already present
-              setOwnAppOptions((prev) => {
-                const exists = prev.some((o) => o.value === applicatieOption.value);
-                return exists ? prev : [...prev, applicatieOption];
-              });
-              // Set the selected applicatie (pre-fills the first step)
-              setSelectedApplicatie(applicatieOption);
-
-              // Trigger loading diensten for the selected applicatie
-              // This will populate the search results in the first step
-              if (!cancelled) {
-                fetchDienstenForApplicatie(moduleId);
-              }
-            }
-          } catch (moduleError) {
-            console.error('Error fetching module for edit mode:', moduleError);
-          }
-        }
+        // Note: The module will be fetched and added to options by the dedicated
+        // useEffect below (lines ~550-635) which handles all the edge cases
 
         // Fetch diensten to populate the search results for display
         if (dienstenIds.length > 0) {
@@ -287,7 +258,7 @@ const ConFormsDienst = ({ store }) => {
             const dienstFetches = dienstenIds.map((id) =>
               store.object
                 .fetchObject('voorzieningen', 'dienst', id, {
-                  '_extend[]': ['@self.schema'],
+                  '_extend[]': ['_schema'],
                   _published: 'false',
                 })
                 .then(() => store.object.getObject('voorzieningen_dienst', id))
@@ -410,8 +381,6 @@ const ConFormsDienst = ({ store }) => {
         {
           _limit: '50',
           _page: '1',
-          _published: 'false',
-          _source: 'index',
         },
         null,
         'dienst_form'
@@ -469,15 +438,11 @@ const ConFormsDienst = ({ store }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Load modules filtered by organisation for Gebruik-beheerders flow
+  // Load modules for Gebruik-beheerders flow (load ALL modules, not just organization's)
   useEffect(() => {
     if (!isGebruikBeheerdersFlow) return;
 
     const loadModulesForGebruikBeheerder = async () => {
-      const activeOrg = store?.user?.activeOrganization;
-      const organisationId = activeOrg?.uuid || activeOrg?.id;
-      if (!organisationId) return;
-
       setOwnAppLoading(true);
       try {
         await store.object.fetchCollection(
@@ -486,9 +451,7 @@ const ConFormsDienst = ({ store }) => {
           {
             _limit: '50',
             _page: '1',
-            _published: 'false',
-            _source: 'index',
-            organisation: String(organisationId),
+            _published: 'false', // Include unpublished modules
           },
           null,
           'dienst_zoeken_initial'
@@ -498,10 +461,21 @@ const ConFormsDienst = ({ store }) => {
         );
         const list = collection?.results || collection || [];
         const options = list.map(mapToOption);
-        setOwnAppOptions(options);
+        // Merge with existing options to preserve modules added by edit mode fetch
+        setOwnAppOptions((prev) => {
+          const existingMap = new Map(prev.map((opt) => [opt.value, opt]));
+          // Add new options, preferring existing ones if they exist
+          options.forEach((opt) => {
+            if (!existingMap.has(opt.value)) {
+              existingMap.set(opt.value, opt);
+            }
+          });
+          return Array.from(existingMap.values());
+        });
       } catch (e) {
         console.error('Failed to load modules for gebruik beheerder:', e);
-        setOwnAppOptions([]);
+        // Don't clear existing options on error - keep any prefilled options
+        // setOwnAppOptions([]);
       } finally {
         setOwnAppLoading(false);
       }
@@ -510,9 +484,94 @@ const ConFormsDienst = ({ store }) => {
     loadModulesForGebruikBeheerder();
   }, [
     isGebruikBeheerdersFlow,
-    store?.user?.activeOrganization?.uuid,
-    store?.user?.activeOrganization?.id,
     store,
+  ]);
+
+  // Add module to options when it becomes available (for edit mode)
+  // This ensures the selected module from gebruik.module is always in ownAppOptions
+  useEffect(() => {
+    if (!isEditMode || !gebruik?.module) return;
+
+    const moduleId = getIdString(gebruik.module);
+    if (!moduleId) return;
+
+    // Already in options? Skip
+    const alreadyInOptions = ownAppOptions.some(
+      (opt) => String(opt.value) === String(moduleId)
+    );
+    if (alreadyInOptions) return;
+
+    let cancelled = false;
+    
+    const fetchAndAddModule = async () => {
+      // Try to find module from various sources
+      let moduleData = null;
+
+      // Check if selectedApplicatie has the data
+      if (
+        selectedApplicatie?.data &&
+        String(getIdString(selectedApplicatie.data)) === String(moduleId)
+      ) {
+        moduleData = selectedApplicatie.data;
+      }
+
+      // Check collection (modules loaded by loadModulesForGebruikBeheerder)
+      if (!moduleData) {
+        const collection = store.object.getCollection(
+          'voorzieningen_module_dienst_zoeken_initial'
+        );
+        const list = collection?.results || collection || [];
+        moduleData = list.find(
+          (item) => String(getIdString(item)) === String(moduleId)
+        );
+      }
+
+      // Check store (module might have been fetched by the prefill useEffect)
+      if (!moduleData) {
+        moduleData = store.object.getObject('voorzieningen_module', String(moduleId));
+      }
+
+      // If still not found, fetch it
+      if (!moduleData) {
+        try {
+          await store.object.fetchObject('voorzieningen', 'module', String(moduleId), {
+            '_extend[]': ['_schema'],
+            _published: 'false',
+          });
+          if (cancelled) return;
+          moduleData = store.object.getObject('voorzieningen_module', String(moduleId));
+        } catch (error) {
+          console.error('Failed to fetch module for options:', error);
+          return;
+        }
+      }
+
+      // Add to options if found
+      if (moduleData && !cancelled) {
+        const option = mapToOption(moduleData, 0);
+        setOwnAppOptions((prev) => {
+          const exists = prev.some((o) => String(o.value) === String(option.value));
+          return exists ? prev : [...prev, option];
+        });
+        // Also ensure selectedApplicatie is set
+        if (!selectedApplicatie || String(selectedApplicatie.value) !== String(option.value)) {
+          setSelectedApplicatie(option);
+        }
+      }
+    };
+
+    fetchAndAddModule();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    isEditMode,
+    gebruik?.module,
+    ownAppOptions,
+    selectedApplicatie,
+    store,
+    getIdString,
   ]);
 
   // Pre-select applicatie from URL parameter
@@ -544,7 +603,7 @@ const ConFormsDienst = ({ store }) => {
               'module',
               String(applicatieFromUrl),
               {
-                '_extend[]': ['@self.schema'],
+                '_extend[]': ['_schema'],
                 _published: 'false',
                 _source: 'index',
               }
@@ -591,8 +650,7 @@ const ConFormsDienst = ({ store }) => {
           const queryParams = {
             _limit: '50',
             _page: '1',
-            _published: 'false',
-            _source: 'index',
+            _published: 'false', // Include unpublished modules for gemeentes
           };
 
           // Add organisation filter if provided (for gebruik beheerder flow)
@@ -668,18 +726,15 @@ const ConFormsDienst = ({ store }) => {
   // Server-side search for modules (for Dienst zoeken step)
   // Filter by active organisation when in gebruik beheerder flow
   const searchModulesForDienstZoeken = useMemo(() => {
-    const activeOrg = store?.user?.activeOrganization;
-    const organisationId =
-      isGebruikBeheerdersFlow && (activeOrg?.uuid || activeOrg?.id)
-        ? String(activeOrg.uuid || activeOrg.id)
-        : null;
+    // Load ALL modules for gebruik-beheerders, not just organization's modules
+    // Gemeentes can add diensten to any application, including from other leveranciers
     return createModuleSearch(
       'dienst_zoeken_search',
       setOwnAppOptions,
       setOwnAppLoading,
-      organisationId
+      null // Don't filter by organization - show all applications
     );
-  }, [createModuleSearch, isGebruikBeheerdersFlow, store?.user?.activeOrganization]);
+  }, [createModuleSearch]);
 
   // Debounced search function for Dienst zoeken step
   const debouncedSearchModulesForDienstZoeken = useDebouncedInput(
@@ -705,8 +760,6 @@ const ConFormsDienst = ({ store }) => {
         const params = new URLSearchParams({
           _limit: '50',
           _page: '1',
-          _published: 'false',
-          _source: 'index',
         });
         params.append('modules', String(applicatieId));
 
@@ -774,7 +827,7 @@ const ConFormsDienst = ({ store }) => {
                 'module',
                 String(moduleId),
                 {
-                  '_extend[]': ['@self.schema'],
+                  '_extend[]': ['_schema'],
                   _published: 'false',
                   _source: 'index',
                 }
@@ -820,7 +873,7 @@ const ConFormsDienst = ({ store }) => {
           _limit: '50',
           _page: '1',
           _source: 'index',
-          '_extend[]': '@self.schema',
+          '_extend[]': '_schema',
           _published: 'false',
         };
 
@@ -902,7 +955,7 @@ const ConFormsDienst = ({ store }) => {
           'organisatie',
           organisationId,
           {
-            '_extend[]': ['@self.schema'],
+            '_extend[]': ['_schema'],
           }
         );
 
@@ -942,7 +995,7 @@ const ConFormsDienst = ({ store }) => {
           'organisatie',
           organisationId,
           {
-            '_extend[]': ['@self.schema', 'deelnemers'],
+            '_extend[]': ['_schema', 'deelnemers'],
           }
         );
 
@@ -1032,7 +1085,7 @@ const ConFormsDienst = ({ store }) => {
           'dienst',
           String(dienstFromUrl),
           {
-            '_extend[]': ['@self.schema'],
+            '_extend[]': ['_schema'],
             _published: 'false',
           }
         );
@@ -1066,7 +1119,7 @@ const ConFormsDienst = ({ store }) => {
                 'module',
                 applicatieId,
                 {
-                  '_extend[]': ['@self.schema'],
+                  '_extend[]': ['_schema'],
                   _published: 'false',
                   _source: 'index',
                 }
@@ -1239,6 +1292,9 @@ const ConFormsDienst = ({ store }) => {
               searchLeveranciers={debouncedSearchLeveranciers}
               // Type options
               dienstTypeOptions={dienstTypeOptions}
+              // Gebruik state for module binding
+              gebruik={gebruik}
+              setGebruikData={setGebruikData}
             />
           );
         case 'gebruiksinformatie':

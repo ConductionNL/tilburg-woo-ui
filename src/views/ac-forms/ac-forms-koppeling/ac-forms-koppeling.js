@@ -432,8 +432,7 @@ const AcFormsKoppeling = ({ store }) => {
           'organisatie',
           String(orgId),
           {
-            '_extend[]': ['@self.schema'],
-            _published: 'false',
+            '_extend[]': ['_schema'],
           }
         );
         const fullOrgData = store.object.getObject(
@@ -462,7 +461,6 @@ const AcFormsKoppeling = ({ store }) => {
         const params = new URLSearchParams({
           _limit: '20',
           _page: '1',
-          _published: 'false',
         });
 
         // Filter by organization when type is eigen-organisatie and org type is leverancier or community
@@ -562,8 +560,7 @@ const AcFormsKoppeling = ({ store }) => {
               'module',
               String(applicatieFromUrl),
               {
-                '_extend[]': ['@self.schema'],
-                _published: 'false',
+                '_extend[]': ['_schema'],
               }
             );
             const fetched = store.object.getObject(
@@ -648,7 +645,7 @@ const AcFormsKoppeling = ({ store }) => {
       const res = await fetch(
         `/api/apps/openregister/api/objects/voorzieningen/module/${encodeURIComponent(
           String(id)
-        )}?_published=false`,
+        )}`,
         { headers: { Accept: 'application/json' } }
       );
       if (!res.ok) return String(id);
@@ -691,7 +688,7 @@ const AcFormsKoppeling = ({ store }) => {
       try {
         const url = `/api/apps/openregister/api/objects/voorzieningen/koppeling/${encodeURIComponent(
           koppelingId
-        )}?_extend[]=@self.schema&_extend[]=@self.relations&_published=false`;
+        )}?_extend[]=_schema&_extend[]=_relations`;
         const res = await fetch(url, { headers: { Accept: 'application/json' } });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
@@ -744,8 +741,21 @@ const AcFormsKoppeling = ({ store }) => {
         }));
 
         // Set own app to moduleA for anchor behavior
+        // Use setTimeout to ensure options are updated before setting ownApp
+        // Capture variables in closure to avoid stale values
         if (moduleAId) {
-          setOwnApp({ value: moduleAId, label: labelA || moduleAId });
+          const moduleIdToSet = String(moduleAId);
+          const moduleLabelToSet = String(labelA || moduleAId);
+          
+          setTimeout(() => {
+            if (cancelled) return;
+            const ownAppOption = {
+              value: moduleIdToSet,
+              label: moduleLabelToSet,
+              type: 'applicatie',
+            };
+            setOwnApp(ownAppOption);
+          }, 100);
         }
 
         // Prefill single row
@@ -799,6 +809,24 @@ const AcFormsKoppeling = ({ store }) => {
     };
   }, [isEditMode, koppelingId]);
 
+  // Separate useEffect to set ownApp when the option becomes available in ownAppOptions
+  // This ensures React Select can match the value to an option in the array
+  useEffect(() => {
+    if (!isEditMode || !selectedAppAByRow[0]) return;
+    
+    // Check if ownApp is already correctly set
+    const moduleAId = selectedAppAByRow[0];
+    if (ownApp && ownApp.value === moduleAId) return;
+    
+    const matchingOption = ownAppOptions.find(
+      (opt) => String(opt.value) === String(moduleAId)
+    );
+    
+    if (matchingOption) {
+      setOwnApp(matchingOption);
+    }
+  }, [isEditMode, selectedAppAByRow, ownAppOptions]);
+
   // Helper function to map module items to option format
   const mapModuleToOption = useCallback((item, index) => {
     const label =
@@ -822,8 +850,6 @@ const AcFormsKoppeling = ({ store }) => {
         const queryParams = {
           _limit: '50',
           _page: '1',
-          _published: 'false',
-          _source: 'index',
         };
 
         // Filter by organization when type is eigen-organisatie and org type is leverancier or community
@@ -951,7 +977,6 @@ const AcFormsKoppeling = ({ store }) => {
             const params = new URLSearchParams({
               _limit: '100',
               _page: '1',
-              _published: 'false',
             });
             for (const id of missingIds) params.append('_search', id);
             const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module?${params}`;
@@ -1026,20 +1051,16 @@ const AcFormsKoppeling = ({ store }) => {
         const paramsA = new URLSearchParams({
           _limit: '20',
           _page: '1',
-          _published: 'false',
         });
         paramsA.append('moduleA', moduleId);
-        paramsA.append('_source', 'index');
         const endpointA = `${BASE_URL}/openregister/api/objects/voorzieningen/koppeling?${paramsA}`;
 
         // Fetch koppelingen where moduleB = moduleId
         const paramsB = new URLSearchParams({
           _limit: '20',
           _page: '1',
-          _published: 'false',
         });
         paramsB.append('moduleB', moduleId);
-        paramsB.append('_source', 'index');
         const endpointB = `${BASE_URL}/openregister/api/objects/voorzieningen/koppeling?${paramsB}`;
 
         // Execute both fetches in parallel
@@ -1129,8 +1150,7 @@ const AcFormsKoppeling = ({ store }) => {
           _limit: '50',
           _page: '1',
           _source: 'index',
-          '_extend[]': '@self.schema',
-          _published: 'false',
+          '_extend[]': '_schema',
         };
 
         // Add search parameter if query is provided
@@ -1544,7 +1564,7 @@ const AcFormsKoppeling = ({ store }) => {
           if (!value) return null;
           if (typeof value === 'string') return value;
           if (typeof value === 'object') {
-            return value.id || value.value || value?.['@self']?.id || null;
+            return value.uuid || value.id || value.value || value?.['@self']?.id || null;
           }
           return null;
         };
@@ -1586,13 +1606,12 @@ const AcFormsKoppeling = ({ store }) => {
         _limit: '500',
         _page: '1',
         gemmaType: 'Standaardversie',
-        '_extend[]': '@self.schema',
-        _published: 'false',
+        '_extend[]': '_schema',
       });
 
-      console.info('📋 Fetching standaardversies from openconnector endpoint...');
+      console.info('📋 Fetching standaardversies from vng-gemma...');
 
-      // Fetch standaardversies from openconnector endpoint using normal fetch
+      // Fetch standaardversies from vng-gemma using normal fetch
       const response = await fetch(
         `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
         {
@@ -1619,7 +1638,8 @@ const AcFormsKoppeling = ({ store }) => {
             item?.identifier || item?.value || item?.id || item?.slug || label;
           return { value: String(value), label: String(label), data: item };
         })
-        .filter((o) => o.label && o.value);
+        .filter((o) => o.label && o.value)
+        .sort((a, b) => a.label.localeCompare(b.label));
 
       setStandaardenOptions(options);
       console.info(`✅ Loaded ${options.length} standaardversies`);
@@ -1642,8 +1662,7 @@ const AcFormsKoppeling = ({ store }) => {
         _limit: '500',
         _page: '1',
         gemmaType: 'Buitengemeentelijke voorziening',
-        '_extend[]': '@self.schema',
-        _published: 'false',
+        '_extend[]': '_schema',
       });
 
       console.info('📋 Fetching external facilities from openconnector endpoint...');
@@ -1716,12 +1735,11 @@ const AcFormsKoppeling = ({ store }) => {
         _limit: '500',
         _page: '1',
         gemmaType: 'Referentiecomponent',
-        '_extend[]': '@self.schema',
-        _published: 'false',
+        '_extend[]': '_schema',
       });
 
       const refCompResponse = await fetch(
-        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${refCompQueryParams}`,
+        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${refCompQueryParams}`,
         {
           method: 'GET',
           headers: {
@@ -1767,7 +1785,6 @@ const AcFormsKoppeling = ({ store }) => {
       const moduleParams = new URLSearchParams({
         _limit: '100',
         _page: '1',
-        _published: 'false',
       });
 
       // Add each referentiecomponent ID as a separate parameter

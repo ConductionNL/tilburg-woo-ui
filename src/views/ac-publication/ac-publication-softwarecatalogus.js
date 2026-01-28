@@ -33,10 +33,13 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications, user, object } 
     setAttachmentsPage,
     getFilteredAttachments,
     get_relations,
+    get_used_data,
     resetRelations,
     resetPublication,
+    resetUsedData,
     fetchRelations,
     fetchPublication,
+    fetchUsed,
   } = publications;
 
   const { id } = useParams();
@@ -49,6 +52,11 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications, user, object } 
 
   useEffect(() => {
     document.title = get_single?.title || 'Open Ac | Publicatie';
+    
+    // Fetch used data (compliancy, standards) when publication is loaded
+    if (get_single?.id) {
+      fetchUsed(get_single.id);
+    }
   }, [get_single]);
 
   if (loading.status || !get_single) {
@@ -206,6 +214,73 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications, user, object } 
             </AcFlex>
             <AcTable rows={AcGetAdditionalInfoRow(get_single, getSearchPageURL)} />
           </div>
+
+          {/* Standards (Standaarden) table */}
+          {get_used_data?.results && get_used_data.results.some(item => item['@self']?.schema?.id === get_used_data['@self']?.schemas?.['18']?.id) && (
+            <div>
+              <Heading level={2}>Standaarden</Heading>
+              <AcFlex spacing={'xs'} className='notice'>
+                <VISUALS.INFO />
+                Overzicht van ondersteunde standaarden en hun compliancy bewijs.
+              </AcFlex>
+              <AcTable
+                header={['Standaardversie', 'Status', 'Bewijs']}
+                rows={get_used_data.results
+                  .filter(item => item['@self']?.schema?.id === get_used_data['@self']?.schemas?.['18']?.id)
+                  .map((compliancy) => {
+                    // Get standaardversie name
+                    const standaardversieId = compliancy.standaardversie;
+                    const standaardversieName = object.getNameFromCache(standaardversieId) || standaardversieId;
+                    
+                    // Determine status based on whether bewijs or url is present
+                    let status = 'ONDERSTEUND';
+                    if (compliancy.bewijs || compliancy.url) {
+                      status = 'ONDERSTEUND (met bewijs)';
+                    }
+                    
+                    // Build bewijs cell content
+                    let bewijsContent = '-';
+                    
+                    // Check for file metadata in @self.files
+                    if (compliancy['@self']?.files && compliancy['@self'].files.length > 0) {
+                      const file = compliancy['@self'].files[0];
+                      bewijsContent = (
+                        <Link
+                          href={file.downloadUrl}
+                          target='_blank'
+                          rel='noopener noreferrer'
+                        >
+                          {file.title || 'Download bestand'}
+                        </Link>
+                      );
+                    } else if (compliancy.url) {
+                      bewijsContent = (
+                        <Link
+                          href={compliancy.url}
+                          target='_blank'
+                          rel='noopener noreferrer'
+                        >
+                          Bekijk URL
+                        </Link>
+                      );
+                    } else if (compliancy.bewijs) {
+                      bewijsContent = 'Bestand geüpload';
+                    }
+                    
+                    return [
+                      <span key={`${compliancy.id}-name`}>{standaardversieName}</span>,
+                      <span key={`${compliancy.id}-status`} style={{ 
+                        color: (compliancy.bewijs || compliancy.url) ? '#0d6f0d' : '#666',
+                        fontWeight: (compliancy.bewijs || compliancy.url) ? '600' : '400'
+                      }}>
+                        {status}
+                      </span>,
+                      <span key={`${compliancy.id}-bewijs`}>{bewijsContent}</span>,
+                    ];
+                  })}
+              />
+            </div>
+          )}
 
           <div className='ac-publication-three-column'>
             <div>

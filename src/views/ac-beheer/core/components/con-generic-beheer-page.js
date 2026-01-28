@@ -893,8 +893,8 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
         },
       ];
 
-      // Add publish/depublish actions as standard options
-      const publishActions = [];
+      // Add publish/depublish actions as standard options - LEGACY: No longer needed
+      /* const publishActions = [];
       if (!row['@self']?.published) {
         publishActions.push({
           key: 'publish',
@@ -926,7 +926,8 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
             ? getDisabledActionTooltip('depublish', reason)
             : undefined,
         });
-      }
+      } */
+      const publishActions = []; // LEGACY: Empty array to maintain compatibility
 
       // Add unique actions based on configuration
       const uniqueActions = (() => {
@@ -1276,21 +1277,25 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
                         </ConActionMenu.Button>
                       </ConActionMenu.SubMenu>
 
-                      <ConActionMenu.Button
-                        icon={<VISUALS.UPLOAD />}
-                        onClick={() => setOpenModal('import')}
-                      >
-                        Importeren
-                      </ConActionMenu.Button>
+                      {!config.disableImport && (
+                        <ConActionMenu.Button
+                          icon={<VISUALS.UPLOAD />}
+                          onClick={() => setOpenModal('import')}
+                        >
+                          Importeren
+                        </ConActionMenu.Button>
+                      )}
 
-                      <ConActionMenu.Button icon={<VISUALS.EYE />} disabled={true}>
-                        Weergeven als view
-                      </ConActionMenu.Button>
+                      {!config.disableView && (
+                        <ConActionMenu.Button icon={<VISUALS.EYE />} disabled={true}>
+                          Weergeven als view
+                        </ConActionMenu.Button>
+                      )}
 
                       <ConActionMenu.Divider />
 
-                      {/* Bulk publish/depublish actions based on selection */}
-                      <ConActionMenu.Button
+                      {/* Bulk publish/depublish actions - LEGACY: No longer needed */}
+                      {/* <ConActionMenu.Button
                         icon={<VISUALS.PUBLISH />}
                         onClick={handleMultiplePublish}
                         disabled={
@@ -1312,7 +1317,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
                         Depubliceren
                       </ConActionMenu.Button>
 
-                      <ConActionMenu.Divider />
+                      <ConActionMenu.Divider /> */}
 
                       <ConActionMenu.Button
                         icon={<VISUALS.TRASHCAN />}

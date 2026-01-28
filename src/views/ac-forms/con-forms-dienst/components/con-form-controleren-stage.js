@@ -6,6 +6,7 @@ import {
   UnorderedListItem,
   Separator,
   Paragraph,
+  Link,
 } from '@utrecht/component-library-react/dist/css-module';
 import ConLogoPreview from '@views/ac-register/con-logo-preview';
 // Import MDEditor for markdown rendering
@@ -28,6 +29,12 @@ const ConFormControlerenStage = memo(
     aanbiederKeuze,
     aanbiederOrganisatie,
     store,
+    // New application flow props
+    showNewApplicatieForm = false,
+    nieuweApplicatie = {},
+    leverancierKeuze = 'bestaand',
+    nieuweLeverancier = {},
+    leverancierOptions = [],
   }) => {
     // State for fetched contactpersoon data
     const [contactpersoonData, setContactpersoonData] = useState(null);
@@ -62,8 +69,7 @@ const ConFormControlerenStage = memo(
             'contactpersoon',
             contactpersoonId,
             {
-              '_extend[]': ['@self.schema'],
-              _published: 'false',
+              '_extend[]': ['_schema'],
             }
           );
 
@@ -300,12 +306,193 @@ const ConFormControlerenStage = memo(
                     ))}
                   </UnorderedList>
                 </div>
-              ) : (
+              ) : !showNewApplicatieForm ? (
                 <div className='ac-register-review__field'>
                   <Paragraph style={{ fontStyle: 'italic', color: '#666' }}>
                     Geen applicaties geselecteerd
                   </Paragraph>
                 </div>
+              ) : null}
+
+              {/* Show new application section when creating a new app */}
+              {showNewApplicatieForm && (
+                <>
+                  {modulesWithDetails.length > 0 && (
+                    <Separator className='ac-register-review__separator' />
+                  )}
+                  <div
+                    className='ac-register-review__subsection'
+                    role='group'
+                    aria-labelledby='nieuwe-applicatie-heading'
+                  >
+                    <h4
+                      id='nieuwe-applicatie-heading'
+                      className='utrecht-heading-5'
+                      style={{ marginBlockEnd: '1rem' }}
+                    >
+                      Nieuwe applicatie wordt aangemaakt
+                    </h4>
+
+                    <dl
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'minmax(120px, auto) 1fr',
+                        gap: '0.5rem 1rem',
+                        margin: 0,
+                      }}
+                    >
+                      <dt
+                        style={{
+                          fontWeight: 600,
+                          color: 'var(--tilburg-color-gray-700)',
+                        }}
+                      >
+                        Naam
+                      </dt>
+                      <dd style={{ margin: 0 }}>{nieuweApplicatie?.naam || '-'}</dd>
+
+                      {nieuweApplicatie?.website && (
+                        <>
+                          <dt
+                            style={{
+                              fontWeight: 600,
+                              color: 'var(--tilburg-color-gray-700)',
+                            }}
+                          >
+                            Website
+                          </dt>
+                          <dd style={{ margin: 0 }}>
+                            <Link
+                              href={
+                                nieuweApplicatie.website.startsWith('http://') ||
+                                nieuweApplicatie.website.startsWith('https://')
+                                  ? nieuweApplicatie.website
+                                  : `https://${nieuweApplicatie.website}`
+                              }
+                              target='_blank'
+                              rel='noopener noreferrer'
+                            >
+                              {nieuweApplicatie.website}
+                            </Link>
+                          </dd>
+                        </>
+                      )}
+
+                      {nieuweApplicatie?.beschrijvingKort && (
+                        <>
+                          <dt
+                            style={{
+                              fontWeight: 600,
+                              color: 'var(--tilburg-color-gray-700)',
+                            }}
+                          >
+                            Beschrijving
+                          </dt>
+                          <dd style={{ margin: 0 }}>
+                            {nieuweApplicatie.beschrijvingKort}
+                          </dd>
+                        </>
+                      )}
+                    </dl>
+
+                    {/* Leverancier subsection */}
+                    {(leverancierKeuze === 'nieuw' || nieuweApplicatie?.leverancier) && (
+                      <div
+                        style={{
+                          marginBlockStart: '1.5rem',
+                          paddingBlockStart: '1rem',
+                          borderBlockStart: '1px solid var(--tilburg-color-gray-200)',
+                        }}
+                        role='group'
+                        aria-labelledby='nieuwe-leverancier-heading'
+                      >
+                        <h5
+                          id='nieuwe-leverancier-heading'
+                          className='utrecht-heading-6'
+                          style={{ marginBlockEnd: '0.75rem' }}
+                        >
+                          {leverancierKeuze === 'nieuw'
+                            ? 'Nieuwe leverancier wordt aangemaakt'
+                            : 'Leverancier'}
+                        </h5>
+
+                        <dl
+                          style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'minmax(120px, auto) 1fr',
+                            gap: '0.5rem 1rem',
+                            margin: 0,
+                          }}
+                        >
+                          {leverancierKeuze === 'nieuw' ? (
+                            <>
+                              <dt
+                                style={{
+                                  fontWeight: 600,
+                                  color: 'var(--tilburg-color-gray-700)',
+                                }}
+                              >
+                                Naam
+                              </dt>
+                              <dd style={{ margin: 0 }}>
+                                {nieuweLeverancier?.naam || '-'}
+                              </dd>
+
+                              {nieuweLeverancier?.website && (
+                                <>
+                                  <dt
+                                    style={{
+                                      fontWeight: 600,
+                                      color: 'var(--tilburg-color-gray-700)',
+                                    }}
+                                  >
+                                    Website
+                                  </dt>
+                                  <dd style={{ margin: 0 }}>
+                                    <Link
+                                      href={
+                                        nieuweLeverancier.website.startsWith('http://') ||
+                                        nieuweLeverancier.website.startsWith('https://')
+                                          ? nieuweLeverancier.website
+                                          : `https://${nieuweLeverancier.website}`
+                                      }
+                                      target='_blank'
+                                      rel='noopener noreferrer'
+                                    >
+                                      {nieuweLeverancier.website}
+                                    </Link>
+                                  </dd>
+                                </>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              <dt
+                                style={{
+                                  fontWeight: 600,
+                                  color: 'var(--tilburg-color-gray-700)',
+                                }}
+                              >
+                                Naam
+                              </dt>
+                              <dd style={{ margin: 0 }}>
+                                {(() => {
+                                  const leverancierId = nieuweApplicatie.leverancier;
+                                  const leverancierOption = (leverancierOptions || []).find(
+                                    (opt) => String(opt.value) === String(leverancierId)
+                                  );
+                                  return leverancierOption
+                                    ? leverancierOption.label
+                                    : leverancierId;
+                                })()}
+                              </dd>
+                            </>
+                          )}
+                        </dl>
+                      </div>
+                    )}
+                  </div>
+                </>
               )}
             </div>
           </div>

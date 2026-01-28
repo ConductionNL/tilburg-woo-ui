@@ -272,7 +272,7 @@ const AcFormsGebruik = ({ store }) => {
           'organisatie',
           organisationId,
           {
-            '_extend[]': ['@self.schema', 'deelnemers'],
+            '_extend[]': ['_schema', 'deelnemers'],
           }
         );
 
@@ -549,6 +549,7 @@ const AcFormsGebruik = ({ store }) => {
 
   // Aanbod beheerders flow state
   const [selectedKlanten, setSelectedKlanten] = useState([]); // Array of klant IDs
+  const [selectedKlantenOptions, setSelectedKlantenOptions] = useState([]); // Array of klant option objects
   const [klantenOptions, setKlantenOptions] = useState([]);
   const [klantenLoading, setKlantenLoading] = useState(false);
   // Versies
@@ -749,7 +750,7 @@ const AcFormsGebruik = ({ store }) => {
           'gebruik',
           String(gebruikId),
           {
-            '_extend[]': ['@self.schema'],
+            '_extend[]': ['_schema'],
             _published: 'false',
           }
         );
@@ -783,7 +784,7 @@ const AcFormsGebruik = ({ store }) => {
                 'organisatie',
                 afnemerId,
                 {
-                  '_extend[]': ['@self.schema'],
+                  '_extend[]': ['_schema'],
                   _published: 'false',
                 }
               );
@@ -899,7 +900,7 @@ const AcFormsGebruik = ({ store }) => {
           _page: '1',
           _source: 'index',
           gemmaType: 'Referentiecomponent',
-          '_extend[]': '@self.schema',
+          '_extend[]': '_schema',
           _published: 'false',
         });
         const collection = store.object.getCollection('vng-gemma_element');
@@ -941,9 +942,7 @@ const AcFormsGebruik = ({ store }) => {
         const queryParams = {
           _limit: '50',
           _page: '1',
-          '_extend[]': ['@self.schema', 'moduleVersies'],
-          _published: 'false',
-          _source: 'index', // Use index to get applications from all tenants
+          '_extend[]': ['_schema', 'moduleVersies'],
         };
 
         // Filter by leverancier (aanbieder) for Aanbod beheerders flow
@@ -1016,9 +1015,7 @@ const AcFormsGebruik = ({ store }) => {
           setApplicatiePreloadLoading(true);
           try {
             const fetchParams = {
-              '_extend[]': ['@self.schema', 'moduleVersies'],
-              _published: 'false',
-              _source: 'index', // Use index to get applications from all tenants
+              '_extend[]': ['_schema', 'moduleVersies'],
             };
 
             // Filter by leverancier (aanbieder) for Aanbod beheerders flow
@@ -1074,9 +1071,7 @@ const AcFormsGebruik = ({ store }) => {
         const queryParams = {
           _limit: '50',
           _page: '1',
-          '_extend[]': ['@self.schema', 'moduleVersies'],
-          _published: 'false',
-          _source: 'index', // Use index to get applications from all tenants
+          '_extend[]': ['_schema', 'moduleVersies'],
         };
 
         // Filter by leverancier (aanbieder) for Aanbod beheerders flow
@@ -1145,7 +1140,7 @@ const AcFormsGebruik = ({ store }) => {
           _limit: '50',
           _page: '1',
           _source: 'index',
-          '_extend[]': '@self.schema',
+          '_extend[]': '_schema',
           _published: 'false',
         };
 
@@ -1207,7 +1202,7 @@ const AcFormsGebruik = ({ store }) => {
           _limit: '50',
           _page: '1',
           _source: 'index',
-          '_extend[]': '@self.schema',
+          '_extend[]': '_schema',
           _published: 'false',
         };
 
@@ -1230,9 +1225,25 @@ const AcFormsGebruik = ({ store }) => {
           const value = item?.['@self']?.id || item?.id || item?.slug || label;
           return { value: String(value), label: String(label), data: item };
         });
-        setKlantenOptions(options);
+
+        // Merge with existing options to preserve selected items
+        setKlantenOptions((prevOptions) => {
+          const newOptionsMap = new Map(options.map((opt) => [opt.value, opt]));
+          const mergedOptions = [...newOptionsMap.values()];
+
+          // Add any existing options that aren't in the new results
+          // This preserves previously selected items that might not match the current search
+          prevOptions.forEach((opt) => {
+            if (!newOptionsMap.has(opt.value)) {
+              mergedOptions.push(opt);
+            }
+          });
+
+          return mergedOptions;
+        });
       } catch (e) {
-        setKlantenOptions([]);
+        // Don't clear options on error to preserve existing selections
+        console.error('Klanten search failed:', e);
       } finally {
         setKlantenLoading(false);
       }
@@ -1251,7 +1262,7 @@ const AcFormsGebruik = ({ store }) => {
         const params = {
           _limit: '50',
           _page: '1',
-          _source: 'database', // Only show data from own organisation
+          _multi: true, // Enable multitenancy
         };
 
         // Add search parameter if query is provided
@@ -1345,7 +1356,7 @@ const AcFormsGebruik = ({ store }) => {
       });
       
       // Add multiple extend parameters to include standards
-      queryParams.append('_extend[]', '@self.schema');
+      queryParams.append('_extend[]', '_schema');
       queryParams.append('_extend[]', 'aanbevolenStandaarden');
       queryParams.append('_extend[]', 'verplichteStandaarden');
 
@@ -1453,9 +1464,7 @@ const AcFormsGebruik = ({ store }) => {
       if (!modData || !Array.isArray(versiesArray) || versiesArray.length === 0) {
         try {
           await store.object.fetchObject('voorzieningen', 'module', String(mod), {
-            '_extend[]': ['@self.schema', '@self.relations', 'moduleVersies'],
-            _published: 'false',
-            _source: 'index', // Use index to get applications from all tenants
+            '_extend[]': ['_schema', '@self.relations', 'moduleVersies'],
           });
           if (cancelled) return;
           modData = store.object.getObject('voorzieningen_module', String(mod));
@@ -1570,8 +1579,9 @@ const AcFormsGebruik = ({ store }) => {
     if (!Array.isArray(versiesArray) || versiesArray.length === 0) {
       setVersionsLoading(false);
       setVersionOptions([]);
-      // Don't clear moduleVersie in edit mode during initial load
+      // Clear moduleVersie when there are no versions available
       if (gebruik?.moduleVersie != null && !(isEditMode && isInitialLoad)) {
+        console.info('Clearing moduleVersie because no versions are available');
         setGebruikData('moduleVersie', null);
       }
       return;
@@ -1593,11 +1603,16 @@ const AcFormsGebruik = ({ store }) => {
 
     const current = String(gebruik?.moduleVersie || '');
     if (current && !options.some((o) => o.value === current)) {
-      // Don't clear moduleVersie in edit mode during initial load
+      // Clear moduleVersie when current value doesn't match available options
       if (!(isEditMode && isInitialLoad)) {
+        console.info(
+          'Clearing moduleVersie because current value is not in available options',
+          { current, availableOptions: options.map((o) => o.value) }
+        );
         setGebruikData('moduleVersie', null);
       }
     }
+    // Auto-select when only one version available
     if (options.length === 1 && current !== options[0].value) {
       setGebruikData('moduleVersie', options[0].value);
     }
@@ -2002,6 +2017,8 @@ const AcFormsGebruik = ({ store }) => {
               searchKlanten={debouncedSearchKlanten}
               selectedKlanten={selectedKlanten}
               setSelectedKlanten={setSelectedKlanten}
+              selectedKlantenOptions={selectedKlantenOptions}
+              setSelectedKlantenOptions={setSelectedKlantenOptions}
               loading={loading}
             />
           );
