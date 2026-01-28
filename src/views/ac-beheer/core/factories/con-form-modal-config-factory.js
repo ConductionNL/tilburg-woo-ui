@@ -247,11 +247,10 @@ const FormModalConfigFactory = {
                   });
 
                   // Get voorzieningen with selected reference components using object store
-                  await objectStore.fetchCollection(
-                    'voorzieningen',
-                    'voorziening',
-                    { ...voorzieningParams, _published: 'false' }
-                  );
+                  await objectStore.fetchCollection('voorzieningen', 'voorziening', {
+                    ...voorzieningParams,
+                    _published: 'false',
+                  });
 
                   const voorzieningType = objectStore.getTypeFromParams(
                     'voorzieningen',
@@ -281,11 +280,10 @@ const FormModalConfigFactory = {
                   };
 
                   // Get the standaarden using object store
-                  await objectStore.fetchCollection(
-                    'voorzieningen',
-                    'standaard',
-                    { ...standaardenParams, _published: 'false' }
-                  );
+                  await objectStore.fetchCollection('voorzieningen', 'standaard', {
+                    ...standaardenParams,
+                    _published: 'false',
+                  });
 
                   const standaardenType = objectStore.getTypeFromParams(
                     'voorzieningen',
@@ -551,9 +549,11 @@ const FormModalConfigFactory = {
            * - Prefill organisatie from active organisation when creating (not editing) and when not pre-selected
            */
           title: 'Gebruiker',
-          initialData: ({ user, isEdit, preSelected } = {}) => {
+          initialData: ({ user, isEdit, preSelected, data } = {}) => {
             const activeOrg = user?.activeOrganization || null;
             const orgId = String(activeOrg?.uuid);
+
+            console.log({data})
 
             return {
               voorkeuren: { taal: 'NL-nl', thema: 'licht' },
