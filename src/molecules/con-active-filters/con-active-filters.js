@@ -4,6 +4,7 @@ import { AcButton } from '@molecules';
 import { withStore } from '@stores';
 import { AcFlex } from '@atoms';
 import { VISUALS } from '@constants';
+import { ConUuidResolver } from '@components';
 
 /**
  * ConFacetsFilters Component
@@ -45,7 +46,9 @@ const ConActiveFilters = ({ activeFilters, onClearAllFilters }) => {
               onClick={() => filter.onRemove()}
               aria-label={`Verwijder filter: ${filter.label}`}
             >
-              {filter.label}{' '}
+              <ConUuidResolver>
+                {filter.label}
+              </ConUuidResolver>{' '}
               <VISUALS.CLOSE style={{ width: '14px', height: '14px' }} />
             </AcButton>
           ))}
