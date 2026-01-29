@@ -533,17 +533,18 @@ const AcFormsKoppeling = ({ store }) => {
         setKoppelingIdByRow({ 0: String(koppelingId) });
 
         // Prefill dates based on status
+        // Convert datetime strings to date-only format (YYYY-MM-DD) for date inputs
         if (datumInGebruik) {
-          setStartDatumInProductieByRow({ 0: datumInGebruik });
+          setStartDatumInProductieByRow({ 0: convertDatetimeToDateOnly(datumInGebruik) });
         }
         if (datumInOntwikkeling) {
-          setStartDatumGeplandByRow({ 0: datumInOntwikkeling });
+          setStartDatumGeplandByRow({ 0: convertDatetimeToDateOnly(datumInOntwikkeling) });
         }
         if (datumEindeOndersteuning) {
-          setStartDatumUitTeFaserenByRow({ 0: datumEindeOndersteuning });
+          setStartDatumUitTeFaserenByRow({ 0: convertDatetimeToDateOnly(datumEindeOndersteuning) });
         }
         if (datumTeruggetrokken) {
-          setStartDatumUitGefaseerdByRow({ 0: datumTeruggetrokken });
+          setStartDatumUitGefaseerdByRow({ 0: convertDatetimeToDateOnly(datumTeruggetrokken) });
         }
 
         // Prefill intermediair
@@ -704,6 +705,23 @@ const AcFormsKoppeling = ({ store }) => {
       return String(rel.id || rel.value || rel?.['@self']?.id || '') || '';
     }
     return '';
+  };
+
+  /**
+   * Converts a datetime string (e.g., "2026-01-02 00:00:00") to date-only format (e.g., "2026-01-02").
+   * Returns the input as-is if it's already in date-only format or empty.
+   * @param {string} datetimeString - The datetime string from the backend
+   * @returns {string} - The date-only string in YYYY-MM-DD format
+   */
+  const convertDatetimeToDateOnly = (datetimeString) => {
+    if (!datetimeString || typeof datetimeString !== 'string') return '';
+    // If already in date-only format (YYYY-MM-DD), return as-is
+    if (/^\d{4}-\d{2}-\d{2}$/.test(datetimeString.trim())) {
+      return datetimeString.trim();
+    }
+    // Extract date part from datetime string (YYYY-MM-DD HH:mm:ss)
+    const dateMatch = datetimeString.trim().match(/^(\d{4}-\d{2}-\d{2})/);
+    return dateMatch ? dateMatch[1] : '';
   };
 
   // Resolve and cache application names for module ids present in searchResults
