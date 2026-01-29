@@ -37,6 +37,8 @@ const ConFormApplicatiesStage = memo(
     leverancierOptions = [],
     leverancierLoading = false,
     searchLeveranciers = () => {},
+    isEditMode = false,
+    dienst = {},
   }) => {
     const handleChange = (value) => {
       // ConSchemaEnhancedField with array schema returns an array of IDs for multi-select
@@ -68,6 +70,47 @@ const ConFormApplicatiesStage = memo(
       return '';
     };
 
+    // Extract dienst information for display
+    const dienstNaam = String(dienst?.naam || '').trim();
+    const dienstBeschrijvingKort = String(
+      dienst?.beschrijvingKort || dienst?.beschrijving || ''
+    ).trim();
+    const dienstWebsite = String(dienst?.website || '').trim();
+
+    // Handle type - could be array, object, string, or string containing JSON array
+    const dienstTypeLabel = (() => {
+      const rawType = dienst?.type;
+      if (!rawType) return '';
+
+      // Check if it's a string that looks like a JSON array
+      if (typeof rawType === 'string' && rawType.trim().startsWith('[')) {
+        try {
+          const parsed = JSON.parse(rawType);
+          if (Array.isArray(parsed)) {
+            return parsed.map((item) =>
+              typeof item === 'string' ? item : String(item)
+            );
+          }
+        } catch (e) {
+          return String(rawType);
+        }
+      }
+
+      // Handle actual arrays
+      if (Array.isArray(rawType) && rawType.length > 0) {
+        return rawType.map((t) =>
+          typeof t === 'object' ? t.naam || t.name || t.label || t : String(t)
+        );
+      }
+
+      // Handle objects
+      if (typeof rawType === 'object') {
+        return [String(rawType.naam || rawType.name || rawType.label || rawType)];
+      }
+
+      return [String(rawType)];
+    })();
+
     return (
       <div
         className='ac-register-form-section'
@@ -77,6 +120,93 @@ const ConFormApplicatiesStage = memo(
         <h2 id='dienst-applicaties-section-title' className='sr-only'>
           Applicaties selecteren
         </h2>
+
+        {/* Edit mode card */}
+        {isEditMode && dienstNaam && (
+          <div
+            style={{
+              padding: '0.75rem',
+              border: '1px solid #ddd',
+              borderLeft: '3px solid var(--tilburg-color-primary, #0063e5)',
+              borderRadius: '4px',
+              backgroundColor: 'var(--tilburg-color-gray-50, #f8f9fa)',
+              marginBottom: '1rem',
+            }}
+          >
+            <div
+              style={{
+                fontSize: '0.75rem',
+                fontStyle: 'italic',
+                color: 'var(--tilburg-color-gray-600, #666)',
+                marginBottom: '0.25rem',
+              }}
+            >
+              U bewerkt deze dienst
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                marginBottom: '0.25rem',
+              }}
+            >
+              {dienstNaam && (
+                <div style={{ flex: 1, minWidth: '200px' }}>
+                  <strong style={{ fontSize: '1rem' }}>{dienstNaam}</strong>
+                </div>
+              )}
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '0.5rem',
+                  flexWrap: 'wrap',
+                }}
+              >
+                {dienstTypeLabel &&
+                  dienstTypeLabel.map((type) => (
+                    <span
+                      key={type}
+                      style={{
+                        display: 'inline-block',
+                        padding: '0.25rem 0.5rem',
+                        backgroundColor: '#e8f4f8',
+                        color: '#0063e5',
+                        borderRadius: '4px',
+                        fontSize: '0.75rem',
+                        fontWeight: '500',
+                      }}
+                    >
+                      {type}
+                    </span>
+                  ))}
+              </div>
+            </div>
+
+            {dienstBeschrijvingKort && (
+              <div
+                style={{
+                  color: '#666',
+                  fontSize: '0.9rem',
+                  marginBottom: '0.5rem',
+                  lineHeight: '1.4',
+                  wordBreak: 'break-word',
+                  whiteSpace: 'normal',
+                  width: '100%',
+                }}
+              >
+                {dienstBeschrijvingKort}
+              </div>
+            )}
+
+            {dienstWebsite && (
+              <div style={{ display: 'flex', gap: '4px', fontSize: '0.875rem' }}>
+                <span style={{ fontWeight: '500', color: '#666' }}>Website:</span>
+                <ConExternalLink href={dienstWebsite} />
+              </div>
+            )}
+          </div>
+        )}
 
         <Paragraph style={{ marginBottom: '1rem' }}>
           Zoek de applicatie(s) waarop u de dienst aanbiedt. Veelal is dat op de
@@ -104,7 +234,9 @@ const ConFormApplicatiesStage = memo(
                     value={nieuweApplicatie?.leverancier || null}
                     onChange={(value) => {
                       const nextId =
-                        (value && value.data && (value.data.id || value.data.value)) ||
+                        (value &&
+                          value.data &&
+                          (value.data.id || value.data.value)) ||
                         (value && value.value) ||
                         value;
                       setNieuweApplicatieData('leverancier', nextId);
@@ -236,7 +368,9 @@ const ConFormApplicatiesStage = memo(
                 schemaType='module'
                 schemaProperty='beschrijvingKort'
                 value={nieuweApplicatie?.beschrijvingKort || ''}
-                onChange={(value) => setNieuweApplicatieData('beschrijvingKort', value)}
+                onChange={(value) =>
+                  setNieuweApplicatieData('beschrijvingKort', value)
+                }
                 isDisabled={loadingModules}
                 width='full'
                 schemas={schemas}
@@ -258,9 +392,7 @@ const ConFormApplicatiesStage = memo(
                 value={selectedModuleIds}
                 onChange={handleChange}
                 isDisabled={loadingModules}
-                isLoading={
-                  loadingModules || searchLoading || dienstenResultsLoading
-                }
+                isLoading={loadingModules || searchLoading || dienstenResultsLoading}
                 width='full'
                 schemas={schemas}
                 optionsProvider={moduleOptions}
@@ -336,19 +468,24 @@ const ConFormApplicatiesStage = memo(
                           ''
                       ).trim();
                       const website = String(dienstItem?.website || '').trim();
-                      
+
                       // Handle type - could be array, object, string, or string containing JSON array
                       const type = (() => {
                         const rawType = dienstItem?.type;
                         if (!rawType) return '';
-                        
+
                         // Check if it's a string that looks like a JSON array
-                        if (typeof rawType === 'string' && rawType.trim().startsWith('[')) {
+                        if (
+                          typeof rawType === 'string' &&
+                          rawType.trim().startsWith('[')
+                        ) {
                           try {
                             const parsed = JSON.parse(rawType);
                             if (Array.isArray(parsed)) {
                               return parsed
-                                .map((item) => (typeof item === 'string' ? item : String(item)))
+                                .map((item) =>
+                                  typeof item === 'string' ? item : String(item)
+                                )
                                 .join(', ');
                             }
                           } catch (e) {
@@ -356,7 +493,7 @@ const ConFormApplicatiesStage = memo(
                             return String(rawType);
                           }
                         }
-                        
+
                         // Handle actual arrays
                         if (Array.isArray(rawType) && rawType.length > 0) {
                           return rawType
@@ -367,17 +504,17 @@ const ConFormApplicatiesStage = memo(
                             )
                             .join(', ');
                         }
-                        
+
                         // Handle objects
                         if (typeof rawType === 'object') {
                           return String(
                             rawType.naam || rawType.name || rawType.label || rawType
                           );
                         }
-                        
+
                         return String(rawType);
                       })().trim();
-                      
+
                       const status = String(dienstItem?.status || '').trim();
                       const aanbieder = dienstItem?.aanbieder
                         ? String(dienstItem.aanbieder).trim()

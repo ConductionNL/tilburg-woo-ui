@@ -344,7 +344,7 @@ const ConKoppelingStageZoeken = ({
 
       {/* Only show existing koppelingen section when selecting an existing application */}
       {ownAppKeuze !== 'nieuw' && (
-        <div style={{ marginTop: '1rem' }}>
+        <div>
           <h3 className='utrecht-heading-4' style={{ marginBottom: '0.5rem' }}>
             {isEditMode
               ? 'Bestaande koppelingen'
