@@ -778,10 +778,9 @@ const AcFormsGebruik = ({ store }) => {
   // Load referentiecomponenten when schemas are available
   useEffect(() => {
     if (!schemas?.module) return;
-    if (referentieComponentenLoading) return; // Currently loading
 
     searchReferentieComponenten('');
-  }, [schemas?.module, referentieComponentenLoading, searchReferentieComponenten]);
+  }, [schemas?.module, searchReferentieComponenten]);
 
   // Load all modules on component mount
   useEffect(() => {
