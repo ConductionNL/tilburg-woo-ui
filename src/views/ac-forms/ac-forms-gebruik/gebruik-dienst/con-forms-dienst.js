@@ -9,7 +9,6 @@ import { VISUALS } from '@src/constants';
 import { ProcessSteps } from '@gemeente-denhaag/components-react';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 import { validateWebsite } from '@views/ac-forms/validation/form-validations';
-import { useDebouncedInput } from '@src/hooks';
 import {
   Heading1,
   Paragraph,
@@ -18,7 +17,16 @@ import {
   UnorderedListItem,
 } from '@utrecht/component-library-react/dist/css-module';
 import useStepper, { addStepperClickHandlers, generateSteps } from '../../con-stepper';
-import { createModuleMapper } from '../../wizard-utils';
+import {
+  useSchemaFetcher,
+  createModuleMapper,
+  createOrganisatieMapper,
+  createModuleSearchConfig,
+  createOrganisatieSearchConfig,
+  useEntitySearch,
+  fetchMissingEntities,
+  mapId,
+} from '../../wizard-utils';
 
 // Stage components
 import ConFormDienstInformatieStage from './components/con-form-dienst-informatie-stage';
@@ -31,8 +39,6 @@ import ConFormDeelnemersStage from './components/con-form-deelnemers-stage';
 import ConUnsavedChangesAlertModal from '@src/components/con-unsaved-changes-alert-modal/con-unsaved-changes-alert-modal';
 import { getActiveWizard } from '@src/constants/wizards.constants';
 import { ConDebugViewer } from '@src/components';
-
-const mapToOption = createModuleMapper();
 
 const ConFormsDienst = ({ store }) => {
   const [searchParams] = useSearchParams();
@@ -49,15 +55,11 @@ const ConFormsDienst = ({ store }) => {
   const stepper = useStepper();
   const processStepsRef = useRef(null);
 
-  // Schemas
-  const [schemas, setSchemas] = useState({
-    dienst: null,
-    product: null,
-    module: null,
-    koppeling: null,
-    organisatie: null,
-  });
-  const [schemasLoading, setSchemasLoading] = useState(true);
+  // Schemas - using wizard-utils
+  const { schemas, loading: schemasLoading } = useSchemaFetcher(
+    store,
+    ['dienst', 'product', 'module', 'koppeling', 'organisatie', 'gebruik']
+  );
 
   // Edit-mode prefill state
   const [prefillLoading, setPrefillLoading] = useState(false);
@@ -89,11 +91,35 @@ const ConFormsDienst = ({ store }) => {
   // productId -> module options derived from product details
   const [productToModulesLookup, setProductToModulesLookup] = useState({});
   const [selectedModuleIds, setSelectedModuleIds] = useState([]);
-  const [modulesLoading, setModulesLoading] = useState(false);
-  const [searchLoading, setSearchLoading] = useState(false);
   const [applicatiePreloadLoading, setApplicatiePreloadLoading] = useState(false);
-  const [moduleOptions, setModuleOptions] = useState([]);
   const moduleOptionsRef = useRef([]);
+
+  // Module search - shared for both flows (aanbod-beheerders and gebruik-beheerders)
+  const moduleMapper = useMemo(() => createModuleMapper({ type: 'applicatie' }), []);
+  const moduleSearchConfig = useMemo(
+    () =>
+      createModuleSearchConfig(store, {
+        useCacheFirst: true,
+        mapToOption: moduleMapper,
+        cacheKey: 'dienst_form',
+        queryParamsBuilder: (searchTerm) => ({
+          _limit: '50',
+          _page: '1',
+          _published: 'false',
+          ...(searchTerm && searchTerm.trim() ? { _search: searchTerm.trim() } : {}),
+        }),
+      }),
+    [store, moduleMapper]
+  );
+  const {
+    search: searchModules,
+    loading: modulesLoading,
+    options: moduleOptions,
+    setOptions: setModuleOptions,
+  } = useEntitySearch(moduleSearchConfig, {
+    debounceDelay: 250,
+    mergeStrategy: 'preserve-existing',
+  });
 
   const [koppelingOptions, setKoppelingOptions] = useState([]);
   const [selectedKoppelingIds] = useState([]);
@@ -110,8 +136,6 @@ const ConFormsDienst = ({ store }) => {
   const [dienstenResults, setDienstenResults] = useState([]); // Array of dienst objects
   const [dienstenResultsLoading, setDienstenResultsLoading] = useState(false);
   const [resolvedModulesFromDiensten, setResolvedModulesFromDiensten] = useState([]);
-  const [ownAppOptions, setOwnAppOptions] = useState([]); // Options for applicatie select in Dienst zoeken
-  const [ownAppLoading, setOwnAppLoading] = useState(false);
 
   // New dienst creation state
   const [dienstKeuze, setDienstKeuze] = useState('bestaand'); // 'bestaand' or 'nieuw'
@@ -134,8 +158,33 @@ const ConFormsDienst = ({ store }) => {
   const setLeverancierOrganisatieData = (key, value) => {
     setLeverancierOrganisatie((prev) => ({ ...prev, [key]: value }));
   };
-  const [leverancierOptions, setLeverancierOptions] = useState([]);
-  const [leverancierLoading, setLeverancierLoading] = useState(false);
+  // Leverancier (organisatie) search using wizard-utils
+  const organisatieMapper = useMemo(() => createOrganisatieMapper(), []);
+  const organisatieSearchConfig = useMemo(
+    () =>
+      createOrganisatieSearchConfig(store, {
+        mapToOption: organisatieMapper,
+        source: 'index',
+        queryParamsBuilder: (searchTerm, additionalParams = {}) => ({
+          _limit: '50',
+          _page: '1',
+          _source: 'index',
+          '_extend[]': '_schema',
+          _published: 'false',
+          ...(searchTerm && searchTerm.trim() ? { _search: searchTerm.trim() } : {}),
+          ...additionalParams,
+        }),
+      }),
+    [store, organisatieMapper]
+  );
+  const {
+    search: searchOrganisaties,
+    loading: leverancierLoading,
+    options: leverancierOptions,
+  } = useEntitySearch(organisatieSearchConfig, {
+    debounceDelay: 500,
+    mergeStrategy: 'preserve-existing',
+  });
 
   // Dienst type options
   const [dienstTypeOptions, setDienstTypeOptions] = useState([]);
@@ -160,22 +209,6 @@ const ConFormsDienst = ({ store }) => {
     setGebruik((prev) => ({ ...prev, [key]: value }));
   };
 
-  // Helper to extract id string from various API reference shapes
-  const getIdString = (ref) => {
-    if (!ref) return '';
-    if (typeof ref === 'string' || typeof ref === 'number') return String(ref);
-    return (
-      String(
-        ref.uuid ||
-          ref.id ||
-          ref.value ||
-          ref?.['@self']?.id ||
-          ref?.['@self']?.value ||
-          ref.slug ||
-          ''
-      ) || ''
-    );
-  };
 
   // Prefill gebruik data when editing (not dienst - we edit the gebruik object)
   // The flow is the same as creating, but with all fields pre-filled
@@ -214,18 +247,18 @@ const ConFormsDienst = ({ store }) => {
             ? fetched.diensten
             : fetched['@self']?.relations?.diensten;
         const dienstenIds = Array.isArray(dienstenSource)
-          ? dienstenSource.map((d) => getIdString(d)).filter(Boolean)
+          ? dienstenSource.map((d) => mapId(d)).filter(Boolean)
           : [];
 
         // Extract module (applicatie) ID from the gebruik object
         // First try fetched.module, if null fallback to @self.relations.module
         const moduleId =
-          getIdString(fetched.module) ||
-          getIdString(fetched['@self']?.relations?.module);
+          mapId(fetched.module) ||
+          mapId(fetched['@self']?.relations?.module);
 
         // Extract deelnemers from the gebruik object
         const deelnemersIds = Array.isArray(fetched.deelnemers)
-          ? fetched.deelnemers.map((d) => getIdString(d)).filter(Boolean)
+          ? fetched.deelnemers.map((d) => mapId(d)).filter(Boolean)
           : [];
 
         // Update gebruik state with the fetched data (same fields as create flow)
@@ -261,10 +294,10 @@ const ConFormsDienst = ({ store }) => {
               // Add the fetched diensten to the results so they show up as selected
               setDienstenResults((prev) => {
                 const existingIds = new Set(
-                  prev.map((d) => d?.id || d?.['@self']?.id)
+                  prev.map((d) => mapId(d))
                 );
                 const newDiensten = fetchedDiensten.filter(
-                  (d) => !existingIds.has(d?.id || d?.['@self']?.id)
+                  (d) => !existingIds.has(mapId(d))
                 );
                 return [...prev, ...newDiensten];
               });
@@ -293,8 +326,7 @@ const ConFormsDienst = ({ store }) => {
   useEffect(() => {
     if (typeof store?.user?.fetchUserProfile === 'function') {
       if (process.env.NODE_ENV === 'development') {
-        // eslint-disable-next-line no-console
-        console.log(
+        console.info(
           'ConFormsDienst - refreshing /me via store.user.fetchUserProfile'
         );
       }
@@ -302,164 +334,32 @@ const ConFormsDienst = ({ store }) => {
     }
   }, [store]);
 
-  // Load schemas through object store (auth-aware)
-  useEffect(() => {
-    const load = async () => {
-      setSchemasLoading(true);
-      const types = [
-        'dienst',
-        'product',
-        'module',
-        'koppeling',
-        'organisatie',
-        'gebruik',
-      ];
-      const fetched = {};
-      try {
-        await Promise.all(
-          types.map(async (t) => {
-            try {
-              await store.object.fetchSchema(t);
-              fetched[t] = store.object.getSchema(`schema_${t}`);
-            } catch {
-              fetched[t] = null;
-            }
-          })
-        );
-        setSchemas(fetched);
-      } finally {
-        setSchemasLoading(false);
-      }
-    };
-    load();
-  }, [store]);
-
-  // Fetch all modules (not product-based anymore)
-  const loadAllModules = async () => {
-    setModulesLoading(true);
-    try {
-      await store.object.fetchCollection(
-        'voorzieningen',
-        'module',
-        {
-          _limit: '50',
-          _page: '1',
-        },
-        null,
-        'dienst_form'
-      );
-      const collection = store.object.getCollection(
-        'voorzieningen_module_dienst_form'
-      );
-      const list = collection?.results || collection || [];
-      const options = list.map(mapToOption);
-
-      // Merge with existing options to preserve search results and manually fetched modules
-      setModuleOptions((prevOptions) => {
-        const existingOptionsMap = new Map(
-          prevOptions.map((opt) => [opt.value, opt])
-        );
-        const newOptionsMap = new Map(options.map((opt) => [opt.value, opt]));
-
-        // Start with existing options
-        const mergedOptions = [...prevOptions];
-
-        // Add new options that don't already exist
-        newOptionsMap.forEach((newOpt, value) => {
-          if (!existingOptionsMap.has(value)) {
-            mergedOptions.push(newOpt);
-          } else {
-            // Update existing option with new data (in case it changed)
-            const index = mergedOptions.findIndex((opt) => opt.value === value);
-            if (index !== -1) {
-              mergedOptions[index] = newOpt;
-            }
-          }
-        });
-
-        // Store as a flat list for backward compatibility
-        setProductToModulesLookup({ all: mergedOptions });
-
-        return mergedOptions;
-      });
-    } catch {
-      setModuleOptions([]);
-      setProductToModulesLookup({ all: [] });
-    } finally {
-      setModulesLoading(false);
-    }
-  };
 
   // Keep ref in sync with moduleOptions state
   useEffect(() => {
     moduleOptionsRef.current = moduleOptions;
   }, [moduleOptions]);
 
+  // Update productToModulesLookup when moduleOptions change
+  useEffect(() => {
+    setProductToModulesLookup({ all: moduleOptions });
+  }, [moduleOptions]);
+
   // Load modules on mount (step 0 is now Applicaties)
   useEffect(() => {
-    loadAllModules();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Load modules for Gebruik-beheerders flow (load ALL modules, not just organization's)
-  useEffect(() => {
-    if (!isGebruikBeheerdersFlow) return;
-
-    const loadModulesForGebruikBeheerder = async () => {
-      setOwnAppLoading(true);
-      try {
-        await store.object.fetchCollection(
-          'voorzieningen',
-          'module',
-          {
-            _limit: '50',
-            _page: '1',
-            _published: 'false', // Include unpublished modules
-          },
-          null,
-          'dienst_zoeken_initial'
-        );
-        const collection = store.object.getCollection(
-          'voorzieningen_module_dienst_zoeken_initial'
-        );
-        const list = collection?.results || collection || [];
-        const options = list.map(mapToOption);
-        // Merge with existing options to preserve modules added by edit mode fetch
-        setOwnAppOptions((prev) => {
-          const existingMap = new Map(prev.map((opt) => [opt.value, opt]));
-          // Add new options, preferring existing ones if they exist
-          options.forEach((opt) => {
-            if (!existingMap.has(opt.value)) {
-              existingMap.set(opt.value, opt);
-            }
-          });
-          return Array.from(existingMap.values());
-        });
-      } catch (e) {
-        console.error('Failed to load modules for gebruik beheerder:', e);
-        // Don't clear existing options on error - keep any prefilled options
-        // setOwnAppOptions([]);
-      } finally {
-        setOwnAppLoading(false);
-      }
-    };
-
-    loadModulesForGebruikBeheerder();
-  }, [
-    isGebruikBeheerdersFlow,
-    store,
-  ]);
+    searchModules('');
+  }, [searchModules]);
 
   // Add module to options when it becomes available (for edit mode)
-  // This ensures the selected module from gebruik.module is always in ownAppOptions
+  // This ensures the selected module from gebruik.module is always in moduleOptions
   useEffect(() => {
     if (!isEditMode || !gebruik?.module) return;
 
-    const moduleId = getIdString(gebruik.module);
+    const moduleId = mapId(gebruik.module);
     if (!moduleId) return;
 
     // Already in options? Skip
-    const alreadyInOptions = ownAppOptions.some(
+    const alreadyInOptions = moduleOptions.some(
       (opt) => String(opt.value) === String(moduleId)
     );
     if (alreadyInOptions) return;
@@ -473,7 +373,7 @@ const ConFormsDienst = ({ store }) => {
       // Check if selectedApplicatie has the data
       if (
         selectedApplicatie?.data &&
-        String(getIdString(selectedApplicatie.data)) === String(moduleId)
+        String(mapId(selectedApplicatie.data)) === String(moduleId)
       ) {
         moduleData = selectedApplicatie.data;
       }
@@ -485,7 +385,7 @@ const ConFormsDienst = ({ store }) => {
         );
         const list = collection?.results || collection || [];
         moduleData = list.find(
-          (item) => String(getIdString(item)) === String(moduleId)
+          (item) => String(mapId(item)) === String(moduleId)
         );
       }
 
@@ -494,13 +394,19 @@ const ConFormsDienst = ({ store }) => {
         moduleData = store.object.getObject('voorzieningen_module', String(moduleId));
       }
 
-      // If still not found, fetch it
-      if (!moduleData) {
+      // If still not found, fetch it using fetchMissingEntities
+      if (!moduleData && !cancelled) {
         try {
-          await store.object.fetchObject('voorzieningen', 'module', String(moduleId), {
-            '_extend[]': ['_schema'],
-            _published: 'false',
-          });
+          await fetchMissingEntities(
+            store,
+            'voorzieningen',
+            'module',
+            [moduleId],
+            moduleOptions,
+            moduleMapper,
+            setModuleOptions,
+            { extendParams: ['@self.schema'], source: 'index' }
+          );
           if (cancelled) return;
           moduleData = store.object.getObject('voorzieningen_module', String(moduleId));
         } catch (error) {
@@ -509,14 +415,10 @@ const ConFormsDienst = ({ store }) => {
         }
       }
 
-      // Add to options if found
+      // Add to options if found and ensure selectedApplicatie is set
       if (moduleData && !cancelled) {
-        const option = mapToOption(moduleData, 0);
-        setOwnAppOptions((prev) => {
-          const exists = prev.some((o) => String(o.value) === String(option.value));
-          return exists ? prev : [...prev, option];
-        });
-        // Also ensure selectedApplicatie is set
+        const option = moduleMapper(moduleData, 0);
+        // fetchMissingEntities already adds to moduleOptions, so we just need to set selectedApplicatie
         if (!selectedApplicatie || String(selectedApplicatie.value) !== String(option.value)) {
           setSelectedApplicatie(option);
         }
@@ -531,10 +433,11 @@ const ConFormsDienst = ({ store }) => {
   }, [
     isEditMode,
     gebruik?.module,
-    ownAppOptions,
+    moduleOptions,
     selectedApplicatie,
     store,
-    getIdString,
+    moduleMapper,
+    setModuleOptions,
   ]);
 
   // Pre-select applicatie from URL parameter
@@ -558,30 +461,25 @@ const ConFormsDienst = ({ store }) => {
             return [...prev, applicatieOption.value];
           });
         } else {
-          // If applicatie not in initial list, fetch it directly
+          // If applicatie not in initial list, fetch it using fetchMissingEntities
           setApplicatiePreloadLoading(true);
           try {
-            await store.object.fetchObject(
+            await fetchMissingEntities(
+              store,
               'voorzieningen',
               'module',
-              String(applicatieFromUrl),
-              {
-                '_extend[]': ['_schema'],
-                _published: 'false',
-                _source: 'index',
-              }
+              [applicatieFromUrl],
+              moduleOptions,
+              moduleMapper,
+              setModuleOptions,
+              { extendParams: ['@self.schema'], source: 'index' }
             );
             const fetched = store.object.getObject(
               'voorzieningen_module',
               String(applicatieFromUrl)
             );
             if (fetched) {
-              const option = mapToOption(fetched, 0);
-              setModuleOptions((prev) => {
-                const exists = prev.some((o) => o.value === option.value);
-                if (exists) return prev;
-                return [...prev, option];
-              });
+              const option = moduleMapper(fetched, 0);
               setSelectedModuleIds((prev) => {
                 if (prev.includes(option.value)) return prev;
                 return [...prev, option.value];
@@ -602,111 +500,6 @@ const ConFormsDienst = ({ store }) => {
     preSelectApplicatie();
   }, [applicatieFromUrl, moduleOptions, isEditMode, store]);
 
-  // Generic server-side search for modules
-  const createModuleSearch = useCallback(
-    (collectionSuffix, setOptions, setLoading, organisationId = null) => {
-      return async (query) => {
-        try {
-          setLoading(true);
-          const q = String(query || '').trim();
-
-          const queryParams = {
-            _limit: '50',
-            _page: '1',
-            _published: 'false', // Include unpublished modules for gemeentes
-          };
-
-          // Add organisation filter if provided (for gebruik beheerder flow)
-          if (organisationId) {
-            queryParams.organisation = String(organisationId);
-          }
-
-          // Add search parameter if provided
-          if (q) {
-            queryParams._search = q;
-          }
-
-          await store.object.fetchCollection(
-            'voorzieningen',
-            'module',
-            queryParams,
-            null,
-            collectionSuffix
-          );
-          const collection = store.object.getCollection(
-            `voorzieningen_module_${collectionSuffix}`
-          );
-          const list = collection?.results || collection || [];
-          const options = list.map(mapToOption);
-
-          // Merge with existing options (don't replace, merge)
-          setOptions((prevOptions) => {
-            const existingOptionsMap = new Map(
-              prevOptions.map((opt) => [opt.value, opt])
-            );
-            const newOptionsMap = new Map(options.map((opt) => [opt.value, opt]));
-
-            // Start with existing options
-            const mergedOptions = [...prevOptions];
-
-            // Add new search results that don't already exist
-            newOptionsMap.forEach((newOpt, value) => {
-              if (!existingOptionsMap.has(value)) {
-                mergedOptions.push(newOpt);
-              } else {
-                // Update existing option with new data (in case it changed)
-                const index = mergedOptions.findIndex((opt) => opt.value === value);
-                if (index !== -1) {
-                  mergedOptions[index] = newOpt;
-                }
-              }
-            });
-
-            return mergedOptions;
-          });
-        } catch (e) {
-          // Don't clear options on error to preserve existing selections
-          console.error('Module search failed:', e);
-        } finally {
-          setLoading(false);
-        }
-      };
-    },
-    [store]
-  );
-
-  // Server-side search for modules (searches all modules)
-  const searchModules = useCallback(
-    createModuleSearch('dienst_form_search', setModuleOptions, setSearchLoading),
-    [createModuleSearch]
-  );
-
-  // Debounced search function
-  const debouncedSearchModules = useDebouncedInput(searchModules, 250, {
-    disableInstantValidation: true,
-  });
-
-  // Server-side search for modules (for Dienst zoeken step)
-  // Filter by active organisation when in gebruik beheerder flow
-  const searchModulesForDienstZoeken = useMemo(() => {
-    // Load ALL modules for gebruik-beheerders, not just organization's modules
-    // Gemeentes can add diensten to any application, including from other leveranciers
-    return createModuleSearch(
-      'dienst_zoeken_search',
-      setOwnAppOptions,
-      setOwnAppLoading,
-      null // Don't filter by organization - show all applications
-    );
-  }, [createModuleSearch]);
-
-  // Debounced search function for Dienst zoeken step
-  const debouncedSearchModulesForDienstZoeken = useDebouncedInput(
-    searchModulesForDienstZoeken,
-    250,
-    {
-      disableInstantValidation: true,
-    }
-  );
 
   // Fetch diensten for a selected applicatie (Gebruik-beheerders flow)
   const fetchDienstenForApplicatie = useCallback(
@@ -746,10 +539,10 @@ const ConFormsDienst = ({ store }) => {
 
           // Find selected diensten that are not in the new list
           const listIds = new Set(
-            list.map((d) => String(d?.id || d?.['@self']?.id || ''))
+            list.map((d) => String(mapId(d)))
           );
           const missingDiensten = prev.filter((d) => {
-            const dienstId = String(d?.id || d?.['@self']?.id || '');
+            const dienstId = String(mapId(d));
             return selectedIds.includes(dienstId) && !listIds.has(dienstId);
           });
 
@@ -765,54 +558,36 @@ const ConFormsDienst = ({ store }) => {
         list.forEach((dienst) => {
           const modules = Array.isArray(dienst.modules) ? dienst.modules : [];
           modules.forEach((m) => {
-            const id =
-              typeof m === 'string'
-                ? m
-                : String(m?.id || m?.value || m?.['@self']?.id || '');
+            const id = mapId(m);
             if (id) moduleIds.add(id);
           });
         });
 
-        // Resolve module labels
-        const resolved = [];
-        for (const moduleId of Array.from(moduleIds)) {
-          // Check if already in ownAppOptions
-          const existing = ownAppOptions.find(
+        // Resolve module labels using fetchMissingEntities
+        const moduleIdsArray = Array.from(moduleIds);
+        if (moduleIdsArray.length > 0) {
+          await fetchMissingEntities(
+            store,
+            'voorzieningen',
+            'module',
+            moduleIdsArray,
+            moduleOptions,
+            moduleMapper,
+            setModuleOptions,
+            { extendParams: ['@self.schema'], source: 'index' }
+          );
+        }
+
+        // Build resolved array from options
+        const resolved = moduleIdsArray.map((moduleId) => {
+          const option = moduleOptions.find(
             (opt) => String(opt.value) === String(moduleId)
           );
-          if (existing) {
-            resolved.push({ value: moduleId, label: existing.label });
-          } else {
-            // Try to fetch if not available
-            try {
-              await store.object.fetchObject(
-                'voorzieningen',
-                'module',
-                String(moduleId),
-                {
-                  '_extend[]': ['_schema'],
-                  _published: 'false',
-                  _source: 'index',
-                }
-              );
-              const moduleData = store.object.getObject(
-                'voorzieningen_module',
-                String(moduleId)
-              );
-              if (moduleData) {
-                const label =
-                  moduleData?.naam ||
-                  moduleData?.name ||
-                  moduleData?.['@self']?.name ||
-                  moduleId;
-                resolved.push({ value: moduleId, label });
-              }
-            } catch {
-              // If fetch fails, use ID as label
-              resolved.push({ value: moduleId, label: moduleId });
-            }
-          }
-        }
+          return {
+            value: moduleId,
+            label: option?.label || moduleId,
+          };
+        });
         setResolvedModulesFromDiensten(resolved);
       } catch (e) {
         console.error('Failed to fetch diensten:', e);
@@ -822,61 +597,9 @@ const ConFormsDienst = ({ store }) => {
         setDienstenResultsLoading(false);
       }
     },
-    [store, ownAppOptions]
+    [store, moduleOptions, moduleMapper, setModuleOptions, gebruik.diensten]
   );
 
-  // Server-side search for leveranciers (organisaties)
-  const searchOrganisaties = useCallback(
-    async (query, setOptions, setLoading) => {
-      try {
-        setLoading(true);
-        const q = String(query || '').trim();
-
-        const params = {
-          _limit: '50',
-          _page: '1',
-          _source: 'index',
-          '_extend[]': '_schema',
-          _published: 'false',
-        };
-
-        if (q) {
-          params['_search'] = q;
-        }
-
-        await store.object.fetchCollection(
-          'voorzieningen',
-          'organisatie',
-          params,
-          null,
-          'leverancier_search'
-        );
-        const collection = store.object.getCollection(
-          'voorzieningen_organisatie_leverancier_search'
-        );
-        const list = collection?.results || collection || [];
-        const options = list.map((org, i) => ({
-          value: org?.['@self']?.id || org?.id || String(i),
-          label: org?.naam || org?.name || `Organisatie ${i + 1}`,
-          data: org,
-        }));
-        setOptions(options);
-      } catch (e) {
-        setOptions([]);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [store]
-  );
-
-  // Debounced search for leveranciers
-  const debouncedSearchLeveranciers = useDebouncedInput(
-    (query) =>
-      searchOrganisaties(query, setLeverancierOptions, setLeverancierLoading),
-    500,
-    { disableInstantValidation: true }
-  );
 
   // Fetch dienst type options from schema
   useEffect(() => {
@@ -900,7 +623,7 @@ const ConFormsDienst = ({ store }) => {
   // Load initial leveranciers when switching to 'nieuw' dienst flow
   useEffect(() => {
     if (dienstKeuze === 'nieuw') {
-      searchOrganisaties('', setLeverancierOptions, setLeverancierLoading);
+      searchOrganisaties('');
     }
   }, [dienstKeuze, searchOrganisaties]);
 
@@ -1064,41 +787,28 @@ const ConFormsDienst = ({ store }) => {
             : [];
           const applicatieId =
             modules.length > 0
-              ? String(
-                  typeof modules[0] === 'object'
-                    ? modules[0]?.id ||
-                        modules[0]?.value ||
-                        modules[0]?.['@self']?.id ||
-                        ''
-                    : modules[0] || ''
-                )
+              ? String(mapId(modules[0]))
               : null;
 
           if (applicatieId) {
-            // Fetch applicatie and add to options
+            // Fetch applicatie and add to options using fetchMissingEntities
             try {
-              await store.object.fetchObject(
+              await fetchMissingEntities(
+                store,
                 'voorzieningen',
                 'module',
-                applicatieId,
-                {
-                  '_extend[]': ['_schema'],
-                  _published: 'false',
-                  _source: 'index',
-                }
+                [applicatieId],
+                moduleOptions,
+                moduleMapper,
+                setModuleOptions,
+                { extendParams: ['@self.schema'], source: 'index' }
               );
               const applicatieData = store.object.getObject(
                 'voorzieningen_module',
                 applicatieId
               );
               if (applicatieData) {
-                const applicatieOption = mapToOption(applicatieData, 0);
-                setOwnAppOptions((prev) => {
-                  const exists = prev.some(
-                    (o) => o.value === applicatieOption.value
-                  );
-                  return exists ? prev : [...prev, applicatieOption];
-                });
+                const applicatieOption = moduleMapper(applicatieData, 0);
                 setSelectedApplicatie(applicatieOption);
               }
             } catch (error) {
@@ -1223,15 +933,15 @@ const ConFormsDienst = ({ store }) => {
           return (
             <ConFormDienstZoekenStage
               loading={prefillLoading || schemasLoading}
-              ownAppOptions={ownAppOptions}
+              ownAppOptions={moduleOptions}
               ownApp={selectedApplicatie}
               setOwnApp={setSelectedApplicatie}
-              ownAppLoading={ownAppLoading}
+              ownAppLoading={modulesLoading}
               searchResults={dienstenResults}
               resolvedModulesFromResults={resolvedModulesFromDiensten}
               resultsLoading={dienstenResultsLoading}
               isEditMode={isEditMode}
-              onSearchModules={debouncedSearchModulesForDienstZoeken}
+              onSearchModules={searchModules}
               schemas={schemas}
               selectedDienstIds={gebruik.diensten}
               setSelectedDienstIds={(ids) => setGebruikData('diensten', ids)}
@@ -1247,7 +957,7 @@ const ConFormsDienst = ({ store }) => {
               setLeverancierOrganisatieData={setLeverancierOrganisatieData}
               leverancierOptions={leverancierOptions}
               leverancierLoading={leverancierLoading}
-              searchLeveranciers={debouncedSearchLeveranciers}
+              searchLeveranciers={searchOrganisaties}
               // Type options
               dienstTypeOptions={dienstTypeOptions}
               // Gebruik state for module binding
@@ -1315,9 +1025,9 @@ const ConFormsDienst = ({ store }) => {
             selectedModuleIds={selectedModuleIds}
             setSelectedModuleIds={setSelectedModuleIds}
             loadingModules={modulesLoading || applicatiePreloadLoading}
-            searchLoading={searchLoading}
+            searchLoading={modulesLoading}
             moduleOptions={moduleOptions}
-            searchModules={debouncedSearchModules}
+            searchModules={searchModules}
             schemas={schemas}
             dienstType={dienstType}
           />
