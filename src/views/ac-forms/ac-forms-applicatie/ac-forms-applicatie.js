@@ -154,7 +154,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
   // ProcessSteps configuration - must be created early to define steps with stepper
   const processStepsConfig = useMemo(() => {
     const needsAanbiederStep = formType === 'ontbrekend-applicatie';
-    const needsVersiesStep = shouldShowVersiesStep;
 
     if (needsAanbiederStep) {
       // For ontbrekend-applicatie: Aanbieder step + multi-step group
@@ -172,7 +171,11 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
           isNavigable: false,
           substeps: [
             { title: 'Licentie / Hosting', stepLabel: 'licentie' },
-            { title: 'Versies', stepLabel: 'versies', condition: needsVersiesStep },
+            {
+              title: 'Versies',
+              stepLabel: 'versies',
+              condition: shouldShowVersiesStep,
+            },
             { title: 'Referentiecomponenten', stepLabel: 'referentiecomponenten' },
             { title: 'Standaarden', stepLabel: 'standaarden' },
             { title: 'Koppelingen', stepLabel: 'koppelingen' },
@@ -189,7 +192,11 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
           isNavigable: false,
           substeps: [
             { title: 'Licentie / Hosting', stepLabel: 'licentie' },
-            { title: 'Versies', stepLabel: 'versies', condition: needsVersiesStep },
+            {
+              title: 'Versies',
+              stepLabel: 'versies',
+              condition: shouldShowVersiesStep,
+            },
             { title: 'Referentiecomponenten', stepLabel: 'referentiecomponenten' },
             { title: 'Standaarden', stepLabel: 'standaarden' },
             { title: 'Koppelingen', stepLabel: 'koppelingen' },

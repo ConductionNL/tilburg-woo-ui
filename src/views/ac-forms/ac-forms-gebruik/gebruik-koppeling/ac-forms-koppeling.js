@@ -473,15 +473,10 @@ const AcFormsKoppeling = ({ store }) => {
           try {
             const koppelingFetches = koppelingenIds.map((id) =>
               store.object
-                .fetchObject(
-                  'voorzieningen',
-                  'koppeling',
-                  String(id),
-                  {
-                    '_extend[]': ['@self.schema', '@self.relations'],
-                    _published: 'false',
-                  }
-                )
+                .fetchObject('voorzieningen', 'koppeling', String(id), {
+                  '_extend[]': ['@self.schema', '@self.relations'],
+                  _published: 'false',
+                })
                 .then(() =>
                   store.object.getObject('voorzieningen_koppeling', String(id))
                 )
@@ -572,9 +567,7 @@ const AcFormsKoppeling = ({ store }) => {
         // Build resolved array from existing and newly fetched options
         const allOptions = [...modulesOptions, ...newOptions];
         const resolved = uniqueIds.map((id) => {
-          const option = allOptions.find(
-            (opt) => String(opt.value) === String(id)
-          );
+          const option = allOptions.find((opt) => String(opt.value) === String(id));
           return {
             value: id,
             label: option?.label || id,

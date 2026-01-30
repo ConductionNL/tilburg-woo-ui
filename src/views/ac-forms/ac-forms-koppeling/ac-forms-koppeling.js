@@ -90,7 +90,6 @@ const AcFormsKoppeling = ({ store }) => {
   const [modulesOptions, setModulesOptions] = useState([]);
   const [applicatiePreloadLoading, setApplicatiePreloadLoading] = useState(false);
 
-
   // Search state
   const [searchResults, setSearchResults] = useState([]);
   const [resolvedModulesFromResults, setResolvedModulesFromResults] = useState([]);
@@ -502,16 +501,24 @@ const AcFormsKoppeling = ({ store }) => {
         // Prefill dates based on status
         // Convert datetime strings to date-only format (YYYY-MM-DD) for date inputs
         if (datumInGebruik) {
-          setStartDatumInProductieByRow({ 0: convertDatetimeToDateOnly(datumInGebruik) });
+          setStartDatumInProductieByRow({
+            0: convertDatetimeToDateOnly(datumInGebruik),
+          });
         }
         if (datumInOntwikkeling) {
-          setStartDatumGeplandByRow({ 0: convertDatetimeToDateOnly(datumInOntwikkeling) });
+          setStartDatumGeplandByRow({
+            0: convertDatetimeToDateOnly(datumInOntwikkeling),
+          });
         }
         if (datumEindeOndersteuning) {
-          setStartDatumUitTeFaserenByRow({ 0: convertDatetimeToDateOnly(datumEindeOndersteuning) });
+          setStartDatumUitTeFaserenByRow({
+            0: convertDatetimeToDateOnly(datumEindeOndersteuning),
+          });
         }
         if (datumTeruggetrokken) {
-          setStartDatumUitGefaseerdByRow({ 0: convertDatetimeToDateOnly(datumTeruggetrokken) });
+          setStartDatumUitGefaseerdByRow({
+            0: convertDatetimeToDateOnly(datumTeruggetrokken),
+          });
         }
 
         // Prefill intermediair

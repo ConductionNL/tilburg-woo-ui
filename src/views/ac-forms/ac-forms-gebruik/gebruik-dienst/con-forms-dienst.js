@@ -16,7 +16,10 @@ import {
   UnorderedList,
   UnorderedListItem,
 } from '@utrecht/component-library-react/dist/css-module';
-import useStepper, { addStepperClickHandlers, generateSteps } from '../../con-stepper';
+import useStepper, {
+  addStepperClickHandlers,
+  generateSteps,
+} from '../../con-stepper';
 import {
   useSchemaFetcher,
   createModuleMapper,
@@ -57,10 +60,14 @@ const ConFormsDienst = ({ store }) => {
   const processStepsRef = useRef(null);
 
   // Schemas - using wizard-utils
-  const { schemas, loading: schemasLoading } = useSchemaFetcher(
-    store,
-    ['dienst', 'product', 'module', 'koppeling', 'organisatie', 'gebruik']
-  );
+  const { schemas, loading: schemasLoading } = useSchemaFetcher(store, [
+    'dienst',
+    'product',
+    'module',
+    'koppeling',
+    'organisatie',
+    'gebruik',
+  ]);
 
   // Edit-mode prefill state
   const [prefillLoading, setPrefillLoading] = useState(false);
@@ -190,7 +197,6 @@ const ConFormsDienst = ({ store }) => {
   // Dienst type options
   const [dienstTypeOptions, setDienstTypeOptions] = useState([]);
 
-
   // Deelnemers options and loading state
   const [deelnemerOptions, setDeelnemerOptions] = useState([]);
   const [deelnemersLoading, setDeelnemersLoading] = useState(false);
@@ -207,7 +213,6 @@ const ConFormsDienst = ({ store }) => {
   const setGebruikData = (key, value) => {
     setGebruik((prev) => ({ ...prev, [key]: value }));
   };
-
 
   // Prefill gebruik data when editing (not dienst - we edit the gebruik object)
   // The flow is the same as creating, but with all fields pre-filled
@@ -252,8 +257,7 @@ const ConFormsDienst = ({ store }) => {
         // Extract module (applicatie) ID from the gebruik object
         // First try fetched.module, if null fallback to @self.relations.module
         const moduleId =
-          mapId(fetched.module) ||
-          mapId(fetched['@self']?.relations?.module);
+          mapId(fetched.module) || mapId(fetched['@self']?.relations?.module);
 
         // Extract deelnemers from the gebruik object
         const deelnemersIds = Array.isArray(fetched.deelnemers)
@@ -292,9 +296,7 @@ const ConFormsDienst = ({ store }) => {
             if (fetchedDiensten.length > 0 && !cancelled) {
               // Add the fetched diensten to the results so they show up as selected
               setDienstenResults((prev) => {
-                const existingIds = new Set(
-                  prev.map((d) => mapId(d))
-                );
+                const existingIds = new Set(prev.map((d) => mapId(d)));
                 const newDiensten = fetchedDiensten.filter(
                   (d) => !existingIds.has(mapId(d))
                 );
@@ -320,7 +322,6 @@ const ConFormsDienst = ({ store }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditMode, gebruikId, prefillRetry, store]);
 
-
   // Ensure /me is refreshed when the wizard mounts (so stages can read active organisation)
   useEffect(() => {
     if (typeof store?.user?.fetchUserProfile === 'function') {
@@ -332,7 +333,6 @@ const ConFormsDienst = ({ store }) => {
       store.user.fetchUserProfile();
     }
   }, [store]);
-
 
   // Keep ref in sync with moduleOptions state
   useEffect(() => {
@@ -364,7 +364,7 @@ const ConFormsDienst = ({ store }) => {
     if (alreadyInOptions) return;
 
     let cancelled = false;
-    
+
     const fetchAndAddModule = async () => {
       // Try to find module from various sources
       let moduleData = null;
@@ -383,14 +383,15 @@ const ConFormsDienst = ({ store }) => {
           'voorzieningen_module_dienst_zoeken_initial'
         );
         const list = collection?.results || collection || [];
-        moduleData = list.find(
-          (item) => String(mapId(item)) === String(moduleId)
-        );
+        moduleData = list.find((item) => String(mapId(item)) === String(moduleId));
       }
 
       // Check store (module might have been fetched by the prefill useEffect)
       if (!moduleData) {
-        moduleData = store.object.getObject('voorzieningen_module', String(moduleId));
+        moduleData = store.object.getObject(
+          'voorzieningen_module',
+          String(moduleId)
+        );
       }
 
       // If still not found, fetch it using fetchMissingEntities
@@ -407,7 +408,10 @@ const ConFormsDienst = ({ store }) => {
             { extendParams: ['@self.schema'], source: 'index' }
           );
           if (cancelled) return;
-          moduleData = store.object.getObject('voorzieningen_module', String(moduleId));
+          moduleData = store.object.getObject(
+            'voorzieningen_module',
+            String(moduleId)
+          );
         } catch (error) {
           console.error('Failed to fetch module for options:', error);
           return;
@@ -418,7 +422,10 @@ const ConFormsDienst = ({ store }) => {
       if (moduleData && !cancelled) {
         const option = moduleMapper(moduleData, 0);
         // fetchMissingEntities already adds to moduleOptions, so we just need to set selectedApplicatie
-        if (!selectedApplicatie || String(selectedApplicatie.value) !== String(option.value)) {
+        if (
+          !selectedApplicatie ||
+          String(selectedApplicatie.value) !== String(option.value)
+        ) {
           setSelectedApplicatie(option);
         }
       }
@@ -499,7 +506,6 @@ const ConFormsDienst = ({ store }) => {
     preSelectApplicatie();
   }, [applicatieFromUrl, moduleOptions, isEditMode, store]);
 
-
   // Fetch diensten for a selected applicatie (Gebruik-beheerders flow)
   const fetchDienstenForApplicatie = useCallback(
     async (applicatieId) => {
@@ -537,9 +543,7 @@ const ConFormsDienst = ({ store }) => {
           if (selectedIds.length === 0) return list;
 
           // Find selected diensten that are not in the new list
-          const listIds = new Set(
-            list.map((d) => String(mapId(d)))
-          );
+          const listIds = new Set(list.map((d) => String(mapId(d))));
           const missingDiensten = prev.filter((d) => {
             const dienstId = String(mapId(d));
             return selectedIds.includes(dienstId) && !listIds.has(dienstId);
@@ -598,7 +602,6 @@ const ConFormsDienst = ({ store }) => {
     },
     [store, moduleOptions, moduleMapper, setModuleOptions, gebruik.diensten]
   );
-
 
   // Fetch dienst type options from schema
   useEffect(() => {
@@ -750,10 +753,7 @@ const ConFormsDienst = ({ store }) => {
           const modules = Array.isArray(fetchedDienst.modules)
             ? fetchedDienst.modules
             : [];
-          const applicatieId =
-            modules.length > 0
-              ? String(mapId(modules[0]))
-              : null;
+          const applicatieId = modules.length > 0 ? String(mapId(modules[0])) : null;
 
           if (applicatieId) {
             // Fetch applicatie and add to options using fetchMissingEntities
@@ -886,7 +886,6 @@ const ConFormsDienst = ({ store }) => {
       setKoppelingOptions([]);
     }
   };
-
 
   const renderStep = () => {
     const stepLabel = stepper.getLabelFromStep(stepper.getCurrentStep());
@@ -1058,7 +1057,11 @@ const ConFormsDienst = ({ store }) => {
       return generateSteps(stepper, [
         { title: 'Dienst zoeken', stepLabel: 'dienst-zoeken' },
         { title: 'Gebruiksinformatie', stepLabel: 'gebruiksinformatie' },
-        { title: 'Deelnemers', stepLabel: 'deelnemers', condition: needsDeelnemersStep },
+        {
+          title: 'Deelnemers',
+          stepLabel: 'deelnemers',
+          condition: needsDeelnemersStep,
+        },
         { title: 'Controleren', stepLabel: 'controleren' },
       ]);
     } else {

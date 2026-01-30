@@ -22,6 +22,8 @@ import {
   useSchemaFetcher,
   createModuleMapper,
   createModuleSearchConfig,
+  createOrganisatieMapper,
+  createOrganisatieSearchConfig,
   useEntitySearch,
   fetchMissingEntities,
   createRelatedEntitiesFetcher,
@@ -53,10 +55,15 @@ const normalizeDienstType = (rawType) => {
   // If it's a string that looks like a JSON array, parse it
   if (typeof rawType === 'string' && rawType.trim().startsWith('[')) {
     try {
-      const parsed = JSON.parse(rawType);
-      return parsed;
+      return JSON.parse(rawType);
     } catch (e) {
-      console.warn('Failed to parse dienst type as JSON array:', e);
+      console.warn(
+        'Unable to parse dienstType as a JSON array. Received value:',
+        rawType,
+        '\nError details:',
+        e,
+        '\nExpected format: a valid JSON array (e.g., ["type1","type2"]).'
+      );
     }
   }
 
@@ -146,66 +153,26 @@ const ConFormsDienst = ({ store, userStore }) => {
     setNieuweLeverancier((prev) => ({ ...prev, [key]: value }));
   }, []);
 
-  /**
-   * Search for leveranciers (organisations)
-   */
-  const searchLeveranciers = useCallback(
-    async (query) => {
-      setLeverancierLoading(true);
-      try {
-        const params = new URLSearchParams({
-          _limit: '20',
-          _page: '1',
-          _published: 'false',
-        });
-        if (query) params.set('_search', query);
-        const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/organisatie?${params}`;
-        const res = await fetch(endpoint, {
-          headers: { Accept: 'application/json' },
-        });
-        if (!res.ok) return;
-        const data = await res.json();
-        const list = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.results)
-          ? data.results
-          : [];
-        const options = list.map((item, index) => {
-          const id =
-            item?.id ||
-            item?.['@self']?.id ||
-            item?.uuid ||
-            item?.value ||
-            item?.slug ||
-            index;
-          const label =
-            item?.naam ||
-            item?.name ||
-            item?.title ||
-            item?.label ||
-            `Organisatie ${index + 1}`;
-          return {
-            value: String(id),
-            label: String(label),
-            data: item,
-          };
-        });
-        setLeverancierOptions(options);
-      } catch (error) {
-        console.error('Failed to search leveranciers:', error);
-        setLeverancierOptions([]);
-      } finally {
-        setLeverancierLoading(false);
-      }
-    },
-    []
-  );
+  // Leverancier options for new application flow - using useEntitySearch
+  const leverancierMapper = createOrganisatieMapper();
+  const leverancierSearchConfig = createOrganisatieSearchConfig(store, {
+    mapToOption: leverancierMapper,
+    source: 'database',
+  });
+  const {
+    search: searchLeveranciers,
+    loading: leverancierLoading,
+    options: leverancierOptions,
+  } = useEntitySearch(leverancierSearchConfig, {
+    debounceDelay: 500,
+    mergeStrategy: 'preserve-existing',
+  });
 
   // productId -> module options derived from product details
   const [productToModulesLookup, setProductToModulesLookup] = useState({});
   const [selectedModuleIds, setSelectedModuleIds] = useState([]);
   const [applicatiePreloadLoading, setApplicatiePreloadLoading] = useState(false);
-  
+
   // Module search with utilities
   const moduleMapper = useMemo(() => createModuleMapper(), []);
   const moduleSearchConfig = useMemo(
@@ -256,10 +223,6 @@ const ConFormsDienst = ({ store, userStore }) => {
     website: '',
     type: '',
   });
-
-  // Leverancier options for new application flow
-  const [leverancierOptions, setLeverancierOptions] = useState([]);
-  const [leverancierLoading, setLeverancierLoading] = useState(false);
 
   // Diensten display state (for showing diensten related to selected applicaties)
   const [dienstenResults, setDienstenResults] = useState([]);
@@ -372,10 +335,12 @@ const ConFormsDienst = ({ store, userStore }) => {
   }, [userStore]);
 
   // Load schemas through object store (auth-aware)
-  const { schemas, loading: schemasLoading } = useSchemaFetcher(
-    store,
-    ['dienst', 'product', 'module', 'koppeling', 'organisatie']
-  );
+  const { schemas, loading: schemasLoading } = useSchemaFetcher(store, [
+    'dienst',
+    'module',
+    'koppeling',
+    'organisatie',
+  ]);
 
   // Keep ref in sync with moduleOptions state
   useEffect(() => {
@@ -447,7 +412,9 @@ const ConFormsDienst = ({ store, userStore }) => {
       setDienstenResultsLoading(true);
       try {
         const getModuleIds = (dienstItem) => {
-          const modules = Array.isArray(dienstItem.modules) ? dienstItem.modules : [];
+          const modules = Array.isArray(dienstItem.modules)
+            ? dienstItem.modules
+            : [];
           return modules.map((m) => mapId(m)).filter(Boolean);
         };
 
@@ -570,8 +537,6 @@ const ConFormsDienst = ({ store, userStore }) => {
     }
   };
 
-
-
   const renderStep = () => {
     const stepLabel = stepper.getLabelFromStep(stepper.getCurrentStep());
 
@@ -692,10 +657,7 @@ const ConFormsDienst = ({ store, userStore }) => {
           // Check leverancier
           if (leverancierKeuze === 'nieuw') {
             // Validate new leverancier fields
-            if (
-              !nieuweLeverancier.naam ||
-              !String(nieuweLeverancier.naam).trim()
-            )
+            if (!nieuweLeverancier.naam || !String(nieuweLeverancier.naam).trim())
               return true;
             if (
               !nieuweLeverancier.website ||
@@ -802,10 +764,7 @@ const ConFormsDienst = ({ store, userStore }) => {
 
           // Check leverancier
           if (leverancierKeuze === 'nieuw') {
-            if (
-              !nieuweLeverancier.naam ||
-              !String(nieuweLeverancier.naam).trim()
-            ) {
+            if (!nieuweLeverancier.naam || !String(nieuweLeverancier.naam).trim()) {
               messages.push('Vul de naam van de leverancier in');
             }
             if (
@@ -1077,7 +1036,11 @@ const ConFormsDienst = ({ store, userStore }) => {
   const processStepsConfig = useMemo(() => {
     return generateSteps(stepper, [
       { title: 'Applicaties', stepLabel: 'applicaties' },
-      { title: 'Aanbieder', stepLabel: 'aanbieder', condition: formType === 'ontbrekend-dienst' },
+      {
+        title: 'Aanbieder',
+        stepLabel: 'aanbieder',
+        condition: formType === 'ontbrekend-dienst',
+      },
       { title: 'Dienst informatie', stepLabel: 'dienst-informatie' },
       { title: 'Controleren', stepLabel: 'controleren' },
     ]);

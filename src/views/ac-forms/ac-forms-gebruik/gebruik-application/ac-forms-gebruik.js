@@ -397,7 +397,6 @@ const AcFormsGebruik = ({ store }) => {
     mergeStrategy: 'preserve-existing',
   });
 
-
   // Aanbod beheerders flow state
   const [selectedKlanten, setSelectedKlanten] = useState([]); // Array of klant IDs
   // Versies
