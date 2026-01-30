@@ -26,6 +26,7 @@ import {
   useEntitySearch,
   fetchMissingEntities,
   mapId,
+  useFullOrganization,
 } from '../../wizard-utils';
 
 // Stage components
@@ -189,8 +190,6 @@ const ConFormsDienst = ({ store }) => {
   // Dienst type options
   const [dienstTypeOptions, setDienstTypeOptions] = useState([]);
 
-  // State for full organization data (to check type for conditional Deelnemers step)
-  const [fullActiveOrganisation, setFullActiveOrganisation] = useState(null);
 
   // Deelnemers options and loading state
   const [deelnemerOptions, setDeelnemerOptions] = useState([]);
@@ -628,43 +627,9 @@ const ConFormsDienst = ({ store }) => {
   }, [dienstKeuze, searchOrganisaties]);
 
   // Fetch full organisation data to check type (for conditional Deelnemers step)
-  useEffect(() => {
-    const fetchFullOrganisationData = async () => {
-      const activeOrg = store?.user?.activeOrganization;
-      const organisationId = activeOrg?.uuid || activeOrg?.id;
-
-      if (!organisationId || !isGebruikBeheerdersFlow) return;
-
-      try {
-        await store.object.fetchObject(
-          'voorzieningen',
-          'organisatie',
-          organisationId,
-          {
-            '_extend[]': ['_schema'],
-          }
-        );
-
-        const fullOrgData = store.object.getObject(
-          'voorzieningen_organisatie',
-          organisationId
-        );
-
-        if (fullOrgData) {
-          setFullActiveOrganisation(fullOrgData);
-        }
-      } catch (error) {
-        console.error('Error fetching full organization data:', error);
-      }
-    };
-
-    fetchFullOrganisationData();
-  }, [
-    store?.user?.activeOrganization?.uuid,
-    store?.user?.activeOrganization?.id,
-    store,
-    isGebruikBeheerdersFlow,
-  ]);
+  const { fullActiveOrganisation } = useFullOrganization(store, {
+    enabled: isGebruikBeheerdersFlow,
+  });
 
   // Fetch deelnemers from current logged-in organization (for gebruik beheerder flow)
   useEffect(() => {

@@ -37,10 +37,10 @@ import {
   createModuleSearchConfig,
   createOrganisatieSearchConfig,
   createEntitySearchConfig,
-  mapToOption,
   useEntitySearch,
   fetchMissingEntities,
   mapId,
+  useFullOrganization,
 } from '../../wizard-utils';
 
 const AcFormsGebruik = ({ store }) => {
@@ -261,80 +261,16 @@ const AcFormsGebruik = ({ store }) => {
   // Aanbod beheerders flow detection (simplified 2-step flow)
   const isAanbodBeheerdersFlow = typeFromUrl === 'ontbrekend-organisatie';
 
-  // State for the full organization data (needed to get the type)
-  const [fullActiveOrganisation, setFullActiveOrganisation] = useState(null);
-
   // Fetch full organization data to get the type and deelnemers
-  useEffect(() => {
-    const fetchFullOrganisationData = async () => {
-      const activeOrg = store?.user?.activeOrganization;
-      const organisationId = activeOrg?.uuid || activeOrg?.id;
-
-      if (!organisationId) return;
-
-      try {
-        setDeelnemersLoading(true);
-        await store.object.fetchObject(
-          'voorzieningen',
-          'organisatie',
-          organisationId,
-          {
-            '_extend[]': ['_schema', 'deelnemers'],
-          }
-        );
-
-        const fullOrgData = store.object.getObject(
-          'voorzieningen_organisatie',
-          organisationId
-        );
-
-        if (fullOrgData) {
-          setFullActiveOrganisation(fullOrgData);
-
-          // Process deelnemers into options if organization is Samenwerking or Community
-          const orgType = fullOrgData?.type || '';
-          if (orgType === 'Samenwerking' || orgType === 'Community') {
-            const deelnemers = Array.isArray(fullOrgData?.deelnemers)
-              ? fullOrgData.deelnemers
-              : [];
-
-            // Map deelnemers to options format
-            const options = deelnemers
-              .filter((deelnemer) => {
-                // Filter out invalid deelnemers
-                const id =
-                  typeof deelnemer === 'object' ? mapId(deelnemer) : deelnemer;
-                return id && id !== 'undefined' && id !== 'null';
-              })
-              .map((deelnemer, index) => {
-                // Handle both object format and string (UUID) format
-                if (typeof deelnemer === 'object') {
-                  return mapToOption(deelnemer, index, {
-                    labelFields: ['naam', '@self.name', 'name'],
-                    valueFields: ['@self.id', 'id'],
-                    fallbackLabel: `Deelnemer ${index + 1}`,
-                  });
-                }
-                // If it's just a string (UUID), use it as both value and label
-                return {
-                  value: String(deelnemer),
-                  label: String(deelnemer),
-                  data: null,
-                };
-              });
-
-            setDeelnemerOptions(options);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching full organization data:', error);
-      } finally {
-        setDeelnemersLoading(false);
-      }
-    };
-
-    fetchFullOrganisationData();
-  }, [store?.user?.activeOrganization?.uuid, store?.user?.activeOrganization?.id]);
+  const {
+    fullActiveOrganisation,
+    deelnemerOptions,
+    loading: deelnemersLoading,
+  } = useFullOrganization(store, {
+    extend: ['_schema', 'deelnemers'],
+    processDeelnemers: true,
+    deelnemerOrgTypes: ['Samenwerking', 'Community'],
+  });
 
   // Check if we need to show the deelnemers step (when organization type is Samenwerking or Community)
   const organizationType = fullActiveOrganisation?.type || '';
@@ -461,9 +397,6 @@ const AcFormsGebruik = ({ store }) => {
     mergeStrategy: 'preserve-existing',
   });
 
-  // Deelnemers options - for Samenwerking/Community organizations
-  const [deelnemerOptions, setDeelnemerOptions] = useState([]);
-  const [deelnemersLoading, setDeelnemersLoading] = useState(false);
 
   // Aanbod beheerders flow state
   const [selectedKlanten, setSelectedKlanten] = useState([]); // Array of klant IDs

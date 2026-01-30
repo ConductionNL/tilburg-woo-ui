@@ -39,3 +39,6 @@ export {
   fetchMissingEntities,
   createRelatedEntitiesFetcher,
 } from './search-utils';
+
+// Organization utilities
+export { useFullOrganization } from './organization-utils';

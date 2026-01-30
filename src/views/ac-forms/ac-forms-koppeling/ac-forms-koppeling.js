@@ -34,6 +34,7 @@ import {
   createEntitySearchConfig,
   useEntitySearch,
   fetchMissingEntities,
+  useFullOrganization,
 } from '../wizard-utils';
 
 /**
@@ -89,8 +90,6 @@ const AcFormsKoppeling = ({ store }) => {
   const [modulesOptions, setModulesOptions] = useState([]);
   const [applicatiePreloadLoading, setApplicatiePreloadLoading] = useState(false);
 
-  // State for the full organization data (needed to get the type)
-  const [fullActiveOrganisation, setFullActiveOrganisation] = useState(null);
 
   // Search state
   const [searchResults, setSearchResults] = useState([]);
@@ -359,39 +358,7 @@ const AcFormsKoppeling = ({ store }) => {
   }, []);
 
   // Fetch full organization data to get the type
-  useEffect(() => {
-    const fetchFullOrganisationData = async () => {
-      const activeOrg = store?.user?.activeOrganization;
-      if (!activeOrg) return;
-
-      const orgId = activeOrg?.uuid || activeOrg?.id;
-      if (!orgId) return;
-
-      try {
-        await store.object.fetchObject(
-          'voorzieningen',
-          'organisatie',
-          String(orgId),
-          {
-            '_extend[]': ['_schema'],
-          }
-        );
-        const fullOrgData = store.object.getObject(
-          'voorzieningen_organisatie',
-          orgId
-        );
-        setFullActiveOrganisation(fullOrgData);
-      } catch (error) {
-        console.error('Failed to fetch full organization data:', error);
-      }
-    };
-
-    fetchFullOrganisationData();
-  }, [
-    store?.user?.activeOrganization?.uuid,
-    store?.user?.activeOrganization?.id,
-    store,
-  ]);
+  const { fullActiveOrganisation } = useFullOrganization(store);
 
   // Pre-load modules once so dropdown has initial options
   useEffect(() => {

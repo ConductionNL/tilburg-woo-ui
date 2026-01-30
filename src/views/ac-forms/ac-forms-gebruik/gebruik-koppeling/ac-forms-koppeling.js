@@ -37,6 +37,7 @@ import {
   useEntitySearch,
   fetchMissingEntities,
   mapId,
+  useFullOrganization,
 } from '../../wizard-utils';
 
 /**
@@ -208,11 +209,6 @@ const AcFormsKoppeling = ({ store }) => {
   const setGebruikData = (key, value) => {
     setGebruik((prev) => ({ ...prev, [key]: value }));
   };
-  const [deelnemerOptions, setDeelnemerOptions] = useState([]);
-  const [deelnemersLoading, setDeelnemersLoading] = useState(false);
-
-  // State for the full organization data (needed to get the type for deelnemers step visibility)
-  const [fullActiveOrganisation, setFullActiveOrganisation] = useState(null);
 
   // New koppeling creation state
   const [koppelingKeuze, setKoppelingKeuze] = useState('bestaand'); // 'bestaand' or 'nieuw'
@@ -781,85 +777,15 @@ const AcFormsKoppeling = ({ store }) => {
   }, [koppelingIdFromUrl, isEditMode]);
 
   // Fetch full organization data to get the type and deelnemers (for gebruik beheerder flow)
-  useEffect(() => {
-    const fetchFullOrganisationData = async () => {
-      const activeOrg = store?.user?.activeOrganization;
-      const organisationId = activeOrg?.uuid || activeOrg?.id;
-
-      if (!organisationId) return;
-
-      try {
-        setDeelnemersLoading(true);
-        await store.object.fetchObject(
-          'voorzieningen',
-          'organisatie',
-          organisationId,
-          {
-            '_extend[]': ['_schema', 'deelnemers'],
-          }
-        );
-
-        const fullOrgData = store.object.getObject(
-          'voorzieningen_organisatie',
-          organisationId
-        );
-
-        if (fullOrgData) {
-          setFullActiveOrganisation(fullOrgData);
-
-          // Process deelnemers into options if organization is Samenwerking
-          const orgType = fullOrgData?.type || '';
-          if (orgType === 'Samenwerking') {
-            const deelnemers = Array.isArray(fullOrgData?.deelnemers)
-              ? fullOrgData.deelnemers
-              : [];
-
-            // Map deelnemers to options format
-            const options = deelnemers
-              .filter((deelnemer) => {
-                // Filter out invalid deelnemers
-                const id =
-                  typeof deelnemer === 'object'
-                    ? deelnemer?.id || deelnemer?.['@self']?.id
-                    : deelnemer;
-                return id && id !== 'undefined' && id !== 'null';
-              })
-              .map((deelnemer) => {
-                // Handle both object format and string (UUID) format
-                if (typeof deelnemer === 'object') {
-                  const id = deelnemer?.id || deelnemer?.['@self']?.id;
-                  const label =
-                    deelnemer?.naam ||
-                    deelnemer?.['@self']?.name ||
-                    deelnemer?.name ||
-                    id;
-                  return {
-                    value: String(id),
-                    label: String(label),
-                    data: deelnemer,
-                  };
-                }
-                // If it's just a string (UUID), use it as both value and label
-                return {
-                  value: String(deelnemer),
-                  label: String(deelnemer),
-                  data: null,
-                };
-              });
-
-            setDeelnemerOptions(options);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching full organization data:', error);
-        setDeelnemerOptions([]);
-      } finally {
-        setDeelnemersLoading(false);
-      }
-    };
-
-    fetchFullOrganisationData();
-  }, [store?.user?.activeOrganization?.uuid, store?.user?.activeOrganization?.id]);
+  const {
+    fullActiveOrganisation,
+    deelnemerOptions,
+    loading: deelnemersLoading,
+  } = useFullOrganization(store, {
+    extend: ['_schema', 'deelnemers'],
+    processDeelnemers: true,
+    deelnemerOrgTypes: ['Samenwerking'],
+  });
 
   // Check if we need to show the deelnemers step (only when organization type is Samenwerking)
   const organizationType = fullActiveOrganisation?.type || '';
