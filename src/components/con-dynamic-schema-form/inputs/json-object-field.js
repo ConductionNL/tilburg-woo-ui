@@ -15,6 +15,7 @@ const JsonObjectField = ({
   path,
   id,
   disabled,
+  labelStyle,
 }) => {
   const [text, setText] = React.useState(() => {
     try {
@@ -54,9 +55,9 @@ const JsonObjectField = ({
       onChange={handleChange}
       placeholder={placeholder || '{ }'}
       disabled={disabled}
+      labelStyle={labelStyle}
     />
   );
 };
 
 export default JsonObjectField;
-

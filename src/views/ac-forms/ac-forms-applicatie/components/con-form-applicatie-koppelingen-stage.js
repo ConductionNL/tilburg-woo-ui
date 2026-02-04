@@ -1,14 +1,9 @@
 import React, { memo, useState, useEffect } from 'react';
-import clsx from 'clsx';
-import ReactSelect from 'react-select';
 import { VISUALS } from '@src/constants';
 import { AcButton } from '@src/molecules';
-import {
-  Paragraph,
-  Textbox,
-  Alert,
-} from '@utrecht/component-library-react/dist/css-module';
+import { Paragraph, Alert } from '@utrecht/component-library-react/dist/css-module';
 import { AcFlex } from '@src/atoms';
+import ConSchemaEnhancedField from '@components/con-schema-enhanced-field/con-schema-enhanced-field';
 
 /**
  * Koppelingen Stage Component for Applicatie Form
@@ -24,6 +19,7 @@ import { AcFlex } from '@src/atoms';
  * @param {Object} koppelingenFormState - UI state for the koppelingen form
  * @param {Function} setKoppelingenFormState - Function to update koppelingen form state
  * @param {Function} searchModules - Function to search for modules/applicaties
+ * @param {Object} schemas - Available schemas for field configuration
  */
 const ConFormApplicatieKoppelingenStage = memo(
   ({
@@ -36,6 +32,7 @@ const ConFormApplicatieKoppelingenStage = memo(
     koppelingenFormState,
     setKoppelingenFormState,
     searchModules,
+    schemas,
   }) => {
     // State for controlling alert visibility - persists until page refresh
     const [showInfoAlert, setShowInfoAlert] = useState(() => {
@@ -55,13 +52,8 @@ const ConFormApplicatieKoppelingenStage = memo(
       directionByRow,
       koppelingIdByRow = {},
       naamByRow = {},
+      touchedNaamByRow = {}, // Track which naam fields have been touched
     } = koppelingenFormState;
-
-    const directionOptions = [
-      { value: 'AnaarB', label: 'A → B' },
-      { value: 'BnaarA', label: 'B → A' },
-      { value: 'bi-directioneel', label: '↔ Bi-directioneel' },
-    ];
 
     const setKoppelingValue = (rowId, updater) => {
       setKoppelingenFormState((prev) => ({ ...prev, ...updater(prev) }));
@@ -235,6 +227,11 @@ const ConFormApplicatieKoppelingenStage = memo(
         naamByRow: Object.fromEntries(
           Object.entries(prev.naamByRow || {}).filter(([k]) => Number(k) !== rowId)
         ),
+        touchedNaamByRow: Object.fromEntries(
+          Object.entries(prev.touchedNaamByRow || {}).filter(
+            ([k]) => Number(k) !== rowId
+          )
+        ),
       }));
     };
 
@@ -267,6 +264,11 @@ const ConFormApplicatieKoppelingenStage = memo(
         ),
         naamByRow: Object.fromEntries(
           Object.entries(prev.naamByRow || {}).filter(([k]) => Number(k) !== rowId)
+        ),
+        touchedNaamByRow: Object.fromEntries(
+          Object.entries(prev.touchedNaamByRow || {}).filter(
+            ([k]) => Number(k) !== rowId
+          )
         ),
       }));
     };
@@ -411,10 +413,6 @@ const ConFormApplicatieKoppelingenStage = memo(
           {rows.map((rowId) => {
             const koppelingData = getKoppelingData(rowId);
 
-            const appAId = `koppeling-appA-${rowId}`;
-            const appBId = `koppeling-appB-${rowId}`;
-            const richtingId = `koppeling-richting-${rowId}`;
-
             return (
               <div
                 key={`row-${rowId}`}
@@ -434,156 +432,141 @@ const ConFormApplicatieKoppelingenStage = memo(
                     gap: '1rem',
                   }}
                 >
+                  {/* Applicatie A (disabled, shows current applicatie) */}
                   <div>
-                    <label
-                      className='utrecht-form-label'
-                      htmlFor={appAId}
-                      style={{ display: 'block' }}
-                    >
-                      Applicatie A
-                      <span className='required-indicator' aria-hidden='true'>
-                        *
-                      </span>
-                      <span className='sr-only'>(verplicht)</span>
-                    </label>
-                    <ReactSelect
-                      isDisabled
-                      className={clsx(
-                        'ac-beheer-select',
-                        'ac-beheer-select--disabled'
-                      )}
-                      value={{
-                        value: applicatie.naam || 'Deze applicatie',
-                        label: applicatie.naam || 'Deze applicatie',
+                    <ConSchemaEnhancedField
+                      schemaType='koppeling'
+                      schemaProperty='moduleA'
+                      value={applicatie.naam || 'Deze applicatie'}
+                      onChange={() => {}}
+                      isDisabled={true}
+                      schemas={schemas}
+                      optionsProvider={[
+                        {
+                          value: applicatie.naam || 'Deze applicatie',
+                          label: applicatie.naam || 'Deze applicatie',
+                        },
+                      ]}
+                      customProps={{
+                        labelStyle: { fontSize: '1rem' },
+                        component: 'ReactSelect',
+                        placeholder: 'Selecteer applicatie A',
                       }}
-                      placeholder='Selecteer applicatie A'
-                      inputId={appAId}
-                      aria-required='true'
                     />
                   </div>
+
+                  {/* Richting (direction) */}
                   <div>
-                    <label
-                      className='utrecht-form-label'
-                      htmlFor={richtingId}
-                      style={{ display: 'block' }}
-                    >
-                      Richting
-                      <span className='required-indicator' aria-hidden='true'>
-                        *
-                      </span>
-                      <span className='sr-only'>(verplicht)</span>
-                    </label>
-                    <ReactSelect
-                      className={clsx(
-                        'ac-beheer-select',
-                        (modulesLoading || buitengemeentelijkeOptionsLoading) &&
-                          'ac-beheer-select--disabled'
-                      )}
-                      options={directionOptions}
-                      value={
-                        directionByRow[rowId]
-                          ? directionOptions.find(
-                              (o) => o.value === directionByRow[rowId]
-                            )
-                          : null
-                      }
-                      onChange={(opt) => {
+                    <ConSchemaEnhancedField
+                      schemaType='koppeling'
+                      schemaProperty='gegevensuitwisselingRichting'
+                      value={directionByRow[rowId] || ''}
+                      onChange={(value) => {
                         // Persist immediately with the fresh value
-                        persistRowIntoApplicatie(rowId, { richting: opt?.value });
+                        persistRowIntoApplicatie(rowId, { richting: value });
                         // Keep UI state in sync
                         setKoppelingValue(rowId, (prev) => ({
                           directionByRow: {
                             ...prev.directionByRow,
-                            [rowId]: opt?.value,
+                            [rowId]: value,
                           },
                         }));
                       }}
-                      placeholder='Richting'
-                      inputId={richtingId}
-                      aria-required='true'
+                      isDisabled={
+                        modulesLoading || buitengemeentelijkeOptionsLoading
+                      }
+                      schemas={schemas}
+                      customProps={{
+                        labelStyle: { fontSize: '1rem' },
+                        component: 'ReactSelect',
+                        placeholder: 'Richting',
+                        getOptionLabel: (opt) => {
+                          // Map enum values to display labels with arrows
+                          const labelMap = {
+                            AnaarB: 'A → B',
+                            BnaarA: 'B → A',
+                            'bi-directioneel': '↔ Bi-directioneel',
+                          };
+                          const value = opt?.value || opt;
+                          return labelMap[value] || opt?.label || value;
+                        },
+                      }}
                     />
                   </div>
+
+                  {/* Applicatie B or BGV */}
                   <div>
-                    <label
-                      className='utrecht-form-label'
-                      htmlFor={appBId}
-                      style={{ display: 'flex', alignItems: 'center' }}
-                    >
-                      Applicatie B of BGV
-                      <span className='required-indicator' aria-hidden='true'>
-                        *
-                      </span>
-                      <span className='sr-only'>(verplicht)</span>
-                    </label>
-                    <ReactSelect
-                      className={clsx(
-                        'ac-beheer-select',
-                        (modulesLoading || buitengemeentelijkeOptionsLoading) &&
-                          'ac-beheer-select--disabled'
-                      )}
-                      isClearable
-                      options={getMergedOptions()}
-                      value={(() => {
-                        const selected = selectedAppBByRow[rowId];
-                        if (selected == null) return null;
-                        const opts = getMergedOptions();
-                        let found = opts.find(
-                          (o) => String(o.value) === String(selected)
-                        );
-                        if (!found) {
-                          found = opts.find(
-                            (o) => String(o.label) === String(selected)
-                          );
-                        }
-                        return found || null;
-                      })()}
-                      onChange={(opt) => {
+                    <ConSchemaEnhancedField
+                      schemaType='koppeling'
+                      schemaProperty='moduleB'
+                      value={selectedAppBByRow[rowId] || ''}
+                      onChange={(value) => {
                         // Update UI state first
                         setKoppelingValue(rowId, (prev) => ({
                           selectedAppBByRow: {
                             ...prev.selectedAppBByRow,
-                            [rowId]: opt?.value ?? null,
+                            [rowId]: value ?? null,
                           },
                         }));
                         // Then persist (pass null explicitly when cleared)
                         persistRowIntoApplicatie(rowId, {
-                          appBId: opt?.value ?? null,
+                          appBId: value ?? null,
                         });
                       }}
-                      onInputChange={(inputValue, meta) => {
-                        if (meta && meta.action === 'input-change') {
-                          searchModules(inputValue || '');
-                        }
-                        return inputValue;
-                      }}
                       isLoading={modulesLoading || buitengemeentelijkeOptionsLoading}
-                      inputId={appBId}
-                      aria-required='true'
-                      styles={getSelectStyles()}
+                      schemas={schemas}
+                      optionsProvider={getMergedOptions()}
+                      isClearable={true}
+                      onSearch={(path, refSlug, inputValue) => {
+                        // Trigger search when user types
+                        // Only search modules, not BGVs (they're already in buitengemeentelijkeOptions)
+                        searchModules(inputValue || '');
+                      }}
+                      customProps={{
+                        labelStyle: { fontSize: '1rem' },
+                        label: 'Applicatie B of BGV',
+                        component: 'ReactSelect',
+                        isClearable: true,
+                        isSearchable: true,
+                        // Disable client-side filtering since we do server-side search
+                        filterOption: () => true,
+                        getOptionLabel: (opt) => {
+                          // Handle both wrapped options (with .data) and direct options
+                          // Options from getMergedOptions() already have .label property
+                          return (
+                            opt?.label ||
+                            opt?.data?.label ||
+                            opt?.naam ||
+                            opt?.data?.naam ||
+                            ''
+                          );
+                        },
+                        getOptionValue: (opt) => {
+                          // Ensure we use the correct value property (ID)
+                          return opt?.value || opt?.id || '';
+                        },
+                      }}
+                      inputStyle={getSelectStyles()}
                     />
                   </div>
+
+                  {/* Naam (name of the connection) */}
                   <div>
-                    <label
-                      className='utrecht-form-label'
-                      htmlFor={`koppeling-naam-${rowId}`}
-                      style={{ display: 'block' }}
-                    >
-                      Naam
-                      <span className='required-indicator' aria-hidden='true'>
-                        *
-                      </span>
-                      <span className='sr-only'>(verplicht)</span>
-                    </label>
-                    <Textbox
-                      id={`koppeling-naam-${rowId}`}
+                    <ConSchemaEnhancedField
+                      schemaType='koppeling'
+                      schemaProperty='naam'
                       value={koppelingData?.naam || naamByRow[rowId] || ''}
-                      onChange={(e) => {
-                        const newNaam = e?.target?.value || '';
-                        // Store in UI state immediately so it persists even if appBId is null
+                      onChange={(value) => {
+                        const newNaam = value || '';
+                        // Mark field as touched when user interacts with it
                         setKoppelingValue(rowId, (prev) => ({
                           naamByRow: {
                             ...(prev.naamByRow || {}),
                             [rowId]: newNaam,
+                          },
+                          touchedNaamByRow: {
+                            ...(prev.touchedNaamByRow || {}),
+                            [rowId]: true,
                           },
                         }));
                         // Also persist to applicatie data if appBId exists
@@ -591,11 +574,19 @@ const ConFormApplicatieKoppelingenStage = memo(
                           naam: newNaam,
                         });
                       }}
-                      placeholder='Naam van de koppeling'
-                      aria-required='true'
+                      schemas={schemas}
+                      touched={{ naam: touchedNaamByRow[rowId] || false }}
+                      customProps={{
+                        labelStyle: { fontSize: '1rem' },
+                        placeholder: 'Naam van de koppeling',
+                      }}
                     />
                   </div>
+
+                  {/* Empty spacer */}
                   <div></div>
+
+                  {/* Delete button */}
                   <div
                     style={{
                       display: 'flex',

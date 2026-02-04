@@ -13,6 +13,7 @@ const NumberField = ({
   schema,
   integer = false,
   validation,
+  labelStyle,
 }) => {
   const inputProps = {};
   if (schema?.minimum != null)
@@ -42,11 +43,10 @@ const NumberField = ({
       disabled={disabled}
       required={required}
       hasError={validation?.hasError}
-      
+      labelStyle={labelStyle}
       {...inputProps}
     />
   );
 };
 
 export default NumberField;
-

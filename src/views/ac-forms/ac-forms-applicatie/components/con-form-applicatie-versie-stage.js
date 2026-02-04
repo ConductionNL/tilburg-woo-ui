@@ -1,14 +1,9 @@
 import React, { useState, memo, useEffect } from 'react';
-import clsx from 'clsx';
 import { AcButton } from '@src/molecules';
 import { VISUALS } from '@src/constants';
-import {
-  Paragraph,
-  Textbox,
-  Alert,
-} from '@utrecht/component-library-react/dist/css-module';
-import ReactSelect from 'react-select';
+import { Paragraph, Alert } from '@utrecht/component-library-react/dist/css-module';
 import { AcFlex } from '@src/atoms';
+import ConSchemaEnhancedField from '@components/con-schema-enhanced-field/con-schema-enhanced-field';
 
 /**
  * All date property names for clearing purposes.
@@ -87,16 +82,8 @@ const ConFormApplicatieVersieStage = memo(
       sessionStorage.setItem('applicatie-versie-info-alert-closed', 'true');
     };
 
-    // Get moduleVersie schema for status options and defaults
+    // Get moduleVersie schema for defaults
     const moduleVersieSchema = schemas?.moduleversie;
-    const statusOptions =
-      moduleVersieSchema?.properties?.status?.enum?.map((status) => ({
-        value: status,
-        label:
-          typeof status === 'string' && status.length > 0
-            ? status.charAt(0).toUpperCase() + status.slice(1)
-            : status,
-      })) || [];
 
     // Extract default values from schema
     const getSchemaDefaults = () => {
@@ -178,46 +165,46 @@ const ConFormApplicatieVersieStage = memo(
       if (!updatedVersions[versionIndex]) {
         updatedVersions[versionIndex] = { ...schemaDefaults };
       }
-      updatedVersions[versionIndex] = {
-        ...updatedVersions[versionIndex],
-        [field]: value,
-      };
-      setApplicatieData('moduleVersies', updatedVersions);
-    };
 
-    // Handle status change with automatic datum logic
-    const handleStatusChange = (versionIndex, newStatus) => {
-      const currentVersions = getVersions();
-      const currentVersion = currentVersions[versionIndex] || {};
-      const newDatumProperty = getDatumPropertyName(newStatus);
+      const currentVersion = updatedVersions[versionIndex];
 
-      // Get current date value for the new status BEFORE any changes
-      let currentDateValue = '';
-      if (newDatumProperty && currentVersion[newDatumProperty]) {
-        currentDateValue = currentVersion[newDatumProperty];
+      // Special handling for status change
+      if (field === 'status') {
+        const newDatumProperty = getDatumPropertyName(value);
+
+        // Get current date value for the new status BEFORE any changes
+        let currentDateValue = '';
+        if (newDatumProperty && currentVersion[newDatumProperty]) {
+          currentDateValue = currentVersion[newDatumProperty];
+        }
+
+        // Create updated version object
+        const updatedVersion = { ...currentVersion, status: value };
+
+        if (!isEditMode) {
+          // In create mode: clear all other date fields, only keep the one for current status
+          ALL_DATUM_PROPERTIES.forEach((property) => {
+            if (property !== newDatumProperty) {
+              updatedVersion[property] = '';
+            }
+          });
+        }
+        // In edit mode: preserve all existing dates (don't clear anything)
+
+        // Set the date for the new status: use existing value or today's date (only if empty)
+        if (newDatumProperty && !currentDateValue) {
+          updatedVersion[newDatumProperty] = getTodayDateString();
+        }
+
+        updatedVersions[versionIndex] = updatedVersion;
+      } else {
+        // Normal field update
+        updatedVersions[versionIndex] = {
+          ...currentVersion,
+          [field]: value,
+        };
       }
 
-      // Create updated version object
-      const updatedVersion = { ...currentVersion, status: newStatus };
-
-      if (!isEditMode) {
-        // In create mode: clear all other date fields, only keep the one for current status
-        ALL_DATUM_PROPERTIES.forEach((property) => {
-          if (property !== newDatumProperty) {
-            updatedVersion[property] = '';
-          }
-        });
-      }
-      // In edit mode: preserve all existing dates (don't clear anything)
-
-      // Set the date for the new status: use existing value or today's date (only if empty)
-      if (newDatumProperty && !currentDateValue) {
-        updatedVersion[newDatumProperty] = getTodayDateString();
-      }
-
-      // Update the version
-      const updatedVersions = [...currentVersions];
-      updatedVersions[versionIndex] = updatedVersion;
       setApplicatieData('moduleVersies', updatedVersions);
     };
 
@@ -287,7 +274,7 @@ const ConFormApplicatieVersieStage = memo(
         )}
 
         <AcFlex column spacing='sm' className='con-form-wizard-rows'>
-          {versions.map((versie, vIdx) => {
+          {versions.map((versie, versionIndex) => {
             const datumProperty = versie.status
               ? getDatumPropertyName(versie.status)
               : null;
@@ -295,7 +282,7 @@ const ConFormApplicatieVersieStage = memo(
 
             return (
               <div
-                key={`version-${vIdx}`}
+                key={`version-${versionIndex}`}
                 className='ac-register-form-section'
                 style={{
                   padding: '1rem',
@@ -303,7 +290,7 @@ const ConFormApplicatieVersieStage = memo(
                   borderRadius: '6px',
                 }}
               >
-                {/* Grid: Versie - Status - Startdatum - Beschrijving */}
+                {/* Grid: Versie - Status - Startdatum on first row, Beschrijving and Delete on second row */}
                 <div
                   className='ac-register-form-grid'
                   style={{
@@ -314,143 +301,96 @@ const ConFormApplicatieVersieStage = memo(
                 >
                   {/* Versie field */}
                   <div>
-                    <label
-                      className='utrecht-form-label'
-                      htmlFor={`versie-versie-${vIdx}`}
-                      style={{ display: 'block' }}
-                    >
-                      Versie
-                      <span className='required-indicator' aria-hidden='true'>
-                        *
-                      </span>
-                      <span className='sr-only'>(verplicht)</span>
-                    </label>
-                    <Textbox
-                      id={`versie-versie-${vIdx}`}
-                      value={versie.versie ?? schemaDefaults.versie ?? ''}
-                      onChange={(e) =>
-                        updateVersieAt(vIdx, 'versie', e.target.value)
+                    <ConSchemaEnhancedField
+                      schemaType='moduleversie'
+                      schemaProperty='versie'
+                      value={versie.versie ?? ''}
+                      onChange={(value) =>
+                        updateVersieAt(versionIndex, 'versie', value)
                       }
-                      placeholder={
-                        schemaDefaults.versie ||
-                        moduleVersieSchema?.properties?.versie?.example ||
-                        '1.0.0'
-                      }
-                      disabled={loading}
-                      aria-required='true'
+                      isDisabled={loading}
+                      schemas={schemas}
+                      customProps={{
+                        labelStyle: { fontSize: '1rem' },
+                      }}
                     />
                   </div>
 
                   {/* Status field */}
                   <div>
-                    <label
-                      className='utrecht-form-label'
-                      htmlFor={`versie-status-${vIdx}`}
-                      style={{ display: 'block' }}
-                    >
-                      Status
-                      <span className='required-indicator' aria-hidden='true'>
-                        *
-                      </span>
-                      <span className='sr-only'>(verplicht)</span>
-                    </label>
-                    <ReactSelect
-                      inputId={`versie-status-${vIdx}`}
-                      className={clsx(
-                        'ac-beheer-select',
-                        loading && 'ac-beheer-select--disabled'
-                      )}
-                      value={
-                        statusOptions.find(
-                          (opt) =>
-                            opt.value === (versie.status || schemaDefaults.status)
-                        ) || null
+                    <ConSchemaEnhancedField
+                      schemaType='moduleversie'
+                      schemaProperty='status'
+                      value={versie.status ?? ''}
+                      onChange={(value) =>
+                        updateVersieAt(versionIndex, 'status', value)
                       }
-                      onChange={(opt) =>
-                        handleStatusChange(vIdx, opt?.value || null)
-                      }
-                      options={statusOptions}
                       isDisabled={loading}
-                      placeholder={schemaDefaults.status || 'Selecteer status'}
-                      aria-required='true'
+                      schemas={schemas}
+                      customProps={{
+                        labelStyle: { fontSize: '16px' },
+                      }}
                     />
                   </div>
 
                   {/* Startdatum Status field - shown when a status is selected */}
                   {versie.status && datumProperty ? (
                     <div>
-                      <label
-                        className='utrecht-form-label'
-                        htmlFor={`versie-datum-${vIdx}`}
-                        style={{ display: 'block' }}
-                      >
-                        {getDatumLabel(versie.status)}
-                        <span className='required-indicator' aria-hidden='true'>
-                          *
-                        </span>
-                        <span className='sr-only'>(verplicht)</span>
-                      </label>
-                      <Textbox
-                        id={`versie-datum-${vIdx}`}
-                        type='date'
+                      <ConSchemaEnhancedField
+                        schemaType='moduleversie'
+                        schemaProperty={datumProperty}
                         value={datumValue}
-                        onChange={(e) =>
-                          updateVersieAt(
-                            vIdx,
-                            datumProperty,
-                            e.target.value
-                          )
+                        onChange={(value) =>
+                          updateVersieAt(versionIndex, datumProperty, value)
                         }
-                        disabled={loading}
-                        style={{ height: '40px' }}
-                        aria-required='true'
+                        isDisabled={loading}
+                        schemas={schemas}
+                        customProps={{
+                          label: getDatumLabel(versie.status),
+                          labelStyle: { fontSize: '1rem' },
+                        }}
                       />
                     </div>
                   ) : (
                     <div>
-                      <label
-                        className='utrecht-form-label'
-                        htmlFor={`versie-datum-placeholder-${vIdx}`}
-                        style={{ display: 'block' }}
-                      >
-                        Startdatum Status
-                        <span className='required-indicator' aria-hidden='true'>
-                          *
-                        </span>
-                        <span className='sr-only'>(verplicht)</span>
-                      </label>
-                      <Textbox
-                        id={`versie-datum-placeholder-${vIdx}`}
-                        type='date'
+                      <ConSchemaEnhancedField
+                        schemaType='moduleversie'
+                        schemaProperty='datumInGebruik'
                         value=''
-                        disabled
-                        placeholder='Selecteer eerst een status'
-                        style={{ height: '40px' }}
-                        aria-required='true'
+                        onChange={() => {}}
+                        isDisabled={true}
+                        schemas={schemas}
+                        customProps={{
+                          required: true,
+                          label: 'Startdatum Status',
+                          placeholder: 'Selecteer eerst een status',
+                          labelStyle: { fontSize: '1rem' },
+                        }}
                       />
                     </div>
                   )}
 
                   {/* Korte omschrijving field */}
                   <div>
-                    <label
-                      className='utrecht-form-label'
-                      htmlFor={`versie-beschrijving-${vIdx}`}
-                      style={{ display: 'block' }}
-                    >
-                      Korte omschrijving
-                    </label>
-                    <Textbox
-                      id={`versie-beschrijving-${vIdx}`}
-                      value={versie.beschrijvingKort || ''}
-                      onChange={(e) =>
-                        updateVersieAt(vIdx, 'beschrijvingKort', e.target.value)
+                    <ConSchemaEnhancedField
+                      schemaType='moduleversie'
+                      schemaProperty='beschrijvingKort'
+                      value={versie.beschrijvingKort ?? ''}
+                      onChange={(value) =>
+                        updateVersieAt(versionIndex, 'beschrijvingKort', value)
                       }
-                      placeholder='Korte beschrijving van deze versie'
-                      disabled={loading}
+                      isDisabled={loading}
+                      schemas={schemas}
+                      customProps={{
+                        labelStyle: { fontSize: '1rem' },
+                      }}
                     />
                   </div>
+
+                  {/* Empty spacer */}
                   <div></div>
+
+                  {/* Delete button */}
                   <div
                     style={{
                       display: 'flex',
@@ -463,7 +403,7 @@ const ConFormApplicatieVersieStage = memo(
                       buttonType='secondary'
                       icon={<VISUALS.TRASHCAN />}
                       disabled={versions.length <= 1 || loading}
-                      onClick={() => removeVersie(vIdx)}
+                      onClick={() => removeVersie(versionIndex)}
                       title='Versie verwijderen'
                     />
                   </div>
