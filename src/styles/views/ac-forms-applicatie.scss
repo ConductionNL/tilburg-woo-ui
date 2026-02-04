@@ -18,9 +18,9 @@
 
         // Force proper flexbox behavior with maximum specificity
         &.field-size-full {
-        // commented out because it caused issues regarding height
-        //   flex: 0 0 100% !important;
-        //   flex-basis: 100% !important;
+          // commented out because it caused issues regarding height
+          //   flex: 0 0 100% !important;
+          //   flex-basis: 100% !important;
           width: 100% !important;
           max-width: 100% !important;
         }
@@ -62,7 +62,7 @@
 
   // Set minimum block size for dropdown selects
   .con-form-field-wrapper .ac-beheer-select > div {
-    min-block-size: 46px;
+    min-block-size: 44px;
   }
 
   // Additional safety: force all field-size-full to be actually full width
@@ -123,5 +123,25 @@
 
   * {
     font-family: 'Avenir', sans-serif !important;
+  }
+}
+
+// Ensure consistent field heights ONLY in versies and koppelingen sections
+// Use max-height of 44px to prevent fields from growing too tall
+// Only constraining height, not interfering with other styling
+.ac-register-container.ac-forms-applicatie
+  .ac-register-form-section
+  .ac-register-form-grid {
+  // Target all text input fields
+  .utrecht-textbox,
+  .utrecht-textbox--html-input,
+  input[type='text'],
+  input[type='date'] {
+    max-height: 44px;
+  }
+
+  // Target React Select controls
+  .react-select__control {
+    max-height: 44px;
   }
 }
