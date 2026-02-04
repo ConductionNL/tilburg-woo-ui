@@ -2019,6 +2019,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
             dienstOptions={dienstOptions}
             formType={formType}
             store={store}
+            schemas={schemas}
           />
         );
       default:
