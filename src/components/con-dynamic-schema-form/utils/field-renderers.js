@@ -707,6 +707,9 @@ export const renderField = ({
           {...(!validation.required && {
             isClearable: true,
           })}
+          {...(typeof fieldConfig.isClearable === 'boolean' && {
+            isClearable: fieldConfig.isClearable,
+          })}
           styles={inputStyle}
         />
       </div>

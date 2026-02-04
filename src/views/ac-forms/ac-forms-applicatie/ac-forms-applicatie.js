@@ -396,6 +396,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         'module',
         'suite',
         'moduleversie',
+        'koppeling',
         'organisatie',
         'dienst',
       ];
@@ -1522,11 +1523,16 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       if (selectedModuleBIds.length === 0) return;
 
       // Find which moduleB IDs are missing from modulesOptions and haven't been fetched yet
+      // Also check if they're BGVs (in buitengemeentelijkeOptions) - if so, skip them
       const existingValues = new Set(modulesOptions.map((opt) => String(opt.value)));
+      const bgvValues = new Set(
+        buitengemeentelijkeOptions.map((opt) => String(opt.value))
+      );
       const missingIds = selectedModuleBIds.filter(
         (id) =>
           !existingValues.has(String(id)) &&
-          !fetchedModuleBIdsRef.current.has(String(id))
+          !fetchedModuleBIdsRef.current.has(String(id)) &&
+          !bgvValues.has(String(id)) // Don't try to fetch BGVs as modules
       );
 
       if (missingIds.length === 0) return;
@@ -1612,7 +1618,12 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     return () => {
       cancelled = true;
     };
-  }, [koppelingenFormState.selectedAppBByRow, modulesOptions, store.object]);
+  }, [
+    koppelingenFormState.selectedAppBByRow,
+    modulesOptions,
+    buitengemeentelijkeOptions,
+    store.object,
+  ]);
 
   // Initialize diensten form state from applicatie.diensten (for edit mode)
   useEffect(() => {
@@ -1989,6 +2000,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
             koppelingenFormState={koppelingenFormState}
             setKoppelingenFormState={setKoppelingenFormState}
             searchModules={searchModules}
+            schemas={schemas}
             standaardenOptions={standaardenOptions}
             standaardenOptionsLoading={standaardenOptionsLoading}
           />
