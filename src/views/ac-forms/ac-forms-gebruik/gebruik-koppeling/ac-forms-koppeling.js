@@ -2178,24 +2178,26 @@ const AcFormsKoppeling = ({ store }) => {
     <AcSection spacing>
       <AcContainer>
         <AcColumn gap='tiger'>
-          <div>
-            <Heading1
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-            >
-              <Icon style={{ width: '1em', height: '1em' }} />
-              Uw {isEditMode ? editModeTitle : wizardName}
-            </Heading1>
-            <Paragraph>
-              {(() => {
-                switch (stepper.getCurrentStep()) {
-                  case 1:
-                    return 'Selecteer een applicatie uit uw eigen aanbod waarvoor u een koppeling wilt publiceren.';
-                  default:
-                    return 'Vul dit formulier in om uw koppeling te registreren in de softwarecatalogus.';
-                }
-              })()}
-            </Paragraph>
-          </div>
+          {saveResult !== 'success' && (
+            <div>
+              <Heading1
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+              >
+                <Icon style={{ width: '1em', height: '1em' }} />
+                Uw {isEditMode ? editModeTitle : wizardName}
+              </Heading1>
+              <Paragraph>
+                {(() => {
+                  switch (stepper.getCurrentStep()) {
+                    case 1:
+                      return 'Selecteer een applicatie uit uw eigen aanbod waarvoor u een koppeling wilt publiceren.';
+                    default:
+                      return 'Vul dit formulier in om uw koppeling te registreren in de softwarecatalogus.';
+                  }
+                })()}
+              </Paragraph>
+            </div>
+          )}
 
           <div>
             {saveResult !== 'success' && saveResult !== 'error' && (
