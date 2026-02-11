@@ -180,7 +180,7 @@ const AcHeader = ({ store: { menu, user, object } }) => {
         </div>
         <div className='ac-header__right-section'>
           {user.isAuthenticated && (userDisplayName || organizationName) && (
-            <Link to='/beheer' className='ac-header__user-info'>
+            <Link to='/beheer/my-account' className='ac-header__user-info'>
               <VISUALS.USER className='ac-header__user-icon' />
               {userDisplayName && (
                 <span className='ac-header__username'>{userDisplayName}</span>
