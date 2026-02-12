@@ -1453,7 +1453,7 @@ const ConFormsDienst = ({ store, userStore }) => {
             </Heading1>
             <Paragraph>
               {isEditMode
-                ? 'Werk uw dienstgegevens bij in onze catalogus.'
+                ? 'Werk uw dienstgegevens bij in onze softwarecatalogus.'
                 : 'Vul dit formulier in om een dienst voor uw en andere applicaties te registreren en vindbaar te maken in de softwarecatalogus.'}
             </Paragraph>
           </div>
@@ -1477,7 +1477,7 @@ const ConFormsDienst = ({ store, userStore }) => {
                 </Paragraph>
                 <Paragraph>
                   De dienst {dienst.naam || 'Onbekende dienst'} en de geselecteerde
-                  applicaties zijn opgeslagen in de catalogus.
+                  applicaties zijn opgeslagen in de softwarecatalogus.
                 </Paragraph>
               </Alert>
               <div style={{ marginTop: '2rem' }}>

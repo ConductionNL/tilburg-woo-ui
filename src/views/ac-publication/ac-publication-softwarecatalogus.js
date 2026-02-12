@@ -77,7 +77,7 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications, user, object } 
     return [
       <span key={row.id}>{row.title}</span>,
       <span key={row.id}>{row.summary || 'Geen samenvatting beschikbaar'}</span>,
-      <span key={row.id}>{row.catalog.title || 'Geen catalogus beschikbaar'}</span>,
+      <span key={row.id}>{row.catalog.title || 'Geen softwarecatalogus beschikbaar'}</span>,
       <AcLink key={row.id} to={`/publicatie/${row.id}`} onClick={() => TabOnClick(row.id)}>
         <VISUALS.ARROW_RIGHT />
         <Link>Bekijk</Link>
