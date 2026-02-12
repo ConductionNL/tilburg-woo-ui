@@ -943,7 +943,7 @@ const ConStandardsTable = ({
                           ? 'COMPLIANT'
                           : isOndersteund
                           ? 'ONDERSTEUND'
-                          : 'NON-COMPLIANT'}
+                          : 'NIET ONDERSTEUND'}
                       </span>
                     )}
                   </TableCell>
