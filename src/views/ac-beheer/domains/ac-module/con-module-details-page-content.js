@@ -46,8 +46,6 @@ const ConModuleDetailsPageContent = ({
   const [relatedTabIndex, setRelatedTabIndex] = useState(0);
 
   // Editing state for inline editing
-  const [editingSummary, setEditingSummary] = useState(false);
-  const [editingDescription, setEditingDescription] = useState(false);
   const [editingStandards, setEditingStandards] = useState(false);
 
   // Standards count state
@@ -245,34 +243,6 @@ const ConModuleDetailsPageContent = ({
 
                 <ConActionMenu.Button
                   icon={<VISUALS.PENCIL />}
-                  onClick={() => setEditingSummary(true)}
-                  disabled={!actualCanEdit}
-                  data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
-                  data-tooltip-content={
-                    !actualCanEdit
-                      ? getDisabledActionTooltip('edit', reason)
-                      : undefined
-                  }
-                >
-                  Bewerk samenvatting
-                </ConActionMenu.Button>
-
-                <ConActionMenu.Button
-                  icon={<VISUALS.PENCIL />}
-                  onClick={() => setEditingDescription(true)}
-                  disabled={!actualCanEdit}
-                  data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
-                  data-tooltip-content={
-                    !actualCanEdit
-                      ? getDisabledActionTooltip('edit', reason)
-                      : undefined
-                  }
-                >
-                  Bewerk beschrijving
-                </ConActionMenu.Button>
-
-                <ConActionMenu.Button
-                  icon={<VISUALS.PENCIL />}
                   onClick={() => setEditingStandards(true)}
                   disabled={!actualCanEdit || !standardsCount}
                   data-tooltip-id={
@@ -357,15 +327,12 @@ const ConModuleDetailsPageContent = ({
           maxLength={255}
           isMarkdown={false}
           value={data.beschrijvingKort}
-          isEditingCustomTrigger={editingSummary}
           serialize={(v) => v}
           deserialize={(v) => v || ''}
           onSuccess={(v) => {
-            setEditingSummary(false);
             data.beschrijvingKort = v;
             // No data refresh needed - data already updated locally
           }}
-          onCancel={() => setEditingSummary(false)}
         />
       </div>
 
@@ -383,7 +350,6 @@ const ConModuleDetailsPageContent = ({
           tooltip='Een uitgebreide beschrijving van de applicatie'
           maxLength={5000}
           isMarkdown={true}
-          isEditingCustomTrigger={editingDescription}
           value={data.beschrijvingLang}
           serialize={(v) => JSON.stringify(v || '')}
           deserialize={(v) => {
@@ -394,9 +360,7 @@ const ConModuleDetailsPageContent = ({
               return v;
             }
           }}
-          onCancel={() => setEditingDescription(false)}
           onSuccess={(v) => {
-            setEditingDescription(false);
             data.beschrijvingLang = v;
             // No data refresh needed - data already updated locally
           }}

@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   Heading,
-  Paragraph,
   Link,
 } from '@utrecht/component-library-react/dist/css-module';
 import { AcColumn } from '@src/atoms';
@@ -45,10 +44,6 @@ const ConDienstDetailsPageContent = ({
   const [usesLoading, setUsesLoading] = useState(false);
   const [usedLoading, setUsedLoading] = useState(false);
   const [relatedTabIndex, setRelatedTabIndex] = useState(0);
-
-  // Editing state for inline editing
-  const [editingSummary, setEditingSummary] = useState(false);
-  const [editingDescription, setEditingDescription] = useState(false);
 
   const navigate = useNavigate();
 
@@ -207,34 +202,6 @@ const ConDienstDetailsPageContent = ({
                   Bewerken
                 </ConActionMenu.Button>
 
-                <ConActionMenu.Button
-                  icon={<VISUALS.PENCIL />}
-                  onClick={() => setEditingSummary(true)}
-                  disabled={!actualCanEdit}
-                  data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
-                  data-tooltip-content={
-                    !actualCanEdit
-                      ? getDisabledActionTooltip('edit', reason)
-                      : undefined
-                  }
-                >
-                  Bewerk samenvatting
-                </ConActionMenu.Button>
-
-                <ConActionMenu.Button
-                  icon={<VISUALS.PENCIL />}
-                  onClick={() => setEditingDescription(true)}
-                  disabled={!actualCanEdit}
-                  data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
-                  data-tooltip-content={
-                    !actualCanEdit
-                      ? getDisabledActionTooltip('edit', reason)
-                      : undefined
-                  }
-                >
-                  Bewerk beschrijving
-                </ConActionMenu.Button>
-
                 {/* Publish/Depublish actions - LEGACY: No longer needed */}
                 {/* {data && !data['@self']?.published && (
                   <ConActionMenu.Button
@@ -303,15 +270,12 @@ const ConDienstDetailsPageContent = ({
           maxLength={255}
           isMarkdown={false}
           value={data.beschrijvingKort}
-          isEditingCustomTrigger={editingSummary}
           serialize={(v) => v}
           deserialize={(v) => v || ''}
           onSuccess={(v) => {
-            setEditingSummary(false);
             data.beschrijvingKort = v;
             // No data refresh needed - data already updated locally
           }}
-          onCancel={() => setEditingSummary(false)}
         />
       </div>
 
@@ -329,7 +293,6 @@ const ConDienstDetailsPageContent = ({
           tooltip='Een uitgebreide beschrijving van de dienst'
           maxLength={5000}
           isMarkdown={true}
-          isEditingCustomTrigger={editingDescription}
           value={data.beschrijvingLang}
           serialize={(v) => JSON.stringify(v || '')}
           deserialize={(v) => {
@@ -340,9 +303,7 @@ const ConDienstDetailsPageContent = ({
               return v;
             }
           }}
-          onCancel={() => setEditingDescription(false)}
           onSuccess={(v) => {
-            setEditingDescription(false);
             data.beschrijvingLang = v;
             // No data refresh needed - data already updated locally
           }}
