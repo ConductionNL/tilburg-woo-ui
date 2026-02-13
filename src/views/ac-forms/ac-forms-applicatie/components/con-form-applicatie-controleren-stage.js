@@ -50,7 +50,6 @@ const ConFormApplicatieControlerenStage = memo(
     store,
     aanbiederOrganisatie,
     aanbiederKeuze,
-    schemas,
   }) => {
     // State to store fetched contactpersoon object
     const [contactpersoonData, setContactpersoonData] = useState(null);
