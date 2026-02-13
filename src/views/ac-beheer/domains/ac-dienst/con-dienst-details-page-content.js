@@ -1,15 +1,11 @@
 import React from 'react';
-import {
-  Heading,
-  Link,
-} from '@utrecht/component-library-react/dist/css-module';
+import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
 import { AcColumn } from '@src/atoms';
 import { VISUALS } from '@src/constants';
 import ConLogoPreview from '@src/views/ac-register/con-logo-preview';
 import { ConExternalLink } from '@src/components';
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import { commongroundApiUrl } from '@src/config';
-import ConEditableDescription from '../../shared/components/con-editable-description/con-editable-description';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
 import RelatedTabs from '@views/ac-publication/con-related-tabs';
 import {
@@ -20,6 +16,17 @@ import { TOOLTIP_ID } from '@src/index.web';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 import { useNavigate } from 'react-router-dom';
+
+// Markdown Editor
+import remarkDefinitionList, { defListHastHandlers } from 'remark-definition-list';
+import { remarkMark } from 'remark-mark-highlight';
+import MDEditor from '@uiw/react-md-editor';
+import remarkGfm from 'remark-gfm';
+import remarkRehype from 'remark-rehype';
+import remarkEmoji from 'remark-emoji';
+import remarkSupersub from 'remark-supersub';
+import rehypeSlug from 'rehype-slug';
+import rehypeSanitize from 'rehype-sanitize';
 
 /**
  * Content for the dienst details page
@@ -149,17 +156,17 @@ const ConDienstDetailsPageContent = ({
           alignItems: 'center',
         }}
       >
-          <div className='con-beheer-details--header-container'>
-            {(data?.logo || data?.['@self']?.image) && (
-              <ConLogoPreview
-                className='con-beheer-details--logo-container'
-                logoUrl={data?.logo || data?.['@self']?.image}
-              />
-            )}
-            <Heading className='con-beheer-details--title'>
-              {data?.naam || data?.['@self']?.name || data?.['@self']?.id}
-            </Heading>
-          </div>
+        <div className='con-beheer-details--header-container'>
+          {(data?.logo || data?.['@self']?.image) && (
+            <ConLogoPreview
+              className='con-beheer-details--logo-container'
+              logoUrl={data?.logo || data?.['@self']?.image}
+            />
+          )}
+          <Heading className='con-beheer-details--title'>
+            {data?.naam || data?.['@self']?.name || data?.['@self']?.id}
+          </Heading>
+        </div>
 
         <div className='ac-register-review__header-controls'>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -259,7 +266,7 @@ const ConDienstDetailsPageContent = ({
 
       {/* Short description */}
       <div style={{ flex: 2 }}>
-        <ConEditableDescription
+        {/* <ConEditableDescription
           registerSlug={config?.registerSlug}
           schemaSlug={config?.schemaSlug}
           objectId={data?.['@self']?.id}
@@ -276,12 +283,15 @@ const ConDienstDetailsPageContent = ({
             data.beschrijvingKort = v;
             // No data refresh needed - data already updated locally
           }}
-        />
+        /> */}
+
+        {/* Visual representation - Short description */}
+        {!!data?.beschrijvingKort && <div>{data.beschrijvingKort}</div>}
       </div>
 
       {/* Long description */}
       <div>
-        <br />
+        {/* <br />
         <ConEditableDescription
           markdownPreviewClassName='con-my-account-description'
           registerSlug={config?.registerSlug}
@@ -307,7 +317,36 @@ const ConDienstDetailsPageContent = ({
             data.beschrijvingLang = v;
             // No data refresh needed - data already updated locally
           }}
-        />
+        /> */}
+        {!!data?.beschrijvingLang && (
+          <>
+            <br />
+            <MDEditor.Markdown
+              wrapperElement={{
+                'data-color-mode': 'light',
+              }}
+              source={(() => {
+                try {
+                  return JSON.parse(data.beschrijvingLang) || '';
+                } catch (e) {
+                  return data.beschrijvingLang || '';
+                }
+              })()}
+              remarkPlugins={[
+                [remarkGfm, { singleTilde: false }],
+                remarkDefinitionList,
+                remarkEmoji,
+                remarkSupersub,
+                remarkMark,
+              ]}
+              rehypePlugins={[
+                rehypeSlug,
+                [rehypeSanitize],
+                [remarkRehype, { handlers: { ...defListHastHandlers } }],
+              ]}
+            />
+          </>
+        )}
       </div>
 
       {(contact || contactId || data?.website) && (
@@ -373,46 +412,48 @@ const ConDienstDetailsPageContent = ({
           </Heading>
           <div className='ac-register-review__section'>
             <div style={{ marginTop: '12px' }}>
-            {data?.type && (
-              <div style={{ marginBottom: '8px' }}>
-                <strong>Type: </strong>
-                {(() => {
-                  const rawType = data.type;
-                  
-                  // Check if it's a string that looks like a JSON array
-                  if (typeof rawType === 'string' && rawType.trim().startsWith('[')) {
-                    try {
-                      const parsed = JSON.parse(rawType);
-                      if (Array.isArray(parsed)) {
-                        return parsed
-                          .map((item, index) => (
+              {data?.type && (
+                <div style={{ marginBottom: '8px' }}>
+                  <strong>Type: </strong>
+                  {(() => {
+                    const rawType = data.type;
+
+                    // Check if it's a string that looks like a JSON array
+                    if (
+                      typeof rawType === 'string' &&
+                      rawType.trim().startsWith('[')
+                    ) {
+                      try {
+                        const parsed = JSON.parse(rawType);
+                        if (Array.isArray(parsed)) {
+                          return parsed.map((item, index) => (
                             <React.Fragment key={index}>
                               <ConUuidResolver>{String(item)}</ConUuidResolver>
                               {index < parsed.length - 1 ? ', ' : ''}
                             </React.Fragment>
                           ));
+                        }
+                      } catch (e) {
+                        // If parsing fails, display as-is
+                        return <ConUuidResolver>{String(rawType)}</ConUuidResolver>;
                       }
-                    } catch (e) {
-                      // If parsing fails, display as-is
-                      return <ConUuidResolver>{String(rawType)}</ConUuidResolver>;
                     }
-                  }
-                  
-                  // Handle actual arrays
-                  if (Array.isArray(rawType)) {
-                    return rawType.map((typeId, index) => (
-                      <React.Fragment key={index}>
-                        <ConUuidResolver>{String(typeId)}</ConUuidResolver>
-                        {index < rawType.length - 1 ? ', ' : ''}
-                      </React.Fragment>
-                    ));
-                  }
-                  
-                  // Handle single value
-                  return <ConUuidResolver>{String(rawType)}</ConUuidResolver>;
-                })()}
-              </div>
-            )}
+
+                    // Handle actual arrays
+                    if (Array.isArray(rawType)) {
+                      return rawType.map((typeId, index) => (
+                        <React.Fragment key={index}>
+                          <ConUuidResolver>{String(typeId)}</ConUuidResolver>
+                          {index < rawType.length - 1 ? ', ' : ''}
+                        </React.Fragment>
+                      ));
+                    }
+
+                    // Handle single value
+                    return <ConUuidResolver>{String(rawType)}</ConUuidResolver>;
+                  })()}
+                </div>
+              )}
               {data?.dienstType && (
                 <div style={{ marginBottom: '8px' }}>
                   <strong>Diensttype: </strong>

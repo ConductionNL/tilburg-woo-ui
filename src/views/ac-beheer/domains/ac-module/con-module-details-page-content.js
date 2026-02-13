@@ -1,14 +1,10 @@
-import {
-  Heading,
-  Link,
-} from '@utrecht/component-library-react/dist/css-module';
+import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
 import { AcColumn, AcFlex } from '@src/atoms';
 import { VISUALS } from '@src/constants';
 import ConLogoPreview from '@src/views/ac-register/con-logo-preview';
 import { ConExternalLink } from '@src/components';
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import { commongroundApiUrl } from '@src/config';
-import ConEditableDescription from '../../shared/components/con-editable-description/con-editable-description';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
 import ConEditableStandards from '../../shared/components/con-editable-standards/con-editable-standards';
 import RelatedTabs from '@views/ac-publication/con-related-tabs';
@@ -20,6 +16,17 @@ import { TOOLTIP_ID } from '@src/index.web';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 import { useNavigate } from 'react-router-dom';
+
+// Markdown Editor
+import remarkDefinitionList, { defListHastHandlers } from 'remark-definition-list';
+import { remarkMark } from 'remark-mark-highlight';
+import MDEditor from '@uiw/react-md-editor';
+import remarkGfm from 'remark-gfm';
+import remarkRehype from 'remark-rehype';
+import remarkEmoji from 'remark-emoji';
+import remarkSupersub from 'remark-supersub';
+import rehypeSlug from 'rehype-slug';
+import rehypeSanitize from 'rehype-sanitize';
 
 /**
  * Content for the module details page
@@ -241,24 +248,6 @@ const ConModuleDetailsPageContent = ({
                   Bewerken
                 </ConActionMenu.Button>
 
-                <ConActionMenu.Button
-                  icon={<VISUALS.PENCIL />}
-                  onClick={() => setEditingStandards(true)}
-                  disabled={!actualCanEdit || !standardsCount}
-                  data-tooltip-id={
-                    !actualCanEdit || !standardsCount ? TOOLTIP_ID : undefined
-                  }
-                  data-tooltip-content={
-                    !actualCanEdit || !standardsCount
-                      ? !actualCanEdit
-                        ? getDisabledActionTooltip('edit', reason)
-                        : 'Kan niet bewerken want er zijn geen standaarden beschikbaar.'
-                      : undefined
-                  }
-                >
-                  Bewerk standaarden
-                </ConActionMenu.Button>
-
                 {/* Publish/Depublish actions - LEGACY: No longer needed */}
                 {/* {data && !data['@self']?.published && (
                   <ConActionMenu.Button
@@ -316,7 +305,7 @@ const ConModuleDetailsPageContent = ({
 
       {/* Short description */}
       <div style={{ flex: 2 }}>
-        <ConEditableDescription
+        {/* <ConEditableDescription
           registerSlug={config?.registerSlug}
           schemaSlug={config?.schemaSlug}
           objectId={data?.['@self']?.id}
@@ -333,12 +322,15 @@ const ConModuleDetailsPageContent = ({
             data.beschrijvingKort = v;
             // No data refresh needed - data already updated locally
           }}
-        />
+        /> */}
+
+        {/* Visual representation - Short description */}
+        {!!data?.beschrijvingKort && <div>{data.beschrijvingKort}</div>}
       </div>
 
       {/* Long description */}
       <div>
-        <br />
+        {/* <br />
         <ConEditableDescription
           markdownPreviewClassName='con-my-account-description'
           registerSlug={config?.registerSlug}
@@ -364,7 +356,36 @@ const ConModuleDetailsPageContent = ({
             data.beschrijvingLang = v;
             // No data refresh needed - data already updated locally
           }}
-        />
+        /> */}
+        {!!data?.beschrijvingLang && (
+          <>
+            <br />
+            <MDEditor.Markdown
+              wrapperElement={{
+                'data-color-mode': 'light',
+              }}
+              source={(() => {
+                try {
+                  return JSON.parse(data.beschrijvingLang) || '';
+                } catch (e) {
+                  return data.beschrijvingLang || '';
+                }
+              })()}
+              remarkPlugins={[
+                [remarkGfm, { singleTilde: false }],
+                remarkDefinitionList,
+                remarkEmoji,
+                remarkSupersub,
+                remarkMark,
+              ]}
+              rehypePlugins={[
+                rehypeSlug,
+                [rehypeSanitize],
+                [remarkRehype, { handlers: { ...defListHastHandlers } }],
+              ]}
+            />
+          </>
+        )}
       </div>
 
       {/* Contact Information Section */}
@@ -445,7 +466,7 @@ const ConModuleDetailsPageContent = ({
                   <p>{data.licentie}</p>
                 </div>
               )}
-              {Array.isArray(data?.moduleVersies) &&
+              {/* {Array.isArray(data?.moduleVersies) &&
                 data.moduleVersies.length > 0 && (
                   <div>
                     <b>Huidige versie:</b>
@@ -455,7 +476,7 @@ const ConModuleDetailsPageContent = ({
                       )?.versie || 'Geen versie in gebruik'}
                     </p>
                   </div>
-                )}
+                )} */}
               {Array.isArray(data?.cloudDienstverleningsmodel) &&
                 data.cloudDienstverleningsmodel.length > 0 && (
                   <div>
