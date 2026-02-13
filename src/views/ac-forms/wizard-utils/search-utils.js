@@ -322,6 +322,7 @@ export const createOrganisatieSearchConfig = (store, options = {}) => {
  * @param {Object} fetchOptions - Additional fetch options
  * @param {Array<string>} fetchOptions.extendParams - Extend parameters for fetch
  * @param {string} fetchOptions.source - Source type: 'index' or 'database' (default: 'index')
+ * @param {function}   filterMissing - filter out missing ID's based on a condition (accepts function that gets passed into `.filter()`)
  * @returns {Promise<Array<Object>>} Array of newly fetched and mapped options
  */
 export const fetchMissingEntities = async (
@@ -332,7 +333,8 @@ export const fetchMissingEntities = async (
   currentOptions,
   mapper,
   setOptions,
-  fetchOptions = {}
+  fetchOptions = {},
+  filterMissing = () => true
 ) => {
   if (!ids || ids.length === 0) return [];
 
@@ -340,7 +342,7 @@ export const fetchMissingEntities = async (
 
   // Find which IDs are missing from current options
   const existingValues = new Set(currentOptions.map((opt) => String(opt.value)));
-  const missingIds = ids.filter((id) => !existingValues.has(String(id)));
+  const missingIds = ids.filter((id) => !existingValues.has(String(id))).filter(filterMissing);
 
   if (missingIds.length === 0) return [];
 

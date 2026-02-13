@@ -1083,21 +1083,13 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       const selectedModuleBIds = Object.values(
         koppelingenFormState.selectedAppBByRow || {}
       ).filter(Boolean);
+      const bgvValues = new Set(
+        buitengemeentelijkeOptions.map((opt) => String(opt.value))
+      );
 
       if (selectedModuleBIds.length === 0) return;
 
       // Directly ask fetchMissingEntities to handle missing IDs, with all current ones
-      // @TODO add a check to ensure that it doesn't attempt to fetch buitengemeentelijke (BGV) as modules
-      // e.g.:
-      /*
-        ```
-        const bgvValues = new Set(
-          buitengemeentelijkeOptions.map((opt) => String(opt.value))
-        );
-
-        .filter((id) => !bgvValues.has(String(id)))
-        ```
-      */
       await fetchMissingEntities(
         store,
         'voorzieningen',
@@ -1106,7 +1098,8 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         modulesOptions,
         moduleMapper,
         setModulesOptions,
-        { extendParams: ['@self.schema'], source: 'index' }
+        { extendParams: ['@self.schema'], source: 'index' },
+        (id) => !bgvValues.has(String(id))
       );
     };
 
@@ -1441,7 +1434,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
             schemas={schemas}
             formType={formType}
             store={store}
-            schemas={schemas}
           />
         );
       default:
