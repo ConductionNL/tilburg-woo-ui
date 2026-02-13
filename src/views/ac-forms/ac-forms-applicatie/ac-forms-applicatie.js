@@ -2497,7 +2497,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       case 'eigen':
         return 'Vul dit formulier in om een door u aangeboden applicatie toe te voegen aan de softwarecatalogus.';
       case 'ontbrekend-applicatie':
-        return 'Meld een applicatie die nog niet in de catalogus staat en registreer deze.';
+        return 'Meld een applicatie die nog niet in de softwarecatalogus staat en registreer deze.';
       default:
         return 'Registreer een nieuwe applicatie in de softwarecatalogus.';
     }
@@ -2526,7 +2526,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
                 </Heading1>
                 <Paragraph>
                   {isEditMode
-                    ? 'Werk uw applicatiegegevens bij in onze catalogus.'
+                    ? 'Werk uw applicatiegegevens bij in onze softwarecatalogus.'
                     : getPageDescription(formType)}
                 </Paragraph>
               </div>

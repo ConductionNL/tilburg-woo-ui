@@ -213,7 +213,7 @@ const getEnvConfig = () => {
 
   const baseConfig = {
     // Site Configuration
-    SITE_TITLE: getConfigValue(yamlConfig, 'SITE_TITLE', 'Test Catalogus'),
+    SITE_TITLE: getConfigValue(yamlConfig, 'SITE_TITLE', 'Test softwarecatalogus'),
     SITE_DESCRIPTION: getConfigValue(
       yamlConfig,
       'SITE_DESCRIPTION',

@@ -63,7 +63,7 @@ const DetailsPageConfigFactory = {
             ...beheerConfig.uniqueActions,
             {
               key: 'openCatalogus',
-              label: 'Bekijk in catalogus',
+              label: 'Bekijk in softwarecatalogus',
               icon: VISUALS.EYE,
               action: null,
               onClick: (row) => window.open(`/publicatie/${row.id}`, '_blank'),
