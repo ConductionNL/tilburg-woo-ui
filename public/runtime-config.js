@@ -34,7 +34,7 @@ window.RUNTIME_CONFIG = {
   "EXTERNAL_PRIVACY_URL": "https://www.tilburg.nl/privacystatement/",
   "EXTERNAL_COOKIES_URL": "https://www.tilburg.nl/cookies/",
   "EXTERNAL_PROCLAIMER_URL": "https://www.tilburg.nl/proclaimer/",
-  "HERO_IMAGE_URL": "/home-hero-background.png",
+  "HERO_IMAGE_URL": "null",
   "FAVICON_URL": null,
   "FOOTER_STYLE": "vng",
   "FOOTER_LOGO_TITLE": "Open Tilburg",
