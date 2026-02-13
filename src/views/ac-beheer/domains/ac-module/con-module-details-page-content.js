@@ -319,7 +319,7 @@ const ConModuleDetailsPageContent = ({
                     }
                   >
                     Depubliceren
-                  </ConActionMenu.Button>
+                </ConActionMenu.Button>
                 )} */}
 
                 <ConActionMenu.Button
