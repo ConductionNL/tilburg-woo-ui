@@ -1444,19 +1444,21 @@ const ConFormsDienst = ({ store, userStore }) => {
     <AcSection spacing>
       <AcContainer>
         <AcColumn gap='tiger'>
-          <div>
-            <Heading1
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-            >
-              <Icon style={{ width: '1em', height: '1em' }} />
-              Uw {isEditMode ? editModeTitle : newWizardName}
-            </Heading1>
-            <Paragraph>
-              {isEditMode
-                ? 'Werk uw dienstgegevens bij in onze catalogus.'
-                : 'Vul dit formulier in om een dienst voor uw en andere applicaties te registreren en vindbaar te maken in de softwarecatalogus.'}
-            </Paragraph>
-          </div>
+          {saveResult !== 'success' && (
+            <div>
+              <Heading1
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+              >
+                <Icon style={{ width: '1em', height: '1em' }} />
+                Uw {isEditMode ? editModeTitle : newWizardName}
+              </Heading1>
+              <Paragraph>
+                {isEditMode
+                  ? 'Werk uw dienstgegevens bij in onze catalogus.'
+                  : 'Vul dit formulier in om een dienst voor uw en andere applicaties te registreren en vindbaar te maken in de softwarecatalogus.'}
+              </Paragraph>
+            </div>
+          )}
 
           {/* End header block */}
 

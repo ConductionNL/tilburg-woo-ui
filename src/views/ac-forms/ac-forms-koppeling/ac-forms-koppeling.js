@@ -2405,33 +2405,35 @@ const AcFormsKoppeling = ({ store }) => {
     <AcSection spacing>
       <AcContainer>
         <AcColumn gap='tiger'>
-          <div>
-            <Heading1
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-            >
-              <Icon style={{ width: '1em', height: '1em' }} />
-              Uw {isEditMode ? editModeTitle : wizardName}
-            </Heading1>
-            <Paragraph>
-              {(() => {
-                const currentStepLabel = stepper.getLabelFromStep(
-                  stepper.getCurrentStep()
-                );
-                switch (currentStepLabel) {
-                  case 'aanbieder':
-                    return 'Selecteer een aanbieder of maak een nieuwe organisatie aan.';
-                  case 'koppeling-zoeken':
-                    return 'Selecteer een applicatie uit uw eigen aanbod waarvoor u een koppeling wilt publiceren.';
-                  case 'koppeling':
-                    return 'Vul dit formulier in om uw koppeling te registreren in de softwarecatalogus.';
-                  case 'aanvullende-informatie':
-                    return 'Vul dit formulier in om uw koppeling te registreren in de softwarecatalogus.';
-                  default:
-                    return 'Vul dit formulier in om uw koppeling te registreren in de softwarecatalogus.';
-                }
-              })()}
-            </Paragraph>
-          </div>
+          {saveResult !== 'success' && (
+            <div>
+              <Heading1
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+              >
+                <Icon style={{ width: '1em', height: '1em' }} />
+                Uw {isEditMode ? editModeTitle : wizardName}
+              </Heading1>
+              <Paragraph>
+                {(() => {
+                  const currentStepLabel = stepper.getLabelFromStep(
+                    stepper.getCurrentStep()
+                  );
+                  switch (currentStepLabel) {
+                    case 'aanbieder':
+                      return 'Selecteer een aanbieder of maak een nieuwe organisatie aan.';
+                    case 'koppeling-zoeken':
+                      return 'Selecteer een applicatie uit uw eigen aanbod waarvoor u een koppeling wilt publiceren.';
+                    case 'koppeling':
+                      return 'Vul dit formulier in om uw koppeling te registreren in de softwarecatalogus.';
+                    case 'aanvullende-informatie':
+                      return 'Vul dit formulier in om uw koppeling te registreren in de softwarecatalogus.';
+                    default:
+                      return 'Vul dit formulier in om uw koppeling te registreren in de softwarecatalogus.';
+                  }
+                })()}
+              </Paragraph>
+            </div>
+          )}
 
           <div>
             {saveResult !== 'success' && saveResult !== 'error' && (
