@@ -987,7 +987,7 @@ const ConFormsDienst = ({ store, userStore }) => {
         modules: finalModuleIds,
         koppelingen: selectedKoppelingIds,
         // Include service type for processing
-        dienstType: dienstType,
+        dienstType: dienst.type,
       };
       if (isEditMode) {
         await store.object.updateObject(

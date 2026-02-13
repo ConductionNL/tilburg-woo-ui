@@ -35,6 +35,7 @@ import rehypeSanitize from 'rehype-sanitize';
  * @param {Array} buitengemeentelijkeOptions - Available external facilities for connections display
  * @param {Array} schemas - Array of schema objects
  * @param {Object} store - MobX store for fetching objects
+ * @param {Object} schemas - Schema definitions for field labels
  */
 const ConFormApplicatieControlerenStage = memo(
   ({
@@ -49,6 +50,7 @@ const ConFormApplicatieControlerenStage = memo(
     store,
     aanbiederOrganisatie,
     aanbiederKeuze,
+    schemas,
   }) => {
     // State to store fetched contactpersoon object
     const [contactpersoonData, setContactpersoonData] = useState(null);
@@ -324,6 +326,19 @@ const ConFormApplicatieControlerenStage = memo(
       return startPart + '...' + endPart + extension;
     };
 
+    // Helper function to get schema label for a field
+    const getSchemaLabel = (schemaType, propertyName, fallback) => {
+      if (!schemas || !schemaType || !propertyName) return fallback;
+
+      const schema = schemas[schemaType];
+      if (!schema || !schema.properties) return fallback;
+
+      const propertySchema = schema.properties[propertyName];
+      if (!propertySchema) return fallback;
+
+      return propertySchema.title || fallback;
+    };
+
     return (
       <div>
         <Paragraph>
@@ -353,7 +368,9 @@ const ConFormApplicatieControlerenStage = memo(
             <Separator className='con-form-wizard-review-header__separator' />
 
             <div className='ac-register-review__field'>
-              <strong>Korte beschrijving:</strong>
+              <strong>
+                {getSchemaLabel('module', 'beschrijvingKort', 'Korte beschrijving')}:
+              </strong>
               <span
                 style={{
                   wordBreak: 'break-word',
@@ -368,7 +385,12 @@ const ConFormApplicatieControlerenStage = memo(
             {applicatie.beschrijvingLang && (
               <div className='ac-register-review__description'>
                 <strong className='ac-register-review__description__heading'>
-                  Lange beschrijving:
+                  {getSchemaLabel(
+                    'module',
+                    'beschrijvingLang',
+                    'Lange beschrijving'
+                  )}
+                  :
                 </strong>
                 <div
                   style={{
@@ -401,7 +423,7 @@ const ConFormApplicatieControlerenStage = memo(
             )}
 
             <div className='ac-register-review__field'>
-              <strong>Website:</strong>{' '}
+              <strong>{getSchemaLabel('module', 'website', 'Website')}:</strong>{' '}
               {applicatie.website ? (
                 isExternalUrl(applicatie.website) ? (
                   <a
@@ -422,7 +444,9 @@ const ConFormApplicatieControlerenStage = memo(
 
             {applicatie.contactpersoon && (
               <div className='ac-register-review__field'>
-                <strong>Contactpersoon:</strong>{' '}
+                <strong>
+                  {getSchemaLabel('module', 'contactpersoon', 'Contactpersoon')}:
+                </strong>{' '}
                 {(() => {
                   const displayName = getContactpersoonDisplayName();
                   if (displayName) {
@@ -441,12 +465,21 @@ const ConFormApplicatieControlerenStage = memo(
             )}
 
             <div className='ac-register-review__field'>
-              <strong>Hosting vorm:</strong>{' '}
+              <strong>
+                {getSchemaLabel(
+                  'module',
+                  'cloudDienstverleningsmodel',
+                  'Hosting vorm'
+                )}
+                :
+              </strong>{' '}
               {applicatie.cloudDienstverleningsmodel?.join(', ') || '-'}
             </div>
 
             <div className='ac-register-review__field'>
-              <strong>Licentietype:</strong>{' '}
+              <strong>
+                {getSchemaLabel('module', 'licentietype', 'Licentietype')}:
+              </strong>{' '}
               {applicatie.licentietype || applicatie.licentieType || '-'}
             </div>
 
@@ -454,23 +487,34 @@ const ConFormApplicatieControlerenStage = memo(
               applicatie.licentieType !== 'Closed Source') &&
               applicatie.licentie && (
                 <div className='ac-register-review__field'>
-                  <strong>Licentie:</strong> {applicatie.licentie}
+                  <strong>
+                    {getSchemaLabel('module', 'licentie', 'Licentie')}:
+                  </strong>{' '}
+                  {applicatie.licentie}
                 </div>
               )}
 
             <div className='ac-register-review__field'>
-              <strong>Hosting:</strong> {applicatie.hostingLocatie || '-'}
+              <strong>
+                {getSchemaLabel('module', 'hostingLocatie', 'Hosting')}:
+              </strong>{' '}
+              {applicatie.hostingLocatie || '-'}
             </div>
 
             <div className='ac-register-review__field'>
-              <strong>Jurisdictie:</strong> {applicatie.hostingJurisdictie || '-'}
+              <strong>
+                {getSchemaLabel('module', 'hostingJurisdictie', 'Jurisdictie')}:
+              </strong>{' '}
+              {applicatie.hostingJurisdictie || '-'}
             </div>
 
             {/* Module Versies */}
             {Array.isArray(applicatie.moduleVersies) &&
               applicatie.moduleVersies.length > 0 && (
                 <div className='ac-register-review__field'>
-                  <strong>Versies:</strong>
+                  <strong>
+                    {getSchemaLabel('module', 'moduleVersies', 'Versies')}:
+                  </strong>
                   <div>
                     <UnorderedList>
                       {applicatie.moduleVersies.map((versie, i) => (
@@ -498,7 +542,14 @@ const ConFormApplicatieControlerenStage = memo(
             {Array.isArray(applicatie.referentieComponenten) &&
               applicatie.referentieComponenten.length > 0 && (
                 <div className='ac-register-review__field'>
-                  <strong>Referentiecomponenten:</strong>
+                  <strong>
+                    {getSchemaLabel(
+                      'module',
+                      'referentieComponenten',
+                      'Referentiecomponenten'
+                    )}
+                    :
+                  </strong>
                   <div>
                     <UnorderedList>
                       {applicatie.referentieComponenten.map((rc, i) => {
@@ -523,7 +574,14 @@ const ConFormApplicatieControlerenStage = memo(
             {Array.isArray(applicatie.compliancy) &&
               applicatie.compliancy.length > 0 && (
                 <div className='ac-register-review__field'>
-                  <strong>Ondersteunde standaarden:</strong>
+                  <strong>
+                    {getSchemaLabel(
+                      'module',
+                      'compliancy',
+                      'Ondersteunde standaarden'
+                    )}
+                    :
+                  </strong>
                   <div>
                     <UnorderedList>
                       {applicatie.compliancy.map((comp, i) => {
@@ -587,7 +645,9 @@ const ConFormApplicatieControlerenStage = memo(
             {Array.isArray(applicatie.koppelingen) &&
               applicatie.koppelingen.length > 0 && (
                 <div className='ac-register-review__field'>
-                  <strong>Koppelingen:</strong>
+                  <strong>
+                    {getSchemaLabel('module', 'koppelingen', 'Koppelingen')}:
+                  </strong>
                   <div>
                     <UnorderedList>
                       {applicatie.koppelingen.map((kp, kIdx) => {
@@ -632,7 +692,9 @@ const ConFormApplicatieControlerenStage = memo(
             {Array.isArray(applicatie.diensten) &&
               applicatie.diensten.length > 0 && (
                 <div className='ac-register-review__field'>
-                  <strong>Diensten:</strong>
+                  <strong>
+                    {getSchemaLabel('module', 'diensten', 'Diensten')}:
+                  </strong>
                   <div>
                     <UnorderedList>
                       {applicatie.diensten.map((dienst, i) => {
@@ -672,7 +734,9 @@ const ConFormApplicatieControlerenStage = memo(
             <div className='ac-register-review__section'>
               {formType === 'ontbrekend-applicatie' && applicatie.aanbieder ? (
                 <div className='ac-register-review__field'>
-                  <strong>Aanbieder:</strong>{' '}
+                  <strong>
+                    {getSchemaLabel('module', 'aanbieder', 'Aanbieder')}:
+                  </strong>{' '}
                   <span>
                     <ConUuidResolver>{applicatie.aanbieder}</ConUuidResolver>
                   </span>
@@ -681,12 +745,17 @@ const ConFormApplicatieControlerenStage = memo(
                 <>
                   {aanbiederOrganisatie.naam && (
                     <div className='ac-register-review__field'>
-                      <strong>Naam:</strong> <span>{aanbiederOrganisatie.naam}</span>
+                      <strong>
+                        {getSchemaLabel('organisatie', 'naam', 'Naam')}:
+                      </strong>{' '}
+                      <span>{aanbiederOrganisatie.naam}</span>
                     </div>
                   )}
                   {aanbiederOrganisatie.type && (
                     <div className='ac-register-review__field'>
-                      <strong>Type:</strong>{' '}
+                      <strong>
+                        {getSchemaLabel('organisatie', 'type', 'Type')}:
+                      </strong>{' '}
                       <span>
                         <ConUuidResolver>
                           {aanbiederOrganisatie.type}
@@ -696,7 +765,9 @@ const ConFormApplicatieControlerenStage = memo(
                   )}
                   {aanbiederOrganisatie.website && (
                     <div className='ac-register-review__field'>
-                      <strong>Website:</strong>{' '}
+                      <strong>
+                        {getSchemaLabel('organisatie', 'website', 'Website')}:
+                      </strong>{' '}
                       {aanbiederOrganisatie.website ? (
                         isExternalUrl(aanbiederOrganisatie.website) ? (
                           <a
@@ -719,7 +790,14 @@ const ConFormApplicatieControlerenStage = memo(
                   )}
                   {aanbiederOrganisatie.beschrijvingKort && (
                     <div className='ac-register-review__field'>
-                      <strong>Korte beschrijving:</strong>
+                      <strong>
+                        {getSchemaLabel(
+                          'organisatie',
+                          'beschrijvingKort',
+                          'Korte beschrijving'
+                        )}
+                        :
+                      </strong>
                       <div
                         style={{
                           wordBreak: 'break-word',
@@ -735,7 +813,12 @@ const ConFormApplicatieControlerenStage = memo(
                   {aanbiederOrganisatie.beschrijvingLang && (
                     <div className='ac-register-review__description'>
                       <strong className='ac-register-review__description__heading'>
-                        Lange beschrijving:
+                        {getSchemaLabel(
+                          'organisatie',
+                          'beschrijvingLang',
+                          'Lange beschrijving'
+                        )}
+                        :
                       </strong>
                       <div
                         style={{
@@ -768,19 +851,31 @@ const ConFormApplicatieControlerenStage = memo(
                   )}
                   {aanbiederOrganisatie['e-mailadres'] && (
                     <div className='ac-register-review__field'>
-                      <strong>E-mailadres:</strong>{' '}
+                      <strong>
+                        {getSchemaLabel('organisatie', 'e-mailadres', 'E-mailadres')}
+                        :
+                      </strong>{' '}
                       <span>{aanbiederOrganisatie['e-mailadres']}</span>
                     </div>
                   )}
                   {aanbiederOrganisatie.telefoonnummer && (
                     <div className='ac-register-review__field'>
-                      <strong>Telefoonnummer:</strong>{' '}
+                      <strong>
+                        {getSchemaLabel(
+                          'organisatie',
+                          'telefoonnummer',
+                          'Telefoonnummer'
+                        )}
+                        :
+                      </strong>{' '}
                       <span>{aanbiederOrganisatie.telefoonnummer}</span>
                     </div>
                   )}
                   {aanbiederOrganisatie.logo && (
                     <div className='ac-register-review__field'>
-                      <strong>Logo:</strong>
+                      <strong>
+                        {getSchemaLabel('organisatie', 'logo', 'Logo')}:
+                      </strong>
                       <ConLogoPreview
                         logoUrl={aanbiederOrganisatie.logo}
                         className='ac-register-review__logo'

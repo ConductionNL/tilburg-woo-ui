@@ -459,7 +459,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
   // Fetch schema definitions on component mount
   const { schemas, loading: schemasLoading } = useSchemaFetcher(
     store,
-    ['module', 'suite', 'moduleversie', 'organisatie', 'dienst'],
+    ['module', 'suite', 'moduleversie', 'koppeling', 'organisatie', 'dienst'],
     {
       onSchemasLoaded: (fetchedSchemas) => {
         // Update applicatie object with schema-based defaults if applicatie schema was loaded
@@ -1087,6 +1087,17 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       if (selectedModuleBIds.length === 0) return;
 
       // Directly ask fetchMissingEntities to handle missing IDs, with all current ones
+      // @TODO add a check to ensure that it doesn't attempt to fetch buitengemeentelijke (BGV) as modules
+      // e.g.:
+      /*
+        ```
+        const bgvValues = new Set(
+          buitengemeentelijkeOptions.map((opt) => String(opt.value))
+        );
+
+        .filter((id) => !bgvValues.has(String(id)))
+        ```
+      */
       await fetchMissingEntities(
         store,
         'voorzieningen',
@@ -1100,7 +1111,13 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     };
 
     run();
-  }, [koppelingenFormState.selectedAppBByRow, modulesOptions, store, moduleMapper]);
+  }, [
+    koppelingenFormState.selectedAppBByRow,
+    modulesOptions,
+    buitengemeentelijkeOptions,
+    store,
+    moduleMapper,
+  ]);
 
   // Initialize diensten form state from applicatie.diensten (for edit mode)
   useEffect(() => {
@@ -1405,6 +1422,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
             koppelingenFormState={koppelingenFormState}
             setKoppelingenFormState={setKoppelingenFormState}
             searchModules={searchModules}
+            schemas={schemas}
             standaardenOptions={standaardenOptions}
             standaardenOptionsLoading={standaardenOptionsLoading}
           />
@@ -1423,6 +1441,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
             schemas={schemas}
             formType={formType}
             store={store}
+            schemas={schemas}
           />
         );
       default:
@@ -1590,22 +1609,88 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       }
     }
 
-    // Koppelingen step: validate that all started koppelingen have a naam
-    // A koppeling is considered "started" if it has moduleB filled in
-    // Empty koppelingen (no moduleB) are ignored - koppelingen are optional
+    // Koppelingen step: validate based on complex business rules
+    // Rules:
+    // 1. If moduleB is selected BUT naam OR richting is missing → INVALID
+    // 2. If naam is filled BUT moduleB OR richting is missing → INVALID
+    // 3. If moduleB AND naam are filled BUT richting is missing → INVALID
+    // 4. If only richting is selected (no moduleB, no naam) → VALID (can progress)
+    // 5. If nothing is selected → VALID (koppelingen are optional)
+    // 6. If all three are filled → VALID
     if (stepLabel === 'koppelingen') {
-      if (Array.isArray(applicatie.koppelingen)) {
-        const startedKoppelingenWithoutNaam = applicatie.koppelingen.filter((kp) => {
-          // Check if koppeling has moduleB (meaning it was started)
-          const hasModuleB = kp.moduleB != null && String(kp.moduleB).trim() !== '';
-          // Check if naam is missing
-          const missingNaam = !kp.naam || !String(kp.naam).trim();
-          // Only flag as invalid if started but missing naam
-          return hasModuleB && missingNaam;
-        });
-        if (startedKoppelingenWithoutNaam.length > 0) {
-          return true;
+      // Check BOTH persisted koppelingen AND UI state (naamByRow, selectedAppBByRow, directionByRow)
+      // The naam field is stored separately in naamByRow and may not be in koppelingen yet
+      const naamByRow = koppelingenFormState.naamByRow || {};
+      const selectedAppBByRow = koppelingenFormState.selectedAppBByRow || {};
+      const directionByRow = koppelingenFormState.directionByRow || {};
+      const koppelingIdByRow = koppelingenFormState.koppelingIdByRow || {};
+      const rows = koppelingenFormState.rows || [];
+
+      // Validate each row by combining persisted data with UI state
+      const hasInvalidRow = rows.some((rowId) => {
+        const localId = koppelingIdByRow[rowId];
+
+        // Find the persisted koppeling for this row
+        const persistedKoppeling = Array.isArray(applicatie.koppelingen)
+          ? applicatie.koppelingen.find((k) => k._localId === localId)
+          : null;
+
+        // Check naam from BOTH persisted data AND UI state
+        const persistedNaam =
+          persistedKoppeling?.naam && String(persistedKoppeling.naam).trim() !== ''
+            ? String(persistedKoppeling.naam).trim()
+            : '';
+        const uiNaam =
+          naamByRow[rowId] && String(naamByRow[rowId]).trim() !== ''
+            ? String(naamByRow[rowId]).trim()
+            : '';
+        const hasNaam = persistedNaam !== '' || uiNaam !== '';
+
+        // Check moduleB from BOTH persisted data AND UI state
+        const persistedModuleB =
+          persistedKoppeling?.moduleB != null &&
+          String(persistedKoppeling.moduleB).trim() !== ''
+            ? String(persistedKoppeling.moduleB).trim()
+            : '';
+        const uiModuleB =
+          selectedAppBByRow[rowId] != null &&
+          String(selectedAppBByRow[rowId]).trim() !== ''
+            ? String(selectedAppBByRow[rowId]).trim()
+            : '';
+        const hasModuleB = persistedModuleB !== '' || uiModuleB !== '';
+
+        // Check richting from BOTH persisted data AND UI state
+        const persistedRichting =
+          persistedKoppeling?.gegevensuitwisselingRichting &&
+          String(persistedKoppeling.gegevensuitwisselingRichting).trim() !== ''
+            ? String(persistedKoppeling.gegevensuitwisselingRichting).trim()
+            : '';
+        const uiRichting =
+          directionByRow[rowId] != null &&
+          String(directionByRow[rowId]).trim() !== ''
+            ? String(directionByRow[rowId]).trim()
+            : '';
+        const hasRichting = persistedRichting !== '' || uiRichting !== '';
+
+        // Case: moduleB is filled but naam OR richting is missing
+        if (hasModuleB && (!hasNaam || !hasRichting)) {
+          return true; // Invalid
         }
+
+        // Case: naam is filled but moduleB OR richting is missing
+        if (hasNaam && (!hasModuleB || !hasRichting)) {
+          return true; // Invalid
+        }
+
+        // All other cases are valid:
+        // - Nothing filled (empty row)
+        // - Only richting filled
+        // - All three filled
+        return false;
+      });
+
+      if (hasInvalidRow) {
+        return true;
       }
     }
 
@@ -1733,18 +1818,93 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     }
 
     if (stepLabel === 'koppelingen') {
-      if (Array.isArray(applicatie.koppelingen)) {
-        const startedKoppelingWithoutNaam = applicatie.koppelingen.find((kp) => {
-          // Check if koppeling has moduleB (meaning it was started)
-          const hasModuleB = kp.moduleB != null && String(kp.moduleB).trim() !== '';
-          // Check if naam is missing
-          const missingNaam = !kp.naam || !String(kp.naam).trim();
-          // Only flag as invalid if started but missing naam
-          return hasModuleB && missingNaam;
-        });
-        if (startedKoppelingWithoutNaam) {
-          return 'Vul voor alle koppelingen de naam in';
+      // Check BOTH persisted koppelingen AND UI state (naamByRow, selectedAppBByRow, directionByRow)
+      // The naam field is stored separately in naamByRow and may not be in koppelingen yet
+      const naamByRow = koppelingenFormState.naamByRow || {};
+      const selectedAppBByRow = koppelingenFormState.selectedAppBByRow || {};
+      const directionByRow = koppelingenFormState.directionByRow || {};
+      const koppelingIdByRow = koppelingenFormState.koppelingIdByRow || {};
+      const rows = koppelingenFormState.rows || [];
+
+      // Find the first invalid row to provide specific error message
+      let invalidRowData = null;
+
+      for (const rowId of rows) {
+        const localId = koppelingIdByRow[rowId];
+
+        // Find the persisted koppeling for this row
+        const persistedKoppeling = Array.isArray(applicatie.koppelingen)
+          ? applicatie.koppelingen.find((k) => k._localId === localId)
+          : null;
+
+        // Check naam from BOTH persisted data AND UI state
+        const persistedNaam =
+          persistedKoppeling?.naam && String(persistedKoppeling.naam).trim() !== ''
+            ? String(persistedKoppeling.naam).trim()
+            : '';
+        const uiNaam =
+          naamByRow[rowId] && String(naamByRow[rowId]).trim() !== ''
+            ? String(naamByRow[rowId]).trim()
+            : '';
+        const hasNaam = persistedNaam !== '' || uiNaam !== '';
+
+        // Check moduleB from BOTH persisted data AND UI state
+        const persistedModuleB =
+          persistedKoppeling?.moduleB != null &&
+          String(persistedKoppeling.moduleB).trim() !== ''
+            ? String(persistedKoppeling.moduleB).trim()
+            : '';
+        const uiModuleB =
+          selectedAppBByRow[rowId] != null &&
+          String(selectedAppBByRow[rowId]).trim() !== ''
+            ? String(selectedAppBByRow[rowId]).trim()
+            : '';
+        const hasModuleB = persistedModuleB !== '' || uiModuleB !== '';
+
+        // Check richting from BOTH persisted data AND UI state
+        const persistedRichting =
+          persistedKoppeling?.gegevensuitwisselingRichting &&
+          String(persistedKoppeling.gegevensuitwisselingRichting).trim() !== ''
+            ? String(persistedKoppeling.gegevensuitwisselingRichting).trim()
+            : '';
+        const uiRichting =
+          directionByRow[rowId] != null &&
+          String(directionByRow[rowId]).trim() !== ''
+            ? String(directionByRow[rowId]).trim()
+            : '';
+        const hasRichting = persistedRichting !== '' || uiRichting !== '';
+
+        // Check if this row is invalid
+        const isInvalid =
+          (hasModuleB && (!hasNaam || !hasRichting)) ||
+          (hasNaam && (!hasModuleB || !hasRichting));
+
+        if (isInvalid) {
+          invalidRowData = { hasModuleB, hasNaam, hasRichting };
+          break;
         }
+      }
+
+      if (invalidRowData) {
+        const { hasModuleB, hasNaam, hasRichting } = invalidRowData;
+
+        // Build list of missing fields
+        const missingFields = [];
+
+        if (hasModuleB || hasNaam) {
+          // If either moduleB or naam is filled, all three are required
+          if (!hasModuleB) missingFields.push('Applicatie B of BGV');
+          if (!hasNaam) missingFields.push('Naam');
+          if (!hasRichting) missingFields.push('Richting');
+        }
+
+        if (missingFields.length > 0) {
+          return `${missingFields.join(', ')} ${
+            missingFields.length === 1 ? 'is' : 'zijn'
+          } verplicht`;
+        }
+
+        return 'Vul alle velden in voor koppelingen met een naam of Applicatie B';
       }
     }
 

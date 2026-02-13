@@ -33,6 +33,7 @@ const AcFormField = ({
   customInput,
   icon,
   tooltip,
+  labelStyle,
   ...restProps
 }) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -114,6 +115,7 @@ const AcFormField = ({
               'ac-form-field-header-info': tooltip,
               'ac-form-field-header-info-with-custom-part': customLabelPart,
             })}
+            style={labelStyle}
           >
             <div>
               {label}
@@ -135,7 +137,10 @@ const AcFormField = ({
                   role='img'
                   aria-label={tooltip}
                 >
-                  <VISUALS.INFO />
+                  <VISUALS.INFO
+                    width={labelStyle?.fontSize || undefined}
+                    height={labelStyle?.fontSize || undefined}
+                  />
                 </span>
               </>
             )}
