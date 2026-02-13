@@ -258,7 +258,7 @@ const ConOrganisatieDetailsPageContent = ({
 //     <div className='ac-alert ac-alert--warning' style={{ marginBottom: '1rem' }}>
 //       <Heading level={4}>{schemaName} is nog niet gepubliceerd</Heading>
 //       <Paragraph>
-//         {objectName} is momenteel niet zichtbaar in de zoekfunctie van de catalogus.
+//         {objectName} is momenteel niet zichtbaar in de zoekfunctie van de softwarecatalogus.
 //         Gebruik de &quot;Publiceren&quot; actie om deze gegevens beschikbaar te maken
 //         voor bezoekers.
 //       </Paragraph>

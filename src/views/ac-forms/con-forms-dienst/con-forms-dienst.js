@@ -167,57 +167,54 @@ const ConFormsDienst = ({ store, userStore }) => {
   /**
    * Search for leveranciers (organisations)
    */
-  const searchLeveranciers = useCallback(
-    async (query) => {
-      setLeverancierLoading(true);
-      try {
-        const params = new URLSearchParams({
-          _limit: '20',
-          _page: '1',
-          _published: 'false',
-        });
-        if (query) params.set('_search', query);
-        const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/organisatie?${params}`;
-        const res = await fetch(endpoint, {
-          headers: { Accept: 'application/json' },
-        });
-        if (!res.ok) return;
-        const data = await res.json();
-        const list = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.results)
-          ? data.results
-          : [];
-        const options = list.map((item, index) => {
-          const id =
-            item?.id ||
-            item?.['@self']?.id ||
-            item?.uuid ||
-            item?.value ||
-            item?.slug ||
-            index;
-          const label =
-            item?.naam ||
-            item?.name ||
-            item?.title ||
-            item?.label ||
-            `Organisatie ${index + 1}`;
-          return {
-            value: String(id),
-            label: String(label),
-            data: item,
-          };
-        });
-        setLeverancierOptions(options);
-      } catch (error) {
-        console.error('Failed to search leveranciers:', error);
-        setLeverancierOptions([]);
-      } finally {
-        setLeverancierLoading(false);
-      }
-    },
-    []
-  );
+  const searchLeveranciers = useCallback(async (query) => {
+    setLeverancierLoading(true);
+    try {
+      const params = new URLSearchParams({
+        _limit: '20',
+        _page: '1',
+        _published: 'false',
+      });
+      if (query) params.set('_search', query);
+      const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/organisatie?${params}`;
+      const res = await fetch(endpoint, {
+        headers: { Accept: 'application/json' },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      const list = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.results)
+        ? data.results
+        : [];
+      const options = list.map((item, index) => {
+        const id =
+          item?.id ||
+          item?.['@self']?.id ||
+          item?.uuid ||
+          item?.value ||
+          item?.slug ||
+          index;
+        const label =
+          item?.naam ||
+          item?.name ||
+          item?.title ||
+          item?.label ||
+          `Organisatie ${index + 1}`;
+        return {
+          value: String(id),
+          label: String(label),
+          data: item,
+        };
+      });
+      setLeverancierOptions(options);
+    } catch (error) {
+      console.error('Failed to search leveranciers:', error);
+      setLeverancierOptions([]);
+    } finally {
+      setLeverancierLoading(false);
+    }
+  }, []);
 
   // productId -> module options derived from product details
   const [productToModulesLookup, setProductToModulesLookup] = useState({});
@@ -991,10 +988,7 @@ const ConFormsDienst = ({ store, userStore }) => {
           // Check leverancier
           if (leverancierKeuze === 'nieuw') {
             // Validate new leverancier fields
-            if (
-              !nieuweLeverancier.naam ||
-              !String(nieuweLeverancier.naam).trim()
-            )
+            if (!nieuweLeverancier.naam || !String(nieuweLeverancier.naam).trim())
               return true;
             if (
               !nieuweLeverancier.website ||
@@ -1101,10 +1095,7 @@ const ConFormsDienst = ({ store, userStore }) => {
 
           // Check leverancier
           if (leverancierKeuze === 'nieuw') {
-            if (
-              !nieuweLeverancier.naam ||
-              !String(nieuweLeverancier.naam).trim()
-            ) {
+            if (!nieuweLeverancier.naam || !String(nieuweLeverancier.naam).trim()) {
               messages.push('Vul de naam van de leverancier in');
             }
             if (
@@ -1444,19 +1435,21 @@ const ConFormsDienst = ({ store, userStore }) => {
     <AcSection spacing>
       <AcContainer>
         <AcColumn gap='tiger'>
-          <div>
-            <Heading1
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-            >
-              <Icon style={{ width: '1em', height: '1em' }} />
-              Uw {isEditMode ? editModeTitle : newWizardName}
-            </Heading1>
-            <Paragraph>
-              {isEditMode
-                ? 'Werk uw dienstgegevens bij in onze catalogus.'
-                : 'Vul dit formulier in om een dienst voor uw en andere applicaties te registreren en vindbaar te maken in de softwarecatalogus.'}
-            </Paragraph>
-          </div>
+          {saveResult !== 'success' && (
+            <div>
+              <Heading1
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+              >
+                <Icon style={{ width: '1em', height: '1em' }} />
+                Uw {isEditMode ? editModeTitle : newWizardName}
+              </Heading1>
+              <Paragraph>
+                {isEditMode
+                  ? 'Werk uw dienstgegevens bij in onze softwarecatalogus.'
+                  : 'Vul dit formulier in om een dienst voor uw en andere applicaties te registreren en vindbaar te maken in de softwarecatalogus.'}
+              </Paragraph>
+            </div>
+          )}
 
           {/* End header block */}
 
@@ -1477,7 +1470,7 @@ const ConFormsDienst = ({ store, userStore }) => {
                 </Paragraph>
                 <Paragraph>
                   De dienst {dienst.naam || 'Onbekende dienst'} en de geselecteerde
-                  applicaties zijn opgeslagen in de catalogus.
+                  applicaties zijn opgeslagen in de softwarecatalogus.
                 </Paragraph>
               </Alert>
               <div style={{ marginTop: '2rem' }}>

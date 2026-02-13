@@ -123,7 +123,7 @@ const getTitle = () => {
       return 'Open Tilburg';
     case 'open-dimpact.accept.commonground.nu':
     case 'dimpact.opencatalogi.nl':
-      return 'Producten catalogus';
+      return 'Producten softwarecatalogus';
     case 'open-rotterdam.accept.commonground.nu':
       return 'Open Rotterdam';
     case 'open-migrato.accept.commonground.nu':
@@ -135,7 +135,7 @@ const getTitle = () => {
     case 'opencatalogi.open-regels.nl':
       return 'OpenRegels';
     case 'localhost':
-      return 'Localhost catalogus';
+      return 'Localhost softwarecatalogus';
     case 'horstadmaas.accept.opencatalogi.nl':
     case 'verwerkingsregister.horstaandemaas.nl':
       return 'Horst aan de Maas';

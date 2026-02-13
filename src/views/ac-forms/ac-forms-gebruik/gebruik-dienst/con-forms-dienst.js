@@ -1863,25 +1863,27 @@ const ConFormsDienst = ({ store }) => {
     <AcSection spacing>
       <AcContainer>
         <AcColumn gap='tiger'>
-          <div>
-            <Heading1
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-            >
-              <Icon style={{ width: '1em', height: '1em' }} />
-              {isEditMode
-                ? 'Gebruik bewerken'
-                : isGebruikBeheerdersFlow
-                ? 'Toevoegen dienst'
-                : `Een ${wizardName}`}
-            </Heading1>
-            <Paragraph>
-              {isEditMode
-                ? 'Werk uw gebruiksregistratie bij. U kunt de geselecteerde diensten, status en andere gegevens aanpassen.'
-                : isGebruikBeheerdersFlow
-                ? 'Zoek naar diensten die op de applicaties in uw applicatielandschap worden uitgevoerd. Zoek op de naam van de betrokken applicatie.\n\nAlle relevante diensten die relevant zijn voor uw eigen applicaties worden weergegeven.\nBestaat de dienst nog niet, dan kunt u deze toevoegen.\n\nNa het selecteren van de gewenste dienst kunt u in de volgende stappen aanvullende informatie opvoeren.'
-                : 'Voer de gegevens van de dienst in, selecteer relevante applicaties en controleer uw invoer.'}
-            </Paragraph>
-          </div>
+          {saveResult !== 'success' && (
+            <div>
+              <Heading1
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+              >
+                <Icon style={{ width: '1em', height: '1em' }} />
+                {isEditMode
+                  ? 'Gebruik bewerken'
+                  : isGebruikBeheerdersFlow
+                  ? 'Toevoegen dienst'
+                  : `Een ${wizardName}`}
+              </Heading1>
+              <Paragraph>
+                {isEditMode
+                  ? 'Werk uw gebruiksregistratie bij. U kunt de geselecteerde diensten, status en andere gegevens aanpassen.'
+                  : isGebruikBeheerdersFlow
+                  ? 'Zoek naar diensten die op de applicaties in uw applicatielandschap worden uitgevoerd. Zoek op de naam van de betrokken applicatie.\n\nAlle relevante diensten die relevant zijn voor uw eigen applicaties worden weergegeven.\nBestaat de dienst nog niet, dan kunt u deze toevoegen.\n\nNa het selecteren van de gewenste dienst kunt u in de volgende stappen aanvullende informatie opvoeren.'
+                  : 'Voer de gegevens van de dienst in, selecteer relevante applicaties en controleer uw invoer.'}
+              </Paragraph>
+            </div>
+          )}
 
           {/* End header block */}
 

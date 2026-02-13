@@ -405,7 +405,7 @@ const ConDienstDetailsPageContent = ({
         </>
       )}
 
-      {(data?.type || data?.dienstType || data?.status) && (
+      {(data?.type || data?.status) && (
         <>
           <Heading level={3} style={{ marginBlockStart: '1rem' }}>
             Basisinformatie
@@ -414,88 +414,14 @@ const ConDienstDetailsPageContent = ({
             <div style={{ marginTop: '12px' }}>
               {data?.type && (
                 <div style={{ marginBottom: '8px' }}>
-                  <strong>Type: </strong>
-                  {(() => {
-                    const rawType = data.type;
-
-                    // Check if it's a string that looks like a JSON array
-                    if (
-                      typeof rawType === 'string' &&
-                      rawType.trim().startsWith('[')
-                    ) {
-                      try {
-                        const parsed = JSON.parse(rawType);
-                        if (Array.isArray(parsed)) {
-                          return parsed.map((item, index) => (
-                            <React.Fragment key={index}>
-                              <ConUuidResolver>{String(item)}</ConUuidResolver>
-                              {index < parsed.length - 1 ? ', ' : ''}
-                            </React.Fragment>
-                          ));
-                        }
-                      } catch (e) {
-                        // If parsing fails, display as-is
-                        return <ConUuidResolver>{String(rawType)}</ConUuidResolver>;
-                      }
-                    }
-
-                    // Handle actual arrays
-                    if (Array.isArray(rawType)) {
-                      return rawType.map((typeId, index) => (
-                        <React.Fragment key={index}>
-                          <ConUuidResolver>{String(typeId)}</ConUuidResolver>
-                          {index < rawType.length - 1 ? ', ' : ''}
-                        </React.Fragment>
-                      ));
-                    }
-
-                    // Handle single value
-                    return <ConUuidResolver>{String(rawType)}</ConUuidResolver>;
-                  })()}
-                </div>
-              )}
-              {data?.dienstType && (
-                <div style={{ marginBottom: '8px' }}>
                   <strong>Diensttype: </strong>
-                  {data.dienstType}
+                  {data.type}
                 </div>
               )}
               {data?.status && (
                 <div style={{ marginBottom: '8px' }}>
                   <strong>Status: </strong>
                   {data.status}
-                </div>
-              )}
-            </div>
-          </div>
-        </>
-      )}
-
-      {(data?.aanbieder ||
-        (Array.isArray(data?.koppelingen) && data.koppelingen.length > 0)) && (
-        <>
-          <Heading level={3} style={{ marginBlockStart: '1rem' }}>
-            Relaties
-          </Heading>
-          <div className='ac-register-review__section'>
-            <div style={{ marginTop: '12px' }}>
-              {data?.aanbieder && (
-                <div style={{ marginBottom: '8px' }}>
-                  <strong>Aanbieder: </strong>
-                  <ConUuidResolver>{String(data.aanbieder)}</ConUuidResolver>
-                </div>
-              )}
-
-              {Array.isArray(data?.koppelingen) && data.koppelingen.length > 0 && (
-                <div style={{ marginBottom: '8px' }}>
-                  <strong>Koppelingen: </strong>
-                  <div>
-                    {data.koppelingen.map((kid, idx) => (
-                      <div key={`${kid}-${idx}`}>
-                        <ConUuidResolver>{String(kid)}</ConUuidResolver>
-                      </div>
-                    ))}
-                  </div>
                 </div>
               )}
             </div>
@@ -537,7 +463,7 @@ const ConDienstDetailsPageContent = ({
 //       <Heading level={4}>{title} is nog niet gepubliceerd</Heading>
 //       <Paragraph>
 //         {objectName} is momenteel niet zichtbaar in de zoekfunctie van{' '}
-//         {schemaName || 'de catalogus'}. Gebruik de &quot;Publiceren&quot; actie om
+//         {schemaName || 'de softwarecatalogus'}. Gebruik de &quot;Publiceren&quot; actie om
 //         deze gegevens beschikbaar te maken voor bezoekers.
 //       </Paragraph>
 //     </div>

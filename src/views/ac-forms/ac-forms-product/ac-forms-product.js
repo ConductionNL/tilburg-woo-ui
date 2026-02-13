@@ -644,22 +644,22 @@ const AcFormsProductInner = ({
         license: {
           title: 'Bestaande applicaties uitgesloten',
           description:
-            'Voor bestaande applicaties kunnen geen licenties worden toegevoegd of aangepast, omdat deze al hun eigen licentie-informatie hebben vastgelegd in de catalogus.',
+            'Voor bestaande applicaties kunnen geen licenties worden toegevoegd of aangepast, omdat deze al hun eigen licentie-informatie hebben vastgelegd in de softwarecatalogus.',
         },
         referentiecomponenten: {
           title: 'Bestaande applicaties uitgesloten',
           description:
-            'Voor bestaande applicaties kunnen geen referentiecomponenten worden toegevoegd of aangepast, omdat deze al hun eigen referentiecomponenten hebben vastgelegd in de catalogus.',
+            'Voor bestaande applicaties kunnen geen referentiecomponenten worden toegevoegd of aangepast, omdat deze al hun eigen referentiecomponenten hebben vastgelegd in de softwarecatalogus.',
         },
         standaarden: {
           title: 'Bestaande applicaties uitgesloten',
           description:
-            'Voor bestaande applicaties kunnen geen standaarden worden toegevoegd of aangepast, omdat deze al hun eigen standaarden hebben vastgelegd in de catalogus.',
+            'Voor bestaande applicaties kunnen geen standaarden worden toegevoegd of aangepast, omdat deze al hun eigen standaarden hebben vastgelegd in de softwarecatalogus.',
         },
         moduleVersies: {
           title: 'Bestaande applicaties uitgesloten',
           description:
-            'Voor bestaande applicaties kunnen geen versies worden toegevoegd of aangepast, omdat deze al hun eigen versie-informatie hebben vastgelegd in de catalogus.',
+            'Voor bestaande applicaties kunnen geen versies worden toegevoegd of aangepast, omdat deze al hun eigen versie-informatie hebben vastgelegd in de softwarecatalogus.',
         },
       };
 
@@ -1873,7 +1873,7 @@ const AcFormsProductInner = ({
                 </Heading1>
                 <Paragraph>
                   {isEditMode
-                    ? 'Werk uw productgegevens bij in onze catalogus.'
+                    ? 'Werk uw productgegevens bij in onze softwarecatalogus.'
                     : utilGetPageDescription(formType)}
                 </Paragraph>
               </div>

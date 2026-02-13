@@ -484,7 +484,7 @@ const ConMyOrganisationPage = ({ store }) => {
                         Uw organisatie heeft nog geen actieve status
                       </Heading>
                       <Paragraph>
-                        Om volledige toegang te krijgen tot alle functies van de catalogus, 
+                        Om volledige toegang te krijgen tot alle functies van de softwarecatalogus, 
                         heeft uw organisatie een actieve status nodig. Neem contact op met 
                         VNG om uw organisatie te activeren:{' '}
                         <ConExternalLink href='mailto:support@vng.nl'>
