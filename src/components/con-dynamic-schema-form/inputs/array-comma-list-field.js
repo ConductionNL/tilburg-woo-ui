@@ -31,6 +31,7 @@ const ArrayCommaListField = ({
   placeholder,
   disabled,
   itemsType,
+  labelStyle,
 }) => {
   const textValue = Array.isArray(value) ? value.join(', ') : '';
 
@@ -50,9 +51,9 @@ const ArrayCommaListField = ({
       value={textValue}
       placeholder={placeholder || 'waarde1, waarde2'}
       disabled={disabled}
+      labelStyle={labelStyle}
     />
   );
 };
 
 export default ArrayCommaListField;
-

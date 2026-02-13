@@ -837,7 +837,7 @@ export class PublicationsStore {
             ...this.defaultQuery,
             _related: true,
             _relatedNames: true,
-            '_extend[]': '_schema',
+            '_extend[]': ['_schema', 'compliancy'],
           })
         ).toString()
       )

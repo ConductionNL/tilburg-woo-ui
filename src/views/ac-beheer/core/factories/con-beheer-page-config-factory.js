@@ -115,6 +115,112 @@ const BeheerPageConfigFactory = {
                 );
               },
             },
+            diensten: {
+              id: 'diensten',
+              label: 'Diensten',
+              key: 'diensten',
+              customContent: (row) => {
+                const diensten = row?.diensten;
+
+                // If no diensten data, show dash
+                if (!diensten) return '-';
+
+                // If it's an array of UUIDs (strings)
+                if (Array.isArray(diensten)) {
+                  if (diensten.length === 0) return '-';
+
+                  // Check if array contains UUIDs (strings) or objects
+                  const firstItem = diensten[0];
+
+                  if (typeof firstItem === 'string') {
+                    // Array of UUIDs - resolve each with ConUuidResolver
+                    return (
+                      <AcColumn key={row.id}>
+                        {diensten.map((dienstId, index) => (
+                          <React.Fragment key={dienstId}>
+                            <ConUuidResolver>{dienstId}</ConUuidResolver>
+                            {index < diensten.length - 1 && ', '}
+                          </React.Fragment>
+                        ))}
+                      </AcColumn>
+                    );
+                  } else if (typeof firstItem === 'object' && firstItem !== null) {
+                    // Array of objects - get @self.name from each
+                    const names = diensten
+                      .map((dienst) => dienst?.['@self']?.name || dienst?.name)
+                      .filter(Boolean);
+                    return (
+                      <AcColumn key={row.id}>
+                        {names.length > 0 ? names.join(', ') : '-'}
+                      </AcColumn>
+                    );
+                  }
+                }
+
+                // If it's a single object, get @self.name
+                if (typeof diensten === 'object' && diensten !== null) {
+                  const name = diensten?.['@self']?.name || diensten?.name;
+                  return <AcColumn key={row.id}>{name || '-'}</AcColumn>;
+                }
+
+                // Fallback
+                return '-';
+              },
+            },
+            koppelingen: {
+              id: 'koppelingen',
+              label: 'Koppelingen',
+              key: 'koppelingen',
+              customContent: (row) => {
+                const koppelingen = row?.koppelingen;
+
+                // If no koppelingen data, show dash
+                if (!koppelingen) return '-';
+
+                // If it's an array of UUIDs (strings)
+                if (Array.isArray(koppelingen)) {
+                  if (koppelingen.length === 0) return '-';
+
+                  // Check if array contains UUIDs (strings) or objects
+                  const firstItem = koppelingen[0];
+
+                  if (typeof firstItem === 'string') {
+                    // Array of UUIDs - resolve each with ConUuidResolver
+                    return (
+                      <AcColumn key={row.id}>
+                        {koppelingen.map((koppelingId, index) => (
+                          <React.Fragment key={koppelingId}>
+                            <ConUuidResolver>{koppelingId}</ConUuidResolver>
+                            {index < koppelingen.length - 1 && ', '}
+                          </React.Fragment>
+                        ))}
+                      </AcColumn>
+                    );
+                  } else if (typeof firstItem === 'object' && firstItem !== null) {
+                    // Array of objects - get @self.name from each
+                    const names = koppelingen
+                      .map(
+                        (koppeling) => koppeling?.['@self']?.name || koppeling?.name
+                      )
+                      .filter(Boolean);
+                    return (
+                      <AcColumn key={row.id}>
+                        {names.length > 0 ? names.join(', ') : '-'}
+                      </AcColumn>
+                    );
+                  }
+                }
+
+                // If it's a single object, get @self.name
+                if (typeof koppelingen === 'object' && koppelingen !== null) {
+                  const name = koppelingen?.['@self']?.name || koppelingen?.name;
+                  return <AcColumn key={row.id}>{name || '-'}</AcColumn>;
+                }
+
+                // Fallback
+                return '-';
+              },
+            },
           },
           // Unique actions that change based on user role (like publish/depublish toggle)
           // Each action shows different label/params based on user group
@@ -249,14 +355,16 @@ const BeheerPageConfigFactory = {
               customContent: (row) => {
                 const rawType = row?.type;
                 if (!rawType) return '-';
-                
+
                 // Check if it's a string that looks like a JSON array
                 if (typeof rawType === 'string' && rawType.trim().startsWith('[')) {
                   try {
                     const parsed = JSON.parse(rawType);
                     if (Array.isArray(parsed)) {
                       return parsed
-                        .map((item) => (typeof item === 'string' ? item : String(item)))
+                        .map((item) =>
+                          typeof item === 'string' ? item : String(item)
+                        )
                         .join(', ');
                     }
                   } catch (e) {
@@ -264,23 +372,28 @@ const BeheerPageConfigFactory = {
                     return rawType;
                   }
                 }
-                
+
                 // Handle actual arrays
                 if (Array.isArray(rawType) && rawType.length > 0) {
                   return rawType
                     .map((typeItem) =>
                       typeof typeItem === 'object'
-                        ? typeItem.naam || typeItem.name || typeItem.label || typeItem
+                        ? typeItem.naam ||
+                          typeItem.name ||
+                          typeItem.label ||
+                          typeItem
                         : String(typeItem)
                     )
                     .join(', ');
                 }
-                
+
                 // Handle objects
                 if (typeof rawType === 'object') {
-                  return String(rawType.naam || rawType.name || rawType.label || rawType);
+                  return String(
+                    rawType.naam || rawType.name || rawType.label || rawType
+                  );
                 }
-                
+
                 return String(rawType);
               },
             },
@@ -448,7 +561,8 @@ const BeheerPageConfigFactory = {
               key: 'moduleVersie',
               customContent: (row) => {
                 // Try direct property first, then fallback to relations
-                const moduleVersieId = row.moduleVersie || row['@self']?.relations?.moduleVersie;
+                const moduleVersieId =
+                  row.moduleVersie || row['@self']?.relations?.moduleVersie;
                 if (!moduleVersieId) return '-';
                 return <ConUuidResolver>{String(moduleVersieId)}</ConUuidResolver>;
               },
@@ -576,12 +690,16 @@ const BeheerPageConfigFactory = {
               },
             },
             eMailadres: {
-              id: 'e-mailadres',  
+              id: 'e-mailadres',
               label: 'E-mailadres',
               key: 'eMailadres',
               customContent: (row) => {
                 // Display email address from API response
-                const email = row.eMailadres || row['eMailadres'] || row['e-mailadres'] || 'NO EMAIL FOUND';
+                const email =
+                  row.eMailadres ||
+                  row['eMailadres'] ||
+                  row['e-mailadres'] ||
+                  'NO EMAIL FOUND';
                 return email;
               },
             },
@@ -610,4 +728,3 @@ const BeheerPageConfigFactory = {
 };
 
 export default BeheerPageConfigFactory;
-

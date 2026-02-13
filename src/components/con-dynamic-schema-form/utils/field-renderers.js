@@ -299,6 +299,7 @@ export const renderField = ({
             className={clsx({
               'ac-form-field-header-info': fieldConfig.description,
             })}
+            style={fieldConfig.labelStyle}
           >
             <div>
               {fieldConfig.label}
@@ -320,7 +321,10 @@ export const renderField = ({
                   role='img'
                   aria-label={fieldConfig.description}
                 >
-                  <VISUALS.INFO />
+                  <VISUALS.INFO
+                    width={fieldConfig.labelStyle?.fontSize || undefined}
+                    height={fieldConfig.labelStyle?.fontSize || undefined}
+                  />
                 </span>
               </>
             )}
@@ -353,6 +357,7 @@ export const renderField = ({
         schema={propertySchema}
         integer={fieldConfig.integer}
         validation={validation}
+        labelStyle={fieldConfig.labelStyle}
         style={inputStyle}
       />
     );
@@ -369,6 +374,7 @@ export const renderField = ({
             className={clsx({
               'ac-form-field-header-info': fieldConfig.description,
             })}
+            style={fieldConfig.labelStyle}
           >
             <div>
               {fieldConfig.label}
@@ -390,7 +396,10 @@ export const renderField = ({
                   role='img'
                   aria-label={fieldConfig.description}
                 >
-                  <VISUALS.INFO />
+                  <VISUALS.INFO
+                    width={fieldConfig.labelStyle?.fontSize || undefined}
+                    height={fieldConfig.labelStyle?.fontSize || undefined}
+                  />
                 </span>
               </>
             )}
@@ -423,6 +432,7 @@ export const renderField = ({
         onChange={handleChange}
         placeholder={fieldConfig.placeholder}
         disabled={isDisabled}
+        labelStyle={fieldConfig.labelStyle}
         style={inputStyle}
       />
     );
@@ -439,6 +449,7 @@ export const renderField = ({
             className={clsx({
               'ac-form-field-header-info': fieldConfig.description,
             })}
+            style={fieldConfig.labelStyle}
           >
             <div>
               {fieldConfig.label}
@@ -459,7 +470,10 @@ export const renderField = ({
                 role='img'
                 aria-label={fieldConfig.description}
               >
-                <VISUALS.INFO />
+                <VISUALS.INFO
+                  width={fieldConfig.labelStyle?.fontSize || undefined}
+                  height={fieldConfig.labelStyle?.fontSize || undefined}
+                />
               </span>
             )}
           </Heading>
@@ -520,7 +534,12 @@ export const renderField = ({
         touchedKey={path}
         minLength={propertySchema?.minLength ?? undefined}
         maxLength={propertySchema?.maxLength ?? undefined}
-        pattern={fieldConfig.pattern !== undefined ? fieldConfig.pattern : (propertySchema?.pattern || undefined)}
+        pattern={
+          fieldConfig.pattern !== undefined
+            ? fieldConfig.pattern
+            : propertySchema?.pattern || undefined
+        }
+        labelStyle={fieldConfig.labelStyle}
         {...validation}
         style={inputStyle}
       />
@@ -551,6 +570,7 @@ export const renderField = ({
         disabled={isDisabled}
         touched={touched}
         touchedKey={path}
+        labelStyle={fieldConfig.labelStyle}
         {...validation}
         style={inputStyle}
       />
@@ -558,7 +578,8 @@ export const renderField = ({
   }
 
   // Array comma list fallback when array has no enum/optionsProviders
-  if (propertySchema.type === 'array') {
+  // BUT: Check if fieldConfig explicitly sets component to ReactSelect first
+  if (propertySchema.type === 'array' && fieldConfig.component !== 'ReactSelect') {
     const fieldOptions = getFieldOptions(
       path,
       propertySchema,
@@ -577,6 +598,7 @@ export const renderField = ({
           placeholder={fieldConfig.placeholder}
           disabled={isDisabled}
           itemsType={itemsType}
+          labelStyle={fieldConfig.labelStyle}
           style={inputStyle}
         />
       );
@@ -616,6 +638,7 @@ export const renderField = ({
                 'ac-form-field-header-info':
                   fieldConfig.description && !fieldConfig.hideDescription,
               })}
+              style={fieldConfig.labelStyle}
             >
               <div>
                 {fieldConfig.label}
@@ -637,7 +660,10 @@ export const renderField = ({
                     role='img'
                     aria-label={fieldConfig.description}
                   >
-                    <VISUALS.INFO />
+                    <VISUALS.INFO
+                      width={fieldConfig.labelStyle?.fontSize || undefined}
+                      height={fieldConfig.labelStyle?.fontSize || undefined}
+                    />
                   </span>
                 </>
               )}
@@ -668,10 +694,7 @@ export const renderField = ({
             handleSearch
               ? (inputValue, actionMeta) => {
                   // Only trigger search for user input
-                  if (
-                    actionMeta.action === 'input-change' &&
-                    !isLoading
-                  ) {
+                  if (actionMeta.action === 'input-change' && !isLoading) {
                     const refSchemaSlug = getFieldRefSchemaSlug(propertySchema);
                     handleSearch(path, refSchemaSlug, inputValue);
                   }
@@ -683,6 +706,9 @@ export const renderField = ({
           })}
           {...(!validation.required && {
             isClearable: true,
+          })}
+          {...(typeof fieldConfig.isClearable === 'boolean' && {
+            isClearable: fieldConfig.isClearable,
           })}
           styles={inputStyle}
         />

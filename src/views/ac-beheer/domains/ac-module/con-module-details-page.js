@@ -80,7 +80,7 @@ const ConModuleDetailsPage = ({ store }) => {
     if (!config || !id) return;
     const extendParams = Array.isArray(config.extend) ? config.extend : [];
     object.fetchObject(config.registerSlug, config.schemaSlug, id, {
-      '_extend[]': ['@self.schema', ...extendParams],
+      '_extend[]': ['@self.schema', 'compliancy', ...extendParams],
       _related: true,
       _relatedNames: true,
       _published: 'false',

@@ -355,7 +355,11 @@ const ConGenericFormModal = ({
           // (e.g., "2026-01-01 00:00:00" -> "2026-01-01")
           Object.keys(mappedData).forEach((key) => {
             const property = schema?.properties?.[key];
-            if (property?.format === 'date' && mappedData[key] && typeof mappedData[key] === 'string') {
+            if (
+              property?.format === 'date' &&
+              mappedData[key] &&
+              typeof mappedData[key] === 'string'
+            ) {
               // Strip timestamp by taking only the date part
               mappedData[key] = mappedData[key].split(' ')[0];
             }
@@ -868,16 +872,29 @@ const ConGenericFormModal = ({
   }, [modalRef.current]);
 
   // Create enhanced user object with full organization for enum filtering (must be before early returns)
+  // IMPORTANT: Use Proxy to preserve MobX computed properties (like userGroups getter)
+  // Object spreading would copy only plain properties and lose MobX reactivity
   const enhancedUser = useMemo(() => {
     if (!fullOrganization) return user;
 
-    return {
-      ...user,
-      activeOrganization: {
-        ...user.activeOrganization,
-        ...fullOrganization, // Merge full org data
-      },
+    // Pre-compute the enhanced activeOrganization
+    const enhancedActiveOrg = {
+      ...user.activeOrganization,
+      ...fullOrganization,
     };
+
+    // Use Proxy to intercept property access and preserve MobX getters
+    return new Proxy(user, {
+      get(target, prop) {
+        // Override only activeOrganization with enhanced version
+        if (prop === 'activeOrganization') {
+          return enhancedActiveOrg;
+        }
+        // Delegate all other properties to original MobX store
+        // This preserves computed properties like userGroups, isAuthenticated, etc.
+        return target[prop];
+      },
+    });
   }, [user, fullOrganization]);
 
   // Don't render if no configuration
