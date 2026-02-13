@@ -1,6 +1,4 @@
-import {
-  Heading,
-} from '@utrecht/component-library-react/dist/css-module';
+import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { AcColumn, AcFlex } from '@src/atoms';
 import { VISUALS } from '@src/constants';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
@@ -16,6 +14,17 @@ import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver
 import { useNavigate } from 'react-router-dom';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 import { AcFormatDate } from '@src/utilities/ac-format-date';
+
+// Markdown Editor
+import remarkDefinitionList, { defListHastHandlers } from 'remark-definition-list';
+import { remarkMark } from 'remark-mark-highlight';
+import MDEditor from '@uiw/react-md-editor';
+import remarkGfm from 'remark-gfm';
+import remarkRehype from 'remark-rehype';
+import remarkEmoji from 'remark-emoji';
+import remarkSupersub from 'remark-supersub';
+import rehypeSlug from 'rehype-slug';
+import rehypeSanitize from 'rehype-sanitize';
 
 /**
  * Gets all dates that have values, to show the full history/trail of status changes.
@@ -262,9 +271,90 @@ const ConKoppelingDetailsPageContent = ({
       {/* Unpublished warning - LEGACY: No longer needed */}
       {/* <UnpublishedWarning data={data} /> */}
 
-      <Heading level={3} style={{ marginBlockStart: '1rem' }}>
-        Koppeling
-      </Heading>
+      {/* Short description */}
+      <div style={{ flex: 2 }}>
+        {/* <ConEditableDescription
+          registerSlug={config?.registerSlug}
+          schemaSlug={config?.schemaSlug}
+          objectId={data?.['@self']?.id}
+          field='beschrijvingKort'
+          label='Korte beschrijving'
+          placeholder='Een korte beschrijving van de dienst'
+          tooltip='Een korte beschrijving van de dienst'
+          maxLength={255}
+          isMarkdown={false}
+          value={data.beschrijvingKort}
+          serialize={(v) => v}
+          deserialize={(v) => v || ''}
+          onSuccess={(v) => {
+            data.beschrijvingKort = v;
+            // No data refresh needed - data already updated locally
+          }}
+        /> */}
+
+        {/* Visual representation - Short description */}
+        {!!data?.beschrijvingKort && <div>{data.beschrijvingKort}</div>}
+      </div>
+
+      {/* Long description */}
+      <div>
+        {/* <br />
+        <ConEditableDescription
+          markdownPreviewClassName='con-my-account-description'
+          registerSlug={config?.registerSlug}
+          schemaSlug={config?.schemaSlug}
+          objectId={data?.['@self']?.id}
+          field='beschrijvingLang'
+          label='Lange beschrijving'
+          placeholder='Een uitgebreide beschrijving van de dienst'
+          tooltip='Een uitgebreide beschrijving van de dienst'
+          maxLength={5000}
+          isMarkdown={true}
+          value={data.beschrijvingLang}
+          serialize={(v) => JSON.stringify(v || '')}
+          deserialize={(v) => {
+            if (!v) return '';
+            try {
+              return JSON.parse(v) || '';
+            } catch (e) {
+              return v;
+            }
+          }}
+          onSuccess={(v) => {
+            data.beschrijvingLang = v;
+            // No data refresh needed - data already updated locally
+          }}
+        /> */}
+        {!!data?.beschrijvingLang && (
+          <>
+            <br />
+            <MDEditor.Markdown
+              wrapperElement={{
+                'data-color-mode': 'light',
+              }}
+              source={(() => {
+                try {
+                  return JSON.parse(data.beschrijvingLang) || '';
+                } catch (e) {
+                  return data.beschrijvingLang || '';
+                }
+              })()}
+              remarkPlugins={[
+                [remarkGfm, { singleTilde: false }],
+                remarkDefinitionList,
+                remarkEmoji,
+                remarkSupersub,
+                remarkMark,
+              ]}
+              rehypePlugins={[
+                rehypeSlug,
+                [rehypeSanitize],
+                [remarkRehype, { handlers: { ...defListHastHandlers } }],
+              ]}
+            />
+          </>
+        )}
+      </div>
       <div className='ac-register-review__section'>
         <div style={{ marginTop: '12px' }}>
           <div style={{ marginBottom: '16px' }}>

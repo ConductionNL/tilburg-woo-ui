@@ -14,7 +14,7 @@ import {
   TableCell,
   TableRow,
 } from '@utrecht/component-library-react';
-import { AcUUID, shouldResolveToName, getDisplayValue } from '@src/utilities';
+import { shouldResolveToName, getDisplayValue } from '@src/utilities';
 import { TOOLTIP_ID } from '@src/index.web';
 import {
   ConHorizontalOverflowWrapper,
@@ -382,71 +382,44 @@ const ConTable = (
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, headerSort, schema, objectStore?.namesCache, tableHeaders]);
 
-  // list of selected rows as a full data object
-  const [selectedRows, setSelectedRows] = useState([]);
+  // Set of selected row IDs (@self.id or row-${index})
+  const [selectedIds, setSelectedIds] = useState(new Set());
   const [selectedAll, setSelectedAll] = useState(false);
-
-  /**
-   * A unique symbol used as the primary ID for each row.
-   * This is then used to check if a row is selected.
-   */
-  const uniqueSymbol = useMemo(() => Symbol(), []);
-
-  // add the unique symbol to each row as the key, which then contains a unique id
-  // this must be added to BOTH originalData and displayData so we can link them
+  
+  // Refs to store latest values for callback (avoid dependency on changing references)
+  const originalDataRef = useRef([]);
+  const getCleanRowDataForExternalRef = useRef(() => (row) => row);
+  
+  // Update originalData ref when it changes
   useEffect(() => {
-    originalData.forEach((row, index) => {
-      // Use consistent IDs across both data structures
-      const rowId = AcUUID('CD');
-      originalData[index][uniqueSymbol] = rowId;
-      if (displayData[index]) {
-        displayData[index][uniqueSymbol] = rowId;
-      }
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [originalData, displayData]);
+    originalDataRef.current = originalData;
+  }, [originalData]);
 
-  const removeUniqueSymbol = useMemo(
-    () => (row) => {
-      // eslint-disable-next-line no-unused-vars
-      const { [uniqueSymbol]: removed, ...cleanRow } = row;
-      return cleanRow;
-    },
-    [uniqueSymbol]
-  );
+  // Helper to get stable row ID
+  const getRowId = useCallback((row, index) => {
+    return row?.['@self']?.id || `row-${index}`;
+  }, []);
 
   /**
    * Maps a display row (with resolved names) back to its original row (with UUIDs)
    * Uses @self.id as the stable identifier to link between structures.
-   * Falls back to uniqueSymbol if @self.id is not available.
    *
    * This ensures that when users click "edit", they always get the original UUID values,
    * while the table can still use resolved names for search and sort functionality.
    */
   const getOriginalRowData = useMemo(
     () => (displayRow) => {
-      // Get identifier from display row
       const displayId = displayRow?.['@self']?.id;
-
-      // Find matching original row by @self.id or by uniqueSymbol fallback
-      const matchingOriginal = originalData.find((origRow) => {
-        if (displayId && origRow?.['@self']?.id) {
-          return origRow['@self'].id === displayId;
-        }
-        // Fallback: match by uniqueSymbol
-        return origRow[uniqueSymbol] === displayRow[uniqueSymbol];
-      });
-
-      if (!matchingOriginal) {
-        console.warn(
-          '[ConTable] Could not find original row data, using display row'
-        );
-        return removeUniqueSymbol(displayRow);
+      if (!displayId) {
+        console.warn('[ConTable] Row missing @self.id, using display row');
+        return displayRow;
       }
-
-      return removeUniqueSymbol(matchingOriginal);
+      const matchingOriginal = originalData.find(
+        (origRow) => origRow?.['@self']?.id === displayId
+      );
+      return matchingOriginal || displayRow;
     },
-    [originalData, uniqueSymbol, removeUniqueSymbol]
+    [originalData]
   );
 
   /**
@@ -461,30 +434,33 @@ const ConTable = (
     },
     [getOriginalRowData]
   );
-
-  // When the data changes, drop selections that no longer exist and announce via getSelectedRows
+  
+  // Update getCleanRowDataForExternal ref when it changes
   useEffect(() => {
-    if (!selectedRows.length) return;
-    const stillSelected = sortedData.filter((row) =>
-      selectedRows.some((sel) => sel[uniqueSymbol] === row[uniqueSymbol])
-    );
-    if (stillSelected.length !== selectedRows.length) {
-      setSelectedRows(stillSelected);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sortedData, selectedRows, uniqueSymbol]);
+    getCleanRowDataForExternalRef.current = getCleanRowDataForExternal;
+  }, [getCleanRowDataForExternal]);
 
-  // when the data changes, update the selected all state based on the selected rows
+  // When data changes, drop selections that no longer exist
+  useEffect(() => {
+    if (selectedIds.size === 0) return;
+    const currentIds = new Set(
+      sortedData.map((row, idx) => getRowId(row, idx))
+    );
+    const stillSelected = new Set(
+      Array.from(selectedIds).filter(id => currentIds.has(id))
+    );
+    if (stillSelected.size !== selectedIds.size) {
+      setSelectedIds(stillSelected);
+    }
+  }, [sortedData, selectedIds, getRowId]);
+
+  // Update selectedAll state based on selected IDs
   useEffect(() => {
     const allSelected =
       sortedData.length > 0 &&
-      sortedData.every((row) =>
-        selectedRows.some(
-          (selectedRow) => selectedRow[uniqueSymbol] === row[uniqueSymbol]
-        )
-      );
+      sortedData.every((row, idx) => selectedIds.has(getRowId(row, idx)));
     setSelectedAll(allSelected);
-  }, [selectedRows, sortedData, uniqueSymbol]);
+  }, [selectedIds, sortedData, getRowId]);
 
   const renderCustomElement = useMemo(() => {
     return (element, row) => {
@@ -502,37 +478,49 @@ const ConTable = (
   const handleSelectAll = useMemo(() => {
     return (checked) => {
       setSelectedAll(checked);
-      setSelectedRows(checked ? sortedData : []);
+      if (checked) {
+        const allIds = new Set(
+          sortedData.map((row, idx) => getRowId(row, idx))
+        );
+        setSelectedIds(allIds);
+      } else {
+        setSelectedIds(new Set());
+      }
     };
-  }, [sortedData]);
+  }, [sortedData, getRowId]);
 
   const handleSelectRow = useMemo(() => {
-    return (checked, row) => {
-      setSelectedRows(
-        checked
-          ? [...selectedRows, row]
-          : selectedRows.filter(
-              (selectedRow) => selectedRow[uniqueSymbol] !== row[uniqueSymbol]
-            )
-      );
+    return (checked, row, index) => {
+      const rowId = getRowId(row, index);
+      setSelectedIds(prev => {
+        const next = new Set(prev);
+        if (checked) {
+          next.add(rowId);
+        } else {
+          next.delete(rowId);
+        }
+        return next;
+      });
     };
-  }, [selectedRows]);
+  }, [getRowId]);
 
   const resetSelectedRows = useMemo(() => {
     return () => {
-      setSelectedRows([]);
+      setSelectedIds(new Set());
     };
-  }, [setSelectedRows]);
+  }, []);
 
+  // Reconstruct full row objects for callback - only when selectedIds changes
   useEffect(() => {
     if (typeof getSelectedRows === 'function') {
-      // Remove the unique symbol from selected rows before passing them
-      // Ensures that selected rows contain original UUID values for API operations
-      const cleanSelectedRows = selectedRows.map(getCleanRowDataForExternal);
+      // Use refs to get latest values without adding them to dependencies
+      const fullRows = originalDataRef.current.filter((row, idx) =>
+        selectedIds.has(getRowId(row, idx))
+      );
+      const cleanSelectedRows = fullRows.map(getCleanRowDataForExternalRef.current);
       getSelectedRows(cleanSelectedRows);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedRows, getSelectedRows]);
+  }, [selectedIds, getSelectedRows, getRowId]);
 
   // control what the parent sees when it uses the child's ref.
   useImperativeHandle(
@@ -777,7 +765,7 @@ const ConTable = (
     }
 
     return sortedData.map((row, index) => {
-      const rowId = row[uniqueSymbol] || `row-${index}`;
+      const rowId = getRowId(row, index);
       return (
         <TableRow key={index}>
           {renderSelectRowButtons && (
@@ -786,13 +774,8 @@ const ConTable = (
                 <AcCheckbox
                   id={`select-row-${rowId}`}
                   label='Selecteer deze rij'
-                  checked={
-                    selectedRows.find(
-                      (selectedRow) =>
-                        selectedRow[uniqueSymbol] === row[uniqueSymbol]
-                    ) || false
-                  }
-                  onChange={(checked) => handleSelectRow(checked, row)}
+                  checked={selectedIds.has(rowId)}
+                  onChange={(checked) => handleSelectRow(checked, row, index)}
                   srOnlyLabel
                 />
               </div>
@@ -837,10 +820,11 @@ const ConTable = (
     sortedData,
     tableHeaders,
     renderSelectRowButtons,
-    selectedRows,
+    selectedIds,
     handleSelectRow,
     renderCustomElement,
     handleDataCellRender,
+    getRowId,
   ]);
 
   return (
