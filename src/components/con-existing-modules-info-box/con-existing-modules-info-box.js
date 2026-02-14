@@ -31,25 +31,25 @@ const ConExistingModulesInfoBox = ({
   const configMessages = {
     licenties: {
       title: 'Bestaande applicaties uitgesloten',
-      description: 'Voor bestaande applicaties kunnen geen licenties worden toegevoegd of aangepast, omdat deze al hun eigen licentie-informatie hebben vastgelegd in de catalogus.',
+      description: 'Voor bestaande applicaties kunnen geen licenties worden toegevoegd of aangepast, omdat deze al hun eigen licentie-informatie hebben vastgelegd in de softwarecatalogus.',
     },
     versies: {
       title: 'Bestaande applicaties uitgesloten',
-      description: 'Voor bestaande applicaties kunnen geen versies worden toegevoegd of aangepast, omdat deze al hun eigen versie-informatie hebben vastgelegd in de catalogus.',
+      description: 'Voor bestaande applicaties kunnen geen versies worden toegevoegd of aangepast, omdat deze al hun eigen versie-informatie hebben vastgelegd in de softwarecatalogus.',
     },
     referentiecomponenten: {
       title: 'Bestaande applicaties uitgesloten',
-      description: 'Voor bestaande applicaties kunnen geen referentiecomponenten worden toegevoegd of aangepast, omdat deze al hun eigen referentiecomponenten hebben vastgelegd in de catalogus.',
+      description: 'Voor bestaande applicaties kunnen geen referentiecomponenten worden toegevoegd of aangepast, omdat deze al hun eigen referentiecomponenten hebben vastgelegd in de softwarecatalogus.',
     },
     standaarden: {
       title: 'Bestaande applicaties uitgesloten',
-      description: 'Voor bestaande applicaties kunnen geen standaarden worden toegevoegd of aangepast, omdat deze al hun eigen standaarden hebben vastgelegd in de catalogus.',
+      description: 'Voor bestaande applicaties kunnen geen standaarden worden toegevoegd of aangepast, omdat deze al hun eigen standaarden hebben vastgelegd in de softwarecatalogus.',
     },
   };
 
   const messages = configMessages[configType] || {
     title: 'Bestaande applicaties uitgesloten',
-    description: `Voor bestaande applicaties kunnen geen ${configType} worden toegevoegd of aangepast, omdat deze al hun eigen ${configType}-informatie hebben vastgelegd in de catalogus.`,
+    description: `Voor bestaande applicaties kunnen geen ${configType} worden toegevoegd of aangepast, omdat deze al hun eigen ${configType}-informatie hebben vastgelegd in de softwarecatalogus.`,
   };
 
   return (

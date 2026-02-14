@@ -48,8 +48,5 @@ window.RUNTIME_CONFIG = {
   "NGINX_NEXTCLOUD_UPSTREAM": "",
   "NGINX_NEXTCLOUD_DOMAIN": "",
   "NGINX_TARGET_HOST": "",
-  "CHAT_ENDPOINT": "https://api.example.com/chat",
-  "CHAT_TITLE": "Chat met Open Registers",
-  "CHAT_DESCRIPTION": "Stel vragen over data en bestanden in open registers en krijg direct antwoord.",
   "FAST_REFRESH": "true"
 };

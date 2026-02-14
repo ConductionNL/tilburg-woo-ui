@@ -121,7 +121,7 @@ const AcDashboard = ({ store }) => {
                 justifyContent='between'
                 className='ac-dashboard-wizards-header'
               >
-                <Heading level={3}>Mijn software catalogus</Heading>
+                <Heading level={3}>Mijn Softwarecatalogus</Heading>
 
                 <ConOrganizationSelector
                   store={store}

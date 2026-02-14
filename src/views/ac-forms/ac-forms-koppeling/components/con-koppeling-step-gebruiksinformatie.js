@@ -1,11 +1,8 @@
 import React, { memo } from 'react';
 import clsx from 'clsx';
 import ReactSelect from 'react-select';
-import {
-  Paragraph,
-  Textarea,
-  Separator,
-} from '@utrecht/component-library-react/dist/css-module';
+import { ConSchemaEnhancedField } from '@src/components';
+import { Paragraph, Textarea, Separator } from '@utrecht/component-library-react/dist/css-module';
 
 /**
  * ConKoppelingStepGebruiksinformatie (Aanvullende informatie)
@@ -19,6 +16,9 @@ import {
 const ConKoppelingStepGebruiksinformatie = ({
   beschrijvingByRow,
   setBeschrijvingByRow,
+  beschrijvingLangByRow,
+  setBeschrijvingLangByRow,
+  schemas,
   standaardenOptions,
   standaardenOptionsLoading,
   standaardenByRow,
@@ -87,6 +87,7 @@ const ConKoppelingStepGebruiksinformatie = ({
       <div className='con-form-wizard-rows'>
         {rows.map((rowId, index) => {
           const beschrijving = beschrijvingByRow[rowId] || '';
+          const beschrijvingLang = beschrijvingLangByRow?.[rowId] || '';
           const maxLen = 255;
           const charsLeft = Math.max(0, maxLen - beschrijving.length);
 
@@ -145,6 +146,30 @@ const ConKoppelingStepGebruiksinformatie = ({
                 >
                   {charsLeft} tekens resterend
                 </Paragraph>
+              </div>
+
+              {/* Lange beschrijving (via schema, zoals in applicatie wizard) */}
+              <div className='con-dynamic-form-container' style={{ marginBottom: '1rem' }}>
+                <div className='con-form-fields-container'>
+                  <ConSchemaEnhancedField
+                    schemaType='koppeling'
+                    schemaProperty='beschrijvingLang'
+                    value={beschrijvingLang}
+                    onChange={(value) =>
+                      setBeschrijvingLangByRow((prev) => ({
+                        ...prev,
+                        [rowId]: value || '',
+                      }))
+                    }
+                    isDisabled={loading}
+                    width='full'
+                    schemas={schemas}
+                    customProps={{
+                      description:
+                        'Een uitgebreide omschrijving van de koppeling. Dit kan met markdown opgemaakt worden.',
+                    }}
+                  />
+                </div>
               </div>
 
               {/* Standaardversies */}

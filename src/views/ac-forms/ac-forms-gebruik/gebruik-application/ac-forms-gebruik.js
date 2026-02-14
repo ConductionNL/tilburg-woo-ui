@@ -2576,7 +2576,7 @@ const AcFormsGebruik = ({ store }) => {
                         wordt
                       </li>
                       <li>
-                        Na goedkeuring wordt het gebruik zichtbaar in de catalogus
+                        Na goedkeuring wordt het gebruik zichtbaar in de softwarecatalogus
                       </li>
                       <li>U kunt het gebruik beheren via het beheer dashboard</li>
                     </>

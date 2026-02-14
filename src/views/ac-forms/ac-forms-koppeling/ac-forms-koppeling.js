@@ -188,6 +188,7 @@ const AcFormsKoppeling = ({ store }) => {
   const [directionByRow, setDirectionByRow] = useState({});
   const [typeByRow, setTypeByRow] = useState({});
   const [beschrijvingByRow, setBeschrijvingByRow] = useState({});
+  const [beschrijvingLangByRow, setBeschrijvingLangByRow] = useState({});
   const [statusByRow, setStatusByRow] = useState({});
   // Separate startdatum fields per status (like gebruik koppeling wizard)
   const [startDatumInProductieByRow, setStartDatumInProductieByRow] = useState({});
@@ -702,6 +703,7 @@ const AcFormsKoppeling = ({ store }) => {
         const richting = data?.gegevensuitwisselingRichting || '';
         const soort = data?.type || '';
         const beschrijving = data?.beschrijvingKort || '';
+        const beschrijvingLang = data?.beschrijvingLang || '';
         const status = data?.status || '';
         const naam = data?.naam || '';
         const standaarden = data?.standaardversies || [];
@@ -766,6 +768,7 @@ const AcFormsKoppeling = ({ store }) => {
         setDirectionByRow({ 0: richting });
         setTypeByRow({ 0: soort });
         setBeschrijvingByRow({ 0: beschrijving });
+        setBeschrijvingLangByRow({ 0: beschrijvingLang });
         setStatusByRow({ 0: status });
         setStandaardenByRow({ 0: standaarden });
         setNameByRow({ 0: naam });
@@ -1502,6 +1505,7 @@ const AcFormsKoppeling = ({ store }) => {
         const richting = directionByRow[rowId] || '';
         const soort = typeByRow[rowId] || '';
         const beschrijving = beschrijvingByRow[rowId] || '';
+        const beschrijvingLang = beschrijvingLangByRow[rowId] || '';
         const status = statusByRow[rowId] || '';
         const standaarden = standaardenByRow[rowId] || [];
         const intermediair = intermediairByRow[rowId] || '';
@@ -1535,6 +1539,7 @@ const AcFormsKoppeling = ({ store }) => {
           gegevensuitwisselingRichting: richting,
           type: soort,
           beschrijvingKort: beschrijving,
+          beschrijvingLang,
           status,
           standaardversies: standaarden,
         };
@@ -1860,6 +1865,7 @@ const AcFormsKoppeling = ({ store }) => {
     setDirectionByRow({});
     setTypeByRow({});
     setBeschrijvingByRow({});
+    setBeschrijvingLangByRow({});
     setStatusByRow({});
     setStartDatumInProductieByRow({});
     setStartDatumGeplandByRow({});
@@ -2287,6 +2293,9 @@ const AcFormsKoppeling = ({ store }) => {
           <ConKoppelingStepGebruiksinformatie
             beschrijvingByRow={beschrijvingByRow}
             setBeschrijvingByRow={setBeschrijvingByRow}
+            beschrijvingLangByRow={beschrijvingLangByRow}
+            setBeschrijvingLangByRow={setBeschrijvingLangByRow}
+            schemas={schemas}
             standaardenOptions={standaardenOptions}
             standaardenOptionsLoading={standaardenOptionsLoading}
             standaardenByRow={standaardenByRow}
@@ -2317,6 +2326,7 @@ const AcFormsKoppeling = ({ store }) => {
             typeByRow={typeByRow}
             typeOptions={typeOptions}
             beschrijvingByRow={beschrijvingByRow}
+            beschrijvingLangByRow={beschrijvingLangByRow}
             statusByRow={statusByRow}
             statusOptions={statusOptions}
             standaardenByRow={standaardenByRow}
@@ -2405,33 +2415,35 @@ const AcFormsKoppeling = ({ store }) => {
     <AcSection spacing>
       <AcContainer>
         <AcColumn gap='tiger'>
-          <div>
-            <Heading1
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-            >
-              <Icon style={{ width: '1em', height: '1em' }} />
-              Uw {isEditMode ? editModeTitle : wizardName}
-            </Heading1>
-            <Paragraph>
-              {(() => {
-                const currentStepLabel = stepper.getLabelFromStep(
-                  stepper.getCurrentStep()
-                );
-                switch (currentStepLabel) {
-                  case 'aanbieder':
-                    return 'Selecteer een aanbieder of maak een nieuwe organisatie aan.';
-                  case 'koppeling-zoeken':
-                    return 'Selecteer een applicatie uit uw eigen aanbod waarvoor u een koppeling wilt publiceren.';
-                  case 'koppeling':
-                    return 'Vul dit formulier in om uw koppeling te registreren in de softwarecatalogus.';
-                  case 'aanvullende-informatie':
-                    return 'Vul dit formulier in om uw koppeling te registreren in de softwarecatalogus.';
-                  default:
-                    return 'Vul dit formulier in om uw koppeling te registreren in de softwarecatalogus.';
-                }
-              })()}
-            </Paragraph>
-          </div>
+          {saveResult !== 'success' && (
+            <div>
+              <Heading1
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+              >
+                <Icon style={{ width: '1em', height: '1em' }} />
+                Uw {isEditMode ? editModeTitle : wizardName}
+              </Heading1>
+              <Paragraph>
+                {(() => {
+                  const currentStepLabel = stepper.getLabelFromStep(
+                    stepper.getCurrentStep()
+                  );
+                  switch (currentStepLabel) {
+                    case 'aanbieder':
+                      return 'Selecteer een aanbieder of maak een nieuwe organisatie aan.';
+                    case 'koppeling-zoeken':
+                      return 'Selecteer een applicatie uit uw eigen aanbod waarvoor u een koppeling wilt publiceren.';
+                    case 'koppeling':
+                      return 'Vul dit formulier in om uw koppeling te registreren in de softwarecatalogus.';
+                    case 'aanvullende-informatie':
+                      return 'Vul dit formulier in om uw koppeling te registreren in de softwarecatalogus.';
+                    default:
+                      return 'Vul dit formulier in om uw koppeling te registreren in de softwarecatalogus.';
+                  }
+                })()}
+              </Paragraph>
+            </div>
+          )}
 
           <div>
             {saveResult !== 'success' && saveResult !== 'error' && (
