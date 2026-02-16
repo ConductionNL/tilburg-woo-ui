@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
 import { AcCheckbox, ConAccordion, ConActiveFilters } from '@molecules';
@@ -34,14 +34,129 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
   const {
     toggleSearchArrayValue,
     updateQuery,
-    // fetchPublications,
-    // fetchFacets,
     all_facets,
+    is_loading,
     is_facets_loading,
   } = publications;
 
   // Use the name resolution hook to resolve UUIDs in facet labels
-  const { resolvedFacets, isResolving } = useFacetNameResolution(all_facets, object);
+  const { resolvedFacets } = useFacetNameResolution(all_facets, object);
+
+  // When any filter is selected, detect it (for disabling logic)
+  const hasAnyFilterSelected = useMemo(() => {
+    const query = publications.query;
+    const filterKeys = Object.keys(query || {}).filter(
+      (k) => !['_page', '_search', '_limit', '_order', 'extend'].includes(k)
+    );
+    for (const key of filterKeys) {
+      const val = query[key];
+      if (Array.isArray(val) && val.length > 0) return true;
+      if (val && typeof val === 'object' && !Array.isArray(val)) {
+        const hasNested = Object.values(val).some(
+          (v) => (Array.isArray(v) && v.length > 0) || (v != null && v !== '')
+        );
+        if (hasNested) return true;
+      }
+      if (val != null && val !== '') return true;
+    }
+    return false;
+  }, [publications.query]);
+
+  // Disable other filter options only while new results/facets are loading (re-enable when fetch completes)
+  const shouldDisableUncheckedFilters =
+    hasAnyFilterSelected && (is_loading || is_facets_loading);
+
+  // When facets come back, remove any active filter whose bucket has count 0 so we never show raw IDs for 0-result filters
+  useEffect(() => {
+    if (is_facets_loading || !resolvedFacets || !publications.query) {
+      return;
+    }
+
+    const query = publications.query;
+    const facets = resolvedFacets;
+    const reservedKeys = ['_page', '_search', '_limit', '_order', 'extend'];
+    const filterKeys = Object.keys(query).filter((k) => !reservedKeys.includes(k));
+    if (filterKeys.length === 0) return;
+
+    let hasChanges = false;
+    const cleanedQuery = { ...query };
+
+    for (const key of filterKeys) {
+      const val = query[key];
+
+      if (key === '@self' && val && typeof val === 'object' && !Array.isArray(val)) {
+        const nested = val;
+        const cleanedNested = {};
+        for (const [subKey, subVal] of Object.entries(nested)) {
+          const buckets = facets[key]?.[subKey]?.buckets;
+          if (!buckets) {
+            cleanedNested[subKey] = subVal;
+            continue;
+          }
+          const bucketByValue = new Map(
+            buckets.map((b) => [String(b.value || b.key), b])
+          );
+          const arr = Array.isArray(subVal) ? subVal : [subVal].filter(Boolean);
+          const kept = arr.filter((v) => {
+            const b = bucketByValue.get(String(v));
+            return b && (b.count || b.results || 0) > 0;
+          });
+          if (kept.length !== arr.length) hasChanges = true;
+          if (kept.length > 0) cleanedNested[subKey] = kept;
+        }
+        if (Object.keys(cleanedNested).length === 0) {
+          delete cleanedQuery[key];
+        } else {
+          cleanedQuery[key] = cleanedNested;
+        }
+        continue;
+      }
+
+      if (Array.isArray(val) && val.length > 0) {
+        const buckets = facets[key]?.buckets;
+        if (!buckets) continue;
+        const bucketByValue = new Map(
+          buckets.map((b) => [String(b.value || b.key), b])
+        );
+        const kept = val.filter((v) => {
+          const b = bucketByValue.get(String(v));
+          return b && (b.count || b.results || 0) > 0;
+        });
+        if (kept.length !== val.length) hasChanges = true;
+        if (kept.length === 0) {
+          delete cleanedQuery[key];
+        } else {
+          cleanedQuery[key] = kept;
+        }
+        continue;
+      }
+
+      if (val && typeof val === 'object') continue;
+      if (val != null && val !== '') {
+        const buckets = facets[key]?.buckets;
+        if (buckets) {
+          const b = buckets.find((x) => String(x.value || x.key) === String(val));
+          if (!b || (b.count || b.results || 0) === 0) {
+            hasChanges = true;
+            delete cleanedQuery[key];
+          }
+        }
+      }
+    }
+
+    if (hasChanges) {
+      const withPageReset = { ...cleanedQuery, _page: 1 };
+      const paramsString = AcBuildURLSearchParams(withPageReset);
+      setSearchParams(new URLSearchParams(paramsString));
+      updateQuery(withPageReset);
+    }
+  }, [
+    is_facets_loading,
+    resolvedFacets,
+    publications.query,
+    updateQuery,
+    setSearchParams,
+  ]);
 
   // Custom function to handle nested facet toggling
   const toggleNestedFacet = (facetKey, value) => {
@@ -593,36 +708,43 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
                               .toLowerCase();
                             return labelA.localeCompare(labelB);
                           })
-                          .map((bucket) => (
-                            <AcCheckbox
-                              key={bucket.value || bucket.key}
-                              label={`${
-                                bucket.label ?? bucket.value ?? bucket.key
-                              } (${ConFormatDutchNumber(
-                                bucket.count || bucket.results
-                              )})`}
-                              value={bucket.value || bucket.key}
-                              checked={isFacetChecked(
-                                _value.queryParameter || facetKey,
-                                bucket.value || bucket.key
-                              )}
-                              onChange={() => {
-                                toggleNestedFacet(
-                                  _value.queryParameter || facetKey,
-                                  bucket.value || bucket.key
-                                );
-                              }}
-                              title={
-                                bucket.originalLabel
-                                  ? `Origineel: ${bucket.originalLabel}`
-                                  : bucket._isActiveSynthetic
-                                  ? `Actieve filter (${
-                                      bucket.count || bucket.results
-                                    } resultaten)`
-                                  : undefined
-                              }
-                            />
-                          ))}
+                          .map((bucket) => {
+                            const bucketValue = bucket.value || bucket.key;
+                            const isChecked = isFacetChecked(
+                              _value.queryParameter || facetKey,
+                              bucketValue
+                            );
+                            return (
+                              <AcCheckbox
+                                key={bucketValue}
+                                label={`${
+                                  bucket.label ?? bucket.value ?? bucket.key
+                                } (${ConFormatDutchNumber(
+                                  bucket.count || bucket.results
+                                )})`}
+                                value={bucketValue}
+                                checked={isChecked}
+                                disabled={
+                                  shouldDisableUncheckedFilters && !isChecked
+                                }
+                                onChange={() => {
+                                  toggleNestedFacet(
+                                    _value.queryParameter || facetKey,
+                                    bucketValue
+                                  );
+                                }}
+                                title={
+                                  bucket.originalLabel
+                                    ? `Origineel: ${bucket.originalLabel}`
+                                    : bucket._isActiveSynthetic
+                                    ? `Actieve filter (${
+                                        bucket.count || bucket.results
+                                      } resultaten)`
+                                    : undefined
+                                }
+                              />
+                            );
+                          })}
                       </ConAccordion.Item>
                     </AcFlex>
                   ) : null;
@@ -679,42 +801,49 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
                             .toLowerCase();
                           return labelA.localeCompare(labelB);
                         })
-                        .map((bucketValue) => (
-                          <AcCheckbox
-                            key={bucketValue.value || bucketValue.key}
-                            label={`${
-                              bucketValue.label ??
-                              bucketValue.value ??
-                              bucketValue.key
-                            } (${bucketValue.count || bucketValue.results})`}
-                            value={bucketValue.value || bucketValue.key}
-                            checked={isFacetChecked(
-                              value.queryParameter || key,
-                              bucketValue.value || bucketValue.key
-                            )}
-                            onChange={() => {
-                              toggleSearchArrayValue(
-                                value.queryParameter || key,
-                                bucketValue.value || bucketValue.key
-                              );
-                              const nextQuery = { ...publications.query, _page: 1 };
-                              const paramsString = AcBuildURLSearchParams(nextQuery);
-                              setSearchParams(new URLSearchParams(paramsString));
+                        .map((bucketValue) => {
+                          const bVal = bucketValue.value || bucketValue.key;
+                          const isChecked = isFacetChecked(
+                            value.queryParameter || key,
+                            bVal
+                          );
+                          return (
+                            <AcCheckbox
+                              key={bVal}
+                              label={`${
+                                bucketValue.label ??
+                                bucketValue.value ??
+                                bucketValue.key
+                              } (${bucketValue.count || bucketValue.results})`}
+                              value={bVal}
+                              checked={isChecked}
+                              disabled={
+                                shouldDisableUncheckedFilters && !isChecked
+                              }
+                              onChange={() => {
+                                toggleSearchArrayValue(
+                                  value.queryParameter || key,
+                                  bVal
+                                );
+                                const nextQuery = { ...publications.query, _page: 1 };
+                                const paramsString = AcBuildURLSearchParams(nextQuery);
+                                setSearchParams(new URLSearchParams(paramsString));
 
-                              // Note: Facets fetch is triggered by URL change effect in AcSearch
-                              // No need to call fetchFacets() here to avoid duplicate API calls
-                            }}
-                            title={
-                              bucketValue.originalLabel
-                                ? `Origineel: ${bucketValue.originalLabel}`
-                                : bucketValue._isActiveSynthetic
-                                ? `Actieve filter (${
-                                    bucketValue.count || bucketValue.results
-                                  } resultaten)`
-                                : undefined
-                            }
-                          />
-                        ))
+                                // Note: Facets fetch is triggered by URL change effect in AcSearch
+                                // No need to call fetchFacets() here to avoid duplicate API calls
+                              }}
+                              title={
+                                bucketValue.originalLabel
+                                  ? `Origineel: ${bucketValue.originalLabel}`
+                                  : bucketValue._isActiveSynthetic
+                                  ? `Actieve filter (${
+                                      bucketValue.count || bucketValue.results
+                                    } resultaten)`
+                                  : undefined
+                              }
+                            />
+                          );
+                        })
                     ) : (
                       <p
                         style={{

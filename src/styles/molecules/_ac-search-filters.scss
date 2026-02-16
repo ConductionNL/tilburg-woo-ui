@@ -74,6 +74,18 @@
     }
   }
 
+  // Disabled filter checkboxes: more gray while results/facets are loading
+  &__subjects .utrecht-form-field--checkbox:has(input:disabled) {
+    opacity: 0.6;
+
+    .utrecht-form-field__label,
+    .ac-checkbox-label,
+    .utrecht-form-field__input {
+      color: var(--tilburg-color-gray-500, #6b7280);
+      cursor: not-allowed;
+    }
+  }
+
   &__sort {
     padding-block-end: var(--tilburg-space-block-rat);
     border-bottom: 1px solid var(--tilburg-color-gray-300);
