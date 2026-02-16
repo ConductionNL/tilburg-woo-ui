@@ -166,11 +166,12 @@ const BeheerModalFactory = {
       },
     };
 
-    // Generic delete props - works for all types
+    // Generic delete props - works for all types; beheerType enables custom copy for applicatie/dienst/koppeling
     if (modalType === 'delete') {
       return {
         ...baseProps,
         objects: singleSelectedRow ? [singleSelectedRow] : selectedRows,
+        beheerType: type,
       };
     }
 
