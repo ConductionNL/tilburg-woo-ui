@@ -37,6 +37,8 @@ const ConFormApplicatiesStage = memo(
     leverancierOptions = [],
     leverancierLoading = false,
     searchLeveranciers = () => {},
+    isEditMode = false,
+    editingDienstId = '',
   }) => {
     const handleChange = (value) => {
       // ConSchemaEnhancedField with array schema returns an array of IDs for multi-select
@@ -320,6 +322,12 @@ const ConFormApplicatiesStage = memo(
                       const dienstId =
                         dienstItem?.id || dienstItem?.['@self']?.id || String(index);
 
+                      // Check if this is the dienst being edited
+                      const isCurrentDienst =
+                        isEditMode &&
+                        editingDienstId &&
+                        String(dienstId) === String(editingDienstId);
+
                       const naam = String(
                         (
                           dienstItem?.naam ||
@@ -338,9 +346,10 @@ const ConFormApplicatiesStage = memo(
                       const website = String(dienstItem?.website || '').trim();
                       
                       // Handle type - could be array, object, string, or string containing JSON array
-                      const type = (() => {
+                      // Return as array for rendering separate tags
+                      const typeArray = (() => {
                         const rawType = dienstItem?.type;
-                        if (!rawType) return '';
+                        if (!rawType) return [];
                         
                         // Check if it's a string that looks like a JSON array
                         if (typeof rawType === 'string' && rawType.trim().startsWith('[')) {
@@ -349,11 +358,11 @@ const ConFormApplicatiesStage = memo(
                             if (Array.isArray(parsed)) {
                               return parsed
                                 .map((item) => (typeof item === 'string' ? item : String(item)))
-                                .join(', ');
+                                .filter(Boolean);
                             }
                           } catch (e) {
-                            // If parsing fails, return as-is
-                            return String(rawType);
+                            // If parsing fails, return as single item array
+                            return [String(rawType)];
                           }
                         }
                         
@@ -362,23 +371,22 @@ const ConFormApplicatiesStage = memo(
                           return rawType
                             .map((t) =>
                               typeof t === 'object'
-                                ? t.naam || t.name || t.label || t
+                                ? t.naam || t.name || t.label || String(t)
                                 : String(t)
                             )
-                            .join(', ');
+                            .filter(Boolean);
                         }
                         
                         // Handle objects
                         if (typeof rawType === 'object') {
-                          return String(
+                          return [String(
                             rawType.naam || rawType.name || rawType.label || rawType
-                          );
+                          )];
                         }
                         
-                        return String(rawType);
-                      })().trim();
+                        return [String(rawType)];
+                      })();
                       
-                      const status = String(dienstItem?.status || '').trim();
                       const aanbieder = dienstItem?.aanbieder
                         ? String(dienstItem.aanbieder).trim()
                         : null;
@@ -410,15 +418,36 @@ const ConFormApplicatiesStage = memo(
                         <div
                           key={dienstId}
                           style={{
-                            display: 'flex',
-                            alignItems: 'flex-start',
-                            gap: '0.75rem',
-                            padding: '1rem',
-                            outline: '1px solid #ddd',
+                            padding: '0.75rem',
+                            border: '1px solid #ddd',
+                            borderLeft: isCurrentDienst
+                              ? '3px solid var(--tilburg-color-primary, #0063e5)'
+                              : '1px solid #ddd',
                             borderRadius: '4px',
-                            backgroundColor: '#fafafa',
+                            backgroundColor: isCurrentDienst
+                              ? 'var(--tilburg-color-gray-50, #f8f9fa)'
+                              : '#fafafa',
                           }}
                         >
+                          {isCurrentDienst && (
+                            <div
+                              style={{
+                                fontSize: '0.75rem',
+                                fontStyle: 'italic',
+                                color: 'var(--tilburg-color-gray-600, #666)',
+                                marginBottom: '0.5rem',
+                              }}
+                            >
+                              U bewerkt deze dienst
+                            </div>
+                          )}
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'flex-start',
+                              gap: '0.75rem',
+                            }}
+                          >
                           <div style={{ flex: 1 }}>
                             {/* Header row with naam and badges */}
                             <div
@@ -441,12 +470,15 @@ const ConFormApplicatiesStage = memo(
                               <div
                                 style={{
                                   display: 'flex',
-                                  gap: '0.5rem',
+                                  gap: '0.25rem',
                                   flexWrap: 'wrap',
+                                  justifyContent: 'flex-end',
+                                  marginLeft: 'auto',
                                 }}
                               >
-                                {type && (
+                                {typeArray.length > 0 && typeArray.map((typeItem, index) => (
                                   <span
+                                    key={index}
                                     style={{
                                       display: 'inline-block',
                                       padding: '0.25rem 0.5rem',
@@ -457,38 +489,9 @@ const ConFormApplicatiesStage = memo(
                                       fontWeight: '500',
                                     }}
                                   >
-                                    {type}
+                                    {typeItem}
                                   </span>
-                                )}
-                                {status && (
-                                  <span
-                                    style={{
-                                      display: 'inline-block',
-                                      padding: '0.25rem 0.5rem',
-                                      backgroundColor:
-                                        status.toLowerCase() === 'concept'
-                                          ? '#fff3cd'
-                                          : status.toLowerCase() ===
-                                              'gepubliceerd' ||
-                                            status.toLowerCase() === 'published'
-                                          ? '#d1e7dd'
-                                          : '#e8e8e8',
-                                      color:
-                                        status.toLowerCase() === 'concept'
-                                          ? '#856404'
-                                          : status.toLowerCase() ===
-                                              'gepubliceerd' ||
-                                            status.toLowerCase() === 'published'
-                                          ? '#0f5132'
-                                          : '#333',
-                                      borderRadius: '4px',
-                                      fontSize: '0.75rem',
-                                      fontWeight: '500',
-                                    }}
-                                  >
-                                    {status}
-                                  </span>
-                                )}
+                                ))}
                               </div>
                             </div>
 
@@ -544,6 +547,7 @@ const ConFormApplicatiesStage = memo(
                                 </div>
                               )}
                             </div>
+                          </div>
                           </div>
                         </div>
                       );

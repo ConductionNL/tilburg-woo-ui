@@ -405,7 +405,7 @@ const ConDienstDetailsPageContent = ({
         </>
       )}
 
-      {(data?.type || data?.status) && (
+      {data?.type && (
         <>
           <Heading level={3} style={{ marginBlockStart: '1rem' }}>
             Basisinformatie
@@ -452,12 +452,6 @@ const ConDienstDetailsPageContent = ({
                     // Handle single value
                     return <ConUuidResolver>{String(rawType)}</ConUuidResolver>;
                   })()}
-                </div>
-              )}
-              {data?.status && (
-                <div style={{ marginBottom: '8px' }}>
-                  <strong>Status: </strong>
-                  {data.status}
                 </div>
               )}
             </div>
