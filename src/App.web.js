@@ -21,6 +21,7 @@ import AcContent from '@views/ac-content/ac-content';
 // Imports => Components
 import AcProtectedRoute from '@components/ac-protected-route/ac-protected-route';
 import { AcLoader } from '@components';
+import ConGlossaryDrawer from '@components/con-glossary-drawer/con-glossary-drawer';
 
 // Imports => Molecules
 const AcHeader = loadable(() => import('@components/ac-header/ac-header'));
@@ -93,6 +94,13 @@ const App = ({ store }) => {
       });
     }
   }, [user.isAuthenticated]);
+
+  // Warm up glossary terms on app init (public API, no auth required)
+  useEffect(() => {
+    store.glossary.warmup().catch((error) => {
+      console.warn('Glossary warmup failed during app initialization:', error);
+    });
+  }, []);
 
   useDocumentTitleFromPath();
 
@@ -294,6 +302,7 @@ const App = ({ store }) => {
           />
         </Routes>
       </main>
+      <ConGlossaryDrawer />
       <AcFooter />
     </div>
   );

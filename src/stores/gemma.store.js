@@ -127,11 +127,11 @@ export class GemmaStore {
   };
 
   @action
-  fetchViews = async () => {
+  fetchViews = async (params = {}) => {
     this.loading.status = true;
 
-    app.store.api.gemma
-      .views()
+    return app.store.api.gemma
+      .views(params)
       .then((response) => {
         this.setViews(response.results);
         delete response.results;

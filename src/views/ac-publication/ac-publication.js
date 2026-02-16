@@ -19,9 +19,9 @@ import AcPublicationContactperson from './ac-publication-contactperson';
 import AcPublicationModuleVersie from './ac-publication-moduleversie';
 import { AcContainer, AcFlex } from '@src/atoms';
 import { AcButton } from '@molecules';
-import { VISUALS } from '@constants';
+import { LABELS, VISUALS } from '@constants';
 
-const AcPublication = observer(({ store: { publications } }) => {
+const AcPublication = observer(({ store: { publications, glossary } }) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const {
@@ -156,9 +156,11 @@ const AcPublication = observer(({ store: { publications } }) => {
     return <AcLoader />;
   }
 
-  if (get_single?.catalog?.title === 'Softwarecatalogus') {
-    return <AcPublicationSoftwarecatalogus />;
-  } else {
+  const renderPublicationView = () => {
+    if (get_single?.catalog?.title === 'Softwarecatalogus') {
+      return <AcPublicationSoftwarecatalogus />;
+    }
+
     switch (get_single?.publicationType?.title) {
       case 'Softwarecatalogus':
         return <AcPublicationSoftwarecatalogus />;
@@ -194,7 +196,25 @@ const AcPublication = observer(({ store: { publications } }) => {
         }
         return <AcPublicationDefault schema={schema} />;
     }
-  }
+  };
+
+  return (
+    <>
+      {glossary.is_warmed_up && glossary.all_terms.length > 0 && (
+        <div className='con-glossary-button-container'>
+          <button
+            className='con-glossary-button'
+            onClick={() => glossary.openDrawer()}
+            aria-label={LABELS.CONCEPTS_LIST}
+          >
+            <VISUALS.LIST_ALT />
+            <span>{LABELS.CONCEPTS_LIST}</span>
+          </button>
+        </div>
+      )}
+      {renderPublicationView()}
+    </>
+  );
 });
 
 export default withStore(AcPublication);

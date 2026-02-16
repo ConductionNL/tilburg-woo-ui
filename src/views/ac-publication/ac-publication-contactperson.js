@@ -11,6 +11,7 @@ import { VISUALS } from '@constants';
 import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
 import { createBeschrijvingTab } from './helpers/beschrijving-tab.helper';
+import ConGlossaryHighlight from '@components/con-glossary-highlight/con-glossary-highlight';
 import { schemaCache } from '@services/schemaCache.service';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
@@ -263,7 +264,9 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
           <AcFlex spacing='sm' justifyContent='between'>
             <AcFlex column spacing='md' style={{ flex: 3 }}>
               {!!get_single?.['@self']?.summary && (
-                <div>{get_single?.['@self']?.summary}</div>
+                <ConGlossaryHighlight as='div'>
+                  {get_single?.['@self']?.summary}
+                </ConGlossaryHighlight>
               )}
 
               {!!get_single?.beschrijvingLang && (

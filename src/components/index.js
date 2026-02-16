@@ -128,6 +128,14 @@ const ConExternalLink = loadable(() =>
   import('@src/components/con-external-link/con-external-link')
 );
 
+const ConGlossaryHighlight = loadable(() =>
+  import('@src/components/con-glossary-highlight/con-glossary-highlight')
+);
+
+const ConGlossaryDrawer = loadable(() =>
+  import('@src/components/con-glossary-drawer/con-glossary-drawer')
+);
+
 // Don't lazy load - needs immediate access to VISUALS
 import ConPublicationTypeBadge from '@src/components/con-publication-type-badge/con-publication-type-badge';
 
@@ -177,4 +185,6 @@ export {
   ConAangebodenSuggestiesTable,
   ConExternalLink,
   ConPublicationTypeBadge,
+  ConGlossaryHighlight,
+  ConGlossaryDrawer,
 };

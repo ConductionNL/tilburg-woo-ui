@@ -690,7 +690,8 @@ module.exports = function (webpackEnv) {
               ecma: 8,
             },
             compress: {
-              drop_console: true,
+              drop_console: false,
+              pure_funcs: ['console.log', 'console.debug'],
               drop_debugger: true,
               ecma: 5,
               warnings: false,

@@ -23,10 +23,10 @@ const ConBeheerViewsList = ({ store }) => {
   useEffect(() => {
     if (!gemma) return;
     
-    const loadViews = async () => {
+    const loadViews = async (params = {}) => {
       setIsLoading(true);
       try {
-        await gemma.fetchViews();
+        await gemma.fetchViews(params);
       } catch (error) {
         console.error('Error loading views:', error);
       } finally {
@@ -34,9 +34,9 @@ const ConBeheerViewsList = ({ store }) => {
       }
     };
 
-    // Only fetch if we don't have views yet
+    // Only fetch if we don't have views yet — filter server-side to reduce payload (33MB → 9.6MB)
     if (!gemma.all_views || gemma.all_views.length === 0) {
-      loadViews();
+      loadViews({ publiceren: 'Softwarecatalogus en GEMMA Online en redactie', _unset: 'xml', _limit: 100 });
     } else {
       setIsLoading(false);
     }
@@ -51,23 +51,26 @@ const ConBeheerViewsList = ({ store }) => {
   };
 
   const getViewDescription = (view) => {
-    return (
-      view?.documentation ||
-      view?.description ||
-      'Geen beschrijving beschikbaar voor deze view.'
-    );
+    if (view?.['@self']?.summary) return view['@self'].summary;
+    if (view?.['@self']?.description) return view['@self'].description;
+    if (view?.documentation) return view.documentation;
+    if (view?.description) return view.description;
+    return 'Geen beschrijving beschikbaar voor deze view.';
   };
 
-  const views = gemma?.all_views || [];
+  // Filter views to only show Softwarecatalogus views
+  const views = (gemma?.all_views || []).filter(
+    (view) => view?.publiceren === 'Softwarecatalogus en GEMMA Online en redactie'
+  );
 
   // Filter views based on search query
   const filteredViews = views.filter((view) => {
     if (!searchQuery.trim()) return true;
-    
+
     const query = searchQuery.toLowerCase();
     const viewName = getViewName(view).toLowerCase();
     const viewDescription = getViewDescription(view).toLowerCase();
-    
+
     return viewName.includes(query) || viewDescription.includes(query);
   });
 

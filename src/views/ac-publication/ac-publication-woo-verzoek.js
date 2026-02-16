@@ -17,6 +17,7 @@ import { AcMappedAttachmentRow } from '@src/services/ac-mapped-attachmend-row';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 import { normalizeSchemaName } from '@src/utilities/con-normalize-schema-name';
+import ConGlossaryHighlight from '@components/con-glossary-highlight/con-glossary-highlight';
 
 const AcPublicationWooVerzoek = ({ store: { publications, user } }) => {
   const { id } = useParams();
@@ -86,9 +87,9 @@ const AcPublicationWooVerzoek = ({ store: { publications, user } }) => {
 
           <AcCard blue>
             <Heading level={2}>{LABELS.SUMMARY}</Heading>
-            <Paragraph>
+            <ConGlossaryHighlight as='p' className='utrecht-paragraph'>
               {get_single?.summary || LABELS.SUMMARY_UNAVAILABLE}
-            </Paragraph>
+            </ConGlossaryHighlight>
           </AcCard>
 
           {/* Show only when there are primary attachments */}

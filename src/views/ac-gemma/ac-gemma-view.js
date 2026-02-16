@@ -26,7 +26,7 @@ const AcGemmaView = ({ store: { gemma }, viewId }) => {
   useEffect(() => {
     // Property definitions are not needed for the new API; directly load views when no viewId is provided
     if (!viewId) {
-      fetchViews();
+      fetchViews({ _limit: 100 });
     }
     setViewNodesData(null);
     setViewRelationsData(null);
@@ -76,10 +76,11 @@ const AcGemmaView = ({ store: { gemma }, viewId }) => {
           'unknown',
         name: node.name || node.elementProperties?.name || 'unknown',
         type: (
+          node.elementProperties?.type ||
           node.type ||
-          node.elementProperties?.gemmaType ||
           'dataobject'
         ).toLowerCase(),
+        gemmaType: node.type || node.gemmaType || node.elementProperties?.gemmaType || null,
       }));
       setViewNodesData(sanitizedNodes);
       setViewRelationsData(gemma.get_view.viewRelationships || []);
@@ -336,12 +337,52 @@ const AcGemmaView = ({ store: { gemma }, viewId }) => {
     };
     */
 
+    const t0 = performance.now();
+
     let viewNodes = [];
     let viewRelationships = [];
 
     if (Array.isArray(gemma.get_view.viewNodes)) {
-      // New API shape: use provided nodes/relationships directly
-      viewNodes = viewNodesData || [];
+      // Topological sort: parents must be rendered before children so the
+      // diagram engine can look up parent cells via graph.getCell(parentId).
+      // Backend now stores nodes in correct order, but we keep this as a
+      // safety net for data imported before the fix.
+      const rawNodes = viewNodesData || [];
+      const sorted = [];
+      const placed = new Set();
+      const remaining = [...rawNodes];
+      let prevLength = -1;
+      while (remaining.length > 0 && remaining.length !== prevLength) {
+        prevLength = remaining.length;
+        for (let i = remaining.length - 1; i >= 0; i--) {
+          const n = remaining[i];
+          if (!n.parent || placed.has(n.parent)) {
+            sorted.push(n);
+            placed.add(n.viewNodeId);
+            remaining.splice(i, 1);
+          }
+        }
+      }
+      // Append any remaining nodes (e.g. orphans with missing parents)
+      sorted.push(...remaining);
+
+      // Convert absolute coordinates to parent-relative.
+      // ArchiMate Open Exchange XML stores absolute positions, but the
+      // diagram engine positions children relative to their parent.
+      const absPos = {};
+      sorted.forEach((n) => {
+        const parentAbs = n.parent ? absPos[n.parent] : null;
+        absPos[n.viewNodeId] = {
+          x: (n.x || 0),
+          y: (n.y || 0),
+        };
+        if (parentAbs) {
+          n.x = (n.x || 0) - parentAbs.x;
+          n.y = (n.y || 0) - parentAbs.y;
+        }
+      });
+
+      viewNodes = sorted;
       viewRelationships = (viewRelationsData || []).map((r) => ({
         modelRelationshipId: r.modelRelationshipId,
         sourceId: r.sourceId,
@@ -425,6 +466,9 @@ const AcGemmaView = ({ store: { gemma }, viewId }) => {
     container.querySelectorAll(':scope > svg').forEach((node) => {
       setSvgViewBox(node);
     });
+
+    const t1 = performance.now();
+    console.info(`[AMEF] Rendered ${viewNodes.length} nodes + ${viewRelationships.length} rels in ${(t1 - t0).toFixed(0)}ms`);
 
     viewNodes && viewRelationships && setViewIsDoneLoading(true);
   }, [viewNodesData, viewRelationsData]);

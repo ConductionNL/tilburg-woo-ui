@@ -25,6 +25,7 @@ import { canReadField } from '@utils/field-authorization';
 import { TOOLTIP_ID } from '@src/index.web';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 import { normalizeSchemaName } from '@src/utilities/con-normalize-schema-name';
+import ConGlossaryHighlight from '@components/con-glossary-highlight/con-glossary-highlight';
 
 // Markdown Editor
 import MDEditor from '@uiw/react-md-editor';
@@ -320,7 +321,9 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
           </AcFlex>
 
           {!!get_single?.['@self']?.summary && (
-            <div>{get_single?.['@self']?.summary}</div>
+            <ConGlossaryHighlight as='div'>
+              {get_single?.['@self']?.summary}
+            </ConGlossaryHighlight>
           )}
 
           {!!get_single?.beschrijvingLang && (
