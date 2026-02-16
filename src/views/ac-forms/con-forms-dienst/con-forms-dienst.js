@@ -944,6 +944,8 @@ const ConFormsDienst = ({ store, userStore }) => {
             leverancierKeuze={leverancierKeuze}
             nieuweLeverancier={nieuweLeverancier}
             leverancierOptions={leverancierOptions}
+            schemas={schemas}
+            store={store}
           />
         );
       default:
