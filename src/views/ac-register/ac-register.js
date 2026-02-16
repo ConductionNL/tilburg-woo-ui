@@ -1088,7 +1088,7 @@ const ContactInformationForm = memo(
                     <Heading level={3}>Contactpersoon</Heading>
                     <Paragraph>
                       De geregistreerde contactpersoon is het eerste aanspreekpunt
-                      van de organisatie en hoofdbeheerder van de gebruikers van
+                      van de organisatie en beheerder van de gebruikers van de
                       Softwarecatalogus namens uw organisatie. Dit kan op een later
                       moment nog gewijzigd worden.
                     </Paragraph>
