@@ -392,12 +392,17 @@ const ConStandardsTable = ({
                 if (isVerplicht && existingVersie.type !== 'VERPLICHT') {
                   existingVersie.type = 'VERPLICHT';
                 }
+                // Add this referentiecomponent to the list if not already present
+                const refComps = existingVersie.referentieComponenten || [];
+                if (!refComps.includes(refCompName)) {
+                  existingVersie.referentieComponenten = [...refComps, refCompName];
+                }
               } else {
                 allVersies.push({
                   id: versieId,
                   name: versieName,
                   type: isVerplicht ? 'VERPLICHT' : 'AANBEVOLEN',
-                  referentieComponent: refCompName,
+                  referentieComponenten: [refCompName],
                   parentStandardId: standardId,
                   fetchedData: versie,
                 });
@@ -912,7 +917,14 @@ const ConStandardsTable = ({
                           wordWrap: 'break-word',
                         }}
                       >
-                        <ConUuidResolver>{versieEntry.referentieComponent}</ConUuidResolver>
+                        {(versieEntry.referentieComponenten ?? (versieEntry.referentieComponent ? [versieEntry.referentieComponent] : [])).map(
+                          (refCompName, refIdx) => (
+                            <span key={`${versieEntry.type}-${idx}-ref-${refIdx}`}>
+                              {refIdx > 0 && ', '}
+                              <ConUuidResolver>{refCompName}</ConUuidResolver>
+                            </span>
+                          )
+                        )}
                       </div>
                     </div>
                   </TableCell>
