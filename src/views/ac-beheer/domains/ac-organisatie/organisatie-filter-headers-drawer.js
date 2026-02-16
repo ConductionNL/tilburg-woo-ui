@@ -2,6 +2,7 @@ import React, {
   forwardRef,
   useState,
   useEffect,
+  useMemo,
   useImperativeHandle,
   useRef,
   // eslint-disable-next-line import/no-unresolved
@@ -17,7 +18,7 @@ import clsx from 'clsx';
  *
  * @component
  * @param {Object} props - Component props
- * @param {Array<{id: string, label?: string, key?: string}>} props.headers - Array of header objects
+ * @param {Array<{id: string, label?: string, key?: string, visible?: boolean}>} props.headers - Array of header objects (entries with visible: false are ignored)
  * @param {string[]} props.defaultHeaders - Array of header IDs that should be checked by default
  * @param {string} props.type - Type identifier for session storage key
  * @param {(selected: Array<Object>) => void} props.onChange - Callback when selection changes
@@ -38,6 +39,12 @@ const OrganisatieFilterHeadersDrawer = forwardRef(
     const drawerRef = useRef(null);
     const touchedRef = useRef(false);
     const storageKey = type ? `filter-headers-${type}` : 'filter-headers-default';
+
+    // Only show and use headers that are visible (ignore visible: false from schema)
+    const visibleHeaders = useMemo(
+      () => headers.filter((h) => h.visible !== false),
+      [headers]
+    );
 
     // Load from session storage or use defaultHeaders
     const getInitialCheckedIds = (
@@ -80,19 +87,19 @@ const OrganisatieFilterHeadersDrawer = forwardRef(
         const initialIds = getInitialCheckedIds(type, defaultHeaders, newStorageKey);
         setCheckedIds(initialIds);
 
-        if (headers.length > 0) {
-          onChange?.(headers.filter((h) => initialIds.has(h.id)));
+        if (visibleHeaders.length > 0) {
+          onChange?.(visibleHeaders.filter((h) => initialIds.has(h.id)));
         }
       }
-    }, [type, defaultHeaders, headers, onChange]);
+    }, [type, defaultHeaders, visibleHeaders, onChange]);
 
     // Notify parent component with initial checked headers from session storage
     useEffect(() => {
-      if (isInitialMount.current && headers.length > 0) {
+      if (isInitialMount.current && visibleHeaders.length > 0) {
         isInitialMount.current = false;
-        onChange?.(headers.filter((h) => checkedIds.has(h.id)));
+        onChange?.(visibleHeaders.filter((h) => checkedIds.has(h.id)));
       }
-    }, [headers]);
+    }, [visibleHeaders]);
 
     // Save to session storage whenever checkedIds changes
     useEffect(() => {
@@ -128,10 +135,11 @@ const OrganisatieFilterHeadersDrawer = forwardRef(
       () => ({
         showModal: () => drawerRef.current?.showModal(),
         close: () => drawerRef.current?.close(),
-        getCheckedHeaders: () => headers.filter((h) => checkedIds.has(h.id)),
+        getCheckedHeaders: () =>
+          visibleHeaders.filter((h) => checkedIds.has(h.id)),
         getCheckedIds: () => Array.from(checkedIds),
       }),
-      [headers, checkedIds]
+      [visibleHeaders, checkedIds]
     );
 
     const toggleHeader = (id) => {
@@ -148,7 +156,7 @@ const OrganisatieFilterHeadersDrawer = forwardRef(
       if (isInitialMount.current) {
         return;
       }
-      onChange?.(headers.filter((h) => checkedIds.has(h.id)));
+      onChange?.(visibleHeaders.filter((h) => checkedIds.has(h.id)));
     }, [Array.from(checkedIds).join(',')]);
 
     if (loading)
@@ -187,7 +195,7 @@ const OrganisatieFilterHeadersDrawer = forwardRef(
           </div>
 
           <AcColumn gap='sm'>
-            {headers.map(({ id, label, key }) => (
+            {visibleHeaders.map(({ id, label, key }) => (
               <AcCheckbox
                 key={id}
                 label={label || key}
