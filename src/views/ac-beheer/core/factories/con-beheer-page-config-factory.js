@@ -350,7 +350,7 @@ const BeheerPageConfigFactory = {
             },
             type: {
               id: 'type',
-              label: 'Type',
+              label: 'Diensttype',
               key: 'type',
               customContent: (row) => {
                 const rawType = row?.type;
