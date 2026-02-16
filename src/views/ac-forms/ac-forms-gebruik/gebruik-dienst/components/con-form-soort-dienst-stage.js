@@ -34,7 +34,7 @@ const ConFormSoortDienstStage = ({ dienstType, setDienstType }) => {
         <br />
         <i>
           Deze keuze helpt organisaties om te begrijpen hoe uw dienst is
-          gepositioneerd en maakt de Softwarecatalogus overzichtelijker.
+          gepositioneerd en maakt de softwarecatalogus overzichtelijker.
         </i>
       </Paragraph>
 

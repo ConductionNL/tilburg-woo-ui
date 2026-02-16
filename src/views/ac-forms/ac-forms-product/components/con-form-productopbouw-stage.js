@@ -38,7 +38,7 @@ const ConFormProductopbouwStage = memo(
           <br />
           <i>
             Deze keuze helpt organisaties om te begrijpen hoe uw oplossing is
-            opgebouwd en maakt de Softwarecatalogus overzichtelijker.
+            opgebouwd en maakt de softwarecatalogus overzichtelijker.
           </i>
           {isMultiApplicatie && (
             <div className='ac-wizard-form-alert' style={{ marginTop: '1rem' }}>

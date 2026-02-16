@@ -2219,7 +2219,7 @@ const AcFormsGebruik = ({ store }) => {
                     ? 'Vul het formulier in om inzicht te geven in het gebruik van uw applicaties bij klanten.'
                     : applicatieKeuze === 'bestaand'
                     ? 'Vul dit formulier in om de applicatie toe te voegen aan uw applicatielandschap'
-                    : 'Vul dit formulier in om applicaties op te voeren die nog niet bestaan in de Softwarecatalogus, maar u wel in gebruik heeft. Dit waren voorheen de “externe pakketten”'}
+                    : 'Vul dit formulier in om applicaties op te voeren die nog niet bestaan in de softwarecatalogus, maar u wel in gebruik heeft. Dit waren voorheen de “externe pakketten”'}
                 </Paragraph>
               </div>
 
@@ -2540,7 +2540,7 @@ const AcFormsGebruik = ({ store }) => {
                     : ` door ${
                         gebruik?.afnemer?.naam || 'de geselecteerde organisatie'
                       }`}{' '}
-                  is opgeslagen in de Softwarecatalogus.
+                  is opgeslagen in de softwarecatalogus.
                 </Paragraph>
                 <Paragraph style={{ fontSize: '0.9rem', color: '#666' }}>
                   Type registratie:{' '}
@@ -2557,7 +2557,7 @@ const AcFormsGebruik = ({ store }) => {
                 <ul className='utrecht-unordered-list'>
                   {gebruikType === 'eigen-organisatie' ? (
                     <>
-                      <li>Het gebruik wordt zichtbaar in de Softwarecatalogus</li>
+                      <li>Het gebruik wordt zichtbaar in de softwarecatalogus</li>
                       <li>
                         Andere organisaties kunnen zien welke applicaties u gebruikt
                       </li>
@@ -2576,7 +2576,7 @@ const AcFormsGebruik = ({ store }) => {
                         wordt
                       </li>
                       <li>
-                        Na goedkeuring wordt het gebruik zichtbaar in de Softwarecatalogus
+                        Na goedkeuring wordt het gebruik zichtbaar in de softwarecatalogus
                       </li>
                       <li>U kunt het gebruik beheren via het beheer dashboard</li>
                     </>

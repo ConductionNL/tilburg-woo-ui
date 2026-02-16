@@ -46,7 +46,7 @@ const ConFormApplicatieInformatieStage = memo(
         <Paragraph className='con-form-wizard-paragraph'>
           De opgevoerde gegevens zorgen ervoor dat gemeenten uw applicatie kunnen
           vinden, herkennen en beoordelen. Vul de velden zo volledig mogelijk in,
-          zodat uw applicatie goed zichtbaar is in de Softwarecatalogus.
+          zodat uw applicatie goed zichtbaar is in de softwarecatalogus.
           <br />
           Na het opslaan kunt u de gegevens later altijd weer aanpassen of aanvullen.
         </Paragraph>

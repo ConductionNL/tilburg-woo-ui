@@ -320,7 +320,7 @@ const ConKoppelingStageToevoegen = ({
                 transportprotocol (bijvoorbeeld API, bestand of bericht).
                 <br />
                 Bestaat de applicatie waarmee u wilt koppelen nog niet, dan kunt u de
-                leverancier vragen zich aan te melden bij de Softwarecatalogus.
+                leverancier vragen zich aan te melden bij de softwarecatalogus.
               </span>
             </div>
           </div>

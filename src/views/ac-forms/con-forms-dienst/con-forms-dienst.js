@@ -1447,8 +1447,8 @@ const ConFormsDienst = ({ store, userStore }) => {
               </Heading1>
               <Paragraph>
                 {isEditMode
-                  ? 'Werk uw dienstgegevens bij in onze Softwarecatalogus.'
-                  : 'Vul dit formulier in om een dienst voor uw en andere applicaties te registreren en vindbaar te maken in de Softwarecatalogus.'}
+                  ? 'Werk uw dienstgegevens bij in onze softwarecatalogus.'
+                  : 'Vul dit formulier in om een dienst voor uw en andere applicaties te registreren en vindbaar te maken in de softwarecatalogus.'}
               </Paragraph>
             </div>
           )}
@@ -1472,7 +1472,7 @@ const ConFormsDienst = ({ store, userStore }) => {
                 </Paragraph>
                 <Paragraph>
                   De dienst {dienst.naam || 'Onbekende dienst'} en de geselecteerde
-                  applicaties zijn opgeslagen in de Softwarecatalogus.
+                  applicaties zijn opgeslagen in de softwarecatalogus.
                 </Paragraph>
               </Alert>
               <div style={{ marginTop: '2rem' }}>
@@ -1481,7 +1481,7 @@ const ConFormsDienst = ({ store, userStore }) => {
                 </Paragraph>
                 <UnorderedList>
                   <UnorderedListItem>
-                    De dienst wordt zichtbaar in de Softwarecatalogus
+                    De dienst wordt zichtbaar in de softwarecatalogus
                   </UnorderedListItem>
                   <UnorderedListItem>
                     Organisaties kunnen de dienst bekijken en beoordelen

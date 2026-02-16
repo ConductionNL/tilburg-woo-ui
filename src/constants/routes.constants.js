@@ -123,7 +123,7 @@ const getTitle = () => {
       return 'Open Tilburg';
     case 'open-dimpact.accept.commonground.nu':
     case 'dimpact.opencatalogi.nl':
-      return 'Producten Softwarecatalogus';
+      return 'Producten softwarecatalogus';
     case 'open-rotterdam.accept.commonground.nu':
       return 'Open Rotterdam';
     case 'open-migrato.accept.commonground.nu':
@@ -135,7 +135,7 @@ const getTitle = () => {
     case 'opencatalogi.open-regels.nl':
       return 'OpenRegels';
     case 'localhost':
-      return 'Localhost Softwarecatalogus';
+      return 'Localhost softwarecatalogus';
     case 'horstadmaas.accept.opencatalogi.nl':
     case 'verwerkingsregister.horstaandemaas.nl':
       return 'Horst aan de Maas';
@@ -525,7 +525,7 @@ export const VNG_ROUTES_INFORMATIE = {
   },
   MELD_AAN_VNG_REALISATIE: {
     label: 'Meld aan VNG Realisatie',
-    href: 'mailto:softwarecatalogus@vng.nl?subject=Softwarecatalogus: Terugmelding GEMMA Softwarecatalogus&amp;body=Hierbij ontvangt u mijn op- en aanmerkingen over de pagina https://www.softwarecatalogus.nl/swchome in de GEMMA Softwarecatalogus.',
+    href: 'mailto:softwarecatalogus@vng.nl?subject=Softwarecatalogus: Terugmelding GEMMA Softwarecatalogus&amp;body=Hierbij ontvangt u mijn op- en aanmerkingen over de pagina https://www.softwarecatalogus.nl/swchome in de GEMMA softwarecatalogus.',
   },
 };
 

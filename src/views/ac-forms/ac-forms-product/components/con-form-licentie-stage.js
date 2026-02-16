@@ -162,7 +162,7 @@ const ConFormLicentieStage = memo(
             </Paragraph>
             <Paragraph>
               Alle applicaties in dit product zijn bestaande applicaties die al hun
-              eigen licentie-informatie hebben vastgelegd in de Softwarecatalogus. Er hoeven
+              eigen licentie-informatie hebben vastgelegd in de softwarecatalogus. Er hoeven
               geen licenties geconfigureerd te worden.
             </Paragraph>
           </div>
@@ -478,7 +478,7 @@ const ConFormLicentieStage = memo(
             }}
           >
             <Paragraph style={{ margin: 0, fontStyle: 'italic', color: '#6c757d' }}>
-              Alle applicaties zijn bestaande applicaties uit de Softwarecatalogus. Hun
+              Alle applicaties zijn bestaande applicaties uit de softwarecatalogus. Hun
               licentie-informatie is al vastgelegd en hoeft niet opnieuw
               geconfigureerd te worden.
             </Paragraph>

@@ -215,11 +215,11 @@ const getRuntimeConfig = () => {
 
   const baseConfig = {
     // Site Configuration
-    SITE_TITLE: getConfigValue(yamlConfig, 'SITE_TITLE', 'Development Softwarecatalogus'),
+    SITE_TITLE: getConfigValue(yamlConfig, 'SITE_TITLE', 'Development softwarecatalogus'),
     SITE_DESCRIPTION: getConfigValue(
       yamlConfig,
       'SITE_DESCRIPTION',
-      'Local development instance of the Softwarecatalogus'
+      'Local development instance of the softwarecatalogus'
     ),
     SITE: getConfigValue(yamlConfig, 'SITE', 'localhost'),
     MODE: getConfigValue(yamlConfig, 'MODE', 'development'),

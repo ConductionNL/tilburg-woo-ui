@@ -935,8 +935,8 @@ const OrganizationOptionalForm = memo(
           <Alert type='info'>
             <Paragraph>
               Optionele velden helpen ons om uw organisatie beter zichtbaar en
-              herkenbaar te maken in de Softwarecatalogus (bijvoorbeeld met een logo
-              en korte beschrijving).
+              herkenbaar te maken in de softwarecatalogus (bijvoorbeeld met een logo en korte
+              beschrijving).
             </Paragraph>
           </Alert>
         </div>

@@ -530,7 +530,7 @@ const ConFormApplicatieStage = memo(
               <strong>Voeg applicaties toe aan uw product</strong>
               <br />
               Hier definieert u welke applicaties en modules onderdeel zijn van uw
-              product. U kunt kiezen tussen bestaande applicaties uit de Softwarecatalogus of
+              product. U kunt kiezen tussen bestaande applicaties uit de softwarecatalogus of
               nieuwe applicaties aanmaken. Bestaande applicaties hebben al hun
               configuratie vastgelegd, terwijl voor nieuwe applicaties in de volgende
               stappen licenties, versies, standaarden en koppelingen moeten worden
@@ -622,7 +622,7 @@ const ConFormApplicatieStage = memo(
                     <Paragraph
                       style={{ margin: '0', fontSize: '0.875rem', color: '#666' }}
                     >
-                      Koppel een reeds bestaande applicatie uit de Softwarecatalogus. Alle
+                      Koppel een reeds bestaande applicatie uit de softwarecatalogus. Alle
                       instellingen, licenties en compliance-informatie zijn al
                       vastgelegd.
                     </Paragraph>

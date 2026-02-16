@@ -2495,11 +2495,11 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
   const getPageDescription = (formType) => {
     switch (formType) {
       case 'eigen':
-        return 'Vul dit formulier in om een door u aangeboden applicatie toe te voegen aan de Softwarecatalogus.';
+        return 'Vul dit formulier in om een door u aangeboden applicatie toe te voegen aan de softwarecatalogus.';
       case 'ontbrekend-applicatie':
-        return 'Meld een applicatie die nog niet in de Softwarecatalogus staat en registreer deze.';
+        return 'Meld een applicatie die nog niet in de softwarecatalogus staat en registreer deze.';
       default:
-        return 'Registreer een nieuwe applicatie in de Softwarecatalogus.';
+        return 'Registreer een nieuwe applicatie in de softwarecatalogus.';
     }
   };
 
@@ -2526,7 +2526,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
                 </Heading1>
                 <Paragraph>
                   {isEditMode
-                    ? 'Werk uw applicatiegegevens bij in onze Softwarecatalogus.'
+                    ? 'Werk uw applicatiegegevens bij in onze softwarecatalogus.'
                     : getPageDescription(formType)}
                 </Paragraph>
               </div>
@@ -2872,7 +2872,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
                 </Paragraph>
                 <Paragraph>
                   De applicatie {applicatie.naam || 'Onbekende applicatie'} is
-                  opgeslagen in de Softwarecatalogus.
+                  opgeslagen in de softwarecatalogus.
                 </Paragraph>
               </Alert>
 
@@ -2882,7 +2882,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
                 </Paragraph>
                 <UnorderedList>
                   <UnorderedListItem>
-                    De applicatie wordt zichtbaar in de Softwarecatalogus
+                    De applicatie wordt zichtbaar in de softwarecatalogus
                   </UnorderedListItem>
                   <UnorderedListItem>
                     Organisaties kunnen de applicatie bekijken en beoordelen

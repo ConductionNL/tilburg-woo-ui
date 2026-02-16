@@ -644,22 +644,22 @@ const AcFormsProductInner = ({
         license: {
           title: 'Bestaande applicaties uitgesloten',
           description:
-            'Voor bestaande applicaties kunnen geen licenties worden toegevoegd of aangepast, omdat deze al hun eigen licentie-informatie hebben vastgelegd in de Softwarecatalogus.',
+            'Voor bestaande applicaties kunnen geen licenties worden toegevoegd of aangepast, omdat deze al hun eigen licentie-informatie hebben vastgelegd in de softwarecatalogus.',
         },
         referentiecomponenten: {
           title: 'Bestaande applicaties uitgesloten',
           description:
-            'Voor bestaande applicaties kunnen geen referentiecomponenten worden toegevoegd of aangepast, omdat deze al hun eigen referentiecomponenten hebben vastgelegd in de Softwarecatalogus.',
+            'Voor bestaande applicaties kunnen geen referentiecomponenten worden toegevoegd of aangepast, omdat deze al hun eigen referentiecomponenten hebben vastgelegd in de softwarecatalogus.',
         },
         standaarden: {
           title: 'Bestaande applicaties uitgesloten',
           description:
-            'Voor bestaande applicaties kunnen geen standaarden worden toegevoegd of aangepast, omdat deze al hun eigen standaarden hebben vastgelegd in de Softwarecatalogus.',
+            'Voor bestaande applicaties kunnen geen standaarden worden toegevoegd of aangepast, omdat deze al hun eigen standaarden hebben vastgelegd in de softwarecatalogus.',
         },
         moduleVersies: {
           title: 'Bestaande applicaties uitgesloten',
           description:
-            'Voor bestaande applicaties kunnen geen versies worden toegevoegd of aangepast, omdat deze al hun eigen versie-informatie hebben vastgelegd in de Softwarecatalogus.',
+            'Voor bestaande applicaties kunnen geen versies worden toegevoegd of aangepast, omdat deze al hun eigen versie-informatie hebben vastgelegd in de softwarecatalogus.',
         },
       };
 
@@ -1873,7 +1873,7 @@ const AcFormsProductInner = ({
                 </Heading1>
                 <Paragraph>
                   {isEditMode
-                    ? 'Werk uw productgegevens bij in onze Softwarecatalogus.'
+                    ? 'Werk uw productgegevens bij in onze softwarecatalogus.'
                     : utilGetPageDescription(formType)}
                 </Paragraph>
               </div>
@@ -2226,7 +2226,7 @@ const AcFormsProductInner = ({
                 <Paragraph>
                   Het product {product.naam || 'Onbekend product'} en alle
                   bijbehorende modules, standaarden, koppelingen en diensten zijn
-                  opgeslagen in de Softwarecatalogus.
+                  opgeslagen in de softwarecatalogus.
                 </Paragraph>
               </Alert>
 
@@ -2236,7 +2236,7 @@ const AcFormsProductInner = ({
                 </Paragraph>
                 <UnorderedList>
                   <UnorderedListItem>
-                    Het product wordt zichtbaar in de Softwarecatalogus
+                    Het product wordt zichtbaar in de softwarecatalogus
                   </UnorderedListItem>
                   <UnorderedListItem>
                     Organisaties kunnen het product bekijken en beoordelen

@@ -463,7 +463,7 @@ const ConDienstDetailsPageContent = ({
 //       <Heading level={4}>{title} is nog niet gepubliceerd</Heading>
 //       <Paragraph>
 //         {objectName} is momenteel niet zichtbaar in de zoekfunctie van{' '}
-//         {schemaName || 'de Softwarecatalogus'}. Gebruik de &quot;Publiceren&quot; actie om
+//         {schemaName || 'de softwarecatalogus'}. Gebruik de &quot;Publiceren&quot; actie om
 //         deze gegevens beschikbaar te maken voor bezoekers.
 //       </Paragraph>
 //     </div>

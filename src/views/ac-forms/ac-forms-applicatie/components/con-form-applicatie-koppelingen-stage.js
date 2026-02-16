@@ -363,7 +363,7 @@ const ConFormApplicatieKoppelingenStage = memo(
                   <br />
                   Als de applicatie waarmee uw wilt koppelen nog niet bestaat, dan
                   kunt u de leverancier vragen zich ook aan te melden bij de
-                  Softwarecatalogus.
+                  softwarecatalogus.
                 </span>
               </div>
             </div>
