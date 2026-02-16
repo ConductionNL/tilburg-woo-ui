@@ -1342,6 +1342,7 @@ const ConFormsDienst = ({ store }) => {
               leverancierKeuze={leverancierKeuze}
               leverancierOrganisatie={leverancierOrganisatie}
               ownApp={selectedApplicatie}
+              schemas={schemas}
             />
           );
         default:
@@ -1387,6 +1388,7 @@ const ConFormsDienst = ({ store }) => {
             userStore={store.user}
             dienstType={dienstType}
             formType={formType}
+            schemas={schemas}
           />
         );
       default:
