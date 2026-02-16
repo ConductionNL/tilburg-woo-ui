@@ -15,6 +15,7 @@ export const LogoUploadField = ({
   _value,
   value, // Support both value (from ConDynamicSchemaForm) and _value (legacy)
   onChange,
+  onFileChange, // Callback to expose the raw File object for multipart uploads
   onChangeFileName,
   onClear,
   validation,
@@ -50,6 +51,7 @@ export const LogoUploadField = ({
     const files = e?.target?.files;
     if (!files || !files.length) {
       onChange('');
+      if (onFileChange) onFileChange(null);
       setSelectedFileName('');
       if (onChangeFileName) onChangeFileName('');
       setErrorMessage('');
@@ -89,6 +91,7 @@ export const LogoUploadField = ({
     if (!isAllowed) {
       if (inputRef.current) inputRef.current.value = null;
       onChange('');
+      if (onFileChange) onFileChange(null);
       setSelectedFileName('');
       if (onChangeFileName) onChangeFileName('');
       setErrorMessage(
@@ -105,6 +108,7 @@ export const LogoUploadField = ({
     if (limitBytes > 0 && fileSizeBytes > limitBytes) {
       if (inputRef.current) inputRef.current.value = null;
       onChange('');
+      if (onFileChange) onFileChange(null);
       setSelectedFileName('');
       if (onChangeFileName) onChangeFileName('');
       setErrorMessage(
@@ -116,6 +120,8 @@ export const LogoUploadField = ({
     setErrorMessage('');
     setSelectedFileName(file.name);
     if (onChangeFileName) onChangeFileName(file.name);
+    // Expose raw File object for multipart form uploads.
+    if (onFileChange) onFileChange(file);
     const reader = new FileReader();
     reader.onload = () => {
       onChange(reader.result);
@@ -123,6 +129,7 @@ export const LogoUploadField = ({
     reader.onerror = () => {
       // TODO: show user-friendly error state if needed
       onChange('');
+      if (onFileChange) onFileChange(null);
       setSelectedFileName('');
       if (onChangeFileName) onChangeFileName('');
     };
@@ -379,6 +386,7 @@ export const LogoUploadField = ({
               onClick={() => {
                 if (inputRef.current) inputRef.current.value = null;
                 onChange(null); // Send null to backend when deleting
+                if (onFileChange) onFileChange(null);
                 setSelectedFileName('');
                 if (onChangeFileName) onChangeFileName('');
                 if (onClear) onClear();
