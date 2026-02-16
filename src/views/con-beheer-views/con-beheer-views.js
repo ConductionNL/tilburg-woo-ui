@@ -189,13 +189,20 @@ const ConBeheerViews = ({ store }) => {
         let prevLength = -1;
         while (remaining.length > 0 && remaining.length !== prevLength) {
           prevLength = remaining.length;
-          for (let i = remaining.length - 1; i >= 0; i--) {
+          // Forward iteration preserves original source order among siblings,
+          // which is critical for correct SVG z-ordering (background rects
+          // must render before the text labels they sit behind).
+          const toRemove = [];
+          for (let i = 0; i < remaining.length; i++) {
             const n = remaining[i];
             if (!n.parent || placed.has(n.parent)) {
               sorted.push(n);
               placed.add(n.viewNodeId);
-              remaining.splice(i, 1);
+              toRemove.push(i);
             }
+          }
+          for (let j = toRemove.length - 1; j >= 0; j--) {
+            remaining.splice(toRemove[j], 1);
           }
         }
         // Append any remaining nodes (e.g. orphans with missing parents)
