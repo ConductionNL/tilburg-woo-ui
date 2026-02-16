@@ -337,7 +337,10 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
       // Only enhance if we have a generic config (no predefined defaultHeaders)
       if (baseConfig.defaultHeaders && baseConfig.defaultHeaders.length === 0) {
         const schemaPropertyKeys = Object.entries(dataProperties)
-          .filter(([, value]) => value.hideOnCollection !== true)
+          .filter(
+            ([, value]) =>
+              value.visible !== false && value.hideOnCollection !== true
+          )
           .map(([key]) => key);
 
         // Use schema title if available, otherwise capitalize the type without "Beheer" prefix
@@ -663,7 +666,10 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
       .map(([key, value]) => {
         // Check if we have a custom override for this header
         if (config.customHeaders[key]) {
-          return config.customHeaders[key];
+          return {
+            ...config.customHeaders[key],
+            visible: value.visible,
+          };
         }
 
         // Generate standard header from schema
@@ -675,6 +681,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
           id: key,
           label: label,
           key: key,
+          visible: value.visible,
         };
       });
 

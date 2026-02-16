@@ -1,7 +1,11 @@
 // eslint-disable-next-line import/no-unresolved
 import React, { useMemo, useRef, useState } from 'react';
+import clsx from 'clsx';
 import { AcFlex } from '@src/atoms';
 import { AcButton } from '@src/molecules';
+import { Heading } from '@utrecht/component-library-react/dist/css-module';
+import { VISUALS } from '@src/constants';
+import { TOOLTIP_ID } from '@src/index.web';
 
 /**
  * Custom Logo Upload Component for form fields
@@ -218,17 +222,41 @@ export const LogoUploadField = ({
   return (
     <AcFlex column>
       <label className='utrecht-form-label' htmlFor={fileInputId}>
-        <h4 className='utrecht-heading-4'>
-          {fieldConfig.label}
-          {validation.required && (
+        <Heading
+          level={4}
+          className={clsx({
+            'ac-form-field-header-info': fieldConfig.description,
+          })}
+          style={fieldConfig.labelStyle}
+        >
+          <div>
+            {fieldConfig.label}
+            {validation.required && (
+              <>
+                <span className='required-indicator' aria-hidden='true'>
+                  *
+                </span>
+                <span className='sr-only'>(verplicht)</span>
+              </>
+            )}
+          </div>
+          {fieldConfig.description && (
             <>
-              <span className='required-indicator' aria-hidden='true'>
-                *
+              <span
+                data-tooltip-id={TOOLTIP_ID}
+                data-tooltip-content={fieldConfig.description}
+                className='info-indicator'
+                role='img'
+                aria-label={fieldConfig.description}
+              >
+                <VISUALS.INFO
+                  width={fieldConfig.labelStyle?.fontSize || undefined}
+                  height={fieldConfig.labelStyle?.fontSize || undefined}
+                />
               </span>
-              <span className='sr-only'>(verplicht)</span>
             </>
           )}
-        </h4>
+        </Heading>
       </label>
 
       {componentSize === 'small' ? (

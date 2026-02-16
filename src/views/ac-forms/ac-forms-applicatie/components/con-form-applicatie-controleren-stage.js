@@ -1,6 +1,6 @@
 import React, { memo, useState, useEffect, useMemo } from 'react';
 import { AcLink } from '@src/molecules';
-import { ConUuidResolver } from '@components';
+import { ConUuidResolver, ConStandardsTable } from '@components';
 import ConLogoPreview from '@views/ac-register/con-logo-preview';
 import {
   UnorderedList,
@@ -19,7 +19,6 @@ import remarkSupersub from 'remark-supersub';
 import { remarkMark } from 'remark-mark-highlight';
 import rehypeSlug from 'rehype-slug';
 
-import { handleFileClick } from '@utils';
 import rehypeSanitize from 'rehype-sanitize';
 
 /**
@@ -40,9 +39,7 @@ import rehypeSanitize from 'rehype-sanitize';
 const ConFormApplicatieControlerenStage = memo(
   ({
     applicatie,
-    referentieComponentenOptions,
     referentieComponentenWithStandards,
-    standaardenOptions,
     modulesOptions,
     buitengemeentelijkeOptions,
     dienstOptions,
@@ -140,56 +137,6 @@ const ConFormApplicatieControlerenStage = memo(
 
       return null;
     };
-    // Helper function to get standard name from ID
-    const getStandardNameFromId = (standardId) => {
-      if (!standardId) return standardId;
-
-      // First try to find in standaardenOptions
-      if (standaardenOptions && Array.isArray(standaardenOptions)) {
-        const foundOption = standaardenOptions.find(
-          (opt) =>
-            String(opt.value) === String(standardId) ||
-            String(opt.data?.id) === String(standardId)
-        );
-        if (foundOption) {
-          return (
-            foundOption.label ||
-            foundOption.data?.naam ||
-            foundOption.data?.name ||
-            standardId
-          );
-        }
-      }
-
-      // Fallback: search through referentieComponentenWithStandards
-      if (
-        referentieComponentenWithStandards &&
-        Array.isArray(referentieComponentenWithStandards)
-      ) {
-        for (const refComp of referentieComponentenWithStandards) {
-          // Check verplichte standards
-          if (Array.isArray(refComp.verplichteStandaarden)) {
-            const found = refComp.verplichteStandaarden.find(
-              (standard) =>
-                standard.id === standardId || `id-${standard.id}` === standardId
-            );
-            if (found) return found.naam || found.title || standardId;
-          }
-
-          // Check aanbevolen standards
-          if (Array.isArray(refComp.aanbevolenStandaarden)) {
-            const found = refComp.aanbevolenStandaarden.find(
-              (standard) =>
-                standard.id === standardId || `id-${standard.id}` === standardId
-            );
-            if (found) return found.naam || found.title || standardId;
-          }
-        }
-      }
-
-      return standardId; // Fallback to ID if name not found
-    };
-
     // Helper function to resolve moduleB ID to display name
     const getModuleBDisplayName = (moduleBId) => {
       if (!moduleBId) return moduleBId;
@@ -265,42 +212,6 @@ const ConFormApplicatieControlerenStage = memo(
 
       // Default to local for ambiguous cases
       return false;
-    };
-
-    // Helper function to create middle ellipsis for long filenames
-    const createMiddleEllipsis = (filename, maxLength = 25) => {
-      if (!filename) return 'bewijs';
-
-      // If filename is short enough, return as is
-      if (filename.length <= maxLength) {
-        return filename;
-      }
-
-      // Find the extension
-      const lastDotIndex = filename.lastIndexOf('.');
-      if (lastDotIndex === -1) {
-        // No extension, truncate from end
-        return filename.substring(0, maxLength - 3) + '...';
-      }
-
-      const name = filename.substring(0, lastDotIndex);
-      const extension = filename.substring(lastDotIndex);
-
-      // Calculate how much space we have for the name part
-      const availableLength = maxLength - extension.length - 3; // 3 for "..."
-
-      if (availableLength <= 0) {
-        return '...' + extension;
-      }
-
-      // Split the available space between start and end of filename
-      const startLength = Math.ceil(availableLength / 2);
-      const endLength = Math.floor(availableLength / 2);
-
-      const startPart = name.substring(0, startLength);
-      const endPart = name.substring(name.length - endLength);
-
-      return startPart + '...' + endPart + extension;
     };
 
     // Helper function to get schema label for a field
@@ -515,108 +426,38 @@ const ConFormApplicatieControlerenStage = memo(
                 </div>
               )}
 
-            {/* Referentiecomponenten */}
-            {Array.isArray(applicatie.referentieComponenten) &&
-              applicatie.referentieComponenten.length > 0 && (
-                <div className='ac-register-review__field'>
-                  <strong>
-                    {getSchemaLabel(
-                      'module',
-                      'referentieComponenten',
-                      'Referentiecomponenten'
-                    )}
-                    :
-                  </strong>
-                  <div>
-                    <UnorderedList>
-                      {applicatie.referentieComponenten.map((rc, i) => {
-                        // Accept old shape {id, naam} or new string values
-                        const value = typeof rc === 'string' ? rc : rc?.naam;
-                        const opt = referentieComponentenOptions?.find(
-                          (o) => String(o.value) === String(value)
-                        );
-                        const label = opt ? opt.label : value;
-                        return (
-                          <UnorderedListItem key={value || i}>
-                            {label}
-                          </UnorderedListItem>
-                        );
-                      })}
-                    </UnorderedList>
-                  </div>
+            {/* Standaarden: table under custom label (same table as publication/beheer) */}
+            {(Array.isArray(applicatie.referentieComponenten) &&
+              applicatie.referentieComponenten.length > 0) ||
+            (Array.isArray(applicatie.compliancy) &&
+              applicatie.compliancy.length > 0) ||
+            (Array.isArray(applicatie.standaardVersies) &&
+              applicatie.standaardVersies.length > 0) ? (
+              <div className='ac-register-review__field ac-register-review__field--full-width'>
+                <strong>Standaarden:</strong>
+                <div style={{ marginTop: '0.5rem', width: '100%' }}>
+                  <ConStandardsTable
+                    containerStyle={{ width: '100%' }}
+                    referentieComponenten={
+                      applicatie.referentieComponenten || []
+                    }
+                    complianceStandards={applicatie.compliancy || []}
+                    compliantVersieIds={
+                      applicatie.standaardVersies ||
+                      applicatie.standaardversies ||
+                      []
+                    }
+                    referentieComponentenWithStandards={
+                      referentieComponentenWithStandards?.length > 0
+                        ? referentieComponentenWithStandards
+                        : undefined
+                    }
+                    isEditing={false}
+                    noStandardsMessage='Geen standaardversies gevonden voor de gekoppelde referentiecomponenten.'
+                  />
                 </div>
-              )}
-
-            {/* Ondersteunde Standaarden (Compliancy) */}
-            {Array.isArray(applicatie.compliancy) &&
-              applicatie.compliancy.length > 0 && (
-                <div className='ac-register-review__field'>
-                  <strong>
-                    {getSchemaLabel(
-                      'module',
-                      'compliancy',
-                      'Ondersteunde standaarden'
-                    )}
-                    :
-                  </strong>
-                  <div>
-                    <UnorderedList>
-                      {applicatie.compliancy.map((comp, i) => {
-                        const displayName =
-                          comp.standaardnaam ||
-                          getStandardNameFromId(comp.standaardversie);
-
-                        return (
-                          <UnorderedListItem key={comp.standaardversie || i}>
-                            <span
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '0.25rem',
-                              }}
-                            >
-                              <span>{displayName}</span>
-                              {comp.bewijs ? (
-                                <>
-                                  <span>- bewijs:</span>
-                                  <AcLink
-                                    href='#'
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      handleFileClick(comp.bewijs);
-                                    }}
-                                    title={comp.bewijsFilename || 'bewijs'}
-                                  >
-                                    {createMiddleEllipsis(comp.bewijsFilename)}
-                                  </AcLink>
-                                </>
-                              ) : comp.url ? (
-                                <>
-                                  <span>- bewijs:</span>
-                                  {isExternalUrl(comp.url) ? (
-                                    <a
-                                      href={normalizeUrl(comp.url)}
-                                      target='_blank'
-                                      rel='noopener noreferrer'
-                                      className='utrecht-link utrecht-link--html-a'
-                                    >
-                                      {comp.url}
-                                    </a>
-                                  ) : (
-                                    <AcLink href={comp.url}>{comp.url}</AcLink>
-                                  )}
-                                </>
-                              ) : (
-                                <span style={{ color: '#666' }}>(geen bewijs)</span>
-                              )}
-                            </span>
-                          </UnorderedListItem>
-                        );
-                      })}
-                    </UnorderedList>
-                  </div>
-                </div>
-              )}
+              </div>
+            ) : null}
 
             {/* Koppelingen */}
             {Array.isArray(applicatie.koppelingen) &&

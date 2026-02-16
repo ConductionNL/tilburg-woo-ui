@@ -38,7 +38,22 @@ const ConFormControlerenStage = memo(
     nieuweDienst,
     leverancierKeuze,
     leverancierOrganisatie,
+    // Schemas for field labels
+    schemas = {},
   }) => {
+    // Helper function to get schema label for a field
+    const getSchemaLabel = (schemaType, propertyName, fallback) => {
+      if (!schemas || !schemaType || !propertyName) return fallback;
+
+      const schema = schemas[schemaType];
+      if (!schema || !schema.properties) return fallback;
+
+      const propertySchema = schema.properties[propertyName];
+      if (!propertySchema) return fallback;
+
+      return propertySchema.title || fallback;
+    };
+
     // Helper to get module information with additional details
     const getModulesWithDetails = () => {
       return (selectedModuleIds || []).map((id) => {
@@ -215,7 +230,7 @@ const ConFormControlerenStage = memo(
                 <div className='ac-register-review'>
                   <div className='ac-register-review__section'>
                     <div className='ac-register-review__field'>
-                      <strong>Naam:</strong>{' '}
+                      <strong>{getSchemaLabel('organisatie', 'naam', 'Naam')}:</strong>{' '}
                       <span>{leverancierDisplayName || '-'}</span>
                     </div>
                     {leverancierWebsite && (
@@ -223,7 +238,7 @@ const ConFormControlerenStage = memo(
                         className='ac-register-review__field'
                         style={{ display: 'flex', gap: '4px' }}
                       >
-                        <strong>Website:</strong>
+                        <strong>{getSchemaLabel('organisatie', 'website', 'Website')}:</strong>
                         <ConExternalLink href={leverancierWebsite} />
                       </div>
                     )}
@@ -241,7 +256,7 @@ const ConFormControlerenStage = memo(
               <div className='ac-register-review'>
                 <div className='ac-register-review__section'>
                   <div className='ac-register-review__field'>
-                    <strong>Aanbieder:</strong>
+                    <strong>{getSchemaLabel('dienst', 'aanbieder', 'Aanbieder')}:</strong>
                     <div>
                       {isNewLeverancier ? (
                         leverancierDisplayName || '-'
@@ -253,11 +268,11 @@ const ConFormControlerenStage = memo(
                     </div>
                   </div>
                   <div className='ac-register-review__field'>
-                    <strong>Naam:</strong> <span>{nieuweDienst?.naam || '-'}</span>
+                    <strong>{getSchemaLabel('dienst', 'naam', 'Naam')}:</strong> <span>{nieuweDienst?.naam || '-'}</span>
                   </div>
                   {nieuweDienst?.type && (
                     <div className='ac-register-review__field'>
-                      <strong>Type:</strong> <span>{nieuweDienst.type}</span>
+                      <strong>{getSchemaLabel('dienst', 'type', 'Type')}:</strong> <span>{nieuweDienst.type}</span>
                     </div>
                   )}
                   {nieuweDienst?.website && (
@@ -265,7 +280,7 @@ const ConFormControlerenStage = memo(
                       className='ac-register-review__field'
                       style={{ display: 'flex', gap: '4px' }}
                     >
-                      <strong>Website:</strong>
+                      <strong>{getSchemaLabel('dienst', 'website', 'Website')}:</strong>
                       <ConExternalLink href={nieuweDienst.website} />
                     </div>
                   )}
@@ -360,8 +375,8 @@ const ConFormControlerenStage = memo(
               Gebruiksinformatie
             </h3>
             <div className='ac-register-review__section'>
-              <div className='ac-register-review__field'>
-                <strong>Status:</strong>{' '}
+            <div className='ac-register-review__field'>
+              <strong>{getSchemaLabel('gebruik', 'status', 'Status')}:</strong>{' '}
                 {gebruik?.status ? (
                   <span>
                     <ConUuidResolver>{gebruik.status}</ConUuidResolver>
@@ -372,7 +387,7 @@ const ConFormControlerenStage = memo(
               </div>
               {gebruik?.interneAantekening && (
                 <div className='ac-register-review__field'>
-                  <strong>Interne aantekening:</strong>
+                  <strong>{getSchemaLabel('gebruik', 'interneAantekening', 'Interne aantekening')}:</strong>
                   <div
                     style={{
                       wordBreak: 'break-word',
@@ -449,7 +464,7 @@ const ConFormControlerenStage = memo(
 
             {dienst.beschrijvingKort && (
               <div className='ac-register-review__field'>
-                <strong>Korte beschrijving:</strong>
+                <strong>{getSchemaLabel('dienst', 'beschrijvingKort', 'Korte beschrijving')}:</strong>
                 <div
                   style={{
                     wordBreak: 'break-word',
@@ -466,7 +481,7 @@ const ConFormControlerenStage = memo(
             {dienst.beschrijvingLang && (
               <div className='ac-register-review__description'>
                 <strong className='ac-register-review__description__heading'>
-                  Lange beschrijving:
+                  {getSchemaLabel('dienst', 'beschrijvingLang', 'Lange beschrijving')}:
                 </strong>
                 <div
                   style={{
@@ -499,11 +514,11 @@ const ConFormControlerenStage = memo(
             )}
 
             <div className='ac-register-review__field'>
-              <strong>Website:</strong> <ConExternalLink href={dienst.website} />
+              <strong>{getSchemaLabel('dienst', 'website', 'Website')}:</strong> <ConExternalLink href={dienst.website} />
             </div>
 
             <div className='ac-register-review__field'>
-              <strong>Type:</strong>{' '}
+              <strong>{getSchemaLabel('dienst', 'type', 'Type')}:</strong>{' '}
               <span>
                 {Array.isArray(dienst.type) && dienst.type.length > 0 ? (
                   <span>
@@ -525,7 +540,7 @@ const ConFormControlerenStage = memo(
 
             {dienst.contactpersoon && (
               <div className='ac-register-review__field'>
-                <strong>Contactpersoon:</strong>{' '}
+                <strong>{getSchemaLabel('dienst', 'contactpersoon', 'Contactpersoon')}:</strong>{' '}
                 <span>
                   {typeof dienst.contactpersoon === 'object' ? (
                     // Handle contactpersoon as object with name properties
@@ -623,7 +638,7 @@ const ConFormControlerenStage = memo(
             <div className='ac-register-review__section'>
               {aanbiederKeuze === 'bestaand' && dienst.aanbieder ? (
                 <div className='ac-register-review__field'>
-                  <strong>Aanbieder:</strong>{' '}
+                  <strong>{getSchemaLabel('dienst', 'aanbieder', 'Aanbieder')}:</strong>{' '}
                   <span>
                     <ConUuidResolver>{dienst.aanbieder}</ConUuidResolver>
                   </span>
@@ -632,12 +647,12 @@ const ConFormControlerenStage = memo(
                 <>
                   {aanbiederOrganisatie.naam && (
                     <div className='ac-register-review__field'>
-                      <strong>Naam:</strong> <span>{aanbiederOrganisatie.naam}</span>
+                      <strong>{getSchemaLabel('organisatie', 'naam', 'Naam')}:</strong> <span>{aanbiederOrganisatie.naam}</span>
                     </div>
                   )}
                   {aanbiederOrganisatie.type && (
                     <div className='ac-register-review__field'>
-                      <strong>Type:</strong>{' '}
+                      <strong>{getSchemaLabel('organisatie', 'type', 'Type')}:</strong>{' '}
                       <span>
                         <ConUuidResolver>
                           {aanbiederOrganisatie.type}
@@ -650,13 +665,13 @@ const ConFormControlerenStage = memo(
                       className='ac-register-review__field'
                       style={{ display: 'flex', gap: '4px' }}
                     >
-                      <strong>Website:</strong>
+                      <strong>{getSchemaLabel('organisatie', 'website', 'Website')}:</strong>
                       <ConExternalLink href={aanbiederOrganisatie.website} />
                     </div>
                   )}
                   {aanbiederOrganisatie.beschrijvingKort && (
                     <div className='ac-register-review__field'>
-                      <strong>Korte beschrijving:</strong>
+                      <strong>{getSchemaLabel('organisatie', 'beschrijvingKort', 'Korte beschrijving')}:</strong>
                       <div
                         style={{
                           wordBreak: 'break-word',
@@ -672,7 +687,7 @@ const ConFormControlerenStage = memo(
                   {aanbiederOrganisatie.beschrijvingLang && (
                     <div className='ac-register-review__description'>
                       <strong className='ac-register-review__description__heading'>
-                        Lange beschrijving:
+                        {getSchemaLabel('organisatie', 'beschrijvingLang', 'Lange beschrijving')}:
                       </strong>
                       <div
                         style={{
@@ -705,19 +720,19 @@ const ConFormControlerenStage = memo(
                   )}
                   {aanbiederOrganisatie['e-mailadres'] && (
                     <div className='ac-register-review__field'>
-                      <strong>E-mailadres:</strong>{' '}
+                      <strong>{getSchemaLabel('organisatie', 'e-mailadres', 'E-mailadres')}:</strong>{' '}
                       <span>{aanbiederOrganisatie['e-mailadres']}</span>
                     </div>
                   )}
                   {aanbiederOrganisatie.telefoonnummer && (
                     <div className='ac-register-review__field'>
-                      <strong>Telefoonnummer:</strong>{' '}
+                      <strong>{getSchemaLabel('organisatie', 'telefoonnummer', 'Telefoonnummer')}:</strong>{' '}
                       <span>{aanbiederOrganisatie.telefoonnummer}</span>
                     </div>
                   )}
                   {aanbiederOrganisatie.logo && (
                     <div className='ac-register-review__field'>
-                      <strong>Logo:</strong>
+                      <strong>{getSchemaLabel('organisatie', 'logo', 'Logo')}:</strong>
                       <ConLogoPreview
                         logoUrl={aanbiederOrganisatie.logo}
                         className='ac-register-review__logo'

@@ -897,6 +897,8 @@ const ConFormsDienst = ({ store, userStore }) => {
             leverancierOptions={leverancierOptions}
             leverancierLoading={leverancierLoading}
             searchLeveranciers={searchLeveranciers}
+            isEditMode={isEditMode}
+            editingDienstId={dienstId}
           />
         );
       case 'aanbieder':
@@ -944,6 +946,8 @@ const ConFormsDienst = ({ store, userStore }) => {
             leverancierKeuze={leverancierKeuze}
             nieuweLeverancier={nieuweLeverancier}
             leverancierOptions={leverancierOptions}
+            schemas={schemas}
+            store={store}
           />
         );
       default:

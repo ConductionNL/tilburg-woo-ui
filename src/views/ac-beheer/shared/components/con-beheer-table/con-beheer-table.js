@@ -132,10 +132,9 @@ const BeheerTable = forwardRef(({ store, ...props }, ref) => {
     const params = {
       _limit: pagination?.limit || 9999,
       _page: pagination?.page || 1,
-      _multi: true, // Enable multitenancy  
+      _multi: true, // Enable multitenancy
       ...searchParams,
     };
-
 
     try {
       await objectStore.fetchCollection(
