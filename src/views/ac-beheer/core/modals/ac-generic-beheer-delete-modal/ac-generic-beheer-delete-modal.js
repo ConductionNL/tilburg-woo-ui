@@ -1,4 +1,3 @@
-// eslint-disable-next-line import/no-unresolved
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
@@ -9,11 +8,15 @@ import { AcFlex } from '@atoms';
 import { Paragraph, Alert } from '@utrecht/component-library-react/dist/css-module';
 
 /**
- * Generic modal to delete 1 or multiple objects
+ * Generic modal to delete 1 or multiple objects.
+ * For applicatie (module), dienst and koppeling, shows custom copy that refers to
+ * "gemeenten of samenwerkingen" / "onderstaande gemeenten en/of samenwerkingen" instead of generic "andere objecten".
+ * Entity type is determined by the beheerType prop (from the beheer page), since schema.title from the API may be the object name, not the type.
  * @param {object[]} objects - array of objects with @self metadata
  * @param {boolean} showModal - boolean to check if the modal is shown
  * @param {function} onClose - function to call when the modal is closed
  * @param {function} onSuccess - function to call when deletion is successful
+ * @param {string} [beheerType] - beheer page type (e.g. 'applicaties', 'diensten', 'koppelingen') to show custom copy
  * @returns {React.JSX.Element} - generic delete modal
  */
 const ConGenericBeheerDeleteModal = ({
@@ -21,6 +24,7 @@ const ConGenericBeheerDeleteModal = ({
   showModal = false,
   onClose,
   onSuccess,
+  beheerType,
   store: { object },
 }) => {
   const modalRef = useRef(null);
@@ -42,7 +46,40 @@ const ConGenericBeheerDeleteModal = ({
     return {
       name: metadata.name,
       schemaTitle: metadata.schema?.title,
+      schema: metadata.schema,
     };
+  };
+
+  /**
+   * Returns entity type labels from the beheer page type so custom copy can be shown (schema from API may contain object name, not type).
+   * @param {string} [type] - beheer page type from modal props
+   * @returns {{ singular: string, plural: string } | null}
+   */
+  const getEntityTypeLabelFromBeheerType = (type) => {
+    if (!type) return null;
+    const t = String(type).toLowerCase();
+    if (t === 'applicaties')
+      return { singular: 'applicatie', plural: 'applicaties' };
+    if (t === 'diensten') return { singular: 'dienst', plural: 'diensten' };
+    if (t === 'koppeling' || t === 'koppelingen')
+      return { singular: 'koppeling', plural: 'koppelingen' };
+    return null;
+  };
+
+  /**
+   * Formats object names for the delete message: singular returns "name", plural returns "A", "B" en "C".
+   * @param {object[]} objs - objects with @self or naam/name/id
+   * @param {boolean} isSingular
+   * @returns {string}
+   */
+  const formatNamesForMessage = (objs, isSingular) => {
+    const getName = (obj) =>
+      obj['@self']?.name ?? obj.naam ?? obj.name ?? obj.id ?? '';
+    const names = objs.map((o) => String(getName(o)).trim() || 'Onbekend');
+    if (isSingular) return `"${names[0]}"`;
+    if (names.length === 2) return `"${names[0]}" en "${names[1]}"`;
+    const quoted = names.map((n) => `"${n}"`);
+    return quoted.slice(0, -1).join(', ') + ' en ' + quoted[quoted.length - 1];
   };
 
   const displayMetadata = getDisplayMetadata();
@@ -229,6 +266,9 @@ const ConGenericBeheerDeleteModal = ({
   );
   const displayNameLower = displayName.toLowerCase();
 
+  const entityTypeLabel = getEntityTypeLabelFromBeheerType(beheerType);
+  const formattedNames = formatNamesForMessage(objects, isSingular);
+
   // Helper functions for usage data
   const hasUsageData = usageData && usageData.length > 0;
   const hasUsedObjects =
@@ -300,9 +340,15 @@ const ConGenericBeheerDeleteModal = ({
         {usageCheckComplete && !usageError && !hasUsedObjects && (
           <Alert type='ok'>
             <AcFlex spacing='sm'>
-              <VISUALS.CHECK style={{ minWidth: 'fit-content', marginTop: '0.25rem' }} />
+              <VISUALS.CHECK
+                style={{ minWidth: 'fit-content', marginTop: '0.25rem' }}
+              />
               <Paragraph>
-                {isSingular
+                {entityTypeLabel
+                  ? isSingular
+                    ? `De ${entityTypeLabel.singular} ${formattedNames} wordt niet gebruikt door gemeenten of samenwerkingen en kan veilig worden verwijderd.`
+                    : `De ${entityTypeLabel.plural} ${formattedNames} worden niet gebruikt door gemeenten of samenwerkingen en kunnen veilig worden verwijderd.`
+                  : isSingular
                   ? `Dit ${displayNameLower} wordt niet gebruikt door andere objecten en kan veilig worden verwijderd.`
                   : `Deze ${displayNameLower}s worden niet gebruikt door andere objecten en kunnen veilig worden verwijderd.`}
               </Paragraph>
@@ -318,7 +364,11 @@ const ConGenericBeheerDeleteModal = ({
                 <VISUALS.CIRCLE_EXCLAMATION />
                 <Paragraph>
                   <strong>
-                    {isSingular
+                    {entityTypeLabel
+                      ? isSingular
+                        ? `De ${entityTypeLabel.singular} ${formattedNames} wordt gebruikt door onderstaande gemeenten en/of samenwerkingen en kan niet worden verwijderd.`
+                        : `De ${entityTypeLabel.plural} ${formattedNames} worden gebruikt door onderstaande gemeenten en/of samenwerkingen en kunnen niet worden verwijderd.`
+                      : isSingular
                       ? `Dit ${displayNameLower} kan niet worden verwijderd omdat het gebruikt wordt door ${totalUsedObjects} ${
                           totalUsedObjects === 1 ? 'ander object' : 'andere objecten'
                         }.`

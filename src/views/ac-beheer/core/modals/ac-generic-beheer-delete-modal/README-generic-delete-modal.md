@@ -62,5 +62,6 @@ Objects must have a `@self` property with the following structure:
 - **Dynamic endpoint building**: Automatically constructs the API endpoint from object metadata
 - **Flexible naming**: Uses schema title or name from metadata for display
 - **Multiple object support**: Can delete single or multiple objects
+- **Entity-specific copy**: For applicatie (module), dienst and koppeling, the modal shows custom text that refers to "gemeenten of samenwerkingen" / "onderstaande gemeenten en/of samenwerkingen" instead of the generic "andere objecten" wording
 - **Error handling**: Graceful error handling with console logging
 - **Generic design**: Works with any object type that has proper metadata
