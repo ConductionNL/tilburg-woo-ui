@@ -1914,7 +1914,7 @@ const ConFormsDienst = ({ store }) => {
                 </Paragraph>
                 <UnorderedList>
                   <UnorderedListItem>
-                    De dienst wordt zichtbaar in de softwarecatalogus
+                    De dienst wordt zichtbaar in de Softwarecatalogus
                   </UnorderedListItem>
                   <UnorderedListItem>
                     Organisaties kunnen de dienst bekijken en beoordelen

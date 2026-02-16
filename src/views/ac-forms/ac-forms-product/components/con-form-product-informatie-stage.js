@@ -37,9 +37,9 @@ const ConFormProductInformatieStage = memo(
         </h2>
 
         <Paragraph className='con-form-wizard-paragraph'>
-          <strong>Basisinformatie voor vindbaarheid in de softwarecatalogus</strong>
+          <strong>Basisinformatie voor vindbaarheid in de Softwarecatalogus</strong>
           <br />
-          Deze gegevens maken uw applicatie vindbaar in de softwarecatalogus. Een duidelijke
+          Deze gegevens maken uw applicatie vindbaar in de Softwarecatalogus. Een duidelijke
           naam, samenvatting en website helpen gemeenten om uw oplossing snel te
           begrijpen en te beoordelen. Logo en contactgegevens zorgen voor herkenning
           en vertrouwen. Hosting- en juridische informatie geven inzicht in waar en

@@ -684,7 +684,7 @@ const ConFormControlerenStage = memo(
                       style={{ color: '#666', fontStyle: 'italic' }}
                     >
                       <Paragraph style={{ margin: 0, fontSize: '0.875rem' }}>
-                        📋 Bestaande applicatie uit de softwarecatalogus - bovenstaande
+                        📋 Bestaande applicatie uit de Softwarecatalogus - bovenstaande
                         informatie is al geregistreerd
                       </Paragraph>
                     </div>

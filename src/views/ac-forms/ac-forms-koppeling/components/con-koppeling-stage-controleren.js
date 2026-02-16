@@ -188,7 +188,7 @@ const ConKoppelingStageControleren = ({
             </strong>
           </Paragraph>
           <Paragraph>
-            Alle ingevoerde koppelingen zijn opgeslagen in de softwarecatalogus.
+            Alle ingevoerde koppelingen zijn opgeslagen in de Softwarecatalogus.
           </Paragraph>
         </Alert>
 
@@ -198,7 +198,7 @@ const ConKoppelingStageControleren = ({
           </Paragraph>
           <UnorderedList>
             <UnorderedListItem>
-              De koppelingen worden zichtbaar in de softwarecatalogus
+              De koppelingen worden zichtbaar in de Softwarecatalogus
             </UnorderedListItem>
             <UnorderedListItem>
               U kunt de koppelingen beheren via het beheer dashboard

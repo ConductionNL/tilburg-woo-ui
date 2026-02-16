@@ -26,10 +26,10 @@ export const getPageTitle = (formType) => {
 export const getPageDescription = (formType) => {
   switch (formType) {
     case 'eigen':
-      return 'Vul dit formulier in om uw eigen product aan te melden in onze softwarecatalogus.';
+      return 'Vul dit formulier in om uw eigen product aan te melden in onze Softwarecatalogus.';
     case 'ontbrekend':
-      return 'Vul dit formulier in om een ontbrekend product te melden dat toegevoegd zou moeten worden aan onze softwarecatalogus.';
+      return 'Vul dit formulier in om een ontbrekend product te melden dat toegevoegd zou moeten worden aan onze Softwarecatalogus.';
     default:
-      return 'Vul dit formulier in om een product aan te melden in onze softwarecatalogus.';
+      return 'Vul dit formulier in om een product aan te melden in onze Softwarecatalogus.';
   }
 };

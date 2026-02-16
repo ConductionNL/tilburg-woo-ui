@@ -2434,11 +2434,11 @@ const AcFormsKoppeling = ({ store }) => {
                     case 'koppeling-zoeken':
                       return 'Selecteer een applicatie uit uw eigen aanbod waarvoor u een koppeling wilt publiceren.';
                     case 'koppeling':
-                      return 'Vul dit formulier in om uw koppeling te registreren in de softwarecatalogus.';
+                      return 'Vul dit formulier in om uw koppeling te registreren in de Softwarecatalogus.';
                     case 'aanvullende-informatie':
-                      return 'Vul dit formulier in om uw koppeling te registreren in de softwarecatalogus.';
+                      return 'Vul dit formulier in om uw koppeling te registreren in de Softwarecatalogus.';
                     default:
-                      return 'Vul dit formulier in om uw koppeling te registreren in de softwarecatalogus.';
+                      return 'Vul dit formulier in om uw koppeling te registreren in de Softwarecatalogus.';
                   }
                 })()}
               </Paragraph>

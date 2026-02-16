@@ -19,7 +19,7 @@ export const DASHBOARD_WIZARDS = {
   EIGEN_APPLICATIE: {
     id: 'eigen-applicatie',
     name: 'Applicatie publiceren',
-    description: 'Voeg een applicatie van uw eigen organisatie toe aan de softwarecatalogus',
+    description: 'Voeg een applicatie van uw eigen organisatie toe aan de Softwarecatalogus',
     icon: VISUALS.CUBE,
     path: PATHS.FORMS_APPLICATIE,
     requiresAuth: true,
@@ -32,7 +32,7 @@ export const DASHBOARD_WIZARDS = {
   // ONTBREKEND_APPLICATIE: {
   //   id: 'ontbrekend-applicatie',
   //   name: 'Applicatie toevoegen',
-  //   description: 'Meld een applicatie dat nog niet in de softwarecatalogus staat',
+  //   description: 'Meld een applicatie dat nog niet in de Softwarecatalogus staat',
   //   icon: VISUALS.CUBE,
   //   path: PATHS.FORMS_APPLICATIE,
   //   requiresAuth: true,
@@ -45,7 +45,7 @@ export const DASHBOARD_WIZARDS = {
   DIENST: {
     id: 'dienst',
     name: 'Dienst publiceren',
-    description: 'Publiceer een nieuwe dienst in de softwarecatalogus',
+    description: 'Publiceer een nieuwe dienst in de Softwarecatalogus',
     icon: VISUALS.HAND_SHAKE,
     path: PATHS.FORMS_DIENST,
     requiresAuth: true,
@@ -58,7 +58,7 @@ export const DASHBOARD_WIZARDS = {
   DIENST_TOEVOEGEN: {
     id: 'dienst-ontbrekend',
     name: 'Dienst toevoegen',
-    description: 'Meld een dienst dat nog niet in de softwarecatalogus staat',
+    description: 'Meld een dienst dat nog niet in de Softwarecatalogus staat',
     icon: VISUALS.HAND_SHAKE,
     path: PATHS.FORMS_GEBRUIK_DIENST,
     requiresAuth: true,
@@ -111,7 +111,7 @@ export const DASHBOARD_WIZARDS = {
   KOPPELING_TOEVOEGEN: {
     id: 'koppeling-toevoegen',
     name: 'Koppeling toevoegen',
-    description: 'Meld een koppeling dat nog niet in de softwarecatalogus staat',
+    description: 'Meld een koppeling dat nog niet in de Softwarecatalogus staat',
     icon: VISUALS.LINK,
     path: PATHS.FORMS_GEBRUIK_KOPPELING,
     requiresAuth: true,
