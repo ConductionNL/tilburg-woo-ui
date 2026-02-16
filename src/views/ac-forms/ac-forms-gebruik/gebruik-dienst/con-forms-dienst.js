@@ -482,10 +482,7 @@ const ConFormsDienst = ({ store }) => {
     };
 
     loadModulesForGebruikBeheerder();
-  }, [
-    isGebruikBeheerdersFlow,
-    store,
-  ]);
+  }, [isGebruikBeheerdersFlow, store]);
 
   // Add module to options when it becomes available (for edit mode)
   // This ensures the selected module from gebruik.module is always in ownAppOptions
@@ -502,7 +499,7 @@ const ConFormsDienst = ({ store }) => {
     if (alreadyInOptions) return;
 
     let cancelled = false;
-    
+
     const fetchAndAddModule = async () => {
       // Try to find module from various sources
       let moduleData = null;
@@ -528,18 +525,29 @@ const ConFormsDienst = ({ store }) => {
 
       // Check store (module might have been fetched by the prefill useEffect)
       if (!moduleData) {
-        moduleData = store.object.getObject('voorzieningen_module', String(moduleId));
+        moduleData = store.object.getObject(
+          'voorzieningen_module',
+          String(moduleId)
+        );
       }
 
       // If still not found, fetch it
       if (!moduleData) {
         try {
-          await store.object.fetchObject('voorzieningen', 'module', String(moduleId), {
-            '_extend[]': ['_schema'],
-            _published: 'false',
-          });
+          await store.object.fetchObject(
+            'voorzieningen',
+            'module',
+            String(moduleId),
+            {
+              '_extend[]': ['_schema'],
+              _published: 'false',
+            }
+          );
           if (cancelled) return;
-          moduleData = store.object.getObject('voorzieningen_module', String(moduleId));
+          moduleData = store.object.getObject(
+            'voorzieningen_module',
+            String(moduleId)
+          );
         } catch (error) {
           console.error('Failed to fetch module for options:', error);
           return;
@@ -554,7 +562,10 @@ const ConFormsDienst = ({ store }) => {
           return exists ? prev : [...prev, option];
         });
         // Also ensure selectedApplicatie is set
-        if (!selectedApplicatie || String(selectedApplicatie.value) !== String(option.value)) {
+        if (
+          !selectedApplicatie ||
+          String(selectedApplicatie.value) !== String(option.value)
+        ) {
           setSelectedApplicatie(option);
         }
       }

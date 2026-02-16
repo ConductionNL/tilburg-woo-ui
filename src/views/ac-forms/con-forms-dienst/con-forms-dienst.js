@@ -897,6 +897,8 @@ const ConFormsDienst = ({ store, userStore }) => {
             leverancierOptions={leverancierOptions}
             leverancierLoading={leverancierLoading}
             searchLeveranciers={searchLeveranciers}
+            isEditMode={isEditMode}
+            editingDienstId={dienstId}
           />
         );
       case 'aanbieder':
