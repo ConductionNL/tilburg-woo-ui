@@ -27,6 +27,8 @@ const ConBeheerViews = ({ store }) => {
   const [viewRelationsData, setViewRelationsData] = useState(null);
   const [viewIsDoneLoading, setViewIsDoneLoading] = useState(false);
   const [panZoomInstance, setPanZoomInstance] = useState(null);
+  const [gebruikData, setGebruikData] = useState(null);
+  const [moduleNames, setModuleNames] = useState({});
   const [filters, setFilters] = useState({
     gebruik: false,
     product: false,
@@ -82,6 +84,54 @@ const ConBeheerViews = ({ store }) => {
       return next;
     });
   };
+
+  // Fetch gebruik data when filters are active
+  useEffect(() => {
+    if (!gemma) return;
+    if (!filters.gebruik && !filters.deelnames) {
+      setGebruikData(null);
+      setModuleNames({});
+      return;
+    }
+
+    const activeOrgUuid = store?.user?.activeOrganization?.uuid;
+
+    const fetchData = async () => {
+      // Build query: filter by afnemer for owned gebruik
+      const gebruikParams = {
+        _limit: 10000,
+        _fields: 'id,module,gebruiktVoorReferentiecomponenten,deelnemers,afnemer,@self',
+      };
+      if (activeOrgUuid) {
+        gebruikParams.afnemer = activeOrgUuid;
+      }
+
+      // Fetch gebruik and modules in parallel
+      const [gebruikResponse, modulesResult] = await Promise.all([
+        gemma.fetchGebruik(gebruikParams),
+        gemma.fetchModules({
+          _limit: 10000,
+          _fields: 'id,naam',
+        }),
+      ]);
+
+      // Build module name lookup
+      const nameLookup = {};
+      if (Array.isArray(modulesResult)) {
+        modulesResult.forEach((m) => {
+          if (m.id && m.naam) nameLookup[m.id] = m.naam;
+          if (m.id && m['@self']?.name) nameLookup[m.id] = nameLookup[m.id] || m['@self'].name;
+        });
+      }
+      setModuleNames(nameLookup);
+
+      // Store gebruik results
+      const results = gebruikResponse?.results || gemma.get_allVoorzieningGebruik || [];
+      setGebruikData(results);
+    };
+
+    fetchData();
+  }, [gemma, filters.gebruik, filters.deelnames]);
 
   // Process view data for rendering - prefer new API (viewNodes/viewRelationships)
   useEffect(() => {
@@ -148,7 +198,7 @@ const ConBeheerViews = ({ store }) => {
       // Initialize the graph
       let outputGraph = new dia.Graph({}, { cellNamespace: shapes });
 
-      new dia.Paper({
+      const paper = new dia.Paper({
         el: container,
         model: outputGraph,
         width: 1168,
@@ -171,7 +221,10 @@ const ConBeheerViews = ({ store }) => {
         },
       });
 
-      const t0 = performance.now();
+      // Freeze paper to suppress rendering during bulk cell addition.
+      // Without this, the Paper re-renders on every .addTo(graph) call
+      // (388 full renders). With freeze, it batches into a single render.
+      paper.freeze();
 
       let viewNodes = [];
       let viewRelationships = [];
@@ -182,7 +235,69 @@ const ConBeheerViews = ({ store }) => {
         // diagram engine can look up parent cells via graph.getCell(parentId).
         // Backend now stores nodes in correct order, but we keep this as a
         // safety net for data imported before the fix.
-        const rawNodes = viewNodesData || [];
+        const rawNodes = [...(viewNodesData || [])];
+
+        // Merge gebruik overlay nodes when filters are active
+        if (gebruikData && gebruikData.length > 0 && (filters.gebruik || filters.deelnames)) {
+          // Build lookup: modelNodeId (with id- prefix) -> viewNode
+          const viewNodeByModelId = {};
+          rawNodes.forEach((n) => {
+            if (n.modelNodeId) viewNodeByModelId[n.modelNodeId] = n;
+          });
+
+          // Track overlay count per parent for vertical stacking
+          const overlayCountPerParent = {};
+          let totalOverlays = 0;
+          const MAX_OVERLAYS = 2000;
+
+          gebruikData.forEach((gebruik) => {
+            if (totalOverlays >= MAX_OVERLAYS) return;
+            const refComps = gebruik.gebruiktVoorReferentiecomponenten;
+            if (!Array.isArray(refComps) || refComps.length === 0) return;
+
+            // Determine owned vs deelname based on deelnemers field
+            // Gebruik returned by API is owned; deelnames = entries where
+            // current org appears in the deelnemers array (future feature)
+            const isDeelname = false;
+
+            const moduleName = moduleNames[gebruik.module] || 'Module';
+
+            refComps.forEach((refCompUuid) => {
+              // Match by prepending id- to the UUID
+              const modelNodeId = `id-${refCompUuid}`;
+              const parentNode = viewNodeByModelId[modelNodeId];
+              if (!parentNode) return;
+
+              // Stack overlays vertically inside parent
+              const parentId = parentNode.viewNodeId;
+              if (!overlayCountPerParent[parentId]) overlayCountPerParent[parentId] = 0;
+              const stackIndex = overlayCountPerParent[parentId]++;
+
+              const overlayHeight = 18;
+              const overlayGap = 2;
+              const overlayY = (parentNode.height || 80) - 5 - ((stackIndex + 1) * (overlayHeight + overlayGap));
+
+              rawNodes.push({
+                viewNodeId: `overlay-${gebruik.id}-${refCompUuid}`,
+                modelNodeId: gebruik.module || gebruik.id,
+                name: moduleName,
+                type: 'applicationcomponent',
+                gemmaType: 'ApplicationComponent',
+                parent: parentId,
+                x: 5,
+                y: Math.max(20, overlayY),
+                width: (parentNode.width || 120) - 10,
+                height: overlayHeight,
+                color: isDeelname ? 'rgb(180, 230, 255)' : 'rgb(200, 255, 200)',
+                borderColor: isDeelname ? 'rgba(0, 100, 180, 0.6)' : 'rgba(0, 150, 0, 0.6)',
+                font: { name: 'Segoe UI', size: 9, color: 'rgb(0, 0, 0)', style: 'normal' },
+                _isModuleOverlay: true,
+                _gebruikId: gebruik.id,
+                _isDeelname: isDeelname,
+              });
+            });
+          });
+        }
         const sorted = [];
         const placed = new Set();
         const remaining = [...rawNodes];
@@ -286,6 +401,8 @@ const ConBeheerViews = ({ store }) => {
           interactive: false,
         })
       );
+      // Unfreeze: triggers a single batch render of all cells at once.
+      paper.unfreeze();
 
       // Apply colors and viewBox like public version
       viewNodes.forEach((node) => {
@@ -298,16 +415,13 @@ const ConBeheerViews = ({ store }) => {
         setSvgViewBox(node);
       });
 
-      const t1 = performance.now();
-      console.info(`[AMEF] Rendered ${viewNodes.length} nodes + ${viewRelationships.length} rels in ${(t1 - t0).toFixed(0)}ms`);
-
       // Always set loading done when we reach this point
       setViewIsDoneLoading(true);
     };
 
     // Start rendering process
     renderBeheerGraph();
-  }, [viewNodesData, viewRelationsData]);
+  }, [viewNodesData, viewRelationsData, gebruikData, moduleNames, filters.gebruik, filters.deelnames]);
 
   // Helper functions from public version
   const setSvgViewBox = (svg) => {

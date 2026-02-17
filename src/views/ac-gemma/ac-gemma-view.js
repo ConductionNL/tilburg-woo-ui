@@ -268,6 +268,9 @@ const AcGemmaView = ({ store: { gemma }, viewId }) => {
       defaultInteractive: false,
     });
 
+    // Freeze paper to suppress rendering during bulk cell addition.
+    paper.freeze();
+
     // Add click handler to the paper
     paper.on('element:pointerclick', (elementView) => {
       const model = elementView.model;
@@ -336,8 +339,6 @@ const AcGemmaView = ({ store: { gemma }, viewId }) => {
       } };
     };
     */
-
-    const t0 = performance.now();
 
     let viewNodes = [];
     let viewRelationships = [];
@@ -460,7 +461,8 @@ const AcGemmaView = ({ store: { gemma }, viewId }) => {
       })
     );
 
-    // console.log({ viewNodes, viewRelationships });
+    // Unfreeze: triggers a single batch render of all cells at once.
+    paper.unfreeze();
 
     viewNodes.forEach((node) => {
       setNodeColor(node);
@@ -473,9 +475,6 @@ const AcGemmaView = ({ store: { gemma }, viewId }) => {
     container.querySelectorAll(':scope > svg').forEach((node) => {
       setSvgViewBox(node);
     });
-
-    const t1 = performance.now();
-    console.info(`[AMEF] Rendered ${viewNodes.length} nodes + ${viewRelationships.length} rels in ${(t1 - t0).toFixed(0)}ms`);
 
     viewNodes && viewRelationships && setViewIsDoneLoading(true);
   }, [viewNodesData, viewRelationsData]);

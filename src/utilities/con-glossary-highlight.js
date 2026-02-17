@@ -94,9 +94,10 @@ export const findGlossaryTerms = (text, terms) => {
  * @param {string} text - Text to process
  * @param {Array} terms - Array of glossary term objects
  * @param {function} onTermClick - Callback when a highlighted term is clicked, receives term ID
+ * @param {Set} [sharedHighlightedIds] - Optional shared set to track already-highlighted terms across multiple calls (used when walking React element trees)
  * @returns {React.ReactNode[]} Array of React elements
  */
-export const highlightGlossaryTerms = (text, terms, onTermClick) => {
+export const highlightGlossaryTerms = (text, terms, onTermClick, sharedHighlightedIds) => {
   if (typeof text !== 'string' || !terms || terms.length === 0) {
     return [text];
   }
@@ -108,7 +109,7 @@ export const highlightGlossaryTerms = (text, terms, onTermClick) => {
   const parts = [];
   let lastIndex = 0;
   let match;
-  const highlightedIds = new Set();
+  const highlightedIds = sharedHighlightedIds || new Set();
 
   // Reset regex state
   regex.lastIndex = 0;

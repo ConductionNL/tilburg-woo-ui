@@ -162,8 +162,28 @@ export class GemmaStore {
       });
   };
 
-  // Removed voorzieningGebruik fetch
-  // Removed voorzieningGebruik fetch by id
+  @action
+  fetchGebruik = async (params = {}) => {
+    return app.store.api.gemma
+      .allVoorzieningGebruik(params)
+      .then((response) => {
+        this.setAllVoorzieningGebruik(response.results || []);
+        return response;
+      })
+      .catch((e) => console.error('fetchGebruik error:', e));
+  };
+
+  @action
+  fetchModules = async (params = {}) => {
+    return app.store.api.gemma
+      .modules(params)
+      .then((response) => response.results || [])
+      .catch((e) => {
+        console.error('fetchModules error:', e);
+        return [];
+      });
+  };
+
   @action
   fetchElementReferences = async (_id) => {
     this.loading.status = true;
@@ -197,7 +217,7 @@ export class GemmaStore {
 
   @action
   resetAllVoorzieningGebruik = () => {
-    this.voorzieningGebruik = null;
+    this.allVoorzieningGebruik = null;
   };
 
   @action

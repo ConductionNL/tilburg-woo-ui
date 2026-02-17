@@ -50,6 +50,8 @@ export const ENDPOINTS = AcLockObject({
       `/openregister/api/objects/vng-gemma/element?identifier=${_id}`,
     RELATIONSHIPS: (_id) =>
       `/openregister/api/objects/vng-gemma/relationships?identifier=${_id}`,
+    VOORZIENING_GEBRUIK: `/openregister/api/objects/voorzieningen/gebruik`,
+    MODULES: `/openregister/api/objects/voorzieningen/module`,
   }, // GET
   MENU: {
     INDEX: `/opencatalogi/api/menus`, // GET
