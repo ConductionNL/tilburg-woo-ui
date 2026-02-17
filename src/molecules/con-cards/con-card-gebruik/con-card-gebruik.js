@@ -4,6 +4,7 @@ import { LABELS, VISUALS } from '@constants';
 import { AcCard, AcFlex } from '@atoms';
 import { Paragraph } from '@utrecht/component-library-react';
 import { NAVIGATE_TO } from '@constants/routes.constants';
+import acFormatDate from '@src/utilities/ac-format-date';
 
 const ConCardGebruik = ({
   skeleton,
@@ -12,6 +13,7 @@ const ConCardGebruik = ({
   organisation,
   referentieComponenten,
   status,
+  created,
   navigateTo = 'publication',
 }) => {
 
@@ -66,6 +68,13 @@ const ConCardGebruik = ({
       </Paragraph>
       <AcFlex justifyContent='between' className='meta'>
         <AcFlex column>
+          <AcFlex alignItems='center' spacing='sm'>
+            {created && (
+              <Paragraph small style={{ whiteSpace: 'nowrap' }}>
+                {acFormatDate(created, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
+              </Paragraph>
+            )}
+          </AcFlex>
           <AcFlex alignItems='center' spacing='sm'>
             {status && <Paragraph small>{status}</Paragraph>}
           </AcFlex>

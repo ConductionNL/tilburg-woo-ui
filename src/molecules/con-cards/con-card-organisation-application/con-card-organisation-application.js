@@ -144,7 +144,7 @@ const ConCardOrganisationApplication = ({
           )}
           <AcFlex alignItems='center' spacing='sm'>
             {created && (
-              <Paragraph small>
+              <Paragraph small style={{ whiteSpace: 'nowrap' }}>
                 {acFormatDate(created, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
               </Paragraph>
             )}

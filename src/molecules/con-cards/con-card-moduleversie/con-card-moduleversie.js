@@ -22,6 +22,7 @@ const ConCardModuleVersie = ({
   datumEindeOndersteuning,
   datumTeruggetrokken,
   moduleUuid,
+  created,
   navigateTo = 'publication',
 }) => {
 
@@ -80,6 +81,13 @@ const ConCardModuleVersie = ({
         <AcFlex column>
           <AcFlex alignItems='center' spacing='sm'>
             {status && <Paragraph small>{status}</Paragraph>}
+          </AcFlex>
+          <AcFlex alignItems='center' spacing='sm'>
+            {created && (
+              <Paragraph small style={{ whiteSpace: 'nowrap' }}>
+                {acFormatDate(created, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
+              </Paragraph>
+            )}
           </AcFlex>
           <AcFlex alignItems='center' spacing='sm'>
             {formattedInOntwikkeling && (
