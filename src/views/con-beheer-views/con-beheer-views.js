@@ -333,7 +333,10 @@ const ConBeheerViews = ({ store }) => {
             x: (n.x || 0),
             y: (n.y || 0),
           };
-          if (parentAbs) {
+          // Skip overlay nodes — their coordinates are already parent-relative.
+          // ArchiMate source nodes use absolute coordinates that need conversion,
+          // but overlays are created with relative offsets (x:5, y:stackOffset).
+          if (parentAbs && !n._isModuleOverlay) {
             n.x = (n.x || 0) - parentAbs.x;
             n.y = (n.y || 0) - parentAbs.y;
           }
