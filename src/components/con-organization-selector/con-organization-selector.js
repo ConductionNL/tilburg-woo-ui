@@ -38,6 +38,9 @@ const ConOrganizationSelector = ({
           activeOrganisation: selectedOption.value,
         });
 
+        // Refetch user profile to ensure we have the latest data from /me endpoint
+        await user.fetchUserProfile();
+
         // Call success callback with updated user data
         onSwitchSuccess(response.data);
       } catch (err) {
@@ -55,7 +58,7 @@ const ConOrganizationSelector = ({
   );
 
   // Don't render if user doesn't have multiple organizations
-  if (!organisations?.results?.length || organisations.results.length <= 1) {
+  if (!organisations?.all?.length || organisations.all.length <= 1) {
     return null;
   }
 
@@ -85,7 +88,7 @@ const ConOrganizationSelector = ({
           className
         )}
         onChange={handleOrganisationSwitch}
-        options={organisations.results.map((org) => ({
+        options={organisations.all.map((org) => ({
           value: org.uuid,
           label: org.name + (org.isDefault ? ' (Standaard)' : ''),
         }))}
