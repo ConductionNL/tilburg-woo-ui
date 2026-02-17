@@ -14,17 +14,16 @@ const ConCardDienst = ({
   skeleton,
   title,
   summary,
-  created,
   category,
   themes,
   id,
   aanbieder,
-  status,
   type,
   navigateTo = 'publication',
 }) => {
   // Get the aanbieder value (handle both object and string formats)
-  const aanbiederValue = typeof aanbieder === 'object' ? aanbieder?.value : aanbieder;
+  const aanbiederValue =
+    typeof aanbieder === 'object' ? aanbieder?.value : aanbieder;
 
   const onClick = () => {
     switch (navigateTo) {
@@ -91,7 +90,7 @@ const ConCardDienst = ({
                       return extractText(type);
                     }
                   }
-                  
+
                   // Handle actual arrays
                   if (Array.isArray(type)) {
                     return type
@@ -99,7 +98,10 @@ const ConCardDienst = ({
                         // Handle objects with naam/name/label
                         if (typeof typeItem === 'object' && typeItem !== null) {
                           return extractText(
-                            typeItem.naam || typeItem.name || typeItem.label || typeItem
+                            typeItem.naam ||
+                              typeItem.name ||
+                              typeItem.label ||
+                              typeItem
                           );
                         }
                         return extractText(typeItem);
@@ -107,23 +109,15 @@ const ConCardDienst = ({
                       .filter(Boolean)
                       .join(', ');
                   }
-                  
+
                   // Handle single object with naam/name/label
                   if (typeof type === 'object' && type !== null) {
-                    return extractText(
-                      type.naam || type.name || type.label || type
-                    );
+                    return extractText(type.naam || type.name || type.label || type);
                   }
-                  
+
                   return extractText(type);
                 })()}
               </Paragraph>
-            </>
-          )}
-          {status && (
-            <>
-              <VISUALS.ELLIPSE />
-              <Paragraph small>{extractText(status)}</Paragraph>
             </>
           )}
         </AcFlex>
