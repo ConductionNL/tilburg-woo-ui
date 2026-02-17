@@ -2,8 +2,7 @@ import { AcLink } from '@molecules';
 import { ConUuidResolver } from '@components';
 import { LABELS, VISUALS } from '@constants';
 import { AcCard, AcFlex } from '@atoms';
-import { Paragraph, StatusBadge } from '@utrecht/component-library-react';
-import { Heading, Paragraph } from '@utrecht/component-library-react';
+import { Paragraph } from '@utrecht/component-library-react';
 import acFormatDate from '@src/utilities/ac-format-date';
 import {
   extractText,
