@@ -109,7 +109,7 @@ const ConLightweightMarkdownEditor = ({
     <div className="con-lightweight-markdown-editor">
       {/* Field Header */}
       <label className="utrecht-form-label">
-        <h4
+        <span
           className={clsx('utrecht-heading-4', {
             'ac-form-field-header-info': description,
           })}
@@ -136,7 +136,7 @@ const ConLightweightMarkdownEditor = ({
               <VISUALS.INFO />
             </span>
           )}
-        </h4>
+        </span>
       </label>
 
       {/* Toolbar */}

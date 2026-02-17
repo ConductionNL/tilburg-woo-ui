@@ -8,7 +8,6 @@ import clsx from 'clsx';
 import { AcFormField } from '@src/molecules';
 import ReactSelect from 'react-select';
 import MDEditor from '@uiw/react-md-editor';
-import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@src/constants';
 import { TOOLTIP_ID } from '@src/index.web';
 
@@ -294,9 +293,8 @@ export const renderField = ({
     return (
       <div key={`${path}-${resetKey}`}>
         <label className='utrecht-form-label' htmlFor={fieldId}>
-          <Heading
-            level={4}
-            className={clsx({
+          <span
+            className={clsx('utrecht-heading-4', {
               'ac-form-field-header-info': fieldConfig.description,
             })}
             style={fieldConfig.labelStyle}
@@ -328,7 +326,7 @@ export const renderField = ({
                 </span>
               </>
             )}
-          </Heading>
+          </span>
         </label>
         <BooleanField
           key={path}
@@ -369,9 +367,8 @@ export const renderField = ({
     return (
       <div key={`${path}-${resetKey}`}>
         <label className='utrecht-form-label' htmlFor={fieldId}>
-          <Heading
-            level={4}
-            className={clsx({
+          <span
+            className={clsx('utrecht-heading-4', {
               'ac-form-field-header-info': fieldConfig.description,
             })}
             style={fieldConfig.labelStyle}
@@ -403,7 +400,7 @@ export const renderField = ({
                 </span>
               </>
             )}
-          </Heading>
+          </span>
         </label>
         <ColorField
           key={path}
@@ -444,9 +441,8 @@ export const renderField = ({
     return (
       <div key={`${path}-${resetKey}`} className='con-wysiwyg-markdown-field'>
         <label id={labelId} className='utrecht-form-label' htmlFor={fieldId}>
-          <Heading
-            level={4}
-            className={clsx({
+          <span
+            className={clsx('utrecht-heading-4', {
               'ac-form-field-header-info': fieldConfig.description,
             })}
             style={fieldConfig.labelStyle}
@@ -476,7 +472,7 @@ export const renderField = ({
                 />
               </span>
             )}
-          </Heading>
+          </span>
         </label>
         <MDEditor
           value={value || ''}
@@ -632,9 +628,8 @@ export const renderField = ({
       <div key={`${path}-${resetKey}`}>
         {!fieldConfig.hideLabel && (
           <label className='utrecht-form-label' htmlFor={fieldId}>
-            <Heading
-              level={4}
-              className={clsx({
+            <span
+              className={clsx('utrecht-heading-4', {
                 'ac-form-field-header-info':
                   fieldConfig.description && !fieldConfig.hideDescription,
               })}
@@ -667,7 +662,7 @@ export const renderField = ({
                   </span>
                 </>
               )}
-            </Heading>
+            </span>
           </label>
         )}
         <ReactSelectWithGlobalHack
