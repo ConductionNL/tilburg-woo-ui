@@ -2,7 +2,7 @@ import { AcLink } from '@molecules';
 import { ConUuidResolver } from '@components';
 import { LABELS, VISUALS } from '@constants';
 import { AcCard, AcFlex } from '@atoms';
-import { Heading, Paragraph, StatusBadge } from '@utrecht/component-library-react';
+import { Paragraph, StatusBadge } from '@utrecht/component-library-react';
 // import acFormatDate from '@src/utilities/ac-format-date';
 import {
   extractText,
@@ -14,7 +14,6 @@ const ConCardDienst = ({
   skeleton,
   title,
   summary,
-  created,
   category,
   themes,
   id,
@@ -51,9 +50,9 @@ const ConCardDienst = ({
               color: 'inherit',
             }}
           />
-          <Heading level={3}>
+          <p className="utrecht-heading-3">
             <ConUuidResolver>{extractTitle(title)}</ConUuidResolver>
-          </Heading>
+          </p>
           {aanbiederValue && (
             <Paragraph small>
               (Aangeboden door <ConUuidResolver>{aanbiederValue}</ConUuidResolver>)

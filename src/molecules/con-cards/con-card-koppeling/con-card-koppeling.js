@@ -2,7 +2,7 @@ import { AcLink } from '@molecules';
 import { ConUuidResolver } from '@components';
 import { LABELS, VISUALS } from '@constants';
 import { AcCard, AcFlex } from '@atoms';
-import { Heading, Paragraph, StatusBadge } from '@utrecht/component-library-react';
+import { Paragraph, StatusBadge } from '@utrecht/component-library-react';
 import { extractText, extractTitle } from '@src/utilities/con-extract-text';
 import { NAVIGATE_TO } from '@constants/routes.constants';
 import acFormatDate from '@src/utilities/ac-format-date';
@@ -61,9 +61,9 @@ const ConCardKoppeling = ({
               color: 'inherit',
             }}
           />
-          <Heading level={3}>
+          <p className="utrecht-heading-3">
             <ConUuidResolver>{extractTitle(title)}</ConUuidResolver>
-          </Heading>
+          </p>
         </AcFlex>
       </AcFlex>
 
