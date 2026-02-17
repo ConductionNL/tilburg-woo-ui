@@ -391,7 +391,7 @@ const ConModuleDetailsPageContent = ({
       {/* Contact Information Section */}
       {(contact || contactId || data?.website) && (
         <>
-          <Heading level={3} style={{ marginBlockStart: '1rem' }}>
+          <Heading level={2} className='utrecht-heading-3' style={{ marginBlockStart: '1rem' }}>
             Contact Informatie
           </Heading>
           <div className='ac-register-review__section'>
@@ -449,7 +449,7 @@ const ConModuleDetailsPageContent = ({
         data?.hostingJurisdictie ||
         data?.hostingLocatie) && (
         <>
-          <Heading level={3} style={{ marginBlockStart: '1rem' }}>
+          <Heading level={2} className='utrecht-heading-3' style={{ marginBlockStart: '1rem' }}>
             Extra informatie
           </Heading>
           <div className='ac-register-review__section'>

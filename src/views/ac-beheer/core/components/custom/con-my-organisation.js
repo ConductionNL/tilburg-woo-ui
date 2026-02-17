@@ -565,7 +565,7 @@ const ConMyOrganisationPage = ({ store }) => {
                 {/* Contact Information Section */}
                 {fullActiveOrganisation && (
                   <>
-                    <Heading level={3} style={{ marginBlockStart: '1rem' }}>
+                    <Heading level={2} className='utrecht-heading-3' style={{ marginBlockStart: '1rem' }}>
                       Contact informatie
                     </Heading>
                     <div className='ac-register-review__section'>
