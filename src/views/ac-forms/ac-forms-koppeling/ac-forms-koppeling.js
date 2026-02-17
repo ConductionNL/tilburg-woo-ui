@@ -38,6 +38,11 @@ import useStepper from '../con-stepper';
  *
  * If no type is provided, defaults to 'eigen-organisatie'.
  *
+ * Applicatie dropdown (step 1 - Zoeken): For organisations of type Gemeente or Samenwerking,
+ * the applicatie select is limited to applications that appear in the organisation's "gebruik"
+ * (usage) objects—i.e. applications the organisation has registered as in use. For Leverancier
+ * or Community, modules are filtered by organisation ownership. Other org types see all modules.
+ *
  * Current steps:
  * - Step 0: Koppeling zoeken (Search for existing connections)
  * - Step 1: Toevoegen/Bewerken (Add/Edit connection details)
@@ -167,6 +172,13 @@ const AcFormsKoppeling = ({ store }) => {
 
   // State for the full organization data (needed to get the type)
   const [fullActiveOrganisation, setFullActiveOrganisation] = useState(null);
+
+  /**
+   * For Gemeente/Samenwerking: module IDs allowed in the applicatie dropdown (from
+   * organisation's gebruik). null = not yet loaded, [] = loaded and none, string[] = allowed ids.
+   */
+  const [allowedModuleIdsFromGebruik, setAllowedModuleIdsFromGebruik] =
+    useState(null);
 
   // Search state
   const [searchResults, setSearchResults] = useState([]);
@@ -453,22 +465,140 @@ const AcFormsKoppeling = ({ store }) => {
     store,
   ]);
 
+  /**
+   * For Gemeente/Samenwerking: fetch gebruik for the active organisation and derive
+   * allowed module IDs (applications in the organisation's applicatielandschap).
+   * Only those applications may appear in the applicatie dropdown in step 1.
+   */
+  useEffect(() => {
+    const organizationType = fullActiveOrganisation?.type || '';
+    const useUsageBasedFilter =
+      koppelingsType === 'eigen-organisatie' &&
+      (organizationType === 'Gemeente' || organizationType === 'Samenwerking');
+
+    const activeOrg = store?.user?.activeOrganization;
+    const activeOrgId = activeOrg?.uuid || activeOrg?.id;
+
+    if (!useUsageBasedFilter || !activeOrgId) {
+      setAllowedModuleIdsFromGebruik(useUsageBasedFilter ? null : []);
+      return;
+    }
+
+    let isMounted = true;
+    setAllowedModuleIdsFromGebruik(null);
+
+    const fetchGebruik = async () => {
+      try {
+        const url = `${commongroundApiUrl()}/softwarecatalog/api/gebruik?afnemer=${encodeURIComponent(
+          String(activeOrgId)
+        )}&_limit=1000&_extend[]=_schema`;
+        const res = await fetch(url, { headers: { Accept: 'application/json' } });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const results = Array.isArray(data?.results) ? data.results : [];
+        const ids = new Set();
+        for (const item of results) {
+          const rel =
+            item?.['@self']?.relations?.module ?? item?.module;
+          if (rel == null) continue;
+          const id =
+            typeof rel === 'string'
+              ? rel.trim()
+              : String(rel?.id ?? rel?.value ?? rel?.['@self']?.id ?? '').trim();
+          if (id) ids.add(id);
+        }
+        if (isMounted) setAllowedModuleIdsFromGebruik(Array.from(ids));
+      } catch (e) {
+        if (isMounted) setAllowedModuleIdsFromGebruik([]);
+      }
+    };
+
+    fetchGebruik();
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    koppelingsType,
+    fullActiveOrganisation?.type,
+    store?.user?.activeOrganization?.uuid,
+    store?.user?.activeOrganization?.id,
+    store,
+  ]);
+
   // Fetch modules (applications) options on mount
   useEffect(() => {
     let isMounted = true;
+    const organizationType = fullActiveOrganisation?.type || '';
+    const shouldFilterByOrg =
+      koppelingsType === 'eigen-organisatie' &&
+      (organizationType === 'Leverancier' || organizationType === 'Community');
+    const useUsageBasedFilter =
+      koppelingsType === 'eigen-organisatie' &&
+      (organizationType === 'Gemeente' || organizationType === 'Samenwerking');
+
     const fetchModules = async () => {
       try {
         setOwnAppLoading(true);
+
+        if (useUsageBasedFilter) {
+          if (allowedModuleIdsFromGebruik === null) return;
+          if (allowedModuleIdsFromGebruik.length === 0) {
+            if (isMounted) {
+              setModulesOptions([]);
+              setOwnAppOptions([]);
+            }
+            return;
+          }
+          const options = [];
+          for (const moduleId of allowedModuleIdsFromGebruik) {
+            try {
+              await store.object.fetchObject(
+                'voorzieningen',
+                'module',
+                String(moduleId),
+                { '_extend[]': ['_schema'] }
+              );
+              const item = store.object.getObject(
+                'voorzieningen_module',
+                String(moduleId)
+              );
+              if (!item || !isMounted) continue;
+              const id =
+                item?.id ??
+                item?.['@self']?.id ??
+                item?.uuid ??
+                item?.value ??
+                moduleId;
+              const label =
+                item?.naam ||
+                item?.name ||
+                item?.title ||
+                item?.label ||
+                item?.uuid ||
+                item?.id ||
+                item?.value ||
+                String(moduleId);
+              options.push({
+                value: String(id),
+                label: String(label),
+                data: item,
+                type: 'applicatie',
+              });
+            } catch {
+              // Skip single module fetch failure
+            }
+          }
+          if (isMounted) {
+            setModulesOptions(options);
+            setOwnAppOptions(options);
+          }
+          return;
+        }
+
         const params = new URLSearchParams({
           _limit: '20',
           _page: '1',
         });
-
-        // Filter by organization when type is eigen-organisatie and org type is leverancier or community
-        const organizationType = fullActiveOrganisation?.type || '';
-        const shouldFilterByOrg =
-          koppelingsType === 'eigen-organisatie' &&
-          (organizationType === 'Leverancier' || organizationType === 'Community');
 
         if (shouldFilterByOrg) {
           const activeOrg = store?.user?.activeOrganization;
@@ -532,7 +662,12 @@ const AcFormsKoppeling = ({ store }) => {
     return () => {
       isMounted = false;
     };
-  }, [koppelingsType, fullActiveOrganisation, store]);
+  }, [
+    koppelingsType,
+    fullActiveOrganisation,
+    store,
+    allowedModuleIdsFromGebruik,
+  ]);
 
   // Pre-select applicatie from URL parameter
   useEffect(() => {
@@ -855,11 +990,13 @@ const AcFormsKoppeling = ({ store }) => {
           _page: '1',
         };
 
-        // Filter by organization when type is eigen-organisatie and org type is leverancier or community
         const organizationType = fullActiveOrganisation?.type || '';
         const shouldFilterByOrg =
           koppelingsType === 'eigen-organisatie' &&
           (organizationType === 'Leverancier' || organizationType === 'Community');
+        const useUsageBasedFilter =
+          koppelingsType === 'eigen-organisatie' &&
+          (organizationType === 'Gemeente' || organizationType === 'Samenwerking');
 
         if (shouldFilterByOrg) {
           const activeOrg = store?.user?.activeOrganization;
@@ -884,7 +1021,20 @@ const AcFormsKoppeling = ({ store }) => {
         const collection = store.object.getCollection(
           'voorzieningen_module_koppeling_form_search'
         );
-        const list = collection?.results || collection || [];
+        let list = collection?.results || collection || [];
+
+        if (useUsageBasedFilter && allowedModuleIdsFromGebruik !== null) {
+          const allowedSet = new Set(
+            (allowedModuleIdsFromGebruik || []).map((id) => String(id))
+          );
+          list = list.filter((item) => {
+            const id = String(
+              item?.['@self']?.id ?? item?.id ?? item?.uuid ?? item?.value ?? ''
+            );
+            return id && allowedSet.has(id);
+          });
+        }
+
         const options = list.map(mapModuleToOption);
 
         // Merge with existing options to preserve selected items
@@ -911,7 +1061,13 @@ const AcFormsKoppeling = ({ store }) => {
         setOwnAppLoading(false);
       }
     },
-    [store, mapModuleToOption, koppelingsType, fullActiveOrganisation]
+    [
+      store,
+      mapModuleToOption,
+      koppelingsType,
+      fullActiveOrganisation,
+      allowedModuleIdsFromGebruik,
+    ]
   );
 
   // Debounced search function for modules
