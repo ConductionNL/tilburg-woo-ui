@@ -536,7 +536,7 @@ const AcMyAccount = ({ store }) => {
                   <div className='ac-register-review__section'>
                     <div className='ac-account-review__header'>
                       <div style={{ flex: 2 }}>
-                        <Heading level={4}>
+                        <Heading level={2} className='utrecht-heading-4'>
                           <div className='con-beheer-details--header-container'>
                             {fullActiveOrganisation?.['@self']?.image && (
                               <ConLogoPreview
@@ -732,7 +732,7 @@ const AcMyAccount = ({ store }) => {
             {userData && (
               <div className='ac-register-review__section'>
                 <div className='ac-register-review__header'>
-                  <Heading level={4}>Gebruikersgegevens</Heading>
+                  <Heading level={2} className='utrecht-heading-4'>Gebruikersgegevens</Heading>
                   <AcButton
                     style='button'
                     icon={<VISUALS.PENCIL />}
@@ -779,7 +779,7 @@ const AcMyAccount = ({ store }) => {
             {userData && (
               <div className='ac-register-review__section'>
                 <div className='ac-register-review__header'>
-                  <Heading level={4}>Contact gegevens</Heading>
+                  <Heading level={2} className='utrecht-heading-4'>Contact gegevens</Heading>
                   <AcButton
                     style='button'
                     icon={<VISUALS.PENCIL />}

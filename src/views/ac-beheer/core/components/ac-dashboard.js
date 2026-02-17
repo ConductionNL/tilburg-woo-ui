@@ -121,7 +121,7 @@ const AcDashboard = ({ store }) => {
                 justifyContent='between'
                 className='ac-dashboard-wizards-header'
               >
-                <Heading level={3}>Mijn Softwarecatalogus</Heading>
+                <Heading level={2} className='utrecht-heading-3'>Mijn Softwarecatalogus</Heading>
 
                 <ConOrganizationSelector
                   store={store}
@@ -176,7 +176,7 @@ const AcDashboard = ({ store }) => {
             >
               <div className='ac-dashboard-suggestions-fade-in'>
                 <Alert type='info'>
-                  <Heading level={4}>Aangeboden Suggesties</Heading>
+                  <Heading level={3} className='utrecht-heading-4'>Aangeboden Suggesties</Heading>
                   <Paragraph>
                     Hieronder vindt u suggesties die door andere organisaties voor u
                     zijn aangemaakt. Dit kunnen koppelingen, gebruik of andere
@@ -197,7 +197,7 @@ const AcDashboard = ({ store }) => {
             {/* Welcome Section */}
             <div className='ac-register-review__section'>
               <div className='ac-register-review__header'>
-                <Heading level={4}>Welkom in de Softwarecatalogus!</Heading>
+                <Heading level={3} className='utrecht-heading-4'>Welkom in de Softwarecatalogus!</Heading>
               </div>
               <Separator className='ac-register-review-header__separator' />
 
