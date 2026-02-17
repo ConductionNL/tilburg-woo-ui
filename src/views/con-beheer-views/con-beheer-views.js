@@ -85,7 +85,9 @@ const ConBeheerViews = ({ store }) => {
     });
   };
 
-  // Fetch gebruik data when filters are active
+  // Load gebruik and module data when filters are active.
+  // Uses pre-fetched data from the store (loaded on the views list page) when available,
+  // falling back to fetching if the user navigated directly to a view URL.
   useEffect(() => {
     if (!gemma) return;
     if (!filters.gebruik && !filters.deelnames) {
@@ -96,41 +98,39 @@ const ConBeheerViews = ({ store }) => {
 
     const activeOrgUuid = store?.user?.activeOrganization?.uuid;
 
-    const fetchData = async () => {
-      // Build query: filter by afnemer for owned gebruik
-      const gebruikParams = {
-        _limit: 10000,
-        _fields: 'id,module,gebruiktVoorReferentiecomponenten,deelnemers,afnemer,@self',
-      };
-      if (activeOrgUuid) {
-        gebruikParams.afnemer = activeOrgUuid;
+    const loadData = async () => {
+      // Use store data if already pre-fetched, otherwise fetch now
+      let gebruikResults = gemma.get_allVoorzieningGebruik;
+      if (!gebruikResults) {
+        const gebruikParams = {
+          _limit: 10000,
+          _fields: 'id,module,gebruiktVoorReferentiecomponenten,deelnemers,afnemer,@self',
+        };
+        if (activeOrgUuid) {
+          gebruikParams.afnemer = activeOrgUuid;
+        }
+        await gemma.fetchGebruik(gebruikParams);
+        gebruikResults = gemma.get_allVoorzieningGebruik || [];
       }
 
-      // Fetch gebruik and modules in parallel
-      const [gebruikResponse, modulesResult] = await Promise.all([
-        gemma.fetchGebruik(gebruikParams),
-        gemma.fetchModules({
-          _limit: 10000,
-          _fields: 'id,naam',
-        }),
-      ]);
+      let modulesData = gemma.get_modules;
+      if (!modulesData) {
+        modulesData = await gemma.fetchModules({ _limit: 10000, _fields: 'id,naam' });
+      }
 
       // Build module name lookup
       const nameLookup = {};
-      if (Array.isArray(modulesResult)) {
-        modulesResult.forEach((m) => {
+      if (Array.isArray(modulesData)) {
+        modulesData.forEach((m) => {
           if (m.id && m.naam) nameLookup[m.id] = m.naam;
           if (m.id && m['@self']?.name) nameLookup[m.id] = nameLookup[m.id] || m['@self'].name;
         });
       }
       setModuleNames(nameLookup);
-
-      // Store gebruik results
-      const results = gebruikResponse?.results || gemma.get_allVoorzieningGebruik || [];
-      setGebruikData(results);
+      setGebruikData(gebruikResults);
     };
 
-    fetchData();
+    loadData();
   }, [gemma, filters.gebruik, filters.deelnames]);
 
   // Process view data for rendering - prefer new API (viewNodes/viewRelationships)

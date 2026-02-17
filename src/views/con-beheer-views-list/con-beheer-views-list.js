@@ -22,7 +22,7 @@ const ConBeheerViewsList = ({ store }) => {
   // Load views on component mount
   useEffect(() => {
     if (!gemma) return;
-    
+
     const loadViews = async (params = {}) => {
       setIsLoading(true);
       try {
@@ -41,6 +41,30 @@ const ConBeheerViewsList = ({ store }) => {
       setIsLoading(false);
     }
   }, [gemma]);
+
+  // Pre-fetch gebruik and modules in the background so they're ready when a view is opened.
+  // This eliminates the 3+ second wait for module data when the user toggles gebruik ON.
+  useEffect(() => {
+    if (!gemma) return;
+    const activeOrgUuid = store?.user?.activeOrganization?.uuid;
+
+    // Only pre-fetch if not already loaded
+    if (!gemma.get_allVoorzieningGebruik) {
+      const gebruikParams = {
+        _limit: 10000,
+        _fields: 'id,module,gebruiktVoorReferentiecomponenten,deelnemers,afnemer,@self',
+      };
+      if (activeOrgUuid) {
+        gebruikParams.afnemer = activeOrgUuid;
+      }
+      gemma.fetchGebruik(gebruikParams);
+    }
+
+    // Pre-fetch module name lookup (largest payload ~800KB)
+    if (!gemma.get_modules) {
+      gemma.fetchModules({ _limit: 10000, _fields: 'id,naam' });
+    }
+  }, [gemma, store?.user?.activeOrganization?.uuid]);
 
   // Helper functions to extract view data
   const getViewName = (view) => {

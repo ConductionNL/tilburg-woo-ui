@@ -34,6 +34,9 @@ export class GemmaStore {
   allVoorzieningGebruik = null;
 
   @observable
+  modules = null;
+
+  @observable
   elementReferences = null;
 
   @observable
@@ -74,6 +77,11 @@ export class GemmaStore {
   @computed
   get get_allVoorzieningGebruik() {
     return toJS(this.allVoorzieningGebruik);
+  }
+
+  @computed
+  get get_modules() {
+    return toJS(this.modules);
   }
 
   @computed
@@ -119,6 +127,11 @@ export class GemmaStore {
   @action
   setAllVoorzieningGebruik = (allVoorzieningGebruik) => {
     this.allVoorzieningGebruik = allVoorzieningGebruik;
+  };
+
+  @action
+  setModules = (modules) => {
+    this.modules = modules;
   };
 
   @action
@@ -177,7 +190,11 @@ export class GemmaStore {
   fetchModules = async (params = {}) => {
     return app.store.api.gemma
       .modules(params)
-      .then((response) => response.results || [])
+      .then((response) => {
+        const results = response.results || [];
+        this.setModules(results);
+        return results;
+      })
       .catch((e) => {
         console.error('fetchModules error:', e);
         return [];
