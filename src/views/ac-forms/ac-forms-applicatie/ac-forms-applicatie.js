@@ -2604,7 +2604,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
                                         currentStep,
                                         getAdjustedStepIndex(1)
                                       ),
-                                title: 'Applicatie informatie',
+                                title: 'Applicatieinformatie',
                                 steps:
                                   formType === 'ontbrekend-applicatie'
                                     ? [

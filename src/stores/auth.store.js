@@ -286,7 +286,7 @@ export class AuthStore {
         app.store.toasters.clear_queue();
         app.store.toasters.add({
           variant: 'error',
-          title: 'De huidige sessie is beeindigd.',
+          title: 'De huidige sessie is beëindigd.',
           description:
             'Wegens inactiviteit ben je automatisch uitgelogd en is de actieve sessie beëindigd.',
         });

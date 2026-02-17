@@ -32,7 +32,7 @@ export const DASHBOARD_WIZARDS = {
   // ONTBREKEND_APPLICATIE: {
   //   id: 'ontbrekend-applicatie',
   //   name: 'Applicatie toevoegen',
-  //   description: 'Meld een applicatie dat nog niet in de softwarecatalogus staat',
+  //   description: 'Meld een applicatie die nog niet in de softwarecatalogus staat',
   //   icon: VISUALS.CUBE,
   //   path: PATHS.FORMS_APPLICATIE,
   //   requiresAuth: true,
@@ -58,7 +58,7 @@ export const DASHBOARD_WIZARDS = {
   DIENST_TOEVOEGEN: {
     id: 'dienst-ontbrekend',
     name: 'Dienst toevoegen',
-    description: 'Meld een dienst dat nog niet in de softwarecatalogus staat',
+    description: 'Meld een dienst die nog niet in de softwarecatalogus staat',
     icon: VISUALS.HAND_SHAKE,
     path: PATHS.FORMS_GEBRUIK_DIENST,
     requiresAuth: true,
@@ -95,7 +95,7 @@ export const DASHBOARD_WIZARDS = {
     color: '#0078c8',
     schema: 'gebruik',
   },
-  KOPPELING_PUBLICEEREN: {
+  KOPPELING_PUBLICEREN: {
     id: 'koppeling-publiceren',
     name: 'Koppeling publiceren',
     description: 'Publiceer een koppeling tussen een product en een dienst',
@@ -111,7 +111,7 @@ export const DASHBOARD_WIZARDS = {
   KOPPELING_TOEVOEGEN: {
     id: 'koppeling-toevoegen',
     name: 'Koppeling toevoegen',
-    description: 'Meld een koppeling dat nog niet in de softwarecatalogus staat',
+    description: 'Meld een koppeling die nog niet in de softwarecatalogus staat',
     icon: VISUALS.LINK,
     path: PATHS.FORMS_GEBRUIK_KOPPELING,
     requiresAuth: true,
@@ -134,7 +134,7 @@ export const getDashboardWizards = (user = null) => {
   // Define which wizards are available for each group
   const aanbodBeheerderWizards = [
     DASHBOARD_WIZARDS.EIGEN_APPLICATIE,
-    DASHBOARD_WIZARDS.KOPPELING_PUBLICEEREN,
+    DASHBOARD_WIZARDS.KOPPELING_PUBLICEREN,
     DASHBOARD_WIZARDS.DIENST,
     DASHBOARD_WIZARDS.GEBRUIK_TOEVOEGEN,
   ];
