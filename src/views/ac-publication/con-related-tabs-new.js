@@ -1,6 +1,5 @@
 import _ from 'lodash';
 import { observer } from 'mobx-react-lite';
-import { useEffect } from 'react';
 import { AcLoader } from '@components';
 import { AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
 import {
@@ -238,7 +237,6 @@ const RelatedTabs = observer(
     gebruikLoading = false,
     excludeObjectIds = [],
     tabNameOverride = { schemaName: null, newTabName: null },
-    tabIndex,
     setTabIndex,
     object,
     navigateTo,
@@ -305,15 +303,6 @@ const RelatedTabs = observer(
 
     const allTabs = [...beforeCustom, ...schemaTabs, ...afterCustom];
 
-    // Determine if there are any visible custom tabs
-    const anyVisibleCustomTabs = [
-      ...(customTabsBefore || []),
-      ...(customTabsAfter || []),
-    ].some((t) => isVisible(t?.visible));
-
-    // Check if we have any data
-    const hasAnyData = mergedItems.length > 0;
-
     // Only show loader if we're loading AND have no tabs at all
     if (isLoading && allTabs.length === 0) {
       return (
@@ -332,9 +321,6 @@ const RelatedTabs = observer(
     if (allTabs.length === 0) {
       return null;
     }
-
-    // Ensure tabIndex is within bounds
-    const safeTabIndex = Math.min(Math.max(0, tabIndex), allTabs.length - 1);
     
     // Create a stable key based on tab structure to force remount on structure changes
     const tabsKey = allTabs.map(t => t.id || t.tab?.id).join('-');
@@ -356,7 +342,7 @@ const RelatedTabs = observer(
                   ? tabNameOverride.newTabName
                   : getTabHeaderName(entry.schemaSlug);
               return (
-                <AcTab key={entry.id}>
+                <AcTab key={entry.id} id={entry.id}>
                   <span
                     style={{
                       display: 'flex',
@@ -377,7 +363,7 @@ const RelatedTabs = observer(
             const count = resolveCount(tab);
 
             return (
-              <AcTab key={tab.id || `custom-${idx}`}>
+              <AcTab key={tab.id || `custom-${idx}`} id={tab.id || `custom-${idx}`}>
                 {headerNode ? (
                   headerNode
                 ) : (
@@ -401,7 +387,7 @@ const RelatedTabs = observer(
         {allTabs.map((entry, idx) => {
           if (entry.kind === 'schema') {
             return (
-              <AcTabPanel key={entry.id}>
+              <AcTabPanel key={entry.id} id={entry.id}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   {entry.items.map((item) => renderCard(item, object, navigateTo, user, schemas))}
                 </div>
@@ -412,7 +398,7 @@ const RelatedTabs = observer(
           // Custom tab panel
           const { tab } = entry;
           return (
-            <AcTabPanel key={tab.id || `custom-${idx}`}>
+            <AcTabPanel key={tab.id || `custom-${idx}`} id={tab.id || `custom-${idx}`}>
               {typeof tab.render === 'function'
                 ? tab.render({ object, navigateTo })
                 : null}
