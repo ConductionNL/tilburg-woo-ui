@@ -77,7 +77,7 @@ const ConFormKoppelingenStage = memo(
       { value: 'n.v.t', label: 'N.v.t' },
       { value: 'bestandsoverdracht', label: 'Bestandsoverdracht' },
       { value: 'digikoppeling', label: 'Digikoppeling' },
-      { value: 'message que', label: 'Message queue' },
+      { value: 'message queue', label: 'Message queue' },
       { value: 'upload naar portaal', label: 'Upload naar portaal' },
       { value: 'webservices', label: 'Webservices' },
       { value: 'api', label: 'API' },

@@ -180,7 +180,7 @@ const FormModalConfigFactory = {
             diensten: () =>
               [
                 'Functioneel beheer',
-                'Applicatie beheer',
+                'Applicatiebeheer',
                 'Technisch beheer',
                 'Implementatieondersteuning',
                 'Opleidingen',
@@ -764,7 +764,7 @@ const FormModalConfigFactory = {
               [
                 { id: 'Actief', label: 'Actief' },
                 { id: 'Verlopen', label: 'Verlopen' },
-                { id: 'Inonderhandeling', label: 'Inonderhandeling' },
+                { id: 'In onderhandeling', label: 'In onderhandeling' },
               ].map((status) => ({ value: status.id, label: status.label })),
           },
           fieldConfigs: {

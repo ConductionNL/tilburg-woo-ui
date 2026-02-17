@@ -203,7 +203,7 @@ const AcMijnOmgeving = () => {
               onClick={syncGemma}
               disabled={syncGemmaLoading}
             >
-              {syncGemmaLoading ? 'Archimate inlezen...' : 'Archimate inlezen'}
+              {syncGemmaLoading ? 'ArchiMate inlezen...' : 'ArchiMate inlezen'}
             </AcButton>
 
             <AcButton
