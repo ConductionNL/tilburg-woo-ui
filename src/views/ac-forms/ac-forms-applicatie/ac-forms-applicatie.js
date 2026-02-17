@@ -2552,14 +2552,14 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
               {!prefillError && (
                 <>
                   <div>
-                    <h3
+                    <h2
                       className={clsx(
                         'utrecht-heading-3',
                         'ac-register-form-heading'
                       )}
                     >
                       {currentStepName(currentStep)}
-                    </h3>
+                    </h2>
 
                     {registerCallBack === 'error' && error.message && (
                       <Alert type='error'>
