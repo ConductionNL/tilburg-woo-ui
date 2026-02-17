@@ -8,8 +8,6 @@ import { VISUALS } from '@constants';
 import { AcButton } from '@molecules';
 import {
   Heading,
-  Paragraph,
-  Alert,
 } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
 import { schemaCache } from '@services/schemaCache.service';
@@ -19,7 +17,6 @@ import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-behe
 import { createBeschrijvingTab } from './helpers/beschrijving-tab.helper';
 // import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
-import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
 import { normalizeSchemaName } from '@src/utilities/con-normalize-schema-name';
 import { AcFormatDate } from '@src/utilities/ac-format-date';
 // import { checkOrganizationPermissions } from '@utils/organization-permissions';

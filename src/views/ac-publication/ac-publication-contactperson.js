@@ -5,7 +5,11 @@ import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-behe
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AcContainer, AcFlex } from '@atoms';
-import { AcLoader, ConDetailsActionsMenu, ConPublicationTypeBadge } from '@components';
+import {
+  AcLoader,
+  ConDetailsActionsMenu,
+  ConPublicationTypeBadge,
+} from '@components';
 import { withStore } from '@stores';
 import { VISUALS } from '@constants';
 import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
@@ -111,7 +115,7 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
   const [usesLoading, setUsesLoading] = useState(false);
   const [usedLoading, setUsedLoading] = useState(false);
   const [tabIndex, setTabIndex] = useState(0);
-  
+
   // Aggregated schemas from all endpoints (indexed by schema ID)
   const [aggregatedSchemas, setAggregatedSchemas] = useState({});
 
@@ -134,12 +138,12 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
       }
       const data = await response.json();
       setUses(data.results || []);
-      
+
       // Extract and aggregate schemas from @self.schemas
       if (data['@self']?.schemas) {
-        setAggregatedSchemas(prev => ({
+        setAggregatedSchemas((prev) => ({
           ...prev,
-          ...data['@self'].schemas
+          ...data['@self'].schemas,
         }));
       }
     } catch (error) {
@@ -168,12 +172,12 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
       }
       const data = await response.json();
       setUsed(data.results || []);
-      
+
       // Extract and aggregate schemas from @self.schemas
       if (data['@self']?.schemas) {
-        setAggregatedSchemas(prev => ({
+        setAggregatedSchemas((prev) => ({
           ...prev,
-          ...data['@self'].schemas
+          ...data['@self'].schemas,
         }));
       }
     } catch (error) {
@@ -185,7 +189,7 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
 
   useEffect(() => {
     if (!id) return;
-    
+
     fetchUses();
     fetchUsed();
   }, [id, fetchUses, fetchUsed]);
@@ -200,22 +204,20 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
       <AcContainer margin='xl'>
         <AcFlex column spacing='sm'>
           <AcFlex spacing='sm' justifyContent='between' alignItems='center'>
-            <Heading level={4} className='con-product-publication--header-container'>
-              <div className='con-beheer-details--header-container'>
-                {(get_single?.['@self']?.image || get_single?.image) && (
-                  <ConLogoPreview
-                    className='con-beheer-details--logo-container'
-                    logoUrl={get_single?.['@self']?.image || get_single?.image}
-                  />
-                )}
+            <div className='con-beheer-details--header-container'>
+              {(get_single?.['@self']?.image || get_single?.image) && (
+                <ConLogoPreview
+                  className='con-beheer-details--logo-container'
+                  logoUrl={get_single?.['@self']?.image || get_single?.image}
+                />
+              )}
 
-                <Heading className='con-beheer-details--title'>
-                  {`${get_single?.voornaam} ${get_single?.tussenvoegsel || ''} ${
-                    get_single?.achternaam
-                  }` || 'Contactpersoon'}
-                </Heading>
-              </div>
-            </Heading>
+              <Heading className='con-beheer-details--title'>
+                {`${get_single?.voornaam} ${get_single?.tussenvoegsel || ''} ${
+                  get_single?.achternaam
+                }` || 'Contactpersoon'}
+              </Heading>
+            </div>
 
             <AcFlex
               justifyContent='between'
@@ -228,36 +230,39 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
               </Heading>
 
               <ConDetailsActionsMenu
-                  user={user}
-                  id={id}
-                  schemaSlug={schemaSlug}
-                  title={get_single?.['@self']?.name || get_single?.id}
-                  published={get_single?.['@self']?.published}
-                  object={get_single}
-                  showViewAction={false}
-                  showEditAction={true}
-                  showPublishActions={true}
-                  onDelete={handleDelete}
-                  onEdit={() => {
-                    if (schemaSlug) {
-                      const wizardSchemaName = normalizeSchemaName(schemaSlug).toLowerCase();
-                      const wizards = Object.values(DASHBOARD_WIZARDS);
-                      const wizard = wizards.find((w) => w.schema === wizardSchemaName);
+                user={user}
+                id={id}
+                schemaSlug={schemaSlug}
+                title={get_single?.['@self']?.name || get_single?.id}
+                published={get_single?.['@self']?.published}
+                object={get_single}
+                showViewAction={false}
+                showEditAction={true}
+                showPublishActions={true}
+                onDelete={handleDelete}
+                onEdit={() => {
+                  if (schemaSlug) {
+                    const wizardSchemaName =
+                      normalizeSchemaName(schemaSlug).toLowerCase();
+                    const wizards = Object.values(DASHBOARD_WIZARDS);
+                    const wizard = wizards.find(
+                      (w) => w.schema === wizardSchemaName
+                    );
 
-                      if (wizard) {
-                        const baseUrl = getWizardUrl(wizard);
-                        const url = new URL(baseUrl, window.location.origin);
-                        url.searchParams.set('id', id);
-                        navigate(url.pathname + url.search);
-                        return;
-                      }
+                    if (wizard) {
+                      const baseUrl = getWizardUrl(wizard);
+                      const url = new URL(baseUrl, window.location.origin);
+                      url.searchParams.set('id', id);
+                      navigate(url.pathname + url.search);
+                      return;
                     }
-                    // Fallback to beheer detail page in same tab with edit modal
-                    const beheerUrl = `/beheer/${schemaSlug}/${id}?showEditModal=true`;
-                    navigate(beheerUrl);
-                  }}
-                  triggerStyle='button'
-                />
+                  }
+                  // Fallback to beheer detail page in same tab with edit modal
+                  const beheerUrl = `/beheer/${schemaSlug}/${id}?showEditModal=true`;
+                  navigate(beheerUrl);
+                }}
+                triggerStyle='button'
+              />
             </AcFlex>
           </AcFlex>
           <AcFlex spacing='sm' justifyContent='between'>

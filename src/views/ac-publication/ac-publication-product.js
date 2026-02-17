@@ -32,7 +32,6 @@ import remarkEmoji from 'remark-emoji';
 import remarkSupersub from 'remark-supersub';
 import rehypeSlug from 'rehype-slug';
 import rehypeSanitize from 'rehype-sanitize';
-import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
 
 /**
  * Product Details Page (simplified for fixed type)
@@ -75,7 +74,7 @@ const AcPublicationProduct = ({
   const [usedLoading, setUsedLoading] = useState(false);
   const [gebruikLoading, setGebruikLoading] = useState(false);
   const [relatedTabIndex, setRelatedTabIndex] = useState(0);
-  
+
   // Aggregated schemas from all endpoints (indexed by schema ID)
   const [aggregatedSchemas, setAggregatedSchemas] = useState({});
 
@@ -115,12 +114,12 @@ const AcPublicationProduct = ({
       }
       const data = await response.json();
       setUses(data.results || []);
-      
+
       // Extract and aggregate schemas from @self.schemas
       if (data['@self']?.schemas) {
-        setAggregatedSchemas(prev => ({
+        setAggregatedSchemas((prev) => ({
           ...prev,
-          ...data['@self'].schemas
+          ...data['@self'].schemas,
         }));
       }
     } catch (error) {
@@ -149,12 +148,12 @@ const AcPublicationProduct = ({
       }
       const data = await response.json();
       setUsed(data.results || []);
-      
+
       // Extract and aggregate schemas from @self.schemas
       if (data['@self']?.schemas) {
-        setAggregatedSchemas(prev => ({
+        setAggregatedSchemas((prev) => ({
           ...prev,
-          ...data['@self'].schemas
+          ...data['@self'].schemas,
         }));
       }
     } catch (error) {
@@ -184,12 +183,12 @@ const AcPublicationProduct = ({
       }
       const data = await response.json();
       setGebruik(data.results || []);
-      
+
       // Extract and aggregate schemas from @self.schemas
       if (data['@self']?.schemas) {
-        setAggregatedSchemas(prev => ({
+        setAggregatedSchemas((prev) => ({
           ...prev,
-          ...data['@self'].schemas
+          ...data['@self'].schemas,
         }));
       }
     } catch (error) {
@@ -201,7 +200,7 @@ const AcPublicationProduct = ({
 
   useEffect(() => {
     if (!id) return;
-    
+
     fetchUses();
     fetchUsed();
     fetchGebruik();
@@ -216,26 +215,25 @@ const AcPublicationProduct = ({
     <AcContainer margin='xl'>
       <AcFlex column spacing='sm'>
         <AcFlex spacing='sm' justifyContent='between' alignItems='center'>
-          <Heading level={4} className='con-product-publication--header-container'>
-            <div className='con-beheer-details--header-container'>
-              {(get_single?.['@self']?.image || get_single?.logo) && (
-                <ConLogoPreview
-                  className='con-beheer-details--logo-container'
-                  logoUrl={get_single?.['@self']?.image || get_single?.logo}
-                />
-              )}
+          <div className='con-beheer-details--header-container'>
+            {(get_single?.['@self']?.image || get_single?.logo) && (
+              <ConLogoPreview
+                className='con-beheer-details--logo-container'
+                logoUrl={get_single?.['@self']?.image || get_single?.logo}
+              />
+            )}
 
-              <Heading className='con-beheer-details--title'>
-                {get_single?.['@self']?.name ||
-                  get_single?.id ||
-                  get_single?.name ||
-                  'Product'}{' '}
-                {'('}
-                <ConUuidResolver>{get_single.aanbieder}</ConUuidResolver>
-                {')'}
-              </Heading>
-            </div>
-          </Heading>
+            <Heading className='con-beheer-details--title'>
+              {get_single?.['@self']?.name ||
+                get_single?.id ||
+                get_single?.name ||
+                'Product'}{' '}
+              {'('}
+              <ConUuidResolver>{get_single.aanbieder}</ConUuidResolver>
+              {')'}
+            </Heading>
+          </div>
+
           <AcFlex
             justifyContent='end'
             alignItems='center'

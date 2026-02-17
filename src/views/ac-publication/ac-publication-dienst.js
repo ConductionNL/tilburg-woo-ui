@@ -3,15 +3,15 @@ import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AcColumn, AcContainer, AcFlex } from '@atoms';
-import { AcLoader, ConDetailsActionsMenu, ConExternalLink, ConPublicationTypeBadge } from '@components';
+import {
+  AcLoader,
+  ConDetailsActionsMenu,
+  ConExternalLink,
+  ConPublicationTypeBadge,
+} from '@components';
 import { VISUALS } from '@constants';
 import { AcButton } from '@molecules';
-import {
-  Heading,
-  Paragraph,
-  Link,
-  Alert,
-} from '@utrecht/component-library-react/dist/css-module';
+import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
 import { schemaCache } from '@services/schemaCache.service';
 import RelatedTabs from '@views/ac-publication/con-related-tabs-new';
@@ -32,7 +32,6 @@ import rehypeSanitize from 'rehype-sanitize';
 import remarkRehype from 'remark-rehype';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
-import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
 import { normalizeSchemaName } from '@src/utilities/con-normalize-schema-name';
 // import { checkOrganizationPermissions } from '@utils/organization-permissions';
 
@@ -64,7 +63,7 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
   const [usesLoading, setUsesLoading] = useState(false);
   const [usedLoading, setUsedLoading] = useState(false);
   const [relatedTabIndex, setRelatedTabIndex] = useState(0);
-  
+
   // Aggregated schemas from all endpoints (indexed by schema ID)
   const [aggregatedSchemas, setAggregatedSchemas] = useState({});
 
@@ -134,12 +133,12 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
       if (!response.ok) return;
       const json = await response.json();
       setUses(json.results || []);
-      
+
       // Extract and aggregate schemas from @self.schemas
       if (json['@self']?.schemas) {
-        setAggregatedSchemas(prev => ({
+        setAggregatedSchemas((prev) => ({
           ...prev,
-          ...json['@self'].schemas
+          ...json['@self'].schemas,
         }));
       }
     } finally {
@@ -158,12 +157,12 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
       if (!response.ok) return;
       const json = await response.json();
       setUsed(json.results || []);
-      
+
       // Extract and aggregate schemas from @self.schemas
       if (json['@self']?.schemas) {
-        setAggregatedSchemas(prev => ({
+        setAggregatedSchemas((prev) => ({
           ...prev,
-          ...json['@self'].schemas
+          ...json['@self'].schemas,
         }));
       }
     } finally {
@@ -384,7 +383,10 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
                     </div>
                     {contact['e-mailadres'] && (
                       <div>
-                        <Link href={`mailto:${contact['e-mailadres']}`} style={{ minHeight: '24px' }}>
+                        <Link
+                          href={`mailto:${contact['e-mailadres']}`}
+                          style={{ minHeight: '24px' }}
+                        >
                           {contact['e-mailadres']}
                         </Link>
                       </div>
