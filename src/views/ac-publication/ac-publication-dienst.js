@@ -19,7 +19,6 @@ import ConLogoPreview from '../ac-register/con-logo-preview';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
 import { createBeschrijvingTab } from './helpers/beschrijving-tab.helper';
-import ConGlossaryHighlight from '@components/con-glossary-highlight/con-glossary-highlight';
 
 // Markdown rendering
 import MDEditor from '@uiw/react-md-editor';
@@ -336,9 +335,9 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
 
         <div style={{ flex: 2 }}>
           {!!get_single?.beschrijvingKort && (
-            <ConGlossaryHighlight as='div'>
+            <div>
               {get_single?.beschrijvingKort}
-            </ConGlossaryHighlight>
+            </div>
           )}
         </div>
 

@@ -12,7 +12,6 @@ import { commongroundApiUrl } from '@config';
 import { schemaCache } from '@services/schemaCache.service';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 import { normalizeSchemaName } from '@src/utilities/con-normalize-schema-name';
-import ConGlossaryHighlight from '@components/con-glossary-highlight/con-glossary-highlight';
 import { createBeschrijvingTab } from './helpers/beschrijving-tab.helper';
 
 const AcPublication = ({ store: { publications, object, user } }) => {
@@ -236,9 +235,9 @@ const AcPublication = ({ store: { publications, object, user } }) => {
           <AcFlex spacing='sm' justifyContent='between'>
             <AcFlex column spacing='md' style={{ flex: 3 }}>
               {!!get_single?.['@self']?.summary && (
-                <ConGlossaryHighlight as='div'>
+                <div>
                   {get_single?.['@self']?.summary}
-                </ConGlossaryHighlight>
+                </div>
               )}
             </AcFlex>
             {(get_single?.['e-mailadres'] ||

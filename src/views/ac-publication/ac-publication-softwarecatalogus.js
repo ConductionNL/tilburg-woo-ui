@@ -16,7 +16,6 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 
 import { LABELS, VISUALS } from '@constants';
-import ConGlossaryHighlight from '@components/con-glossary-highlight/con-glossary-highlight';
 import { AcGetAdditionalInfoRow } from '@src/services/ac-get-additional-info-row';
 import { Pagination } from '@amsterdam/design-system-react';
 import { Heading2, Heading3 } from '@utrecht/component-library-react';
@@ -145,9 +144,9 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications, user, object } 
 
           <AcCard blue>
             <Heading level={2}>Omschrijving</Heading>
-            <ConGlossaryHighlight as='p' className='utrecht-paragraph'>
+            <Paragraph>
               {get_single?.description || 'Geen omschrijving beschikbaar'}
-            </ConGlossaryHighlight>
+            </Paragraph>
           </AcCard>
 
           {get_single?.data?.github_url && (
@@ -303,10 +302,10 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications, user, object } 
                           </div>
                         )}
                       </div>
-                      <ConGlossaryHighlight as='p' className='utrecht-paragraph ac-publication-organization-card-description'>
+                      <p className='utrecht-paragraph ac-publication-organization-card-description'>
                         {get_single?.organization?.summary ||
                           'Geen omschrijving beschikbaar'}
-                      </ConGlossaryHighlight>
+                      </p>
                     </div>
                   </AcCard>
                 </div>

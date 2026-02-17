@@ -23,7 +23,6 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 
 import { LABELS, VISUALS } from '@constants';
-import ConGlossaryHighlight from '@components/con-glossary-highlight/con-glossary-highlight';
 import { Pagination } from '@amsterdam/design-system-react';
 import { Heading2 } from '@utrecht/component-library-react';
 import { AcGetAdditionalInfoRow } from '@src/services/ac-get-additional-info-row';
@@ -157,9 +156,9 @@ const AcPublicationFormulier = ({ store: { publications, user } }) => {
 
           <AcCard blue>
             <Heading level={2}>{LABELS.SUMMARY}</Heading>
-            <ConGlossaryHighlight as='p' className='utrecht-paragraph'>
+            <Paragraph>
               {get_single?.summary || LABELS.SUMMARY_UNAVAILABLE}
-            </ConGlossaryHighlight>
+            </Paragraph>
           </AcCard>
 
           {get_single?.data?.github_url && (

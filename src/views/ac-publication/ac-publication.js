@@ -19,9 +19,10 @@ import AcPublicationContactperson from './ac-publication-contactperson';
 import AcPublicationModuleVersie from './ac-publication-moduleversie';
 import { AcContainer, AcFlex } from '@src/atoms';
 import { AcButton } from '@molecules';
-import { LABELS, VISUALS } from '@constants';
+import { VISUALS } from '@constants';
+import ConGlossaryHighlight from '@components/con-glossary-highlight/con-glossary-highlight';
 
-const AcPublication = observer(({ store: { publications, glossary } }) => {
+const AcPublication = observer(({ store: { publications } }) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const {
@@ -199,21 +200,9 @@ const AcPublication = observer(({ store: { publications, glossary } }) => {
   };
 
   return (
-    <>
-      {glossary.is_warmed_up && glossary.all_terms.length > 0 && (
-        <div className='con-glossary-button-container'>
-          <button
-            className='con-glossary-button'
-            onClick={() => glossary.openDrawer()}
-            aria-label={LABELS.CONCEPTS_LIST}
-          >
-            <VISUALS.LIST_ALT />
-            <span>{LABELS.CONCEPTS_LIST}</span>
-          </button>
-        </div>
-      )}
+    <ConGlossaryHighlight as='div'>
       {renderPublicationView()}
-    </>
+    </ConGlossaryHighlight>
   );
 });
 

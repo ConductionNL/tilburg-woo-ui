@@ -13,7 +13,6 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
 import { schemaCache } from '@services/schemaCache.service';
-import ConGlossaryHighlight from '@components/con-glossary-highlight/con-glossary-highlight';
 import RelatedTabs from '@views/ac-publication/con-related-tabs-new';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
@@ -353,9 +352,9 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
             {get_single?.beschrijvingKort && (
               <div style={{ marginBottom: '8px' }}>
                 <strong>Korte beschrijving: </strong>
-                <ConGlossaryHighlight as='span'>
+                <span>
                   {get_single.beschrijvingKort}
-                </ConGlossaryHighlight>
+                </span>
               </div>
             )}
             {intermediairId && (

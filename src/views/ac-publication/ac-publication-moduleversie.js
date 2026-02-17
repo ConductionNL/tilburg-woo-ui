@@ -11,7 +11,6 @@ import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
 import { schemaCache } from '@services/schemaCache.service';
 import { createBeschrijvingTab } from './helpers/beschrijving-tab.helper';
-import ConGlossaryHighlight from '@components/con-glossary-highlight/con-glossary-highlight';
 
 // Markdown Editor
 import remarkDefinitionList, { defListHastHandlers } from 'remark-definition-list';
@@ -232,9 +231,9 @@ const AcPublicationModuleVersie = ({ store: { publications, user, object } }) =>
         <AcFlex spacing='sm' justifyContent='between'>
           <AcFlex column spacing='md' style={{ flex: 3 }}>
             {!!get_single?.beschrijvingKort && (
-              <ConGlossaryHighlight as='div'>
+              <div>
                 {get_single?.beschrijvingKort}
-              </ConGlossaryHighlight>
+              </div>
             )}
 
             {!!get_single?.beschrijvingLang && (
