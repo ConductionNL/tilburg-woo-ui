@@ -15,6 +15,7 @@ const ConCardKoppeling = ({
   id,
   source,
   target,
+  created,
   navigateTo = 'publication',
 }) => {
   const onClick = () => {
@@ -118,43 +119,53 @@ const ConCardKoppeling = ({
         )}
 
       <AcFlex justifyContent='between' className='meta'>
-        <AcFlex alignItems='center' spacing='sm' wrap>
-          {/* Status badge */}
-          {status && (
-            <>
-              <StatusBadge>{extractText(status)}</StatusBadge>
-              <VISUALS.ELLIPSE />
-            </>
-          )}
+        <AcFlex column>
+          <AcFlex alignItems='center' spacing='sm' wrap>
+            {/* Status badge */}
+            {status && (
+              <>
+                <StatusBadge>{extractText(status)}</StatusBadge>
+                <VISUALS.ELLIPSE />
+              </>
+            )}
 
-          {/* Koppel type (intern/extern) */}
-          {koppelType && (
-            <>
-              <Paragraph small>
-                {koppelType === 'extern' ? 'Externe koppeling' : 'Interne koppeling'}
+            {/* Koppel type (intern/extern) */}
+            {koppelType && (
+              <>
+                <Paragraph small>
+                  {koppelType === 'extern' ? 'Externe koppeling' : 'Interne koppeling'}
+                </Paragraph>
+                <VISUALS.ELLIPSE />
+              </>
+            )}
+
+            {/* Soort koppeling */}
+            {soortKoppeling && (
+              <>
+                <Paragraph small>{extractText(soortKoppeling)}</Paragraph>
+                <VISUALS.ELLIPSE />
+              </>
+            )}
+
+            {/* Datum in gebruik */}
+            {datumInGebruik && (
+              <>
+                <Paragraph small>Sinds {acFormatDate(datumInGebruik)}</Paragraph>
+                <VISUALS.ELLIPSE />
+              </>
+            )}
+
+            {/* Category */}
+            {category && <Paragraph small>{extractText(category)}</Paragraph>}
+          </AcFlex>
+          <AcFlex alignItems='center' spacing='sm'>
+            {/* Created date */}
+            {created && (
+              <Paragraph small style={{ whiteSpace: 'nowrap' }}>
+                {acFormatDate(created, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
               </Paragraph>
-              <VISUALS.ELLIPSE />
-            </>
-          )}
-
-          {/* Soort koppeling */}
-          {soortKoppeling && (
-            <>
-              <Paragraph small>{extractText(soortKoppeling)}</Paragraph>
-              <VISUALS.ELLIPSE />
-            </>
-          )}
-
-          {/* Datum in gebruik */}
-          {datumInGebruik && (
-            <>
-              <Paragraph small>Sinds {acFormatDate(datumInGebruik)}</Paragraph>
-              <VISUALS.ELLIPSE />
-            </>
-          )}
-
-          {/* Category */}
-          {category && <Paragraph small>{extractText(category)}</Paragraph>}
+            )}
+          </AcFlex>
         </AcFlex>
         <AcLink to={onClick()}>
           <span className='sr-only'>
