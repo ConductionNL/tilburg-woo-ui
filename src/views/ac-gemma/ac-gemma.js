@@ -13,7 +13,8 @@ const AcGemma = observer(() => {
       hostname !== 'localhost' &&
       hostname !== 'softwarecatalogus.accept.opencatalogi.nl' &&
       hostname !== 'softwarecatalogus.test.opencatalogi.nl' &&
-      hostname !== 'acceptatie.softwarecatalogus.nl'
+      hostname !== 'acceptatie.softwarecatalogus.nl' &&
+      hostname !== 'performance.accept.opencatalogi.nl'
     ) {
       navigate('/');
     }
