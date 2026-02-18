@@ -64,8 +64,7 @@ const renderCard = (item, object, navigateTo, user) => {
           cardType={schemaSlug}
           type={schemaSlug ? getTabHeaderName(schemaSlug, true) : null}
           referenceComponents={item.referentieComponenten}
-          updated={item['@self'].updated}
-          published={item['@self'].published}
+          created={item['@self']?.created}
           organisation={item['@self'].organisation}
           objectStore={object}
           navigateTo={`${navigateTo}-${schemaSlug}`}
@@ -106,8 +105,7 @@ const renderCard = (item, object, navigateTo, user) => {
             item['@self']?.name
           }
           summary={item.beschrijving ?? item.beschrijvingKort ?? ''}
-          updated={item['@self']?.updated}
-          published={item['@self']?.published}
+          created={item['@self']?.created}
           category={schemaSlug ? getTabHeaderName(schemaSlug, true) : null}
           themes={item.themes}
           aanbieder={item['@self']?.relations?.aanbieder || item.aanbieder}
@@ -174,7 +172,7 @@ const renderCard = (item, object, navigateTo, user) => {
           id={item.id}
           title={item.title ?? item.titel ?? item.name ?? item.naam ?? item.id}
           summary={item.beschrijving ?? item.beschrijvingKort ?? ''}
-          published={item['@self']?.published}
+          created={item['@self']?.created}
           category={schemaSlug ? getTabHeaderName(schemaSlug, true) : null}
           themes={item.themes}
           navigateTo={navigateTo}

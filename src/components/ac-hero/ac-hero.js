@@ -55,6 +55,7 @@ const AcHero = (contents) => {
       case 'softwarecatalogus.accept.opencatalogi.nl':
       case 'acceptatie.softwarecatalogus.nl':
       case 'softwarecatalogus.test.opencatalogi.nl':
+      case 'performance.accept.opencatalogi.nl':
         return 'https://vng.nl/sites/default/files/styles/banner_header_xl/public/2023-07/illustratie_homepage.png?itok=VWuXeA1E';
       case 'opencatalogi.nl':
       case 'developer.opencatalogi.nl':

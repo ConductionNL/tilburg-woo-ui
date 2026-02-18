@@ -21,7 +21,7 @@ const ConCardOrganisationApplication = ({
   type,
   referenceComponents,
   organisation,
-  published,
+  created,
   navigateTo = 'publication',
   user,
   // self, // Add self prop for relevance
@@ -143,14 +143,14 @@ const ConCardOrganisationApplication = ({
             </Paragraph>
           )}
           <AcFlex alignItems='center' spacing='sm'>
-            {published && (
-              <Paragraph small>
-                {acFormatDate(published, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
+            {created && (
+              <Paragraph small style={{ whiteSpace: 'nowrap' }}>
+                {acFormatDate(created, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
               </Paragraph>
             )}
             {type && (
               <>
-                {published && <VISUALS.ELLIPSE />}
+                {created && <VISUALS.ELLIPSE />}
                 <Paragraph small>{getTypeLabel(type)}</Paragraph>
               </>
             )}

@@ -127,8 +127,7 @@ const renderCard = (item, object, navigateTo, user, schemas) => {
           cardType={schemaSlug}
           type={schemaSlug ? getTabHeaderName(schemaSlug, true) : null}
           referenceComponents={item.referentieComponenten}
-          updated={item['@self'].updated}
-          published={item['@self'].published}
+          created={item['@self']?.created}
           organisation={item['@self'].organisation}
           objectStore={object}
           navigateTo={`${navigateTo}-${schemaSlug}`}
@@ -170,8 +169,7 @@ const renderCard = (item, object, navigateTo, user, schemas) => {
             item['@self']?.name
           }
           summary={item.beschrijving ?? item.beschrijvingKort ?? ''}
-          updated={item['@self']?.updated}
-          published={item['@self']?.published}
+          created={item['@self']?.created}
           category={schemaSlug ? getTabHeaderName(schemaSlug, true) : null}
           themes={item.themes}
           aanbieder={item['@self']?.relations?.aanbieder || item.aanbieder}

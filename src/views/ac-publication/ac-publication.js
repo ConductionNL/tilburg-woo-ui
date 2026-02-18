@@ -157,11 +157,10 @@ const AcPublication = observer(({ store: { publications } }) => {
     return <AcLoader />;
   }
 
-  const renderPublicationView = () => {
-    if (get_single?.catalog?.title === 'Softwarecatalogus') {
-      return <AcPublicationSoftwarecatalogus />;
-    }
-
+  if (get_single?.catalog?.title === 'Softwarecatalogus') {
+    return <AcPublicationSoftwarecatalogus />;
+  } else {
+    const publicationType = get_single?.['@self']?.schema?.slug.toLowerCase();
     switch (get_single?.publicationType?.title) {
       case 'Softwarecatalogus':
         return <AcPublicationSoftwarecatalogus />;
@@ -171,28 +170,28 @@ const AcPublication = observer(({ store: { publications } }) => {
       case 'Woo-verzoeken en -besluiten':
         return <AcPublicationWooVerzoek />;
       default:
-        if (get_single?.['@self']?.schema?.slug === 'organisatie') {
+        if (publicationType === 'organisatie') {
           return <AcPublicationOrganisation />;
         }
-        if (get_single?.['@self']?.schema?.slug === 'suite') {
+        if (publicationType === 'suite') {
           return <AcPublicationProduct />;
         }
-        if (get_single?.['@self']?.schema?.slug === 'module') {
+        if (publicationType === 'module') {
           return <AcPublicationModule />;
         }
-        if (get_single?.['@self']?.schema?.slug === 'moduleversie') {
+        if (publicationType === 'moduleversie') {
           return <AcPublicationModuleVersie />;
         }
-        if (get_single?.['@self']?.schema?.slug === 'koppeling') {
+        if (publicationType === 'koppeling') {
           return <AcPublicationKoppeling />;
         }
-        if (get_single?.['@self']?.schema?.slug === 'gebruik') {
+        if (publicationType === 'gebruik') {
           return <AcPublicationGebruik />;
         }
-        if (get_single?.['@self']?.schema?.slug === 'dienst') {
+        if (publicationType === 'dienst') {
           return <AcPublicationDienst />;
         }
-        if (get_single?.['@self']?.schema?.slug === 'contactpersoon') {
+        if (publicationType === 'contactpersoon') {
           return <AcPublicationContactperson />;
         }
         return <AcPublicationDefault schema={schema} />;
