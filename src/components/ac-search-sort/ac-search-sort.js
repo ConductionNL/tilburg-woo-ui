@@ -32,7 +32,7 @@ const AcSearchSort = ({ store: { publications }, type }) => {
     if (value.length !== 2) {
       resetSort();
       // Remove all _order parameters from URL
-      params.delete('_order[_published]');
+      params.delete('_order[_created]');
       params.delete('_order[_name]');
       params.delete('_order[_relevance]');
       setSearchParams(params);
@@ -43,12 +43,12 @@ const AcSearchSort = ({ store: { publications }, type }) => {
     setSort(key, order);
 
     // Remove any existing _order parameters before setting the new one
-    params.delete('_order[_published]');
+    params.delete('_order[_created]');
     params.delete('_order[_name]');
     params.delete('_order[_relevance]');
 
     // Update URL with new _order parameter
-    // Metadata properties use _property format (e.g., _name, _published, _relevance)
+    // Metadata properties use _property format (e.g., _name, _created, _relevance)
     params.set(`_order[_${key}]`, order);
     params.set('_page', '1'); // Reset to first page when sorting changes
     setSearchParams(params);
@@ -77,14 +77,14 @@ const AcSearchSort = ({ store: { publications }, type }) => {
             Minst relevant
           </SelectOption> */}
           <SelectOption
-            selected={get_order?._published === 'desc'}
-            value='published|desc'
+            selected={get_order?._created === 'asc'}
+            value='created|asc'
           >
             Datum - oud naar nieuw
           </SelectOption>
           <SelectOption
-            selected={get_order?._published === 'asc'}
-            value='published|asc'
+            selected={get_order?._created === 'desc'}
+            value='created|desc'
           >
             Datum - nieuw naar oud
           </SelectOption>

@@ -180,8 +180,8 @@ const AcDashboard = ({ store }) => {
                   <Paragraph>
                     Hieronder vindt u suggesties die door andere organisaties voor u
                     zijn aangemaakt. Dit kunnen koppelingen, gebruik of andere
-                    registraties zijn. U kunt deze overnemen om ze toe te voegen aan uw
-                    organisatie, of afwijzen als ze niet relevant zijn.
+                    registraties zijn. U kunt deze overnemen om ze toe te voegen aan
+                    uw organisatie, of afwijzen als ze niet relevant zijn.
                   </Paragraph>
                   <div style={{ marginTop: 'var(--tilburg-space-block-md)' }}>
                     <ConAangebodenSuggestiesTable
@@ -197,14 +197,15 @@ const AcDashboard = ({ store }) => {
             {/* Welcome Section */}
             <div className='ac-register-review__section'>
               <div className='ac-register-review__header'>
-                <Heading level={4}>Welkom in de Softwarecatalogus!</Heading>
+                <Heading level={4}>Welkom in de Softwarecatalogus</Heading>
               </div>
               <Separator className='ac-register-review-header__separator' />
 
               <Paragraph>
-                Dit is de centrale plek om applicaties en diensten binnen de gemeente
-                te beheren en te ontdekken en deze te koppelen aan uw ICT
-                Architectuur op basis van de GEMMA.
+                Dit is de centrale plek om producten, applicaties, diensten en
+                koppelingen te beheren. Door applicaties te koppelen aan
+                GEMMA-referentiecomponenten wordt uw applicatielandschap gemapped op
+                de GEMMA-referentiearchitectuur.
               </Paragraph>
 
               <div className='ac-register-review__field'>

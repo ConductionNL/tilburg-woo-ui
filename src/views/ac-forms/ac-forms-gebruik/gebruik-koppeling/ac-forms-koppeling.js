@@ -37,6 +37,9 @@ import { validateWebsite } from '@views/ac-forms/validation/form-validations';
  *
  * If no type is provided, defaults to 'aanbieden-koppeling' (gebruik beheerder flow).
  *
+ * This wizard is only accessible to Gemeente/Samenwerking. The applicatie dropdown
+ * is limited to applications present in the organisation's gebruik (fetched with ?afnemer=).
+ *
  * Current steps (gebruik beheerder flow - aanbieden-koppeling):
  * - Step 0: Een koppeling zoeken (Search for existing connections)
  * - Step 1: Toevoegen/Bewerken (Add/Edit connection details)
@@ -157,6 +160,13 @@ const AcFormsKoppeling = ({ store }) => {
   // Options/loading specifically for the own-app searchable select
   const [ownAppOptions, setOwnAppOptions] = useState([]);
   const [ownAppLoading, setOwnAppLoading] = useState(false);
+
+  /**
+   * This wizard is only for Gemeente/Samenwerking. Applicatie dropdown is limited to
+   * applications in the organisation's gebruik (afnemer). null = not loaded, [] = none, string[] = allowed ids.
+   */
+  const [allowedModuleIdsFromGebruik, setAllowedModuleIdsFromGebruik] =
+    useState(null);
   const [applicatiePreloadLoading, setApplicatiePreloadLoading] = useState(false);
 
   // Search state
@@ -280,53 +290,111 @@ const AcFormsKoppeling = ({ store }) => {
     return '↔';
   };
 
-  // Fetch modules (applications) options on mount
+  /**
+   * This wizard is only for Gemeente/Samenwerking. Fetch gebruik for the active organisation (afnemer)
+   * and derive allowed module IDs for the applicatie dropdown.
+   */
   useEffect(() => {
+    const activeOrg = store?.user?.activeOrganization;
+    const activeOrgId = activeOrg?.uuid || activeOrg?.id;
+    if (!activeOrgId) {
+      setAllowedModuleIdsFromGebruik([]);
+      return;
+    }
+
     let isMounted = true;
-    const fetchModules = async () => {
+    setAllowedModuleIdsFromGebruik(null);
+
+    const fetchGebruik = async () => {
       try {
-        setOwnAppLoading(true);
-        const params = new URLSearchParams({
-          _limit: '20',
-          _page: '1',
-          _published: 'false',
-        });
-        const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module?${params}`;
-        const res = await fetch(endpoint, {
-          headers: { Accept: 'application/json' },
-        });
+        const url = `${commongroundApiUrl()}/softwarecatalog/api/gebruik?afnemer=${encodeURIComponent(
+          String(activeOrgId)
+        )}&_limit=1000&_extend[]=_schema`;
+        const res = await fetch(url, { headers: { Accept: 'application/json' } });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        const list = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.results)
-          ? data.results
-          : [];
-        const options = list.map((item, index) => {
+        const results = Array.isArray(data?.results) ? data.results : [];
+        const ids = new Set();
+        for (const item of results) {
+          const rel = item?.['@self']?.relations?.module ?? item?.module;
+          if (rel == null) continue;
           const id =
-            item?.id ||
-            item?.['@self']?.id ||
-            item?.uuid ||
-            item?.value ||
-            item?.slug ||
-            index;
-          const label =
-            item?.naam ||
-            item?.name ||
-            item?.title ||
-            item?.label ||
-            item?.uuid ||
-            item?.id ||
-            item?.value ||
-            item?.slug ||
-            `Applicatie ${index + 1}`;
-          return {
-            value: String(id),
-            label: String(label),
-            data: item,
-            type: 'applicatie',
-          };
-        });
+            typeof rel === 'string'
+              ? rel.trim()
+              : String(rel?.id ?? rel?.value ?? rel?.['@self']?.id ?? '').trim();
+          if (id) ids.add(id);
+        }
+        if (isMounted) setAllowedModuleIdsFromGebruik(Array.from(ids));
+      } catch (e) {
+        if (isMounted) setAllowedModuleIdsFromGebruik([]);
+      }
+    };
+
+    fetchGebruik();
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    store?.user?.activeOrganization?.uuid,
+    store?.user?.activeOrganization?.id,
+    store,
+  ]);
+
+  // Fetch modules (applications) from organisation's gebruik only
+  useEffect(() => {
+    let isMounted = true;
+    if (allowedModuleIdsFromGebruik === null) return;
+
+    const run = async () => {
+      try {
+        setOwnAppLoading(true);
+        if (allowedModuleIdsFromGebruik.length === 0) {
+          if (isMounted) {
+            setModulesOptions([]);
+            setOwnAppOptions([]);
+          }
+          setOwnAppLoading(false);
+          return;
+        }
+        const options = [];
+        for (const moduleId of allowedModuleIdsFromGebruik) {
+          try {
+            await store.object.fetchObject(
+              'voorzieningen',
+              'module',
+              String(moduleId),
+              { '_extend[]': ['_schema'], _published: 'false' }
+            );
+            const item = store.object.getObject(
+              'voorzieningen_module',
+              String(moduleId)
+            );
+            if (!item || !isMounted) continue;
+            const id =
+              item?.id ??
+              item?.['@self']?.id ??
+              item?.uuid ??
+              item?.value ??
+              moduleId;
+            const label =
+              item?.naam ||
+              item?.name ||
+              item?.title ||
+              item?.label ||
+              item?.uuid ||
+              item?.id ||
+              item?.value ||
+              String(moduleId);
+            options.push({
+              value: String(id),
+              label: String(label),
+              data: item,
+              type: 'applicatie',
+            });
+          } catch {
+            // Skip single module fetch failure
+          }
+        }
         if (isMounted) {
           setModulesOptions(options);
           setOwnAppOptions(options);
@@ -341,11 +409,11 @@ const AcFormsKoppeling = ({ store }) => {
       }
     };
 
-    fetchModules();
+    run();
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [allowedModuleIdsFromGebruik, store]);
 
   // Pre-select applicatie from URL parameter
   useEffect(() => {
@@ -658,7 +726,20 @@ const AcFormsKoppeling = ({ store }) => {
         const collection = store.object.getCollection(
           'voorzieningen_module_koppeling_form_search'
         );
-        const list = collection?.results || collection || [];
+        let list = collection?.results || collection || [];
+
+        if (allowedModuleIdsFromGebruik !== null) {
+          const allowedSet = new Set(
+            (allowedModuleIdsFromGebruik || []).map((id) => String(id))
+          );
+          list = list.filter((item) => {
+            const id = String(
+              item?.['@self']?.id ?? item?.id ?? item?.uuid ?? item?.value ?? ''
+            );
+            return id && allowedSet.has(id);
+          });
+        }
+
         const options = list.map(mapModuleToOption);
 
         // Merge with existing options to preserve selected items
@@ -685,7 +766,7 @@ const AcFormsKoppeling = ({ store }) => {
         setOwnAppLoading(false);
       }
     },
-    [store, mapModuleToOption]
+    [store, mapModuleToOption, allowedModuleIdsFromGebruik]
   );
 
   // Debounced search function for modules
