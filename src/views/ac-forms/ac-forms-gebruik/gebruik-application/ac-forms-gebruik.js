@@ -2224,7 +2224,7 @@ const AcFormsGebruik = ({ store }) => {
               </div>
 
               <div>
-                <h3
+                <h2
                   className={clsx('utrecht-heading-3', 'ac-register-form-heading')}
                 >
                   {isAanbodBeheerdersFlow
@@ -2233,7 +2233,7 @@ const AcFormsGebruik = ({ store }) => {
                       ? 'Selecteer de applicatie en klanten'
                       : 'Controleer uw gegevens'
                     : currentStepName()}
-                </h3>
+                </h2>
 
                 <div className='ac-register-container ac-forms-product'>
                   <div ref={processStepsRef} className='ac-register-process-steps'>

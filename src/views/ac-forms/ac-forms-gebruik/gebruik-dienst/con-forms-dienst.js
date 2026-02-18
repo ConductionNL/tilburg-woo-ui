@@ -2047,11 +2047,11 @@ const ConFormsDienst = ({ store }) => {
           ) : (
             <div>
               <div>
-                <h3
+                <h2
                   className={clsx('utrecht-heading-3', 'ac-register-form-heading')}
                 >
                   {currentStepName()}
-                </h3>
+                </h2>
               </div>
 
               <div className='ac-register-container ac-forms-product'>

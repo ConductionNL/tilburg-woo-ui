@@ -2282,9 +2282,9 @@ const AcFormsKoppeling = ({ store }) => {
 
           <div>
             {saveResult !== 'success' && saveResult !== 'error' && (
-              <h3 className={clsx('utrecht-heading-3', 'ac-register-form-heading')}>
+              <h2 className={clsx('utrecht-heading-3', 'ac-register-form-heading')}>
                 {currentStepName(stepper.getCurrentStep())}
-              </h3>
+              </h2>
             )}
 
             <div className='ac-register-container ac-forms-product'>
