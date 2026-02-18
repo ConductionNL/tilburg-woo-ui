@@ -302,10 +302,10 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications, user, object } 
                           </div>
                         )}
                       </div>
-                      <p className='utrecht-paragraph ac-publication-organization-card-description'>
+                      <Paragraph className='ac-publication-organization-card-description'>
                         {get_single?.organization?.summary ||
                           'Geen omschrijving beschikbaar'}
-                      </p>
+                      </Paragraph>
                     </div>
                   </AcCard>
                 </div>
