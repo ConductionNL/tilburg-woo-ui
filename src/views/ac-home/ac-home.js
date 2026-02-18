@@ -13,6 +13,7 @@ import {
 import { LABELS, PATHS } from '@constants';
 import { AcCardCategory, AcLink } from '@molecules';
 import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
+import ConGlossaryHighlight from '@components/con-glossary-highlight/con-glossary-highlight';
 
 import AcGrid from '@atoms/ac-grid/ac-grid';
 
@@ -34,7 +35,7 @@ const AcHome = ({ store: { pages, publications, themes } }) => {
   }
 
   return (
-    <>
+    <ConGlossaryHighlight as='div'>
       <AcHero contents={contents} />
 
       <AcSection spacing>
@@ -99,7 +100,7 @@ const AcHome = ({ store: { pages, publications, themes } }) => {
           />
         );
       })()}
-    </>
+    </ConGlossaryHighlight>
   );
 };
 

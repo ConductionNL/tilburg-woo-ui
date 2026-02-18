@@ -19,8 +19,8 @@ export class GemmaAPI {
     );
   }
 
-  voorzieningGebruik(id, params) {
-    return this.Client.get(ENDPOINTS.GEMMA.VOORZIENING_GEBRUIK(id, params)).then(
+  modules(params) {
+    return this.Client.get(ENDPOINTS.GEMMA.MODULES, { params }).then(
       (response) => response.data
     );
   }

@@ -20,6 +20,7 @@ import AcPublicationModuleVersie from './ac-publication-moduleversie';
 import { AcContainer, AcFlex } from '@src/atoms';
 import { AcButton } from '@molecules';
 import { VISUALS } from '@constants';
+import ConGlossaryHighlight from '@components/con-glossary-highlight/con-glossary-highlight';
 
 const AcPublication = observer(({ store: { publications } }) => {
   const { id } = useParams();
@@ -195,7 +196,13 @@ const AcPublication = observer(({ store: { publications } }) => {
         }
         return <AcPublicationDefault schema={schema} />;
     }
-  }
+  };
+
+  return (
+    <ConGlossaryHighlight as='div'>
+      {renderPublicationView()}
+    </ConGlossaryHighlight>
+  );
 });
 
 export default withStore(AcPublication);

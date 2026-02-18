@@ -286,7 +286,9 @@ const AcPublicationProduct = ({
         <AcFlex spacing='sm' justifyContent='between'>
           <AcFlex column spacing='md' style={{ flex: 3 }}>
             {!!get_single?.['@self']?.summary && (
-              <div>{get_single?.['@self']?.summary}</div>
+              <div>
+                {get_single?.['@self']?.summary}
+              </div>
             )}
 
             {!!get_single?.beschrijvingLang && (

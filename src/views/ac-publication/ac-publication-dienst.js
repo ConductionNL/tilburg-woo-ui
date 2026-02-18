@@ -335,7 +335,9 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
 
         <div style={{ flex: 2 }}>
           {!!get_single?.beschrijvingKort && (
-            <div>{get_single?.beschrijvingKort}</div>
+            <div>
+              {get_single?.beschrijvingKort}
+            </div>
           )}
         </div>
 
