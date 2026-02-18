@@ -32,3 +32,4 @@ yarn-error.log*
 .yarn/**/*
 
 .cursor/debug.log
+.cursor/debug-*.log
