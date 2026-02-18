@@ -15,7 +15,7 @@ const AcSearchResult = ({
   skeleton,
   title,
   summary,
-  published,
+  created,
   category,
   themes,
   id,
@@ -64,10 +64,10 @@ const AcSearchResult = ({
               <VISUALS.ELLIPSE />
             </>
           )}
-          {published && (
+          {created && (
             <>
               <Paragraph small>
-                {acFormatDate(published, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
+                {acFormatDate(created, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
               </Paragraph>
               <VISUALS.ELLIPSE />
             </>

@@ -37,8 +37,12 @@ export {
   createEntitySearchConfig,
   useEntitySearch,
   fetchMissingEntities,
+  fetchEntitiesByIds,
   createRelatedEntitiesFetcher,
 } from './search-utils';
 
 // Organization utilities
 export { useFullOrganization } from './organization-utils';
+
+// Gebruik utilities
+export { fetchModuleIdsFromGebruikByAfnemer } from './gebruik-utils';

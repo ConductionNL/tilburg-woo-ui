@@ -310,7 +310,7 @@ const ConFormReferentiecomponentenStage = memo(
             </Paragraph>
             <Paragraph>
               Alle applicaties in dit product zijn bestaande applicaties die al hun
-              eigen referentiecomponenten hebben vastgelegd in de catalogus. Er
+              eigen referentiecomponenten hebben vastgelegd in de softwarecatalogus. Er
               hoeven geen referentiecomponenten geconfigureerd te worden.
             </Paragraph>
           </div>

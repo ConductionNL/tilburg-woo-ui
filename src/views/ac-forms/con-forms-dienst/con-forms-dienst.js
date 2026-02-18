@@ -567,6 +567,7 @@ const ConFormsDienst = ({ store, userStore }) => {
             searchLeveranciers={searchLeveranciers}
             isEditMode={isEditMode}
             dienst={dienst}
+            editingDienstId={dienstId}
           />
         );
       case 'aanbieder':
@@ -613,6 +614,8 @@ const ConFormsDienst = ({ store, userStore }) => {
             leverancierKeuze={leverancierKeuze}
             nieuweLeverancier={nieuweLeverancier}
             leverancierOptions={leverancierOptions}
+            schemas={schemas}
+            store={store}
           />
         );
       default:
@@ -1087,19 +1090,21 @@ const ConFormsDienst = ({ store, userStore }) => {
     <AcSection spacing>
       <AcContainer>
         <AcColumn gap='tiger'>
-          <div>
-            <Heading1
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-            >
-              <Icon style={{ width: '1em', height: '1em' }} />
-              Uw {isEditMode ? editModeTitle : newWizardName}
-            </Heading1>
-            <Paragraph>
-              {isEditMode
-                ? 'Werk uw dienstgegevens bij in onze catalogus.'
-                : 'Vul dit formulier in om een dienst voor uw en andere applicaties te registreren en vindbaar te maken in de softwarecatalogus.'}
-            </Paragraph>
-          </div>
+          {saveResult !== 'success' && (
+            <div>
+              <Heading1
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+              >
+                <Icon style={{ width: '1em', height: '1em' }} />
+                Uw {isEditMode ? editModeTitle : newWizardName}
+              </Heading1>
+              <Paragraph>
+                {isEditMode
+                  ? 'Werk uw dienstgegevens bij in onze softwarecatalogus.'
+                  : 'Vul dit formulier in om een dienst voor uw en andere applicaties te registreren en vindbaar te maken in de softwarecatalogus.'}
+              </Paragraph>
+            </div>
+          )}
 
           {/* End header block */}
 
@@ -1120,7 +1125,7 @@ const ConFormsDienst = ({ store, userStore }) => {
                 </Paragraph>
                 <Paragraph>
                   De dienst {dienst.naam || 'Onbekende dienst'} en de geselecteerde
-                  applicaties zijn opgeslagen in de catalogus.
+                  applicaties zijn opgeslagen in de softwarecatalogus.
                 </Paragraph>
               </Alert>
               <div style={{ marginTop: '2rem' }}>

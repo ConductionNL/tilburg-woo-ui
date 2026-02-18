@@ -574,18 +574,18 @@ const AcRegister = () => {
                 {organization.contactPersons[0].lastName} van {organization.name},
               </p>
               <p>
-                Uw aanmelding voor de Softwarecatalogus is succesvol ontvangen. We
-                hebben een bevestigingsmail gestuurd naar{' '}
+                Uw aanmelding voor de softwarecatalogus is in goede orde ontvangen.
+                We hebben een bevestigingsmail gestuurd naar{' '}
                 <b>{organization.contactPersons[0].email}</b>. Controleer uw inbox
                 (en eventueel uw spam folder) voor deze bevestiging.
               </p>
               <p>
-                Een beheerder zal uw aanmelding beoordelen. Zodra uw aanmelding is
+                Een beheerder beoordeeld de aanmelding. Zodra de aanmelding is
                 goedgekeurd, ontvangt u een nieuwe e-mail met daarin uw inloggegevens
-                en verdere instructies voor het gebruik van de Softwarecatalogus.
+                en verdere instructies voor het gebruik van de softwarecatalogus.
               </p>
               <p>
-                Heeft u vragen? Neem dan contact op met onze helpdesk via
+                Heeft u vragen? Neem dan contact op met via
                 <Link href='mailto:softwarecatalogus@vng.nl'>
                   softwarecatalogus@vng.nl
                 </Link>
@@ -935,8 +935,8 @@ const OrganizationOptionalForm = memo(
           <Alert type='info'>
             <Paragraph>
               Optionele velden helpen ons om uw organisatie beter zichtbaar en
-              herkenbaar te maken in de catalogus (bijvoorbeeld met een logo en korte
-              beschrijving).
+              herkenbaar te maken in de softwarecatalogus (bijvoorbeeld met een logo
+              en korte beschrijving).
             </Paragraph>
           </Alert>
         </div>
@@ -1088,7 +1088,7 @@ const ContactInformationForm = memo(
                     <Heading level={3}>Contactpersoon</Heading>
                     <Paragraph>
                       De geregistreerde contactpersoon is het eerste aanspreekpunt
-                      van de organisatie en hoofdbeheerder van de gebruikers van
+                      van de organisatie en beheerder van de gebruikers van de
                       Softwarecatalogus namens uw organisatie. Dit kan op een later
                       moment nog gewijzigd worden.
                     </Paragraph>

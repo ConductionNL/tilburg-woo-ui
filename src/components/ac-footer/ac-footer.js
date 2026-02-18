@@ -44,63 +44,60 @@ const AcFooter = ({ store: { menu, user } }) => {
         <AcContainer
           className={AcCheckIfSpecificHostname() ? 'ac-footer__container' : ''}
         >
-          {AcCheckIfSpecificHostname() ? (
-            <>
-              {footerItems && footerItems.length > 0
-                ? footerItems.map((footerItem, index) => (
-                    <nav
-                      className='ac-footer__links'
-                      key={`footer-menu-${index + 1}`}
-                      aria-label={`Footer menu ${index + 1}`}
-                    >
-                      {/* Menu Title */}
-                      {footerItem.title && (
-                        <h3 className='ac-footer__menu-title'>{footerItem.title}</h3>
-                      )}
-                      {footerItem.items && footerItem.items.length > 0 ? (
-                        <ul>
-                          {footerItem.items.map((item, index) => (
-                            <li key={`footer-item-${index}`}>
-                              {item.link ? (
-                                item.link.includes('http') ||
-                                item.link.includes('https') ? (
-                                  <a
-                                    href={item.link}
-                                    target='_blank'
-                                    className='ac-footer__link'
-                                    rel='noreferrer'
-                                  >
-                                    {item.icon ? (
-                                      <item.icon className='ac-footer__link-icon' />
-                                    ) : (
-                                      <VISUALS.EXTERNAL_LINK className='ac-footer__link-icon' />
-                                    )}
-                                    {item.name}
-                                    <span className='sr-only'>
-                                      Opent in een nieuw tabblad
-                                    </span>
-                                  </a>
+          {/* Footer Left, Center, Right (positions 3, 4, 5) – show whenever menu data exists */}
+          {footerItems && footerItems.length > 0
+            ? footerItems.map((footerItem, index) => (
+                <nav
+                  className='ac-footer__links'
+                  key={`footer-menu-${index + 1}`}
+                  aria-label={`Footer menu ${index + 1}`}
+                >
+                  {/* Menu Title */}
+                  {footerItem.title && (
+                    <h3 className='ac-footer__menu-title'>{footerItem.title}</h3>
+                  )}
+                  {footerItem.items && footerItem.items.length > 0 ? (
+                    <ul>
+                      {footerItem.items.map((item, index) => (
+                        <li key={`footer-item-${index}`}>
+                          {item.link ? (
+                            item.link.includes('http') ||
+                            item.link.includes('https') ? (
+                              <a
+                                href={item.link}
+                                target='_blank'
+                                className='ac-footer__link'
+                                rel='noreferrer'
+                              >
+                                {item.icon ? (
+                                  <item.icon className='ac-footer__link-icon' />
                                 ) : (
-                                  <Link className='ac-footer__link' to={item.link}>
-                                    {item.icon && <Icon icon={item.icon} />}
-                                    {item.name}
-                                  </Link>
-                                )
-                              ) : (
-                                <div className='ac-footer__link'>
-                                  {item.icon && <Icon icon={item.icon} />}
-                                  {item.name}
-                                </div>
-                              )}
-                            </li>
-                          ))}
-                        </ul>
-                      ) : null}
-                    </nav>
-                  ))
-                : null}
-            </>
-          ) : null}
+                                  <VISUALS.EXTERNAL_LINK className='ac-footer__link-icon' />
+                                )}
+                                {item.name}
+                                <span className='sr-only'>
+                                  Opent in een nieuw tabblad
+                                </span>
+                              </a>
+                            ) : (
+                              <Link className='ac-footer__link' to={item.link}>
+                                {item.icon && <Icon icon={item.icon} />}
+                                {item.name}
+                              </Link>
+                            )
+                          ) : (
+                            <div className='ac-footer__link'>
+                              {item.icon && <Icon icon={item.icon} />}
+                              {item.name}
+                            </div>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </nav>
+              ))
+            : null}
           <div className='ac-footer__logo'>
             <ConLogo variant='footer' />
             {getFooterStaticContent()}

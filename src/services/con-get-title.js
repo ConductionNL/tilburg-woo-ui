@@ -26,7 +26,7 @@ export const getTitle = () => {
       return 'Open Tilburg';
     case 'open-dimpact.accept.commonground.nu':
     case 'dimpact.opencatalogi.nl':
-      return 'Producten catalogus';
+      return 'Producten softwarecatalogus';
     case 'open-rotterdam.accept.commonground.nu':
       return 'Open Rotterdam';
     case 'open-migrato.accept.commonground.nu':

@@ -1,4 +1,4 @@
-import {  useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 
@@ -22,7 +22,7 @@ export const validateAndProcessLogoUrl = (logoUrl) => {
       let imageUrl = logoUrl;
 
       // Handle data URLs
-      if (logoUrl.startsWith('data:')) {
+      if (typeof logoUrl === 'string' && logoUrl.startsWith('data:')) {
         const isImageData = logoUrl.startsWith('data:image/');
         if (!isImageData) {
           resolve({ isValid: false, processedUrl: null });
@@ -92,11 +92,13 @@ const ConLogoPreview = ({ logoUrl, className, style }) => {
     setIsValid(false);
     setIsLoading(true);
 
-    validateAndProcessLogoUrl(logoUrl).then(({ isValid, processedUrl }) => {
-      setIsValid(isValid);
-      setProcessedUrl(processedUrl);
-      setIsLoading(false);
-    });
+    validateAndProcessLogoUrl(logoUrl).then(
+      ({ isValid, processedUrl: nextProcessedUrl }) => {
+        setIsValid(isValid);
+        setProcessedUrl((prev) => (isValid ? nextProcessedUrl : prev));
+        setIsLoading(false);
+      }
+    );
   }, [logoUrl]);
 
   return (
@@ -104,10 +106,12 @@ const ConLogoPreview = ({ logoUrl, className, style }) => {
       {logoUrl && (
         <>
           {isLoading && <span>(Validating...)</span>}
-          {!isLoading && isValid && (
+          {!isLoading && (processedUrl || isValid) && (
             <img src={processedUrl || logoUrl} alt='Organization logo' />
           )}
-          {!isLoading && !isValid && <span>(Invalid image URL)</span>}
+          {!isLoading && !processedUrl && !isValid && (
+            <span>(Invalid image URL)</span>
+          )}
         </>
       )}
     </div>

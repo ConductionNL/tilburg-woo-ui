@@ -8,6 +8,7 @@ import { AcButton } from '@src/molecules';
 import { VISUALS } from '@src/constants';
 import { ProcessSteps } from '@gemeente-denhaag/components-react';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
+import { commongroundApiUrl } from '@src/config';
 import { validateWebsite } from '@views/ac-forms/validation/form-validations';
 import {
   Heading1,
@@ -28,6 +29,7 @@ import {
   createOrganisatieSearchConfig,
   useEntitySearch,
   fetchMissingEntities,
+  fetchModuleIdsFromGebruikByAfnemer,
   mapId,
   useFullOrganization,
 } from '../../wizard-utils';
@@ -44,6 +46,10 @@ import ConUnsavedChangesAlertModal from '@src/components/con-unsaved-changes-ale
 import { getActiveWizard } from '@src/constants/wizards.constants';
 import { ConDebugViewer } from '@src/components';
 
+/**
+ * Gebruik-dienst form: only for Gemeente/Samenwerking. Applicatie dropdowns are limited
+ * to applications in the organisation's gebruik (fetched with ?afnemer=).
+ */
 const ConFormsDienst = ({ store }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -102,6 +108,13 @@ const ConFormsDienst = ({ store }) => {
   const [applicatiePreloadLoading, setApplicatiePreloadLoading] = useState(false);
   const moduleOptionsRef = useRef([]);
 
+  /**
+   * This form is only for Gemeente/Samenwerking. Applicatie dropdowns are limited to
+   * applications in the organisation's gebruik (afnemer). null = not loaded, [] = none, string[] = allowed ids.
+   */
+  const [allowedModuleIdsFromGebruik, setAllowedModuleIdsFromGebruik] =
+    useState(null);
+
   // Module search - shared for both flows (aanbod-beheerders and gebruik-beheerders)
   const moduleMapper = useMemo(() => createModuleMapper({ type: 'applicatie' }), []);
   const moduleSearchConfig = useMemo(
@@ -110,6 +123,7 @@ const ConFormsDienst = ({ store }) => {
         useCacheFirst: true,
         mapToOption: moduleMapper,
         cacheKey: 'dienst_form',
+        allowedIds: allowedModuleIdsFromGebruik ?? undefined,
         queryParamsBuilder: (searchTerm) => ({
           _limit: '50',
           _page: '1',
@@ -117,7 +131,7 @@ const ConFormsDienst = ({ store }) => {
           ...(searchTerm && searchTerm.trim() ? { _search: searchTerm.trim() } : {}),
         }),
       }),
-    [store, moduleMapper]
+    [store, moduleMapper, allowedModuleIdsFromGebruik]
   );
   const {
     search: searchModules,
@@ -334,6 +348,32 @@ const ConFormsDienst = ({ store }) => {
     }
   }, [store]);
 
+  // Fetch allowed module IDs from organisation's gebruik (Gemeente/Samenwerking; limits applicatie dropdowns)
+  useEffect(() => {
+    const activeOrgId =
+      store?.user?.activeOrganization?.uuid ||
+      store?.user?.activeOrganization?.id;
+    if (!activeOrgId) {
+      setAllowedModuleIdsFromGebruik([]);
+      return;
+    }
+    let isMounted = true;
+    setAllowedModuleIdsFromGebruik(null);
+    fetchModuleIdsFromGebruikByAfnemer(commongroundApiUrl(), activeOrgId)
+      .then((ids) => {
+        if (isMounted) setAllowedModuleIdsFromGebruik(ids);
+      })
+      .catch(() => {
+        if (isMounted) setAllowedModuleIdsFromGebruik([]);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    store?.user?.activeOrganization?.uuid,
+    store?.user?.activeOrganization?.id,
+  ]);
+
   // Keep ref in sync with moduleOptions state
   useEffect(() => {
     moduleOptionsRef.current = moduleOptions;
@@ -344,10 +384,16 @@ const ConFormsDienst = ({ store }) => {
     setProductToModulesLookup({ all: moduleOptions });
   }, [moduleOptions]);
 
-  // Load modules on mount (step 0 is now Applicaties)
+  // Load or clear module options when allowed IDs from gebruik are known (module fetch runs when allowedModuleIdsFromGebruik changes)
   useEffect(() => {
+    if (allowedModuleIdsFromGebruik === null) return;
+    if (allowedModuleIdsFromGebruik.length === 0) {
+      setModuleOptions([]);
+      setProductToModulesLookup({ all: [] });
+      return;
+    }
     searchModules('');
-  }, [searchModules]);
+  }, [allowedModuleIdsFromGebruik, searchModules]);
 
   // Add module to options when it becomes available (for edit mode)
   // This ensures the selected module from gebruik.module is always in moduleOptions
@@ -974,6 +1020,7 @@ const ConFormsDienst = ({ store }) => {
               leverancierKeuze={leverancierKeuze}
               leverancierOrganisatie={leverancierOrganisatie}
               ownApp={selectedApplicatie}
+              schemas={schemas}
             />
           );
         default:
@@ -1018,6 +1065,7 @@ const ConFormsDienst = ({ store }) => {
             userStore={store.user}
             dienstType={dienstType}
             formType={formType}
+            schemas={schemas}
           />
         );
       default:
@@ -1444,25 +1492,27 @@ const ConFormsDienst = ({ store }) => {
     <AcSection spacing>
       <AcContainer>
         <AcColumn gap='tiger'>
-          <div>
-            <Heading1
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-            >
-              <Icon style={{ width: '1em', height: '1em' }} />
-              {isEditMode
-                ? 'Gebruik bewerken'
-                : isGebruikBeheerdersFlow
-                ? 'Toevoegen dienst'
-                : `Een ${wizardName}`}
-            </Heading1>
-            <Paragraph>
-              {isEditMode
-                ? 'Werk uw gebruiksregistratie bij. U kunt de geselecteerde diensten, status en andere gegevens aanpassen.'
-                : isGebruikBeheerdersFlow
-                ? 'Zoek naar diensten die op de applicaties in uw applicatielandschap worden uitgevoerd. Zoek op de naam van de betrokken applicatie.\n\nAlle relevante diensten die relevant zijn voor uw eigen applicaties worden weergegeven.\nBestaat de dienst nog niet, dan kunt u deze toevoegen.\n\nNa het selecteren van de gewenste dienst kunt u in de volgende stappen aanvullende informatie opvoeren.'
-                : 'Voer de gegevens van de dienst in, selecteer relevante applicaties en controleer uw invoer.'}
-            </Paragraph>
-          </div>
+          {saveResult !== 'success' && (
+            <div>
+              <Heading1
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+              >
+                <Icon style={{ width: '1em', height: '1em' }} />
+                {isEditMode
+                  ? 'Gebruik bewerken'
+                  : isGebruikBeheerdersFlow
+                  ? 'Toevoegen dienst'
+                  : `Een ${wizardName}`}
+              </Heading1>
+              <Paragraph>
+                {isEditMode
+                  ? 'Werk uw gebruiksregistratie bij. U kunt de geselecteerde diensten, status en andere gegevens aanpassen.'
+                  : isGebruikBeheerdersFlow
+                  ? 'Zoek naar diensten die op de applicaties in uw applicatielandschap worden uitgevoerd. Zoek op de naam van de betrokken applicatie.\n\nAlle relevante diensten die relevant zijn voor uw eigen applicaties worden weergegeven.\nBestaat de dienst nog niet, dan kunt u deze toevoegen.\n\nNa het selecteren van de gewenste dienst kunt u in de volgende stappen aanvullende informatie opvoeren.'
+                  : 'Voer de gegevens van de dienst in, selecteer relevante applicaties en controleer uw invoer.'}
+              </Paragraph>
+            </div>
+          )}
 
           {/* End header block */}
 

@@ -7,7 +7,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useDebouncedInput } from '@src/hooks';
 import { useLoadingState } from './loading-utils';
-import { filterValidOptions } from './mapping-utils';
+import { filterValidOptions, mapId } from './mapping-utils';
 
 /**
  * Builds a type suffix that includes distinguishing query parameters
@@ -122,6 +122,7 @@ export const mergeSearchOptions = (
  * @param {string} options.source - Source type: 'index' or 'database' (default: 'index')
  * @param {boolean} options.useCacheFirst - Use fetchModulesCacheFirst instead of fetchCollection (default: false)
  * @param {Function} options.filterByOrg - Function to add org filter to query params
+ * @param {Array<string>|null} options.allowedIds - When set, filter fetched results to only items whose id is in this array (e.g. module IDs from organisation's gebruik)
  * @returns {Object} Search configuration object
  */
 export const createModuleSearchConfig = (store, options = {}) => {
@@ -133,7 +134,65 @@ export const createModuleSearchConfig = (store, options = {}) => {
     source = 'index',
     useCacheFirst = false,
     filterByOrg,
+    allowedIds,
   } = options;
+
+  const baseFetchMethod = useCacheFirst
+    ? async (queryParams) => {
+        return await store.object.fetchModulesCacheFirst(queryParams);
+      }
+    : async (queryParams) => {
+        const typeSuffix = buildTypeSuffix(`module_${cacheKey}`, queryParams);
+        await store.object.fetchCollection(
+          collectionKey,
+          'module',
+          queryParams,
+          null,
+          typeSuffix
+        );
+        const collectionType = store.object.getTypeFromParams(
+          collectionKey,
+          'module',
+          null,
+          typeSuffix
+        );
+        const collection = store.object.getCollection(collectionType);
+        return collection?.results || collection || [];
+      };
+
+  // When allowedIds is set: filter search results and fetch any allowed IDs not in the (limit 50) result
+  const fetchMethod =
+    allowedIds != null && allowedIds.length > 0
+      ? async (queryParams) => {
+          const list = await baseFetchMethod(queryParams);
+          const allowedSet = new Set(allowedIds.map((id) => String(id)));
+          const filteredList = list.filter((item) => {
+            const id = String(
+              mapId(item) || (item?.['@self']?.id ?? item?.id ?? item?.uuid ?? '')
+            );
+            return id && allowedSet.has(id);
+          });
+          const existingIds = new Set(
+            filteredList.map((item) =>
+              String(
+                mapId(item) || (item?.['@self']?.id ?? item?.id ?? item?.uuid ?? '')
+              )
+            )
+          );
+          const missingIds = allowedIds.filter(
+            (id) => id && !existingIds.has(String(id))
+          );
+          if (missingIds.length === 0) return filteredList;
+          const fetched = await fetchEntitiesByIds(
+            store,
+            collectionKey,
+            'module',
+            missingIds,
+            { extendParams: ['@self.schema'], source }
+          );
+          return [...filteredList, ...fetched];
+        }
+      : baseFetchMethod;
 
   return {
     entityType: 'module',
@@ -168,33 +227,7 @@ export const createModuleSearchConfig = (store, options = {}) => {
       }),
     mapToOption,
     useCacheFirst,
-    fetchMethod: useCacheFirst
-      ? async (queryParams) => {
-          return await store.object.fetchModulesCacheFirst(queryParams);
-        }
-      : async (queryParams) => {
-          // Build type suffix including distinguishing params (like gemmaType)
-          // to prevent cancellation between different parameter combinations
-          const typeSuffix = buildTypeSuffix(`module_${cacheKey}`, queryParams);
-
-          await store.object.fetchCollection(
-            collectionKey,
-            'module',
-            queryParams,
-            null,
-            typeSuffix
-          );
-          // Use getTypeFromParams to construct the correct collection key (register_schema_suffix format)
-          // This matches how fetchCollection internally constructs the type key
-          const collectionType = store.object.getTypeFromParams(
-            collectionKey,
-            'module',
-            null,
-            typeSuffix
-          );
-          const collection = store.object.getCollection(collectionType);
-          return collection?.results || collection || [];
-        },
+    fetchMethod,
   };
 };
 
@@ -308,6 +341,62 @@ export const createOrganisatieSearchConfig = (store, options = {}) => {
     extendParams,
     source: options.source || 'database',
   });
+};
+
+/**
+ * Fetches entities by ID and returns them as raw entity objects (not options).
+ * Used when a search returns a limited list (e.g. _limit=50) but we need to ensure
+ * specific IDs (e.g. allowedIds from gebruik) are included in the result.
+ *
+ * @param {Object} store - The MobX store instance
+ * @param {string} collectionKey - Collection key (e.g., 'voorzieningen')
+ * @param {string} entityType - Entity type (e.g., 'module')
+ * @param {Array<string>} ids - Entity IDs to fetch
+ * @param {Object} fetchOptions - Optional fetch options
+ * @param {Array<string>} fetchOptions.extendParams - Extend parameters (default: ['@self.schema'])
+ * @param {string} fetchOptions.source - Source type: 'index' or 'database' (default: 'index')
+ * @returns {Promise<Array<Object>>} Array of fetched entity objects (nulls omitted)
+ */
+export const fetchEntitiesByIds = async (
+  store,
+  collectionKey,
+  entityType,
+  ids,
+  fetchOptions = {}
+) => {
+  if (!ids || ids.length === 0) return [];
+
+  const { extendParams = ['@self.schema'], source = 'index' } = fetchOptions;
+
+  const fetchPromises = ids.map(async (id) => {
+    try {
+      const fetchParams = {
+        _published: 'false',
+        _source: source,
+      };
+      if (extendParams.length > 0) {
+        fetchParams['_extend[]'] = extendParams;
+      }
+      await store.object.fetchObject(
+        collectionKey,
+        entityType,
+        String(id),
+        fetchParams
+      );
+      return store.object.getObject(
+        `${collectionKey}_${entityType}`,
+        String(id)
+      );
+    } catch (error) {
+      console.error(`Failed to fetch ${entityType} ${id}:`, error);
+      return null;
+    }
+  });
+
+  const results = await Promise.allSettled(fetchPromises);
+  return results
+    .map((r) => (r.status === 'fulfilled' ? r.value : null))
+    .filter(Boolean);
 };
 
 /**

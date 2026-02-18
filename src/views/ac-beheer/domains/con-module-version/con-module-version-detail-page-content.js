@@ -38,10 +38,6 @@ const ConModuleVersionDetailsPageContent = ({
   const [usedLoading, setUsedLoading] = useState(false);
   const [relatedTabIndex, setRelatedTabIndex] = useState(0);
 
-  // Editing state for inline editing
-  const [editingSummary, setEditingSummary] = useState(false);
-  const [editingDescription, setEditingDescription] = useState(false);
-
   const fetchUses = useCallback(async () => {
     if (!id) return;
     setUsesLoading(true);
@@ -166,34 +162,6 @@ const ConModuleVersionDetailsPageContent = ({
                   Bewerken
                 </ConActionMenu.Button>
 
-                <ConActionMenu.Button
-                  icon={<VISUALS.PENCIL />}
-                  onClick={() => setEditingSummary(true)}
-                  disabled={!actualCanEdit}
-                  data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
-                  data-tooltip-content={
-                    !actualCanEdit
-                      ? getDisabledActionTooltip('edit', reason)
-                      : undefined
-                  }
-                >
-                  Bewerk samenvatting
-                </ConActionMenu.Button>
-
-                <ConActionMenu.Button
-                  icon={<VISUALS.PENCIL />}
-                  onClick={() => setEditingDescription(true)}
-                  disabled={!actualCanEdit}
-                  data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
-                  data-tooltip-content={
-                    !actualCanEdit
-                      ? getDisabledActionTooltip('edit', reason)
-                      : undefined
-                  }
-                >
-                  Bewerk beschrijving
-                </ConActionMenu.Button>
-
                 {/* Publish/Depublish actions - LEGACY: No longer needed */}
                 {/* {data && !data['@self']?.published && (
                   <ConActionMenu.Button
@@ -262,11 +230,8 @@ const ConModuleVersionDetailsPageContent = ({
           maxLength={255}
           isMarkdown={false}
           value={data.beschrijvingKort}
-          isEditingCustomTrigger={editingSummary}
           serialize={(v) => v}
           deserialize={(v) => v || ''}
-          onSuccess={() => setEditingSummary(false)}
-          onCancel={() => setEditingSummary(false)}
           canEdit={actualCanEdit}
         />
       </div>
@@ -285,7 +250,6 @@ const ConModuleVersionDetailsPageContent = ({
           tooltip='Een uitgebreide beschrijving van de applicatie versie'
           maxLength={5000}
           isMarkdown={true}
-          isEditingCustomTrigger={editingDescription}
           value={data.beschrijvingLang}
           serialize={(v) => JSON.stringify(v || '')}
           deserialize={(v) => {
@@ -296,8 +260,6 @@ const ConModuleVersionDetailsPageContent = ({
               return v;
             }
           }}
-          onCancel={() => setEditingDescription(false)}
-          onSuccess={() => setEditingDescription(false)}
           canEdit={actualCanEdit}
         />
       </div>
@@ -391,7 +353,7 @@ const ConModuleVersionDetailsPageContent = ({
 //     <Alert type='warning' style={{ marginBottom: '1rem' }}>
 //       <Heading level={4}>{schemaName} is nog niet gepubliceerd</Heading>
 //       <Paragraph>
-//         {objectName} is momenteel niet zichtbaar in de zoekfunctie van de catalogus.
+//         {objectName} is momenteel niet zichtbaar in de zoekfunctie van de softwarecatalogus.
 //         Gebruik de &quot;Publiceren&quot; actie om deze gegevens beschikbaar te maken
 //         voor bezoekers.
 //       </Paragraph>

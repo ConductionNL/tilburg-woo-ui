@@ -714,15 +714,6 @@ const AcPublicationProduct = ({
                 </div>
               )}
 
-              {Array.isArray(moduleVersies) && moduleVersies.length > 0 && (
-                <div>
-                  <b>Huidige versie:</b>
-                  <p>
-                    {moduleVersies?.find((versie) => versie.status === 'in gebruik')
-                      ?.versie || 'Geen versie in gebruik'}
-                  </p>
-                </div>
-              )}
               {get_single?.hostingLocatie && (
                 <div>
                   <b>De applicatie wordt gehost in:</b>

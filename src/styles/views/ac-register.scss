@@ -140,6 +140,16 @@
       color: var(--tilburg-color-gray-700);
       font-weight: 600;
     }
+
+    &--full-width {
+      display: block;
+      grid-template-columns: unset;
+
+      strong {
+        display: block;
+        margin-block-end: var(--tilburg-space-block-snail);
+      }
+    }
   }
 
   // New class for description fields that need full width

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { VISUALS } from '@constants';
@@ -27,10 +27,10 @@ const ConDynamicSidenav = ({ store: { menu, user } }) => {
   }, [menu]);
 
   // Get admin dashboard menu from position 7 with user groups
-  const dashboardMenu = menu.getAdminDashboardMenu(
+  const dashboardMenu = useMemo(() => menu.getAdminDashboardMenu(
     user.isAuthenticated,
     user.userGroups || []
-  );
+  ), [menu.items]);
 
   // Icon mapping for menu items
   const getIconForMenuItem = (menuItem) => {

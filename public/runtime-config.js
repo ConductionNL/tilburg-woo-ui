@@ -34,7 +34,7 @@ window.RUNTIME_CONFIG = {
   "EXTERNAL_PRIVACY_URL": "https://www.tilburg.nl/privacystatement/",
   "EXTERNAL_COOKIES_URL": "https://www.tilburg.nl/cookies/",
   "EXTERNAL_PROCLAIMER_URL": "https://www.tilburg.nl/proclaimer/",
-  "HERO_IMAGE_URL": "/home-hero-background.png",
+  "HERO_IMAGE_URL": "null",
   "FAVICON_URL": null,
   "FOOTER_STYLE": "vng",
   "FOOTER_LOGO_TITLE": "Open Tilburg",
@@ -48,8 +48,5 @@ window.RUNTIME_CONFIG = {
   "NGINX_NEXTCLOUD_UPSTREAM": "",
   "NGINX_NEXTCLOUD_DOMAIN": "",
   "NGINX_TARGET_HOST": "",
-  "CHAT_ENDPOINT": "https://api.example.com/chat",
-  "CHAT_TITLE": "Chat met Open Registers",
-  "CHAT_DESCRIPTION": "Stel vragen over data en bestanden in open registers en krijg direct antwoord.",
   "FAST_REFRESH": "true"
 };

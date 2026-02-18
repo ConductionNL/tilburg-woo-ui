@@ -38,6 +38,22 @@ import { validateWebsite } from '@src/views/ac-forms/validation/form-validations
  * @param {boolean} props.loading - Optional: Loading state when using external data
  * @param {Function} props.onReferentieComponentenChange - Callback when referentieComponenten data changes
  */
+
+/**
+ * Returns an absolute URL for use in href. Protocol-less values like "test.nl/path" are prefixed with https://
+ * so the browser navigates externally instead of treating them as relative paths.
+ * @param {string} url - URL string (may be protocol-less, or already absolute)
+ * @returns {string} URL safe for use as link href
+ */
+function toAbsoluteUrl(url) {
+  if (!url || typeof url !== 'string') return url;
+  const trimmed = url.trim();
+  if (!trimmed) return url;
+  if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(trimmed)) return trimmed;
+  if (trimmed.startsWith('/') || trimmed.startsWith('#')) return trimmed;
+  return `https://${trimmed}`;
+}
+
 const ConStandardsTable = ({
   referentieComponenten = [],
   complianceStandards = [],
@@ -376,12 +392,17 @@ const ConStandardsTable = ({
                 if (isVerplicht && existingVersie.type !== 'VERPLICHT') {
                   existingVersie.type = 'VERPLICHT';
                 }
+                // Add this referentiecomponent to the list if not already present
+                const refComps = existingVersie.referentieComponenten || [];
+                if (!refComps.includes(refCompName)) {
+                  existingVersie.referentieComponenten = [...refComps, refCompName];
+                }
               } else {
                 allVersies.push({
                   id: versieId,
                   name: versieName,
                   type: isVerplicht ? 'VERPLICHT' : 'AANBEVOLEN',
-                  referentieComponent: refCompName,
+                  referentieComponenten: [refCompName],
                   parentStandardId: standardId,
                   fetchedData: versie,
                 });
@@ -821,8 +842,12 @@ const ConStandardsTable = ({
               
               // Check if we have a data URL (base64 encoded file)
               const hasBewijsDataUrl = bewijsUrl && bewijsUrl.startsWith('data:');
-              // Check if we have an HTTP(S) URL in bewijs
-              const hasBewijsHttpUrl = bewijsUrl && (bewijsUrl.startsWith('http://') || bewijsUrl.startsWith('https://'));
+              // Check if we have an HTTP(S) or protocol-less external URL in bewijs (e.g. test.nl/path)
+              const hasBewijsHttpUrl =
+                bewijsUrl &&
+                (bewijsUrl.startsWith('http://') ||
+                  bewijsUrl.startsWith('https://') ||
+                  validateWebsite(bewijsUrl));
               // Check if we have a separate url field
               const hasUrl = !!complianceStandard?.url;
               
@@ -892,7 +917,14 @@ const ConStandardsTable = ({
                           wordWrap: 'break-word',
                         }}
                       >
-                        <ConUuidResolver>{versieEntry.referentieComponent}</ConUuidResolver>
+                        {(versieEntry.referentieComponenten ?? (versieEntry.referentieComponent ? [versieEntry.referentieComponent] : [])).map(
+                          (refCompName, refIdx) => (
+                            <span key={`${versieEntry.type}-${idx}-ref-${refIdx}`}>
+                              {refIdx > 0 && ', '}
+                              <ConUuidResolver>{refCompName}</ConUuidResolver>
+                            </span>
+                          )
+                        )}
                       </div>
                     </div>
                   </TableCell>
@@ -943,7 +975,7 @@ const ConStandardsTable = ({
                           ? 'COMPLIANT'
                           : isOndersteund
                           ? 'ONDERSTEUND'
-                          : 'NON-COMPLIANT'}
+                          : 'NIET ONDERSTEUND'}
                       </span>
                     )}
                   </TableCell>
@@ -1071,10 +1103,10 @@ const ConStandardsTable = ({
                           </Link>
                         );
                       } else if (hasBewijsHttpUrl) {
-                        // HTTP(S) URL in bewijs field - display the URL
+                        // HTTP(S) or protocol-less external URL in bewijs field - display the URL
                         return (
                           <Link
-                            href={bewijsUrl}
+                            href={toAbsoluteUrl(bewijsUrl)}
                             target='_blank'
                             rel='noopener noreferrer'
                             style={{
@@ -1095,7 +1127,7 @@ const ConStandardsTable = ({
                         // Separate url field - display the URL
                         return (
                           <Link
-                            href={complianceStandard.url}
+                            href={toAbsoluteUrl(complianceStandard.url)}
                             target='_blank'
                             rel='noopener noreferrer'
                             style={{

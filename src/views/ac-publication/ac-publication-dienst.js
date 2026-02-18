@@ -414,57 +414,17 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
           </>
         )}
 
-        {(get_single?.type || get_single?.dienstType || get_single?.status) && (
+        {(get_single?.type || get_single?.status) && (
           <>
             <Heading level={3} style={{ marginBlockStart: '1rem' }}>
               Basisinformatie
             </Heading>
             <div className='ac-register-review__section'>
               <div style={{ marginTop: '12px' }}>
-                {get_single?.type && (
-                  <div style={{ marginBottom: '8px' }}>
-                    <strong>Type: </strong>
-                    {(() => {
-                      const rawType = get_single.type;
-                      
-                      // Check if it's a string that looks like a JSON array
-                      if (typeof rawType === 'string' && rawType.trim().startsWith('[')) {
-                        try {
-                          const parsed = JSON.parse(rawType);
-                          if (Array.isArray(parsed)) {
-                            return parsed
-                              .map((item, index) => (
-                                <React.Fragment key={index}>
-                                  <ConUuidResolver>{String(item)}</ConUuidResolver>
-                                  {index < parsed.length - 1 ? ', ' : ''}
-                                </React.Fragment>
-                              ));
-                          }
-                        } catch (e) {
-                          // If parsing fails, display as-is
-                          return <ConUuidResolver>{String(rawType)}</ConUuidResolver>;
-                        }
-                      }
-                      
-                      // Handle actual arrays
-                      if (Array.isArray(rawType)) {
-                        return rawType.map((typeId, index) => (
-                          <React.Fragment key={index}>
-                            <ConUuidResolver>{String(typeId)}</ConUuidResolver>
-                            {index < rawType.length - 1 ? ', ' : ''}
-                          </React.Fragment>
-                        ));
-                      }
-                      
-                      // Handle single value
-                      return <ConUuidResolver>{String(rawType)}</ConUuidResolver>;
-                    })()}
-                  </div>
-                )}
                 {get_single?.dienstType && (
                   <div style={{ marginBottom: '8px' }}>
                     <strong>Diensttype: </strong>
-                    {get_single.dienstType}
+                    {get_single.type}
                   </div>
                 )}
                 {get_single?.status && (
@@ -473,41 +433,6 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
                     {get_single.status}
                   </div>
                 )}
-              </div>
-            </div>
-          </>
-        )}
-
-        {(get_single?.aanbieder ||
-          (Array.isArray(get_single?.koppelingen) &&
-            get_single.koppelingen.length > 0) ||
-          (Array.isArray(get_single?.modules) && get_single.modules.length > 0)) && (
-          <>
-            <Heading level={3} style={{ marginBlockStart: '1rem' }}>
-              Relaties
-            </Heading>
-            <div className='ac-register-review__section'>
-              <div style={{ marginTop: '12px' }}>
-                {get_single?.aanbieder && (
-                  <div style={{ marginBottom: '8px' }}>
-                    <strong>Aanbieder: </strong>
-                    <ConUuidResolver>{String(get_single.aanbieder)}</ConUuidResolver>
-                  </div>
-                )}
-
-                {Array.isArray(get_single?.koppelingen) &&
-                  get_single.koppelingen.length > 0 && (
-                    <div style={{ marginBottom: '8px' }}>
-                      <strong>Koppelingen: </strong>
-                      <div>
-                        {get_single.koppelingen.map((kid, idx) => (
-                          <div key={`${kid}-${idx}`}>
-                            <ConUuidResolver>{String(kid)}</ConUuidResolver>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
               </div>
             </div>
           </>

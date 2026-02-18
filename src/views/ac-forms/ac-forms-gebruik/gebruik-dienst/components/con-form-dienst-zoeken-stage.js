@@ -425,7 +425,9 @@ const ConFormDienstZoekenStage = ({
 
               // Extract ID from value (could be object or string)
               const nextId =
-                (actualValue && actualValue.data && (actualValue.data.id || actualValue.data.value)) ||
+                (actualValue &&
+                  actualValue.data &&
+                  (actualValue.data.id || actualValue.data.value)) ||
                 (actualValue && actualValue.value) ||
                 actualValue;
 
@@ -499,6 +501,9 @@ const ConFormDienstZoekenStage = ({
                     Array.isArray(selectedDienstIds) &&
                     selectedDienstIds.includes(dienstId);
 
+                  // In edit mode, show which dienst(en) are being edited
+                  const isBeingEdited = isEditMode && isSelected;
+
                   const naam = String(
                     (d?.naam || d?.name || d?.title || d?.label || '').toString()
                   ).trim();
@@ -510,7 +515,10 @@ const ConFormDienstZoekenStage = ({
                   let type = [];
                   if (Array.isArray(d?.type)) {
                     type = d.type.map((t) => String(t).trim()).filter(Boolean);
-                  } else if (typeof d?.type === 'string' && d.type.trim().startsWith('[')) {
+                  } else if (
+                    typeof d?.type === 'string' &&
+                    d.type.trim().startsWith('[')
+                  ) {
                     // Handle string containing JSON array like "['id1', 'id2']"
                     try {
                       const parsed = JSON.parse(d.type);
@@ -525,7 +533,6 @@ const ConFormDienstZoekenStage = ({
                   } else if (d?.type) {
                     type = [String(d.type).trim()];
                   }
-                  const status = String(d?.status || '').trim();
                   const aanbieder = d?.aanbieder ? String(d.aanbieder).trim() : null;
 
                   // Extract modules information - handle both string (single UUID) and array
@@ -556,40 +563,67 @@ const ConFormDienstZoekenStage = ({
                     <div
                       key={dienstId}
                       style={{
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: '0.75rem',
-                        padding: '1rem',
-                        outline: isSelected ? '2px solid #0063e5' : '1px solid #ddd',
+                        padding: '0.75rem',
+                        border: '1px solid #ddd',
+                        borderLeft: isBeingEdited
+                          ? '3px solid var(--tilburg-color-primary, #0063e5)'
+                          : isSelected
+                          ? '2px solid #0063e5'
+                          : '1px solid #ddd',
                         borderRadius: '4px',
-                        backgroundColor: isSelected ? '#f0f7ff' : '#fafafa',
-                        cursor: loading ? 'default' : 'pointer',
-                      }}
-                      onClick={() => {
-                        if (!loading) {
-                          const currentIds = Array.isArray(selectedDienstIds)
-                            ? [...selectedDienstIds]
-                            : [];
-                          if (isSelected) {
-                            // Remove from selection
-                            setSelectedDienstIds(
-                              currentIds.filter((id) => id !== dienstId)
-                            );
-                          } else {
-                            // Add to selection
-                            setSelectedDienstIds([...currentIds, dienstId]);
-                          }
-                        }
+                        backgroundColor: isBeingEdited
+                          ? 'var(--tilburg-color-gray-50, #f8f9fa)'
+                          : isSelected
+                          ? '#f0f7ff'
+                          : '#fafafa',
                       }}
                     >
-                      <div style={{ marginTop: '0.125rem' }}>
-                        <label
-                          htmlFor={`dienst-${dienstId}`}
-                          className='sr-only'
+                      {isBeingEdited && (
+                        <div
+                          style={{
+                            fontSize: '0.75rem',
+                            fontStyle: 'italic',
+                            color: 'var(--tilburg-color-gray-600, #666)',
+                            marginBottom: '0.5rem',
+                          }}
                         >
+                          U bewerkt deze dienst
+                        </div>
+                      )}
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: '0.75rem',
+                          cursor: loading ? 'default' : 'pointer',
+                        }}
+                        onClick={() => {
+                          if (!loading) {
+                            const currentIds = Array.isArray(selectedDienstIds)
+                              ? [...selectedDienstIds]
+                              : [];
+                            if (isSelected) {
+                              // Remove from selection
+                              setSelectedDienstIds(
+                                currentIds.filter((id) => id !== dienstId)
+                              );
+                            } else {
+                              // Add to selection
+                              setSelectedDienstIds([...currentIds, dienstId]);
+                            }
+                          }
+                        }}
+                      >
+                        <label htmlFor={`dienst-${dienstId}`} className='sr-only'>
                           {naam
-                            ? `Selecteer dienst ${naam}${type.length > 0 ? `, type: ${type.join(', ')}` : ''}${status ? `, status: ${status}` : ''}${aanbieder ? `, aanbieder: ${aanbieder}` : ''}`
-                            : `Selecteer dienst${type.length > 0 ? `, type: ${type.join(', ')}` : ''}${status ? `, status: ${status}` : ''}`}
+                            ? `Selecteer dienst ${naam}${
+                                type.length > 0 ? `, type: ${type.join(', ')}` : ''
+                              }${
+                                aanbieder ? `, aanbieder: ${aanbieder}` : ''
+                              }`
+                            : `Selecteer dienst${
+                                type.length > 0 ? `, type: ${type.join(', ')}` : ''
+                              }`}
                         </label>
                         <AcCheckbox
                           id={`dienst-${dienstId}`}
@@ -659,27 +693,6 @@ const ConFormDienstZoekenStage = ({
                                 }}
                               >
                                 {type.join(', ')}
-                              </span>
-                            )}
-                            {status && (
-                              <span
-                                style={{
-                                  display: 'inline-block',
-                                  padding: '0.125rem 0.5rem',
-                                  backgroundColor:
-                                    status.toLowerCase() === 'actief'
-                                      ? '#dcfce7'
-                                      : '#fef3c7',
-                                  borderRadius: '9999px',
-                                  fontSize: '0.75rem',
-                                  fontWeight: '500',
-                                  color:
-                                    status.toLowerCase() === 'actief'
-                                      ? '#166534'
-                                      : '#92400e',
-                                }}
-                              >
-                                {status}
                               </span>
                             )}
                           </div>

@@ -465,7 +465,7 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
                     <Heading level={4}>Dit object is nog niet gepubliceerd</Heading>
                     <Paragraph>
                       Dit object is momenteel niet zichtbaar in de zoekfunctie van{' '}
-                      {config?.title || 'de catalogus'}. Gebruik de
+                      {config?.title || 'de softwarecatalogus'}. Gebruik de
                       &quot;Publiceren&quot; actie om het object beschikbaar te maken
                       voor bezoekers.
                     </Paragraph>

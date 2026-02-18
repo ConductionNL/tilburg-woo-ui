@@ -36,6 +36,7 @@ import {
   createEntitySearchConfig,
   useEntitySearch,
   fetchMissingEntities,
+  fetchModuleIdsFromGebruikByAfnemer,
   mapId,
   useFullOrganization,
 } from '../../wizard-utils';
@@ -51,6 +52,9 @@ import {
  * - ?type=eigen-organisatie - Aanbod beheerder flow (future implementation)
  *
  * If no type is provided, defaults to 'aanbieden-koppeling' (gebruik beheerder flow).
+ *
+ * This wizard is only accessible to Gemeente/Samenwerking. The applicatie dropdown
+ * is limited to applications present in the organisation's gebruik (fetched with ?afnemer=).
  *
  * Current steps (gebruik beheerder flow - aanbieden-koppeling):
  * - Step 0: Een koppeling zoeken (Search for existing connections)
@@ -88,6 +92,13 @@ const AcFormsKoppeling = ({ store }) => {
     'dienst',
   ]);
 
+  /**
+   * This wizard is only for Gemeente/Samenwerking. Applicatie dropdown is limited to
+   * applications in the organisation's gebruik (afnemer). null = not loaded, [] = none, string[] = allowed ids.
+   */
+  const [allowedModuleIdsFromGebruik, setAllowedModuleIdsFromGebruik] =
+    useState(null);
+
   // Options for modules (applications) - using wizard-utils
   const moduleMapper = useMemo(() => createModuleMapper({ type: 'applicatie' }), []);
   const moduleSearchConfig = useMemo(
@@ -96,6 +107,7 @@ const AcFormsKoppeling = ({ store }) => {
         useCacheFirst: true,
         mapToOption: moduleMapper,
         cacheKey: 'koppeling_form_search',
+        allowedIds: allowedModuleIdsFromGebruik ?? undefined,
         queryParamsBuilder: (searchTerm, additionalParams = {}) => ({
           _limit: '50',
           _page: '1',
@@ -104,7 +116,7 @@ const AcFormsKoppeling = ({ store }) => {
           ...additionalParams,
         }),
       }),
-    [store, moduleMapper]
+    [store, moduleMapper, allowedModuleIdsFromGebruik]
   );
   const {
     search: searchModules,
@@ -115,11 +127,6 @@ const AcFormsKoppeling = ({ store }) => {
     debounceDelay: 250,
     mergeStrategy: 'preserve-existing',
   });
-
-  // Pre-load modules once so dropdown has initial options
-  useEffect(() => {
-    searchModules('');
-  }, [searchModules]);
 
   const [applicatiePreloadLoading, setApplicatiePreloadLoading] = useState(false);
 
@@ -295,6 +302,42 @@ const AcFormsKoppeling = ({ store }) => {
     if (dir === 'bi-directioneel') return '↔';
     return '↔';
   };
+
+  // Fetch allowed module IDs from organisation's gebruik (Gemeente/Samenwerking; limits applicatie dropdown)
+  useEffect(() => {
+    const activeOrgId =
+      store?.user?.activeOrganization?.uuid ||
+      store?.user?.activeOrganization?.id;
+    if (!activeOrgId) {
+      setAllowedModuleIdsFromGebruik([]);
+      return;
+    }
+    let isMounted = true;
+    setAllowedModuleIdsFromGebruik(null);
+    fetchModuleIdsFromGebruikByAfnemer(commongroundApiUrl(), activeOrgId)
+      .then((ids) => {
+        if (isMounted) setAllowedModuleIdsFromGebruik(ids);
+      })
+      .catch(() => {
+        if (isMounted) setAllowedModuleIdsFromGebruik([]);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    store?.user?.activeOrganization?.uuid,
+    store?.user?.activeOrganization?.id,
+  ]);
+
+  // Load or clear module options when allowed IDs from gebruik are known
+  useEffect(() => {
+    if (allowedModuleIdsFromGebruik === null) return;
+    if (allowedModuleIdsFromGebruik.length === 0) {
+      setModulesOptions([]);
+      return;
+    }
+    searchModules('');
+  }, [allowedModuleIdsFromGebruik, searchModules]);
 
   // Pre-select applicatie from URL parameter
   useEffect(() => {
@@ -1655,24 +1698,26 @@ const AcFormsKoppeling = ({ store }) => {
     <AcSection spacing>
       <AcContainer>
         <AcColumn gap='tiger'>
-          <div>
-            <Heading1
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-            >
-              <Icon style={{ width: '1em', height: '1em' }} />
-              Uw {isEditMode ? editModeTitle : wizardName}
-            </Heading1>
-            <Paragraph>
-              {(() => {
-                switch (stepper.getCurrentStep()) {
-                  case 1:
-                    return 'Selecteer een applicatie uit uw eigen aanbod waarvoor u een koppeling wilt publiceren.';
-                  default:
-                    return 'Vul dit formulier in om uw koppeling te registreren in de softwarecatalogus.';
-                }
-              })()}
-            </Paragraph>
-          </div>
+          {saveResult !== 'success' && (
+            <div>
+              <Heading1
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+              >
+                <Icon style={{ width: '1em', height: '1em' }} />
+                Uw {isEditMode ? editModeTitle : wizardName}
+              </Heading1>
+              <Paragraph>
+                {(() => {
+                  switch (stepper.getCurrentStep()) {
+                    case 1:
+                      return 'Selecteer een applicatie uit uw eigen aanbod waarvoor u een koppeling wilt publiceren.';
+                    default:
+                      return 'Vul dit formulier in om uw koppeling te registreren in de softwarecatalogus.';
+                  }
+                })()}
+              </Paragraph>
+            </div>
+          )}
 
           <div>
             {saveResult !== 'success' && saveResult !== 'error' && (

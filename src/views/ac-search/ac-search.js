@@ -151,8 +151,7 @@ const AcSearch = ({ store: { publications, user, object } }) => {
               type={selfData.schema.title}
               user={user}
               referenceComponents={publication.referentieComponenten}
-              updated={selfData.updated}
-              published={selfData.published}
+              created={selfData.created}
               organisation={selfData.organisation}
               objectStore={object}
               key={index}
@@ -186,8 +185,7 @@ const AcSearch = ({ store: { publications, user, object } }) => {
             <ConCardDienst
               {...publication}
               id={publication.id || publication['@self']?.id}
-              updated={publication['@self'].updated}
-              published={publication['@self'].published}
+              created={publication['@self']?.created}
               category={publication['@self'].schema.title}
               title={extractTitle(
                 publication.title ??
@@ -243,6 +241,7 @@ const AcSearch = ({ store: { publications, user, object } }) => {
               {...publication}
               key={index}
               id={publication.id || publication['@self']?.id}
+              created={publication['@self']?.created}
               title={extractTitle(
                 publication.title ??
                   publication.titel ??
@@ -260,8 +259,7 @@ const AcSearch = ({ store: { publications, user, object } }) => {
           return (
             <AcSearchResult
               id={publication.id || selfData?.id}
-              published={selfData.published}
-              updated={selfData.updated}
+              created={selfData.created}
               category={selfData.schema.title}
               title={extractTitle(
                 publication.title ??

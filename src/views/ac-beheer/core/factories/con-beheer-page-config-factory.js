@@ -350,7 +350,7 @@ const BeheerPageConfigFactory = {
             },
             type: {
               id: 'type',
-              label: 'Type',
+              label: 'Diensttype',
               key: 'type',
               customContent: (row) => {
                 const rawType = row?.type;
@@ -633,16 +633,16 @@ const BeheerPageConfigFactory = {
           disableImport: true, // Import not needed for contactpersonen
           disableView: true, // View not needed for contactpersonen
           defaultHeaders: [
-            'username',
             'name',
             'isAanspreekpunt',
             'functie',
             'e-mailadres',
           ],
-          customHeaders: {
-            username: {
-              id: 'username',
-              order: 1,
+          // Virtual columns are columns that don't exist in the schema but are added to the table
+          virtualColumns: [
+            {
+              id: 'isGebruiker',
+              order: 0,
               label: 'Is gebruiker',
               key: 'username',
               customContent: (row) => {
@@ -659,7 +659,6 @@ const BeheerPageConfigFactory = {
                         style={{
                           width: '30px',
                           height: '30px',
-                          // color: row.enabled ? 'var(--tilburg-interaction-active-color)' : 'var(--tilburg-color-orange-300)',
                           color: 'var(--tilburg-interaction-active-color)',
                         }}
                       />
@@ -676,6 +675,8 @@ const BeheerPageConfigFactory = {
                 );
               },
             },
+          ],
+          customHeaders: {
             voornaam: {
               id: 'name',
               label: 'Naam',

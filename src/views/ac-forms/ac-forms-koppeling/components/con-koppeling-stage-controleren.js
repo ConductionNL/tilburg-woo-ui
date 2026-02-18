@@ -91,6 +91,7 @@ const ConKoppelingStageControleren = ({
   typeByRow,
   typeOptions,
   beschrijvingByRow,
+  beschrijvingLangByRow,
   statusByRow,
   statusOptions,
   nameByRow,
@@ -353,6 +354,9 @@ const ConKoppelingStageControleren = ({
                           statusVal)) ||
                       '';
                     const beschrijving = (beschrijvingByRow[rowId] || '').trim();
+                    const beschrijvingLang = (
+                      beschrijvingLangByRow?.[rowId] || ''
+                    ).trim();
 
                     // Get the relevant start date for this row
                     const relevantStartDate = getRelevantStartDate(
@@ -389,6 +393,9 @@ const ConKoppelingStageControleren = ({
                             </div>
                           )}
                           {beschrijving && <div>Beschrijving: {beschrijving}</div>}
+                          {beschrijvingLang && (
+                            <div>Lange beschrijving: {beschrijvingLang}</div>
+                          )}
                           {soortLabel && <div>Transportprotocol: {soortLabel}</div>}
                           {intermediairLabel && (
                             <div>Intermediair: {intermediairLabel}</div>

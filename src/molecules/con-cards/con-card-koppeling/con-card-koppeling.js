@@ -13,9 +13,9 @@ const ConCardKoppeling = ({
   item,
   category,
   id,
-  published,
   source,
   target,
+  created,
   navigateTo = 'publication',
 }) => {
   const onClick = () => {
@@ -42,7 +42,7 @@ const ConCardKoppeling = ({
   const aanmeldstandaard = item?.aanmeldstandaard;
   const standaardversies = item?.standaardversies;
   const gebruikVoorReferentiecomponenten = item?.gebruikVoorReferentiecomponenten;
-  
+
   const arrow =
     richtingDataUitwisseling === 'AnaarB'
       ? '→'
@@ -67,9 +67,13 @@ const ConCardKoppeling = ({
           </Heading>
         </AcFlex>
       </AcFlex>
-      
+
       {/* Module koppeling met richting */}
-      <AcFlex alignItems='center' spacing='xs' style={{ marginBottom: 'var(--spacing-default)' }}>
+      <AcFlex
+        alignItems='center'
+        spacing='xs'
+        style={{ marginBottom: 'var(--spacing-default)' }}
+      >
         <Paragraph>
           <ConUuidResolver>{moduleA}</ConUuidResolver> {arrow}{' '}
           <ConUuidResolver>{moduleB}</ConUuidResolver>
@@ -79,10 +83,12 @@ const ConCardKoppeling = ({
       {/* Aanmeldstandaard en versies */}
       {aanmeldstandaard && (
         <Paragraph small style={{ marginBottom: 'var(--spacing-small)' }}>
-          <strong>Aanmeldstandaard:</strong> <ConUuidResolver>{aanmeldstandaard}</ConUuidResolver>
+          <strong>Aanmeldstandaard:</strong>{' '}
+          <ConUuidResolver>{aanmeldstandaard}</ConUuidResolver>
           {standaardversies && standaardversies.length > 0 && (
             <>
-              {' '}(
+              {' '}
+              (
               {standaardversies.map((versie, index) => (
                 <span key={versie}>
                   {index > 0 && ', '}
@@ -96,61 +102,70 @@ const ConCardKoppeling = ({
       )}
 
       {/* Referentiecomponenten */}
-      {gebruikVoorReferentiecomponenten && gebruikVoorReferentiecomponenten.length > 0 && (
-        <Paragraph small style={{ marginBottom: 'var(--spacing-small)' }}>
-          <strong>Geschikt voor:</strong>{' '}
-          {gebruikVoorReferentiecomponenten
-            .slice()
-            .sort((a, b) => String(a).localeCompare(String(b)))
-            .map((component, index) => (
-              <span key={component}>
-                {index > 0 && ', '}
-                <ConUuidResolver>{component}</ConUuidResolver>
-              </span>
-            ))}
-        </Paragraph>
-      )}
+      {gebruikVoorReferentiecomponenten &&
+        gebruikVoorReferentiecomponenten.length > 0 && (
+          <Paragraph small style={{ marginBottom: 'var(--spacing-small)' }}>
+            <strong>Geschikt voor:</strong>{' '}
+            {gebruikVoorReferentiecomponenten
+              .slice()
+              .sort((a, b) => String(a).localeCompare(String(b)))
+              .map((component, index) => (
+                <span key={component}>
+                  {index > 0 && ', '}
+                  <ConUuidResolver>{component}</ConUuidResolver>
+                </span>
+              ))}
+          </Paragraph>
+        )}
 
       <AcFlex justifyContent='between' className='meta'>
-        <AcFlex alignItems='center' spacing='sm' wrap>
-          {/* Status badge */}
-          {status && (
-            <>
-              <StatusBadge>{extractText(status)}</StatusBadge>
-              <VISUALS.ELLIPSE />
-            </>
-          )}
-          
-          {/* Koppel type (intern/extern) */}
-          {koppelType && (
-            <>
-              <Paragraph small>
-                {koppelType === 'extern' ? 'Externe koppeling' : 'Interne koppeling'}
+        <AcFlex column>
+          <AcFlex alignItems='center' spacing='sm' wrap>
+            {/* Status badge */}
+            {status && (
+              <>
+                <StatusBadge>{extractText(status)}</StatusBadge>
+                <VISUALS.ELLIPSE />
+              </>
+            )}
+
+            {/* Koppel type (intern/extern) */}
+            {koppelType && (
+              <>
+                <Paragraph small>
+                  {koppelType === 'extern' ? 'Externe koppeling' : 'Interne koppeling'}
+                </Paragraph>
+                <VISUALS.ELLIPSE />
+              </>
+            )}
+
+            {/* Soort koppeling */}
+            {soortKoppeling && (
+              <>
+                <Paragraph small>{extractText(soortKoppeling)}</Paragraph>
+                <VISUALS.ELLIPSE />
+              </>
+            )}
+
+            {/* Datum in gebruik */}
+            {datumInGebruik && (
+              <>
+                <Paragraph small>Sinds {acFormatDate(datumInGebruik)}</Paragraph>
+                <VISUALS.ELLIPSE />
+              </>
+            )}
+
+            {/* Category */}
+            {category && <Paragraph small>{extractText(category)}</Paragraph>}
+          </AcFlex>
+          <AcFlex alignItems='center' spacing='sm'>
+            {/* Created date */}
+            {created && (
+              <Paragraph small style={{ whiteSpace: 'nowrap' }}>
+                {acFormatDate(created, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
               </Paragraph>
-              <VISUALS.ELLIPSE />
-            </>
-          )}
-
-          {/* Soort koppeling */}
-          {soortKoppeling && (
-            <>
-              <Paragraph small>{extractText(soortKoppeling)}</Paragraph>
-              <VISUALS.ELLIPSE />
-            </>
-          )}
-
-          {/* Datum in gebruik */}
-          {datumInGebruik && (
-            <>
-              <Paragraph small>
-                Sinds {acFormatDate(datumInGebruik)}
-              </Paragraph>
-              <VISUALS.ELLIPSE />
-            </>
-          )}
-
-          {/* Category */}
-          {category && <Paragraph small>{extractText(category)}</Paragraph>}
+            )}
+          </AcFlex>
         </AcFlex>
         <AcLink to={onClick()}>
           <span className='sr-only'>

@@ -39,6 +39,7 @@ const ConFormApplicatiesStage = memo(
     searchLeveranciers = () => {},
     isEditMode = false,
     dienst = {},
+    editingDienstId = '',
   }) => {
     const handleChange = (value) => {
       // ConSchemaEnhancedField with array schema returns an array of IDs for multi-select
@@ -452,6 +453,12 @@ const ConFormApplicatiesStage = memo(
                       const dienstId =
                         dienstItem?.id || dienstItem?.['@self']?.id || String(index);
 
+                      // Check if this is the dienst being edited
+                      const isCurrentDienst =
+                        isEditMode &&
+                        editingDienstId &&
+                        String(dienstId) === String(editingDienstId);
+
                       const naam = String(
                         (
                           dienstItem?.naam ||
@@ -470,9 +477,10 @@ const ConFormApplicatiesStage = memo(
                       const website = String(dienstItem?.website || '').trim();
 
                       // Handle type - could be array, object, string, or string containing JSON array
-                      const type = (() => {
+                      // Return as array for rendering separate tags
+                      const typeArray = (() => {
                         const rawType = dienstItem?.type;
-                        if (!rawType) return '';
+                        if (!rawType) return [];
 
                         // Check if it's a string that looks like a JSON array
                         if (
@@ -486,11 +494,11 @@ const ConFormApplicatiesStage = memo(
                                 .map((item) =>
                                   typeof item === 'string' ? item : String(item)
                                 )
-                                .join(', ');
+                                .filter(Boolean);
                             }
                           } catch (e) {
-                            // If parsing fails, return as-is
-                            return String(rawType);
+                            // If parsing fails, return as single item array
+                            return [String(rawType)];
                           }
                         }
 
@@ -499,23 +507,27 @@ const ConFormApplicatiesStage = memo(
                           return rawType
                             .map((t) =>
                               typeof t === 'object'
-                                ? t.naam || t.name || t.label || t
+                                ? t.naam || t.name || t.label || String(t)
                                 : String(t)
                             )
-                            .join(', ');
+                            .filter(Boolean);
                         }
 
                         // Handle objects
                         if (typeof rawType === 'object') {
-                          return String(
-                            rawType.naam || rawType.name || rawType.label || rawType
-                          );
+                          return [
+                            String(
+                              rawType.naam ||
+                                rawType.name ||
+                                rawType.label ||
+                                rawType
+                            ),
+                          ];
                         }
 
-                        return String(rawType);
-                      })().trim();
+                        return [String(rawType)];
+                      })();
 
-                      const status = String(dienstItem?.status || '').trim();
                       const aanbieder = dienstItem?.aanbieder
                         ? String(dienstItem.aanbieder).trim()
                         : null;
@@ -547,139 +559,138 @@ const ConFormApplicatiesStage = memo(
                         <div
                           key={dienstId}
                           style={{
-                            display: 'flex',
-                            alignItems: 'flex-start',
-                            gap: '0.75rem',
-                            padding: '1rem',
-                            outline: '1px solid #ddd',
+                            padding: '0.75rem',
+                            border: '1px solid #ddd',
+                            borderLeft: isCurrentDienst
+                              ? '3px solid var(--tilburg-color-primary, #0063e5)'
+                              : '1px solid #ddd',
                             borderRadius: '4px',
-                            backgroundColor: '#fafafa',
+                            backgroundColor: isCurrentDienst
+                              ? 'var(--tilburg-color-gray-50, #f8f9fa)'
+                              : '#fafafa',
                           }}
                         >
-                          <div style={{ flex: 1 }}>
-                            {/* Header row with naam and badges */}
+                          {isCurrentDienst && (
                             <div
                               style={{
-                                display: 'flex',
-                                alignItems: 'flex-start',
-                                justifyContent: 'space-between',
-                                gap: '0.75rem',
+                                fontSize: '0.75rem',
+                                fontStyle: 'italic',
+                                color: 'var(--tilburg-color-gray-600, #666)',
                                 marginBottom: '0.5rem',
-                                flexWrap: 'wrap',
                               }}
                             >
-                              {naam && (
-                                <div style={{ flex: 1, minWidth: '200px' }}>
-                                  <strong style={{ fontSize: '1rem' }}>
-                                    {naam}
-                                  </strong>
-                                </div>
-                              )}
+                              U bewerkt deze dienst
+                            </div>
+                          )}
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'flex-start',
+                              gap: '0.75rem',
+                            }}
+                          >
+                            <div style={{ flex: 1 }}>
+                              {/* Header row with naam and badges */}
                               <div
                                 style={{
                                   display: 'flex',
-                                  gap: '0.5rem',
+                                  alignItems: 'flex-start',
+                                  justifyContent: 'space-between',
+                                  gap: '0.75rem',
+                                  marginBottom: '0.5rem',
                                   flexWrap: 'wrap',
                                 }}
                               >
-                                {type && (
-                                  <span
-                                    style={{
-                                      display: 'inline-block',
-                                      padding: '0.25rem 0.5rem',
-                                      backgroundColor: '#e8f4f8',
-                                      color: '#0063e5',
-                                      borderRadius: '4px',
-                                      fontSize: '0.75rem',
-                                      fontWeight: '500',
-                                    }}
-                                  >
-                                    {type}
-                                  </span>
+                                {naam && (
+                                  <div style={{ flex: 1, minWidth: '200px' }}>
+                                    <strong style={{ fontSize: '1rem' }}>
+                                      {naam}
+                                    </strong>
+                                  </div>
                                 )}
-                                {status && (
-                                  <span
-                                    style={{
-                                      display: 'inline-block',
-                                      padding: '0.25rem 0.5rem',
-                                      backgroundColor:
-                                        status.toLowerCase() === 'concept'
-                                          ? '#fff3cd'
-                                          : status.toLowerCase() ===
-                                              'gepubliceerd' ||
-                                            status.toLowerCase() === 'published'
-                                          ? '#d1e7dd'
-                                          : '#e8e8e8',
-                                      color:
-                                        status.toLowerCase() === 'concept'
-                                          ? '#856404'
-                                          : status.toLowerCase() ===
-                                              'gepubliceerd' ||
-                                            status.toLowerCase() === 'published'
-                                          ? '#0f5132'
-                                          : '#333',
-                                      borderRadius: '4px',
-                                      fontSize: '0.75rem',
-                                      fontWeight: '500',
-                                    }}
-                                  >
-                                    {status}
-                                  </span>
-                                )}
+                                <div
+                                  style={{
+                                    display: 'flex',
+                                    gap: '0.25rem',
+                                    flexWrap: 'wrap',
+                                    justifyContent: 'flex-end',
+                                    marginLeft: 'auto',
+                                  }}
+                                >
+                                  {typeArray.length > 0 &&
+                                    typeArray.map((typeItem, index) => (
+                                      <span
+                                        key={index}
+                                        style={{
+                                          display: 'inline-block',
+                                          padding: '0.25rem 0.5rem',
+                                          backgroundColor: '#e8f4f8',
+                                          color: '#0063e5',
+                                          borderRadius: '4px',
+                                          fontSize: '0.75rem',
+                                          fontWeight: '500',
+                                        }}
+                                      >
+                                        {typeItem}
+                                      </span>
+                                    ))}
+                                </div>
                               </div>
-                            </div>
 
-                            {/* Description */}
-                            {beschrijvingKort && (
+                              {/* Description */}
+                              {beschrijvingKort && (
+                                <div
+                                  style={{
+                                    color: '#666',
+                                    fontSize: '0.9rem',
+                                    marginBottom: '0.5rem',
+                                    lineHeight: '1.4',
+                                  }}
+                                >
+                                  {beschrijvingKort}
+                                </div>
+                              )}
+
+                              {/* Metadata row */}
                               <div
                                 style={{
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: '0.375rem',
+                                  fontSize: '0.875rem',
                                   color: '#666',
-                                  fontSize: '0.9rem',
-                                  marginBottom: '0.5rem',
-                                  lineHeight: '1.4',
                                 }}
                               >
-                                {beschrijvingKort}
-                              </div>
-                            )}
-
-                            {/* Metadata row */}
-                            <div
-                              style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '0.375rem',
-                                fontSize: '0.875rem',
-                                color: '#666',
-                              }}
-                            >
-                              {moduleLabels.length > 0 && (
-                                <div>
-                                  <span style={{ fontWeight: '500' }}>
-                                    Applicaties:
-                                  </span>{' '}
-                                  {moduleLabels.map((label, idx) => (
-                                    <span key={idx}>
-                                      <ConUuidResolver>{label}</ConUuidResolver>
-                                      {idx < moduleLabels.length - 1 ? ', ' : ''}
+                                {moduleLabels.length > 0 && (
+                                  <div>
+                                    <span style={{ fontWeight: '500' }}>
+                                      Applicaties:
+                                    </span>{' '}
+                                    {moduleLabels.map((label, idx) => (
+                                      <span key={idx}>
+                                        <ConUuidResolver>{label}</ConUuidResolver>
+                                        {idx < moduleLabels.length - 1 ? ', ' : ''}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                                {aanbieder && (
+                                  <div>
+                                    <span style={{ fontWeight: '500' }}>
+                                      Aanbieder:
+                                    </span>{' '}
+                                    <ConUuidResolver>{aanbieder}</ConUuidResolver>
+                                  </div>
+                                )}
+                                {website && (
+                                  <div style={{ display: 'flex', gap: '4px' }}>
+                                    <span style={{ fontWeight: '500' }}>
+                                      Website:
                                     </span>
-                                  ))}
-                                </div>
-                              )}
-                              {aanbieder && (
-                                <div>
-                                  <span style={{ fontWeight: '500' }}>
-                                    Aanbieder:
-                                  </span>{' '}
-                                  <ConUuidResolver>{aanbieder}</ConUuidResolver>
-                                </div>
-                              )}
-                              {website && (
-                                <div style={{ display: 'flex', gap: '4px' }}>
-                                  <span style={{ fontWeight: '500' }}>Website:</span>
-                                  <ConExternalLink href={website} />
-                                </div>
-                              )}
+                                    <ConExternalLink href={website} />
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
