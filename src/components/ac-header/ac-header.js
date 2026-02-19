@@ -33,31 +33,69 @@ const AcHeader = ({ store: { menu, user, object } }) => {
 
   // State to store full organization data
   const [fullActiveOrganisation, setFullActiveOrganisation] = useState(null);
+  const [hasLoadedOrganisation, setHasLoadedOrganisation] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   // Fetch full organization data to get the correct organization name
+  // This runs on mount and whenever the organization ID changes
   useEffect(() => {
     const fetchFullOrganisationData = async () => {
       const activeOrg = user?.activeOrganization;
-      if (!activeOrg) return;
+      if (!activeOrg) {
+        setFullActiveOrganisation(null);
+        setHasLoadedOrganisation(true);
+        return;
+      }
 
       const orgId = activeOrg?.uuid || activeOrg?.id;
-      if (!orgId) return;
+      if (!orgId) {
+        setFullActiveOrganisation(null);
+        setHasLoadedOrganisation(true);
+        return;
+      }
 
       try {
+        const type = object.getTypeFromParams('voorzieningen', 'organisatie');
+        
+        // Clear any existing errors
+        object.setError(type, null);
+        
+        // Fetch the organization data
         await object.fetchObject('voorzieningen', 'organisatie', String(orgId), {
           '_extend[]': ['_schema'],
+          _fresh: true, // Force bypass cache to get latest data
         });
-        const fullOrgData = object.getObject('voorzieningen_organisatie', orgId);
+        
+        // Access the object directly from the store after fetch completes
+        const fullOrgData = object.objects[type]?.[orgId] || null;
+        
+        // If data is still null and no error, the request was likely cancelled
+        // Retry up to 3 times with a delay
+        if (!fullOrgData && !object.errors[type] && retryCount < 3) {
+          setTimeout(() => {
+            setRetryCount(prev => prev + 1);
+          }, 200);
+          return;
+        }
+        
         setFullActiveOrganisation(fullOrgData);
+        setHasLoadedOrganisation(true);
       } catch (error) {
-        console.error('Failed to fetch full organization data:', error);
+        console.error('Failed to fetch organization data:', error);
+        setHasLoadedOrganisation(true);
       }
     };
 
-    if (user.isAuthenticated) {
+    if (user.isAuthenticated && !hasLoadedOrganisation) {
       fetchFullOrganisationData();
     }
-  }, [user?.activeOrganization?.uuid, user?.activeOrganization?.id, user.isAuthenticated, object]);
+  }, [user.isAuthenticated, user?.activeOrganization?.uuid, user?.activeOrganization?.id, object, hasLoadedOrganisation, retryCount]);
+
+  // Reset the loaded flag and retry count when organization changes
+  useEffect(() => {
+    setHasLoadedOrganisation(false);
+    setRetryCount(0);
+  }, [user?.activeOrganization?.uuid, user?.activeOrganization?.id]);
 
   // Get user display name and organization
   const getUserDisplayName = () => {
