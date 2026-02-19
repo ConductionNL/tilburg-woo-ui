@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { buildTypeSuffix } from '@views/ac-forms/wizard-utils/search-utils';
 
 /**
  * Custom hook for fetching options for $ref-based form fields
@@ -214,9 +215,16 @@ export const useRefOptions = (
       // Create a unique key for this fetch operation (include schema params in cache key)
       const collectionSlug = getCollectionSlugForRef(refSchemaSlug);
       const fetchKey = `${fieldPath}-${collectionSlug}-${searchQuery || 'initial'}`;
+
+      // Build fetch params to check for distinguishing params in cache key
+      const allQueryParams = {
+        ...schemaQueryParams,
+        ...(optimizations?.additionalQueryParams || {}),
+      };
+
       const cacheKey = `${targetRegister}-${collectionSlug}-${
         searchQuery || 'initial'
-      }-${JSON.stringify(schemaQueryParams)}`;
+      }-${JSON.stringify(allQueryParams)}`;
 
       // Check cache first - if we have cached results, use them immediately
       if (API_CACHE.has(cacheKey)) {
@@ -281,8 +289,8 @@ export const useRefOptions = (
 
         // Use the object store's fetchCollection method to get the objects
         // Use 'options' suffix to separate from main list view collections
-        const optionsTypeSuffix = 'options';
-        
+        const baseOptionsTypeSuffix = 'options';
+
         // Build fetch params - modules/applications should not be filtered by organisation
         const fetchParams = {
           _search: searchQuery || undefined,
@@ -291,12 +299,19 @@ export const useRefOptions = (
           ...schemaQueryParams, // Add schema-defined query parameters
           ...(optimizations?.additionalQueryParams || {}), // Add additional query params from optimizations
         };
-        
+
         // Only add _source filter for non-module schemas
         // Modules/applications should be visible across all organisations
         if (collectionSlug !== 'module' && collectionSlug !== 'moduleversie') {
           fetchParams._multi = true; // Enable multitenancy
         }
+
+        // Build type suffix including distinguishing params (like gemmaType)
+        // to prevent cancellation between different parameter combinations
+        const optionsTypeSuffix = buildTypeSuffix(
+          baseOptionsTypeSuffix,
+          fetchParams
+        );
 
         await object.fetchCollection(
           targetRegister,
@@ -307,7 +322,13 @@ export const useRefOptions = (
         );
 
         // Get the data from the store after fetching using the suffixed type
-        const collectionType = `${targetRegister}_${collectionSlug}_${optionsTypeSuffix}`;
+        // Use getTypeFromParams to match how fetchCollection constructs the type
+        const collectionType = object.getTypeFromParams(
+          targetRegister,
+          collectionSlug,
+          null,
+          optionsTypeSuffix
+        );
 
         const collection = object.getCollection(collectionType);
 
