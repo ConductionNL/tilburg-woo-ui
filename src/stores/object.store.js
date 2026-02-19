@@ -2709,6 +2709,22 @@ export class ObjectStore {
     return this.fetchRelatedData(register, schema, id, 'files', params);
   };
 
+  /**
+   * Fetches a single file by ID for a specific object
+   * @param {string|Object} register - Register identifier
+   * @param {string|Object} schema - Schema identifier
+   * @param {string} id - Object ID
+   * @param {number|string} fileId - File ID
+   * @returns {Promise<Object>} File data including accessUrl, downloadUrl, etc.
+   */
+  fetchObjectFile = async (register, schema, id, fileId) => {
+    const filesBase = this._constructApiUrl(register, schema, id, 'files');
+    const encoded = encodeURIComponent(fileId);
+    const endpoint = `${filesBase}/${encoded}`;
+    const response = await nextcloudApi.get(endpoint);
+    return response.data;
+  };
+
   // Getters for accessing state
   /**
    * Checks if a specific type is currently loading
