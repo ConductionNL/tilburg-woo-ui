@@ -207,6 +207,7 @@ const App = ({ store }) => {
       case 'softwarecatalogus.accept.opencatalogi.nl':
       case 'acceptatie.softwarecatalogus.nl':
       case 'softwarecatalogus.test.opencatalogi.nl':
+      case 'performance.accept.opencatalogi.nl':
         return 'https://vng.nl/themes/custom/vng/favicon.ico';
       case 'open-migrato.accept.commonground.nu':
         return 'https://www.migrato.nl/wp-content/uploads/2023/01/favicon-32x32-1.png';

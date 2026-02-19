@@ -252,21 +252,20 @@ const ConStandardsTable = ({
   // Use external data if provided, otherwise use internal state
   // Priority: Internal fetched data (when available) > External data > Empty
   // This ensures that when we successfully fetch 321 items, we use those instead of the 5 from external
-  const effectiveStandards = 
-    standards.length > 0 
-      ? standards 
-      : (externalStandards || standards);
-      
-  const effectiveStandaardversies = 
-    standaardversies.length > 0 
-      ? standaardversies 
-      : (externalStandaardversies || standaardversies);
-      
+  const effectiveStandards =
+    standards.length > 0 ? standards : externalStandards || standards;
+
+  const effectiveStandaardversies =
+    standaardversies.length > 0
+      ? standaardversies
+      : externalStandaardversies || standaardversies;
+
   const effectiveReferentieComponentenWithStandards =
     referentieComponentenWithStandards.length > 0
       ? referentieComponentenWithStandards
-      : (externalReferentieComponentenWithStandards || referentieComponentenWithStandards);
-      
+      : externalReferentieComponentenWithStandards ||
+        referentieComponentenWithStandards;
+
   const effectiveLoading =
     externalLoading || standardsLoading || standaardversiesLoading;
 
@@ -275,7 +274,7 @@ const ConStandardsTable = ({
   // 1. We already have internal data (standaardversies.length > 0), OR
   // 2. We've confirmed we're not authenticated (isAuthenticated === false)
   const shouldFetchData =
-    standaardversies.length === 0 && 
+    standaardversies.length === 0 &&
     referentieComponentenWithStandards.length === 0 &&
     isAuthenticated;
 
@@ -420,7 +419,11 @@ const ConStandardsTable = ({
 
       return allVersies;
     },
-    [effectiveStandaardversies, findMatchingStandardData, findMatchingStandaardversieData]
+    [
+      effectiveStandaardversies,
+      findMatchingStandardData,
+      findMatchingStandaardversieData,
+    ]
   );
 
   // Get all standaardversies from referentieComponenten using the helper function
@@ -834,12 +837,15 @@ const ConStandardsTable = ({
               // 2. An object with url property: { url: "https://..." } or { url: "data:..." }
               // 3. null/undefined
               const bewijsValue = complianceStandard?.bewijs;
-              const bewijsUrl = typeof bewijsValue === 'object' && bewijsValue?.url 
-                ? bewijsValue.url 
-                : typeof bewijsValue === 'string' 
-                ? bewijsValue 
-                : null;
-              
+              const bewijsUrl =
+                typeof bewijsValue === 'object' && bewijsValue?.url
+                  ? bewijsValue.url
+                  : typeof bewijsValue === 'string'
+                  ? bewijsValue
+                  : null;
+
+              const bewijsFilename = complianceStandard?.bewijsFilename;
+
               // Check if we have a data URL (base64 encoded file)
               const hasBewijsDataUrl = bewijsUrl && bewijsUrl.startsWith('data:');
               // Check if we have an HTTP(S) or protocol-less external URL in bewijs (e.g. test.nl/path)
@@ -850,12 +856,14 @@ const ConStandardsTable = ({
                   validateWebsite(bewijsUrl));
               // Check if we have a separate url field
               const hasUrl = !!complianceStandard?.url;
-              
+              const hasBewijsFile = !!complianceStandard?.['@self']?.files?.[0];
+
               // For display purposes: compliant means has evidence
-              const isCompliant = hasBewijsDataUrl || hasBewijsHttpUrl || hasUrl;
+              const isCompliant =
+                hasBewijsFile || hasBewijsDataUrl || hasBewijsHttpUrl || hasUrl;
               // Ondersteund means in compliancy or compliantVersieIds but no evidence yet
               const isOndersteund =
-                (!!complianceStandard || isInCompliantVersieIds) &&
+                (!!complianceStandard && isInCompliantVersieIds) &&
                 !hasBewijsDataUrl &&
                 !hasBewijsHttpUrl &&
                 !hasUrl;
@@ -917,14 +925,17 @@ const ConStandardsTable = ({
                           wordWrap: 'break-word',
                         }}
                       >
-                        {(versieEntry.referentieComponenten ?? (versieEntry.referentieComponent ? [versieEntry.referentieComponent] : [])).map(
-                          (refCompName, refIdx) => (
-                            <span key={`${versieEntry.type}-${idx}-ref-${refIdx}`}>
-                              {refIdx > 0 && ', '}
-                              <ConUuidResolver>{refCompName}</ConUuidResolver>
-                            </span>
-                          )
-                        )}
+                        {(
+                          versieEntry.referentieComponenten ??
+                          (versieEntry.referentieComponent
+                            ? [versieEntry.referentieComponent]
+                            : [])
+                        ).map((refCompName, refIdx) => (
+                          <span key={`${versieEntry.type}-${idx}-ref-${refIdx}`}>
+                            {refIdx > 0 && ', '}
+                            <ConUuidResolver>{refCompName}</ConUuidResolver>
+                          </span>
+                        ))}
                       </div>
                     </div>
                   </TableCell>
@@ -1057,106 +1068,116 @@ const ConStandardsTable = ({
                           -
                         </span>
                       )
-                    ) : // Always show download/link button when not editing
-                    (() => {
-                      // Check for file metadata in @self.files
-                      const fileInfo = complianceStandard?.['@self']?.files?.[0];
-                      const fileTitle = fileInfo?.title;
-                      const fileDownloadUrl = fileInfo?.downloadUrl;
+                    ) : (
+                      // Always show download/link button when not editing
+                      (() => {
+                        // Check for file metadata in @self.files
+                        const fileInfo = complianceStandard?.['@self']?.files?.[0];
+                        const fileTitle = fileInfo?.title;
+                        const fileDownloadUrl = fileInfo?.downloadUrl;
 
-                      if (fileTitle && fileDownloadUrl) {
-                        return (
-                          <Link
-                            href={fileDownloadUrl}
-                            target='_blank'
-                            rel='noopener noreferrer'
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                              justifyContent: 'left',
-                              cursor: 'pointer',
-                            }}
-                            title={`Download: ${fileTitle}`}
-                          >
-                            <VISUALS.DOWNLOAD />
-                            <span style={{ fontSize: '0.85rem' }}>{fileTitle}</span>
-                          </Link>
-                        );
-                      } else if (hasBewijsDataUrl) {
-                        // Data URL (base64 encoded file) - handle with handleFileClick
-                        return (
-                          <Link
-                            href='#'
-                            onClick={(e) => {
-                              e.preventDefault();
-                              handleFileClick(bewijsUrl);
-                            }}
-                            style={{
-                              display: 'flex',
-                              justifyContent: 'left',
-                              cursor: 'pointer',
-                            }}
-                            title='Download bewijs bestand'
-                          >
-                            <VISUALS.DOWNLOAD />
-                          </Link>
-                        );
-                      } else if (hasBewijsHttpUrl) {
-                        // HTTP(S) or protocol-less external URL in bewijs field - display the URL
-                        return (
-                          <Link
-                            href={toAbsoluteUrl(bewijsUrl)}
-                            target='_blank'
-                            rel='noopener noreferrer'
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                              justifyContent: 'left',
-                              cursor: 'pointer',
-                              wordBreak: 'break-all',
-                            }}
-                            title={`Open bewijs URL: ${bewijsUrl}`}
-                          >
-                            <VISUALS.EXTERNAL_LINK />
-                            <span style={{ fontSize: '0.85rem' }}>{bewijsUrl}</span>
-                          </Link>
-                        );
-                      } else if (hasUrl) {
-                        // Separate url field - display the URL
-                        return (
-                          <Link
-                            href={toAbsoluteUrl(complianceStandard.url)}
-                            target='_blank'
-                            rel='noopener noreferrer'
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                              justifyContent: 'left',
-                              cursor: 'pointer',
-                              wordBreak: 'break-all',
-                            }}
-                            title={`Open bewijs URL: ${complianceStandard.url}`}
-                          >
-                            <VISUALS.EXTERNAL_LINK />
-                            <span style={{ fontSize: '0.85rem' }}>{complianceStandard.url}</span>
-                          </Link>
-                        );
-                      } else {
-                        return (
-                          <span
-                            style={{
-                              display: 'flex',
-                              justifyContent: 'left',
-                            }}
-                          >
-                            -
-                          </span>
-                        );
-                      }
-                    })()}
+                        if (fileTitle && fileDownloadUrl) {
+                          return (
+                            <Link
+                              href={fileDownloadUrl}
+                              target='_blank'
+                              rel='noopener noreferrer'
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                justifyContent: 'left',
+                                cursor: 'pointer',
+                              }}
+                              title={`Download: ${fileTitle}`}
+                            >
+                              <VISUALS.DOWNLOAD />
+                              <span style={{ fontSize: '0.85rem' }}>
+                                {fileTitle}
+                              </span>
+                            </Link>
+                          );
+                        } else if (hasBewijsDataUrl) {
+                          // Data URL (base64 encoded file) - handle with handleFileClick
+                          return (
+                            <Link
+                              href='#'
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleFileClick(bewijsUrl);
+                              }}
+                              style={{
+                                display: 'flex',
+                                justifyContent: 'left',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              <VISUALS.DOWNLOAD />
+                              <span style={{ fontSize: '0.85rem' }}>
+                                {bewijsFilename}
+                              </span>
+                            </Link>
+                          );
+                        } else if (hasBewijsHttpUrl) {
+                          // HTTP(S) or protocol-less external URL in bewijs field - display the URL
+                          return (
+                            <Link
+                              href={toAbsoluteUrl(bewijsUrl)}
+                              target='_blank'
+                              rel='noopener noreferrer'
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                justifyContent: 'left',
+                                cursor: 'pointer',
+                                wordBreak: 'break-all',
+                              }}
+                              title={`Open bewijs URL: ${bewijsUrl}`}
+                            >
+                              <VISUALS.EXTERNAL_LINK />
+                              <span style={{ fontSize: '0.85rem' }}>
+                                {bewijsUrl}
+                              </span>
+                            </Link>
+                          );
+                        } else if (hasUrl) {
+                          // Separate url field - display the URL
+                          return (
+                            <Link
+                              href={toAbsoluteUrl(complianceStandard.url)}
+                              target='_blank'
+                              rel='noopener noreferrer'
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                justifyContent: 'left',
+                                cursor: 'pointer',
+                                wordBreak: 'break-all',
+                              }}
+                              title={`Open bewijs URL: ${complianceStandard.url}`}
+                            >
+                              <VISUALS.EXTERNAL_LINK />
+                              <span style={{ fontSize: '0.85rem' }}>
+                                {complianceStandard.url}
+                              </span>
+                            </Link>
+                          );
+                        } else {
+                          return (
+                            <span
+                              style={{
+                                display: 'flex',
+                                justifyContent: 'left',
+                              }}
+                            >
+                              -
+                            </span>
+                          );
+                        }
+                      })()
+                    )}
                   </TableCell>
                 </TableRow>
               );

@@ -72,7 +72,9 @@ const ConCardDienst = ({
             {category && (
               <>
                 {created && <VISUALS.ELLIPSE />}
-                <Paragraph small>{extractText(category)}</Paragraph>
+                <Paragraph small style={{ whiteSpace: 'nowrap' }}>
+                  {extractText(category)}
+                </Paragraph>
               </>
             )}
             {type && (
