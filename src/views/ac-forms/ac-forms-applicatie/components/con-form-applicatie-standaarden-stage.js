@@ -1125,7 +1125,7 @@ const ConFormApplicatieStandaardenStage = ({
   };
 
   // Update bewijs for a specific standard
-  const updateBewijs = (key, bewijs) => {
+  const updateBewijs = (key, bewijs, filename) => {
     const entry = tableState[key];
     if (!entry) return;
 
@@ -1134,8 +1134,9 @@ const ConFormApplicatieStandaardenStage = ({
       ...prev,
       [key]: {
         ...prev[key],
-        bewijs,
         url: null, // Clear URL when file is uploaded (mutually exclusive)
+        bewijs,
+        bewijsFilename: filename,
       },
     }));
 
@@ -1149,7 +1150,7 @@ const ConFormApplicatieStandaardenStage = ({
             ...c,
             standaardnaam: entry.standardName,
             bewijs,
-            bewijsFilename: c.bewijsFilename || entry.bewijsFilename || null,
+            bewijsFilename: filename,
             url: null, // Clear URL when file is uploaded (mutually exclusive)
           }
         : c
@@ -1186,38 +1187,6 @@ const ConFormApplicatieStandaardenStage = ({
             url,
             bewijs: null, // Clear file when URL is set (mutually exclusive)
             bewijsFilename: null,
-          }
-        : c
-    );
-
-    setApplicatieData('compliancy', updatedCompliancy);
-  };
-
-  // Update bewijs filename for a specific standard
-  const updateBewijsFilename = (key, filename) => {
-    const entry = tableState[key];
-    if (!entry) return;
-
-    // Update tableState
-    setTableState((prev) => ({
-      ...prev,
-      [key]: {
-        ...prev[key],
-        bewijsFilename: filename,
-      },
-    }));
-
-    // Update applicatie data
-    const prevCompliancy = Array.isArray(applicatie.compliancy)
-      ? [...applicatie.compliancy]
-      : [];
-    const updatedCompliancy = prevCompliancy.map((c) =>
-      c.standaardversie === entry.standardId
-        ? {
-            ...c,
-            standaardnaam: entry.standardName,
-            bewijsFilename: filename,
-            bewijs: c.bewijs || entry.bewijs || null,
           }
         : c
     );
@@ -1680,10 +1649,9 @@ const ConFormApplicatieStandaardenStage = ({
                   filename: entry.bewijs ? 'Bestand geüpload' : '',
                 }}
                 _value={entry.bewijs || ''}
-                onChange={(dataUrl) => updateBewijs(entryKey, dataUrl)}
-                onChangeFileName={(filename) =>
-                  updateBewijsFilename(entryKey, filename)
-                }
+                onChange={(dataUrl, filename) => {
+                  updateBewijs(entryKey, dataUrl, filename)
+                }}
                 onClear={() => clearBewijs(entryKey)}
                 accept={['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx']}
                 showPreview={false}
