@@ -128,7 +128,7 @@ export const LogoUploadField = ({
     if (onFileChange) onFileChange(file);
     const reader = new FileReader();
     reader.onload = () => {
-      onChange(reader.result);
+      onChange(reader.result, file.name);
     };
     reader.onerror = () => {
       // TODO: show user-friendly error state if needed
