@@ -887,7 +887,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     schemas?.module,
     referentieComponentenOptions.length,
     referentieComponentenLoading,
-    loadReferentieComponenten,
   ]);
 
   // ✅ Load standaarden when referentiecomponenten are selected
@@ -910,7 +909,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     referentieComponentenWithStandards,
     referentieComponentenOptions,
     schemas?.module,
-    loadStandaardenFromReferentieComponenten,
   ]);
 
   // ✅ Load ALL standaardversies when schemas are available (for extra standaardversies dropdown)
@@ -928,7 +926,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     schemas?.module,
     standaardenversiesOptions.length,
     standaardenversiesOptionsLoading,
-    loadAllStandaardenversies,
   ]);
 
   // Initialize selectedExtraStandards from existing compliancy and standaardVersies data
