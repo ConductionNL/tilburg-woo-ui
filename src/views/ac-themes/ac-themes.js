@@ -29,15 +29,16 @@ const AcSubjects = ({ store: { publications, themes } }) => {
     }
 
     return (
-      <AcGrid row={3}>
+      <AcGrid columns={3}>
         {all_themes?.map((subject, index) => (
           <AcCardCategory
             key={index}
             {...subject}
-            linkUrl={getSearchPageURL({
+            linkUrl={subject.linkUrl || getSearchPageURL({
               themes: [subject.id],
             })}
-            linkTitle={LABELS.VIEW_DOCUMENTS}
+            linkTitle={subject.linkTitle || LABELS.VIEW_DOCUMENTS}
+            isExternal={subject.isExternal || false}
           />
         ))}
       </AcGrid>

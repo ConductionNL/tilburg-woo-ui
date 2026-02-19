@@ -10,6 +10,7 @@ import { withStore } from '@stores';
 import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
 import { schemaCache } from '@services/schemaCache.service';
+import { useResolveSchemaIds } from '@src/hooks/use-resolve-schema-ids.hook';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 import { normalizeSchemaName } from '@src/utilities/con-normalize-schema-name';
 import { createBeschrijvingTab } from './helpers/beschrijving-tab.helper';
@@ -36,14 +37,13 @@ const AcPublication = ({ store: { publications, object, user } }) => {
   // Tabs
   const [uses, setUses] = useState([]);
   const [used, setUsed] = useState([]);
-  const [gebruik, setGebruik] = useState([]);
   const [usesLoading, setUsesLoading] = useState(false);
   const [usedLoading, setUsedLoading] = useState(false);
-  const [gebruikLoading, setGebruikLoading] = useState(false);
   const [tabIndex, setTabIndex] = useState(0);
-  
-  // Aggregated schemas from all endpoints (indexed by schema ID)
-  const [aggregatedSchemas, setAggregatedSchemas] = useState({});
+
+  // Resolve schema IDs from uses/used items to full schema objects
+  const allRelatedItems = useMemo(() => [...uses, ...used], [uses, used]);
+  const { aggregatedSchemas, setAggregatedSchemas } = useResolveSchemaIds(allRelatedItems);
 
   const fetchUses = useCallback(async () => {
     if (!id) return;
@@ -64,14 +64,6 @@ const AcPublication = ({ store: { publications, object, user } }) => {
       }
       const data = await response.json();
       setUses(data.results || []);
-      
-      // Extract and aggregate schemas from @self.schemas
-      if (data['@self']?.schemas) {
-        setAggregatedSchemas(prev => ({
-          ...prev,
-          ...data['@self'].schemas
-        }));
-      }
     } catch (error) {
       console.error('Error fetching uses:', error);
     } finally {
@@ -98,14 +90,6 @@ const AcPublication = ({ store: { publications, object, user } }) => {
       }
       const data = await response.json();
       setUsed(data.results || []);
-      
-      // Extract and aggregate schemas from @self.schemas
-      if (data['@self']?.schemas) {
-        setAggregatedSchemas(prev => ({
-          ...prev,
-          ...data['@self'].schemas
-        }));
-      }
     } catch (error) {
       console.error('Error fetching used:', error);
     } finally {
@@ -113,48 +97,12 @@ const AcPublication = ({ store: { publications, object, user } }) => {
     }
   }, [id]);
 
-  const fetchGebruik = useCallback(async () => {
-    if (!id) return;
-    setGebruikLoading(true);
-    try {
-      // For organisations, fetch gebruik where the organisation is referenced
-      const response = await fetch(
-        `${commongroundApiUrl()}/softwarecatalog/api/gebruik?_limit=1000&_extend[]=_schema&organisatie=${id}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      if (!response.ok) {
-        console.error('Error fetching gebruik:', response.statusText);
-        return;
-      }
-      const data = await response.json();
-      setGebruik(data.results || []);
-      
-      // Extract and aggregate schemas from @self.schemas
-      if (data['@self']?.schemas) {
-        setAggregatedSchemas(prev => ({
-          ...prev,
-          ...data['@self'].schemas
-        }));
-      }
-    } catch (error) {
-      console.error('Error fetching gebruik:', error);
-    } finally {
-      setGebruikLoading(false);
-    }
-  }, [id]);
-
   useEffect(() => {
     if (!id) return;
-    
+
     fetchUses();
     fetchUsed();
-    fetchGebruik();
-  }, [id, fetchUses, fetchUsed, fetchGebruik]);
+  }, [id, fetchUses, fetchUsed]);
 
   // Loading
   if (loading.status || !get_single || !attachments) {
@@ -291,11 +239,9 @@ const AcPublication = ({ store: { publications, object, user } }) => {
           <RelatedTabs
             uses={uses}
             used={used}
-            gebruik={gebruik}
             schemas={aggregatedSchemas}
             usesLoading={usesLoading}
             usedLoading={usedLoading}
-            gebruikLoading={gebruikLoading}
             excludeObjectIds={[]}
             tabIndex={tabIndex}
             setTabIndex={setTabIndex}

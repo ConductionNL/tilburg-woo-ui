@@ -55,24 +55,20 @@ const AcHome = ({ store: { pages, publications, themes } }) => {
                 </Paragraph>
               )}
             </AcColumn>
-            <AcGrid row={3}>
+            <AcGrid columns={3}>
               {all_themes
-                ?.slice(0, Math.min(3, all_themes.length))
-                .map((subject, index) => (
-                  // <AcCardCategory key={index} {...subject} />
+                ?.map((subject, index) => (
                   <AcCardCategory
                     key={index}
                     {...subject}
-                    linkUrl={getSearchPageURL({
+                    linkUrl={subject.linkUrl || getSearchPageURL({
                       themes: [subject.id],
                     })}
-                    linkTitle={LABELS.VIEW_DOCUMENTS}
+                    linkTitle={subject.linkTitle || LABELS.VIEW_DOCUMENTS}
+                    isExternal={subject.isExternal || false}
                   />
                 ))}
             </AcGrid>
-            <AcLink type='button' to={PATHS.THEMES}>
-              {LABELS.VIEW_ALL_THEMES}
-            </AcLink>
           </AcColumn>
         </AcContainer>
       </AcSection>
