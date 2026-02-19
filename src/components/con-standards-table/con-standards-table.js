@@ -859,10 +859,11 @@ const ConStandardsTable = ({
               const hasBewijsFile = !!complianceStandard?.['@self']?.files?.[0];
 
               // For display purposes: compliant means has evidence
-              const isCompliant = hasBewijsFile || hasBewijsDataUrl || hasBewijsHttpUrl || hasUrl;
+              const isCompliant =
+                hasBewijsFile || hasBewijsDataUrl || hasBewijsHttpUrl || hasUrl;
               // Ondersteund means in compliancy or compliantVersieIds but no evidence yet
               const isOndersteund =
-                (!!complianceStandard || isInCompliantVersieIds) &&
+                (!!complianceStandard && isInCompliantVersieIds) &&
                 !hasBewijsDataUrl &&
                 !hasBewijsHttpUrl &&
                 !hasUrl;
