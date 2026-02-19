@@ -44,11 +44,13 @@ const ConAddAccountModal = ({
 
   // State for add account operation
   const [isProcessing, setIsProcessing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(null);
 
   const handleConfirm = async () => {
     if (isProcessing) return; // Prevent double-clicks
 
     setIsProcessing(true);
+    setErrorMessage(null);
     try {
       const response = await fetch(
         `${commongroundApiUrl()}/softwarecatalog/api/contactpersonen/${
@@ -61,8 +63,12 @@ const ConAddAccountModal = ({
           },
         }
       );
-      if (!response.ok) {
-        throw new Error('Failed to add account to contactpersoon');
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        setErrorMessage(data.message || 'Failed to add account to contactpersoon');
+        return;
       }
 
       // Close modal first to prevent state conflicts
@@ -74,7 +80,7 @@ const ConAddAccountModal = ({
       }, 100);
     } catch (err) {
       console.error('❌ Failed to add account to contactpersoon:', err);
-      // TODO: add user-facing error handling if required by UX guidelines
+      setErrorMessage(err.message || 'An unexpected error occurred');
     } finally {
       setIsProcessing(false);
     }
@@ -87,8 +93,9 @@ const ConAddAccountModal = ({
   }, [showModal]);
 
   const handleCloseModal = useCallback(() => {
-    // Reset processing state when modal closes
+    // Reset state when modal closes
     setIsProcessing(false);
+    setErrorMessage(null);
 
     onClose?.();
   }, [onClose]);
@@ -138,6 +145,20 @@ const ConAddAccountModal = ({
       disableDefaultButton
     >
       <AcFlex column spacing='sm'>
+        {/* Error message display */}
+        {errorMessage && (
+          <div
+            style={{
+              backgroundColor: '#fdecea',
+              border: '1px solid #f5c6cb',
+              color: '#721c24',
+              padding: '1rem',
+              borderRadius: '4px',
+            }}
+          >
+            <Paragraph>{errorMessage}</Paragraph>
+          </div>
+        )}
         {/* Confirmation text for adding account */}
         Weet je zeker dat je een account wilt toevoegen voor deze {displayName}?
         {/* Show contactpersoon details */}

@@ -228,6 +228,35 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
     }
   };
 
+  // Handle toggling a non-aggregated facet: adds/removes both the facet value and _schema parameter.
+  const toggleNonAggregatedFacet = (facetKey, value, schemaId) => {
+    const { query } = publications;
+    const isCurrentlyChecked = isFacetChecked(facetKey, value);
+
+    // Toggle the facet value using existing logic.
+    toggleSearchArrayValue(facetKey, value);
+
+    // Build the next query state.
+    const nextQuery = { ...publications.query, _page: 1 };
+
+    if (isCurrentlyChecked) {
+      // Deselecting: check if any values remain for this facet key.
+      const remaining = nextQuery[facetKey];
+      const hasRemaining = Array.isArray(remaining) ? remaining.length > 0 : (remaining != null && remaining !== '');
+      if (!hasRemaining) {
+        // No more values for this facet — remove _schema too.
+        delete nextQuery._schema;
+      }
+    } else {
+      // Selecting: add _schema parameter.
+      nextQuery._schema = String(schemaId);
+    }
+
+    const paramsString = AcBuildURLSearchParams(nextQuery);
+    setSearchParams(new URLSearchParams(paramsString));
+    updateQuery(nextQuery);
+  };
+
   // Generic function to check if a value is checked for any facet key
   const isFacetChecked = (facetKey, value) => {
     const { query } = publications;
@@ -599,8 +628,11 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
     return hasActiveBucket;
   });
 
-  // Sort facets alphabetically by title or key
+  // Sort facets by order field (numeric ascending), then alphabetically by title as tiebreaker.
   const sortedFacets = [...filteredFacets].sort(([keyA, valueA], [keyB, valueB]) => {
+    const orderA = valueA.order != null ? Number(valueA.order) : Infinity;
+    const orderB = valueB.order != null ? Number(valueB.order) : Infinity;
+    if (orderA !== orderB) return orderA - orderB;
     const titleA = (valueA.title || keyA).toLowerCase();
     const titleB = (valueB.title || keyB).toLowerCase();
     return titleA.localeCompare(titleB);
@@ -821,13 +853,22 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
                                 shouldDisableUncheckedFilters && !isChecked
                               }
                               onChange={() => {
-                                toggleSearchArrayValue(
-                                  value.queryParameter || key,
-                                  bVal
-                                );
-                                const nextQuery = { ...publications.query, _page: 1 };
-                                const paramsString = AcBuildURLSearchParams(nextQuery);
-                                setSearchParams(new URLSearchParams(paramsString));
+                                if (value.schema != null) {
+                                  // Non-aggregated facet: also manage _schema parameter.
+                                  toggleNonAggregatedFacet(
+                                    value.queryParameter || key,
+                                    bVal,
+                                    value.schema
+                                  );
+                                } else {
+                                  toggleSearchArrayValue(
+                                    value.queryParameter || key,
+                                    bVal
+                                  );
+                                  const nextQuery = { ...publications.query, _page: 1 };
+                                  const paramsString = AcBuildURLSearchParams(nextQuery);
+                                  setSearchParams(new URLSearchParams(paramsString));
+                                }
 
                                 // Note: Facets fetch is triggered by URL change effect in AcSearch
                                 // No need to call fetchFacets() here to avoid duplicate API calls
