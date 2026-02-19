@@ -84,7 +84,7 @@ const AcRegister = () => {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const orgType = params.get('organisatieType');
+    const orgType = params.get('type');
 
     if (orgType) {
       const matchingType = organizationTypes.find(

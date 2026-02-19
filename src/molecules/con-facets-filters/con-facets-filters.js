@@ -228,6 +228,35 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
     }
   };
 
+  // Handle toggling a non-aggregated facet: adds/removes both the facet value and _schema parameter.
+  const toggleNonAggregatedFacet = (facetKey, value, schemaId) => {
+    const { query } = publications;
+    const isCurrentlyChecked = isFacetChecked(facetKey, value);
+
+    // Toggle the facet value using existing logic.
+    toggleSearchArrayValue(facetKey, value);
+
+    // Build the next query state.
+    const nextQuery = { ...publications.query, _page: 1 };
+
+    if (isCurrentlyChecked) {
+      // Deselecting: check if any values remain for this facet key.
+      const remaining = nextQuery[facetKey];
+      const hasRemaining = Array.isArray(remaining) ? remaining.length > 0 : (remaining != null && remaining !== '');
+      if (!hasRemaining) {
+        // No more values for this facet — remove _schema too.
+        delete nextQuery._schema;
+      }
+    } else {
+      // Selecting: add _schema parameter.
+      nextQuery._schema = String(schemaId);
+    }
+
+    const paramsString = AcBuildURLSearchParams(nextQuery);
+    setSearchParams(new URLSearchParams(paramsString));
+    updateQuery(nextQuery);
+  };
+
   // Generic function to check if a value is checked for any facet key
   const isFacetChecked = (facetKey, value) => {
     const { query } = publications;
@@ -599,8 +628,21 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
     return hasActiveBucket;
   });
 
-  // Sort facets alphabetically by title or key
+  // Sort facets by order field (numeric ascending), then alphabetically by title as tiebreaker.
+  // For @self facets (grouped object), derive sort position from the minimum order of sub-facets.
   const sortedFacets = [...filteredFacets].sort(([keyA, valueA], [keyB, valueB]) => {
+    const getOrder = (key, value) => {
+      if (key === '@self') {
+        const subOrders = Object.values(value)
+          .map((v) => v.order)
+          .filter((o) => o != null);
+        return subOrders.length > 0 ? Math.min(...subOrders) : Infinity;
+      }
+      return value.order != null ? Number(value.order) : Infinity;
+    };
+    const orderA = getOrder(keyA, valueA);
+    const orderB = getOrder(keyB, valueB);
+    if (orderA !== orderB) return orderA - orderB;
     const titleA = (valueA.title || keyA).toLowerCase();
     const titleB = (valueB.title || keyB).toLowerCase();
     return titleA.localeCompare(titleB);
@@ -644,7 +686,10 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
             <React.Fragment key={key}>
               {Object.entries(value)
                 .sort(([_keyA, _valueA], [_keyB, _valueB]) => {
-                  // Sort @self sub-facets alphabetically by title or key
+                  // Sort @self sub-facets by order (ascending), then alphabetically by title
+                  const orderA = _valueA.order != null ? Number(_valueA.order) : Infinity;
+                  const orderB = _valueB.order != null ? Number(_valueB.order) : Infinity;
+                  if (orderA !== orderB) return orderA - orderB;
                   const titleA = (_valueA.title || _keyA).toLowerCase();
                   const titleB = (_valueB.title || _keyB).toLowerCase();
                   return titleA.localeCompare(titleB);
@@ -821,13 +866,22 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
                                 shouldDisableUncheckedFilters && !isChecked
                               }
                               onChange={() => {
-                                toggleSearchArrayValue(
-                                  value.queryParameter || key,
-                                  bVal
-                                );
-                                const nextQuery = { ...publications.query, _page: 1 };
-                                const paramsString = AcBuildURLSearchParams(nextQuery);
-                                setSearchParams(new URLSearchParams(paramsString));
+                                if (value.schema != null) {
+                                  // Non-aggregated facet: also manage _schema parameter.
+                                  toggleNonAggregatedFacet(
+                                    value.queryParameter || key,
+                                    bVal,
+                                    value.schema
+                                  );
+                                } else {
+                                  toggleSearchArrayValue(
+                                    value.queryParameter || key,
+                                    bVal
+                                  );
+                                  const nextQuery = { ...publications.query, _page: 1 };
+                                  const paramsString = AcBuildURLSearchParams(nextQuery);
+                                  setSearchParams(new URLSearchParams(paramsString));
+                                }
 
                                 // Note: Facets fetch is triggered by URL change effect in AcSearch
                                 // No need to call fetchFacets() here to avoid duplicate API calls

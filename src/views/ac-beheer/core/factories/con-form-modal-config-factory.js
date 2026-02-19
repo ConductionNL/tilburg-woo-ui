@@ -500,7 +500,6 @@ const FormModalConfigFactory = {
             beschrijvingKort: { visible: false },
             beschrijvingLang: { visible: false },
             type: { visible: (formData, isEdit) => !isEdit }, // Only show type field when adding new organisation
-            organisatieType: { visible: false }, // Hide organisatieType - it's derived from type field
             geregistreerdDoor: { visible: false },
             links: { visible: false },
             oin: { visible: false },
