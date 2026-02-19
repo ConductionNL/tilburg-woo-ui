@@ -701,8 +701,32 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
       }
       // If neither has order, maintain original order (stable sort)
       return 0;
+    })
+    // Mark rollen column as not visible for aanbod-beheerders in contactpersonen table
+    .map((header) => {
+      if (
+        (type === 'contactpersonen' || type === 'contactpersoon') &&
+        (header.id === 'rollen' || header.key === 'rollen')
+      ) {
+        // Try multiple paths to access user groups for compatibility
+        const userGroups =
+          user?.userGroups ||
+          user?.currentUser?.groups ||
+          user?.user?.groups ||
+          [];
+        // Hide rollen column if user is ONLY aanbod-beheerder (not gebruik-beheerder)
+        const isOnlyAanbodBeheerder =
+          userGroups.includes('aanbod-beheerder') &&
+          !userGroups.includes('gebruik-beheerder');
+        
+        if (isOnlyAanbodBeheerder) {
+          // Mark as not visible so it's hidden in both table and column selector
+          return { ...header, visible: false };
+        }
+      }
+      return header;
     });
-  }, [dataProperties, config.customHeaders, user]);
+  }, [dataProperties, config.customHeaders, user, type]);
 
   const [tableHeaders, setTableHeaders] = useState([]);
 
