@@ -241,7 +241,7 @@ const ConFormApplicatieControlerenStage = memo(
         <br />
         <div className='con-form-wizard-review-heading-container'>
           <h3 className='con-form-wizard-review-heading-header'>
-            Applicatie informatie
+            Applicatie-informatie
           </h3>
           <div className='ac-register-review__section'>
             <div className='ac-register-review__header'>
