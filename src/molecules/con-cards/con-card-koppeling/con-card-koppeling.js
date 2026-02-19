@@ -2,7 +2,7 @@ import { AcLink } from '@molecules';
 import { ConUuidResolver } from '@components';
 import { LABELS, VISUALS } from '@constants';
 import { AcCard, AcFlex } from '@atoms';
-import { Heading, Paragraph, StatusBadge } from '@utrecht/component-library-react';
+import { Heading, Paragraph } from '@utrecht/component-library-react';
 import { extractText, extractTitle } from '@src/utilities/con-extract-text';
 import { NAVIGATE_TO } from '@constants/routes.constants';
 import acFormatDate from '@src/utilities/ac-format-date';
@@ -32,21 +32,33 @@ const ConCardKoppeling = ({
   };
 
   // Handle both individual props (source/target) and item object format
-  const moduleA = source || item?.['@self']?.relations?.moduleA;
-  const moduleB = target || item?.['@self']?.relations?.moduleB;
-  const richtingDataUitwisseling = item?.richtingDataUitwisseling;
-  const soortKoppeling = item?.soortKoppeling;
-  const koppelType = item?.koppelType;
+  const moduleA = source || item?.moduleA;
+  const moduleB = target || item?.moduleB;
+  const richtingDataUitwisseling = item?.gegevensuitwisselingRichting;
   const status = item?.status;
-  const datumInGebruik = item?.datumInGebruik;
-  const aanmeldstandaard = item?.aanmeldstandaard;
+  const createdDate = created || item?.['@self']?.created;
+  
+  // Get the appropriate status date based on status
+  const getStatusDate = () => {
+    if (!status) return null;
+    const statusDateMap = {
+      'in ontwikkeling': item?.datumInOntwikkeling,
+      'ontwikkeling': item?.datumInOntwikkeling,
+      'actief': item?.datumInGebruik,
+      'in gebruik': item?.datumInGebruik,
+      'teruggetrokken': item?.datumTeruggetrokken,
+      'einde ondersteuning': item?.datumEindeOndersteuning,
+    };
+    return statusDateMap[status?.toLowerCase()] || null;
+  };
+  
+  const statusDate = getStatusDate();
   const standaardversies = item?.standaardversies;
-  const gebruikVoorReferentiecomponenten = item?.gebruikVoorReferentiecomponenten;
 
   const arrow =
-    richtingDataUitwisseling === 'AnaarB'
+    richtingDataUitwisseling === 'a-naar-b' || richtingDataUitwisseling === 'AnaarB'
       ? '→'
-      : richtingDataUitwisseling === 'BnaarA'
+      : richtingDataUitwisseling === 'b-naar-a' || richtingDataUitwisseling === 'BnaarA'
       ? '←'
       : '↔';
 
@@ -80,89 +92,49 @@ const ConCardKoppeling = ({
         </Paragraph>
       </AcFlex>
 
-      {/* Aanmeldstandaard en versies */}
-      {aanmeldstandaard && (
+      {/* Standaardversies */}
+      {standaardversies && standaardversies.length > 0 && (
         <Paragraph small style={{ marginBottom: 'var(--spacing-small)' }}>
-          <strong>Aanmeldstandaard:</strong>{' '}
-          <ConUuidResolver>{aanmeldstandaard}</ConUuidResolver>
-          {standaardversies && standaardversies.length > 0 && (
-            <>
-              {' '}
-              (
-              {standaardversies.map((versie, index) => (
-                <span key={versie}>
-                  {index > 0 && ', '}
-                  <ConUuidResolver>{versie}</ConUuidResolver>
-                </span>
-              ))}
-              )
-            </>
-          )}
+          <strong>Standaardversies:</strong>{' '}
+          {standaardversies.map((versie, index) => (
+            <span key={versie}>
+              {index > 0 && ', '}
+              <ConUuidResolver>{versie}</ConUuidResolver>
+            </span>
+          ))}
         </Paragraph>
       )}
-
-      {/* Referentiecomponenten */}
-      {gebruikVoorReferentiecomponenten &&
-        gebruikVoorReferentiecomponenten.length > 0 && (
-          <Paragraph small style={{ marginBottom: 'var(--spacing-small)' }}>
-            <strong>Geschikt voor:</strong>{' '}
-            {gebruikVoorReferentiecomponenten
-              .slice()
-              .sort((a, b) => String(a).localeCompare(String(b)))
-              .map((component, index) => (
-                <span key={component}>
-                  {index > 0 && ', '}
-                  <ConUuidResolver>{component}</ConUuidResolver>
-                </span>
-              ))}
-          </Paragraph>
-        )}
 
       <AcFlex justifyContent='between' className='meta'>
         <AcFlex column>
           <AcFlex alignItems='center' spacing='sm' wrap>
-            {/* Status badge */}
-            {status && (
+            {/* Created date */}
+            {createdDate && (
               <>
-                <StatusBadge>{extractText(status)}</StatusBadge>
-                <VISUALS.ELLIPSE />
-              </>
-            )}
-
-            {/* Koppel type (intern/extern) */}
-            {koppelType && (
-              <>
-                <Paragraph small>
-                  {koppelType === 'extern' ? 'Externe koppeling' : 'Interne koppeling'}
+                <Paragraph small style={{ whiteSpace: 'nowrap' }}>
+                  {acFormatDate(createdDate, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
                 </Paragraph>
                 <VISUALS.ELLIPSE />
               </>
             )}
 
-            {/* Soort koppeling */}
-            {soortKoppeling && (
+            {/* Type/Category */}
+            {category && (
               <>
-                <Paragraph small>{extractText(soortKoppeling)}</Paragraph>
+                <Paragraph small>{extractText(category)}</Paragraph>
                 <VISUALS.ELLIPSE />
               </>
             )}
 
-            {/* Datum in gebruik */}
-            {datumInGebruik && (
-              <>
-                <Paragraph small>Sinds {acFormatDate(datumInGebruik)}</Paragraph>
-                <VISUALS.ELLIPSE />
-              </>
-            )}
-
-            {/* Category */}
-            {category && <Paragraph small>{extractText(category)}</Paragraph>}
-          </AcFlex>
-          <AcFlex alignItems='center' spacing='sm'>
-            {/* Created date */}
-            {created && (
-              <Paragraph small style={{ whiteSpace: 'nowrap' }}>
-                {acFormatDate(created, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
+            {/* Status with date */}
+            {status && (
+              <Paragraph small>
+                {extractText(status)}
+                {statusDate && (
+                  <span style={{ marginLeft: '4px' }}>
+                    (sinds {acFormatDate(statusDate, 'YYYY-MM-DD HH:mm:ss', 'DD MMMM YYYY', 'nl-NL')})
+                  </span>
+                )}
               </Paragraph>
             )}
           </AcFlex>
