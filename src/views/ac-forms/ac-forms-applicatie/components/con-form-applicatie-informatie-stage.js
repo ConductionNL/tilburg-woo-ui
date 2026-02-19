@@ -4,7 +4,7 @@ import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
 import { validateWebsite } from '@views/ac-forms/validation/form-validations';
 
 /**
- * Applicatie Informatie Form Component
+ * Applicatie-informatie Form Component
  *
  * This step collects basic information about the application.
  *

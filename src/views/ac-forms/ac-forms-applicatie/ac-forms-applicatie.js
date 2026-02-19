@@ -159,7 +159,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       // For ontbrekend-applicatie: Aanbieder step + multi-step group
       return generateSteps(stepper, [
         {
-          title: 'Applicatie informatie',
+          title: 'Applicatie-informatie',
           isNavigable: false,
           substeps: [
             { title: 'Aanbieder', stepLabel: 'aanbieder' },
@@ -186,7 +186,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     } else {
       // For eigen type: no Aanbieder step
       return generateSteps(stepper, [
-        { title: 'Applicatie informatie', stepLabel: 'applicatie-informatie' },
+        { title: 'Applicatie-informatie', stepLabel: 'applicatie-informatie' },
         {
           title: 'Applicatie configuratie',
           isNavigable: false,
@@ -1519,7 +1519,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       return missingNewOrgFields.length > 0;
     }
 
-    // Applicatie informatie: naam, website, and beschrijvingKort are required
+    // Applicatie-informatie: naam, website, and beschrijvingKort are required
     if (stepLabel === 'applicatie-informatie') {
       // Check naam is filled
       if (!applicatie.naam?.trim?.()) {

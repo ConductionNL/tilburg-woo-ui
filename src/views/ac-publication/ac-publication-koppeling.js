@@ -352,7 +352,9 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
             {get_single?.beschrijvingKort && (
               <div style={{ marginBottom: '8px' }}>
                 <strong>Korte beschrijving: </strong>
-                {get_single.beschrijvingKort}
+                <span>
+                  {get_single.beschrijvingKort}
+                </span>
               </div>
             )}
             {intermediairId && (

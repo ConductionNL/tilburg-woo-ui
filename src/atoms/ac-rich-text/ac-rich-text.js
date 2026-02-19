@@ -15,7 +15,11 @@ const AcRichText = ({ store: { user }, content }) => {
   // Process template variables in content before sanitizing HTML
   const processedContent = processUserTemplate(content, user);
 
-  return <div className={_CLASSES}>{AcSanitizeHtml(processedContent)}</div>;
+  return (
+    <div className={_CLASSES}>
+      {AcSanitizeHtml(processedContent)}
+    </div>
+  );
 };
 
 export default withStore(observer(AcRichText));

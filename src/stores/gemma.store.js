@@ -34,6 +34,9 @@ export class GemmaStore {
   allVoorzieningGebruik = null;
 
   @observable
+  modules = null;
+
+  @observable
   elementReferences = null;
 
   @observable
@@ -74,6 +77,11 @@ export class GemmaStore {
   @computed
   get get_allVoorzieningGebruik() {
     return toJS(this.allVoorzieningGebruik);
+  }
+
+  @computed
+  get get_modules() {
+    return toJS(this.modules);
   }
 
   @computed
@@ -122,16 +130,21 @@ export class GemmaStore {
   };
 
   @action
+  setModules = (modules) => {
+    this.modules = modules;
+  };
+
+  @action
   setViewError = (error) => {
     this.viewError = error;
   };
 
   @action
-  fetchViews = async () => {
+  fetchViews = async (params = {}) => {
     this.loading.status = true;
 
-    app.store.api.gemma
-      .views()
+    return app.store.api.gemma
+      .views(params)
       .then((response) => {
         this.setViews(response.results);
         delete response.results;
@@ -162,8 +175,32 @@ export class GemmaStore {
       });
   };
 
-  // Removed voorzieningGebruik fetch
-  // Removed voorzieningGebruik fetch by id
+  @action
+  fetchGebruik = async (params = {}) => {
+    return app.store.api.gemma
+      .allVoorzieningGebruik(params)
+      .then((response) => {
+        this.setAllVoorzieningGebruik(response.results || []);
+        return response;
+      })
+      .catch((e) => console.error('fetchGebruik error:', e));
+  };
+
+  @action
+  fetchModules = async (params = {}) => {
+    return app.store.api.gemma
+      .modules(params)
+      .then((response) => {
+        const results = response.results || [];
+        this.setModules(results);
+        return results;
+      })
+      .catch((e) => {
+        console.error('fetchModules error:', e);
+        return [];
+      });
+  };
+
   @action
   fetchElementReferences = async (_id) => {
     this.loading.status = true;
@@ -197,7 +234,7 @@ export class GemmaStore {
 
   @action
   resetAllVoorzieningGebruik = () => {
-    this.voorzieningGebruik = null;
+    this.allVoorzieningGebruik = null;
   };
 
   @action

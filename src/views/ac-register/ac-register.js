@@ -65,6 +65,7 @@ const AcRegister = () => {
     email: '',
   });
   const [logoDataUrl, setLogoDataUrl] = useState(null);
+  const [logoFile, setLogoFile] = useState(null);
   const [touched, setTouched] = useState({
     name: false,
     contactPersons: {
@@ -144,18 +145,21 @@ const AcRegister = () => {
   const handleRegister = async () => {
     setLoading(true);
     try {
-      // Create a copy of the organization data
-      const organizationData = {
-        naam: organization.name,
-        website: organization.website,
-        links: organization.links,
-        oin: organization.oin,
-        cbs: organization.cbs,
-        telefoonnummer: organization.phone,
-        rol: organization.role,
-        beschrijvingKort: organization.summary,
-        logo: logoDataUrl || '',
-        contactpersonen: [
+      // Build multipart form data to support file uploads (logo) without size limits.
+      const formData = new FormData();
+      formData.append('naam', organization.name || '');
+      formData.append('website', organization.website || '');
+      formData.append('links', organization.links || '');
+      formData.append('oin', organization.oin || '');
+      formData.append('cbs', organization.cbs || '');
+      formData.append('telefoonnummer', organization.phone || '');
+      formData.append('rol', organization.role || '');
+      formData.append('beschrijvingKort', organization.summary || '');
+      formData.append('type', organization.organizationType || '');
+      formData.append('e-mailadres', organization.email || '');
+      formData.append(
+        'contactpersonen',
+        JSON.stringify([
           {
             voornaam: organization.contactPersons[0].firstName,
             tussenvoegsel: organization.contactPersons[0].middleName,
@@ -164,19 +168,17 @@ const AcRegister = () => {
             'e-mailadres': organization.contactPersons[0].email,
             functie: organization.contactPersons[0].function,
           },
-        ],
-        type: organization.organizationType,
-        'e-mailadres': organization.email,
-      };
+        ])
+      );
+
+      // Attach logo as a file if available, otherwise send empty string.
+      formData.append('logo', logoFile || '');
 
       const response = await fetch(
         `${BASE_URL}/openregister/api/objects/voorzieningen/organisatie`,
         {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(organizationData),
+          body: formData,
         }
       );
 
@@ -234,6 +236,7 @@ const AcRegister = () => {
         email: false,
       },
     });
+    setLogoFile(null);
     setCurrentStep(0);
   };
 
@@ -263,6 +266,7 @@ const AcRegister = () => {
               touched,
               logoDataUrl,
               setLogoDataUrl,
+              setLogoFile,
             }}
           />
         );
@@ -890,6 +894,7 @@ const OrganizationOptionalForm = memo(
     validatePhone,
     logoDataUrl,
     setLogoDataUrl,
+    setLogoFile,
   }) => {
     const dimensions = { width: '100%', height: '234px' };
     const counterRef = useRef(null);
@@ -1005,13 +1010,15 @@ const OrganizationOptionalForm = memo(
               fieldConfig={{ label: 'Logo', filename: undefined }}
               _value={logoDataUrl || ''}
               onChange={(dataUrl) => setLogoDataUrl(dataUrl || null)}
+              onFileChange={(file) => setLogoFile(file || null)}
               onChangeFileName={() => {}}
-              onClear={() => setLogoDataUrl(null)}
+              onClear={() => { setLogoDataUrl(null); setLogoFile(null); }}
               validation={{ required: false }}
               propertyName={'logo'}
               isDisabled={loading}
               showPreview={true}
               size={'normal'}
+              maxFileSize={10240}
             />
 
             {(organization.organizationType === 'Gemeente' ||

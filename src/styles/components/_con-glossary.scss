@@ -1,0 +1,93 @@
+// Glossary highlight marks in text
+.con-glossary-term {
+  background-color: var(--tilburg-color-primary-100, #e8f0fe);
+  border-bottom: 2px solid var(--tilburg-color-primary-500, #1a73e8);
+  padding: 0 2px;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: background-color 0.2s ease;
+
+  &:hover,
+  &:focus {
+    background-color: var(--tilburg-color-primary-200, #c5defa);
+    outline: 2px solid var(--tilburg-color-primary-500, #1a73e8);
+    outline-offset: 1px;
+  }
+}
+
+// Glossary drawer term list
+.con-glossary-drawer {
+  &__term {
+    padding: var(--tilburg-space-row-rat, 0.5rem) 0;
+    border-bottom: 1px solid var(--tilburg-color-gray-200, #e0e0e0);
+    transition: background-color 0.3s ease;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    h3 {
+      font-size: var(--tilburg-typography-font-size-md, 1rem);
+      margin-bottom: 0.25rem;
+    }
+
+    p {
+      font-size: var(--tilburg-typography-font-size-sm, 0.875rem);
+      color: var(--tilburg-color-gray-600, #666);
+      margin: 0;
+    }
+
+    a {
+      font-size: var(--tilburg-typography-font-size-sm, 0.875rem);
+      display: inline-block;
+      margin-top: 0.25rem;
+    }
+
+    &--highlighted {
+      background-color: var(--tilburg-color-primary-100, #e8f0fe);
+      padding-inline: var(--tilburg-space-row-rat, 0.5rem);
+      margin-inline: calc(-1 * var(--tilburg-space-row-rat, 0.5rem));
+      border-radius: 4px;
+    }
+  }
+}
+
+// Floating glossary button on publication pages
+.con-glossary-button-container {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 100;
+}
+
+.con-glossary-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background-color: var(--tilburg-color-primary-500, #1a73e8);
+  color: white;
+  border: none;
+  border-radius: 2rem;
+  cursor: pointer;
+  font-size: var(--tilburg-typography-font-size-sm, 0.875rem);
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+
+  svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    fill: white;
+  }
+
+  &:hover {
+    background-color: var(--tilburg-color-primary-600, #1557b0);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  &:focus-visible {
+    outline: 2px solid white;
+    outline-offset: 2px;
+  }
+}

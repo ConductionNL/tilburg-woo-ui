@@ -231,7 +231,9 @@ const AcPublicationModuleVersie = ({ store: { publications, user, object } }) =>
         <AcFlex spacing='sm' justifyContent='between'>
           <AcFlex column spacing='md' style={{ flex: 3 }}>
             {!!get_single?.beschrijvingKort && (
-              <div>{get_single?.beschrijvingKort}</div>
+              <div>
+                {get_single?.beschrijvingKort}
+              </div>
             )}
 
             {!!get_single?.beschrijvingLang && (

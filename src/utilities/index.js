@@ -151,5 +151,11 @@ export {
   useResolvedArray,
 } from './con-resolve-uuids-in-text';
 export { normalizeSchemaName } from './con-normalize-schema-name';
+export {
+  buildGlossaryRegex,
+  buildTermLookup,
+  findGlossaryTerms,
+  highlightGlossaryTerms,
+} from './con-glossary-highlight';
 export { normalizeLinkToSchemaSlug } from './con-normalize-link-to-schema-slug';
 export { checkOrganizationPermissions } from './organization-permissions';

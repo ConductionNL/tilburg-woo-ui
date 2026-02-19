@@ -320,7 +320,9 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
           </AcFlex>
 
           {!!get_single?.['@self']?.summary && (
-            <div>{get_single?.['@self']?.summary}</div>
+            <div>
+              {get_single?.['@self']?.summary}
+            </div>
           )}
 
           {!!get_single?.beschrijvingLang && (

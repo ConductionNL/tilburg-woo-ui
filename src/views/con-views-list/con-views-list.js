@@ -39,7 +39,7 @@ const ConViewsList = ({ store }) => {
   useEffect(() => {
     if (!gemma) return;
     if (!gemma.all_views || gemma.all_views.length === 0) {
-      gemma.fetchViews();
+      gemma.fetchViews({ _limit: 100 });
     }
   }, [gemma]);
 
