@@ -629,9 +629,19 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
   });
 
   // Sort facets by order field (numeric ascending), then alphabetically by title as tiebreaker.
+  // For @self facets (grouped object), derive sort position from the minimum order of sub-facets.
   const sortedFacets = [...filteredFacets].sort(([keyA, valueA], [keyB, valueB]) => {
-    const orderA = valueA.order != null ? Number(valueA.order) : Infinity;
-    const orderB = valueB.order != null ? Number(valueB.order) : Infinity;
+    const getOrder = (key, value) => {
+      if (key === '@self') {
+        const subOrders = Object.values(value)
+          .map((v) => v.order)
+          .filter((o) => o != null);
+        return subOrders.length > 0 ? Math.min(...subOrders) : Infinity;
+      }
+      return value.order != null ? Number(value.order) : Infinity;
+    };
+    const orderA = getOrder(keyA, valueA);
+    const orderB = getOrder(keyB, valueB);
     if (orderA !== orderB) return orderA - orderB;
     const titleA = (valueA.title || keyA).toLowerCase();
     const titleB = (valueB.title || keyB).toLowerCase();
@@ -676,7 +686,10 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
             <React.Fragment key={key}>
               {Object.entries(value)
                 .sort(([_keyA, _valueA], [_keyB, _valueB]) => {
-                  // Sort @self sub-facets alphabetically by title or key
+                  // Sort @self sub-facets by order (ascending), then alphabetically by title
+                  const orderA = _valueA.order != null ? Number(_valueA.order) : Infinity;
+                  const orderB = _valueB.order != null ? Number(_valueB.order) : Infinity;
+                  if (orderA !== orderB) return orderA - orderB;
                   const titleA = (_valueA.title || _keyA).toLowerCase();
                   const titleB = (_valueB.title || _keyB).toLowerCase();
                   return titleA.localeCompare(titleB);

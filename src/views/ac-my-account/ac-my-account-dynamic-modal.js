@@ -392,9 +392,6 @@ const AcMyAccountDynamicModal = ({
       type: {
         visible: false,
       },
-      organisatieType: {
-        visible: false,
-      },
       deelnames: {
         visible: false,
       },
