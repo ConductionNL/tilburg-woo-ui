@@ -13,7 +13,6 @@ import {
   ConPublicationTypeBadge,
 } from '@components';
 import { withStore } from '@stores';
-import { createBeschrijvingTab } from './helpers/beschrijving-tab.helper';
 // import { VISUALS } from '@constants';
 import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
@@ -21,6 +20,7 @@ import { commongroundApiUrl } from '@config';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 import { schemaCache } from '@services/schemaCache.service';
 import { normalizeSchemaName } from '@src/utilities/con-normalize-schema-name';
+import { useResolveSchemaIds } from '@src/hooks/use-resolve-schema-ids.hook';
 
 // Markdown Editor
 import remarkDefinitionList, { defListHastHandlers } from 'remark-definition-list';
@@ -70,14 +70,13 @@ const AcPublicationProduct = ({
   // Tabs
   const [uses, setUses] = useState([]);
   const [used, setUsed] = useState([]);
-  const [gebruik, setGebruik] = useState([]);
   const [usesLoading, setUsesLoading] = useState(false);
   const [usedLoading, setUsedLoading] = useState(false);
-  const [gebruikLoading, setGebruikLoading] = useState(false);
   const [relatedTabIndex, setRelatedTabIndex] = useState(0);
-  
-  // Aggregated schemas from all endpoints (indexed by schema ID)
-  const [aggregatedSchemas, setAggregatedSchemas] = useState({});
+
+  // Resolve schema IDs from uses/used items to full schema objects
+  const allRelatedItems = useMemo(() => [...uses, ...used], [uses, used]);
+  const { aggregatedSchemas, setAggregatedSchemas } = useResolveSchemaIds(allRelatedItems);
 
   // Extract contactpersoon from uses data instead of get_single
   const contact = useMemo(() => {
@@ -115,14 +114,6 @@ const AcPublicationProduct = ({
       }
       const data = await response.json();
       setUses(data.results || []);
-      
-      // Extract and aggregate schemas from @self.schemas
-      if (data['@self']?.schemas) {
-        setAggregatedSchemas(prev => ({
-          ...prev,
-          ...data['@self'].schemas
-        }));
-      }
     } catch (error) {
       console.error('Error fetching uses:', error);
     } finally {
@@ -149,14 +140,6 @@ const AcPublicationProduct = ({
       }
       const data = await response.json();
       setUsed(data.results || []);
-      
-      // Extract and aggregate schemas from @self.schemas
-      if (data['@self']?.schemas) {
-        setAggregatedSchemas(prev => ({
-          ...prev,
-          ...data['@self'].schemas
-        }));
-      }
     } catch (error) {
       console.error('Error fetching used:', error);
     } finally {
@@ -164,48 +147,12 @@ const AcPublicationProduct = ({
     }
   }, [id]);
 
-  const fetchGebruik = useCallback(async () => {
-    if (!id) return;
-    setGebruikLoading(true);
-    try {
-      // For products, fetch gebruik where the product is referenced
-      const response = await fetch(
-        `${commongroundApiUrl()}/softwarecatalog/api/gebruik?_limit=1000&_extend[]=_schema&product=${id}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      if (!response.ok) {
-        console.error('Error fetching gebruik:', response.statusText);
-        return;
-      }
-      const data = await response.json();
-      setGebruik(data.results || []);
-      
-      // Extract and aggregate schemas from @self.schemas
-      if (data['@self']?.schemas) {
-        setAggregatedSchemas(prev => ({
-          ...prev,
-          ...data['@self'].schemas
-        }));
-      }
-    } catch (error) {
-      console.error('Error fetching gebruik:', error);
-    } finally {
-      setGebruikLoading(false);
-    }
-  }, [id]);
-
   useEffect(() => {
     if (!id) return;
-    
+
     fetchUses();
     fetchUsed();
-    fetchGebruik();
-  }, [id, fetchUses, fetchUsed, fetchGebruik]);
+  }, [id, fetchUses, fetchUsed]);
 
   // Loading
   if (loading.status || !get_single) {
@@ -433,18 +380,15 @@ const AcPublicationProduct = ({
       <RelatedTabs
         uses={uses}
         used={used}
-        gebruik={gebruik}
         schemas={aggregatedSchemas}
         usesLoading={usesLoading}
         usedLoading={usedLoading}
-        gebruikLoading={gebruikLoading}
         excludeObjectIds={[]}
         tabIndex={relatedTabIndex}
         setTabIndex={setRelatedTabIndex}
         object={object}
         navigateTo='publication'
         user={user}
-        customTabsBefore={[createBeschrijvingTab(get_single)]}
       />
     </AcContainer>
   );

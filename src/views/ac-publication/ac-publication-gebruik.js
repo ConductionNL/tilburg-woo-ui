@@ -10,9 +10,19 @@ import { commongroundApiUrl } from '@config';
 import { schemaCache } from '@services/schemaCache.service';
 import RelatedTabs from '@views/ac-publication/con-related-tabs-new';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
-import { createBeschrijvingTab } from './helpers/beschrijving-tab.helper';
+// Markdown Editor
+import remarkDefinitionList, { defListHastHandlers } from 'remark-definition-list';
+import { remarkMark } from 'remark-mark-highlight';
+import MDEditor from '@uiw/react-md-editor';
+import remarkGfm from 'remark-gfm';
+import remarkRehype from 'remark-rehype';
+import remarkEmoji from 'remark-emoji';
+import remarkSupersub from 'remark-supersub';
+import rehypeSlug from 'rehype-slug';
+import rehypeSanitize from 'rehype-sanitize';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
 // import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
+import { useResolveSchemaIds } from '@src/hooks/use-resolve-schema-ids.hook';
 import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
 import { AcFormatDate } from '@src/utilities/ac-format-date';
 // import { checkOrganizationPermissions } from '@utils/organization-permissions';
@@ -46,8 +56,9 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
   const [usedLoading, setUsedLoading] = useState(false);
   const [relatedTabIndex, setRelatedTabIndex] = useState(0);
   
-  // Aggregated schemas from all endpoints (indexed by schema ID)
-  const [aggregatedSchemas, setAggregatedSchemas] = useState({});
+  // Aggregated schemas from all related items via hook
+  const allRelatedItems = useMemo(() => [...uses, ...used], [uses, used]);
+  const { aggregatedSchemas, setAggregatedSchemas } = useResolveSchemaIds(allRelatedItems);
 
   // Resolved names state for referentiecomponenten (needed for sorting and GEMMA links)
   const [sortedReferentiecomponenten, setSortedReferentiecomponenten] = useState([]);
@@ -95,14 +106,6 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
       if (!response.ok) return;
       const json = await response.json();
       setUses(json.results || []);
-      
-      // Extract and aggregate schemas from @self.schemas
-      if (json['@self']?.schemas) {
-        setAggregatedSchemas(prev => ({
-          ...prev,
-          ...json['@self'].schemas
-        }));
-      }
     } finally {
       setUsesLoading(false);
     }
@@ -119,14 +122,6 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
       if (!response.ok) return;
       const json = await response.json();
       setUsed(json.results || []);
-      
-      // Extract and aggregate schemas from @self.schemas
-      if (json['@self']?.schemas) {
-        setAggregatedSchemas(prev => ({
-          ...prev,
-          ...json['@self'].schemas
-        }));
-      }
     } finally {
       setUsedLoading(false);
     }
@@ -322,22 +317,40 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
           )}
         </div>
 
+        {!!get_single?.beschrijvingLang && (
+          <MDEditor.Markdown
+            wrapperElement={{
+              'data-color-mode': 'light',
+            }}
+            source={get_single?.beschrijvingLang}
+            remarkPlugins={[
+              [remarkGfm, { singleTilde: false }],
+              remarkDefinitionList,
+              remarkEmoji,
+              remarkSupersub,
+              remarkMark,
+            ]}
+            rehypePlugins={[
+              rehypeSlug,
+              [rehypeSanitize],
+              [remarkRehype, { handlers: { ...defListHastHandlers } }],
+            ]}
+          />
+        )}
+
         <div style={{ marginTop: '2rem' }}>
           <RelatedTabs
             uses={uses}
             used={used}
-            gebruik={[]}
             schemas={aggregatedSchemas}
             usesLoading={usesLoading}
             usedLoading={usedLoading}
-            gebruikLoading={false}
             excludeObjectIds={[]}
             tabIndex={relatedTabIndex}
             setTabIndex={setRelatedTabIndex}
             object={object}
             navigateTo='publication'
             user={user}
-            customTabsBefore={[createBeschrijvingTab(get_single)]}
           />
         </div>
 
