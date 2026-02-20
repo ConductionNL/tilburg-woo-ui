@@ -10,7 +10,16 @@ import { commongroundApiUrl } from '@config';
 import { schemaCache } from '@services/schemaCache.service';
 import RelatedTabs from '@views/ac-publication/con-related-tabs-new';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
-import { createBeschrijvingTab } from './helpers/beschrijving-tab.helper';
+// Markdown Editor
+import remarkDefinitionList, { defListHastHandlers } from 'remark-definition-list';
+import { remarkMark } from 'remark-mark-highlight';
+import MDEditor from '@uiw/react-md-editor';
+import remarkGfm from 'remark-gfm';
+import remarkRehype from 'remark-rehype';
+import remarkEmoji from 'remark-emoji';
+import remarkSupersub from 'remark-supersub';
+import rehypeSlug from 'rehype-slug';
+import rehypeSanitize from 'rehype-sanitize';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
 // import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { useResolveSchemaIds } from '@src/hooks/use-resolve-schema-ids.hook';
@@ -308,6 +317,27 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
           )}
         </div>
 
+        {!!get_single?.beschrijvingLang && (
+          <MDEditor.Markdown
+            wrapperElement={{
+              'data-color-mode': 'light',
+            }}
+            source={get_single?.beschrijvingLang}
+            remarkPlugins={[
+              [remarkGfm, { singleTilde: false }],
+              remarkDefinitionList,
+              remarkEmoji,
+              remarkSupersub,
+              remarkMark,
+            ]}
+            rehypePlugins={[
+              rehypeSlug,
+              [rehypeSanitize],
+              [remarkRehype, { handlers: { ...defListHastHandlers } }],
+            ]}
+          />
+        )}
+
         <div style={{ marginTop: '2rem' }}>
           <RelatedTabs
             uses={uses}
@@ -321,7 +351,6 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
             object={object}
             navigateTo='publication'
             user={user}
-            customTabsBefore={[createBeschrijvingTab(get_single)]}
           />
         </div>
 

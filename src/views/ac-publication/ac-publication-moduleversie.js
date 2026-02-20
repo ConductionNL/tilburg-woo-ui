@@ -10,7 +10,6 @@ import { withStore } from '@stores';
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
 import { schemaCache } from '@services/schemaCache.service';
-import { createBeschrijvingTab } from './helpers/beschrijving-tab.helper';
 
 // Markdown Editor
 import remarkDefinitionList, { defListHastHandlers } from 'remark-definition-list';
@@ -325,7 +324,6 @@ const AcPublicationModuleVersie = ({ store: { publications, user, object } }) =>
         object={object}
         navigateTo='publication'
         user={user}
-        customTabsBefore={[createBeschrijvingTab(get_single)]}
       />
     </AcContainer>
   );

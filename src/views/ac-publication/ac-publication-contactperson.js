@@ -10,7 +10,6 @@ import { withStore } from '@stores';
 import { VISUALS } from '@constants';
 import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
-import { createBeschrijvingTab } from './helpers/beschrijving-tab.helper';
 import { schemaCache } from '@services/schemaCache.service';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { useResolveSchemaIds } from '@src/hooks/use-resolve-schema-ids.hook';
@@ -347,7 +346,6 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
             object={object}
             navigateTo='publication'
             user={user}
-            customTabsBefore={[createBeschrijvingTab(get_single)]}
           />
         </AcFlex>
       </AcContainer>

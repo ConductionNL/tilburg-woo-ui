@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { observer } from 'mobx-react-lite';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { AcLoader } from '@components';
 import { AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
 import {
@@ -333,15 +333,23 @@ const RelatedTabs = observer(
       return null;
     }
 
-    // Ensure tabIndex is within bounds
-    const safeTabIndex = Math.min(Math.max(0, tabIndex), allTabs.length - 1);
-    
-    // Create a stable key based on tab structure to force remount on structure changes
-    const tabsKey = allTabs.map(t => t.id || t.tab?.id).join('-');
+    // Workaround: react-tabs defaultIndex={0} doesn't reliably select the first tab
+    // when tabs are rendered asynchronously. Programmatically click the first tab if needed.
+    const wrapperRef = useRef(null);
+    useEffect(() => {
+      if (wrapperRef.current && allTabs.length > 0) {
+        setTimeout(() => {
+          const firstTab = wrapperRef.current?.querySelector('[role="tab"]');
+          if (firstTab && firstTab.getAttribute('aria-selected') !== 'true') {
+            firstTab.click();
+          }
+        }, 100);
+      }
+    }, [allTabs.length]);
 
     return (
+      <div ref={wrapperRef}>
       <AcTabs
-        key={tabsKey}
         style={{ marginBlockStart: 'var(--tilburg-space-block-mouse)' }}
         defaultIndex={0}
         onSelect={(index) => setTabIndex(index)}
@@ -420,6 +428,7 @@ const RelatedTabs = observer(
           );
         })}
       </AcTabs>
+      </div>
     );
   }
 );
