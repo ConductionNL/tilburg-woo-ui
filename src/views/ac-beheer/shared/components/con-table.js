@@ -561,9 +561,24 @@ const ConTable = (
       }
 
       if (header.key === 'logo') {
+        const rawValue = row?.['@self']?.image || row[header.key];
+        const isNumericFileId =
+          typeof rawValue === 'number' ||
+          (typeof rawValue === 'string' && /^\d+$/.test(rawValue.trim()));
+
+        if (isNumericFileId && row['@self']) {
+          return (
+            <ConLogoPreview
+              fileId={rawValue}
+              objectSelf={row['@self']}
+              className='ac-register-review__logo'
+            />
+          );
+        }
+
         return (
           <ConLogoPreview
-            logoUrl={row[header.key]}
+            logoUrl={rawValue}
             className='ac-register-review__logo'
           />
         );

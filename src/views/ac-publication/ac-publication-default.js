@@ -277,6 +277,7 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
                 <ConLogoPreview
                   className='con-beheer-details--logo-container'
                   logoUrl={get_single?.['@self']?.image}
+                  objectSelf={get_single?.['@self']}
                 />
               )}
 

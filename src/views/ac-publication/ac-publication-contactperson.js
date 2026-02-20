@@ -191,6 +191,7 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
                   <ConLogoPreview
                     className='con-beheer-details--logo-container'
                     logoUrl={get_single?.['@self']?.image || get_single?.image}
+                    objectSelf={get_single?.['@self']}
                   />
                 )}
 
