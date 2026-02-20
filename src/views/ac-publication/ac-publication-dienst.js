@@ -63,10 +63,10 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
   const [usesLoading, setUsesLoading] = useState(false);
   const [usedLoading, setUsedLoading] = useState(false);
   const [relatedTabIndex, setRelatedTabIndex] = useState(0);
-  
+
   // Aggregated schemas from all related items via hook
   const allRelatedItems = useMemo(() => [...uses, ...used], [uses, used]);
-  const { aggregatedSchemas, setAggregatedSchemas } = useResolveSchemaIds(allRelatedItems);
+  const { aggregatedSchemas } = useResolveSchemaIds(allRelatedItems);
 
   // Related create actions (wizard-aware) like module/product pages
   const openDynamicCreate = useCallback(
@@ -103,6 +103,8 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
     excludeSchemas,
   });
 
+  // @TODO decide to keep action menu items or remove it entirely, no half functionality
+  // eslint-disable-next-line no-unused-vars
   const [actionMenuItems, setActionMenuItems] = useState([]);
 
   useEffect(() => {
@@ -320,9 +322,7 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
 
         <div style={{ flex: 2 }}>
           {!!get_single?.beschrijvingKort && (
-            <div>
-              {get_single?.beschrijvingKort}
-            </div>
+            <div>{get_single?.beschrijvingKort}</div>
           )}
         </div>
 

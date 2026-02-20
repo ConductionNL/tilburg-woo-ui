@@ -11,7 +11,6 @@ import {
   ConPublicationTypeBadge,
 } from '@components';
 import { withStore } from '@stores';
-import { VISUALS } from '@constants';
 import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
 import { schemaCache } from '@services/schemaCache.service';
@@ -31,7 +30,6 @@ import remarkEmoji from 'remark-emoji';
 import remarkSupersub from 'remark-supersub';
 import rehypeSlug from 'rehype-slug';
 import rehypeSanitize from 'rehype-sanitize';
-import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
 
 const AcPublicationContactperson = ({ store: { publications, object, user } }) => {
@@ -79,6 +77,8 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
   });
 
   // Generate action menu items
+  // @TODO decide if action menu functionality should be fixed or removed, no half functional code.
+  // eslint-disable-next-line no-unused-vars
   const [actionMenuItems, setActionMenuItems] = useState([]);
 
   // Delete modal state
@@ -118,8 +118,7 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
 
   // Aggregated schemas from all related items via hook
   const allRelatedItems = useMemo(() => [...uses, ...used], [uses, used]);
-  const { aggregatedSchemas, setAggregatedSchemas } =
-    useResolveSchemaIds(allRelatedItems);
+  const { aggregatedSchemas } = useResolveSchemaIds(allRelatedItems);
 
   const fetchUses = useCallback(async () => {
     if (!id) return;

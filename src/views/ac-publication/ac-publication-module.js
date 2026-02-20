@@ -279,7 +279,7 @@ const AcPublicationProduct = ({
 
   // Resolve schema IDs from uses/used items to full schema objects
   const allRelatedItems = useMemo(() => [...uses, ...used], [uses, used]);
-  const { aggregatedSchemas, setAggregatedSchemas } = useResolveSchemaIds(allRelatedItems);
+  const { aggregatedSchemas } = useResolveSchemaIds(allRelatedItems);
 
   // Extract contactpersoon from get_single (extended) or fallback to uses data
   const contact = useMemo(() => {
@@ -447,14 +447,14 @@ const AcPublicationProduct = ({
     <AcContainer margin='xl'>
       <AcFlex column spacing='sm'>
         <AcFlex spacing='sm' justifyContent='between' alignItems='center'>
-            <div className='con-beheer-details--header-container'>
-              {(get_single?.['@self']?.image || get_single?.logo) && (
-                <ConLogoPreview
-                  className='con-beheer-details--logo-container'
-                  logoUrl={get_single?.['@self']?.image || get_single?.logo}
-                  objectSelf={get_single?.['@self']}
-                />
-              )}
+          <div className='con-beheer-details--header-container'>
+            {(get_single?.['@self']?.image || get_single?.logo) && (
+              <ConLogoPreview
+                className='con-beheer-details--logo-container'
+                logoUrl={get_single?.['@self']?.image || get_single?.logo}
+                objectSelf={get_single?.['@self']}
+              />
+            )}
 
             <Heading className='con-beheer-details--title'>
               {get_single?.['@self']?.name ||
@@ -555,9 +555,7 @@ const AcPublicationProduct = ({
         <AcFlex spacing='sm' justifyContent='between'>
           <AcFlex column spacing='md' style={{ flex: 2 }}>
             {!!get_single?.['@self']?.summary && (
-              <div>
-                {get_single?.['@self']?.summary}
-              </div>
+              <div>{get_single?.['@self']?.summary}</div>
             )}
 
             {!!get_single?.beschrijvingLang && (

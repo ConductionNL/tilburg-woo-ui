@@ -65,10 +65,10 @@ const AcPublicationModuleVersie = ({ store: { publications, user, object } }) =>
   const [usesLoading, setUsesLoading] = useState(false);
   const [usedLoading, setUsedLoading] = useState(false);
   const [relatedTabIndex, setRelatedTabIndex] = useState(0);
-  
+
   // Aggregated schemas from all related items via hook
   const allRelatedItems = useMemo(() => [...uses, ...used], [uses, used]);
-  const { aggregatedSchemas, setAggregatedSchemas } = useResolveSchemaIds(allRelatedItems);
+  const { aggregatedSchemas } = useResolveSchemaIds(allRelatedItems);
 
   const fetchUses = useCallback(async () => {
     if (!id) return;
@@ -157,15 +157,15 @@ const AcPublicationModuleVersie = ({ store: { publications, user, object } }) =>
     <AcContainer margin='xl'>
       <AcFlex column spacing='sm'>
         <AcFlex spacing='sm' justifyContent='between' alignItems='center'>
-            <div className='con-beheer-details--header-container'>
-              {(get_single?.['@self']?.image || get_single?.logo) && (
-                <ConLogoPreview
-                  className='con-beheer-details--logo-container'
-                  logoUrl={get_single?.['@self']?.image || get_single?.logo}
-                  objectSelf={get_single?.['@self']}
-                />
-              )}
-            </div>
+          <div className='con-beheer-details--header-container'>
+            {(get_single?.['@self']?.image || get_single?.logo) && (
+              <ConLogoPreview
+                className='con-beheer-details--logo-container'
+                logoUrl={get_single?.['@self']?.image || get_single?.logo}
+                objectSelf={get_single?.['@self']}
+              />
+            )}
+          </div>
 
           <AcFlex
             justifyContent='between'
@@ -213,9 +213,7 @@ const AcPublicationModuleVersie = ({ store: { publications, user, object } }) =>
         <AcFlex spacing='sm' justifyContent='between'>
           <AcFlex column spacing='md' style={{ flex: 3 }}>
             {!!get_single?.beschrijvingKort && (
-              <div>
-                {get_single?.beschrijvingKort}
-              </div>
+              <div>{get_single?.beschrijvingKort}</div>
             )}
 
             {!!get_single?.beschrijvingLang && (
