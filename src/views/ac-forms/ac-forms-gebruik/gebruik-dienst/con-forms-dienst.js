@@ -68,7 +68,6 @@ const ConFormsDienst = ({ store }) => {
   // Schemas - using wizard-utils
   const { schemas, loading: schemasLoading } = useSchemaFetcher(store, [
     'dienst',
-    'product',
     'module',
     'koppeling',
     'organisatie',
