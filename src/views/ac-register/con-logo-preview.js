@@ -136,19 +136,43 @@ const ConLogoPreview = ({
         objectSelf.id,
         resolvedFileId
       )
-      .then((fileData) => {
-        const url = fileData?.downloadUrl || fileData?.accessUrl;
+      .then(async (fileData) => {
+        let url = fileData?.downloadUrl || fileData?.accessUrl || fileData?.path;
+        
         if (url) {
+          // SVG files from external domains have CORS restrictions in <img> tags.
+          // Fetch and convert to data URL for inline display to bypass CORS.
+          const isSvg = fileData?.title?.toLowerCase().endsWith('.svg') || 
+                        url.toLowerCase().includes('.svg');
+          
+          if (isSvg) {
+            try {
+              const svgResponse = await fetch(url);
+              if (svgResponse.ok) {
+                const svgContent = await svgResponse.text();
+                const dataUrl = `data:image/svg+xml;base64,${btoa(svgContent)}`;
+                setProcessedUrl(dataUrl);
+                setIsValid(true);
+                setIsLoading(false);
+                return;
+              }
+            } catch (error) {
+              console.error('Error fetching SVG content:', error);
+            }
+          }
+          
+          // For non-SVG images or if SVG fetch failed, use the URL directly
           setProcessedUrl(url);
           setIsValid(true);
+          setIsLoading(false);
         } else {
           setIsValid(false);
+          setIsLoading(false);
         }
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error('Error fetching file:', error);
         setIsValid(false);
-      })
-      .finally(() => {
         setIsLoading(false);
       });
   }, [

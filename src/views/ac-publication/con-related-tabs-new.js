@@ -216,8 +216,11 @@ const renderCard = (item, object, navigateTo, user, schemas) => {
           key={item.id}
           id={item.id}
           title={item.naam}
+          item={item}
           source={item.bronApplicatie}
           target={item.doelApplicatie}
+          created={item['@self']?.created}
+          category={schemaSlug ? getTabHeaderName(schemaSlug, true) : null}
           objectStore={object}
           navigateTo={navigateTo}
         />
