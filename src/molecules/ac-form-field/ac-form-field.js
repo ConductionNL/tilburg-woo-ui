@@ -29,8 +29,7 @@ const AcFormField = ({
   minLength,
   maxLength,
   required,
-  touched,
-  touchedKey,
+  isTouched = false,
   customInput,
   icon,
   tooltip,
@@ -39,11 +38,10 @@ const AcFormField = ({
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const onBlurHandler = (e) => {
-    if (!(onBlur instanceof Function)) {
-      return;
+    // Call parent onBlur if provided (for tracking touched state)
+    if (onBlur instanceof Function) {
+      onBlur(e.target.value);
     }
-
-    onBlur(e.target.value);
   };
 
   const onChangeHandler = (e) => {
@@ -152,7 +150,7 @@ const AcFormField = ({
         {getInput(inputType, {
           id: id,
           className: clsx(
-            { 'error-input': touched ? touched[touchedKey] && hasError : hasError },
+            { 'error-input': isTouched && hasError },
             fullWidth && 'ac-form-field--full-width'
           ),
           defaultValue: defaultValue,
@@ -171,13 +169,7 @@ const AcFormField = ({
           ...restProps,
         })}
       </FormField>
-      {touched ? (
-        touched[touchedKey] && hasError && !!restProps.errorMessage ? (
-          <span className='ac-register-form-field-error'>
-            {restProps.errorMessage}
-          </span>
-        ) : null
-      ) : hasError && !!restProps.errorMessage ? (
+      {isTouched && hasError && !!restProps.errorMessage ? (
         <span className='ac-register-form-field-error'>
           {restProps.errorMessage}
         </span>
