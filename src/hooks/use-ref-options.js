@@ -1,5 +1,31 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { buildTypeSuffix } from '@views/ac-forms/wizard-utils/search-utils';
+// will be imported in a later PR
+// import { buildTypeSuffix } from '@views/ac-forms/wizard-utils/search-utils';
+
+// will be removed in a later PRT
+/**
+ * Builds a type suffix that includes distinguishing query parameters
+ * to prevent request cancellation between different parameter combinations
+ * @param {string} baseSuffix - Base suffix (e.g., 'module_search')
+ * @param {Object} queryParams - Query parameters
+ * @returns {string} Suffix with distinguishing params included
+ */
+export const buildTypeSuffix = (baseSuffix, queryParams) => {
+  const distinguishingParams = [];
+
+  // Include gemmaType in suffix to prevent cancellation between different gemmaType fetches
+  if (queryParams?.gemmaType) {
+    distinguishingParams.push(`gemmaType-${queryParams.gemmaType}`);
+  }
+
+  if (distinguishingParams.length > 0) {
+    return baseSuffix
+      ? `${baseSuffix}_${distinguishingParams.join('_')}`
+      : distinguishingParams.join('_');
+  }
+
+  return baseSuffix;
+};
 
 /**
  * Custom hook for fetching options for $ref-based form fields
