@@ -1092,8 +1092,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       // Directly ask fetchMissingEntities to handle missing IDs, with all current ones
       await fetchMissingEntities(
         store,
-        'voorzieningen',
-        'module',
         selectedModuleBIds,
         modulesOptions,
         moduleMapper,

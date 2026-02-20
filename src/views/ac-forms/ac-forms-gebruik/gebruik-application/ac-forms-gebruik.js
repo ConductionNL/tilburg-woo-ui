@@ -631,8 +631,6 @@ const AcFormsGebruik = ({ store }) => {
           if (filteredAfnemerIds.length > 0 && !cancelled) {
             await fetchMissingEntities(
               store,
-              'voorzieningen',
-              'organisatie',
               filteredAfnemerIds,
               klantenOptions,
               organisatieMapper,
@@ -734,8 +732,6 @@ const AcFormsGebruik = ({ store }) => {
         try {
           const newOptions = await fetchMissingEntities(
             store,
-            'voorzieningen',
-            'module',
             [applicatieFromUrl],
             modulesOptions,
             moduleMapper,
@@ -855,8 +851,6 @@ const AcFormsGebruik = ({ store }) => {
       // Use fetchMissingEntities to handle missing module ID
       await fetchMissingEntities(
         store,
-        'voorzieningen',
-        'module',
         [moduleId],
         modulesOptions,
         moduleMapper,

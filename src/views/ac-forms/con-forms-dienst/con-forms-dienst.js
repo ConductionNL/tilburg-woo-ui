@@ -267,8 +267,6 @@ const ConFormsDienst = ({ store, userStore }) => {
         if (prefilledModuleIds.length > 0 && !cancelled) {
           await fetchMissingEntities(
             store,
-            'voorzieningen',
-            'module',
             prefilledModuleIds,
             moduleOptionsRef.current,
             moduleMapper,
@@ -366,8 +364,6 @@ const ConFormsDienst = ({ store, userStore }) => {
         // fetchMissingEntities will check if the module needs fetching/adding
         await fetchMissingEntities(
           store,
-          'voorzieningen',
-          'module',
           [applicatieFromUrl],
           moduleOptions,
           moduleMapper,

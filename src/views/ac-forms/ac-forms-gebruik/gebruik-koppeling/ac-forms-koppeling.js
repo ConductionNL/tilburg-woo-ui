@@ -359,8 +359,6 @@ const AcFormsKoppeling = ({ store }) => {
           try {
             const newOptions = await fetchMissingEntities(
               store,
-              'voorzieningen',
-              'module',
               [applicatieFromUrl],
               modulesOptions,
               moduleMapper,
@@ -419,8 +417,6 @@ const AcFormsKoppeling = ({ store }) => {
     try {
       const newOptions = await fetchMissingEntities(
         store,
-        'voorzieningen',
-        'module',
         [id],
         modulesOptions,
         moduleMapper,
@@ -594,8 +590,6 @@ const AcFormsKoppeling = ({ store }) => {
         // Fetch missing entities using wizard-utils
         const newOptions = await fetchMissingEntities(
           store,
-          'voorzieningen',
-          'module',
           uniqueIds,
           modulesOptions,
           moduleMapper,

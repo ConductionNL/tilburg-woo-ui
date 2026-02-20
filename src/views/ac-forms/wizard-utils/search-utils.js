@@ -185,8 +185,6 @@ export const createModuleSearchConfig = (store, options = {}) => {
           if (missingIds.length === 0) return filteredList;
           const fetched = await fetchEntitiesByIds(
             store,
-            collectionKey,
-            'module',
             missingIds,
             { extendParams: ['@self.schema'], source }
           );
@@ -359,8 +357,6 @@ export const createOrganisatieSearchConfig = (store, options = {}) => {
  */
 export const fetchEntitiesByIds = async (
   store,
-  collectionKey,
-  entityType,
   ids,
   fetchOptions = {}
 ) => {
@@ -368,36 +364,27 @@ export const fetchEntitiesByIds = async (
 
   const { extendParams = ['@self.schema'], source = 'index' } = fetchOptions;
 
-  const fetchPromises = ids.map(async (id) => {
-    try {
-      const fetchParams = {
-        _published: 'false',
-        _source: source,
-      };
-      if (extendParams.length > 0) {
-        fetchParams['_extend[]'] = extendParams;
-      }
-      await store.object.fetchObject(
-        collectionKey,
-        entityType,
-        String(id),
-        fetchParams
-      );
-      return store.object.getObject(`${collectionKey}_${entityType}`, String(id));
-    } catch (error) {
-      console.error(`Failed to fetch ${entityType} ${id}:`, error);
-      return null;
+  let results;
+  try {
+    const fetchParams = {
+      _published: 'false',
+      _source: source,
+    };
+    if (extendParams.length > 0) {
+      fetchParams['_extend[]'] = extendParams;
     }
-  });
+    results = await store.object.fetchObjects(ids, fetchParams);
+  } catch (error) {
+    console.error(`Failed to fetch entities`, ids, error);
+    return null;
+  }
 
-  const results = await Promise.allSettled(fetchPromises);
-  return results
-    .map((r) => (r.status === 'fulfilled' ? r.value : null))
-    .filter(Boolean);
+  return results;
 };
 
 /**
- * Fetches missing entities and adds them to options
+ * Fetches missing entities and adds them to options.
+ * 
  * @param {Object} store - The MobX store instance
  * @param {string} collectionKey - Collection key (e.g., 'voorzieningen')
  * @param {string} entityType - Entity type (e.g., 'module', 'dienst')
@@ -413,8 +400,6 @@ export const fetchEntitiesByIds = async (
  */
 export const fetchMissingEntities = async (
   store,
-  collectionKey,
-  entityType,
   ids,
   currentOptions,
   mapper,
@@ -423,8 +408,6 @@ export const fetchMissingEntities = async (
   filterMissing = () => true
 ) => {
   if (!ids || ids.length === 0) return [];
-
-  const { extendParams = ['@self.schema'], source = 'index' } = fetchOptions;
 
   // Find which IDs are missing from current options
   const existingValues = new Set(currentOptions.map((opt) => String(opt.value)));
@@ -435,22 +418,7 @@ export const fetchMissingEntities = async (
   if (missingIds.length === 0) return [];
 
   // Fetch missing entities
-  let results;
-  try {
-    const fetchParams = {
-      _published: 'false',
-      _source: source,
-    };
-
-    if (extendParams.length > 0) {
-      fetchParams['_extend[]'] = extendParams;
-    }
-
-    results = await store.object.fetchObjects(missingIds, fetchParams);
-  } catch (error) {
-    console.error(`Failed to fetch ${entityType}:`, missingIds, error);
-    return [];
-  }
+  const results = await fetchEntitiesByIds(store, missingIds, fetchOptions)
 
   const newOptions = results
     .map((result, index) => {

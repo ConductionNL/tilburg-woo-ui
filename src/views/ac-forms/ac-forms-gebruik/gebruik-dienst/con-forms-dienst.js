@@ -444,8 +444,6 @@ const ConFormsDienst = ({ store }) => {
         try {
           await fetchMissingEntities(
             store,
-            'voorzieningen',
-            'module',
             [moduleId],
             moduleOptions,
             moduleMapper,
@@ -517,8 +515,6 @@ const ConFormsDienst = ({ store }) => {
           try {
             await fetchMissingEntities(
               store,
-              'voorzieningen',
-              'module',
               [applicatieFromUrl],
               moduleOptions,
               moduleMapper,
@@ -616,8 +612,6 @@ const ConFormsDienst = ({ store }) => {
         if (moduleIdsArray.length > 0) {
           await fetchMissingEntities(
             store,
-            'voorzieningen',
-            'module',
             moduleIdsArray,
             moduleOptions,
             moduleMapper,
@@ -805,8 +799,6 @@ const ConFormsDienst = ({ store }) => {
             try {
               await fetchMissingEntities(
                 store,
-                'voorzieningen',
-                'module',
                 [applicatieId],
                 moduleOptions,
                 moduleMapper,

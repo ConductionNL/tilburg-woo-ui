@@ -14,14 +14,19 @@
  */
 export async function fetchModuleIdsFromGebruikByAfnemer(apiBaseUrl, afnemerId) {
   if (!afnemerId) return [];
+
   const url = `${apiBaseUrl}/softwarecatalog/api/gebruik?afnemer=${encodeURIComponent(
     String(afnemerId)
   )}&_limit=1000&_extend[]=_schema`;
+
   const res = await fetch(url, { headers: { Accept: 'application/json' } });
+
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  
   const data = await res.json();
   const results = Array.isArray(data?.results) ? data.results : [];
   const ids = new Set();
+
   for (const item of results) {
     const rel = item?.['@self']?.relations?.module ?? item?.module;
     if (rel == null) continue;
@@ -31,5 +36,6 @@ export async function fetchModuleIdsFromGebruikByAfnemer(apiBaseUrl, afnemerId) 
         : String(rel?.id ?? rel?.value ?? rel?.['@self']?.id ?? '').trim();
     if (id) ids.add(id);
   }
+
   return Array.from(ids);
 }

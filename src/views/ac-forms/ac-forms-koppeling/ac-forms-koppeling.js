@@ -611,8 +611,6 @@ const AcFormsKoppeling = ({ store }) => {
         try {
           const newOptions = await fetchMissingEntities(
             store,
-            'voorzieningen',
-            'module',
             [applicatieFromUrl],
             ownAppOptions,
             createModuleMapper({ type: 'applicatie' }),
