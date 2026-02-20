@@ -20,6 +20,7 @@ import { commongroundApiUrl } from '@config';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 import { schemaCache } from '@services/schemaCache.service';
 import { normalizeSchemaName } from '@src/utilities/con-normalize-schema-name';
+import { useResolveSchemaIds } from '@src/hooks/use-resolve-schema-ids.hook';
 
 // Markdown Editor
 import remarkDefinitionList, { defListHastHandlers } from 'remark-definition-list';
@@ -272,14 +273,13 @@ const AcPublicationProduct = ({
 
   const [uses, setUses] = useState([]);
   const [used, setUsed] = useState([]);
-  const [gebruik, setGebruik] = useState([]);
   const [usesLoading, setUsesLoading] = useState(false);
   const [usedLoading, setUsedLoading] = useState(false);
-  const [gebruikLoading, setGebruikLoading] = useState(false);
   const [tabIndex, setTabIndex] = useState(0);
 
-  // Aggregated schemas from all endpoints (indexed by schema ID)
-  const [aggregatedSchemas, setAggregatedSchemas] = useState({});
+  // Resolve schema IDs from uses/used items to full schema objects
+  const allRelatedItems = useMemo(() => [...uses, ...used], [uses, used]);
+  const { aggregatedSchemas, setAggregatedSchemas } = useResolveSchemaIds(allRelatedItems);
 
   // Extract contactpersoon from get_single (extended) or fallback to uses data
   const contact = useMemo(() => {
@@ -377,14 +377,6 @@ const AcPublicationProduct = ({
       const usesResults = data.results || [];
       setUses(usesResults);
 
-      // Extract and aggregate schemas from @self.schemas
-      if (data['@self']?.schemas) {
-        setAggregatedSchemas((prev) => ({
-          ...prev,
-          ...data['@self'].schemas,
-        }));
-      }
-
       // Process vng-gemma/element data from the uses response
       processVngGemmaData(usesResults);
     } catch (error) {
@@ -413,14 +405,6 @@ const AcPublicationProduct = ({
       }
       const data = await response.json();
       setUsed(data.results);
-
-      // Extract and aggregate schemas from @self.schemas
-      if (data['@self']?.schemas) {
-        setAggregatedSchemas((prev) => ({
-          ...prev,
-          ...data['@self'].schemas,
-        }));
-      }
     } catch (error) {
       console.error('Error fetching used:', error);
     } finally {
@@ -428,50 +412,12 @@ const AcPublicationProduct = ({
     }
   }, [id]);
 
-  const fetchGebruik = useCallback(async () => {
-    if (!id) return;
-    setGebruikLoading(true);
-    try {
-      // Fetch gebruik data related to this publication (as applicatie/module)
-      const response = await fetch(
-        `${commongroundApiUrl()}/softwarecatalog/api/gebruik?_limit=1000&_extend[]=_schema&${
-          schemaSlug === 'product' ? 'product' : 'module'
-        }=${id}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      if (!response.ok) {
-        console.error('Error fetching gebruik:', response.statusText);
-        return;
-      }
-      const data = await response.json();
-      setGebruik(data.results || []);
-
-      // Extract and aggregate schemas from @self.schemas
-      if (data['@self']?.schemas) {
-        setAggregatedSchemas((prev) => ({
-          ...prev,
-          ...data['@self'].schemas,
-        }));
-      }
-    } catch (error) {
-      console.error('Error fetching gebruik:', error);
-    } finally {
-      setGebruikLoading(false);
-    }
-  }, [id, schemaSlug]);
-
   useEffect(() => {
     if (!id) return;
 
     fetchUses();
     fetchUsed();
-    fetchGebruik();
-  }, [id, fetchUses, fetchUsed, fetchGebruik]);
+  }, [id, fetchUses, fetchUsed]);
 
   // Extract compliancy data - must be before early return to satisfy React Hooks rules
   const compliancyFromUsed = useMemo(() => {
@@ -501,13 +447,14 @@ const AcPublicationProduct = ({
     <AcContainer margin='xl'>
       <AcFlex column spacing='sm'>
         <AcFlex spacing='sm' justifyContent='between' alignItems='center'>
-          <div className='con-beheer-details--header-container'>
-            {(get_single?.['@self']?.image || get_single?.logo) && (
-              <ConLogoPreview
-                className='con-beheer-details--logo-container'
-                logoUrl={get_single?.['@self']?.image || get_single?.logo}
-              />
-            )}
+            <div className='con-beheer-details--header-container'>
+              {(get_single?.['@self']?.image || get_single?.logo) && (
+                <ConLogoPreview
+                  className='con-beheer-details--logo-container'
+                  logoUrl={get_single?.['@self']?.image || get_single?.logo}
+                  objectSelf={get_single?.['@self']}
+                />
+              )}
 
             <Heading className='con-beheer-details--title'>
               {get_single?.['@self']?.name ||
@@ -608,7 +555,9 @@ const AcPublicationProduct = ({
         <AcFlex spacing='sm' justifyContent='between'>
           <AcFlex column spacing='md' style={{ flex: 2 }}>
             {!!get_single?.['@self']?.summary && (
-              <div>{get_single?.['@self']?.summary}</div>
+              <div>
+                {get_single?.['@self']?.summary}
+              </div>
             )}
 
             {!!get_single?.beschrijvingLang && (
@@ -740,11 +689,9 @@ const AcPublicationProduct = ({
       <RelatedTabs
         uses={uses}
         used={used}
-        gebruik={gebruik}
         schemas={aggregatedSchemas}
         usesLoading={usesLoading}
         usedLoading={usedLoading}
-        gebruikLoading={gebruikLoading}
         excludeObjectIds={[]}
         tabIndex={tabIndex}
         setTabIndex={setTabIndex}

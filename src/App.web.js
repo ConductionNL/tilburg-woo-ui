@@ -1,7 +1,7 @@
 // Imports => React
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
-import { Route, Routes, useNavigate, Navigate } from 'react-router-dom';
+import { Route, Routes, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useAutoFocus, useDocumentTitleFromPath } from '@hooks';
 import loadable from '@loadable/component';
@@ -12,7 +12,7 @@ import '@styles/index.scss';
 // Imports => Config
 
 // Imports => Constants
-import { DEFAULT_ROUTE, ROUTES, AUTHENTICATION_REQUIRED_ROUTES } from '@constants';
+import { DEFAULT_ROUTE, ROUTES, AUTHENTICATION_REQUIRED_ROUTES, LABELS, VISUALS } from '@constants';
 
 // Imports => Utilities
 import { AcHome, AcFallbackErrorPage } from '@views';
@@ -21,6 +21,7 @@ import AcContent from '@views/ac-content/ac-content';
 // Imports => Components
 import AcProtectedRoute from '@components/ac-protected-route/ac-protected-route';
 import { AcLoader } from '@components';
+import ConGlossaryDrawer from '@components/con-glossary-drawer/con-glossary-drawer';
 
 // Imports => Molecules
 const AcHeader = loadable(() => import('@components/ac-header/ac-header'));
@@ -61,8 +62,10 @@ const AcLogout = withStore(
 );
 
 const App = ({ store }) => {
-  const { user } = store;
+  const { user, glossary } = store;
   const resetFocus = useAutoFocus();
+  const location = useLocation();
+  const isBeheerPage = location.pathname.startsWith('/beheer');
 
   // Names cache warmup removed - names are now efficiently loaded via _extend=_names
   // on search and collection endpoints, eliminating the need for bulk fetching
@@ -93,6 +96,13 @@ const App = ({ store }) => {
       });
     }
   }, [user.isAuthenticated]);
+
+  // Warm up glossary terms on app init (public API, no auth required)
+  useEffect(() => {
+    store.glossary.warmup().catch((error) => {
+      console.warn('Glossary warmup failed during app initialization:', error);
+    });
+  }, []);
 
   useDocumentTitleFromPath();
 
@@ -197,6 +207,7 @@ const App = ({ store }) => {
       case 'softwarecatalogus.accept.opencatalogi.nl':
       case 'acceptatie.softwarecatalogus.nl':
       case 'softwarecatalogus.test.opencatalogi.nl':
+      case 'performance.accept.opencatalogi.nl':
         return 'https://vng.nl/themes/custom/vng/favicon.ico';
       case 'open-migrato.accept.commonground.nu':
         return 'https://www.migrato.nl/wp-content/uploads/2023/01/favicon-32x32-1.png';
@@ -294,6 +305,19 @@ const App = ({ store }) => {
           />
         </Routes>
       </main>
+      {!isBeheerPage && glossary.is_warmed_up && glossary.all_terms.length > 0 && (
+        <div className='con-glossary-button-container'>
+          <button
+            className='con-glossary-button'
+            onClick={() => glossary.openDrawer()}
+            aria-label={LABELS.CONCEPTS_LIST}
+          >
+            <VISUALS.LIST_ALT />
+            <span>{LABELS.CONCEPTS_LIST}</span>
+          </button>
+        </div>
+      )}
+      <ConGlossaryDrawer />
       <AcFooter />
     </div>
   );

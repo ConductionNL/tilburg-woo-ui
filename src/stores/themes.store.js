@@ -77,13 +77,21 @@ export class ThemesStore {
         ?.slice()
         // Filter out items without titles before sorting to prevent localeCompare errors
         ?.filter((theme) => theme && theme.title && typeof theme.title === 'string')
-        ?.sort((a, b) => a.title.localeCompare(b.title))
+        ?.sort((a, b) => {
+          // Sort by sort field first, then alphabetically by title
+          const sortA = a.sort ?? 999;
+          const sortB = b.sort ?? 999;
+          if (sortA !== sortB) return sortA - sortB;
+          return a.title.localeCompare(b.title);
+        })
         ?.map((theme) => ({
           ...theme,
-          paragraph: theme.description || '',
-          linkTitle: LABELS.VIEW_ALL_THEMES,
+          paragraph: theme.content || theme.description || '',
+          summary: theme.summary || theme.description || '',
+          linkTitle: theme.link || LABELS.VIEW_ALL_THEMES,
+          linkUrl: theme.url || null,
+          isExternal: theme.isExternal || false,
         }))
-        .filter((theme) => theme.image !== null)
     );
   }
 

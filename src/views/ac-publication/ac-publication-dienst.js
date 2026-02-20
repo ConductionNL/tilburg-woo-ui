@@ -18,7 +18,6 @@ import RelatedTabs from '@views/ac-publication/con-related-tabs-new';
 import ConLogoPreview from '../ac-register/con-logo-preview';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
-import { createBeschrijvingTab } from './helpers/beschrijving-tab.helper';
 
 // Markdown rendering
 import MDEditor from '@uiw/react-md-editor';
@@ -31,6 +30,7 @@ import rehypeSlug from 'rehype-slug';
 import rehypeSanitize from 'rehype-sanitize';
 import remarkRehype from 'remark-rehype';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
+import { useResolveSchemaIds } from '@src/hooks/use-resolve-schema-ids.hook';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 import { normalizeSchemaName } from '@src/utilities/con-normalize-schema-name';
 // import { checkOrganizationPermissions } from '@utils/organization-permissions';
@@ -63,9 +63,10 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
   const [usesLoading, setUsesLoading] = useState(false);
   const [usedLoading, setUsedLoading] = useState(false);
   const [relatedTabIndex, setRelatedTabIndex] = useState(0);
-
-  // Aggregated schemas from all endpoints (indexed by schema ID)
-  const [aggregatedSchemas, setAggregatedSchemas] = useState({});
+  
+  // Aggregated schemas from all related items via hook
+  const allRelatedItems = useMemo(() => [...uses, ...used], [uses, used]);
+  const { aggregatedSchemas, setAggregatedSchemas } = useResolveSchemaIds(allRelatedItems);
 
   // Related create actions (wizard-aware) like module/product pages
   const openDynamicCreate = useCallback(
@@ -133,14 +134,6 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
       if (!response.ok) return;
       const json = await response.json();
       setUses(json.results || []);
-
-      // Extract and aggregate schemas from @self.schemas
-      if (json['@self']?.schemas) {
-        setAggregatedSchemas((prev) => ({
-          ...prev,
-          ...json['@self'].schemas,
-        }));
-      }
     } finally {
       setUsesLoading(false);
     }
@@ -157,14 +150,6 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
       if (!response.ok) return;
       const json = await response.json();
       setUsed(json.results || []);
-
-      // Extract and aggregate schemas from @self.schemas
-      if (json['@self']?.schemas) {
-        setAggregatedSchemas((prev) => ({
-          ...prev,
-          ...json['@self'].schemas,
-        }));
-      }
     } finally {
       setUsedLoading(false);
     }
@@ -235,6 +220,7 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
               <ConLogoPreview
                 className='con-beheer-details--logo-container'
                 logoUrl={get_single?.logo || get_single?.['@self']?.image}
+                objectSelf={get_single?.['@self']}
               />
             )}
             <Heading className='con-beheer-details--title'>
@@ -334,7 +320,9 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
 
         <div style={{ flex: 2 }}>
           {!!get_single?.beschrijvingKort && (
-            <div>{get_single?.beschrijvingKort}</div>
+            <div>
+              {get_single?.beschrijvingKort}
+            </div>
           )}
         </div>
 
@@ -444,18 +432,15 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
           <RelatedTabs
             uses={uses}
             used={used}
-            gebruik={[]}
             schemas={aggregatedSchemas}
             usesLoading={usesLoading}
             usedLoading={usedLoading}
-            gebruikLoading={false}
             excludeObjectIds={[]}
             tabIndex={relatedTabIndex}
             setTabIndex={setRelatedTabIndex}
             object={object}
             navigateTo='publication'
             user={user}
-            customTabsBefore={[createBeschrijvingTab(get_single)]}
           />
         </div>
 

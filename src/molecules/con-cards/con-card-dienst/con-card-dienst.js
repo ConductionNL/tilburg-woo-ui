@@ -64,20 +64,22 @@ const ConCardDienst = ({
       <AcFlex justifyContent='between' className='meta'>
         <AcFlex column>
           <AcFlex alignItems='center' spacing='sm'>
-            {category && (
-              <>
-                <Paragraph small>{extractText(category)}</Paragraph>
-                <VISUALS.ELLIPSE />
-              </>
-            )}
             {created && (
               <Paragraph small style={{ whiteSpace: 'nowrap' }}>
                 {acFormatDate(created, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
               </Paragraph>
             )}
-            {type && (
+            {category && (
               <>
                 {created && <VISUALS.ELLIPSE />}
+                <Paragraph small style={{ whiteSpace: 'nowrap' }}>
+                  {extractText(category)}
+                </Paragraph>
+              </>
+            )}
+            {type && (
+              <>
+                {(created || category) && <VISUALS.ELLIPSE />}
                 <Paragraph small>
                   {(() => {
                     // Check if it's a string that looks like a JSON array
@@ -117,7 +119,9 @@ const ConCardDienst = ({
 
                     // Handle single object with naam/name/label
                     if (typeof type === 'object' && type !== null) {
-                      return extractText(type.naam || type.name || type.label || type);
+                      return extractText(
+                        type.naam || type.name || type.label || type
+                      );
                     }
 
                     return extractText(type);

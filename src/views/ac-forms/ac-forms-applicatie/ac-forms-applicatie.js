@@ -203,14 +203,14 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     const mapping = [];
 
     if (formType === 'ontbrekend-applicatie') {
-      // Main step 1 header (Applicatie informatie)
+      // Main step 1 header (Applicatie-informatie)
       mapping.push(getAdjustedStepIndex(0));
       // Sub-step: Aanbieder
       mapping.push(getAdjustedStepIndex(0));
       // Sub-step: Applicatie gegevens
       mapping.push(getAdjustedStepIndex(1));
     } else {
-      // Main step 1: Applicatie informatie (no sub-steps)
+      // Main step 1: Applicatie-informatie (no sub-steps)
       mapping.push(getAdjustedStepIndex(1));
     }
 
@@ -887,7 +887,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     schemas?.module,
     referentieComponentenOptions.length,
     referentieComponentenLoading,
-    loadReferentieComponenten,
   ]);
 
   // ✅ Load standaarden when referentiecomponenten are selected
@@ -910,7 +909,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     referentieComponentenWithStandards,
     referentieComponentenOptions,
     schemas?.module,
-    loadStandaardenFromReferentieComponenten,
   ]);
 
   // ✅ Load ALL standaardversies when schemas are available (for extra standaardversies dropdown)
@@ -928,7 +926,6 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
     schemas?.module,
     standaardenversiesOptions.length,
     standaardenversiesOptionsLoading,
-    loadAllStandaardenversies,
   ]);
 
   // Initialize selectedExtraStandards from existing compliancy and standaardVersies data
@@ -1923,7 +1920,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
           />
         );
       case 1:
-        // Applicatie informatie
+        // Applicatie-informatie
         return (
           <ConFormApplicatieInformatieStage
             applicatie={applicatie}
@@ -2107,7 +2104,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
       return missingNewOrgFields.length > 0;
     }
 
-    // Applicatie informatie: naam, website, and beschrijvingKort are required
+    // Applicatie-informatie: naam, website, and beschrijvingKort are required
     if (logicalStep === 1) {
       // Check naam is filled
       if (!applicatie.naam?.trim?.()) {
@@ -2604,7 +2601,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
                                         currentStep,
                                         getAdjustedStepIndex(1)
                                       ),
-                                title: 'Applicatie informatie',
+                                title: 'Applicatie-informatie',
                                 steps:
                                   formType === 'ontbrekend-applicatie'
                                     ? [

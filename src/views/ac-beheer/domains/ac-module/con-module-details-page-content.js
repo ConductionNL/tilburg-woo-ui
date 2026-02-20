@@ -198,6 +198,7 @@ const ConModuleDetailsPageContent = ({
             <ConLogoPreview
               className='con-beheer-details--logo-container'
               logoUrl={data?.logo || data?.['@self']?.image}
+              objectSelf={data?.['@self']}
             />
           )}
 

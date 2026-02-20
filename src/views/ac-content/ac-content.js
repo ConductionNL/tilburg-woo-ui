@@ -7,6 +7,7 @@ import { Heading } from '@utrecht/component-library-react/dist/css-module';
 
 import { AcContainer } from '@atoms';
 import { AcLoader, AcSectionsHandler } from '@components';
+import ConGlossaryHighlight from '@components/con-glossary-highlight/con-glossary-highlight';
 
 const AcContent = ({ store: { pages, user } }) => {
   const { fetchPage, get_single, loading, resetPage, shouldShowPage } = pages;
@@ -51,10 +52,12 @@ const AcContent = ({ store: { pages, user } }) => {
   }
 
   return (
-    <AcContainer compact>
-      <Heading level={1}>{get_single?.name}</Heading>
-      <AcSectionsHandler contents={get_single?.contents} />
-    </AcContainer>
+    <ConGlossaryHighlight as='div'>
+      <AcContainer compact>
+        <Heading level={1}>{get_single?.name}</Heading>
+        <AcSectionsHandler contents={get_single?.contents} />
+      </AcContainer>
+    </ConGlossaryHighlight>
   );
 };
 

@@ -22,11 +22,11 @@ const ConBeheerViewsList = ({ store }) => {
   // Load views on component mount
   useEffect(() => {
     if (!gemma) return;
-    
-    const loadViews = async () => {
+
+    const loadViews = async (params = {}) => {
       setIsLoading(true);
       try {
-        await gemma.fetchViews();
+        await gemma.fetchViews(params);
       } catch (error) {
         console.error('Error loading views:', error);
       } finally {
@@ -34,13 +34,37 @@ const ConBeheerViewsList = ({ store }) => {
       }
     };
 
-    // Only fetch if we don't have views yet
+    // Only fetch if we don't have views yet — filter server-side to reduce payload (33MB → 9.6MB)
     if (!gemma.all_views || gemma.all_views.length === 0) {
-      loadViews();
+      loadViews({ publiceren: 'Softwarecatalogus en GEMMA Online en redactie', _unset: 'xml', _limit: 100 });
     } else {
       setIsLoading(false);
     }
   }, [gemma]);
+
+  // Pre-fetch gebruik and modules in the background so they're ready when a view is opened.
+  // This eliminates the 3+ second wait for module data when the user toggles gebruik ON.
+  useEffect(() => {
+    if (!gemma) return;
+    const activeOrgUuid = store?.user?.activeOrganization?.uuid;
+
+    // Only pre-fetch if not already loaded
+    if (!gemma.get_allVoorzieningGebruik) {
+      const gebruikParams = {
+        _limit: 10000,
+        _fields: 'id,module,gebruiktVoorReferentiecomponenten,deelnemers,afnemer,@self',
+      };
+      if (activeOrgUuid) {
+        gebruikParams.afnemer = activeOrgUuid;
+      }
+      gemma.fetchGebruik(gebruikParams);
+    }
+
+    // Pre-fetch module name lookup (largest payload ~800KB)
+    if (!gemma.get_modules) {
+      gemma.fetchModules({ _limit: 10000, _fields: 'id,naam' });
+    }
+  }, [gemma, store?.user?.activeOrganization?.uuid]);
 
   // Helper functions to extract view data
   const getViewName = (view) => {
@@ -51,23 +75,26 @@ const ConBeheerViewsList = ({ store }) => {
   };
 
   const getViewDescription = (view) => {
-    return (
-      view?.documentation ||
-      view?.description ||
-      'Geen beschrijving beschikbaar voor deze view.'
-    );
+    if (view?.['@self']?.summary) return view['@self'].summary;
+    if (view?.['@self']?.description) return view['@self'].description;
+    if (view?.documentation) return view.documentation;
+    if (view?.description) return view.description;
+    return 'Geen beschrijving beschikbaar voor deze view.';
   };
 
-  const views = gemma?.all_views || [];
+  // Filter views to only show Softwarecatalogus views
+  const views = (gemma?.all_views || []).filter(
+    (view) => view?.publiceren === 'Softwarecatalogus en GEMMA Online en redactie'
+  );
 
   // Filter views based on search query
   const filteredViews = views.filter((view) => {
     if (!searchQuery.trim()) return true;
-    
+
     const query = searchQuery.toLowerCase();
     const viewName = getViewName(view).toLowerCase();
     const viewDescription = getViewDescription(view).toLowerCase();
-    
+
     return viewName.includes(query) || viewDescription.includes(query);
   });
 

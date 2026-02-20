@@ -4,11 +4,21 @@ import { withStore } from '@stores';
 
 const isBase64 = (str) => {
   try {
-    // Check if the string is valid base64
     return btoa(atob(str)) === str;
   } catch (e) {
     return false;
   }
+};
+
+/**
+ * Returns true when the given value is a numeric file ID (integer or numeric string),
+ * rather than a URL, data URI, or base64 string.
+ */
+const isFileId = (value) => {
+  if (value === null || value === undefined || value === '') return false;
+  if (typeof value === 'number') return Number.isInteger(value);
+  if (typeof value === 'string') return /^\d+$/.test(value.trim());
+  return false;
 };
 
 export const validateAndProcessLogoUrl = (logoUrl) => {
@@ -83,35 +93,123 @@ export const validateAndProcessLogoUrl = (logoUrl) => {
   });
 };
 
-const ConLogoPreview = ({ logoUrl, className, style }) => {
+/**
+ * Displays a logo image from a URL, data URI, base64 string, or a numeric file ID.
+ *
+ * When a numeric `fileId` is provided together with `objectSelf` (containing `register`,
+ * `schema`, and `id`), the component fetches the file from the OpenRegister files API
+ * and uses the returned `accessUrl` for display.
+ *
+ * @param {string} [props.logoUrl] - Direct URL, data URI, or base64 string for the logo.
+ * @param {number|string} [props.fileId] - Numeric file ID to resolve via the files API.
+ * @param {{ register: string, schema: string, id: string }} [props.objectSelf] - Object @self context required when fileId is provided.
+ * @param {string} [props.className]
+ * @param {object} [props.style]
+ * @param {object} [props.store] - Injected by withStore.
+ */
+const ConLogoPreview = ({
+  logoUrl,
+  fileId,
+  objectSelf,
+  className,
+  style,
+  store,
+}) => {
   const [isValid, setIsValid] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [processedUrl, setProcessedUrl] = useState(null);
 
+  const resolvedFileId = fileId ?? (isFileId(logoUrl) ? logoUrl : null);
+  const effectiveLogoUrl = resolvedFileId ? null : logoUrl;
+
   useEffect(() => {
+    if (!resolvedFileId) return;
+    if (!objectSelf?.register || !objectSelf?.schema || !objectSelf?.id) return;
+
     setIsValid(false);
     setIsLoading(true);
 
-    validateAndProcessLogoUrl(logoUrl).then(
-      ({ isValid, processedUrl: nextProcessedUrl }) => {
-        setIsValid(isValid);
-        setProcessedUrl((prev) => (isValid ? nextProcessedUrl : prev));
+    store.object
+      .fetchObjectFile(
+        objectSelf.register,
+        objectSelf.schema,
+        objectSelf.id,
+        resolvedFileId
+      )
+      .then(async (fileData) => {
+        let url = fileData?.downloadUrl || fileData?.accessUrl || fileData?.path;
+        
+        if (url) {
+          // SVG files from external domains have CORS restrictions in <img> tags.
+          // Fetch and convert to data URL for inline display to bypass CORS.
+          const isSvg = fileData?.title?.toLowerCase().endsWith('.svg') || 
+                        url.toLowerCase().includes('.svg');
+          
+          if (isSvg) {
+            try {
+              const svgResponse = await fetch(url);
+              if (svgResponse.ok) {
+                const svgContent = await svgResponse.text();
+                const dataUrl = `data:image/svg+xml;base64,${btoa(svgContent)}`;
+                setProcessedUrl(dataUrl);
+                setIsValid(true);
+                setIsLoading(false);
+                return;
+              }
+            } catch (error) {
+              console.error('Error fetching SVG content:', error);
+            }
+          }
+          
+          // For non-SVG images or if SVG fetch failed, use the URL directly
+          setProcessedUrl(url);
+          setIsValid(true);
+          setIsLoading(false);
+        } else {
+          setIsValid(false);
+          setIsLoading(false);
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching file:', error);
+        setIsValid(false);
+        setIsLoading(false);
+      });
+  }, [
+    resolvedFileId,
+    objectSelf?.register,
+    objectSelf?.schema,
+    objectSelf?.id,
+    store,
+  ]);
+
+  useEffect(() => {
+    if (resolvedFileId) return;
+
+    setIsValid(false);
+    setIsLoading(true);
+
+    validateAndProcessLogoUrl(effectiveLogoUrl).then(
+      ({ isValid: valid, processedUrl: nextProcessedUrl }) => {
+        setIsValid(valid);
+        setProcessedUrl((prev) => (valid ? nextProcessedUrl : prev));
         setIsLoading(false);
       }
     );
-  }, [logoUrl]);
+  }, [effectiveLogoUrl, resolvedFileId]);
+
+  const displayUrl = processedUrl || effectiveLogoUrl;
+  const hasContent = resolvedFileId ? !!resolvedFileId : !!effectiveLogoUrl;
 
   return (
     <div className={className} style={style}>
-      {logoUrl && (
+      {hasContent && (
         <>
           {isLoading && <span>(Validating...)</span>}
-          {!isLoading && (processedUrl || isValid) && (
-            <img src={processedUrl || logoUrl} alt='Organization logo' />
+          {!isLoading && isValid && displayUrl && (
+            <img src={displayUrl} alt='Organization logo' />
           )}
-          {!isLoading && !processedUrl && !isValid && (
-            <span>(Invalid image URL)</span>
-          )}
+          {!isLoading && !isValid && <span>(Invalid image URL)</span>}
         </>
       )}
     </div>

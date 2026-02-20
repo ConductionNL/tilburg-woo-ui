@@ -376,16 +376,17 @@ const ConMyOrganisationPage = ({ store }) => {
                   }}
                 >
                 <div className='con-beheer-details--header-container'>
-                    {fullActiveOrganisation?.['@self']?.image ||
-                    (fullActiveOrganisation?.logo && (
+                    {(fullActiveOrganisation?.['@self']?.image ||
+                    fullActiveOrganisation?.logo) && (
                         <ConLogoPreview
                         className='con-beheer-details--logo-container'
                         logoUrl={
                             fullActiveOrganisation?.['@self']?.image ||
                             fullActiveOrganisation?.logo
                         }
+                        objectSelf={fullActiveOrganisation?.['@self']}
                         />
-                    ))}
+                    )}
 
                     <Heading className='con-beheer-details--title'>
                     {fullActiveOrganisation?.['@self']?.name ||

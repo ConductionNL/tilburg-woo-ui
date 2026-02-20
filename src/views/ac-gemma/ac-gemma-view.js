@@ -15,18 +15,21 @@ import clsx from 'clsx';
 import svgPanZoom from 'svg-pan-zoom';
 // import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 
-const AcGemmaView = ({ store: { gemma }, viewId }) => {
+const AcGemmaView = ({ store, viewId }) => {
+  const { gemma } = store;
   const { fetchViews, resetViews, fetchView, resetView } = gemma;
   const [view, setView] = useState(null);
   const [viewNodesData, setViewNodesData] = useState(null);
   const [viewRelationsData, setViewRelationsData] = useState(null);
   const [viewIsDoneLoading, setViewIsDoneLoading] = useState(false);
-  const [filters, setFilters] = useState({ gebruik: false, product: false });
+  const [gebruikData, setGebruikData] = useState(null);
+  const [moduleNames, setModuleNames] = useState({});
+  const [filters, setFilters] = useState({ gebruik: false, product: false, deelnames: false });
 
   useEffect(() => {
     // Property definitions are not needed for the new API; directly load views when no viewId is provided
     if (!viewId) {
-      fetchViews();
+      fetchViews({ _limit: 100 });
     }
     setViewNodesData(null);
     setViewRelationsData(null);
@@ -52,6 +55,7 @@ const AcGemmaView = ({ store: { gemma }, viewId }) => {
     const params = {
       ...(filters.gebruik ? { gebruik: true } : {}),
       ...(filters.product ? { product: true } : {}),
+      ...(filters.deelnames ? { deelnames: true } : {}),
     };
     fetchView(view, params);
     return () => {
@@ -76,10 +80,11 @@ const AcGemmaView = ({ store: { gemma }, viewId }) => {
           'unknown',
         name: node.name || node.elementProperties?.name || 'unknown',
         type: (
+          node.elementProperties?.type ||
           node.type ||
-          node.elementProperties?.gemmaType ||
           'dataobject'
         ).toLowerCase(),
+        gemmaType: node.type || node.gemmaType || node.elementProperties?.gemmaType || null,
       }));
       setViewNodesData(sanitizedNodes);
       setViewRelationsData(gemma.get_view.viewRelationships || []);
@@ -197,6 +202,53 @@ const AcGemmaView = ({ store: { gemma }, viewId }) => {
     */
   }, [gemma.get_view]);
 
+  // Load gebruik and module data when filters are active.
+  // Uses pre-fetched data from the store when available,
+  // falling back to fetching if the user navigated directly to the view.
+  useEffect(() => {
+    if (!filters.gebruik && !filters.deelnames) {
+      setGebruikData(null);
+      setModuleNames({});
+      return;
+    }
+
+    const activeOrgUuid = store?.user?.activeOrganization?.uuid;
+
+    const loadData = async () => {
+      // Use store data if already pre-fetched, otherwise fetch now
+      let gebruikResults = gemma.get_allVoorzieningGebruik;
+      if (!gebruikResults) {
+        const gebruikParams = {
+          _limit: 10000,
+          _fields: 'id,module,gebruiktVoorReferentiecomponenten,deelnemers,afnemer,@self',
+        };
+        if (activeOrgUuid) {
+          gebruikParams.afnemer = activeOrgUuid;
+        }
+        await gemma.fetchGebruik(gebruikParams);
+        gebruikResults = gemma.get_allVoorzieningGebruik || [];
+      }
+
+      let modulesData = gemma.get_modules;
+      if (!modulesData) {
+        modulesData = await gemma.fetchModules({ _limit: 10000, _fields: 'id,naam' });
+      }
+
+      // Build module name lookup
+      const nameLookup = {};
+      if (Array.isArray(modulesData)) {
+        modulesData.forEach((m) => {
+          if (m.id && m.naam) nameLookup[m.id] = m.naam;
+          if (m.id && m['@self']?.name) nameLookup[m.id] = nameLookup[m.id] || m['@self'].name;
+        });
+      }
+      setModuleNames(nameLookup);
+      setGebruikData(gebruikResults);
+    };
+
+    loadData();
+  }, [filters.gebruik, filters.deelnames]);
+
   useEffect(() => {
     if (!gemma.get_view) return;
     // Wait until we at least have empty arrays; allow rendering with empty data
@@ -266,6 +318,9 @@ const AcGemmaView = ({ store: { gemma }, viewId }) => {
       },
       defaultInteractive: false,
     });
+
+    // Freeze paper to suppress rendering during bulk cell addition.
+    paper.freeze();
 
     // Add click handler to the paper
     paper.on('element:pointerclick', (elementView) => {
@@ -340,8 +395,111 @@ const AcGemmaView = ({ store: { gemma }, viewId }) => {
     let viewRelationships = [];
 
     if (Array.isArray(gemma.get_view.viewNodes)) {
-      // New API shape: use provided nodes/relationships directly
-      viewNodes = viewNodesData || [];
+      // Topological sort: parents must be rendered before children so the
+      // diagram engine can look up parent cells via graph.getCell(parentId).
+      // Backend now stores nodes in correct order, but we keep this as a
+      // safety net for data imported before the fix.
+      const rawNodes = [...(viewNodesData || [])];
+
+      // Merge gebruik overlay nodes when filters are active
+      if (gebruikData && gebruikData.length > 0 && (filters.gebruik || filters.deelnames)) {
+        // Build lookup: modelNodeId (with id- prefix) -> viewNode
+        const viewNodeByModelId = {};
+        rawNodes.forEach((n) => {
+          if (n.modelNodeId) viewNodeByModelId[n.modelNodeId] = n;
+        });
+
+        // Track overlay count per parent for vertical stacking
+        const overlayCountPerParent = {};
+        let totalOverlays = 0;
+        const MAX_OVERLAYS = 2000;
+
+        gebruikData.forEach((gebruik) => {
+          if (totalOverlays >= MAX_OVERLAYS) return;
+          const refComps = gebruik.gebruiktVoorReferentiecomponenten;
+          if (!Array.isArray(refComps) || refComps.length === 0) return;
+
+          const isDeelname = false;
+          const moduleName = moduleNames[gebruik.module] || 'Module';
+
+          refComps.forEach((refCompUuid) => {
+            const modelNodeId = `id-${refCompUuid}`;
+            const parentNode = viewNodeByModelId[modelNodeId];
+            if (!parentNode) return;
+
+            const parentId = parentNode.viewNodeId;
+            if (!overlayCountPerParent[parentId]) overlayCountPerParent[parentId] = 0;
+            const stackIndex = overlayCountPerParent[parentId]++;
+
+            const overlayHeight = 18;
+            const overlayGap = 2;
+            const overlayY = (parentNode.height || 80) - 5 - ((stackIndex + 1) * (overlayHeight + overlayGap));
+
+            rawNodes.push({
+              viewNodeId: `overlay-${gebruik.id}-${refCompUuid}`,
+              modelNodeId: gebruik.module || gebruik.id,
+              name: moduleName,
+              type: 'applicationcomponent',
+              gemmaType: 'ApplicationComponent',
+              parent: parentId,
+              x: 5,
+              y: Math.max(20, overlayY),
+              width: (parentNode.width || 120) - 10,
+              height: overlayHeight,
+              color: isDeelname ? 'rgb(180, 230, 255)' : 'rgb(200, 255, 200)',
+              borderColor: isDeelname ? 'rgba(0, 100, 180, 0.6)' : 'rgba(0, 150, 0, 0.6)',
+              font: { name: 'Segoe UI', size: 9, color: 'rgb(0, 0, 0)', style: 'normal' },
+              _isModuleOverlay: true,
+              _gebruikId: gebruik.id,
+              _isDeelname: isDeelname,
+            });
+          });
+        });
+      }
+
+      const sorted = [];
+      const placed = new Set();
+      const remaining = [...rawNodes];
+      let prevLength = -1;
+      while (remaining.length > 0 && remaining.length !== prevLength) {
+        prevLength = remaining.length;
+        // Forward iteration preserves original source order among siblings,
+        // which is critical for correct SVG z-ordering (background rects
+        // must render before the text labels they sit behind).
+        const toRemove = [];
+        for (let i = 0; i < remaining.length; i++) {
+          const n = remaining[i];
+          if (!n.parent || placed.has(n.parent)) {
+            sorted.push(n);
+            placed.add(n.viewNodeId);
+            toRemove.push(i);
+          }
+        }
+        for (let j = toRemove.length - 1; j >= 0; j--) {
+          remaining.splice(toRemove[j], 1);
+        }
+      }
+      // Append any remaining nodes (e.g. orphans with missing parents)
+      sorted.push(...remaining);
+
+      // Convert absolute coordinates to parent-relative.
+      // ArchiMate Open Exchange XML stores absolute positions, but the
+      // diagram engine positions children relative to their parent.
+      const absPos = {};
+      sorted.forEach((n) => {
+        const parentAbs = n.parent ? absPos[n.parent] : null;
+        absPos[n.viewNodeId] = {
+          x: (n.x || 0),
+          y: (n.y || 0),
+        };
+        // Skip overlay nodes — their coordinates are already parent-relative.
+        if (parentAbs && !n._isModuleOverlay) {
+          n.x = (n.x || 0) - parentAbs.x;
+          n.y = (n.y || 0) - parentAbs.y;
+        }
+      });
+
+      viewNodes = sorted;
       viewRelationships = (viewRelationsData || []).map((r) => ({
         modelRelationshipId: r.modelRelationshipId,
         sourceId: r.sourceId,
@@ -412,7 +570,8 @@ const AcGemmaView = ({ store: { gemma }, viewId }) => {
       })
     );
 
-    // console.log({ viewNodes, viewRelationships });
+    // Unfreeze: triggers a single batch render of all cells at once.
+    paper.unfreeze();
 
     viewNodes.forEach((node) => {
       setNodeColor(node);
@@ -427,7 +586,7 @@ const AcGemmaView = ({ store: { gemma }, viewId }) => {
     });
 
     viewNodes && viewRelationships && setViewIsDoneLoading(true);
-  }, [viewNodesData, viewRelationsData]);
+  }, [viewNodesData, viewRelationsData, gebruikData, moduleNames, filters.gebruik, filters.deelnames]);
 
   const setSvgViewBox = (svg) => {
     const box = svg.querySelector('g').getBBox();
@@ -845,6 +1004,11 @@ const AcGemmaView = ({ store: { gemma }, viewId }) => {
             label='Product'
             checked={filters.product}
             onChange={(checked) => setFilters((f) => ({ ...f, product: checked }))}
+          />
+          <AcCheckbox
+            label='Deelnames'
+            checked={filters.deelnames}
+            onChange={(checked) => setFilters((f) => ({ ...f, deelnames: checked }))}
           />
         </div>
         {gemma.get_view && !viewIsDoneLoading && (

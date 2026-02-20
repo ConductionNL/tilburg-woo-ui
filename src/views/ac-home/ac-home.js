@@ -13,6 +13,7 @@ import {
 import { LABELS, PATHS } from '@constants';
 import { AcCardCategory, AcLink } from '@molecules';
 import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
+import ConGlossaryHighlight from '@components/con-glossary-highlight/con-glossary-highlight';
 
 import AcGrid from '@atoms/ac-grid/ac-grid';
 
@@ -34,7 +35,7 @@ const AcHome = ({ store: { pages, publications, themes } }) => {
   }
 
   return (
-    <>
+    <ConGlossaryHighlight as='div'>
       <AcHero contents={contents} />
 
       <AcSection spacing>
@@ -54,24 +55,20 @@ const AcHome = ({ store: { pages, publications, themes } }) => {
                 </Paragraph>
               )}
             </AcColumn>
-            <AcGrid row={3}>
+            <AcGrid columns={3}>
               {all_themes
-                ?.slice(0, Math.min(3, all_themes.length))
-                .map((subject, index) => (
-                  // <AcCardCategory key={index} {...subject} />
+                ?.map((subject, index) => (
                   <AcCardCategory
                     key={index}
                     {...subject}
-                    linkUrl={getSearchPageURL({
+                    linkUrl={subject.linkUrl || getSearchPageURL({
                       themes: [subject.id],
                     })}
-                    linkTitle={LABELS.VIEW_DOCUMENTS}
+                    linkTitle={subject.linkTitle || LABELS.VIEW_DOCUMENTS}
+                    isExternal={subject.isExternal || false}
                   />
                 ))}
             </AcGrid>
-            <AcLink type='button' to={PATHS.THEMES}>
-              {LABELS.VIEW_ALL_THEMES}
-            </AcLink>
           </AcColumn>
         </AcContainer>
       </AcSection>
@@ -99,7 +96,7 @@ const AcHome = ({ store: { pages, publications, themes } }) => {
           />
         );
       })()}
-    </>
+    </ConGlossaryHighlight>
   );
 };
 
