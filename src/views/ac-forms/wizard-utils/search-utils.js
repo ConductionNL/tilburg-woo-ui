@@ -383,10 +383,7 @@ export const fetchEntitiesByIds = async (
         String(id),
         fetchParams
       );
-      return store.object.getObject(
-        `${collectionKey}_${entityType}`,
-        String(id)
-      );
+      return store.object.getObject(`${collectionKey}_${entityType}`, String(id));
     } catch (error) {
       console.error(`Failed to fetch ${entityType} ${id}:`, error);
       return null;
@@ -431,42 +428,33 @@ export const fetchMissingEntities = async (
 
   // Find which IDs are missing from current options
   const existingValues = new Set(currentOptions.map((opt) => String(opt.value)));
-  const missingIds = ids.filter((id) => !existingValues.has(String(id))).filter(filterMissing);
+  const missingIds = ids
+    .filter((id) => !existingValues.has(String(id)))
+    .filter(filterMissing);
 
   if (missingIds.length === 0) return [];
 
   // Fetch missing entities
-  const fetchPromises = missingIds.map(async (id) => {
-    try {
-      const fetchParams = {
-        _published: 'false',
-        _source: source,
-      };
+  let results;
+  try {
+    const fetchParams = {
+      _published: 'false',
+      _source: source,
+    };
 
-      if (extendParams.length > 0) {
-        fetchParams['_extend[]'] = extendParams;
-      }
-
-      await store.object.fetchObject(
-        collectionKey,
-        entityType,
-        String(id),
-        fetchParams
-      );
-      return store.object.getObject(`${collectionKey}_${entityType}`, String(id));
-    } catch (error) {
-      console.error(`Failed to fetch ${entityType} ${id}:`, error);
-      return null;
+    if (extendParams.length > 0) {
+      fetchParams['_extend[]'] = extendParams;
     }
-  });
 
-  const fetchedEntities = await Promise.allSettled(fetchPromises);
-  const newOptions = fetchedEntities
+    results = await store.object.fetchObjects(missingIds, fetchParams);
+  } catch (error) {
+    console.error(`Failed to fetch ${entityType}:`, missingIds, error);
+    return [];
+  }
+
+  const newOptions = results
     .map((result, index) => {
-      if (result.status === 'fulfilled' && result.value) {
-        return mapper(result.value, index);
-      }
-      return null;
+      return mapper(result, index);
     })
     .filter(Boolean)
     .filter((opt) => opt.label && opt.value);

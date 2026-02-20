@@ -1281,6 +1281,71 @@ export class ObjectStore {
   };
 
   /**
+   * Dumb fetch method for efficiently fetching multiple objects by ID.
+   * This method is not type specific.
+   *
+   * Due to this no loading, error and success state manipulation exist,
+   * No fetch method exists either.
+   * And no requestType exists due to the dynamic nature,
+   * this also means that there is no abort controller and other functionality which traditionally required a request type.
+   *
+   * Possible addition in the future:
+   * - Have the function add/overwrite existing object state based on the received object `@self` data
+   *
+   * @param {string} ids - Array of object ID's
+   * @param {Object} [params={}] - Query parameters for the request
+   */
+  @action
+  fetchObjects = async (ids = [], params = {}) => {
+    if (!ids || ids.length === 0) {
+      throw new Error('[ObjectStore::fetchObjects] No ids passed');
+    }
+
+    const joinedIds = ids.join(',');
+
+    try {
+      const queryParams = {
+        _ids: [],
+        ...params,
+      };
+
+      // Support legacy _extend or extend params by converting to _extend[]
+      if (!params['_extend[]'] && (params._extend || params.extend)) {
+        const extendValue = params._extend || params.extend;
+        queryParams['_extend[]'] = Array.isArray(extendValue)
+          ? extendValue
+          : typeof extendValue === 'string'
+          ? extendValue.split(',').map((s) => s.trim())
+          : [extendValue];
+      }
+
+      queryParams._ids = joinedIds;
+
+      const response = await nextcloudApi.get('/openregister/api/objects', {
+        params: queryParams,
+      });
+      if (!response.ok) throw new Error(`Failed to fetch object:`, joinedIds);
+
+      const data = response.data;
+      const results = data.results;
+
+      // Cache the name for the fetched objects itself
+      results.forEach((o) => {
+        const objectId = o?.id || o?.['@self']?.id;
+        const objectName = o?.naam || o?.name || o?.title || o?.['@self']?.name;
+        if (objectId && objectName && typeof objectName === 'string') {
+          this.setNamesInCacheSingle(objectId, objectName);
+        }
+      });
+
+      return results
+    } catch (error) {
+      const truncatedIds = joinedIds.map((id) => `${id.slice(0, 8)}...`)
+      throw new Error(`Error fetching objects: ${truncatedIds.join(', ')}`, { cause: error });
+    }
+  };
+
+  /**
    * Fetches related data for an object (logs, uses, used, files)
    * @param {string|Object} register - Register identifier or object
    * @param {string|Object} schema - Schema identifier or object
