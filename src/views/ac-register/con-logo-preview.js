@@ -15,7 +15,6 @@ const isBase64 = (str) => {
  * rather than a URL, data URI, or base64 string.
  */
 const isFileId = (value) => {
-  console.log('value', value);
   if (value === null || value === undefined || value === '') return false;
   if (typeof value === 'number') return Number.isInteger(value);
   if (typeof value === 'string') return /^\d+$/.test(value.trim());
@@ -23,8 +22,6 @@ const isFileId = (value) => {
 };
 
 export const validateAndProcessLogoUrl = (logoUrl) => {
-  console.log('logoUrl', logoUrl);
-
   return new Promise((resolve) => {
     if (!logoUrl) {
       resolve({ isValid: true, processedUrl: null }); // Empty URL is valid (optional field)
@@ -110,7 +107,14 @@ export const validateAndProcessLogoUrl = (logoUrl) => {
  * @param {object} [props.style]
  * @param {object} [props.store] - Injected by withStore.
  */
-const ConLogoPreview = ({ logoUrl, fileId, objectSelf, className, style, store }) => {
+const ConLogoPreview = ({
+  logoUrl,
+  fileId,
+  objectSelf,
+  className,
+  style,
+  store,
+}) => {
   const [isValid, setIsValid] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [processedUrl, setProcessedUrl] = useState(null);
@@ -147,7 +151,13 @@ const ConLogoPreview = ({ logoUrl, fileId, objectSelf, className, style, store }
       .finally(() => {
         setIsLoading(false);
       });
-  }, [resolvedFileId, objectSelf?.register, objectSelf?.schema, objectSelf?.id, store]);
+  }, [
+    resolvedFileId,
+    objectSelf?.register,
+    objectSelf?.schema,
+    objectSelf?.id,
+    store,
+  ]);
 
   useEffect(() => {
     if (resolvedFileId) return;
@@ -175,9 +185,7 @@ const ConLogoPreview = ({ logoUrl, fileId, objectSelf, className, style, store }
           {!isLoading && isValid && displayUrl && (
             <img src={displayUrl} alt='Organization logo' />
           )}
-          {!isLoading && !isValid && (
-            <span>(Invalid image URL)</span>
-          )}
+          {!isLoading && !isValid && <span>(Invalid image URL)</span>}
         </>
       )}
     </div>
