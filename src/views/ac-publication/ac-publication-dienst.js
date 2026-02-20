@@ -236,6 +236,7 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
               <ConLogoPreview
                 className='con-beheer-details--logo-container'
                 logoUrl={get_single?.logo || get_single?.['@self']?.image}
+                objectSelf={get_single?.['@self']}
               />
             )}
             <Heading className='con-beheer-details--title'>

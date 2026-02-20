@@ -174,6 +174,7 @@ const AcPublicationModuleVersie = ({ store: { publications, user, object } }) =>
                 <ConLogoPreview
                   className='con-beheer-details--logo-container'
                   logoUrl={get_single?.['@self']?.image || get_single?.logo}
+                  objectSelf={get_single?.['@self']}
                 />
               )}
 

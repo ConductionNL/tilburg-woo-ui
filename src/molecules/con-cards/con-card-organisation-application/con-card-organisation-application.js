@@ -24,7 +24,7 @@ const ConCardOrganisationApplication = ({
   created,
   navigateTo = 'publication',
   user,
-  // self, // Add self prop for relevance
+  '@self': objectSelf, // Extract @self for file ID resolution
 }) => {
   // Extract relevance score if present (fuzzy search)
   // const relevanceScore = self?.relevance;
@@ -112,6 +112,7 @@ const ConCardOrganisationApplication = ({
         {logo && (
           <ConLogoPreview
             logoUrl={logo}
+            objectSelf={objectSelf}
             className='ac-register-review__logo'
             style={{ margin: 0, aspectRatio: 'auto', height: '32px' }}
           />

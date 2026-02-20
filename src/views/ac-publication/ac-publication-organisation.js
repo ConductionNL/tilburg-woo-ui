@@ -168,13 +168,13 @@ const AcPublication = ({ store: { publications, object, user } }) => {
           <AcFlex spacing='sm' justifyContent='between' alignItems='center'>
             <Heading level={4} className='con-product-publication--header-container'>
               <div className='con-beheer-details--header-container'>
-                {get_single?.['@self']?.image ||
-                  (get_single?.logo && (
+                {(get_single?.['@self']?.image || get_single?.logo) && (
                     <ConLogoPreview
                       className='con-beheer-details--logo-container'
                       logoUrl={get_single?.['@self']?.image || get_single?.logo}
+                      objectSelf={get_single?.['@self']}
                     />
-                  ))}
+                  )}
 
                 <Heading className='con-beheer-details--title'>
                   {get_single?.['@self']?.name ||
