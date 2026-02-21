@@ -34,6 +34,8 @@ const ConBeheerViews = ({ store }) => {
     applicatie: false,
     deelnames: false,
   });
+  const [frozenViewHtml, setFrozenViewHtml] = useState(null);
+  const [isFilterTransition, setIsFilterTransition] = useState(false);
 
   // Sync filters from URL
   useEffect(() => {
@@ -66,6 +68,15 @@ const ConBeheerViews = ({ store }) => {
 
   // Update URL when filters change (keep existing params)
   const handleToggleFilter = (key) => (checked) => {
+    // Capture current view before changing filter
+    const container = document.getElementById('graph-container');
+    if (container && viewIsDoneLoading) {
+      const clonedContainer = container.cloneNode(true);
+      clonedContainer.id = 'frozen-graph-container';
+      setFrozenViewHtml(clonedContainer.outerHTML);
+      setIsFilterTransition(true);
+    }
+
     setFilters((prev) => {
       const next = { ...prev, [key]: checked };
       const sp = new URLSearchParams(location.search);
@@ -145,8 +156,6 @@ const ConBeheerViews = ({ store }) => {
       return;
     }
 
-    setViewIsDoneLoading(false);
-
     // Check top-level viewNodes first, then xml.viewNodes as fallback
     const sourceNodes = gemma.get_view.viewNodes || gemma.get_view.xml?.viewNodes;
     const sourceRelationships =
@@ -187,6 +196,9 @@ const ConBeheerViews = ({ store }) => {
     if (!gemma.get_view) return;
     if (!viewNodesData) return;
     if (!viewRelationsData) return;
+
+    // Mark as loading when starting the render process
+    setViewIsDoneLoading(false);
 
     // Small delay to ensure DOM is ready
     const renderBeheerGraph = () => {
@@ -444,6 +456,8 @@ const ConBeheerViews = ({ store }) => {
 
       // Always set loading done when we reach this point
       setViewIsDoneLoading(true);
+
+      // Don't remove frozen view here - wait until pan/zoom is initialized
     };
 
     // Start rendering process
@@ -455,6 +469,7 @@ const ConBeheerViews = ({ store }) => {
     moduleNames,
     filters.gebruik,
     filters.deelnames,
+    isFilterTransition,
   ]);
 
   // Helper functions from public version
@@ -777,8 +792,20 @@ const ConBeheerViews = ({ store }) => {
         /* ignore cleanup errors */
       }
       setPanZoomInstance(null);
+
+      // Remove frozen view as the very last thing after everything is complete
+      if (isFilterTransition) {
+        setFrozenViewHtml(null);
+        setIsFilterTransition(false);
+      }
     };
-  }, [gemma, viewIsDoneLoading, viewNodesData, viewRelationsData]);
+  }, [
+    gemma,
+    viewIsDoneLoading,
+    viewNodesData,
+    viewRelationsData,
+    isFilterTransition,
+  ]);
 
   // Download SVG (aligned with public viewer)
   const downloadSvg = () => {
@@ -984,14 +1011,58 @@ const ConBeheerViews = ({ store }) => {
             <>
               {/* Graph Container */}
               {viewNodesData && viewRelationsData && (
-                <div
-                  className='con-beheer-views-graph-container'
-                  id='graph-container'
-                ></div>
+                <div style={{ position: 'relative' }}>
+                  {/* Frozen view overlay during filter transition */}
+                  {frozenViewHtml && isFilterTransition && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        zIndex: 10,
+                        pointerEvents: 'none',
+                      }}
+                    >
+                      <div
+                        dangerouslySetInnerHTML={{ __html: frozenViewHtml }}
+                        style={{
+                          opacity: 0.6,
+                          filter: 'grayscale(50%)',
+                        }}
+                      />
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <AcLoader />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Real graph container */}
+                  <div
+                    className='con-beheer-views-graph-container'
+                    id='graph-container'
+                    style={{
+                      visibility: isFilterTransition ? 'hidden' : 'visible',
+                    }}
+                  ></div>
+                </div>
               )}
 
               {/* Loading indicator for graph rendering */}
-              {gemma?.get_view && !viewIsDoneLoading && (
+              {gemma?.get_view && !viewIsDoneLoading && !isFilterTransition && (
                 <div className='con-beheer-views-graph-loading'>
                   <AcLoader />
                   <p>Weergave wordt geladen...</p>

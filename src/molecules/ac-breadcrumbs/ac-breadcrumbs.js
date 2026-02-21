@@ -84,6 +84,17 @@ const AcBreadcrumbs = ({ store: { pages, publications, gemma } }) => {
       return BREADCRUMBS.BEHEER_MY_ORGANISATION;
     }
 
+    const isViewDetailPath =
+      location.pathname.startsWith('/beheer/view/') ||
+      (location.pathname.startsWith('/beheer/views/') && !!pathnames[3]);
+    if (isViewDetailPath) {
+      const viewName =
+        single_view?.titelViewSwc?.trim() ||
+        single_view?.name ||
+        single_view?.['@self']?.name;
+      return BREADCRUMBS.BEHEER_VIEW_DETAIL(viewName);
+    }
+
     if (location.pathname.startsWith(`/beheer/${pathnames[2]}`)) {
       const detailPathName = pathnames[3]?.match(
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
