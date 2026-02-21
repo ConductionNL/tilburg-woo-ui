@@ -2710,19 +2710,52 @@ export class ObjectStore {
   };
 
   /**
-   * Fetches a single file by ID for a specific object
-   * @param {string|Object} register - Register identifier
-   * @param {string|Object} schema - Schema identifier
-   * @param {string} id - Object ID
-   * @param {number|string} fileId - File ID
-   * @returns {Promise<Object>} File data including accessUrl, downloadUrl, etc.
+   * Fetches a single file by ID from an object.
+   * Handles two scenarios:
+   * 1. API returns binary file data - creates and returns a blob URL
+   * 2. API returns JSON with URL properties - returns the URL string
+   * 
+   * @param {string|Object} register - Register identifier or object
+   * @param {string|Object} schema - Schema identifier or object
+   * @param {string} objectId - The object ID that owns the file
+   * @param {string|number} fileId - The file ID to fetch
+   * @returns {Promise<string>} Blob URL or direct URL for the file
    */
-  fetchObjectFile = async (register, schema, id, fileId) => {
-    const filesBase = this._constructApiUrl(register, schema, id, 'files');
-    const encoded = encodeURIComponent(fileId);
-    const endpoint = `${filesBase}/${encoded}`;
-    const response = await nextcloudApi.get(endpoint);
-    return response.data;
+  @action
+  fetchObjectFile = async (register, schema, objectId, fileId) => {
+    const registerId = this.extractId(register);
+    const schemaId = this.extractId(schema);
+    const baseUrl = '/openregister/api/objects';
+    const url = `${baseUrl}/${registerId}/${schemaId}/${objectId}/files/${fileId}`;
+
+    try {
+      // First, try to fetch as blob (binary file data)
+      const response = await nextcloudApi.get(url, {
+        responseType: 'blob',
+      });
+      if (!response.ok) throw new Error('Failed to fetch file');
+      
+      const contentType = response.headers['content-type'] || '';
+      
+      // If response is JSON, it means API returned metadata with URLs
+      if (contentType.includes('application/json')) {
+        // Read the blob as text to parse JSON
+        const text = await response.data.text();
+        const jsonData = JSON.parse(text);
+        
+        // Return URL from JSON metadata
+        return jsonData.downloadUrl || jsonData.accessUrl || jsonData.url || jsonData.path;
+      }
+      
+      // Otherwise, it's binary file data - create a blob URL
+      const blob = new Blob([response.data], { 
+        type: contentType || 'image/png' 
+      });
+      return URL.createObjectURL(blob);
+    } catch (error) {
+      console.error('Error fetching file:', error);
+      throw error;
+    }
   };
 
   // Getters for accessing state
