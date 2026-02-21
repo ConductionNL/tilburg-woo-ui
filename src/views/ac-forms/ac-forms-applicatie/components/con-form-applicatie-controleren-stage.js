@@ -477,10 +477,12 @@ const ConFormApplicatieControlerenStage = memo(
                             ? '←'
                             : '↔';
 
-                        // Resolve moduleB ID to display name
+                        // Resolve moduleB ID to display name (fall back to buitengemeentelijkVoorziening)
                         const moduleBId =
                           kp.moduleB ||
+                          kp.buitengemeentelijkVoorziening ||
                           kp?.['@self']?.relations?.moduleB ||
+                          kp?.['@self']?.relations?.buitengemeentelijkVoorziening ||
                           kp.moduleBId;
                         const moduleBDisplayName = getModuleBDisplayName(moduleBId);
 

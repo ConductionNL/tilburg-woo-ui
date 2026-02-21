@@ -2226,12 +2226,16 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
             : '';
         const hasNaam = persistedNaam !== '' || uiNaam !== '';
 
-        // Check moduleB from BOTH persisted data AND UI state
+        // Check moduleB from BOTH persisted data AND UI state (also check buitengemeentelijkVoorziening)
         const persistedModuleB =
-          persistedKoppeling?.moduleB != null &&
+          (persistedKoppeling?.moduleB != null &&
           String(persistedKoppeling.moduleB).trim() !== ''
             ? String(persistedKoppeling.moduleB).trim()
-            : '';
+            : '') ||
+          (persistedKoppeling?.buitengemeentelijkVoorziening != null &&
+          String(persistedKoppeling.buitengemeentelijkVoorziening).trim() !== ''
+            ? String(persistedKoppeling.buitengemeentelijkVoorziening).trim()
+            : '');
         const uiModuleB =
           selectedAppBByRow[rowId] != null &&
           String(selectedAppBByRow[rowId]).trim() !== ''
@@ -2429,12 +2433,16 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
             : '';
         const hasNaam = persistedNaam !== '' || uiNaam !== '';
 
-        // Check moduleB from BOTH persisted data AND UI state
+        // Check moduleB from BOTH persisted data AND UI state (also check buitengemeentelijkVoorziening)
         const persistedModuleB =
-          persistedKoppeling?.moduleB != null &&
+          (persistedKoppeling?.moduleB != null &&
           String(persistedKoppeling.moduleB).trim() !== ''
             ? String(persistedKoppeling.moduleB).trim()
-            : '';
+            : '') ||
+          (persistedKoppeling?.buitengemeentelijkVoorziening != null &&
+          String(persistedKoppeling.buitengemeentelijkVoorziening).trim() !== ''
+            ? String(persistedKoppeling.buitengemeentelijkVoorziening).trim()
+            : '');
         const uiModuleB =
           selectedAppBByRow[rowId] != null &&
           String(selectedAppBByRow[rowId]).trim() !== ''
