@@ -48,17 +48,15 @@ const ConBeheerViews = ({ store }) => {
     setFilters({ gebruik, applicaties, deelnames });
   }, [location.search]);
 
-  // Load view by route param when present (include filters)
+  // Load view by route param when present.
+  // Filters do NOT affect the view data itself (overlay data is loaded separately),
+  // so we only re-fetch when the view ID changes.
   useEffect(() => {
     if (!gemma) return;
     if (!params?.id) return;
     setViewIsDoneLoading(false);
-    const q = {};
-    if (filters.gebruik) q.gebruik = true;
-    if (filters.applicaties) q.applicaties = true;
-    if (filters.deelnames) q.deelnames = true;
-    gemma.fetchView(params.id, q);
-  }, [gemma, params?.id, filters.gebruik, filters.applicaties, filters.deelnames]);
+    gemma.fetchView(params.id);
+  }, [gemma, params?.id]);
 
   // Helper function to get view name
   const getViewName = (view) => {
@@ -116,50 +114,50 @@ const ConBeheerViews = ({ store }) => {
     const fields = 'id,module,gebruiktVoorReferentiecomponenten,deelnemers,afnemer,aanbieder,@self';
 
     const loadData = async () => {
+      // Collect all data first, then batch-set state at the end.
+      // This prevents intermediate state updates from triggering multiple renders.
+      let nextGebruik = null;
+      let nextApplicaties = null;
+      let nextDeelnames = null;
+      let nextModuleNames = {};
+
       // Load gebruik (afnemer = our org)
       if (filters.gebruik) {
-        let results = gemma.get_allVoorzieningGebruik;
-        if (!results) {
+        nextGebruik = gemma.get_allVoorzieningGebruik;
+        if (!nextGebruik) {
           const params = { _limit: 10000, _fields: fields };
           if (activeOrgUuid) params.afnemer = activeOrgUuid;
           await gemma.fetchGebruik(params);
-          results = gemma.get_allVoorzieningGebruik || [];
+          nextGebruik = gemma.get_allVoorzieningGebruik || [];
         }
-        setGebruikData(results);
-      } else {
-        setGebruikData(null);
       }
 
       // Load applicaties (aanbieder = our org)
       if (filters.applicaties) {
-        let results = gemma.get_applicaties;
-        if (!results && activeOrgUuid) {
+        nextApplicaties = gemma.get_applicaties;
+        if (!nextApplicaties && activeOrgUuid) {
           await gemma.fetchApplicaties({
             _limit: 10000,
             _fields: fields,
             aanbieder: activeOrgUuid,
           });
-          results = gemma.get_applicaties || [];
+          nextApplicaties = gemma.get_applicaties || [];
         }
-        setApplicatiesData(results || []);
-      } else {
-        setApplicatiesData(null);
+        nextApplicaties = nextApplicaties || [];
       }
 
       // Load deelnames (deelnemers contains our org)
       if (filters.deelnames) {
-        let results = gemma.get_deelnames;
-        if (!results && activeOrgUuid) {
+        nextDeelnames = gemma.get_deelnames;
+        if (!nextDeelnames && activeOrgUuid) {
           await gemma.fetchDeelnames({
             _limit: 10000,
             _fields: fields,
             deelnemers: activeOrgUuid,
           });
-          results = gemma.get_deelnames || [];
+          nextDeelnames = gemma.get_deelnames || [];
         }
-        setDeelnamesData(results || []);
-      } else {
-        setDeelnamesData(null);
+        nextDeelnames = nextDeelnames || [];
       }
 
       // Load modules for name lookup
@@ -170,16 +168,19 @@ const ConBeheerViews = ({ store }) => {
           _fields: 'id,naam',
         });
       }
-
-      const nameLookup = {};
       if (Array.isArray(modulesData)) {
         modulesData.forEach((m) => {
-          if (m.id && m.naam) nameLookup[m.id] = m.naam;
+          if (m.id && m.naam) nextModuleNames[m.id] = m.naam;
           if (m.id && m['@self']?.name)
-            nameLookup[m.id] = nameLookup[m.id] || m['@self'].name;
+            nextModuleNames[m.id] = nextModuleNames[m.id] || m['@self'].name;
         });
       }
-      setModuleNames(nameLookup);
+
+      // Batch-set all state at once to trigger a single render cycle
+      setGebruikData(nextGebruik);
+      setApplicatiesData(nextApplicaties);
+      setDeelnamesData(nextDeelnames);
+      setModuleNames(nextModuleNames);
     };
 
     loadData();
@@ -238,6 +239,8 @@ const ConBeheerViews = ({ store }) => {
 
     // Small delay to ensure DOM is ready
     const renderBeheerGraph = () => {
+      const t0 = performance.now();
+
       // Create container in HTML
       const container = document.getElementById('graph-container');
 
@@ -276,6 +279,9 @@ const ConBeheerViews = ({ store }) => {
         },
       });
 
+      const t1 = performance.now();
+      console.info(`[ViewPerf] Graph+Paper init: ${(t1 - t0).toFixed(1)}ms`);
+
       // Freeze paper to suppress rendering during bulk cell addition.
       // Without this, the Paper re-renders on every .addTo(graph) call
       // (388 full renders). With freeze, it batches into a single render.
@@ -299,9 +305,9 @@ const ConBeheerViews = ({ store }) => {
 
         // Merge overlay nodes for gebruik, applicaties, and deelnames when filters are active
         const overlayColors = {
-          gebruik:     { color: 'rgb(200, 255, 200)', borderColor: 'rgba(0, 150, 0, 0.6)' },
-          applicaties: { color: 'rgb(255, 235, 180)', borderColor: 'rgba(180, 130, 0, 0.6)' },
-          deelnames:   { color: 'rgb(180, 230, 255)', borderColor: 'rgba(0, 100, 180, 0.6)' },
+          gebruik:     { color: '#b9f6ca', borderColor: '#2e7d32', fontColor: '#1b5e20' },  // green
+          applicaties: { color: '#ffe0b2', borderColor: '#e65100', fontColor: '#bf360c' },  // orange
+          deelnames:   { color: '#b3e5fc', borderColor: '#01579b', fontColor: '#01579b' },  // blue
         };
 
         // Collect all active overlay data sources
@@ -367,7 +373,7 @@ const ConBeheerViews = ({ store }) => {
                   height: overlayHeight,
                   color: colors.color,
                   borderColor: colors.borderColor,
-                  font: { name: 'Segoe UI', size: 9, color: 'rgb(0, 0, 0)', style: 'normal' },
+                  font: { name: 'Segoe UI', size: 9, color: colors.fontColor || 'rgb(0, 0, 0)', style: 'normal' },
                   _isModuleOverlay: true,
                   _gebruikId: record.id,
                   _overlayType: type,
@@ -463,6 +469,9 @@ const ConBeheerViews = ({ store }) => {
         }));
       }
 
+      const tDataReady = performance.now();
+      console.info(`[ViewPerf] Data prep (sort+overlays): ${(tDataReady - t1).toFixed(1)}ms — ${viewNodes.length} nodes, ${viewRelationships.length} rels`);
+
       // Render the graph (match public views list for consistent colors)
       ViewRenderer.renderToGraph(
         outputGraph,
@@ -482,24 +491,43 @@ const ConBeheerViews = ({ store }) => {
           interactive: false,
         })
       );
+      const tRendered = performance.now();
+      console.info(`[ViewPerf] ViewRenderer.renderToGraph: ${(tRendered - tDataReady).toFixed(1)}ms`);
+
       // Unfreeze: triggers a single batch render of all cells at once.
       paper.unfreeze();
+      const tUnfrozen = performance.now();
+      console.info(`[ViewPerf] paper.unfreeze (DOM flush): ${(tUnfrozen - tRendered).toFixed(1)}ms`);
 
-      // Apply colors and viewBox like public version
+      // Apply colors and viewBox like public version.
+      // Build a model-id → element map once, then look up per node.
+      const modelIdElements = {};
+      container.querySelectorAll('[model-id]').forEach((el) => {
+        modelIdElements[el.getAttribute('model-id')] = el;
+      });
+
       viewNodes.forEach((node) => {
-        setNodeColor(node);
+        setNodeColor(node, modelIdElements);
       });
       viewRelationships.forEach((relationship) => {
-        setRelationshipColor(relationship);
+        setRelationshipColor(relationship, modelIdElements);
       });
       container.querySelectorAll(':scope > svg').forEach((node) => {
         setSvgViewBox(node);
       });
+      const tColored = performance.now();
+      console.info(`[ViewPerf] Color+viewBox apply: ${(tColored - tUnfrozen).toFixed(1)}ms`);
+      console.info(`[ViewPerf] TOTAL render: ${(tColored - t0).toFixed(1)}ms`);
 
       // Always set loading done when we reach this point
       setViewIsDoneLoading(true);
 
-      // Don't remove frozen view here - wait until pan/zoom is initialized
+      // Clear frozen view overlay now that the new graph is rendered.
+      // This must happen here (not in pan/zoom cleanup) because the graph
+      // container has visibility:hidden during isFilterTransition, which
+      // causes getBBox() to return 0,0 and pan/zoom init to bail out.
+      setFrozenViewHtml(null);
+      setIsFilterTransition(false);
     };
 
     // Start rendering process
@@ -511,10 +539,11 @@ const ConBeheerViews = ({ store }) => {
     applicatiesData,
     deelnamesData,
     moduleNames,
-    filters.gebruik,
-    filters.applicaties,
-    filters.deelnames,
-    isFilterTransition,
+    // NOTE: filters.* and isFilterTransition are intentionally excluded.
+    // The data states (gebruikData, applicatiesData, deelnamesData) already
+    // encode the filter state. Including filters here caused 4-5 redundant
+    // re-renders per checkbox toggle. isFilterTransition being cleared in the
+    // pan/zoom cleanup caused a visible re-render after the loading overlay.
   ]);
 
   // Helper functions from public version
@@ -532,8 +561,10 @@ const ConBeheerViews = ({ store }) => {
     }
   };
 
-  const setNodeColor = (node) => {
-    const parentElement = document.querySelector(`[model-id="${node.viewNodeId}"]`);
+  const setNodeColor = (node, modelIdElements) => {
+    const parentElement = modelIdElements
+      ? modelIdElements[node.viewNodeId]
+      : document.querySelector(`[model-id="${node.viewNodeId}"]`);
     if (!parentElement) return;
     if (node.type?.toLowerCase() !== 'label') {
       parentElement.setAttribute('data-tooltip-id', TOOLTIP_ID);
@@ -580,10 +611,10 @@ const ConBeheerViews = ({ store }) => {
     });
   };
 
-  const setRelationshipColor = (relationship) => {
-    const parentElement = document.querySelector(
-      `[model-id="${relationship.viewRelationshipId}"]`
-    );
+  const setRelationshipColor = (relationship, modelIdElements) => {
+    const parentElement = modelIdElements
+      ? modelIdElements[relationship.viewRelationshipId]
+      : document.querySelector(`[model-id="${relationship.viewRelationshipId}"]`);
     if (!parentElement) return;
     const allPathElements = parentElement.querySelectorAll(':scope > path');
     allPathElements.forEach((item) => {
@@ -837,19 +868,12 @@ const ConBeheerViews = ({ store }) => {
         /* ignore cleanup errors */
       }
       setPanZoomInstance(null);
-
-      // Remove frozen view as the very last thing after everything is complete
-      if (isFilterTransition) {
-        setFrozenViewHtml(null);
-        setIsFilterTransition(false);
-      }
     };
   }, [
     gemma,
     viewIsDoneLoading,
     viewNodesData,
     viewRelationsData,
-    isFilterTransition,
   ]);
 
   // Download SVG (aligned with public viewer)
