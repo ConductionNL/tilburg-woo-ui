@@ -161,7 +161,8 @@ const ConFormApplicatieControlerenStage = memo(
         }
       }
 
-      return moduleBId; // Fallback to ID if not found
+      // Fallback: Use ConUuidResolver to resolve the UUID
+      return <ConUuidResolver>{moduleBId}</ConUuidResolver>;
     };
 
     // Helper function to normalize URLs for external links

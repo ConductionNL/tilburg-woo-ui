@@ -638,10 +638,19 @@ const AcFormsKoppeling = ({ store }) => {
   // Helper to ensure a module option exists and return its label
   const ensureModuleOptionAndGetLabel = async (id) => {
     if (!id) return '';
+    
+    // First check in modulesOptions
     const existing = (modulesOptions || []).find(
       (o) => String(o.value) === String(id)
     );
     if (existing) return existing.label || String(id);
+    
+    // Then check in buitengemeentelijkeOptions
+    const existingBgv = (buitengemeentelijkeOptions || []).find(
+      (o) => String(o.value) === String(id)
+    );
+    if (existingBgv) return existingBgv.label || String(id);
+    
     try {
       const res = await fetch(
         `/api/apps/openregister/api/objects/voorzieningen/module/${encodeURIComponent(
@@ -2328,6 +2337,7 @@ const AcFormsKoppeling = ({ store }) => {
           <ConKoppelingStageControleren
             rows={rows}
             modulesOptions={modulesOptions}
+            buitengemeentelijkeOptions={buitengemeentelijkeOptions}
             selectedModuleLabels={selectedModuleLabels}
             selectedAppAByRow={selectedAppAByRow}
             selectedAppBByRow={selectedAppBByRow}

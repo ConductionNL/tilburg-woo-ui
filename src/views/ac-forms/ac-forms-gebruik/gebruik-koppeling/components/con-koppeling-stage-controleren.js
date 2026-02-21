@@ -299,7 +299,10 @@ const ConKoppelingStageControleren = ({
     if (selectedModuleLabels && selectedModuleLabels[v])
       return selectedModuleLabels[v];
     const fromPool = modulesOptions.find((o) => String(o.value) === v);
-    return fromPool?.label || '';
+    if (fromPool) return fromPool.label;
+    // Also check buitengemeentelijkeOptions
+    const fromBgv = (buitengemeentelijkeOptions || []).find((o) => String(o.value) === v);
+    return fromBgv?.label || '';
   };
 
   // Helper to get module B label for new koppeling
@@ -363,9 +366,10 @@ const ConKoppelingStageControleren = ({
     const moduleBIdRaw = rels?.moduleB ?? koppeling?.moduleB ?? rels?.buitengemeentelijkVoorziening ?? koppeling?.buitengemeentelijkVoorziening;
     const moduleAId = String(extractRelationId(moduleAIdRaw) || '');
     const moduleBId = String(extractRelationId(moduleBIdRaw) || '');
-    const moduleALabel = optionLabelByValue(moduleAId) || moduleAId || '-';
-    const moduleBLabel = optionLabelByValue(moduleBId) || moduleBId || '-';
-    const isBuitengemeentelijk = !(rels?.moduleB ?? koppeling?.moduleB) && moduleBId;
+    const moduleALabel = optionLabelByValue(moduleAId);
+    const moduleBLabel = optionLabelByValue(moduleBId);
+    const moduleADisplay = moduleALabel || moduleAId || '-';
+    const moduleBDisplay = moduleBLabel || moduleBId || '-';
     const richting =
       koppeling?.gegevensuitwisselingRichting ||
       koppeling?.richting ||
@@ -599,8 +603,17 @@ const ConKoppelingStageControleren = ({
               <div className='ac-register-review__field'>
                 <strong>Koppeling:</strong>
                 <div>
-                  <ConUuidResolver>{moduleALabel}</ConUuidResolver> {dirArrow}{' '}
-                  <ConUuidResolver>{moduleBLabel}</ConUuidResolver>
+                  {moduleALabel ? (
+                    moduleADisplay
+                  ) : (
+                    <ConUuidResolver>{moduleADisplay}</ConUuidResolver>
+                  )}{' '}
+                  {dirArrow}{' '}
+                  {moduleBLabel ? (
+                    moduleBDisplay
+                  ) : (
+                    <ConUuidResolver>{moduleBDisplay}</ConUuidResolver>
+                  )}
                 </div>
               </div>
 

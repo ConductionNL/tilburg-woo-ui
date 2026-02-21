@@ -781,7 +781,15 @@ const ConKoppelingStageToevoegen = ({
                             ...prev,
                             [rowId]: opt?.value,
                           }));
-                          if (opt) upsertModuleOption(opt);
+                          if (opt) {
+                            upsertModuleOption(opt);
+                          } else {
+                            // When cleared, reset the options to show full list
+                            setAppBOptionsByRow((prev) => ({
+                              ...prev,
+                              [rowId]: null,
+                            }));
+                          }
                         }}
                         inputId={appBId}
                         aria-required='true'
