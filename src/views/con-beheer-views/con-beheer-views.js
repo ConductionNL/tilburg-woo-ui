@@ -292,7 +292,10 @@ const ConBeheerViews = ({ store }) => {
         // diagram engine can look up parent cells via graph.getCell(parentId).
         // Backend now stores nodes in correct order, but we keep this as a
         // safety net for data imported before the fix.
-        const rawNodes = [...(viewNodesData || [])];
+        // Deep-clone nodes so the absolute→relative coordinate conversion
+        // (below) never mutates the original viewNodesData objects.
+        // Without this, re-renders subtract parent offsets a second time.
+        const rawNodes = (viewNodesData || []).map((n) => ({ ...n }));
 
         // Merge overlay nodes for gebruik, applicaties, and deelnames when filters are active
         const overlayColors = {
