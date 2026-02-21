@@ -112,6 +112,14 @@ export const BREADCRUMBS = {
   },
   VIEWS_LIST: [BREADCRUMB_ITEMS.VIEWS_LIST],
   BEHEER_VIEWS: [BREADCRUMB_ITEMS.BEHEER_VIEWS],
+  BEHEER_VIEW_DETAIL: (viewName) => {
+    const items = [
+      BREADCRUMB_ITEMS.BEHEER,
+      { label: 'View', href: '/beheer/views' },
+    ];
+    if (viewName) items.push({ label: viewName });
+    return items;
+  },
   MY_ACCOUNT: [BREADCRUMB_ITEMS.MY_ACCOUNT],
   DIRECTORY: [BREADCRUMB_ITEMS.DIRECTORY],
 };

@@ -36,6 +36,8 @@ const ConBeheerViews = ({ store }) => {
     applicaties: false,
     deelnames: false,
   });
+  const [frozenViewHtml, setFrozenViewHtml] = useState(null);
+  const [isFilterTransition, setIsFilterTransition] = useState(false);
 
   // Sync filters from URL
   useEffect(() => {
@@ -68,6 +70,15 @@ const ConBeheerViews = ({ store }) => {
 
   // Update URL when filters change (keep existing params)
   const handleToggleFilter = (key) => (checked) => {
+    // Capture current view before changing filter
+    const container = document.getElementById('graph-container');
+    if (container && viewIsDoneLoading) {
+      const clonedContainer = container.cloneNode(true);
+      clonedContainer.id = 'frozen-graph-container';
+      setFrozenViewHtml(clonedContainer.outerHTML);
+      setIsFilterTransition(true);
+    }
+
     setFilters((prev) => {
       const next = { ...prev, [key]: checked };
       const sp = new URLSearchParams(location.search);
@@ -154,14 +165,18 @@ const ConBeheerViews = ({ store }) => {
       // Load modules for name lookup
       let modulesData = gemma.get_modules;
       if (!modulesData) {
-        modulesData = await gemma.fetchModules({ _limit: 10000, _fields: 'id,naam' });
+        modulesData = await gemma.fetchModules({
+          _limit: 10000,
+          _fields: 'id,naam',
+        });
       }
 
       const nameLookup = {};
       if (Array.isArray(modulesData)) {
         modulesData.forEach((m) => {
           if (m.id && m.naam) nameLookup[m.id] = m.naam;
-          if (m.id && m['@self']?.name) nameLookup[m.id] = nameLookup[m.id] || m['@self'].name;
+          if (m.id && m['@self']?.name)
+            nameLookup[m.id] = nameLookup[m.id] || m['@self'].name;
         });
       }
       setModuleNames(nameLookup);
@@ -177,11 +192,10 @@ const ConBeheerViews = ({ store }) => {
       return;
     }
 
-    setViewIsDoneLoading(false);
-
     // Check top-level viewNodes first, then xml.viewNodes as fallback
     const sourceNodes = gemma.get_view.viewNodes || gemma.get_view.xml?.viewNodes;
-    const sourceRelationships = gemma.get_view.viewRelationships || gemma.get_view.xml?.viewRelationships;
+    const sourceRelationships =
+      gemma.get_view.viewRelationships || gemma.get_view.xml?.viewRelationships;
 
     if (Array.isArray(sourceNodes)) {
       const sanitizedNodes = sourceNodes.map((node) => ({
@@ -198,7 +212,8 @@ const ConBeheerViews = ({ store }) => {
           node.type ||
           'dataobject'
         ).toLowerCase(),
-        gemmaType: node.type || node.gemmaType || node.elementProperties?.gemmaType || null,
+        gemmaType:
+          node.type || node.gemmaType || node.elementProperties?.gemmaType || null,
       }));
       setViewNodesData(sanitizedNodes);
       setViewRelationsData(sourceRelationships || []);
@@ -217,6 +232,9 @@ const ConBeheerViews = ({ store }) => {
     if (!gemma.get_view) return;
     if (!viewNodesData) return;
     if (!viewRelationsData) return;
+
+    // Mark as loading when starting the render process
+    setViewIsDoneLoading(false);
 
     // Small delay to ensure DOM is ready
     const renderBeheerGraph = () => {
@@ -266,7 +284,9 @@ const ConBeheerViews = ({ store }) => {
       let viewNodes = [];
       let viewRelationships = [];
 
-      const hasNewFormat = Array.isArray(gemma.get_view.viewNodes) || Array.isArray(gemma.get_view.xml?.viewNodes);
+      const hasNewFormat =
+        Array.isArray(gemma.get_view.viewNodes) ||
+        Array.isArray(gemma.get_view.xml?.viewNodes);
       if (hasNewFormat) {
         // Topological sort: parents must be rendered before children so the
         // diagram engine can look up parent cells via graph.getCell(parentId).
@@ -385,8 +405,8 @@ const ConBeheerViews = ({ store }) => {
         sorted.forEach((n) => {
           const parentAbs = n.parent ? absPos[n.parent] : null;
           absPos[n.viewNodeId] = {
-            x: (n.x || 0),
-            y: (n.y || 0),
+            x: n.x || 0,
+            y: n.y || 0,
           };
           // Skip overlay nodes — their coordinates are already parent-relative.
           // ArchiMate source nodes use absolute coordinates that need conversion,
@@ -475,11 +495,24 @@ const ConBeheerViews = ({ store }) => {
 
       // Always set loading done when we reach this point
       setViewIsDoneLoading(true);
+
+      // Don't remove frozen view here - wait until pan/zoom is initialized
     };
 
     // Start rendering process
     renderBeheerGraph();
-  }, [viewNodesData, viewRelationsData, gebruikData, applicatiesData, deelnamesData, moduleNames, filters.gebruik, filters.applicaties, filters.deelnames]);
+  }, [
+    viewNodesData,
+    viewRelationsData,
+    gebruikData,
+    applicatiesData,
+    deelnamesData,
+    moduleNames,
+    filters.gebruik,
+    filters.applicaties,
+    filters.deelnames,
+    isFilterTransition,
+  ]);
 
   // Helper functions from public version
   const setSvgViewBox = (svg) => {
@@ -607,12 +640,23 @@ const ConBeheerViews = ({ store }) => {
       try {
         const bbox = gElement.getBBox();
         // Check if bounding box is valid (has width and height)
-        if (!bbox || bbox.width === 0 || bbox.height === 0 || !isFinite(bbox.width) || !isFinite(bbox.height)) {
-          console.warn('SVG has invalid bounding box, skipping pan/zoom initialization');
+        if (
+          !bbox ||
+          bbox.width === 0 ||
+          bbox.height === 0 ||
+          !isFinite(bbox.width) ||
+          !isFinite(bbox.height)
+        ) {
+          console.warn(
+            'SVG has invalid bounding box, skipping pan/zoom initialization'
+          );
           return;
         }
       } catch (e) {
-        console.warn('Could not get SVG bounding box, skipping pan/zoom initialization:', e);
+        console.warn(
+          'Could not get SVG bounding box, skipping pan/zoom initialization:',
+          e
+        );
         return;
       }
 
@@ -638,143 +682,146 @@ const ConBeheerViews = ({ store }) => {
 
       try {
         const instance = svgPanZoom(svg, {
-        zoomEnabled: true,
-        controlIconsEnabled: true,
-        fit: true,
-        center: true,
-        minZoom: 0.1,
-        maxZoom: 10,
-        zoomScaleSensitivity: 0.5,
-        customEventsHandler: {
-          haltEventListeners: [
-            'touchstart',
-            'touchend',
-            'touchmove',
-            'touchleave',
-            'touchcancel',
-          ],
-          init: function (options) {
-            function updateSvgClassName() {
-              options.svgElement.setAttribute('class', svgHovered ? 'hovered' : '');
-            }
-            function getTouchCenter(touch1, touch2) {
-              const rect = options.svgElement.getBoundingClientRect();
-              return {
-                x: (touch1.clientX + touch2.clientX) / 2 - rect.left,
-                y: (touch1.clientY + touch2.clientY) / 2 - rect.top,
-              };
-            }
-            function getRelativePoint(svgElement, x, y) {
-              const ctm = svgElement.getScreenCTM();
-              const point = svgElement.createSVGPoint();
-              point.x = x;
-              point.y = y;
-              return point.matrixTransform(ctm.inverse());
-            }
-            this.listeners = {
-              mouseenter: function () {
-                svgHovered = true;
-                options.instance.enableZoom();
-                updateSvgClassName();
-              },
-              mouseleave: function () {
-                svgHovered = false;
-                updateSvgClassName();
-              },
-              touchstart: function (evt) {
-                touchStarted = true;
-                if (evt.touches.length === 2) {
-                  const touch1 = evt.touches[0];
-                  const touch2 = evt.touches[1];
-                  initialPinchDistance = Math.hypot(
-                    touch2.clientX - touch1.clientX,
-                    touch2.clientY - touch1.clientY
-                  );
-                  lastPinchCenter = getTouchCenter(touch1, touch2);
-                  initialScale = options.instance.getZoom();
-                }
-                evt.preventDefault();
-              },
-              touchmove: function (evt) {
-                if (!touchStarted) return;
-                evt.preventDefault();
-                if (evt.touches.length === 2) {
-                  const touch1 = evt.touches[0];
-                  const touch2 = evt.touches[1];
-                  const currentDistance = Math.hypot(
-                    touch2.clientX - touch1.clientX,
-                    touch2.clientY - touch1.clientY
-                  );
-                  const currentCenter = getTouchCenter(touch1, touch2);
-                  if (initialPinchDistance && initialScale && lastPinchCenter) {
-                    const scaleFactor = currentDistance / initialPinchDistance;
-                    const newScale = Math.min(
-                      Math.max(initialScale * scaleFactor, 0.1),
-                      10
+          zoomEnabled: true,
+          controlIconsEnabled: true,
+          fit: true,
+          center: true,
+          minZoom: 0.1,
+          maxZoom: 10,
+          zoomScaleSensitivity: 0.5,
+          customEventsHandler: {
+            haltEventListeners: [
+              'touchstart',
+              'touchend',
+              'touchmove',
+              'touchleave',
+              'touchcancel',
+            ],
+            init: function (options) {
+              function updateSvgClassName() {
+                options.svgElement.setAttribute(
+                  'class',
+                  svgHovered ? 'hovered' : ''
+                );
+              }
+              function getTouchCenter(touch1, touch2) {
+                const rect = options.svgElement.getBoundingClientRect();
+                return {
+                  x: (touch1.clientX + touch2.clientX) / 2 - rect.left,
+                  y: (touch1.clientY + touch2.clientY) / 2 - rect.top,
+                };
+              }
+              function getRelativePoint(svgElement, x, y) {
+                const ctm = svgElement.getScreenCTM();
+                const point = svgElement.createSVGPoint();
+                point.x = x;
+                point.y = y;
+                return point.matrixTransform(ctm.inverse());
+              }
+              this.listeners = {
+                mouseenter: function () {
+                  svgHovered = true;
+                  options.instance.enableZoom();
+                  updateSvgClassName();
+                },
+                mouseleave: function () {
+                  svgHovered = false;
+                  updateSvgClassName();
+                },
+                touchstart: function (evt) {
+                  touchStarted = true;
+                  if (evt.touches.length === 2) {
+                    const touch1 = evt.touches[0];
+                    const touch2 = evt.touches[1];
+                    initialPinchDistance = Math.hypot(
+                      touch2.clientX - touch1.clientX,
+                      touch2.clientY - touch1.clientY
                     );
-                    const svgPoint = getRelativePoint(
-                      options.svgElement,
-                      currentCenter.x,
-                      currentCenter.y
-                    );
-                    const zoomPoint = { x: svgPoint.x, y: svgPoint.y };
-                    options.instance.zoom(newScale, zoomPoint);
-                    if (lastPinchCenter) {
-                      const dx = currentCenter.x - lastPinchCenter.x;
-                      const dy = currentCenter.y - lastPinchCenter.y;
-                      options.instance.panBy({ x: dx, y: dy });
-                    }
-                    lastPinchCenter = currentCenter;
+                    lastPinchCenter = getTouchCenter(touch1, touch2);
+                    initialScale = options.instance.getZoom();
                   }
-                } else if (evt.touches.length === 1) {
-                  const touch = evt.touches[0];
-                  const dx = touch.clientX - (this.lastX || touch.clientX);
-                  const dy = touch.clientY - (this.lastY || touch.clientY);
-                  options.instance.panBy({ x: dx, y: dy });
-                  this.lastX = touch.clientX;
-                  this.lastY = touch.clientY;
-                }
-              },
-              touchend: function () {
-                touchStarted = false;
-                initialPinchDistance = null;
-                initialScale = null;
-                lastPinchCenter = null;
-                delete this.lastX;
-                delete this.lastY;
-              },
-              touchcancel: function () {
-                touchStarted = false;
-                initialPinchDistance = null;
-                initialScale = null;
-                lastPinchCenter = null;
-                delete this.lastX;
-                delete this.lastY;
-              },
-            };
-            this.listeners.mousemove = this.listeners.mouseenter;
-            for (const eventName in this.listeners) {
-              options.svgElement.addEventListener(
-                eventName,
-                this.listeners[eventName]
-              );
-            }
+                  evt.preventDefault();
+                },
+                touchmove: function (evt) {
+                  if (!touchStarted) return;
+                  evt.preventDefault();
+                  if (evt.touches.length === 2) {
+                    const touch1 = evt.touches[0];
+                    const touch2 = evt.touches[1];
+                    const currentDistance = Math.hypot(
+                      touch2.clientX - touch1.clientX,
+                      touch2.clientY - touch1.clientY
+                    );
+                    const currentCenter = getTouchCenter(touch1, touch2);
+                    if (initialPinchDistance && initialScale && lastPinchCenter) {
+                      const scaleFactor = currentDistance / initialPinchDistance;
+                      const newScale = Math.min(
+                        Math.max(initialScale * scaleFactor, 0.1),
+                        10
+                      );
+                      const svgPoint = getRelativePoint(
+                        options.svgElement,
+                        currentCenter.x,
+                        currentCenter.y
+                      );
+                      const zoomPoint = { x: svgPoint.x, y: svgPoint.y };
+                      options.instance.zoom(newScale, zoomPoint);
+                      if (lastPinchCenter) {
+                        const dx = currentCenter.x - lastPinchCenter.x;
+                        const dy = currentCenter.y - lastPinchCenter.y;
+                        options.instance.panBy({ x: dx, y: dy });
+                      }
+                      lastPinchCenter = currentCenter;
+                    }
+                  } else if (evt.touches.length === 1) {
+                    const touch = evt.touches[0];
+                    const dx = touch.clientX - (this.lastX || touch.clientX);
+                    const dy = touch.clientY - (this.lastY || touch.clientY);
+                    options.instance.panBy({ x: dx, y: dy });
+                    this.lastX = touch.clientX;
+                    this.lastY = touch.clientY;
+                  }
+                },
+                touchend: function () {
+                  touchStarted = false;
+                  initialPinchDistance = null;
+                  initialScale = null;
+                  lastPinchCenter = null;
+                  delete this.lastX;
+                  delete this.lastY;
+                },
+                touchcancel: function () {
+                  touchStarted = false;
+                  initialPinchDistance = null;
+                  initialScale = null;
+                  lastPinchCenter = null;
+                  delete this.lastX;
+                  delete this.lastY;
+                },
+              };
+              this.listeners.mousemove = this.listeners.mouseenter;
+              for (const eventName in this.listeners) {
+                options.svgElement.addEventListener(
+                  eventName,
+                  this.listeners[eventName]
+                );
+              }
+            },
+            destroy: function (options) {
+              for (const eventName in this.listeners) {
+                options.svgElement.removeEventListener(
+                  eventName,
+                  this.listeners[eventName]
+                );
+              }
+            },
           },
-          destroy: function (options) {
-            for (const eventName in this.listeners) {
-              options.svgElement.removeEventListener(
-                eventName,
-                this.listeners[eventName]
-              );
-            }
-          },
-        },
-      });
-      setPanZoomInstance(instance);
-    } catch (error) {
-      console.error('Error initializing svgPanZoom:', error);
-      // Don't set panZoomInstance if initialization failed
-    }
+        });
+        setPanZoomInstance(instance);
+      } catch (error) {
+        console.error('Error initializing svgPanZoom:', error);
+        // Don't set panZoomInstance if initialization failed
+      }
     }, 100);
 
     return () => {
@@ -787,8 +834,20 @@ const ConBeheerViews = ({ store }) => {
         /* ignore cleanup errors */
       }
       setPanZoomInstance(null);
+
+      // Remove frozen view as the very last thing after everything is complete
+      if (isFilterTransition) {
+        setFrozenViewHtml(null);
+        setIsFilterTransition(false);
+      }
     };
-  }, [gemma, viewIsDoneLoading, viewNodesData, viewRelationsData]);
+  }, [
+    gemma,
+    viewIsDoneLoading,
+    viewNodesData,
+    viewRelationsData,
+    isFilterTransition,
+  ]);
 
   // Download SVG (aligned with public viewer)
   const downloadSvg = () => {
@@ -875,28 +934,38 @@ const ConBeheerViews = ({ store }) => {
                         try {
                           const response = await fetch(
                             '/api/apps/softwarecatalog/api/archimate/export',
-                            { 
+                            {
                               method: 'POST',
                               headers: {
-                                'Accept': 'application/xml',
+                                Accept: 'application/xml',
                               },
                             }
                           );
 
                           if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
+                            throw new Error(
+                              `HTTP error! status: ${response.status}`
+                            );
                           }
 
                           // Get the XML content
                           const xmlData = await response.text();
 
                           // Extract filename from Content-Disposition header if available
-                          const disposition = response.headers.get('content-disposition');
-                          const filenameMatch = disposition?.match(/filename="?([^";]+)"?/i);
-                          const filename = filenameMatch?.[1] || `${getViewName(gemma.get_view).replace(/[^a-z0-9]/gi, '_').toLowerCase()}_amef.xml`;
+                          const disposition =
+                            response.headers.get('content-disposition');
+                          const filenameMatch =
+                            disposition?.match(/filename="?([^";]+)"?/i);
+                          const filename =
+                            filenameMatch?.[1] ||
+                            `${getViewName(gemma.get_view)
+                              .replace(/[^a-z0-9]/gi, '_')
+                              .toLowerCase()}_amef.xml`;
 
                           // Create blob and download
-                          const blob = new Blob([xmlData], { type: 'application/xml;charset=utf-8' });
+                          const blob = new Blob([xmlData], {
+                            type: 'application/xml;charset=utf-8',
+                          });
                           const url = URL.createObjectURL(blob);
                           const a = document.createElement('a');
                           a.href = url;
@@ -904,7 +973,7 @@ const ConBeheerViews = ({ store }) => {
                           document.body.appendChild(a);
                           a.click();
                           document.body.removeChild(a);
-                          
+
                           // Cleanup
                           URL.revokeObjectURL(url);
                         } catch (error) {
@@ -984,14 +1053,58 @@ const ConBeheerViews = ({ store }) => {
             <>
               {/* Graph Container */}
               {viewNodesData && viewRelationsData && (
-                <div
-                  className='con-beheer-views-graph-container'
-                  id='graph-container'
-                ></div>
+                <div style={{ position: 'relative' }}>
+                  {/* Frozen view overlay during filter transition */}
+                  {frozenViewHtml && isFilterTransition && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        zIndex: 10,
+                        pointerEvents: 'none',
+                      }}
+                    >
+                      <div
+                        dangerouslySetInnerHTML={{ __html: frozenViewHtml }}
+                        style={{
+                          opacity: 0.6,
+                          filter: 'grayscale(50%)',
+                        }}
+                      />
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <AcLoader />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Real graph container */}
+                  <div
+                    className='con-beheer-views-graph-container'
+                    id='graph-container'
+                    style={{
+                      visibility: isFilterTransition ? 'hidden' : 'visible',
+                    }}
+                  ></div>
+                </div>
               )}
 
               {/* Loading indicator for graph rendering */}
-              {gemma?.get_view && !viewIsDoneLoading && (
+              {gemma?.get_view && !viewIsDoneLoading && !isFilterTransition && (
                 <div className='con-beheer-views-graph-loading'>
                   <AcLoader />
                   <p>Weergave wordt geladen...</p>
