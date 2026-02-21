@@ -33,7 +33,7 @@ const ConCardKoppeling = ({
 
   // Handle both individual props (source/target) and item object format
   const moduleA = source || item?.moduleA;
-  const moduleB = target || item?.moduleB;
+  const moduleB = target || item?.moduleB || item?.buitengemeentelijkVoorziening;
   const richtingDataUitwisseling = item?.gegevensuitwisselingRichting;
   const status = item?.status;
   const createdDate = created || item?.['@self']?.created;

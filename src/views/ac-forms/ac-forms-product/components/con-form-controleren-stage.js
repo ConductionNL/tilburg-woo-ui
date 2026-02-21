@@ -468,14 +468,15 @@ const ConFormControlerenStage = memo(
                                     ? '←'
                                     : '↔';
 
-                                // Resolve moduleB ID to display name
+                                // Resolve moduleB ID to display name (fallback to buitengemeentelijkVoorziening)
+                                const moduleBId = kp.moduleB || kp.buitengemeentelijkVoorziening;
                                 const moduleBDisplayName = getModuleBDisplayName(
-                                  kp.moduleB
+                                  moduleBId
                                 );
 
                                 return (
                                   <UnorderedListItem
-                                    key={`${kp.moduleA}-${kp.moduleB}-${kIdx}`}
+                                    key={`${kp.moduleA}-${moduleBId}-${kIdx}`}
                                   >
                                     {kp.moduleA} {arrow} {moduleBDisplayName}
                                     {soortLabel ? ` (${soortLabel})` : ''}

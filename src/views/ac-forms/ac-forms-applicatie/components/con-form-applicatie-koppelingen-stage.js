@@ -188,12 +188,18 @@ const ConFormApplicatieKoppelingenStage = memo(
         // Find existing koppeling to preserve all its properties
         const existingKoppeling = list.find((k) => k?._localId === localId);
 
+        // Check if the selected App B is a buitengemeentelijke voorziening
+        const isBuitengemeentelijk = (buitengemeentelijkeOptions || []).some(
+          (o) => String(o.value) === String(appBId)
+        );
+
         const fields = {
           // Preserve existing properties, then override with new values
           ...(existingKoppeling || {}),
           _localId: localId, // Ensure local ID is preserved
           moduleA: applicatie.naam || 'Deze applicatie', // Current applicatie name
-          moduleB: appBId, // Store as ID for edit mode preselection
+          moduleB: isBuitengemeentelijk ? null : appBId,
+          buitengemeentelijkVoorziening: isBuitengemeentelijk ? appBId : null,
           gegevensuitwisselingRichting: richting,
           // Only set these fields if they're explicitly provided or already exist
           ...(naam !== undefined ? { naam } : {}),

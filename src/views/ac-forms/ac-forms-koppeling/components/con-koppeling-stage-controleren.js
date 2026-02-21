@@ -83,6 +83,7 @@ const getRelevantStartDate = (
 const ConKoppelingStageControleren = ({
   rows,
   modulesOptions,
+  buitengemeentelijkeOptions = [],
   selectedModuleLabels,
   selectedAppAByRow,
   selectedAppBByRow,
@@ -234,10 +235,14 @@ const ConKoppelingStageControleren = ({
   const optionLabelByValue = (val) => {
     if (!val) return '';
     const v = String(val);
-    if (selectedModuleLabels && selectedModuleLabels[v])
+    // Check selectedModuleLabels, but only use if it's different from the ID (i.e., it's an actual label)
+    if (selectedModuleLabels && selectedModuleLabels[v] && selectedModuleLabels[v] !== v)
       return selectedModuleLabels[v];
     const fromPool = modulesOptions.find((o) => String(o.value) === v);
-    return fromPool?.label || '';
+    if (fromPool) return fromPool.label;
+    // Also check buitengemeentelijkeOptions
+    const fromBgv = (buitengemeentelijkeOptions || []).find((o) => String(o.value) === v);
+    return fromBgv?.label || '';
   };
 
   // Helper function to get the correct aanbieder display name
@@ -338,7 +343,9 @@ const ConKoppelingStageControleren = ({
                         ? nieuweOwnApp?.naam || '-'
                         : optionLabelByValue(appAValue) || ownApp?.label || '-';
                     const appBValue = selectedAppBByRow[rowId] || '';
-                    const appBLabel = optionLabelByValue(appBValue) || '-';
+                    const appBLabelFromOptions = optionLabelByValue(appBValue);
+                    // If label not found in options, use ConUuidResolver as fallback
+                    const appBLabel = appBLabelFromOptions || (appBValue ? <ConUuidResolver>{appBValue}</ConUuidResolver> : '-');
                     const richting = directionByRow[rowId] || '';
                     const dirArrow = getArrowForDirection(richting);
                     const soortVal = typeByRow[rowId] || '';

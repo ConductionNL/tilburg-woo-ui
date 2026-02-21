@@ -35,7 +35,7 @@ const ConFormKoppelingenStage = memo(
         const aRel =
           rels.moduleA ?? k.moduleA ?? k.applicatie1 ?? k.applicatieA ?? k.appA;
         const bRel =
-          rels.moduleB ?? k.moduleB ?? k.applicatie2 ?? k.applicatieB ?? k.appB;
+          rels.moduleB ?? k.moduleB ?? rels.buitengemeentelijkVoorziening ?? k.buitengemeentelijkVoorziening ?? k.applicatie2 ?? k.applicatieB ?? k.appB;
         const aId = String(extractRelationId(aRel));
         const bId = String(extractRelationId(bRel));
         return selectedSet.has(aId) || selectedSet.has(bId);

@@ -123,8 +123,17 @@ const ConKoppelingDetailsPageContent = ({
   }, [data]);
 
   const moduleBId = useMemo(() => {
-    return data?.['@self']?.relations?.moduleB || null;
+    return (
+      data?.['@self']?.relations?.moduleB || 
+      data?.['@self']?.relations?.buitengemeentelijkVoorziening || 
+      null
+    );
   }, [data]);
+
+  const isBuitengemeentelijk = useMemo(() => {
+    const hasModuleB = data?.['@self']?.relations?.moduleB;
+    return !hasModuleB && moduleBId;
+  }, [data, moduleBId]);
 
   const richting = useMemo(() => {
     return (
@@ -381,7 +390,7 @@ const ConKoppelingDetailsPageContent = ({
             )}
           </div>
           <div style={{ marginBottom: '8px' }}>
-            <strong>Applicatie B: </strong>
+            <strong>{isBuitengemeentelijk ? 'Buitengemeentelijke voorziening: ' : 'Applicatie B: '}</strong>
             {moduleBId ? (
               <ConUuidResolver>{String(moduleBId)}</ConUuidResolver>
             ) : (
