@@ -31,7 +31,7 @@ const ConBeheerViews = ({ store }) => {
   const [moduleNames, setModuleNames] = useState({});
   const [filters, setFilters] = useState({
     gebruik: false,
-    product: false,
+    applicatie: false,
     deelnames: false,
   });
 
@@ -39,9 +39,9 @@ const ConBeheerViews = ({ store }) => {
   useEffect(() => {
     const sp = new URLSearchParams(location.search);
     const gebruik = sp.get('gebruik') === 'true';
-    const product = sp.get('product') === 'true';
+    const applicatie = sp.get('applicatie') === 'true';
     const deelnames = sp.get('deelnames') === 'true';
-    setFilters({ gebruik, product, deelnames });
+    setFilters({ gebruik, applicatie, deelnames });
   }, [location.search]);
 
   // Load view by route param when present (include filters)
@@ -51,10 +51,10 @@ const ConBeheerViews = ({ store }) => {
     setViewIsDoneLoading(false);
     const q = {};
     if (filters.gebruik) q.gebruik = true;
-    if (filters.product) q.product = true;
+    if (filters.applicatie) q.applicatie = true;
     if (filters.deelnames) q.deelnames = true;
     gemma.fetchView(params.id, q);
-  }, [gemma, params?.id, filters.gebruik, filters.product, filters.deelnames]);
+  }, [gemma, params?.id, filters.gebruik, filters.applicatie, filters.deelnames]);
 
   // Helper function to get view name
   const getViewName = (view) => {
@@ -71,8 +71,8 @@ const ConBeheerViews = ({ store }) => {
       const sp = new URLSearchParams(location.search);
       if (next.gebruik) sp.set('gebruik', 'true');
       else sp.delete('gebruik');
-      if (next.product) sp.set('product', 'true');
-      else sp.delete('product');
+      if (next.applicatie) sp.set('applicatie', 'true');
+      else sp.delete('applicatie');
       if (next.deelnames) sp.set('deelnames', 'true');
       else sp.delete('deelnames');
       const qs = sp.toString();
@@ -104,7 +104,8 @@ const ConBeheerViews = ({ store }) => {
       if (!gebruikResults) {
         const gebruikParams = {
           _limit: 10000,
-          _fields: 'id,module,gebruiktVoorReferentiecomponenten,deelnemers,afnemer,@self',
+          _fields:
+            'id,module,gebruiktVoorReferentiecomponenten,deelnemers,afnemer,@self',
         };
         if (activeOrgUuid) {
           gebruikParams.afnemer = activeOrgUuid;
@@ -115,7 +116,10 @@ const ConBeheerViews = ({ store }) => {
 
       let modulesData = gemma.get_modules;
       if (!modulesData) {
-        modulesData = await gemma.fetchModules({ _limit: 10000, _fields: 'id,naam' });
+        modulesData = await gemma.fetchModules({
+          _limit: 10000,
+          _fields: 'id,naam',
+        });
       }
 
       // Build module name lookup
@@ -123,7 +127,8 @@ const ConBeheerViews = ({ store }) => {
       if (Array.isArray(modulesData)) {
         modulesData.forEach((m) => {
           if (m.id && m.naam) nameLookup[m.id] = m.naam;
-          if (m.id && m['@self']?.name) nameLookup[m.id] = nameLookup[m.id] || m['@self'].name;
+          if (m.id && m['@self']?.name)
+            nameLookup[m.id] = nameLookup[m.id] || m['@self'].name;
         });
       }
       setModuleNames(nameLookup);
@@ -144,7 +149,8 @@ const ConBeheerViews = ({ store }) => {
 
     // Check top-level viewNodes first, then xml.viewNodes as fallback
     const sourceNodes = gemma.get_view.viewNodes || gemma.get_view.xml?.viewNodes;
-    const sourceRelationships = gemma.get_view.viewRelationships || gemma.get_view.xml?.viewRelationships;
+    const sourceRelationships =
+      gemma.get_view.viewRelationships || gemma.get_view.xml?.viewRelationships;
 
     if (Array.isArray(sourceNodes)) {
       const sanitizedNodes = sourceNodes.map((node) => ({
@@ -161,7 +167,8 @@ const ConBeheerViews = ({ store }) => {
           node.type ||
           'dataobject'
         ).toLowerCase(),
-        gemmaType: node.type || node.gemmaType || node.elementProperties?.gemmaType || null,
+        gemmaType:
+          node.type || node.gemmaType || node.elementProperties?.gemmaType || null,
       }));
       setViewNodesData(sanitizedNodes);
       setViewRelationsData(sourceRelationships || []);
@@ -229,7 +236,9 @@ const ConBeheerViews = ({ store }) => {
       let viewNodes = [];
       let viewRelationships = [];
 
-      const hasNewFormat = Array.isArray(gemma.get_view.viewNodes) || Array.isArray(gemma.get_view.xml?.viewNodes);
+      const hasNewFormat =
+        Array.isArray(gemma.get_view.viewNodes) ||
+        Array.isArray(gemma.get_view.xml?.viewNodes);
       if (hasNewFormat) {
         // Topological sort: parents must be rendered before children so the
         // diagram engine can look up parent cells via graph.getCell(parentId).
@@ -238,7 +247,11 @@ const ConBeheerViews = ({ store }) => {
         const rawNodes = [...(viewNodesData || [])];
 
         // Merge gebruik overlay nodes when filters are active
-        if (gebruikData && gebruikData.length > 0 && (filters.gebruik || filters.deelnames)) {
+        if (
+          gebruikData &&
+          gebruikData.length > 0 &&
+          (filters.gebruik || filters.deelnames)
+        ) {
           // Build lookup: modelNodeId (with id- prefix) -> viewNode
           const viewNodeByModelId = {};
           rawNodes.forEach((n) => {
@@ -270,12 +283,16 @@ const ConBeheerViews = ({ store }) => {
 
               // Stack overlays vertically inside parent
               const parentId = parentNode.viewNodeId;
-              if (!overlayCountPerParent[parentId]) overlayCountPerParent[parentId] = 0;
+              if (!overlayCountPerParent[parentId])
+                overlayCountPerParent[parentId] = 0;
               const stackIndex = overlayCountPerParent[parentId]++;
 
               const overlayHeight = 18;
               const overlayGap = 2;
-              const overlayY = (parentNode.height || 80) - 5 - ((stackIndex + 1) * (overlayHeight + overlayGap));
+              const overlayY =
+                (parentNode.height || 80) -
+                5 -
+                (stackIndex + 1) * (overlayHeight + overlayGap);
 
               rawNodes.push({
                 viewNodeId: `overlay-${gebruik.id}-${refCompUuid}`,
@@ -289,8 +306,15 @@ const ConBeheerViews = ({ store }) => {
                 width: (parentNode.width || 120) - 10,
                 height: overlayHeight,
                 color: isDeelname ? 'rgb(180, 230, 255)' : 'rgb(200, 255, 200)',
-                borderColor: isDeelname ? 'rgba(0, 100, 180, 0.6)' : 'rgba(0, 150, 0, 0.6)',
-                font: { name: 'Segoe UI', size: 9, color: 'rgb(0, 0, 0)', style: 'normal' },
+                borderColor: isDeelname
+                  ? 'rgba(0, 100, 180, 0.6)'
+                  : 'rgba(0, 150, 0, 0.6)',
+                font: {
+                  name: 'Segoe UI',
+                  size: 9,
+                  color: 'rgb(0, 0, 0)',
+                  style: 'normal',
+                },
                 _isModuleOverlay: true,
                 _gebruikId: gebruik.id,
                 _isDeelname: isDeelname,
@@ -330,8 +354,8 @@ const ConBeheerViews = ({ store }) => {
         sorted.forEach((n) => {
           const parentAbs = n.parent ? absPos[n.parent] : null;
           absPos[n.viewNodeId] = {
-            x: (n.x || 0),
-            y: (n.y || 0),
+            x: n.x || 0,
+            y: n.y || 0,
           };
           // Skip overlay nodes — their coordinates are already parent-relative.
           // ArchiMate source nodes use absolute coordinates that need conversion,
@@ -424,7 +448,14 @@ const ConBeheerViews = ({ store }) => {
 
     // Start rendering process
     renderBeheerGraph();
-  }, [viewNodesData, viewRelationsData, gebruikData, moduleNames, filters.gebruik, filters.deelnames]);
+  }, [
+    viewNodesData,
+    viewRelationsData,
+    gebruikData,
+    moduleNames,
+    filters.gebruik,
+    filters.deelnames,
+  ]);
 
   // Helper functions from public version
   const setSvgViewBox = (svg) => {
@@ -552,12 +583,23 @@ const ConBeheerViews = ({ store }) => {
       try {
         const bbox = gElement.getBBox();
         // Check if bounding box is valid (has width and height)
-        if (!bbox || bbox.width === 0 || bbox.height === 0 || !isFinite(bbox.width) || !isFinite(bbox.height)) {
-          console.warn('SVG has invalid bounding box, skipping pan/zoom initialization');
+        if (
+          !bbox ||
+          bbox.width === 0 ||
+          bbox.height === 0 ||
+          !isFinite(bbox.width) ||
+          !isFinite(bbox.height)
+        ) {
+          console.warn(
+            'SVG has invalid bounding box, skipping pan/zoom initialization'
+          );
           return;
         }
       } catch (e) {
-        console.warn('Could not get SVG bounding box, skipping pan/zoom initialization:', e);
+        console.warn(
+          'Could not get SVG bounding box, skipping pan/zoom initialization:',
+          e
+        );
         return;
       }
 
@@ -583,143 +625,146 @@ const ConBeheerViews = ({ store }) => {
 
       try {
         const instance = svgPanZoom(svg, {
-        zoomEnabled: true,
-        controlIconsEnabled: true,
-        fit: true,
-        center: true,
-        minZoom: 0.1,
-        maxZoom: 10,
-        zoomScaleSensitivity: 0.5,
-        customEventsHandler: {
-          haltEventListeners: [
-            'touchstart',
-            'touchend',
-            'touchmove',
-            'touchleave',
-            'touchcancel',
-          ],
-          init: function (options) {
-            function updateSvgClassName() {
-              options.svgElement.setAttribute('class', svgHovered ? 'hovered' : '');
-            }
-            function getTouchCenter(touch1, touch2) {
-              const rect = options.svgElement.getBoundingClientRect();
-              return {
-                x: (touch1.clientX + touch2.clientX) / 2 - rect.left,
-                y: (touch1.clientY + touch2.clientY) / 2 - rect.top,
-              };
-            }
-            function getRelativePoint(svgElement, x, y) {
-              const ctm = svgElement.getScreenCTM();
-              const point = svgElement.createSVGPoint();
-              point.x = x;
-              point.y = y;
-              return point.matrixTransform(ctm.inverse());
-            }
-            this.listeners = {
-              mouseenter: function () {
-                svgHovered = true;
-                options.instance.enableZoom();
-                updateSvgClassName();
-              },
-              mouseleave: function () {
-                svgHovered = false;
-                updateSvgClassName();
-              },
-              touchstart: function (evt) {
-                touchStarted = true;
-                if (evt.touches.length === 2) {
-                  const touch1 = evt.touches[0];
-                  const touch2 = evt.touches[1];
-                  initialPinchDistance = Math.hypot(
-                    touch2.clientX - touch1.clientX,
-                    touch2.clientY - touch1.clientY
-                  );
-                  lastPinchCenter = getTouchCenter(touch1, touch2);
-                  initialScale = options.instance.getZoom();
-                }
-                evt.preventDefault();
-              },
-              touchmove: function (evt) {
-                if (!touchStarted) return;
-                evt.preventDefault();
-                if (evt.touches.length === 2) {
-                  const touch1 = evt.touches[0];
-                  const touch2 = evt.touches[1];
-                  const currentDistance = Math.hypot(
-                    touch2.clientX - touch1.clientX,
-                    touch2.clientY - touch1.clientY
-                  );
-                  const currentCenter = getTouchCenter(touch1, touch2);
-                  if (initialPinchDistance && initialScale && lastPinchCenter) {
-                    const scaleFactor = currentDistance / initialPinchDistance;
-                    const newScale = Math.min(
-                      Math.max(initialScale * scaleFactor, 0.1),
-                      10
+          zoomEnabled: true,
+          controlIconsEnabled: true,
+          fit: true,
+          center: true,
+          minZoom: 0.1,
+          maxZoom: 10,
+          zoomScaleSensitivity: 0.5,
+          customEventsHandler: {
+            haltEventListeners: [
+              'touchstart',
+              'touchend',
+              'touchmove',
+              'touchleave',
+              'touchcancel',
+            ],
+            init: function (options) {
+              function updateSvgClassName() {
+                options.svgElement.setAttribute(
+                  'class',
+                  svgHovered ? 'hovered' : ''
+                );
+              }
+              function getTouchCenter(touch1, touch2) {
+                const rect = options.svgElement.getBoundingClientRect();
+                return {
+                  x: (touch1.clientX + touch2.clientX) / 2 - rect.left,
+                  y: (touch1.clientY + touch2.clientY) / 2 - rect.top,
+                };
+              }
+              function getRelativePoint(svgElement, x, y) {
+                const ctm = svgElement.getScreenCTM();
+                const point = svgElement.createSVGPoint();
+                point.x = x;
+                point.y = y;
+                return point.matrixTransform(ctm.inverse());
+              }
+              this.listeners = {
+                mouseenter: function () {
+                  svgHovered = true;
+                  options.instance.enableZoom();
+                  updateSvgClassName();
+                },
+                mouseleave: function () {
+                  svgHovered = false;
+                  updateSvgClassName();
+                },
+                touchstart: function (evt) {
+                  touchStarted = true;
+                  if (evt.touches.length === 2) {
+                    const touch1 = evt.touches[0];
+                    const touch2 = evt.touches[1];
+                    initialPinchDistance = Math.hypot(
+                      touch2.clientX - touch1.clientX,
+                      touch2.clientY - touch1.clientY
                     );
-                    const svgPoint = getRelativePoint(
-                      options.svgElement,
-                      currentCenter.x,
-                      currentCenter.y
-                    );
-                    const zoomPoint = { x: svgPoint.x, y: svgPoint.y };
-                    options.instance.zoom(newScale, zoomPoint);
-                    if (lastPinchCenter) {
-                      const dx = currentCenter.x - lastPinchCenter.x;
-                      const dy = currentCenter.y - lastPinchCenter.y;
-                      options.instance.panBy({ x: dx, y: dy });
-                    }
-                    lastPinchCenter = currentCenter;
+                    lastPinchCenter = getTouchCenter(touch1, touch2);
+                    initialScale = options.instance.getZoom();
                   }
-                } else if (evt.touches.length === 1) {
-                  const touch = evt.touches[0];
-                  const dx = touch.clientX - (this.lastX || touch.clientX);
-                  const dy = touch.clientY - (this.lastY || touch.clientY);
-                  options.instance.panBy({ x: dx, y: dy });
-                  this.lastX = touch.clientX;
-                  this.lastY = touch.clientY;
-                }
-              },
-              touchend: function () {
-                touchStarted = false;
-                initialPinchDistance = null;
-                initialScale = null;
-                lastPinchCenter = null;
-                delete this.lastX;
-                delete this.lastY;
-              },
-              touchcancel: function () {
-                touchStarted = false;
-                initialPinchDistance = null;
-                initialScale = null;
-                lastPinchCenter = null;
-                delete this.lastX;
-                delete this.lastY;
-              },
-            };
-            this.listeners.mousemove = this.listeners.mouseenter;
-            for (const eventName in this.listeners) {
-              options.svgElement.addEventListener(
-                eventName,
-                this.listeners[eventName]
-              );
-            }
+                  evt.preventDefault();
+                },
+                touchmove: function (evt) {
+                  if (!touchStarted) return;
+                  evt.preventDefault();
+                  if (evt.touches.length === 2) {
+                    const touch1 = evt.touches[0];
+                    const touch2 = evt.touches[1];
+                    const currentDistance = Math.hypot(
+                      touch2.clientX - touch1.clientX,
+                      touch2.clientY - touch1.clientY
+                    );
+                    const currentCenter = getTouchCenter(touch1, touch2);
+                    if (initialPinchDistance && initialScale && lastPinchCenter) {
+                      const scaleFactor = currentDistance / initialPinchDistance;
+                      const newScale = Math.min(
+                        Math.max(initialScale * scaleFactor, 0.1),
+                        10
+                      );
+                      const svgPoint = getRelativePoint(
+                        options.svgElement,
+                        currentCenter.x,
+                        currentCenter.y
+                      );
+                      const zoomPoint = { x: svgPoint.x, y: svgPoint.y };
+                      options.instance.zoom(newScale, zoomPoint);
+                      if (lastPinchCenter) {
+                        const dx = currentCenter.x - lastPinchCenter.x;
+                        const dy = currentCenter.y - lastPinchCenter.y;
+                        options.instance.panBy({ x: dx, y: dy });
+                      }
+                      lastPinchCenter = currentCenter;
+                    }
+                  } else if (evt.touches.length === 1) {
+                    const touch = evt.touches[0];
+                    const dx = touch.clientX - (this.lastX || touch.clientX);
+                    const dy = touch.clientY - (this.lastY || touch.clientY);
+                    options.instance.panBy({ x: dx, y: dy });
+                    this.lastX = touch.clientX;
+                    this.lastY = touch.clientY;
+                  }
+                },
+                touchend: function () {
+                  touchStarted = false;
+                  initialPinchDistance = null;
+                  initialScale = null;
+                  lastPinchCenter = null;
+                  delete this.lastX;
+                  delete this.lastY;
+                },
+                touchcancel: function () {
+                  touchStarted = false;
+                  initialPinchDistance = null;
+                  initialScale = null;
+                  lastPinchCenter = null;
+                  delete this.lastX;
+                  delete this.lastY;
+                },
+              };
+              this.listeners.mousemove = this.listeners.mouseenter;
+              for (const eventName in this.listeners) {
+                options.svgElement.addEventListener(
+                  eventName,
+                  this.listeners[eventName]
+                );
+              }
+            },
+            destroy: function (options) {
+              for (const eventName in this.listeners) {
+                options.svgElement.removeEventListener(
+                  eventName,
+                  this.listeners[eventName]
+                );
+              }
+            },
           },
-          destroy: function (options) {
-            for (const eventName in this.listeners) {
-              options.svgElement.removeEventListener(
-                eventName,
-                this.listeners[eventName]
-              );
-            }
-          },
-        },
-      });
-      setPanZoomInstance(instance);
-    } catch (error) {
-      console.error('Error initializing svgPanZoom:', error);
-      // Don't set panZoomInstance if initialization failed
-    }
+        });
+        setPanZoomInstance(instance);
+      } catch (error) {
+        console.error('Error initializing svgPanZoom:', error);
+        // Don't set panZoomInstance if initialization failed
+      }
     }, 100);
 
     return () => {
@@ -820,28 +865,38 @@ const ConBeheerViews = ({ store }) => {
                         try {
                           const response = await fetch(
                             '/api/apps/softwarecatalog/api/archimate/export',
-                            { 
+                            {
                               method: 'POST',
                               headers: {
-                                'Accept': 'application/xml',
+                                Accept: 'application/xml',
                               },
                             }
                           );
 
                           if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
+                            throw new Error(
+                              `HTTP error! status: ${response.status}`
+                            );
                           }
 
                           // Get the XML content
                           const xmlData = await response.text();
 
                           // Extract filename from Content-Disposition header if available
-                          const disposition = response.headers.get('content-disposition');
-                          const filenameMatch = disposition?.match(/filename="?([^";]+)"?/i);
-                          const filename = filenameMatch?.[1] || `${getViewName(gemma.get_view).replace(/[^a-z0-9]/gi, '_').toLowerCase()}_amef.xml`;
+                          const disposition =
+                            response.headers.get('content-disposition');
+                          const filenameMatch =
+                            disposition?.match(/filename="?([^";]+)"?/i);
+                          const filename =
+                            filenameMatch?.[1] ||
+                            `${getViewName(gemma.get_view)
+                              .replace(/[^a-z0-9]/gi, '_')
+                              .toLowerCase()}_amef.xml`;
 
                           // Create blob and download
-                          const blob = new Blob([xmlData], { type: 'application/xml;charset=utf-8' });
+                          const blob = new Blob([xmlData], {
+                            type: 'application/xml;charset=utf-8',
+                          });
                           const url = URL.createObjectURL(blob);
                           const a = document.createElement('a');
                           a.href = url;
@@ -849,7 +904,7 @@ const ConBeheerViews = ({ store }) => {
                           document.body.appendChild(a);
                           a.click();
                           document.body.removeChild(a);
-                          
+
                           // Cleanup
                           URL.revokeObjectURL(url);
                         } catch (error) {
@@ -889,12 +944,12 @@ const ConBeheerViews = ({ store }) => {
                 />
 
                 <AcCheckbox
-                  label='Product'
-                  checked={filters.product}
+                  label='Applicatie'
+                  checked={filters.applicatie}
                   tooltip={
-                    'Toon product-gerelateerde elementen en hun onderlinge relaties'
+                    'Toon applicatie-gerelateerde elementen en hun onderlinge relaties'
                   }
-                  onChange={handleToggleFilter('product')}
+                  onChange={handleToggleFilter('applicatie')}
                 />
 
                 <AcCheckbox
