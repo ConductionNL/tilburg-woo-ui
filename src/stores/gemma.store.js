@@ -34,6 +34,12 @@ export class GemmaStore {
   allVoorzieningGebruik = null;
 
   @observable
+  applicaties = null;
+
+  @observable
+  deelnames = null;
+
+  @observable
   modules = null;
 
   @observable
@@ -77,6 +83,16 @@ export class GemmaStore {
   @computed
   get get_allVoorzieningGebruik() {
     return toJS(this.allVoorzieningGebruik);
+  }
+
+  @computed
+  get get_applicaties() {
+    return toJS(this.applicaties);
+  }
+
+  @computed
+  get get_deelnames() {
+    return toJS(this.deelnames);
   }
 
   @computed
@@ -127,6 +143,16 @@ export class GemmaStore {
   @action
   setAllVoorzieningGebruik = (allVoorzieningGebruik) => {
     this.allVoorzieningGebruik = allVoorzieningGebruik;
+  };
+
+  @action
+  setApplicaties = (applicaties) => {
+    this.applicaties = applicaties;
+  };
+
+  @action
+  setDeelnames = (deelnames) => {
+    this.deelnames = deelnames;
   };
 
   @action
@@ -187,6 +213,28 @@ export class GemmaStore {
   };
 
   @action
+  fetchApplicaties = async (params = {}) => {
+    return app.store.api.gemma
+      .allVoorzieningGebruik(params)
+      .then((response) => {
+        this.setApplicaties(response.results || []);
+        return response;
+      })
+      .catch((e) => console.error('fetchApplicaties error:', e));
+  };
+
+  @action
+  fetchDeelnames = async (params = {}) => {
+    return app.store.api.gemma
+      .allVoorzieningGebruik(params)
+      .then((response) => {
+        this.setDeelnames(response.results || []);
+        return response;
+      })
+      .catch((e) => console.error('fetchDeelnames error:', e));
+  };
+
+  @action
   fetchModules = async (params = {}) => {
     return app.store.api.gemma
       .modules(params)
@@ -235,6 +283,16 @@ export class GemmaStore {
   @action
   resetAllVoorzieningGebruik = () => {
     this.allVoorzieningGebruik = null;
+  };
+
+  @action
+  resetApplicaties = () => {
+    this.applicaties = null;
+  };
+
+  @action
+  resetDeelnames = () => {
+    this.deelnames = null;
   };
 
   @action

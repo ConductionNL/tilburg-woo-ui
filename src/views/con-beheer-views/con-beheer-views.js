@@ -28,10 +28,12 @@ const ConBeheerViews = ({ store }) => {
   const [viewIsDoneLoading, setViewIsDoneLoading] = useState(false);
   const [panZoomInstance, setPanZoomInstance] = useState(null);
   const [gebruikData, setGebruikData] = useState(null);
+  const [applicatiesData, setApplicatiesData] = useState(null);
+  const [deelnamesData, setDeelnamesData] = useState(null);
   const [moduleNames, setModuleNames] = useState({});
   const [filters, setFilters] = useState({
     gebruik: false,
-    product: false,
+    applicaties: false,
     deelnames: false,
   });
 
@@ -39,9 +41,9 @@ const ConBeheerViews = ({ store }) => {
   useEffect(() => {
     const sp = new URLSearchParams(location.search);
     const gebruik = sp.get('gebruik') === 'true';
-    const product = sp.get('product') === 'true';
+    const applicaties = sp.get('applicaties') === 'true';
     const deelnames = sp.get('deelnames') === 'true';
-    setFilters({ gebruik, product, deelnames });
+    setFilters({ gebruik, applicaties, deelnames });
   }, [location.search]);
 
   // Load view by route param when present (include filters)
@@ -51,10 +53,10 @@ const ConBeheerViews = ({ store }) => {
     setViewIsDoneLoading(false);
     const q = {};
     if (filters.gebruik) q.gebruik = true;
-    if (filters.product) q.product = true;
+    if (filters.applicaties) q.applicaties = true;
     if (filters.deelnames) q.deelnames = true;
     gemma.fetchView(params.id, q);
-  }, [gemma, params?.id, filters.gebruik, filters.product, filters.deelnames]);
+  }, [gemma, params?.id, filters.gebruik, filters.applicaties, filters.deelnames]);
 
   // Helper function to get view name
   const getViewName = (view) => {
@@ -71,8 +73,8 @@ const ConBeheerViews = ({ store }) => {
       const sp = new URLSearchParams(location.search);
       if (next.gebruik) sp.set('gebruik', 'true');
       else sp.delete('gebruik');
-      if (next.product) sp.set('product', 'true');
-      else sp.delete('product');
+      if (next.applicaties) sp.set('applicaties', 'true');
+      else sp.delete('applicaties');
       if (next.deelnames) sp.set('deelnames', 'true');
       else sp.delete('deelnames');
       const qs = sp.toString();
@@ -85,40 +87,76 @@ const ConBeheerViews = ({ store }) => {
     });
   };
 
-  // Load gebruik and module data when filters are active.
+  // Load gebruik, applicaties, deelnames, and module data when filters are active.
   // Uses pre-fetched data from the store (loaded on the views list page) when available,
   // falling back to fetching if the user navigated directly to a view URL.
   useEffect(() => {
     if (!gemma) return;
-    if (!filters.gebruik && !filters.deelnames) {
+    const anyFilterActive = filters.gebruik || filters.applicaties || filters.deelnames;
+    if (!anyFilterActive) {
       setGebruikData(null);
+      setApplicatiesData(null);
+      setDeelnamesData(null);
       setModuleNames({});
       return;
     }
 
     const activeOrgUuid = store?.user?.activeOrganization?.uuid;
+    const fields = 'id,module,gebruiktVoorReferentiecomponenten,deelnemers,afnemer,aanbieder,@self';
 
     const loadData = async () => {
-      // Use store data if already pre-fetched, otherwise fetch now
-      let gebruikResults = gemma.get_allVoorzieningGebruik;
-      if (!gebruikResults) {
-        const gebruikParams = {
-          _limit: 10000,
-          _fields: 'id,module,gebruiktVoorReferentiecomponenten,deelnemers,afnemer,@self',
-        };
-        if (activeOrgUuid) {
-          gebruikParams.afnemer = activeOrgUuid;
+      // Load gebruik (afnemer = our org)
+      if (filters.gebruik) {
+        let results = gemma.get_allVoorzieningGebruik;
+        if (!results) {
+          const params = { _limit: 10000, _fields: fields };
+          if (activeOrgUuid) params.afnemer = activeOrgUuid;
+          await gemma.fetchGebruik(params);
+          results = gemma.get_allVoorzieningGebruik || [];
         }
-        await gemma.fetchGebruik(gebruikParams);
-        gebruikResults = gemma.get_allVoorzieningGebruik || [];
+        setGebruikData(results);
+      } else {
+        setGebruikData(null);
       }
 
+      // Load applicaties (aanbieder = our org)
+      if (filters.applicaties) {
+        let results = gemma.get_applicaties;
+        if (!results && activeOrgUuid) {
+          await gemma.fetchApplicaties({
+            _limit: 10000,
+            _fields: fields,
+            aanbieder: activeOrgUuid,
+          });
+          results = gemma.get_applicaties || [];
+        }
+        setApplicatiesData(results || []);
+      } else {
+        setApplicatiesData(null);
+      }
+
+      // Load deelnames (deelnemers contains our org)
+      if (filters.deelnames) {
+        let results = gemma.get_deelnames;
+        if (!results && activeOrgUuid) {
+          await gemma.fetchDeelnames({
+            _limit: 10000,
+            _fields: fields,
+            deelnemers: activeOrgUuid,
+          });
+          results = gemma.get_deelnames || [];
+        }
+        setDeelnamesData(results || []);
+      } else {
+        setDeelnamesData(null);
+      }
+
+      // Load modules for name lookup
       let modulesData = gemma.get_modules;
       if (!modulesData) {
         modulesData = await gemma.fetchModules({ _limit: 10000, _fields: 'id,naam' });
       }
 
-      // Build module name lookup
       const nameLookup = {};
       if (Array.isArray(modulesData)) {
         modulesData.forEach((m) => {
@@ -127,11 +165,10 @@ const ConBeheerViews = ({ store }) => {
         });
       }
       setModuleNames(nameLookup);
-      setGebruikData(gebruikResults);
     };
 
     loadData();
-  }, [gemma, filters.gebruik, filters.deelnames]);
+  }, [gemma, filters.gebruik, filters.applicaties, filters.deelnames]);
 
   // Process view data for rendering - prefer new API (viewNodes/viewRelationships)
   useEffect(() => {
@@ -237,8 +274,26 @@ const ConBeheerViews = ({ store }) => {
         // safety net for data imported before the fix.
         const rawNodes = [...(viewNodesData || [])];
 
-        // Merge gebruik overlay nodes when filters are active
-        if (gebruikData && gebruikData.length > 0 && (filters.gebruik || filters.deelnames)) {
+        // Merge overlay nodes for gebruik, applicaties, and deelnames when filters are active
+        const overlayColors = {
+          gebruik:     { color: 'rgb(200, 255, 200)', borderColor: 'rgba(0, 150, 0, 0.6)' },
+          applicaties: { color: 'rgb(255, 235, 180)', borderColor: 'rgba(180, 130, 0, 0.6)' },
+          deelnames:   { color: 'rgb(180, 230, 255)', borderColor: 'rgba(0, 100, 180, 0.6)' },
+        };
+
+        // Collect all active overlay data sources
+        const overlaySources = [];
+        if (filters.gebruik && gebruikData && gebruikData.length > 0) {
+          overlaySources.push({ data: gebruikData, type: 'gebruik' });
+        }
+        if (filters.applicaties && applicatiesData && applicatiesData.length > 0) {
+          overlaySources.push({ data: applicatiesData, type: 'applicaties' });
+        }
+        if (filters.deelnames && deelnamesData && deelnamesData.length > 0) {
+          overlaySources.push({ data: deelnamesData, type: 'deelnames' });
+        }
+
+        if (overlaySources.length > 0) {
           // Build lookup: modelNodeId (with id- prefix) -> viewNode
           const viewNodeByModelId = {};
           rawNodes.forEach((n) => {
@@ -250,50 +305,50 @@ const ConBeheerViews = ({ store }) => {
           let totalOverlays = 0;
           const MAX_OVERLAYS = 2000;
 
-          gebruikData.forEach((gebruik) => {
-            if (totalOverlays >= MAX_OVERLAYS) return;
-            const refComps = gebruik.gebruiktVoorReferentiecomponenten;
-            if (!Array.isArray(refComps) || refComps.length === 0) return;
+          overlaySources.forEach(({ data, type }) => {
+            const colors = overlayColors[type];
 
-            // Determine owned vs deelname based on deelnemers field
-            // Gebruik returned by API is owned; deelnames = entries where
-            // current org appears in the deelnemers array (future feature)
-            const isDeelname = false;
+            data.forEach((record) => {
+              if (totalOverlays >= MAX_OVERLAYS) return;
+              const refComps = record.gebruiktVoorReferentiecomponenten;
+              if (!Array.isArray(refComps) || refComps.length === 0) return;
 
-            const moduleName = moduleNames[gebruik.module] || 'Module';
+              const moduleName = moduleNames[record.module] || 'Module';
 
-            refComps.forEach((refCompUuid) => {
-              // Match by prepending id- to the UUID
-              const modelNodeId = `id-${refCompUuid}`;
-              const parentNode = viewNodeByModelId[modelNodeId];
-              if (!parentNode) return;
+              refComps.forEach((refCompUuid) => {
+                if (totalOverlays >= MAX_OVERLAYS) return;
 
-              // Stack overlays vertically inside parent
-              const parentId = parentNode.viewNodeId;
-              if (!overlayCountPerParent[parentId]) overlayCountPerParent[parentId] = 0;
-              const stackIndex = overlayCountPerParent[parentId]++;
+                const modelNodeId = `id-${refCompUuid}`;
+                const parentNode = viewNodeByModelId[modelNodeId];
+                if (!parentNode) return;
 
-              const overlayHeight = 18;
-              const overlayGap = 2;
-              const overlayY = (parentNode.height || 80) - 5 - ((stackIndex + 1) * (overlayHeight + overlayGap));
+                const parentId = parentNode.viewNodeId;
+                if (!overlayCountPerParent[parentId]) overlayCountPerParent[parentId] = 0;
+                const stackIndex = overlayCountPerParent[parentId]++;
+                totalOverlays++;
 
-              rawNodes.push({
-                viewNodeId: `overlay-${gebruik.id}-${refCompUuid}`,
-                modelNodeId: gebruik.module || gebruik.id,
-                name: moduleName,
-                type: 'applicationcomponent',
-                gemmaType: 'ApplicationComponent',
-                parent: parentId,
-                x: 5,
-                y: Math.max(20, overlayY),
-                width: (parentNode.width || 120) - 10,
-                height: overlayHeight,
-                color: isDeelname ? 'rgb(180, 230, 255)' : 'rgb(200, 255, 200)',
-                borderColor: isDeelname ? 'rgba(0, 100, 180, 0.6)' : 'rgba(0, 150, 0, 0.6)',
-                font: { name: 'Segoe UI', size: 9, color: 'rgb(0, 0, 0)', style: 'normal' },
-                _isModuleOverlay: true,
-                _gebruikId: gebruik.id,
-                _isDeelname: isDeelname,
+                const overlayHeight = 18;
+                const overlayGap = 2;
+                const overlayY = (parentNode.height || 80) - 5 - ((stackIndex + 1) * (overlayHeight + overlayGap));
+
+                rawNodes.push({
+                  viewNodeId: `overlay-${record.id}-${refCompUuid}`,
+                  modelNodeId: record.module || record.id,
+                  name: moduleName,
+                  type: 'applicationcomponent',
+                  gemmaType: 'ApplicationComponent',
+                  parent: parentId,
+                  x: 5,
+                  y: Math.max(20, overlayY),
+                  width: (parentNode.width || 120) - 10,
+                  height: overlayHeight,
+                  color: colors.color,
+                  borderColor: colors.borderColor,
+                  font: { name: 'Segoe UI', size: 9, color: 'rgb(0, 0, 0)', style: 'normal' },
+                  _isModuleOverlay: true,
+                  _gebruikId: record.id,
+                  _overlayType: type,
+                });
               });
             });
           });
@@ -424,7 +479,7 @@ const ConBeheerViews = ({ store }) => {
 
     // Start rendering process
     renderBeheerGraph();
-  }, [viewNodesData, viewRelationsData, gebruikData, moduleNames, filters.gebruik, filters.deelnames]);
+  }, [viewNodesData, viewRelationsData, gebruikData, applicatiesData, deelnamesData, moduleNames, filters.gebruik, filters.applicaties, filters.deelnames]);
 
   // Helper functions from public version
   const setSvgViewBox = (svg) => {
@@ -889,12 +944,12 @@ const ConBeheerViews = ({ store }) => {
                 />
 
                 <AcCheckbox
-                  label='Product'
-                  checked={filters.product}
+                  label='Applicaties'
+                  checked={filters.applicaties}
                   tooltip={
-                    'Toon product-gerelateerde elementen en hun onderlinge relaties'
+                    'Toon applicaties die uw organisatie aanbiedt en hun onderlinge relaties'
                   }
-                  onChange={handleToggleFilter('product')}
+                  onChange={handleToggleFilter('applicaties')}
                 />
 
                 <AcCheckbox

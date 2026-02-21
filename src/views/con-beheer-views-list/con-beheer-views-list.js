@@ -42,22 +42,38 @@ const ConBeheerViewsList = ({ store }) => {
     }
   }, [gemma]);
 
-  // Pre-fetch gebruik and modules in the background so they're ready when a view is opened.
-  // This eliminates the 3+ second wait for module data when the user toggles gebruik ON.
+  // Pre-fetch gebruik, applicaties, deelnames, and modules in the background so they're
+  // ready when a view is opened. This eliminates the wait when the user toggles filters ON.
   useEffect(() => {
     if (!gemma) return;
     const activeOrgUuid = store?.user?.activeOrganization?.uuid;
+    const fields = 'id,module,gebruiktVoorReferentiecomponenten,deelnemers,afnemer,aanbieder,@self';
 
-    // Only pre-fetch if not already loaded
+    // Pre-fetch gebruik (afnemer = our org)
     if (!gemma.get_allVoorzieningGebruik) {
-      const gebruikParams = {
-        _limit: 10000,
-        _fields: 'id,module,gebruiktVoorReferentiecomponenten,deelnemers,afnemer,@self',
-      };
+      const gebruikParams = { _limit: 10000, _fields: fields };
       if (activeOrgUuid) {
         gebruikParams.afnemer = activeOrgUuid;
       }
       gemma.fetchGebruik(gebruikParams);
+    }
+
+    // Pre-fetch applicaties (aanbieder = our org)
+    if (!gemma.get_applicaties && activeOrgUuid) {
+      gemma.fetchApplicaties({
+        _limit: 10000,
+        _fields: fields,
+        aanbieder: activeOrgUuid,
+      });
+    }
+
+    // Pre-fetch deelnames (deelnemers contains our org)
+    if (!gemma.get_deelnames && activeOrgUuid) {
+      gemma.fetchDeelnames({
+        _limit: 10000,
+        _fields: fields,
+        deelnemers: activeOrgUuid,
+      });
     }
 
     // Pre-fetch module name lookup (largest payload ~800KB)
