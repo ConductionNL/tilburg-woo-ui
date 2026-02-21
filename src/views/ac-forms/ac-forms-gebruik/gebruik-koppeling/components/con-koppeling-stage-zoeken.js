@@ -733,6 +733,8 @@ const ConKoppelingStageZoeken = ({
                   const bRel =
                     rels.moduleB ??
                     k.moduleB ??
+                    rels.buitengemeentelijkVoorziening ??
+                    k.buitengemeentelijkVoorziening ??
                     k.applicatie2 ??
                     k.applicatieB ??
                     k.appB;

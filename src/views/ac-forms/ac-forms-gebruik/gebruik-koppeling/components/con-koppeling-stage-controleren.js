@@ -360,11 +360,12 @@ const ConKoppelingStageControleren = ({
     const koppeling = selectedKoppelingData;
     const rels = koppeling?.['@self']?.relations || {};
     const moduleAIdRaw = rels?.moduleA ?? koppeling?.moduleA;
-    const moduleBIdRaw = rels?.moduleB ?? koppeling?.moduleB;
+    const moduleBIdRaw = rels?.moduleB ?? koppeling?.moduleB ?? rels?.buitengemeentelijkVoorziening ?? koppeling?.buitengemeentelijkVoorziening;
     const moduleAId = String(extractRelationId(moduleAIdRaw) || '');
     const moduleBId = String(extractRelationId(moduleBIdRaw) || '');
     const moduleALabel = optionLabelByValue(moduleAId) || moduleAId || '-';
     const moduleBLabel = optionLabelByValue(moduleBId) || moduleBId || '-';
+    const isBuitengemeentelijk = !(rels?.moduleB ?? koppeling?.moduleB) && moduleBId;
     const richting =
       koppeling?.gegevensuitwisselingRichting ||
       koppeling?.richting ||

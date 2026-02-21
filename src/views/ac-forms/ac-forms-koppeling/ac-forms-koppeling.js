@@ -946,7 +946,7 @@ const AcFormsKoppeling = ({ store }) => {
           const aRel =
             rels.moduleA ?? k.moduleA ?? k.applicatie1 ?? k.applicatieA ?? k.appA;
           const bRel =
-            rels.moduleB ?? k.moduleB ?? k.applicatie2 ?? k.applicatieB ?? k.appB;
+            rels.moduleB ?? k.moduleB ?? rels.buitengemeentelijkVoorziening ?? k.buitengemeentelijkVoorziening ?? k.applicatie2 ?? k.applicatieB ?? k.appB;
           const aId = String(extractRelationId(aRel));
           const bId = String(extractRelationId(bRel));
           if (aId) ids.push(aId);
@@ -1121,7 +1121,7 @@ const AcFormsKoppeling = ({ store }) => {
           const aRel =
             rels.moduleA ?? k.moduleA ?? k.applicatie1 ?? k.applicatieA ?? k.appA;
           const bRel =
-            rels.moduleB ?? k.moduleB ?? k.applicatie2 ?? k.applicatieB ?? k.appB;
+            rels.moduleB ?? k.moduleB ?? rels.buitengemeentelijkVoorziening ?? k.buitengemeentelijkVoorziening ?? k.applicatie2 ?? k.applicatieB ?? k.appB;
           const aId = String(extractRelationId(aRel));
           const bId = String(extractRelationId(bRel));
           return aId === moduleId || bId === moduleId;
