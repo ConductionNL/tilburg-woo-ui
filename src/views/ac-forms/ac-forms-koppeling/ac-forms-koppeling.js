@@ -696,7 +696,10 @@ const AcFormsKoppeling = ({ store }) => {
 
         const rels = data?.['@self']?.relations || {};
         const moduleAIdRaw = rels?.moduleA ?? data?.moduleA;
-        const moduleBIdRaw = rels?.moduleB ?? data?.moduleB;
+        // Fall back to buitengemeentelijkVoorziening if moduleB is empty
+        const moduleBIdRaw =
+          rels?.moduleB ?? data?.moduleB ??
+          rels?.buitengemeentelijkVoorziening ?? data?.buitengemeentelijkVoorziening;
         const moduleAId = String(extractRelationId(moduleAIdRaw) || '');
         const moduleBId = String(extractRelationId(moduleBIdRaw) || '');
 
@@ -1532,10 +1535,17 @@ const AcFormsKoppeling = ({ store }) => {
           naam = `${appALabel} ${arrow} ${appBLabel}`;
         }
 
+        // Check if the selected App B is a buitengemeentelijke voorziening
+        // Check buitengemeentelijkeOptions directly for reliable BGV detection
+        const isBuitengemeentelijk = buitengemeentelijkeOptions.some(
+          (o) => String(o.value) === String(appBId)
+        );
+
         const payload = {
           naam,
           moduleA: appAId,
-          moduleB: appBId,
+          moduleB: isBuitengemeentelijk ? null : appBId,
+          buitengemeentelijkVoorziening: isBuitengemeentelijk ? appBId : null,
           gegevensuitwisselingRichting: richting,
           type: soort,
           beschrijvingKort: beschrijving,
