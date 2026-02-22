@@ -24,7 +24,7 @@ window.RUNTIME_CONFIG = {
   "ACTIVITY_PING": false,
   "ROLLBAR_KEY": "",
   "ROLLBAR_ENVIRONMENT": "development",
-  "ENABLE_AUTHENTICATION": true,
+  "ENABLE_AUTHENTICATION": false,
   "ENABLE_GEMMA": true,
   "ENABLE_DIRECTORY": true,
   "ENABLE_ROLLBAR": false,

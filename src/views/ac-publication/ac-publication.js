@@ -160,7 +160,7 @@ const AcPublication = observer(({ store: { publications } }) => {
   if (get_single?.catalog?.title === 'Softwarecatalogus') {
     return <AcPublicationSoftwarecatalogus />;
   } else {
-    const publicationType = get_single?.['@self']?.schema?.slug.toLowerCase();
+    const publicationType = get_single?.['@self']?.schema?.slug?.toLowerCase();
     switch (get_single?.publicationType?.title) {
       case 'Softwarecatalogus':
         return <AcPublicationSoftwarecatalogus />;

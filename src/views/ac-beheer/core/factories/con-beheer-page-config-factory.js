@@ -684,9 +684,11 @@ const BeheerPageConfigFactory = {
               customContent: (row) => {
                 const voornaam =
                   row.voornaam && row.voornaam !== 'null' ? row.voornaam : '';
+                const tussenvoegsel =
+                  row.tussenvoegsel && row.tussenvoegsel !== 'null' ? row.tussenvoegsel : '';
                 const achternaam =
                   row.achternaam && row.achternaam !== 'null' ? row.achternaam : '';
-                const fullName = [voornaam, achternaam].filter(Boolean).join(' ');
+                const fullName = [voornaam, tussenvoegsel, achternaam].filter(Boolean).join(' ');
                 return fullName || '-';
               },
             },
