@@ -591,6 +591,14 @@ const BeheerPageConfigFactory = {
             'type',
           ],
           customHeaders: {
+            naam: {
+              id: 'naam',
+              label: 'Naam',
+              key: 'naam',
+              customContent: (row) => {
+                return row?.['@self']?.name || row?.naam || row?.['@self']?.id;
+              },
+            },
             moduleA: {
               id: 'moduleA',
               label: 'Applicatie A',
@@ -610,7 +618,10 @@ const BeheerPageConfigFactory = {
               key: 'moduleB',
               customContent: (row) => {
                 // Use @self.relations.moduleB, fallback to buitengemeentelijkVoorziening
-                const moduleBId = row?.['@self']?.relations?.moduleB || row?.['@self']?.relations?.buitengemeentelijkVoorziening || null;
+                const moduleBId =
+                  row?.['@self']?.relations?.moduleB ||
+                  row?.['@self']?.relations?.buitengemeentelijkVoorziening ||
+                  null;
                 if (!moduleBId) return '-';
                 // Use ConUuidResolver to display the application name
                 return <ConUuidResolver>{String(moduleBId)}</ConUuidResolver>;
@@ -632,12 +643,7 @@ const BeheerPageConfigFactory = {
           disableRelatedCreateActions: true, // Only show basic actions for contactpersonen
           disableImport: true, // Import not needed for contactpersonen
           disableView: true, // View not needed for contactpersonen
-          defaultHeaders: [
-            'name',
-            'isAanspreekpunt',
-            'functie',
-            'e-mailadres',
-          ],
+          defaultHeaders: ['name', 'isAanspreekpunt', 'functie', 'e-mailadres'],
           // Virtual columns are columns that don't exist in the schema but are added to the table
           virtualColumns: [
             {

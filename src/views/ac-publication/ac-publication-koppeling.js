@@ -3,7 +3,11 @@ import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AcColumn, AcContainer, AcFlex } from '@atoms';
-import { AcLoader, ConDetailsActionsMenu, ConPublicationTypeBadge } from '@components';
+import {
+  AcLoader,
+  ConDetailsActionsMenu,
+  ConPublicationTypeBadge,
+} from '@components';
 import { VISUALS } from '@constants';
 import { AcButton } from '@molecules';
 import {
@@ -100,10 +104,11 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
   const [usesLoading, setUsesLoading] = useState(false);
   const [usedLoading, setUsedLoading] = useState(false);
   const [relatedTabIndex, setRelatedTabIndex] = useState(0);
-  
+
   // Aggregated schemas from all related items via hook
   const allRelatedItems = useMemo(() => [...uses, ...used], [uses, used]);
-  const { aggregatedSchemas, setAggregatedSchemas } = useResolveSchemaIds(allRelatedItems);
+  const { aggregatedSchemas, setAggregatedSchemas } =
+    useResolveSchemaIds(allRelatedItems);
 
   const fetchUses = useCallback(async () => {
     if (!id) return;
@@ -146,7 +151,7 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
   // Derived fields from get_single
   const title = useMemo(() => {
     return (
-      get_single?.naam || get_single?.['@self']?.name || get_single?.['@self']?.id
+      get_single?.['@self']?.name || get_single?.naam || get_single?.['@self']?.id
     );
   }, [get_single]);
 
@@ -156,16 +161,17 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
 
   const moduleBId = useMemo(() => {
     return (
-      get_single?.['@self']?.relations?.moduleB || 
-      get_single?.moduleB || 
-      get_single?.['@self']?.relations?.buitengemeentelijkVoorziening || 
-      get_single?.buitengemeentelijkVoorziening || 
+      get_single?.['@self']?.relations?.moduleB ||
+      get_single?.moduleB ||
+      get_single?.['@self']?.relations?.buitengemeentelijkVoorziening ||
+      get_single?.buitengemeentelijkVoorziening ||
       null
     );
   }, [get_single]);
 
   const isBuitengemeentelijk = useMemo(() => {
-    const hasModuleB = get_single?.['@self']?.relations?.moduleB || get_single?.moduleB;
+    const hasModuleB =
+      get_single?.['@self']?.relations?.moduleB || get_single?.moduleB;
     return !hasModuleB && moduleBId;
   }, [get_single, moduleBId]);
 
@@ -314,7 +320,11 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
               )}
             </div>
             <div style={{ marginBottom: '8px' }}>
-              <strong>{isBuitengemeentelijk ? 'Buitengemeentelijke voorziening: ' : 'Applicatie B: '}</strong>
+              <strong>
+                {isBuitengemeentelijk
+                  ? 'Buitengemeentelijke voorziening: '
+                  : 'Applicatie B: '}
+              </strong>
               {moduleBId ? (
                 <ConUuidResolver>{String(moduleBId)}</ConUuidResolver>
               ) : (
@@ -358,9 +368,7 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
             {get_single?.beschrijvingKort && (
               <div style={{ marginBottom: '8px' }}>
                 <strong>Korte beschrijving: </strong>
-                <span>
-                  {get_single.beschrijvingKort}
-                </span>
+                <span>{get_single.beschrijvingKort}</span>
               </div>
             )}
             {!!get_single?.beschrijvingLang && (
