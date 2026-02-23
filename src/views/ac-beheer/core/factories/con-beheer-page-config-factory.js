@@ -533,9 +533,7 @@ const BeheerPageConfigFactory = {
               label: 'Contactpersoon',
               key: 'contactpersoon',
               customContent: (row) => {
-                const fullName = `${row?.contactpersoon?.voornaam || ''} ${
-                  row?.contactpersoon?.tussenvoegsel || ''
-                } ${row?.contactpersoon?.achternaam || ''}`.trim();
+                const fullName = [row?.contactpersoon?.voornaam, row?.contactpersoon?.tussenvoegsel, row?.contactpersoon?.achternaam].filter(Boolean).join(' ');
                 return (
                   fullName || (
                     <ConUuidResolver>{row.contactpersoon}</ConUuidResolver>
