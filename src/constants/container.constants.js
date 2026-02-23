@@ -5,7 +5,7 @@
 import { AcLockObject } from '@utils/ac-lock-object';
 // Container configuration
 export const CONTAINER_CONFIG = AcLockObject({
-  SITE_TITLE: 'Development Catalogus',
+  SITE_TITLE: 'Softwarecatalogus',
   SITE_DESCRIPTION: 'Local development instance of the softwarecatalogus',
   SITE: 'localhost',
   MODE: 'development',
@@ -36,8 +36,8 @@ export const CONTAINER_CONFIG = AcLockObject({
   EXTERNAL_PROCLAIMER_URL: 'https://www.tilburg.nl/proclaimer/',
   HERO_IMAGE_URL: 'null',
   FOOTER_STYLE: 'vng',
-  FOOTER_LOGO_TITLE: 'Open Tilburg',
-  FOOTER_LOGO_SUBTITLE: 'Één plek voor alle publicaties van Gemeente Tilburg',
+  FOOTER_LOGO_TITLE: 'Softwarecatalogus',
+  FOOTER_LOGO_SUBTITLE: 'Één plek voor alle software voor en door Gemeenten',
   SUPPORT_EMAIL_ADDRESS: 'info@conduction.nl',
   DEFAULT_SEARCH_SCHEMA: '',
   CHAT_ENDPOINT: 'https://api.example.com/chat',
