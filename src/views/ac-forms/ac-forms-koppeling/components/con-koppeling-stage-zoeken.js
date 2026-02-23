@@ -434,7 +434,7 @@ const ConKoppelingStageZoeken = ({
                     const dirArrow = arrowFor(dir);
 
                     const naam = String(
-                      (k?.naam || k?.name || k?.title || k?.label || '').toString()
+                      (k?.['@self']?.name || k?.naam || k?.name || k?.title || k?.label || '').toString()
                     ).trim();
                     const soortLabel = String(
                       k?.type ||
