@@ -104,8 +104,8 @@ const AcHeader = ({ store: { menu, user, object } }) => {
     if (parts.length > 0) {
       return parts.join(' ');
     }
-    // Fallback to email if no name parts are available
-    return user.user.email || null;
+    // Fallback to displayName, then email
+    return user.user.displayName || user.user.email || null;
   };
 
   const getOrganizationName = () => {
