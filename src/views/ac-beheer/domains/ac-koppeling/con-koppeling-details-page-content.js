@@ -167,7 +167,7 @@ const ConKoppelingDetailsPageContent = ({
 
   if (loading || !data) return null;
 
-  const title = data?.naam || data?.['@self']?.name || data?.['@self']?.id;
+  const title = data?.['@self']?.name || data?.naam || data?.['@self']?.id;
 
   return (
     <AcColumn gap='sm' horizontalOverflowWrapper>

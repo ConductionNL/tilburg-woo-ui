@@ -152,12 +152,12 @@ const renderCard = (item, object, navigateTo, user) => {
           key={item.id}
           id={item.id}
           title={extractTitle(
-            item.title ??
+            item['@self']?.name ??
+              item.title ??
               item.titel ??
               item.name ??
               item.naam ??
-              item.id ??
-              item['@self']?.name
+              item.id
           )}
           item={item}
           category={schemaSlug ? getTabHeaderName(schemaSlug, true) : null}
