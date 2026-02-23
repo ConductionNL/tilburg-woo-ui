@@ -188,7 +188,8 @@ const AcSearch = ({ store: { publications, user, object } }) => {
               created={publication['@self']?.created}
               category={publication['@self'].schema.title}
               title={extractTitle(
-                publication.title ??
+                publication['@self']?.name ??
+                  publication.title ??
                   publication.titel ??
                   publication.name ??
                   publication.naam ??
@@ -243,7 +244,8 @@ const AcSearch = ({ store: { publications, user, object } }) => {
               id={publication.id || publication['@self']?.id}
               created={publication['@self']?.created}
               title={extractTitle(
-                publication.title ??
+                publication['@self']?.name ??
+                  publication.title ??
                   publication.titel ??
                   publication.name ??
                   publication.naam ??
@@ -262,7 +264,8 @@ const AcSearch = ({ store: { publications, user, object } }) => {
               created={selfData.created}
               category={selfData.schema.title}
               title={extractTitle(
-                publication.title ??
+                selfData?.name ??
+                  publication.title ??
                   publication.titel ??
                   publication.name ??
                   publication.naam ??
