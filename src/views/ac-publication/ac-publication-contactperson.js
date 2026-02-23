@@ -196,9 +196,7 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
                 )}
 
                 <Heading className='con-beheer-details--title'>
-                  {`${get_single?.voornaam} ${get_single?.tussenvoegsel || ''} ${
-                    get_single?.achternaam
-                  }` || 'Contactpersoon'}
+                  {[get_single?.voornaam, get_single?.tussenvoegsel, get_single?.achternaam].filter(Boolean).join(' ') || 'Contactpersoon'}
                 </Heading>
               </div>
             </Heading>
