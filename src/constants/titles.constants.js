@@ -23,7 +23,7 @@ const getTitle = () => {
     case 'vng.opencatalogi.nl':
     case 'acceptatie.softwarecatalogus.nl':
     case 'vng.test.opencatalogi.nl':
-      return 'Softwarecatalogus';
+      return 'softwarecatalogus';
     case 'open-tilburg.accept.commonground.nu':
       return 'Open Tilburg';
     case 'open-dimpact.accept.commonground.nu':

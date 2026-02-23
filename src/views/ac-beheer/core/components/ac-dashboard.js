@@ -123,7 +123,7 @@ const AcDashboard = ({ store }) => {
                 justifyContent='between'
                 className='ac-dashboard-wizards-header'
               >
-                <Heading level={3}>Mijn Softwarecatalogus</Heading>
+                <Heading level={3}>Mijn softwarecatalogus</Heading>
 
                 <ConOrganizationSelector
                   store={store}
@@ -202,7 +202,7 @@ const AcDashboard = ({ store }) => {
               {userGroups.includes('aanbod-beheerder') && (
                 <>
                   <div className='ac-register-review__header'>
-                    <Heading level={4}>Welkom in uw Softwarecatalogus</Heading>
+                    <Heading level={4}>Welkom in uw softwarecatalogus</Heading>
                   </div>
                   <Separator />
 
@@ -246,7 +246,7 @@ const AcDashboard = ({ store }) => {
                 !userGroups.includes('aanbod-beheerder') && (
                   <>
                     <div className='ac-register-review__header'>
-                      <Heading level={4}>Welkom in de Softwarecatalogus</Heading>
+                      <Heading level={4}>Welkom in de softwarecatalogus</Heading>
                     </div>
                     <Separator className='ac-register-review-header__separator' />
 
