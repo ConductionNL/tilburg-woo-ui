@@ -5,7 +5,7 @@
 import { AcLockObject } from '@utils/ac-lock-object';
 // Container configuration
 export const CONTAINER_CONFIG = AcLockObject({
-  SITE_TITLE: 'Development Catalogus',
+  SITE_TITLE: 'Softwarecatalogus',
   SITE_DESCRIPTION: 'Local development instance of the softwarecatalogus',
   SITE: 'localhost',
   MODE: 'development',

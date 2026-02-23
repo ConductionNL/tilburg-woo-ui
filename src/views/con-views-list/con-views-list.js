@@ -32,7 +32,7 @@ const ConViewsList = ({ store }) => {
     const inlineTitle =
       typeof view?.titelViewSwc === 'string' ? view.titelViewSwc.trim() : '';
     if (inlineTitle) return inlineTitle;
-    return view?.name || 'Unnamed View';
+    return view?.name || view?.['@self']?.name || 'Unnamed View';
   };
 
   // Load views list on component mount
