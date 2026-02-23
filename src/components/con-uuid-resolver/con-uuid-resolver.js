@@ -30,10 +30,17 @@ const ConUuidResolver = ({
   loadingPlaceholder = 'Loading...',
   ...props
 }) => {
-  const isStringChild = typeof children === 'string';
+  // Normalize children: extract string from object formats like {value: uuid}
+  const normalized = typeof children === 'string'
+    ? children
+    : children && typeof children === 'object' && !React.isValidElement(children)
+      ? children.value || children.id || children.uuid || ''
+      : children;
+
+  const isStringChild = typeof normalized === 'string';
 
   // Always call the hook with a string value to satisfy React's rules of hooks
-  const textToResolve = isStringChild ? children : '';
+  const textToResolve = isStringChild ? normalized : '';
   const { resolvedText, isLoading } = useResolvedText(textToResolve, object);
 
   // Determine what to display
@@ -41,7 +48,7 @@ const ConUuidResolver = ({
     ? isLoading
       ? loadingPlaceholder
       : resolvedText
-    : children;
+    : normalized;
 
   return (
     <Component style={style} className={className} {...props}>

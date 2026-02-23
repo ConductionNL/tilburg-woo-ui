@@ -609,8 +609,8 @@ const BeheerPageConfigFactory = {
               label: 'Applicatie B',
               key: 'moduleB',
               customContent: (row) => {
-                // Use @self.relations.moduleB instead of direct moduleB property
-                const moduleBId = row?.['@self']?.relations?.moduleB || null;
+                // Use @self.relations.moduleB, fallback to buitengemeentelijkVoorziening
+                const moduleBId = row?.['@self']?.relations?.moduleB || row?.['@self']?.relations?.buitengemeentelijkVoorziening || null;
                 if (!moduleBId) return '-';
                 // Use ConUuidResolver to display the application name
                 return <ConUuidResolver>{String(moduleBId)}</ConUuidResolver>;

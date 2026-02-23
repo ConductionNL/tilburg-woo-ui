@@ -6,13 +6,15 @@ on:
       - softwarecatalogus
       - development
       - softwarecatalog-gebruik
-      - softwarecatalogus-performance
+      # - softwarecatalogus-performance
+      - softwarecatalogus-igs
   pull_request:
     branches:
       - softwarecatalogus
       - development
       - softwarecatalog-gebruik
-      - softwarecatalogus-performance
+      # - softwarecatalogus-performance
+      - softwarecatalogus-igs
 
 env:
   REGISTRY: ghcr.io
@@ -123,6 +125,7 @@ jobs:
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/softwarecatalogus' }}
             type=raw,value=gebruik,enable=${{ github.ref == 'refs/heads/softwarecatalog-gebruik' }}
             type=raw,value=dev,enable=${{ github.ref == 'refs/heads/development' }}
+            type=raw,value=igs,enable=${{ github.ref == 'refs/heads/igs' }}
             type=raw,value=performance,enable=${{ github.ref == 'refs/heads/softwarecatalogus-performance' }}
 
       - name: Build and push Docker image

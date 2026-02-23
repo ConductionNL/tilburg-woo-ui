@@ -963,7 +963,7 @@ const AcFormsKoppeling = ({ store }) => {
           const aRel =
             rels.moduleA ?? k.moduleA ?? k.applicatie1 ?? k.applicatieA ?? k.appA;
           const bRel =
-            rels.moduleB ?? k.moduleB ?? k.applicatie2 ?? k.applicatieB ?? k.appB;
+            rels.moduleB ?? k.moduleB ?? rels.buitengemeentelijkVoorziening ?? k.buitengemeentelijkVoorziening ?? k.applicatie2 ?? k.applicatieB ?? k.appB;
           const aId = String(extractRelationId(aRel));
           const bId = String(extractRelationId(bRel));
           if (aId) ids.push(aId);
@@ -1150,7 +1150,7 @@ const AcFormsKoppeling = ({ store }) => {
           const aRel =
             rels.moduleA ?? k.moduleA ?? k.applicatie1 ?? k.applicatieA ?? k.appA;
           const bRel =
-            rels.moduleB ?? k.moduleB ?? k.applicatie2 ?? k.applicatieB ?? k.appB;
+            rels.moduleB ?? k.moduleB ?? rels.buitengemeentelijkVoorziening ?? k.buitengemeentelijkVoorziening ?? k.applicatie2 ?? k.applicatieB ?? k.appB;
           const aId = String(extractRelationId(aRel));
           const bId = String(extractRelationId(bRel));
           return aId === moduleId || bId === moduleId;
@@ -1513,10 +1513,17 @@ const AcFormsKoppeling = ({ store }) => {
         const status = statusByRow[rowId] || '';
         const standaarden = standaardenByRow[rowId] || [];
 
+        // Check if the selected App B is a buitengemeentelijke voorziening
+        // by checking if it exists in buitengemeentelijkeOptions (source of truth for BGV items)
+        const isBuitengemeentelijk = buitengemeentelijkeOptions.some(
+          (o) => String(o.value) === String(appBId)
+        );
+
         const payload = {
           naam,
           moduleA: appAId,
-          moduleB: appBId,
+          moduleB: isBuitengemeentelijk ? null : appBId,
+          buitengemeentelijkVoorziening: isBuitengemeentelijk ? appBId : null,
           gegevensuitwisselingRichting: richting,
           type: soort,
           beschrijvingKort: beschrijving,
@@ -1713,10 +1720,16 @@ const AcFormsKoppeling = ({ store }) => {
 
         // Step 2: Create the new koppeling
         try {
+          // Check if the selected module B is a buitengemeentelijke voorziening
+          const isBuitengemeentelijk = buitengemeentelijkeOptions.some(
+            (o) => String(o.value) === String(nieuweKoppeling.moduleB)
+          );
+
           const newKoppelingData = {
             naam: nieuweKoppeling.naam,
             moduleA: ownApp.value,
-            moduleB: nieuweKoppeling.moduleB,
+            moduleB: isBuitengemeentelijk ? null : nieuweKoppeling.moduleB,
+            buitengemeentelijkVoorziening: isBuitengemeentelijk ? nieuweKoppeling.moduleB : null,
             gegevensuitwisselingRichting: nieuweKoppeling.richting,
             aanbieder: finalLeverancierId,
           };

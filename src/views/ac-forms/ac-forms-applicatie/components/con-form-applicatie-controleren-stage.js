@@ -161,7 +161,8 @@ const ConFormApplicatieControlerenStage = memo(
         }
       }
 
-      return moduleBId; // Fallback to ID if not found
+      // Fallback: Use ConUuidResolver to resolve the UUID
+      return <ConUuidResolver>{moduleBId}</ConUuidResolver>;
     };
 
     // Helper function to normalize URLs for external links
@@ -477,10 +478,12 @@ const ConFormApplicatieControlerenStage = memo(
                             ? '←'
                             : '↔';
 
-                        // Resolve moduleB ID to display name
+                        // Resolve moduleB ID to display name (fall back to buitengemeentelijkVoorziening)
                         const moduleBId =
                           kp.moduleB ||
+                          kp.buitengemeentelijkVoorziening ||
                           kp?.['@self']?.relations?.moduleB ||
+                          kp?.['@self']?.relations?.buitengemeentelijkVoorziening ||
                           kp.moduleBId;
                         const moduleBDisplayName = getModuleBDisplayName(moduleBId);
 

@@ -1463,11 +1463,22 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
               typeof kpl.moduleB === 'object' ? kpl.moduleB?.id : kpl.moduleB
             );
           }
+          // Then check buitengemeentelijkVoorziening
+          if (kpl.buitengemeentelijkVoorziening != null) {
+            return String(
+              typeof kpl.buitengemeentelijkVoorziening === 'object' 
+                ? kpl.buitengemeentelijkVoorziening?.id 
+                : kpl.buitengemeentelijkVoorziening
+            );
+          }
           // Then check moduleBId
           if (kpl.moduleBId != null) return String(kpl.moduleBId);
-          // Finally check @self.relations as last case scenario
+          // Check @self.relations for moduleB
           const relationsModuleB = kpl?.['@self']?.relations?.moduleB;
           if (relationsModuleB != null) return String(relationsModuleB);
+          // Finally check @self.relations for buitengemeentelijkVoorziening
+          const relationsBgv = kpl?.['@self']?.relations?.buitengemeentelijkVoorziening;
+          if (relationsBgv != null) return String(relationsBgv);
           return null;
         })();
 
@@ -2223,12 +2234,16 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
             : '';
         const hasNaam = persistedNaam !== '' || uiNaam !== '';
 
-        // Check moduleB from BOTH persisted data AND UI state
+        // Check moduleB from BOTH persisted data AND UI state (also check buitengemeentelijkVoorziening)
         const persistedModuleB =
-          persistedKoppeling?.moduleB != null &&
+          (persistedKoppeling?.moduleB != null &&
           String(persistedKoppeling.moduleB).trim() !== ''
             ? String(persistedKoppeling.moduleB).trim()
-            : '';
+            : '') ||
+          (persistedKoppeling?.buitengemeentelijkVoorziening != null &&
+          String(persistedKoppeling.buitengemeentelijkVoorziening).trim() !== ''
+            ? String(persistedKoppeling.buitengemeentelijkVoorziening).trim()
+            : '');
         const uiModuleB =
           selectedAppBByRow[rowId] != null &&
           String(selectedAppBByRow[rowId]).trim() !== ''
@@ -2426,12 +2441,16 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
             : '';
         const hasNaam = persistedNaam !== '' || uiNaam !== '';
 
-        // Check moduleB from BOTH persisted data AND UI state
+        // Check moduleB from BOTH persisted data AND UI state (also check buitengemeentelijkVoorziening)
         const persistedModuleB =
-          persistedKoppeling?.moduleB != null &&
+          (persistedKoppeling?.moduleB != null &&
           String(persistedKoppeling.moduleB).trim() !== ''
             ? String(persistedKoppeling.moduleB).trim()
-            : '';
+            : '') ||
+          (persistedKoppeling?.buitengemeentelijkVoorziening != null &&
+          String(persistedKoppeling.buitengemeentelijkVoorziening).trim() !== ''
+            ? String(persistedKoppeling.buitengemeentelijkVoorziening).trim()
+            : '');
         const uiModuleB =
           selectedAppBByRow[rowId] != null &&
           String(selectedAppBByRow[rowId]).trim() !== ''

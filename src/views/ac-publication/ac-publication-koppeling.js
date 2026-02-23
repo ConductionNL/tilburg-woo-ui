@@ -155,8 +155,19 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
   }, [get_single]);
 
   const moduleBId = useMemo(() => {
-    return get_single?.['@self']?.relations?.moduleB || get_single?.moduleB || null;
+    return (
+      get_single?.['@self']?.relations?.moduleB || 
+      get_single?.moduleB || 
+      get_single?.['@self']?.relations?.buitengemeentelijkVoorziening || 
+      get_single?.buitengemeentelijkVoorziening || 
+      null
+    );
   }, [get_single]);
+
+  const isBuitengemeentelijk = useMemo(() => {
+    const hasModuleB = get_single?.['@self']?.relations?.moduleB || get_single?.moduleB;
+    return !hasModuleB && moduleBId;
+  }, [get_single, moduleBId]);
 
   const richting = useMemo(() => {
     return (
@@ -303,7 +314,7 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
               )}
             </div>
             <div style={{ marginBottom: '8px' }}>
-              <strong>Applicatie B: </strong>
+              <strong>{isBuitengemeentelijk ? 'Buitengemeentelijke voorziening: ' : 'Applicatie B: '}</strong>
               {moduleBId ? (
                 <ConUuidResolver>{String(moduleBId)}</ConUuidResolver>
               ) : (

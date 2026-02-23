@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useParams, useLocation } from 'react-router';
 import { AcFlex, AcSection } from '@atoms';
@@ -27,34 +27,45 @@ const ConBeheerViews = ({ store }) => {
   const [viewRelationsData, setViewRelationsData] = useState(null);
   const [viewIsDoneLoading, setViewIsDoneLoading] = useState(false);
   const [panZoomInstance, setPanZoomInstance] = useState(null);
-  const [gebruikData, setGebruikData] = useState(null);
-  const [moduleNames, setModuleNames] = useState({});
+  // Combined overlay data — single state object prevents cascading renders
+  // when multiple data sources load in an async context.
+  const [overlayData, setOverlayData] = useState({
+    gebruik: null,
+    applicaties: null,
+    deelnames: null,
+    moduleNames: {},
+  });
   const [filters, setFilters] = useState({
     gebruik: false,
-    product: false,
+    applicaties: false,
     deelnames: false,
   });
+  const [frozenViewHtml, setFrozenViewHtml] = useState(null);
+  const [isFilterTransition, setIsFilterTransition] = useState(false);
+
+  // Refs for persistent graph state (survive across filter toggles)
+  const graphRef = useRef(null);
+  const paperRef = useRef(null);
+  const overlayIdsRef = useRef([]);
 
   // Sync filters from URL
   useEffect(() => {
     const sp = new URLSearchParams(location.search);
     const gebruik = sp.get('gebruik') === 'true';
-    const product = sp.get('product') === 'true';
+    const applicaties = sp.get('applicaties') === 'true';
     const deelnames = sp.get('deelnames') === 'true';
-    setFilters({ gebruik, product, deelnames });
+    setFilters({ gebruik, applicaties, deelnames });
   }, [location.search]);
 
-  // Load view by route param when present (include filters)
+  // Load view by route param when present.
+  // Filters do NOT affect the view data itself (overlay data is loaded separately),
+  // so we only re-fetch when the view ID changes.
   useEffect(() => {
     if (!gemma) return;
     if (!params?.id) return;
     setViewIsDoneLoading(false);
-    const q = {};
-    if (filters.gebruik) q.gebruik = true;
-    if (filters.product) q.product = true;
-    if (filters.deelnames) q.deelnames = true;
-    gemma.fetchView(params.id, q);
-  }, [gemma, params?.id, filters.gebruik, filters.product, filters.deelnames]);
+    gemma.fetchView(params.id);
+  }, [gemma, params?.id]);
 
   // Helper function to get view name
   const getViewName = (view) => {
@@ -66,13 +77,25 @@ const ConBeheerViews = ({ store }) => {
 
   // Update URL when filters change (keep existing params)
   const handleToggleFilter = (key) => (checked) => {
+    // Only capture frozen view when turning a filter ON (data may need loading).
+    // Filter OFF is near-instant with incremental overlay removal.
+    if (checked) {
+      const container = document.getElementById('graph-container');
+      if (container && viewIsDoneLoading) {
+        const clonedContainer = container.cloneNode(true);
+        clonedContainer.id = 'frozen-graph-container';
+        setFrozenViewHtml(clonedContainer.outerHTML);
+        setIsFilterTransition(true);
+      }
+    }
+
     setFilters((prev) => {
       const next = { ...prev, [key]: checked };
       const sp = new URLSearchParams(location.search);
       if (next.gebruik) sp.set('gebruik', 'true');
       else sp.delete('gebruik');
-      if (next.product) sp.set('product', 'true');
-      else sp.delete('product');
+      if (next.applicaties) sp.set('applicaties', 'true');
+      else sp.delete('applicaties');
       if (next.deelnames) sp.set('deelnames', 'true');
       else sp.delete('deelnames');
       const qs = sp.toString();
@@ -85,53 +108,109 @@ const ConBeheerViews = ({ store }) => {
     });
   };
 
-  // Load gebruik and module data when filters are active.
+  // Load gebruik, applicaties, deelnames, and module data when filters are active.
   // Uses pre-fetched data from the store (loaded on the views list page) when available,
   // falling back to fetching if the user navigated directly to a view URL.
   useEffect(() => {
     if (!gemma) return;
-    if (!filters.gebruik && !filters.deelnames) {
-      setGebruikData(null);
-      setModuleNames({});
+    const anyFilterActive = filters.gebruik || filters.applicaties || filters.deelnames;
+    if (!anyFilterActive) {
+      // Only clear if there's actual data to clear — avoids creating a new
+      // object reference that would needlessly re-trigger Effect B.
+      setOverlayData((prev) => {
+        if (prev.gebruik === null && prev.applicaties === null && prev.deelnames === null) return prev;
+        return { gebruik: null, applicaties: null, deelnames: null, moduleNames: {} };
+      });
       return;
     }
 
+    // Stale guard — prevents old async callbacks from setting state after
+    // this effect is cleaned up (e.g. when filters change mid-fetch).
+    let stale = false;
+
     const activeOrgUuid = store?.user?.activeOrganization?.uuid;
+    const fields = 'id,module,gebruiktVoorReferentiecomponenten,deelnemers,afnemer,aanbieder,@self';
 
     const loadData = async () => {
-      // Use store data if already pre-fetched, otherwise fetch now
-      let gebruikResults = gemma.get_allVoorzieningGebruik;
-      if (!gebruikResults) {
-        const gebruikParams = {
-          _limit: 10000,
-          _fields: 'id,module,gebruiktVoorReferentiecomponenten,deelnemers,afnemer,@self',
-        };
-        if (activeOrgUuid) {
-          gebruikParams.afnemer = activeOrgUuid;
+      let nextGebruik = null;
+      let nextApplicaties = null;
+      let nextDeelnames = null;
+      let nextModuleNames = {};
+
+      // Load gebruik (afnemer = our org)
+      if (filters.gebruik) {
+        nextGebruik = gemma.get_allVoorzieningGebruik;
+        if (!nextGebruik) {
+          const params = { _limit: 10000, _fields: fields };
+          if (activeOrgUuid) params.afnemer = activeOrgUuid;
+          await gemma.fetchGebruik(params);
+          if (stale) return;
+          nextGebruik = gemma.get_allVoorzieningGebruik || [];
         }
-        await gemma.fetchGebruik(gebruikParams);
-        gebruikResults = gemma.get_allVoorzieningGebruik || [];
       }
 
+      // Load applicaties (aanbieder = our org)
+      if (filters.applicaties) {
+        nextApplicaties = gemma.get_applicaties;
+        if (!nextApplicaties && activeOrgUuid) {
+          await gemma.fetchApplicaties({
+            _limit: 10000,
+            _fields: fields,
+            aanbieder: activeOrgUuid,
+          });
+          if (stale) return;
+          nextApplicaties = gemma.get_applicaties || [];
+        }
+        nextApplicaties = nextApplicaties || [];
+      }
+
+      // Load deelnames (deelnemers contains our org)
+      if (filters.deelnames) {
+        nextDeelnames = gemma.get_deelnames;
+        if (!nextDeelnames && activeOrgUuid) {
+          await gemma.fetchDeelnames({
+            _limit: 10000,
+            _fields: fields,
+            deelnemers: activeOrgUuid,
+          });
+          if (stale) return;
+          nextDeelnames = gemma.get_deelnames || [];
+        }
+        nextDeelnames = nextDeelnames || [];
+      }
+
+      // Load modules for name lookup
       let modulesData = gemma.get_modules;
       if (!modulesData) {
-        modulesData = await gemma.fetchModules({ _limit: 10000, _fields: 'id,naam' });
+        modulesData = await gemma.fetchModules({
+          _limit: 10000,
+          _fields: 'id,naam',
+        });
+        if (stale) return;
       }
-
-      // Build module name lookup
-      const nameLookup = {};
       if (Array.isArray(modulesData)) {
         modulesData.forEach((m) => {
-          if (m.id && m.naam) nameLookup[m.id] = m.naam;
-          if (m.id && m['@self']?.name) nameLookup[m.id] = nameLookup[m.id] || m['@self'].name;
+          if (m.id && m.naam) nextModuleNames[m.id] = m.naam;
+          if (m.id && m['@self']?.name)
+            nextModuleNames[m.id] = nextModuleNames[m.id] || m['@self'].name;
         });
       }
-      setModuleNames(nameLookup);
-      setGebruikData(gebruikResults);
+
+      // Single atomic state update — prevents cascading renders from
+      // individual setState calls in async contexts.
+      if (!stale) {
+        setOverlayData({
+          gebruik: nextGebruik,
+          applicaties: nextApplicaties,
+          deelnames: nextDeelnames,
+          moduleNames: nextModuleNames,
+        });
+      }
     };
 
     loadData();
-  }, [gemma, filters.gebruik, filters.deelnames]);
+    return () => { stale = true; };
+  }, [gemma, filters.gebruik, filters.applicaties, filters.deelnames]);
 
   // Process view data for rendering - prefer new API (viewNodes/viewRelationships)
   useEffect(() => {
@@ -140,11 +219,10 @@ const ConBeheerViews = ({ store }) => {
       return;
     }
 
-    setViewIsDoneLoading(false);
-
     // Check top-level viewNodes first, then xml.viewNodes as fallback
     const sourceNodes = gemma.get_view.viewNodes || gemma.get_view.xml?.viewNodes;
-    const sourceRelationships = gemma.get_view.viewRelationships || gemma.get_view.xml?.viewRelationships;
+    const sourceRelationships =
+      gemma.get_view.viewRelationships || gemma.get_view.xml?.viewRelationships;
 
     if (Array.isArray(sourceNodes)) {
       const sanitizedNodes = sourceNodes.map((node) => ({
@@ -161,7 +239,8 @@ const ConBeheerViews = ({ store }) => {
           node.type ||
           'dataobject'
         ).toLowerCase(),
-        gemmaType: node.type || node.gemmaType || node.elementProperties?.gemmaType || null,
+        gemmaType:
+          node.type || node.gemmaType || node.elementProperties?.gemmaType || null,
       }));
       setViewNodesData(sanitizedNodes);
       setViewRelationsData(sourceRelationships || []);
@@ -175,28 +254,38 @@ const ConBeheerViews = ({ store }) => {
     setViewRelationsData(relationships);
   }, [gemma && gemma.get_view]);
 
-  // Render view when data is ready (same logic as public version)
+  // ── Effect A — Base render: runs once per view ──
+  // Only re-runs when the base node/relation data changes (view switch).
+  // Overlay data is handled separately in Effect B for incremental updates.
   useEffect(() => {
     if (!gemma.get_view) return;
     if (!viewNodesData) return;
     if (!viewRelationsData) return;
 
-    // Small delay to ensure DOM is ready
-    const renderBeheerGraph = () => {
-      // Create container in HTML
-      const container = document.getElementById('graph-container');
+    setViewIsDoneLoading(false);
 
+    const renderBaseGraph = () => {
+      const t0 = performance.now();
+
+      const container = document.getElementById('graph-container');
       if (!container) {
-        // Retry after a short delay
-        setTimeout(renderBeheerGraph, 100);
+        setTimeout(renderBaseGraph, 100);
         return;
       }
 
-      // Clear previous content
+      // Clean up previous graph/paper before creating new ones
+      if (graphRef.current) {
+        graphRef.current.clear();
+        graphRef.current = null;
+      }
+      if (paperRef.current) {
+        paperRef.current.remove();
+        paperRef.current = null;
+      }
+      overlayIdsRef.current = [];
       container.innerHTML = '';
 
-      // Initialize the graph
-      let outputGraph = new dia.Graph({}, { cellNamespace: shapes });
+      const outputGraph = new dia.Graph({}, { cellNamespace: shapes });
 
       const paper = new dia.Paper({
         el: container,
@@ -216,97 +305,31 @@ const ConBeheerViews = ({ store }) => {
           labelMove: false,
         },
         clickThreshold: 10,
-        background: {
-          color: 'rgba(0, 0, 0, 0)',
-        },
+        background: { color: 'rgba(0, 0, 0, 0)' },
       });
 
-      // Freeze paper to suppress rendering during bulk cell addition.
-      // Without this, the Paper re-renders on every .addTo(graph) call
-      // (388 full renders). With freeze, it batches into a single render.
+      const t1 = performance.now();
+      console.info(`[ViewPerf] Graph+Paper init: ${(t1 - t0).toFixed(1)}ms`);
+
       paper.freeze();
 
       let viewNodes = [];
       let viewRelationships = [];
 
-      const hasNewFormat = Array.isArray(gemma.get_view.viewNodes) || Array.isArray(gemma.get_view.xml?.viewNodes);
+      const hasNewFormat =
+        Array.isArray(gemma.get_view.viewNodes) ||
+        Array.isArray(gemma.get_view.xml?.viewNodes);
       if (hasNewFormat) {
-        // Topological sort: parents must be rendered before children so the
-        // diagram engine can look up parent cells via graph.getCell(parentId).
-        // Backend now stores nodes in correct order, but we keep this as a
-        // safety net for data imported before the fix.
-        const rawNodes = [...(viewNodesData || [])];
+        // Deep-clone base nodes (no overlays — those are added in Effect B).
+        const rawNodes = (viewNodesData || []).map((n) => ({ ...n }));
 
-        // Merge gebruik overlay nodes when filters are active
-        if (gebruikData && gebruikData.length > 0 && (filters.gebruik || filters.deelnames)) {
-          // Build lookup: modelNodeId (with id- prefix) -> viewNode
-          const viewNodeByModelId = {};
-          rawNodes.forEach((n) => {
-            if (n.modelNodeId) viewNodeByModelId[n.modelNodeId] = n;
-          });
-
-          // Track overlay count per parent for vertical stacking
-          const overlayCountPerParent = {};
-          let totalOverlays = 0;
-          const MAX_OVERLAYS = 2000;
-
-          gebruikData.forEach((gebruik) => {
-            if (totalOverlays >= MAX_OVERLAYS) return;
-            const refComps = gebruik.gebruiktVoorReferentiecomponenten;
-            if (!Array.isArray(refComps) || refComps.length === 0) return;
-
-            // Determine owned vs deelname based on deelnemers field
-            // Gebruik returned by API is owned; deelnames = entries where
-            // current org appears in the deelnemers array (future feature)
-            const isDeelname = false;
-
-            const moduleName = moduleNames[gebruik.module] || 'Module';
-
-            refComps.forEach((refCompUuid) => {
-              // Match by prepending id- to the UUID
-              const modelNodeId = `id-${refCompUuid}`;
-              const parentNode = viewNodeByModelId[modelNodeId];
-              if (!parentNode) return;
-
-              // Stack overlays vertically inside parent
-              const parentId = parentNode.viewNodeId;
-              if (!overlayCountPerParent[parentId]) overlayCountPerParent[parentId] = 0;
-              const stackIndex = overlayCountPerParent[parentId]++;
-
-              const overlayHeight = 18;
-              const overlayGap = 2;
-              const overlayY = (parentNode.height || 80) - 5 - ((stackIndex + 1) * (overlayHeight + overlayGap));
-
-              rawNodes.push({
-                viewNodeId: `overlay-${gebruik.id}-${refCompUuid}`,
-                modelNodeId: gebruik.module || gebruik.id,
-                name: moduleName,
-                type: 'applicationcomponent',
-                gemmaType: 'ApplicationComponent',
-                parent: parentId,
-                x: 5,
-                y: Math.max(20, overlayY),
-                width: (parentNode.width || 120) - 10,
-                height: overlayHeight,
-                color: isDeelname ? 'rgb(180, 230, 255)' : 'rgb(200, 255, 200)',
-                borderColor: isDeelname ? 'rgba(0, 100, 180, 0.6)' : 'rgba(0, 150, 0, 0.6)',
-                font: { name: 'Segoe UI', size: 9, color: 'rgb(0, 0, 0)', style: 'normal' },
-                _isModuleOverlay: true,
-                _gebruikId: gebruik.id,
-                _isDeelname: isDeelname,
-              });
-            });
-          });
-        }
+        // Topological sort: parents before children for graph.getCell(parentId).
         const sorted = [];
         const placed = new Set();
         const remaining = [...rawNodes];
         let prevLength = -1;
         while (remaining.length > 0 && remaining.length !== prevLength) {
           prevLength = remaining.length;
-          // Forward iteration preserves original source order among siblings,
-          // which is critical for correct SVG z-ordering (background rects
-          // must render before the text labels they sit behind).
           const toRemove = [];
           for (let i = 0; i < remaining.length; i++) {
             const n = remaining[i];
@@ -320,23 +343,14 @@ const ConBeheerViews = ({ store }) => {
             remaining.splice(toRemove[j], 1);
           }
         }
-        // Append any remaining nodes (e.g. orphans with missing parents)
         sorted.push(...remaining);
 
-        // Convert absolute coordinates to parent-relative.
-        // ArchiMate Open Exchange XML stores absolute positions, but the
-        // diagram engine positions children relative to their parent.
+        // Convert absolute → parent-relative coordinates.
         const absPos = {};
         sorted.forEach((n) => {
           const parentAbs = n.parent ? absPos[n.parent] : null;
-          absPos[n.viewNodeId] = {
-            x: (n.x || 0),
-            y: (n.y || 0),
-          };
-          // Skip overlay nodes — their coordinates are already parent-relative.
-          // ArchiMate source nodes use absolute coordinates that need conversion,
-          // but overlays are created with relative offsets (x:5, y:stackOffset).
-          if (parentAbs && !n._isModuleOverlay) {
+          absPos[n.viewNodeId] = { x: n.x || 0, y: n.y || 0 };
+          if (parentAbs) {
             n.x = (n.x || 0) - parentAbs.x;
             n.y = (n.y || 0) - parentAbs.y;
           }
@@ -358,7 +372,7 @@ const ConBeheerViews = ({ store }) => {
           label: {},
         }));
       } else {
-        // Legacy fallback: map minimal fields
+        // Legacy fallback
         viewNodes = (viewNodesData || []).map((n) => ({
           modelNodeId: n.elementRef || n.identifier || n.modelNodeId,
           viewNodeId: n.identifier || n.viewNodeId || n.modelNodeId,
@@ -385,7 +399,9 @@ const ConBeheerViews = ({ store }) => {
         }));
       }
 
-      // Render the graph (match public views list for consistent colors)
+      const tDataReady = performance.now();
+      console.info(`[ViewPerf] Base data prep: ${(tDataReady - t1).toFixed(1)}ms — ${viewNodes.length} nodes, ${viewRelationships.length} rels`);
+
       ViewRenderer.renderToGraph(
         outputGraph,
         viewNodes,
@@ -404,27 +420,198 @@ const ConBeheerViews = ({ store }) => {
           interactive: false,
         })
       );
-      // Unfreeze: triggers a single batch render of all cells at once.
+      const tRendered = performance.now();
+      console.info(`[ViewPerf] ViewRenderer.renderToGraph: ${(tRendered - tDataReady).toFixed(1)}ms`);
+
       paper.unfreeze();
+      const tUnfrozen = performance.now();
+      console.info(`[ViewPerf] paper.unfreeze (DOM flush): ${(tUnfrozen - tRendered).toFixed(1)}ms`);
 
-      // Apply colors and viewBox like public version
-      viewNodes.forEach((node) => {
-        setNodeColor(node);
+      // Apply colors and viewBox
+      const modelIdElements = {};
+      container.querySelectorAll('[model-id]').forEach((el) => {
+        modelIdElements[el.getAttribute('model-id')] = el;
       });
-      viewRelationships.forEach((relationship) => {
-        setRelationshipColor(relationship);
-      });
-      container.querySelectorAll(':scope > svg').forEach((node) => {
-        setSvgViewBox(node);
-      });
+      viewNodes.forEach((node) => setNodeColor(node, modelIdElements));
+      viewRelationships.forEach((rel) => setRelationshipColor(rel, modelIdElements));
+      container.querySelectorAll(':scope > svg').forEach((node) => setSvgViewBox(node));
 
-      // Always set loading done when we reach this point
+      const tColored = performance.now();
+      console.info(`[ViewPerf] Color+viewBox apply: ${(tColored - tUnfrozen).toFixed(1)}ms`);
+      console.info(`[ViewPerf] TOTAL base render: ${(tColored - t0).toFixed(1)}ms`);
+
+      // Store refs for overlay effect (Effect B)
+      graphRef.current = outputGraph;
+      paperRef.current = paper;
+
       setViewIsDoneLoading(true);
+
+      // Clear frozen view on view switch (base re-render).
+      // Effect B will handle clearing during filter transitions.
+      setFrozenViewHtml(null);
+      setIsFilterTransition(false);
     };
 
-    // Start rendering process
-    renderBeheerGraph();
-  }, [viewNodesData, viewRelationsData, gebruikData, moduleNames, filters.gebruik, filters.deelnames]);
+    renderBaseGraph();
+
+    return () => {
+      // Cleanup on unmount or when base data changes
+      if (graphRef.current) {
+        graphRef.current.clear();
+        graphRef.current = null;
+      }
+      if (paperRef.current) {
+        paperRef.current.remove();
+        paperRef.current = null;
+      }
+      overlayIdsRef.current = [];
+    };
+  }, [viewNodesData, viewRelationsData]);
+
+  // ── Effect B — Overlay update: runs on filter toggle ──
+  // Incrementally adds/removes overlay cells without rebuilding the base graph.
+  // This is the key performance optimization: base nodes stay in DOM.
+  // Depends on a single overlayData object (atomic update) to prevent
+  // cascading renders from individual data source changes.
+  useEffect(() => {
+    // Guard: skip if base render hasn't completed
+    if (!graphRef.current || !paperRef.current || !viewIsDoneLoading) return;
+
+    const t0 = performance.now();
+
+    // Remove old overlay cells from the existing graph
+    if (overlayIdsRef.current.length > 0) {
+      overlayIdsRef.current.forEach((id) => {
+        const cell = graphRef.current.getCell(id);
+        if (cell) cell.remove();
+      });
+      overlayIdsRef.current = [];
+    }
+
+    // Destructure the combined overlay data
+    const { gebruik: gebruikData, applicaties: applicatiesData, deelnames: deelnamesData, moduleNames } = overlayData;
+
+    // Collect active overlay data sources
+    const overlayColors = {
+      gebruik:     { color: '#b9f6ca', borderColor: '#2e7d32', fontColor: '#1b5e20' },
+      applicaties: { color: '#ffe0b2', borderColor: '#e65100', fontColor: '#bf360c' },
+      deelnames:   { color: '#b3e5fc', borderColor: '#01579b', fontColor: '#01579b' },
+    };
+
+    const overlaySources = [];
+    if (gebruikData && gebruikData.length > 0) {
+      overlaySources.push({ data: gebruikData, type: 'gebruik' });
+    }
+    if (applicatiesData && applicatiesData.length > 0) {
+      overlaySources.push({ data: applicatiesData, type: 'applicaties' });
+    }
+    if (deelnamesData && deelnamesData.length > 0) {
+      overlaySources.push({ data: deelnamesData, type: 'deelnames' });
+    }
+
+    if (overlaySources.length === 0) {
+      // No overlays to add — clear frozen view and exit
+      setFrozenViewHtml(null);
+      setIsFilterTransition(false);
+      const t1 = performance.now();
+      console.info(`[ViewPerf] Overlay cleanup: ${(t1 - t0).toFixed(1)}ms — all overlays removed`);
+      return;
+    }
+
+    // Build lookup: modelNodeId (with id- prefix) → base viewNode
+    // NOTE: viewNodesData is intentionally excluded from deps.
+    // When the view changes, viewIsDoneLoading transitions false→true,
+    // which re-triggers this effect with the correct viewNodesData.
+    const viewNodeByModelId = {};
+    (viewNodesData || []).forEach((n) => {
+      if (n.modelNodeId) viewNodeByModelId[n.modelNodeId] = n;
+    });
+
+    // Freeze paper for batch rendering of overlay cells
+    paperRef.current.freeze();
+
+    const newOverlayIds = [];
+    const overlayCountPerParent = {};
+    let totalOverlays = 0;
+    const MAX_OVERLAYS = 2000;
+
+    overlaySources.forEach(({ data, type }) => {
+      const colors = overlayColors[type];
+
+      data.forEach((record) => {
+        if (totalOverlays >= MAX_OVERLAYS) return;
+        const refComps = record.gebruiktVoorReferentiecomponenten;
+        if (!Array.isArray(refComps) || refComps.length === 0) return;
+
+        const moduleName = moduleNames[record.module] || 'Module';
+
+        refComps.forEach((refCompUuid) => {
+          if (totalOverlays >= MAX_OVERLAYS) return;
+
+          const modelNodeId = `id-${refCompUuid}`;
+          const parentNode = viewNodeByModelId[modelNodeId];
+          if (!parentNode) return;
+
+          const parentId = parentNode.viewNodeId;
+          const parentCell = graphRef.current.getCell(parentId);
+          if (!parentCell) return;
+
+          if (!overlayCountPerParent[parentId]) overlayCountPerParent[parentId] = 0;
+          const stackIndex = overlayCountPerParent[parentId]++;
+          totalOverlays++;
+
+          const overlayHeight = 18;
+          const overlayGap = 2;
+          const overlayWidth = (parentNode.width || 120) - 10;
+          const overlayX = 5;
+          const overlayY = Math.max(20, (parentNode.height || 80) - 5 - ((stackIndex + 1) * (overlayHeight + overlayGap)));
+
+          const overlayId = `overlay-${record.id}-${refCompUuid}`;
+
+          // Create overlay directly as a simple rectangle — bypasses
+          // ViewRenderer entirely (no glyph generation, no ArchiMate type
+          // processing). Colors are set on creation, no post-render DOM pass.
+          const rect = new shapes.standard.Rectangle({
+            id: overlayId,
+            size: { width: overlayWidth, height: overlayHeight },
+            attrs: {
+              body: {
+                fill: colors.color,
+                stroke: colors.borderColor,
+                strokeWidth: 0.8,
+                rx: 4,
+                ry: 4,
+              },
+              label: {
+                text: moduleName,
+                fill: colors.fontColor,
+                fontSize: 9,
+                fontFamily: 'Segoe UI',
+              },
+            },
+          });
+
+          rect.addTo(graphRef.current);
+          parentCell.embed(rect);
+          rect.position(overlayX, overlayY, { parentRelative: true });
+
+          newOverlayIds.push(overlayId);
+        });
+      });
+    });
+
+    overlayIdsRef.current = newOverlayIds;
+
+    // Unfreeze: only renders the new overlay cells (base stays untouched)
+    paperRef.current.unfreeze();
+
+    const t1 = performance.now();
+    console.info(`[ViewPerf] Overlay update: ${(t1 - t0).toFixed(1)}ms — ${newOverlayIds.length} overlays added`);
+
+    // Clear frozen view overlay now that overlays are rendered
+    setFrozenViewHtml(null);
+    setIsFilterTransition(false);
+  }, [overlayData, viewIsDoneLoading]);
 
   // Helper functions from public version
   const setSvgViewBox = (svg) => {
@@ -441,8 +628,10 @@ const ConBeheerViews = ({ store }) => {
     }
   };
 
-  const setNodeColor = (node) => {
-    const parentElement = document.querySelector(`[model-id="${node.viewNodeId}"]`);
+  const setNodeColor = (node, modelIdElements) => {
+    const parentElement = modelIdElements
+      ? modelIdElements[node.viewNodeId]
+      : document.querySelector(`[model-id="${node.viewNodeId}"]`);
     if (!parentElement) return;
     if (node.type?.toLowerCase() !== 'label') {
       parentElement.setAttribute('data-tooltip-id', TOOLTIP_ID);
@@ -489,10 +678,10 @@ const ConBeheerViews = ({ store }) => {
     });
   };
 
-  const setRelationshipColor = (relationship) => {
-    const parentElement = document.querySelector(
-      `[model-id="${relationship.viewRelationshipId}"]`
-    );
+  const setRelationshipColor = (relationship, modelIdElements) => {
+    const parentElement = modelIdElements
+      ? modelIdElements[relationship.viewRelationshipId]
+      : document.querySelector(`[model-id="${relationship.viewRelationshipId}"]`);
     if (!parentElement) return;
     const allPathElements = parentElement.querySelectorAll(':scope > path');
     allPathElements.forEach((item) => {
@@ -528,15 +717,9 @@ const ConBeheerViews = ({ store }) => {
   };
 
   // Pan/Zoom behavior similar to public viewer
+  // Only re-inits when base render completes — filter toggles preserve pan/zoom state.
   useEffect(() => {
-    if (
-      !gemma ||
-      !gemma.get_view ||
-      !viewIsDoneLoading ||
-      !viewNodesData ||
-      !viewRelationsData
-    )
-      return;
+    if (!gemma || !gemma.get_view || !viewIsDoneLoading) return;
 
     const initTimer = setTimeout(() => {
       const svg = document.getElementById('svg-container');
@@ -552,12 +735,23 @@ const ConBeheerViews = ({ store }) => {
       try {
         const bbox = gElement.getBBox();
         // Check if bounding box is valid (has width and height)
-        if (!bbox || bbox.width === 0 || bbox.height === 0 || !isFinite(bbox.width) || !isFinite(bbox.height)) {
-          console.warn('SVG has invalid bounding box, skipping pan/zoom initialization');
+        if (
+          !bbox ||
+          bbox.width === 0 ||
+          bbox.height === 0 ||
+          !isFinite(bbox.width) ||
+          !isFinite(bbox.height)
+        ) {
+          console.warn(
+            'SVG has invalid bounding box, skipping pan/zoom initialization'
+          );
           return;
         }
       } catch (e) {
-        console.warn('Could not get SVG bounding box, skipping pan/zoom initialization:', e);
+        console.warn(
+          'Could not get SVG bounding box, skipping pan/zoom initialization:',
+          e
+        );
         return;
       }
 
@@ -583,143 +777,146 @@ const ConBeheerViews = ({ store }) => {
 
       try {
         const instance = svgPanZoom(svg, {
-        zoomEnabled: true,
-        controlIconsEnabled: true,
-        fit: true,
-        center: true,
-        minZoom: 0.1,
-        maxZoom: 10,
-        zoomScaleSensitivity: 0.5,
-        customEventsHandler: {
-          haltEventListeners: [
-            'touchstart',
-            'touchend',
-            'touchmove',
-            'touchleave',
-            'touchcancel',
-          ],
-          init: function (options) {
-            function updateSvgClassName() {
-              options.svgElement.setAttribute('class', svgHovered ? 'hovered' : '');
-            }
-            function getTouchCenter(touch1, touch2) {
-              const rect = options.svgElement.getBoundingClientRect();
-              return {
-                x: (touch1.clientX + touch2.clientX) / 2 - rect.left,
-                y: (touch1.clientY + touch2.clientY) / 2 - rect.top,
-              };
-            }
-            function getRelativePoint(svgElement, x, y) {
-              const ctm = svgElement.getScreenCTM();
-              const point = svgElement.createSVGPoint();
-              point.x = x;
-              point.y = y;
-              return point.matrixTransform(ctm.inverse());
-            }
-            this.listeners = {
-              mouseenter: function () {
-                svgHovered = true;
-                options.instance.enableZoom();
-                updateSvgClassName();
-              },
-              mouseleave: function () {
-                svgHovered = false;
-                updateSvgClassName();
-              },
-              touchstart: function (evt) {
-                touchStarted = true;
-                if (evt.touches.length === 2) {
-                  const touch1 = evt.touches[0];
-                  const touch2 = evt.touches[1];
-                  initialPinchDistance = Math.hypot(
-                    touch2.clientX - touch1.clientX,
-                    touch2.clientY - touch1.clientY
-                  );
-                  lastPinchCenter = getTouchCenter(touch1, touch2);
-                  initialScale = options.instance.getZoom();
-                }
-                evt.preventDefault();
-              },
-              touchmove: function (evt) {
-                if (!touchStarted) return;
-                evt.preventDefault();
-                if (evt.touches.length === 2) {
-                  const touch1 = evt.touches[0];
-                  const touch2 = evt.touches[1];
-                  const currentDistance = Math.hypot(
-                    touch2.clientX - touch1.clientX,
-                    touch2.clientY - touch1.clientY
-                  );
-                  const currentCenter = getTouchCenter(touch1, touch2);
-                  if (initialPinchDistance && initialScale && lastPinchCenter) {
-                    const scaleFactor = currentDistance / initialPinchDistance;
-                    const newScale = Math.min(
-                      Math.max(initialScale * scaleFactor, 0.1),
-                      10
+          zoomEnabled: true,
+          controlIconsEnabled: true,
+          fit: true,
+          center: true,
+          minZoom: 0.1,
+          maxZoom: 10,
+          zoomScaleSensitivity: 0.5,
+          customEventsHandler: {
+            haltEventListeners: [
+              'touchstart',
+              'touchend',
+              'touchmove',
+              'touchleave',
+              'touchcancel',
+            ],
+            init: function (options) {
+              function updateSvgClassName() {
+                options.svgElement.setAttribute(
+                  'class',
+                  svgHovered ? 'hovered' : ''
+                );
+              }
+              function getTouchCenter(touch1, touch2) {
+                const rect = options.svgElement.getBoundingClientRect();
+                return {
+                  x: (touch1.clientX + touch2.clientX) / 2 - rect.left,
+                  y: (touch1.clientY + touch2.clientY) / 2 - rect.top,
+                };
+              }
+              function getRelativePoint(svgElement, x, y) {
+                const ctm = svgElement.getScreenCTM();
+                const point = svgElement.createSVGPoint();
+                point.x = x;
+                point.y = y;
+                return point.matrixTransform(ctm.inverse());
+              }
+              this.listeners = {
+                mouseenter: function () {
+                  svgHovered = true;
+                  options.instance.enableZoom();
+                  updateSvgClassName();
+                },
+                mouseleave: function () {
+                  svgHovered = false;
+                  updateSvgClassName();
+                },
+                touchstart: function (evt) {
+                  touchStarted = true;
+                  if (evt.touches.length === 2) {
+                    const touch1 = evt.touches[0];
+                    const touch2 = evt.touches[1];
+                    initialPinchDistance = Math.hypot(
+                      touch2.clientX - touch1.clientX,
+                      touch2.clientY - touch1.clientY
                     );
-                    const svgPoint = getRelativePoint(
-                      options.svgElement,
-                      currentCenter.x,
-                      currentCenter.y
-                    );
-                    const zoomPoint = { x: svgPoint.x, y: svgPoint.y };
-                    options.instance.zoom(newScale, zoomPoint);
-                    if (lastPinchCenter) {
-                      const dx = currentCenter.x - lastPinchCenter.x;
-                      const dy = currentCenter.y - lastPinchCenter.y;
-                      options.instance.panBy({ x: dx, y: dy });
-                    }
-                    lastPinchCenter = currentCenter;
+                    lastPinchCenter = getTouchCenter(touch1, touch2);
+                    initialScale = options.instance.getZoom();
                   }
-                } else if (evt.touches.length === 1) {
-                  const touch = evt.touches[0];
-                  const dx = touch.clientX - (this.lastX || touch.clientX);
-                  const dy = touch.clientY - (this.lastY || touch.clientY);
-                  options.instance.panBy({ x: dx, y: dy });
-                  this.lastX = touch.clientX;
-                  this.lastY = touch.clientY;
-                }
-              },
-              touchend: function () {
-                touchStarted = false;
-                initialPinchDistance = null;
-                initialScale = null;
-                lastPinchCenter = null;
-                delete this.lastX;
-                delete this.lastY;
-              },
-              touchcancel: function () {
-                touchStarted = false;
-                initialPinchDistance = null;
-                initialScale = null;
-                lastPinchCenter = null;
-                delete this.lastX;
-                delete this.lastY;
-              },
-            };
-            this.listeners.mousemove = this.listeners.mouseenter;
-            for (const eventName in this.listeners) {
-              options.svgElement.addEventListener(
-                eventName,
-                this.listeners[eventName]
-              );
-            }
+                  evt.preventDefault();
+                },
+                touchmove: function (evt) {
+                  if (!touchStarted) return;
+                  evt.preventDefault();
+                  if (evt.touches.length === 2) {
+                    const touch1 = evt.touches[0];
+                    const touch2 = evt.touches[1];
+                    const currentDistance = Math.hypot(
+                      touch2.clientX - touch1.clientX,
+                      touch2.clientY - touch1.clientY
+                    );
+                    const currentCenter = getTouchCenter(touch1, touch2);
+                    if (initialPinchDistance && initialScale && lastPinchCenter) {
+                      const scaleFactor = currentDistance / initialPinchDistance;
+                      const newScale = Math.min(
+                        Math.max(initialScale * scaleFactor, 0.1),
+                        10
+                      );
+                      const svgPoint = getRelativePoint(
+                        options.svgElement,
+                        currentCenter.x,
+                        currentCenter.y
+                      );
+                      const zoomPoint = { x: svgPoint.x, y: svgPoint.y };
+                      options.instance.zoom(newScale, zoomPoint);
+                      if (lastPinchCenter) {
+                        const dx = currentCenter.x - lastPinchCenter.x;
+                        const dy = currentCenter.y - lastPinchCenter.y;
+                        options.instance.panBy({ x: dx, y: dy });
+                      }
+                      lastPinchCenter = currentCenter;
+                    }
+                  } else if (evt.touches.length === 1) {
+                    const touch = evt.touches[0];
+                    const dx = touch.clientX - (this.lastX || touch.clientX);
+                    const dy = touch.clientY - (this.lastY || touch.clientY);
+                    options.instance.panBy({ x: dx, y: dy });
+                    this.lastX = touch.clientX;
+                    this.lastY = touch.clientY;
+                  }
+                },
+                touchend: function () {
+                  touchStarted = false;
+                  initialPinchDistance = null;
+                  initialScale = null;
+                  lastPinchCenter = null;
+                  delete this.lastX;
+                  delete this.lastY;
+                },
+                touchcancel: function () {
+                  touchStarted = false;
+                  initialPinchDistance = null;
+                  initialScale = null;
+                  lastPinchCenter = null;
+                  delete this.lastX;
+                  delete this.lastY;
+                },
+              };
+              this.listeners.mousemove = this.listeners.mouseenter;
+              for (const eventName in this.listeners) {
+                options.svgElement.addEventListener(
+                  eventName,
+                  this.listeners[eventName]
+                );
+              }
+            },
+            destroy: function (options) {
+              for (const eventName in this.listeners) {
+                options.svgElement.removeEventListener(
+                  eventName,
+                  this.listeners[eventName]
+                );
+              }
+            },
           },
-          destroy: function (options) {
-            for (const eventName in this.listeners) {
-              options.svgElement.removeEventListener(
-                eventName,
-                this.listeners[eventName]
-              );
-            }
-          },
-        },
-      });
-      setPanZoomInstance(instance);
-    } catch (error) {
-      console.error('Error initializing svgPanZoom:', error);
-      // Don't set panZoomInstance if initialization failed
-    }
+        });
+        setPanZoomInstance(instance);
+      } catch (error) {
+        console.error('Error initializing svgPanZoom:', error);
+        // Don't set panZoomInstance if initialization failed
+      }
     }, 100);
 
     return () => {
@@ -733,7 +930,7 @@ const ConBeheerViews = ({ store }) => {
       }
       setPanZoomInstance(null);
     };
-  }, [gemma, viewIsDoneLoading, viewNodesData, viewRelationsData]);
+  }, [gemma, viewIsDoneLoading]);
 
   // Download SVG (aligned with public viewer)
   const downloadSvg = () => {
@@ -820,28 +1017,38 @@ const ConBeheerViews = ({ store }) => {
                         try {
                           const response = await fetch(
                             '/api/apps/softwarecatalog/api/archimate/export',
-                            { 
+                            {
                               method: 'POST',
                               headers: {
-                                'Accept': 'application/xml',
+                                Accept: 'application/xml',
                               },
                             }
                           );
 
                           if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
+                            throw new Error(
+                              `HTTP error! status: ${response.status}`
+                            );
                           }
 
                           // Get the XML content
                           const xmlData = await response.text();
 
                           // Extract filename from Content-Disposition header if available
-                          const disposition = response.headers.get('content-disposition');
-                          const filenameMatch = disposition?.match(/filename="?([^";]+)"?/i);
-                          const filename = filenameMatch?.[1] || `${getViewName(gemma.get_view).replace(/[^a-z0-9]/gi, '_').toLowerCase()}_amef.xml`;
+                          const disposition =
+                            response.headers.get('content-disposition');
+                          const filenameMatch =
+                            disposition?.match(/filename="?([^";]+)"?/i);
+                          const filename =
+                            filenameMatch?.[1] ||
+                            `${getViewName(gemma.get_view)
+                              .replace(/[^a-z0-9]/gi, '_')
+                              .toLowerCase()}_amef.xml`;
 
                           // Create blob and download
-                          const blob = new Blob([xmlData], { type: 'application/xml;charset=utf-8' });
+                          const blob = new Blob([xmlData], {
+                            type: 'application/xml;charset=utf-8',
+                          });
                           const url = URL.createObjectURL(blob);
                           const a = document.createElement('a');
                           a.href = url;
@@ -849,7 +1056,7 @@ const ConBeheerViews = ({ store }) => {
                           document.body.appendChild(a);
                           a.click();
                           document.body.removeChild(a);
-                          
+
                           // Cleanup
                           URL.revokeObjectURL(url);
                         } catch (error) {
@@ -889,12 +1096,12 @@ const ConBeheerViews = ({ store }) => {
                 />
 
                 <AcCheckbox
-                  label='Product'
-                  checked={filters.product}
+                  label='Applicaties'
+                  checked={filters.applicaties}
                   tooltip={
-                    'Toon product-gerelateerde elementen en hun onderlinge relaties'
+                    'Toon applicaties die uw organisatie aanbiedt en hun onderlinge relaties'
                   }
-                  onChange={handleToggleFilter('product')}
+                  onChange={handleToggleFilter('applicaties')}
                 />
 
                 <AcCheckbox
@@ -929,14 +1136,58 @@ const ConBeheerViews = ({ store }) => {
             <>
               {/* Graph Container */}
               {viewNodesData && viewRelationsData && (
-                <div
-                  className='con-beheer-views-graph-container'
-                  id='graph-container'
-                ></div>
+                <div style={{ position: 'relative' }}>
+                  {/* Frozen view overlay during filter transition */}
+                  {frozenViewHtml && isFilterTransition && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        zIndex: 10,
+                        pointerEvents: 'none',
+                      }}
+                    >
+                      <div
+                        dangerouslySetInnerHTML={{ __html: frozenViewHtml }}
+                        style={{
+                          opacity: 0.6,
+                          filter: 'grayscale(50%)',
+                        }}
+                      />
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <AcLoader />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Real graph container */}
+                  <div
+                    className='con-beheer-views-graph-container'
+                    id='graph-container'
+                    style={{
+                      visibility: isFilterTransition ? 'hidden' : 'visible',
+                    }}
+                  ></div>
+                </div>
               )}
 
               {/* Loading indicator for graph rendering */}
-              {gemma?.get_view && !viewIsDoneLoading && (
+              {gemma?.get_view && !viewIsDoneLoading && !isFilterTransition && (
                 <div className='con-beheer-views-graph-loading'>
                   <AcLoader />
                   <p>Weergave wordt geladen...</p>
