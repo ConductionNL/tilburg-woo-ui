@@ -28,7 +28,7 @@ const AcFooter = ({ store: { menu, user } }) => {
   const getFooterStaticContent = () => {
     return (
       <span>
-        <span>{getFooterLogoTitle() || 'Softwarecatalogus'}</span>
+        <span>{getFooterLogoTitle() || 'softwarecatalogus'}</span>
         <span>
           {getFooterLogoSubtitle() ||
             'Één plek voor alle software voor en door Gemeenten'}
