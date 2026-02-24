@@ -1,0 +1,28 @@
+@use '../global/breakpoints' as *;
+@use '../global/mixins/respond' as *;
+
+.ac-quote {
+  background-color: var(--tilburg-color-primary-50, #e8f0fe);
+
+  &__content {
+    text-align: center;
+    margin: 0;
+    padding: var(--tilburg-space-block-horse, 2rem) 0;
+
+    h2 {
+      font-size: var(--tilburg-typography-font-size-xl, 1.5rem);
+      font-weight: 700;
+      margin-bottom: var(--tilburg-space-block-rabbit, 0.5rem);
+
+      @include respond-max($screen-sm) {
+        font-size: var(--tilburg-typography-font-size-lg, 1.25rem);
+      }
+    }
+
+    p {
+      font-size: var(--tilburg-typography-font-size-md, 1rem);
+      color: var(--tilburg-color-neutral-600, #555);
+      margin: 0;
+    }
+  }
+}
