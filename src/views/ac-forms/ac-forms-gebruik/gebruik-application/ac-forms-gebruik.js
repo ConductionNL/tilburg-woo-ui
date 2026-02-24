@@ -2613,9 +2613,9 @@ const AcFormsGebruik = ({ store }) => {
                       deelnemers: [],
                       koppelingen: [],
                       diensten: [],
-                      startDatumInProductie: new Date().toISOString().split('T')[0],
+                      startDatumVerwerving: '',
                       startDatumGepland: '',
-                      startDatumInProductie: '',
+                      startDatumInProductie: new Date().toISOString().split('T')[0],
                       startDatumUitTeFaseren: '',
                       startDatumUitGefaseerd: '',
                     });
