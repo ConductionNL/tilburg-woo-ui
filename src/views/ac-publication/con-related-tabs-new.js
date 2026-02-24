@@ -215,7 +215,7 @@ const renderCard = (item, object, navigateTo, user, schemas) => {
         <ConCardKoppeling
           key={item.id}
           id={item.id}
-          title={item.naam}
+          title={item['@self']?.name ?? item.naam}
           item={item}
           source={item.bronApplicatie}
           target={item.doelApplicatie}
