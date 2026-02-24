@@ -191,7 +191,7 @@ const DetailsPageConfigFactory = {
         return {
           ...baseDetailsConfig,
           ...beheerConfig,
-          excludedProperties: ['id', 'voornaam', 'achternaam'],
+          excludedProperties: ['id', 'voornaam', 'tussenvoegsel', 'achternaam'],
           formatBySchemaOptions: {
             profile: {
               organisatie: { include: ['naam'], includeUnknown: true, inline: true },
