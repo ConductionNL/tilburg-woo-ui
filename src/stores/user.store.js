@@ -525,10 +525,12 @@ export class UserStore {
     this.setLoading(true, 'Uitloggen...');
 
     try {
+      // Clear cookies early so session is gone regardless of backend response
+      this.clearNextcloudCookies();
+
       // If using session auth, try to call logout endpoint
       if (this.authMethod === 'session') {
         try {
-          // Use the proper API client instead of hardcoded fetch
           if (app.store.api && app.store.api.auth) {
             await app.store.api.auth.sessionLogout();
           }
@@ -558,14 +560,15 @@ export class UserStore {
 
       this.setLoading(false);
 
-      // Clear any nextcloud cookies
+      // Clear cookies again after backend call to catch any that were re-set
       this.clearNextcloudCookies();
 
       return { success: true };
     } catch (error) {
       console.error('Logout failed:', error);
-      this.clearUser(); // Clear anyway
-      this.clearStorage(); // Clear localStorage anyway
+      this.clearUser();
+      this.clearStorage();
+      this.clearNextcloudCookies();
       this.setLoading(false);
       return { success: false, error: error.message };
     }
@@ -623,19 +626,43 @@ export class UserStore {
   // Clear Nextcloud authentication cookies
   @action
   clearNextcloudCookies = () => {
+    // Known cookie names to clear explicitly
     const cookiesToClear = [
       'nextcloud_access_token',
       'nextcloud_refresh_token',
       'nextcloud_user_id',
       'nextcloud_client_id',
       'nextcloud_secret_key',
-      'logout', // Clear the logout cookie that causes immediate logout
+      'openconnector_access_token',
+      'logout',
+      'oc_sessionPassphrase',
+      'nc_sameSiteCookielax',
+      'nc_sameSiteCookiestrict',
+      'nc_username',
+      'nc_token',
+      'nc_session_id',
+      'sessionid',
+      'csrftoken',
     ];
 
+    const paths = ['/', '/index.php', '/apps'];
+    const expiry = 'expires=Thu, 01 Jan 1970 00:00:00 GMT';
+
     cookiesToClear.forEach((cookieName) => {
-      document.cookie = `${encodeURIComponent(
-        cookieName
-      )}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+      paths.forEach((path) => {
+        document.cookie = `${cookieName}=; ${expiry}; path=${path}`;
+      });
+    });
+
+    // Clear any remaining Nextcloud session cookies with dynamic names
+    // (e.g. session ID cookies like "oc6fgt938z8c")
+    document.cookie.split(';').forEach((cookie) => {
+      const name = cookie.split('=')[0].trim();
+      if (name.startsWith('oc') || name.startsWith('nc_')) {
+        paths.forEach((path) => {
+          document.cookie = `${name}=; ${expiry}; path=${path}`;
+        });
+      }
     });
   };
 
