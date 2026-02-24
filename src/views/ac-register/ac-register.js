@@ -608,13 +608,11 @@ const AcRegister = () => {
             <AcColumn gap='sm'>
               <Heading level={2}>Er is iets misgegaan</Heading>
               <p>
-                Beste {organization.contactPersons[0].firstName}{' '}
-                {organization.contactPersons[0].middleName}{' '}
-                {organization.contactPersons[0].lastName} van {organization.name},
+                Beste {[organization.contactPersons[0].firstName, organization.contactPersons[0].middleName, organization.contactPersons[0].lastName].filter(Boolean).join(' ')} van {organization.name},
               </p>
               <p>
                 Er ging iets mis bij het verwerken van je aanmelding voor de
-                Softwarecatalogus.{' '}
+                softwarecatalogus.{' '}
                 {error.message ? '' : 'Dit kan verschillende oorzaken hebben:'}
               </p>
               {!error.errors && !error.message && (
@@ -650,7 +648,7 @@ const AcRegister = () => {
               </p>
               <p>Met vriendelijke groet,</p>
               <br />
-              <p>Het team van de Softwarecatalogus</p>
+              <p>Het team van de softwarecatalogus</p>
               <br />
               <AcButton
                 style='button'
@@ -700,7 +698,7 @@ const OrganizationRequiredForm = memo(
                   <Heading level={3}>Gemeenten zijn al aangemeld</Heading>
                   <Paragraph>
                     Alle Nederlandse gemeenten zijn al opgenomen in de
-                    Softwarecatalogus. Ook is voor elke gemeente een inlogaccount
+                    softwarecatalogus. Ook is voor elke gemeente een inlogaccount
                     beschikbaar om het gemeentelijk applicatieportfolio te beheren.
                     Bent u gemeentemedewerker en heeft u zelf nog geen persoonlijk
                     account? Vraag dan binnen uw gemeente na wie een beheeraccount
@@ -734,7 +732,7 @@ const OrganizationRequiredForm = memo(
                   </Heading>
                   <Paragraph>
                     Veel gemeentelijke samenwerkingsverbanden zijn al opgenomen in de
-                    Softwarecatalogus. Controleer daarom eerst de lijst &quot;Alle
+                    softwarecatalogus. Controleer daarom eerst de lijst &quot;Alle
                     samenwerkingsverbanden&quot;. Staat uw samenwerkingsverband
                     ertussen? Vraag dan toegang aan bij de beheerder - vaak de
                     ICT-verantwoordelijke.{' '}
@@ -1096,7 +1094,7 @@ const ContactInformationForm = memo(
                     <Paragraph>
                       De geregistreerde contactpersoon is het eerste aanspreekpunt
                       van de organisatie en beheerder van de gebruikers van de
-                      Softwarecatalogus namens uw organisatie. Dit kan op een later
+                      softwarecatalogus namens uw organisatie. Dit kan op een later
                       moment nog gewijzigd worden.
                     </Paragraph>
                   </AcFlex>
@@ -1275,9 +1273,7 @@ const ReviewForm = memo(
             <Separator className='ac-register-review-header__separator' />
             <div className='ac-register-review__field'>
               <strong>Naam:</strong>
-              {organization.contactPersons[0].firstName || '-'}{' '}
-              {organization.contactPersons[0].middleName || ' '}
-              {organization.contactPersons[0].lastName || '-'}
+              {[organization.contactPersons[0].firstName, organization.contactPersons[0].middleName, organization.contactPersons[0].lastName].filter(Boolean).join(' ') || '-'}
             </div>
             <div className='ac-register-review__field'>
               <strong>Telefoonnummer:</strong>
