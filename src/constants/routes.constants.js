@@ -118,7 +118,7 @@ const getTitle = () => {
     case 'vng.opencatalogi.nl':
     case 'acceptatie.softwarecatalogus.nl':
     case 'vng.test.opencatalogi.nl':
-      return 'Softwarecatalogus';
+      return 'softwarecatalogus';
     case 'open-tilburg.accept.commonground.nu':
       return 'Open Tilburg';
     case 'open-dimpact.accept.commonground.nu':
@@ -525,7 +525,7 @@ export const VNG_ROUTES_INFORMATIE = {
   },
   MELD_AAN_VNG_REALISATIE: {
     label: 'Meld aan VNG Realisatie',
-    href: 'mailto:softwarecatalogus@vng.nl?subject=Softwarecatalogus: Terugmelding GEMMA Softwarecatalogus&amp;body=Hierbij ontvangt u mijn op- en aanmerkingen over de pagina https://www.softwarecatalogus.nl/swchome in de GEMMA softwarecatalogus.',
+    href: 'mailto:softwarecatalogus@vng.nl?subject=softwarecatalogus: Terugmelding GEMMA softwarecatalogus&amp;body=Hierbij ontvangt u mijn op- en aanmerkingen over de pagina https://www.softwarecatalogus.nl/swchome in de GEMMA softwarecatalogus.',
   },
 };
 
