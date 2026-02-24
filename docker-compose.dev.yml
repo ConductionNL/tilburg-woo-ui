@@ -33,7 +33,7 @@ services:
       - NGINX_TARGET_HOST=nextcloud.local
       - NGINX_ROOT_DIR=/app/public_html
       # Site Configuration
-      - SITE_TITLE=Environment Config Test ✅
+      - SITE_TITLE=Softwarecatalogus
       - SITE_DESCRIPTION=Development instance of the softwarecatalogus
       - SITE=localhost
       - MODE=development
@@ -118,7 +118,7 @@ services:
       - GENERATE_SOURCEMAP=true
       - BROWSER=none
       # Site Configuration
-      - SITE_TITLE=Hot Reload Development 🔥
+      - SITE_TITLE=Softwarecatalogus
       - SITE_DESCRIPTION=Hot reload development instance
       - SITE=localhost
       - MODE=development
@@ -167,8 +167,8 @@ services:
       # Menu Configuration
       - FOOTER_STYLE=vng
       # Footer Text Configuration
-      - FOOTER_LOGO_TITLE=Open Tilburg
-      - FOOTER_LOGO_SUBTITLE=Één plek voor alle publicaties van Gemeente Tilburg
+      - FOOTER_LOGO_TITLE=Softwarecatalogus
+      - FOOTER_LOGO_SUBTITLE=Één plek voor alle software voor en door Gemeenten
       # Search Configuration
       - DEFAULT_SEARCH_SCHEMA=18
       # Chat Configuration (test URL for development)
