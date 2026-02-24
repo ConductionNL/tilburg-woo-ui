@@ -153,7 +153,7 @@ const AcFormsGebruik = ({ store }) => {
 
       const mapped = {
         id: api.id || api?.['@self']?.id || '',
-        status: api.status || 'Verwerving',
+        status: api.status || 'In productie',
         contactpersoon: createContactpersoonObject(
           api.contactpersoon || api?.['@self']?.relations?.contactpersoon
         ),
@@ -686,8 +686,8 @@ const AcFormsGebruik = ({ store }) => {
             gebruikSchema,
             'gebruik',
             {
-              status: 'Verwerving',
-              startDatumVerwerving: new Date().toISOString().split('T')[0],
+              status: 'In productie',
+              startDatumInProductie: new Date().toISOString().split('T')[0],
             }
           );
           if (!isEditMode) setGebruik((prev) => ({ ...defaultGebruik, ...prev }));
@@ -1646,8 +1646,8 @@ const AcFormsGebruik = ({ store }) => {
           module: gebruik.module,
           afnemer: klantId,
           // status is a required field
-          status: 'Verwerving',
-          startDatumVerwerving: new Date().toISOString().split('T')[0],
+          status: 'In productie',
+          startDatumInProductie: new Date().toISOString().split('T')[0],
         }));
 
         try {
@@ -1861,7 +1861,7 @@ const AcFormsGebruik = ({ store }) => {
           applicatieKeuze === 'nieuw' && createdVersieId
             ? createdVersieId
             : gebruik?.moduleVersie,
-        status: gebruik?.status || 'Verwerving',
+        status: gebruik?.status || 'In productie',
       };
 
       // Submit to the gebruik endpoint using the object store
@@ -2603,7 +2603,7 @@ const AcFormsGebruik = ({ store }) => {
                     stepper.resetCurrentStep();
                     setGebruik({
                       id: '',
-                      status: 'Verwerving',
+                      status: 'In productie',
                       contactpersoon: '',
                       afnemer: null,
                       product: null,
@@ -2613,9 +2613,9 @@ const AcFormsGebruik = ({ store }) => {
                       deelnemers: [],
                       koppelingen: [],
                       diensten: [],
-                      startDatumVerwerving: new Date().toISOString().split('T')[0],
+                      startDatumVerwerving: '',
                       startDatumGepland: '',
-                      startDatumInProductie: '',
+                      startDatumInProductie: new Date().toISOString().split('T')[0],
                       startDatumUitTeFaseren: '',
                       startDatumUitGefaseerd: '',
                     });
