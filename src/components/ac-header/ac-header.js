@@ -19,7 +19,7 @@ const AcHeader = ({ store: { menu, user, object } }) => {
 
   // Get sub menu items from position 2 with authentication and group filtering
   const menuItems =
-    menu.getMenuFromPosition(2, user.isAuthenticated, user.userGroups || []) || null;
+    menu.getMenuFromPosition(2, user?.isAuthenticated, user?.userGroups || []) || null;
 
   // Determine if we are at or below the md breakpoint (matches SCSS $screen-md = 1024px)
   const windowWidth = useWindowSize();
@@ -28,7 +28,7 @@ const AcHeader = ({ store: { menu, user, object } }) => {
   // Get admin dashboard menu (position 7) for injecting as dropdown on small screens
   const adminMenu = menu.getAdminDashboardMenu(
     user.isAuthenticated,
-    user.userGroups || []
+    user?.userGroups || []
   );
 
   // State to store full organization data

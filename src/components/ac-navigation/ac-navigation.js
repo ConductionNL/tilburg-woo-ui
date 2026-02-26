@@ -14,7 +14,7 @@ const AcNavigation = ({ store: { menu, user } }) => {
   const activeMenu = getMenuFromPosition(
     1,
     user.isAuthenticated,
-    user.userGroups || []
+    user?.userGroups || []
   );
 
   // Filter out login/register items when user is authenticated

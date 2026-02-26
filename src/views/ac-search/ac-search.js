@@ -264,7 +264,8 @@ const AcSearch = ({ store: { publications, user, object } }) => {
               created={selfData.created}
               category={selfData.schema.title}
               title={extractTitle(
-                selfData?.name ??
+                publication.titelViewSwc ??
+                  selfData?.name ??
                   publication.title ??
                   publication.titel ??
                   publication.name ??

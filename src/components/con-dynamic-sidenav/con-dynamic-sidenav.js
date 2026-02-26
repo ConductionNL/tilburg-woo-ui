@@ -28,8 +28,8 @@ const ConDynamicSidenav = ({ store: { menu, user } }) => {
 
   // Get admin dashboard menu from position 7 with user groups
   const dashboardMenu = useMemo(() => menu.getAdminDashboardMenu(
-    user.isAuthenticated,
-    user.userGroups || []
+    user?.isAuthenticated,
+    user?.userGroups || []
   ), [menu.items]);
 
   // Icon mapping for menu items

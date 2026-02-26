@@ -83,8 +83,8 @@ const AcBeheer = ({ store }) => {
 
     // Get admin dashboard menu to check valid types
     const dashboardMenu = menu.getAdminDashboardMenu(
-      user.isAuthenticated,
-      user.userGroups || []
+      user?.isAuthenticated,
+      user?.userGroups || []
     );
 
     if (

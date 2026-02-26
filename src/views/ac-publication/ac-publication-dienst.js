@@ -15,7 +15,6 @@ import {
 import { commongroundApiUrl } from '@config';
 import { schemaCache } from '@services/schemaCache.service';
 import RelatedTabs from '@views/ac-publication/con-related-tabs-new';
-import { createBeschrijvingTab } from '@views/ac-publication/helpers/beschrijving-tab.helper';
 import ConLogoPreview from '../ac-register/con-logo-preview';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
@@ -326,27 +325,25 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
               {get_single?.beschrijvingKort}
             </div>
           )}
-        </div>
-
-        <div>
-          <br />
           {!!get_single?.beschrijvingLang && (
-            <MDEditor.Markdown
-              wrapperElement={{ 'data-color-mode': 'light' }}
-              source={get_single?.beschrijvingLang}
-              remarkPlugins={[
-                [remarkGfm, { singleTilde: false }],
-                remarkDefinitionList,
-                remarkEmoji,
-                remarkSupersub,
-                remarkMark,
-              ]}
-              rehypePlugins={[
-                rehypeSlug,
-                [rehypeSanitize],
-                [remarkRehype, { handlers: { ...defListHastHandlers } }],
-              ]}
-            />
+            <div style={{ marginTop: 'var(--tilburg-space-block-md, 1rem)' }}>
+              <MDEditor.Markdown
+                wrapperElement={{ 'data-color-mode': 'light' }}
+                source={get_single?.beschrijvingLang}
+                remarkPlugins={[
+                  [remarkGfm, { singleTilde: false }],
+                  remarkDefinitionList,
+                  remarkEmoji,
+                  remarkSupersub,
+                  remarkMark,
+                ]}
+                rehypePlugins={[
+                  rehypeSlug,
+                  [rehypeSanitize],
+                  [remarkRehype, { handlers: { ...defListHastHandlers } }],
+                ]}
+              />
+            </div>
           )}
         </div>
 
@@ -440,7 +437,7 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
             object={object}
             navigateTo='publication'
             user={user}
-            customTabsBefore={[createBeschrijvingTab(get_single)]}
+            customTabsBefore={[]}
           />
         </div>
 
