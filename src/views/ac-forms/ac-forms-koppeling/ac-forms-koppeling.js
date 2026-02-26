@@ -1505,15 +1505,15 @@ const AcFormsKoppeling = ({ store }) => {
    * @param {Object} createdModuleIds - Optional object mapping rowId to created module ID
    * @param {string} createdOwnAppId - Optional ID of newly created own app (Applicatie A)
    */
-  const serializeRowsToPayload = (createdModuleIds = {}, createdOwnAppId = null) => {
-    return rows
-      .map((rowId) => {
+  const serializeRowsToPayload = async (createdModuleIds = {}, createdOwnAppId = null) => {
+    const results = [];
+    for (const rowId of rows) {
         let naam = (nameByRow[rowId] || '').trim();
         // Use created own app ID if available, otherwise use selected existing app
         const appAId = createdOwnAppId || selectedAppAByRow[rowId] || ownApp?.value;
         // Use created module ID if available, otherwise use selected existing app
         const appBId = createdModuleIds[rowId] || selectedAppBByRow[rowId];
-        if (!appAId || !appBId) return null;
+        if (!appAId || !appBId) { results.push(null); continue; }
         const richting = directionByRow[rowId] || '';
         const soort = typeByRow[rowId] || '';
         const beschrijving = beschrijvingByRow[rowId] || '';
@@ -1523,6 +1523,7 @@ const AcFormsKoppeling = ({ store }) => {
         const intermediair = intermediairByRow[rowId] || '';
 
         // Generate default name if not provided: "AppA name → AppB name"
+        // Resolve labels via API if not cached to avoid UUIDs in names
         if (!naam) {
           const appALabel =
             (ownAppKeuze === 'nieuw' ? nieuweOwnApp?.naam : null) ||
@@ -1532,14 +1533,14 @@ const AcFormsKoppeling = ({ store }) => {
             ownAppOptions.find((opt) => String(opt.value) === String(appAId))
               ?.label ||
             ownApp?.label ||
-            appAId;
+            await ensureModuleOptionAndGetLabel(appAId);
           const appBLabel =
             selectedModuleLabels[appBId] ||
             modulesOptions.find((opt) => String(opt.value) === String(appBId))
               ?.label ||
             ownAppOptions.find((opt) => String(opt.value) === String(appBId))
               ?.label ||
-            appBId;
+            await ensureModuleOptionAndGetLabel(appBId);
           const arrow = getArrowForDirection(richting);
           naam = `${appALabel} ${arrow} ${appBLabel}`;
         }
@@ -1616,9 +1617,9 @@ const AcFormsKoppeling = ({ store }) => {
           }
         }
 
-        return payload;
-      })
-      .filter(Boolean);
+        results.push(payload);
+    }
+    return results.filter(Boolean);
   };
 
   const loadStandaardversies = useCallback(async () => {
@@ -2128,7 +2129,7 @@ const AcFormsKoppeling = ({ store }) => {
       }
 
       // Now serialize payloads with created module IDs and own app ID
-      const payloads = serializeRowsToPayload(createdModuleIds, createdOwnAppId);
+      const payloads = await serializeRowsToPayload(createdModuleIds, createdOwnAppId);
       if (!payloads.length) {
         setSaveLoading(false);
         return;
@@ -2637,7 +2638,6 @@ const AcFormsKoppeling = ({ store }) => {
                             directionByRow,
                             typeByRow,
                             koppelingIdByRow,
-                            payloads: serializeRowsToPayload(),
                           },
                           null,
                           2
