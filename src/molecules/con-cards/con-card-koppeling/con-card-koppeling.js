@@ -31,9 +31,9 @@ const ConCardKoppeling = ({
     }
   };
 
-  // Handle both individual props (source/target) and item object format
-  const moduleA = source || item?.moduleA;
-  const moduleB = target || item?.moduleB || item?.buitengemeentelijkVoorziening;
+  // Handle both individual props (source/target), item fields, and @self.relations fallback
+  const moduleA = source || item?.moduleA || item?.['@self']?.relations?.moduleA;
+  const moduleB = target || item?.moduleB || item?.buitengemeentelijkVoorziening || item?.['@self']?.relations?.moduleB || item?.['@self']?.relations?.buitengemeentelijkVoorziening;
   const richtingDataUitwisseling = item?.gegevensuitwisselingRichting;
   const status = item?.status;
   const createdDate = created || item?.['@self']?.created;

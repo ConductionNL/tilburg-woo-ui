@@ -133,6 +133,9 @@ const BeheerTable = forwardRef(({ store, ...props }, ref) => {
       _limit: pagination?.limit || 9999,
       _page: pagination?.page || 1,
       ...(config.multi !== false && { _multi: true }), // Enable multitenancy unless explicitly disabled
+      ...(Array.isArray(config.extend) && config.extend.length > 0 && {
+        '_extend[]': config.extend,
+      }),
       ...searchParams,
     };
 

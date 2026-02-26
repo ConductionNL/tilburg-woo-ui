@@ -284,7 +284,7 @@ const ConGenericBeheerDeleteModal = ({
     <AcModal
       ref={modalRef}
       id='generic-delete-modal'
-      title={`${isSingular ? displayName : `${displayName}s`} verwijderen`}
+      title={`${entityTypeLabel ? (isSingular ? entityTypeLabel.singular : entityTypeLabel.plural) : (isSingular ? displayName : `${displayName}s`)} verwijderen`}
       buttons={[
         {
           label: 'Annuleren',
@@ -317,7 +317,11 @@ const ConGenericBeheerDeleteModal = ({
               <VISUALS.SPINNER />
               <Paragraph>
                 Controleren of{' '}
-                {isSingular
+                {entityTypeLabel
+                  ? isSingular
+                    ? `deze ${entityTypeLabel.singular}`
+                    : `deze ${entityTypeLabel.plural}`
+                  : isSingular
                   ? `dit ${displayNameLower}`
                   : `deze ${displayNameLower}s`}{' '}
                 wordt gebruikt door andere objecten...
@@ -420,9 +424,17 @@ const ConGenericBeheerDeleteModal = ({
         {/* Always show confirmation text and object list */}
         <Paragraph>
           {usageCheckComplete && hasUsedObjects
-            ? `Je kunt ${
-                isSingular ? `dit ${displayNameLower}` : `deze ${displayNameLower}s`
-              } pas verwijderen nadat alle afhankelijkheden zijn weggenomen.`
+            ? entityTypeLabel
+              ? `Je kunt ${
+                  isSingular ? `deze ${entityTypeLabel.singular} ${formattedNames}` : `deze ${entityTypeLabel.plural}`
+                } pas verwijderen nadat alle afhankelijkheden zijn weggenomen.`
+              : `Je kunt ${
+                  isSingular ? `dit ${displayNameLower}` : `deze ${displayNameLower}s`
+                } pas verwijderen nadat alle afhankelijkheden zijn weggenomen.`
+            : entityTypeLabel
+            ? `Weet je zeker dat je ${
+                isSingular ? `de ${entityTypeLabel.singular} ${formattedNames}` : `deze ${entityTypeLabel.plural}`
+              } wilt verwijderen?`
             : `Weet je zeker dat je ${
                 isSingular ? `dit ${displayNameLower}` : `deze ${displayNameLower}s`
               } wilt verwijderen?`}
@@ -437,7 +449,11 @@ const ConGenericBeheerDeleteModal = ({
           }}
         >
           <Paragraph style={{ fontWeight: '600', marginBottom: '0.5rem' }}>
-            {isSingular ? 'Te verwijderen object:' : 'Te verwijderen objecten:'}
+            {entityTypeLabel
+              ? isSingular
+                ? `Te verwijderen ${entityTypeLabel.singular}:`
+                : `Te verwijderen ${entityTypeLabel.plural}:`
+              : isSingular ? 'Te verwijderen object:' : 'Te verwijderen objecten:'}
           </Paragraph>
           {objects.map((obj) => (
             <Paragraph key={obj.id} style={{ marginLeft: '1rem' }}>
