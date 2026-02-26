@@ -87,8 +87,8 @@ const ConCardKoppeling = ({
         style={{ marginBottom: 'var(--spacing-default)' }}
       >
         <Paragraph>
-          <ConUuidResolver>{moduleA}</ConUuidResolver> {arrow}{' '}
-          <ConUuidResolver>{moduleB}</ConUuidResolver>
+          {moduleA ? <ConUuidResolver>{moduleA}</ConUuidResolver> : <em>Onbekend</em>} {arrow}{' '}
+          {moduleB ? <ConUuidResolver>{moduleB}</ConUuidResolver> : <em>Onbekend</em>}
         </Paragraph>
       </AcFlex>
 

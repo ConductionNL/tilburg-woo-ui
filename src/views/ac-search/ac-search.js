@@ -279,6 +279,7 @@ const AcSearch = ({ store: { publications, user, object } }) => {
               schemaSlug={selfData?.schema?.slug}
               self={selfData}
               key={index}
+              navigateTo={selfData?.schema?.slug === 'weergave' || selfData?.schema?.slug === 'view' ? 'view' : 'publication'}
             />
           );
       }
