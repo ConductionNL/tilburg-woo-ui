@@ -91,7 +91,7 @@ const BeheerPageConfigFactory = {
           disableDeleteAction: false, // Enable delete action voor applicaties
           disableImport: true, // Import not needed for applicaties
           disableView: true, // View not needed for applicaties
-          extend: ['moduleVersies'],
+          extend: ['moduleVersies', 'contactpersoon', 'diensten'],
           defaultHeaders: [
             'naam',
             'referentieComponenten',
@@ -165,6 +165,23 @@ const BeheerPageConfigFactory = {
 
                 // Fallback
                 return '-';
+              },
+            },
+            contactpersoon: {
+              id: 'contactpersoon',
+              label: 'Contactpersoon',
+              key: 'contactpersoon',
+              customContent: (row) => {
+                const cp = row?.contactpersoon;
+                if (!cp) return '-';
+                // If it's an array, take the first one
+                const person = Array.isArray(cp) ? cp[0] : cp;
+                if (!person) return '-';
+                if (typeof person === 'string') {
+                  return <ConUuidResolver>{person}</ConUuidResolver>;
+                }
+                const fullName = [person?.voornaam, person?.tussenvoegsel, person?.achternaam].filter(Boolean).join(' ');
+                return fullName || person?.['@self']?.name || '-';
               },
             },
             koppelingen: {
@@ -638,6 +655,7 @@ const BeheerPageConfigFactory = {
           paginationKey: 'contactpersoon',
           title: 'Contactpersoon',
           routeType: 'contactpersoon',
+          multi: false, // Disable _multi to enforce per-org RBAC scoping
           disableRelatedCreateActions: true, // Only show basic actions for contactpersonen
           disableImport: true, // Import not needed for contactpersonen
           disableView: true, // View not needed for contactpersonen
