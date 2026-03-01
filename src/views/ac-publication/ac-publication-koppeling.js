@@ -305,7 +305,11 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
                   <AcFlex spacing='xs'>
                     <ConUuidResolver>{String(moduleAId)}</ConUuidResolver>
                     {richtingIcon}
-                    <ConUuidResolver>{String(moduleBId)}</ConUuidResolver>
+                    {moduleBId ? (
+                      <ConUuidResolver>{String(moduleBId)}</ConUuidResolver>
+                    ) : (
+                      <span>—</span>
+                    )}
                   </AcFlex>
                 );
               })()}

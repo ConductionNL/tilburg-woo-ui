@@ -431,10 +431,42 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
             </Heading>
             <div className='ac-register-review__section'>
               <div style={{ marginTop: '12px' }}>
-                {get_single?.dienstType && (
+                {get_single?.type && (
                   <div style={{ marginBottom: '8px' }}>
                     <strong>Diensttype: </strong>
-                    {get_single.type}
+                    {(() => {
+                      const rawType = get_single.type;
+
+                      if (
+                        typeof rawType === 'string' &&
+                        rawType.trim().startsWith('[')
+                      ) {
+                        try {
+                          const parsed = JSON.parse(rawType);
+                          if (Array.isArray(parsed)) {
+                            return parsed.map((item, index) => (
+                              <span key={index}>
+                                <ConUuidResolver>{String(item)}</ConUuidResolver>
+                                {index < parsed.length - 1 ? ', ' : ''}
+                              </span>
+                            ));
+                          }
+                        } catch (e) {
+                          return <ConUuidResolver>{String(rawType)}</ConUuidResolver>;
+                        }
+                      }
+
+                      if (Array.isArray(rawType)) {
+                        return rawType.map((typeId, index) => (
+                          <span key={index}>
+                            <ConUuidResolver>{String(typeId)}</ConUuidResolver>
+                            {index < rawType.length - 1 ? ', ' : ''}
+                          </span>
+                        ));
+                      }
+
+                      return <ConUuidResolver>{String(rawType)}</ConUuidResolver>;
+                    })()}
                   </div>
                 )}
                 {get_single?.status && (
