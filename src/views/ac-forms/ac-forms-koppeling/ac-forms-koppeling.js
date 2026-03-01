@@ -373,7 +373,7 @@ const AcFormsKoppeling = ({ store }) => {
     setLeverancierLoading(true);
     try {
       const params = new URLSearchParams({
-        _limit: '20',
+        _limit: '40',
         _page: '1',
         _published: 'false',
       });
@@ -460,7 +460,7 @@ const AcFormsKoppeling = ({ store }) => {
       try {
         setOwnAppLoading(true);
         const params = new URLSearchParams({
-          _limit: '20',
+          _limit: '40',
           _page: '1',
         });
 
@@ -1064,7 +1064,7 @@ const AcFormsKoppeling = ({ store }) => {
       try {
         // Fetch koppelingen where moduleA = moduleId
         const paramsA = new URLSearchParams({
-          _limit: '20',
+          _limit: '40',
           _page: '1',
         });
         paramsA.append('moduleA', moduleId);
@@ -1072,7 +1072,7 @@ const AcFormsKoppeling = ({ store }) => {
 
         // Fetch koppelingen where moduleB = moduleId
         const paramsB = new URLSearchParams({
-          _limit: '20',
+          _limit: '40',
           _page: '1',
         });
         paramsB.append('moduleB', moduleId);

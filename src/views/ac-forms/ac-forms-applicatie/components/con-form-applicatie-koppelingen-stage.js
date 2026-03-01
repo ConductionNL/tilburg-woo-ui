@@ -62,6 +62,14 @@ const ConFormApplicatieKoppelingenStage = memo(
     const generateLocalId = () =>
       `kpl_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 
+    // Helper to map direction enum values to arrow symbols
+    const getArrowForDirection = (dir) => {
+      if (dir === 'AnaarB') return '\u2192';
+      if (dir === 'BnaarA') return '\u2190';
+      if (dir === 'bi-directioneel') return '\u2194';
+      return '\u2194';
+    };
+
     // Helper function to merge modules and buitengemeentelijke options
     const getMergedOptions = () => {
       const merged = [...modulesOptions];
@@ -74,6 +82,23 @@ const ConFormApplicatieKoppelingenStage = memo(
         }
       });
       return merged;
+    };
+
+    // Helper to look up the display label for a module/BGV by its ID
+    const getOptionLabel = (id) => {
+      if (!id) return null;
+      const allOptions = getMergedOptions();
+      const option = allOptions.find((o) => String(o.value) === String(id));
+      return option?.label || null;
+    };
+
+    // Auto-generate koppeling naam from applicatie A name, direction, and App B label
+    const generateKoppelingNaam = (appBId, richting) => {
+      const appALabel = applicatie.naam || 'Deze applicatie';
+      const appBLabel = getOptionLabel(appBId);
+      if (!appBLabel) return null;
+      const arrow = getArrowForDirection(richting);
+      return `${appALabel} ${arrow} ${appBLabel}`;
     };
 
     // Helper function to create colored dot style
@@ -149,10 +174,26 @@ const ConFormApplicatieKoppelingenStage = memo(
         'richting' in overrides ? overrides.richting : directionByRow[rowId];
       const koppelingData = getKoppelingData(rowId);
       // Get naam from overrides, then from persisted koppeling data, then from UI state
-      const naam =
+      let naam =
         'naam' in overrides
           ? overrides.naam
           : koppelingData?.naam ?? naamByRow[rowId];
+
+      // Auto-generate naam when the user hasn't manually entered one.
+      // Regenerate on every persist call (when untouched) so that changing
+      // direction or App B updates the auto-generated name accordingly.
+      const userTouchedNaam = touchedNaamByRow[rowId];
+      if (!userTouchedNaam && !('naam' in overrides) && appBId != null) {
+        const generatedNaam = generateKoppelingNaam(appBId, richting);
+        if (generatedNaam) {
+          naam = generatedNaam;
+          // Sync the auto-generated naam back to UI state so the field displays it
+          setKoppelingenFormState((prev) => ({
+            ...prev,
+            naamByRow: { ...(prev.naamByRow || {}), [rowId]: generatedNaam },
+          }));
+        }
+      }
 
       let localId = koppelingIdByRow[rowId];
 

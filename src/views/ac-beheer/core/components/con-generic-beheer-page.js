@@ -377,7 +377,11 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
 
     if (schemaSlug) {
       try {
-        object.refreshWarmupDataForType(schemaSlug, register);
+        // Pass extend config so related data (e.g. diensten, contactpersoon) is fetched
+        const extendParams = baseConfig.extend?.length
+          ? { _extend: baseConfig.extend }
+          : {};
+        object.refreshWarmupDataForType(schemaSlug, register, extendParams);
       } catch (error) {
         console.error('Failed to refresh warmup data for type:', error);
       }

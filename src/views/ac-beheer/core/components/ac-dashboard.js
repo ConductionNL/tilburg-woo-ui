@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { AcFlex, AcSection, AcGrid, AcContainer } from '@atoms';
@@ -103,11 +103,12 @@ const AcDashboard = ({ store }) => {
     fetchOrganisatieData();
   }, [fetchOrganisatieData]);
 
-  // Get available wizards for this user - only calculate when userOrganization is loaded
-  const availableWizards = useMemo(() => {
-    if (!userOrganization) return [];
-    return getDashboardWizards(user, userOrganization);
-  }, [user, userOrganization]);
+  // Get available wizards for this user based on their groups.
+  // Not wrapped in useMemo — the user store reference never changes,
+  // so useMemo caches the result from the first render and MobX
+  // loses track of user.user.groups, preventing re-renders when
+  // groups load after initial mount (e.g. samenwerking users).
+  const availableWizards = getDashboardWizards(user);
 
   return (
     <AcSection spacing className='ac-mijn-omgeving-section'>

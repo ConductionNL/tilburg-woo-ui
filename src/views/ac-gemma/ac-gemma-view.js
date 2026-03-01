@@ -92,7 +92,9 @@ const AcGemmaView = ({ store, viewId }) => {
       }));
       setViewNodesData(sanitizedNodes);
       setViewRelationsData(resolvedRelationships);
-      setViewIsDoneLoading(true);
+      // Don't set viewIsDoneLoading here — the rendering useEffect handles it
+      // after JointJS rendering completes. Setting it here hides the loading
+      // spinner before the heavy graph rendering starts (12+ seconds for large views).
       return;
     }
     /* Legacy fallback retained for reference
@@ -1062,11 +1064,13 @@ const AcGemmaView = ({ store, viewId }) => {
             viewRelationsData && (
               <div className='ac-gemma-graph-container' id='graph-container'></div>
             )}
-          {!gemma.get_view &&
+          {view && !gemma.get_view &&
             !viewNodesData &&
             !viewRelationsData &&
             !viewIsDoneLoading && (
-              <div className='ac-gemma-graph-container-loading' />
+              <div className='ac-gemma-graph-container-loading'>
+                <AcLoader className='ac-gemma-graph-container-loading-loader' />
+              </div>
             )}
           {gemma.get_view && !viewIsDoneLoading && (
             <div className='ac-gemma-graph-container-loading'>

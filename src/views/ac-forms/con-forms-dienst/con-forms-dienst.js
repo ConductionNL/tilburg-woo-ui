@@ -171,7 +171,7 @@ const ConFormsDienst = ({ store, userStore }) => {
     setLeverancierLoading(true);
     try {
       const params = new URLSearchParams({
-        _limit: '20',
+        _limit: '40',
         _page: '1',
         _published: 'false',
       });

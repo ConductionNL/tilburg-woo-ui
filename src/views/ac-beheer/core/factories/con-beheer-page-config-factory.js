@@ -91,7 +91,7 @@ const BeheerPageConfigFactory = {
           disableDeleteAction: false, // Enable delete action voor applicaties
           disableImport: true, // Import not needed for applicaties
           disableView: true, // View not needed for applicaties
-          extend: ['moduleVersies', 'contactpersoon'],
+          extend: ['moduleVersies', 'contactpersoon', 'diensten'],
           defaultHeaders: [],
           customHeaders: {
             contactpersoon: {
@@ -109,6 +109,45 @@ const BeheerPageConfigFactory = {
                 }
                 const fullName = [person?.voornaam, person?.tussenvoegsel, person?.achternaam].filter(Boolean).join(' ');
                 return fullName || person?.['@self']?.name || '-';
+              },
+            },
+            diensten: {
+              id: 'diensten',
+              label: 'Diensten',
+              key: 'diensten',
+              customContent: (row) => {
+                const diensten = row?.diensten;
+                if (!diensten) return '-';
+                if (Array.isArray(diensten)) {
+                  if (diensten.length === 0) return '-';
+                  const firstItem = diensten[0];
+                  if (typeof firstItem === 'string') {
+                    return (
+                      <AcColumn key={row.id}>
+                        {diensten.map((dienstId, index) => (
+                          <React.Fragment key={dienstId}>
+                            <ConUuidResolver>{dienstId}</ConUuidResolver>
+                            {index < diensten.length - 1 && ', '}
+                          </React.Fragment>
+                        ))}
+                      </AcColumn>
+                    );
+                  } else if (typeof firstItem === 'object' && firstItem !== null) {
+                    const names = diensten
+                      .map((dienst) => dienst?.['@self']?.name || dienst?.naam || dienst?.name)
+                      .filter(Boolean);
+                    return (
+                      <AcColumn key={row.id}>
+                        {names.length > 0 ? names.join(', ') : '-'}
+                      </AcColumn>
+                    );
+                  }
+                }
+                if (typeof diensten === 'object' && diensten !== null) {
+                  const name = diensten?.['@self']?.name || diensten?.naam || diensten?.name;
+                  return <AcColumn key={row.id}>{name || '-'}</AcColumn>;
+                }
+                return '-';
               },
             },
             koppelingen: {

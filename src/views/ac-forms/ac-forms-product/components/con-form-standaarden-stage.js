@@ -1341,6 +1341,12 @@ const ConFormStandaardenStage = ({
                   onChange={(dataUrl) =>
                     updateBewijs(representativeEntry.key, dataUrl)
                   }
+                  onChangeFileName={(filename) =>
+                    updateBewijsFilename(representativeEntry.key, filename)
+                  }
+                  onFileChange={(file) =>
+                    updateBewijsFile(representativeEntry.key, file)
+                  }
                   onFileChange={(file) =>
                     updateBewijsFile(representativeEntry.key, file)
                   }
