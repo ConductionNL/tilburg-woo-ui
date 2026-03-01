@@ -68,7 +68,7 @@ const BeheerPageConfigFactory = {
           ...baseConfig,
           schemaSlug: 'moduleversie',
           paginationKey: 'applicatiesversie',
-          title: 'Applicatie Versies',
+          title: 'Applicatieversies',
           routeType: 'applicatiesversie',
           defaultHeaders: ['naam', 'versie', 'status', 'releaseDatum'],
           customHeaders: {},
@@ -91,82 +91,9 @@ const BeheerPageConfigFactory = {
           disableDeleteAction: false, // Enable delete action voor applicaties
           disableImport: true, // Import not needed for applicaties
           disableView: true, // View not needed for applicaties
-          extend: ['moduleVersies', 'contactpersoon', 'diensten'],
-          defaultHeaders: [
-            'naam',
-            'referentieComponenten',
-            'standaarden',
-            'categorie',
-            'links',
-          ],
+          extend: ['moduleVersies', 'contactpersoon'],
+          defaultHeaders: [],
           customHeaders: {
-            standaarden: {
-              id: 'standaarden',
-              label: 'Standaarden',
-              key: 'standaarden',
-              customContent: (row) => {
-                if (row?.standaarden && typeof row?.standaarden === 'string') {
-                  return <AcColumn key={row.id}>Data invalid</AcColumn>;
-                }
-                return (
-                  <AcColumn key={row.id}>
-                    {row?.standaarden?.map((standaard) => standaard.naam).join(', ')}
-                  </AcColumn>
-                );
-              },
-            },
-            diensten: {
-              id: 'diensten',
-              label: 'Diensten',
-              key: 'diensten',
-              customContent: (row) => {
-                const diensten = row?.diensten;
-
-                // If no diensten data, show dash
-                if (!diensten) return '-';
-
-                // If it's an array of UUIDs (strings)
-                if (Array.isArray(diensten)) {
-                  if (diensten.length === 0) return '-';
-
-                  // Check if array contains UUIDs (strings) or objects
-                  const firstItem = diensten[0];
-
-                  if (typeof firstItem === 'string') {
-                    // Array of UUIDs - resolve each with ConUuidResolver
-                    return (
-                      <AcColumn key={row.id}>
-                        {diensten.map((dienstId, index) => (
-                          <React.Fragment key={dienstId}>
-                            <ConUuidResolver>{dienstId}</ConUuidResolver>
-                            {index < diensten.length - 1 && ', '}
-                          </React.Fragment>
-                        ))}
-                      </AcColumn>
-                    );
-                  } else if (typeof firstItem === 'object' && firstItem !== null) {
-                    // Array of objects - get @self.name from each
-                    const names = diensten
-                      .map((dienst) => dienst?.['@self']?.name || dienst?.name)
-                      .filter(Boolean);
-                    return (
-                      <AcColumn key={row.id}>
-                        {names.length > 0 ? names.join(', ') : '-'}
-                      </AcColumn>
-                    );
-                  }
-                }
-
-                // If it's a single object, get @self.name
-                if (typeof diensten === 'object' && diensten !== null) {
-                  const name = diensten?.['@self']?.name || diensten?.name;
-                  return <AcColumn key={row.id}>{name || '-'}</AcColumn>;
-                }
-
-                // Fallback
-                return '-';
-              },
-            },
             contactpersoon: {
               id: 'contactpersoon',
               label: 'Contactpersoon',
@@ -232,6 +159,51 @@ const BeheerPageConfigFactory = {
                 if (typeof koppelingen === 'object' && koppelingen !== null) {
                   const name = koppelingen?.['@self']?.name || koppelingen?.name;
                   return <AcColumn key={row.id}>{name || '-'}</AcColumn>;
+                }
+
+                // Fallback
+                return '-';
+              },
+            },
+            compliancy: {
+              id: 'compliancy',
+              label: 'Compliance',
+              key: 'compliancy',
+              customContent: (row) => {
+                const compliancy = row?.compliancy;
+
+                // If no data, show dash
+                if (!compliancy) return '-';
+
+                // If it's an array
+                if (Array.isArray(compliancy)) {
+                  if (compliancy.length === 0) return '-';
+
+                  const firstItem = compliancy[0];
+
+                  if (typeof firstItem === 'string') {
+                    // Array of UUIDs - resolve each with ConUuidResolver
+                    return (
+                      <AcColumn key={row.id}>
+                        {compliancy.map((compliancyId, index) => (
+                          <React.Fragment key={compliancyId}>
+                            <ConUuidResolver>{compliancyId}</ConUuidResolver>
+                            {index < compliancy.length - 1 && ', '}
+                          </React.Fragment>
+                        ))}
+                      </AcColumn>
+                    );
+                  } else if (typeof firstItem === 'object' && firstItem !== null) {
+                    // Array of objects - get readable name from each
+                    const names = compliancy
+                      .map((item) => item?.['@self']?.name || item?.naam || item?.name)
+                      .filter(Boolean);
+                    return (
+                      <AcColumn key={row.id}>
+                        {names.length > 0 ? names.join(', ') : '-'}
+                      </AcColumn>
+                    );
+                  }
                 }
 
                 // Fallback
@@ -495,7 +467,7 @@ const BeheerPageConfigFactory = {
             },
             moduleVersie: {
               id: 'moduleVersie',
-              label: 'Applicatie versie',
+              label: 'Applicatieversie',
               key: 'moduleVersie',
               customContent: (row) => {
                 // Try direct property first, then fallback to relations

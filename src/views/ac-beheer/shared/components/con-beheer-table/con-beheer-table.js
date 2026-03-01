@@ -89,7 +89,9 @@ const BeheerTable = forwardRef(({ store, ...props }, ref) => {
 
   const [data, setData] = useState([]);
   const [dataProperties, setDataProperties] = useState({});
-  const [loading, setLoading] = useState(false);
+  // Start in loading state when the component needs to fetch its own data,
+  // so the table shows "Loading..." instead of flashing "Geen data gevonden"
+  const [loading, setLoading] = useState(shouldFetchData || shouldFetchDataProperties);
 
   const [tableHeaders, setTableHeaders] = useState([]);
 

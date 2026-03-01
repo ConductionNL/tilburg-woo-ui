@@ -168,7 +168,7 @@ const AcPublicationModuleVersie = ({ store: { publications, user, object } }) =>
                   get_single?.naam ||
                   get_single?.versie ||
                   get_single?.id ||
-                  'Applicatie versie'}
+                  'Applicatieversie'}
               </Heading>
             </div>
           </Heading>

@@ -31,8 +31,8 @@ const SCHEMA_NAMES = {
   kwetsbaarheid: 'Kwetsbaarheid',
   koppeling: 'Koppeling',
   contactpersoon: 'Contactpersoon',
-  moduleversie: 'Applicatie Versie',
-  moduleVersie: 'Applicatie Versie',
+  moduleversie: 'Applicatieversie',
+  moduleVersie: 'Applicatieversie',
 };
 
 /**

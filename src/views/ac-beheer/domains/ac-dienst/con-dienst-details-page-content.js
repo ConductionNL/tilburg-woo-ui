@@ -4,8 +4,9 @@ import { AcColumn } from '@src/atoms';
 import { VISUALS } from '@src/constants';
 import ConLogoPreview from '@src/views/ac-register/con-logo-preview';
 import { ConExternalLink } from '@src/components';
-import { useCallback, useEffect, useState } from 'preact/hooks';
+import { useCallback, useEffect, useMemo, useState } from 'preact/hooks';
 import { commongroundApiUrl } from '@src/config';
+import { schemaCache } from '@services/schemaCache.service';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
 import RelatedTabs from '@views/ac-publication/con-related-tabs';
 import {
@@ -143,6 +144,22 @@ const ConDienstDetailsPageContent = ({
     fetchUses();
     fetchUsed();
   }, [fetchUses, fetchUsed]);
+
+  // Filter out organisatie items from related tabs (aanbieder is redundant on dienst pages)
+  const filteredUses = useMemo(
+    () => uses.filter((item) => {
+      const slug = item?.['@self']?.schema?.slug || schemaCache.get(item?.['@self']?.schema);
+      return slug !== 'organisatie';
+    }),
+    [uses]
+  );
+  const filteredUsed = useMemo(
+    () => used.filter((item) => {
+      const slug = item?.['@self']?.schema?.slug || schemaCache.get(item?.['@self']?.schema);
+      return slug !== 'organisatie';
+    }),
+    [used]
+  );
 
   if (loading || !data) return null;
 
@@ -463,8 +480,8 @@ const ConDienstDetailsPageContent = ({
         <div style={{ marginTop: '2rem' }}>
           <RelatedTabs
             id={id}
-            uses={uses}
-            used={used}
+            uses={filteredUses}
+            used={filteredUsed}
             usesLoading={usesLoading}
             usedLoading={usedLoading}
             gebruikId={id}
