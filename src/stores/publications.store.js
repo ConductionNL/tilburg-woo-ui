@@ -1,5 +1,5 @@
 // Imports => MOBX
-import { observable, computed, makeObservable, action, toJS } from 'mobx';
+import { observable, computed, makeObservable, action, runInAction, toJS } from 'mobx';
 import { AcBuildURLSearchParams, getCookie } from '@utils';
 import { commongroundApiUrl } from '@config';
 import { schemaCache } from '@services/schemaCache.service';
@@ -694,120 +694,76 @@ export class PublicationsStore {
     console.info('URL:', fullUrl);
     console.groupEnd();
 
-    // Use fetch with proper authentication headers
-    fetch(fullUrl, {
-      method: 'GET',
-      headers: getAuthHeaders(),
-      credentials: 'include', // Include cookies like the browser
-      signal, // Add abort signal
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+    try {
+      const response = await fetch(fullUrl, {
+        method: 'GET',
+        headers: getAuthHeaders(),
+        credentials: 'include',
+        signal,
+      }).then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
         }
-        return response.json();
-      })
-      .then(async (response) => {
-        // Enrich publications with full schema and register data from response metadata
-        const enrichedResults = this.enrichPublications(
-          response.results,
-          response['@self']
-        );
-
-        // Set enriched search results
-        this.setItems(enrichedResults);
-
-        // Process related names data to populate the names cache
-        // API may return names in response['@self'].names or response.relatedNames
-        const namesData = response['@self']?.names || response.relatedNames;
-        
-        if (namesData && app.store?.object) {
-          console.group('🏷️ PROCESSING NAMES FROM SEARCH (_extend=_names)');
-          console.info(
-            'Names received:',
-            Object.keys(namesData).length,
-            'entries'
-          );
-          console.info('Names data sample:', Object.keys(namesData).slice(0, 5));
-          app.store.object.setNamesInCache(namesData);
-          console.info(
-            'Names cache after processing:',
-            Object.keys(app.store.object.namesCache).length,
-            'total entries'
-          );
-          console.groupEnd();
-        } else if (app.store?.object && response.results?.length > 0) {
-          // Fallback: manually extract reference IDs and resolve names if _relatedNames is not supported
-          console.group('⚠️ FALLBACK: Manual reference extraction in search');
-          console.info(
-            'No relatedNames in response, falling back to manual extraction'
-          );
-          console.info('Search results count:', response.results.length);
-          try {
-            const {
-              extractReferenceIdsFromCollection,
-            } = require('@src/utilities/con-detect-object-references');
-            const referenceIds = extractReferenceIdsFromCollection(response.results);
-            console.info('Extracted reference IDs:', referenceIds.length, 'IDs');
-            console.info('Reference IDs:', referenceIds);
-
-            if (referenceIds.length > 0) {
-              // Asynchronously resolve names in background (don't wait for this)
-              console.info('Starting background names resolution...');
-              app.store.object
-                .getNamesForMultipleIds(referenceIds)
-                .then((resolvedNames) => {
-                  console.info(
-                    'Background names resolved:',
-                    Object.keys(resolvedNames).length,
-                    'names'
-                  );
-                  console.info('Resolved names:', resolvedNames);
-                })
-                .catch((error) => {
-                  console.warn(
-                    'Failed to resolve reference names in search:',
-                    error
-                  );
-                });
-            } else {
-              console.info('No reference IDs found to resolve');
-            }
-          } catch (error) {
-            console.warn('Reference resolution fallback failed in search:', error);
-          }
-          console.groupEnd();
-        } else {
-          console.group('ℹ️ SEARCH NAMES INFO');
-          console.info('No names processing needed');
-          console.info('Has object store:', !!app.store?.object);
-          console.info('Results count:', response.results?.length || 0);
-          console.info('Has names in @self:', !!response['@self']?.names);
-          console.info('Has relatedNames:', !!response.relatedNames);
-          console.groupEnd();
-        }
-
-        // Clean up response and set pagination
-        delete response.results;
-        delete response.relatedNames;
-        if (response['@self']) {
-          delete response['@self'].names;
-        }
-        this.setPagination(response);
-      })
-      .catch((e) => {
-        // Don't log error if request was aborted (expected behavior)
-        if (e.name === 'AbortError') {
-          console.info('✅ Publications request cancelled');
-          return;
-        }
-        console.error(e);
-      })
-      .finally(() => {
-        this.setLoadingStatus(false);
-        // Clear the controller reference after request completes
-        this.publicationsAbortController = null;
+        return res.json();
       });
+
+      // Enrich publications with full schema and register data from response metadata
+      const enrichedResults = this.enrichPublications(
+        response.results,
+        response['@self']
+      );
+
+      // Process related names data to populate the names cache
+      const namesData = response['@self']?.names || response.relatedNames;
+
+      if (namesData && app.store?.object) {
+        app.store.object.setNamesInCache(namesData);
+      } else if (app.store?.object && response.results?.length > 0) {
+        // Fallback: manually extract reference IDs and resolve names
+        try {
+          const {
+            extractReferenceIdsFromCollection,
+          } = require('@src/utilities/con-detect-object-references');
+          const referenceIds = extractReferenceIdsFromCollection(response.results);
+
+          if (referenceIds.length > 0) {
+            // Asynchronously resolve names in background (don't block rendering)
+            app.store.object
+              .getNamesForMultipleIds(referenceIds)
+              .catch((error) => {
+                console.warn('Failed to resolve reference names in search:', error);
+              });
+          }
+        } catch (error) {
+          console.warn('Reference resolution fallback failed in search:', error);
+        }
+      }
+
+      // Clean up response for pagination (remove results/names already extracted)
+      delete response.results;
+      delete response.relatedNames;
+      if (response['@self']) {
+        delete response['@self'].names;
+      }
+
+      // Batch all MobX state updates together so observer re-renders once
+      runInAction(() => {
+        this.items = enrichedResults;
+        this.pagination = response;
+        this.loading.status = false;
+      });
+    } catch (e) {
+      if (e.name === 'AbortError') {
+        console.info('✅ Publications request cancelled');
+        return;
+      }
+      console.error(e);
+      runInAction(() => {
+        this.loading.status = false;
+      });
+    } finally {
+      this.publicationsAbortController = null;
+    }
   };
 
   @action
