@@ -21,15 +21,19 @@ import {
 } from '@molecules/con-cards';
 import { commongroundApiUrl } from '@src/config';
 import { schemaCache } from '@services/schemaCache.service';
+import { useResolveSchemaIds } from '@src/hooks/use-resolve-schema-ids.hook';
 
 // Helper function to define the desired tab order
 const getTabOrder = (schemaSlug) => {
   const order = {
     product: 1,
     module: 2,
+    moduleversie: 2.5,
     dienst: 3,
     gebruik: 4,
     contactpersoon: 5,
+    organisatie: 6,
+    koppeling: 7,
   };
   return order[schemaSlug] || 999; // Other relations get a high number to appear last
 };
@@ -477,6 +481,11 @@ const RelatedTabs = observer(
     // Merge and deduplicate the data
     const mergedItems = mergeAndDeduplicateItems(uses, used);
 
+    // Resolve unknown schema IDs from the /uses and /used responses.
+    // These endpoints return @self.schema as a numeric string (e.g. "27"),
+    // which needs to be mapped to a slug (e.g. "moduleversie") for tab grouping.
+    const { schemasLoading: schemaResolutionLoading } = useResolveSchemaIds(mergedItems);
+
     // Show loading if either is loading
     const isLoading = usesLoading || usedLoading;
     // Fetch ambtenaar gebruik for "Aangeboden gebruik" tab (optional, permission-based)
@@ -577,8 +586,8 @@ const RelatedTabs = observer(
     const hasGebruikData = Array.isArray(gebruikData) && gebruikData.length > 0;
     const hasAnyData = hasUsesData || hasUsedData || hasGebruikData;
 
-    // Check if any fetch is still loading
-    const anyLoading = isLoading || gebruikLoading;
+    // Check if any fetch is still loading (including schema resolution for tab grouping)
+    const anyLoading = isLoading || gebruikLoading || schemaResolutionLoading;
 
     // Show the tabs if:
     // 1. Any fetch is still loading (show loader)

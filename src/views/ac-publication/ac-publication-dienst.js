@@ -65,8 +65,32 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
   const [usedLoading, setUsedLoading] = useState(false);
   const [relatedTabIndex, setRelatedTabIndex] = useState(0);
   
+  // Filter out organisatie items from related tabs (aanbieder is redundant on dienst pages)
+  const filteredUses = useMemo(
+    () => uses.filter((item) => {
+      const slug = item?.['@self']?.schema?.slug || schemaCache.get(
+        typeof item?.['@self']?.schema === 'object'
+          ? item?.['@self']?.schema?.id
+          : item?.['@self']?.schema
+      );
+      return slug !== 'organisatie';
+    }),
+    [uses]
+  );
+  const filteredUsed = useMemo(
+    () => used.filter((item) => {
+      const slug = item?.['@self']?.schema?.slug || schemaCache.get(
+        typeof item?.['@self']?.schema === 'object'
+          ? item?.['@self']?.schema?.id
+          : item?.['@self']?.schema
+      );
+      return slug !== 'organisatie';
+    }),
+    [used]
+  );
+
   // Aggregated schemas from all related items via hook
-  const allRelatedItems = useMemo(() => [...uses, ...used], [uses, used]);
+  const allRelatedItems = useMemo(() => [...filteredUses, ...filteredUsed], [filteredUses, filteredUsed]);
   const { aggregatedSchemas, setAggregatedSchemas } = useResolveSchemaIds(allRelatedItems);
 
   // Related create actions (wizard-aware) like module/product pages
@@ -426,8 +450,8 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
 
         <div style={{ marginTop: '2rem' }}>
           <RelatedTabs
-            uses={uses}
-            used={used}
+            uses={filteredUses}
+            used={filteredUsed}
             schemas={aggregatedSchemas}
             usesLoading={usesLoading}
             usedLoading={usedLoading}

@@ -67,10 +67,14 @@ const AcGemmaView = ({ store, viewId }) => {
 
   useEffect(() => {
     if (!gemma.get_view) return;
-    // New view object may not contain nodes/relationships; render empty graph in that case
-    if (Array.isArray(gemma.get_view.viewNodes)) {
+    // New view object may not contain nodes/relationships; render empty graph in that case.
+    // The xml property contains the full AMEF data with viewNodes when top-level fields are empty.
+    const xmlData = gemma.get_view.xml || {};
+    const resolvedViewNodes = gemma.get_view.viewNodes || xmlData.viewNodes || [];
+    const resolvedRelationships = gemma.get_view.viewRelationships || xmlData.connection || [];
+    if (Array.isArray(resolvedViewNodes) && resolvedViewNodes.length > 0) {
       // Sanitize nodes to ensure minimal required fields
-      const sanitizedNodes = (gemma.get_view.viewNodes || []).map((node) => ({
+      const sanitizedNodes = resolvedViewNodes.map((node) => ({
         ...node,
         viewNodeId:
           node.viewNodeId ||
@@ -87,7 +91,7 @@ const AcGemmaView = ({ store, viewId }) => {
         gemmaType: node.type || node.gemmaType || node.elementProperties?.gemmaType || null,
       }));
       setViewNodesData(sanitizedNodes);
-      setViewRelationsData(gemma.get_view.viewRelationships || []);
+      setViewRelationsData(resolvedRelationships);
       setViewIsDoneLoading(true);
       return;
     }
@@ -394,12 +398,12 @@ const AcGemmaView = ({ store, viewId }) => {
     let viewNodes = [];
     let viewRelationships = [];
 
-    if (Array.isArray(gemma.get_view.viewNodes)) {
+    if (Array.isArray(viewNodesData) && viewNodesData.length > 0) {
       // Topological sort: parents must be rendered before children so the
       // diagram engine can look up parent cells via graph.getCell(parentId).
       // Backend now stores nodes in correct order, but we keep this as a
       // safety net for data imported before the fix.
-      const rawNodes = [...(viewNodesData || [])];
+      const rawNodes = [...viewNodesData];
 
       // Merge gebruik overlay nodes when filters are active
       if (gebruikData && gebruikData.length > 0 && (filters.gebruik || filters.deelnames)) {
@@ -1053,10 +1057,8 @@ const AcGemmaView = ({ store, viewId }) => {
             </div>
           )}
 
-          {/* Only render graph when new view object contains detailed nodes/relationships */}
-          {Array.isArray(gemma.get_view?.viewNodes) &&
-            Array.isArray(gemma.get_view?.viewRelationships) &&
-            viewNodesData &&
+          {/* Render graph container when view data is available (from viewNodes, xml.viewNodes, or state) */}
+          {viewNodesData &&
             viewRelationsData && (
               <div className='ac-gemma-graph-container' id='graph-container'></div>
             )}

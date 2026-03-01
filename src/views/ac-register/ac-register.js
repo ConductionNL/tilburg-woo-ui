@@ -574,8 +574,7 @@ const AcRegister = () => {
             <AcColumn gap='sm'>
               <Heading level={2}>Aanmelding succesvol!</Heading>
               <p>
-                Beste {organization.contactPersons[0].firstName}{' '}
-                {organization.contactPersons[0].lastName} van {organization.name},
+                Beste {[organization.contactPersons[0].firstName, organization.contactPersons[0].middleName, organization.contactPersons[0].lastName].filter(Boolean).join(' ')} van {organization.name},
               </p>
               <p>
                 Uw aanmelding voor de softwarecatalogus is in goede orde ontvangen.
@@ -1053,6 +1052,11 @@ const ContactInformationForm = memo(
       500
     );
 
+    const debouncedSetMiddleName = useDebouncedInput(
+      (value) => setOrganizationData('contactPersons.middleName', value),
+      500
+    );
+
     const debouncedSetLastName = useDebouncedInput(
       (value) => setOrganizationData('contactPersons.lastName', value),
       500
@@ -1105,48 +1109,61 @@ const ContactInformationForm = memo(
         </div>
 
         <div className='ac-register-form-grid'>
-          <div>
-            <AcFormField
-              label='Voornaam'
-              required={true}
-              placeholder='John'
-              value={organization.contactPersons[0].firstName}
-              type='text'
-              onChange={(e) => debouncedSetFirstName(e)}
-              hasError={
-                touched.contactPersons.firstName &&
-                !organization.contactPersons[0].firstName
-              }
-              id='name-field'
-              disabled={loading}
-              autoFocus
-            />
-            <span className='ac-register-form-field-error'>
-              {touched.contactPersons.firstName &&
-                !organization.contactPersons[0].firstName &&
-                'Dit veld is verplicht'}
-            </span>
-          </div>
-          <div>
-            <AcFormField
-              label='Achternaam'
-              required={true}
-              placeholder='Doe'
-              value={organization.contactPersons[0].lastName}
-              type='text'
-              onChange={(e) => debouncedSetLastName(e)}
-              hasError={
-                touched.contactPersons.lastName &&
-                !organization.contactPersons[0].lastName
-              }
-              id='name-field'
-              disabled={loading}
-            />
-            <span className='ac-register-form-field-error'>
-              {touched.contactPersons.lastName &&
-                !organization.contactPersons[0].lastName &&
-                'Dit veld is verplicht'}
-            </span>
+          <div style={{ gridColumn: 'span 2', display: 'grid', gridTemplateColumns: '2fr 1fr 2fr', gap: 'var(--tilburg-space-block-rat)' }}>
+            <div>
+              <AcFormField
+                label='Voornaam'
+                required={true}
+                placeholder='John'
+                value={organization.contactPersons[0].firstName}
+                type='text'
+                onChange={(e) => debouncedSetFirstName(e)}
+                hasError={
+                  touched.contactPersons.firstName &&
+                  !organization.contactPersons[0].firstName
+                }
+                id='firstname-field'
+                disabled={loading}
+                autoFocus
+              />
+              <span className='ac-register-form-field-error'>
+                {touched.contactPersons.firstName &&
+                  !organization.contactPersons[0].firstName &&
+                  'Dit veld is verplicht'}
+              </span>
+            </div>
+            <div>
+              <AcFormField
+                label='Tussenvoegsel'
+                placeholder='van der'
+                value={organization.contactPersons[0].middleName}
+                type='text'
+                onChange={(e) => debouncedSetMiddleName(e)}
+                id='middlename-field'
+                disabled={loading}
+              />
+            </div>
+            <div>
+              <AcFormField
+                label='Achternaam'
+                required={true}
+                placeholder='Doe'
+                value={organization.contactPersons[0].lastName}
+                type='text'
+                onChange={(e) => debouncedSetLastName(e)}
+                hasError={
+                  touched.contactPersons.lastName &&
+                  !organization.contactPersons[0].lastName
+                }
+                id='lastname-field'
+                disabled={loading}
+              />
+              <span className='ac-register-form-field-error'>
+                {touched.contactPersons.lastName &&
+                  !organization.contactPersons[0].lastName &&
+                  'Dit veld is verplicht'}
+              </span>
+            </div>
           </div>
           <div>
             <AcFormField
