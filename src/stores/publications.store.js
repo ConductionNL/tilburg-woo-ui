@@ -137,7 +137,7 @@ export class PublicationsStore {
 
   @observable
   loading = {
-    status: false,
+    status: true,
     message: undefined,
   };
 
@@ -302,7 +302,17 @@ export class PublicationsStore {
   @action
   updateQuery = (query) => {
     // Replace the entire query instead of merging to prevent old filters from persisting
-    this.query = { ...DEFAULT_SEARCH_QUERY, ...query };
+    const merged = { ...DEFAULT_SEARCH_QUERY, ...query };
+
+    // When a search term is present but no explicit sort was provided in the URL,
+    // default to relevance sorting instead of alphabetical for better UX.
+    const hasSearchTerm = merged._search && merged._search.trim() !== '';
+    const hasExplicitOrder = query._order !== undefined;
+    if (hasSearchTerm && !hasExplicitOrder) {
+      merged._order = { '_relevance': 'desc' };
+    }
+
+    this.query = merged;
   };
 
   @action

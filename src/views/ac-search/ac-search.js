@@ -309,8 +309,9 @@ const AcSearch = ({ store: { publications, user, object } }) => {
             <AcFlex column spacing='sm' margin='sm'>
               <AcFlex justifyContent='between'>
                 <Heading level={2}>
-                  {ConFormatDutchNumber(pagination.total)}{' '}
-                  {LABELS_DYNAMIC.RESULTS(pagination.total).toLowerCase()}
+                  {is_loading
+                    ? LABELS.SEARCH_RESULTS_LOADING
+                    : `${ConFormatDutchNumber(pagination.total)} ${LABELS_DYNAMIC.RESULTS(pagination.total).toLowerCase()}`}
                 </Heading>
                 <div className='desktop-sorting'>
                   <AcSearchSort type='alt' />

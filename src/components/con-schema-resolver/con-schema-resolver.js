@@ -16,7 +16,7 @@ import { useResolvedSchema } from '@src/utilities/con-resolve-schema';
  */
 const DISPLAY_NAME_OVERRIDES = {
   module: 'Applicatie',
-  moduleversie: 'Applicatie Versie',
+  moduleversie: 'Applicatieversie',
 };
 
 /**
