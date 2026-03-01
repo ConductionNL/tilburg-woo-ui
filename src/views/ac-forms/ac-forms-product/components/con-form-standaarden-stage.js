@@ -762,6 +762,56 @@ const ConFormStandaardenStage = ({
     }
   };
 
+  // Capture raw File object for multipart upload
+  const updateBewijsFile = (key, file) => {
+    const entry = tableState[key];
+    if (!entry) return;
+
+    if (sameForAll && isMultiNewApplicatie) {
+      setTableState((prev) => {
+        const updated = { ...prev };
+        Object.keys(updated).forEach((entryKey) => {
+          if (updated[entryKey].standardId === entry.standardId) {
+            updated[entryKey] = { ...updated[entryKey], bewijsFile: file };
+          }
+        });
+        return updated;
+      });
+    } else {
+      setTableState((prev) => ({
+        ...prev,
+        [key]: { ...prev[key], bewijsFile: file },
+      }));
+    }
+
+    // Propagate to product state
+    setProduct((prev) => {
+      const modules = [...(prev.modules || [])];
+      if (sameForAll && isMultiNewApplicatie) {
+        modules.forEach((app, idx) => {
+          if (app?.id) return;
+          const compliancy = Array.isArray(app.compliancy) ? [...app.compliancy] : [];
+          modules[idx] = {
+            ...app,
+            compliancy: compliancy.map((c) =>
+              c.standaardversie === entry.standardId ? { ...c, bewijsFile: file } : c
+            ),
+          };
+        });
+      } else {
+        const app = modules[entry.moduleId];
+        const compliancy = Array.isArray(app?.compliancy) ? [...app.compliancy] : [];
+        modules[entry.moduleId] = {
+          ...app,
+          compliancy: compliancy.map((c) =>
+            c.standaardversie === entry.standardId ? { ...c, bewijsFile: file } : c
+          ),
+        };
+      }
+      return { ...prev, modules };
+    });
+  };
+
   // ✅ NEW: Clear both bewijs and filename
   const clearBewijs = (key) => {
     const entry = tableState[key];
@@ -777,6 +827,7 @@ const ConFormStandaardenStage = ({
               ...updated[entryKey],
               bewijs: null,
               bewijsFilename: null,
+              bewijsFile: null,
             };
           }
         });
@@ -793,6 +844,7 @@ const ConFormStandaardenStage = ({
           ...prev[key],
           bewijs: null,
           bewijsFilename: null,
+          bewijsFile: null,
         },
       }));
 
@@ -810,6 +862,7 @@ const ConFormStandaardenStage = ({
                 standaardnaam: entry.standardName,
                 bewijs: null,
                 bewijsFilename: null,
+                bewijsFile: null,
               }
             : c
         );
@@ -1288,6 +1341,9 @@ const ConFormStandaardenStage = ({
                   onChange={(dataUrl) =>
                     updateBewijs(representativeEntry.key, dataUrl)
                   }
+                  onFileChange={(file) =>
+                    updateBewijsFile(representativeEntry.key, file)
+                  }
                   onChangeFileName={(filename) =>
                     updateBewijsFilename(representativeEntry.key, filename)
                   }
@@ -1480,6 +1536,7 @@ const ConFormStandaardenStage = ({
                     }}
                     _value={entry.bewijs || ''}
                     onChange={(dataUrl) => updateBewijs(entry.key, dataUrl)}
+                    onFileChange={(file) => updateBewijsFile(entry.key, file)}
                     onChangeFileName={(filename) =>
                       updateBewijsFilename(entry.key, filename)
                     }
@@ -1623,13 +1680,13 @@ const ConFormStandaardenStage = ({
               {totalModules !== 1 ? 's' : ''},{' '}
               <span style={{ color: '#dc3545', fontWeight: '600' }}>
                 {verplichteCount} verplichte standaarden (waarvan{' '}
-                {verplichteCompliant} compliant)
+                {verplichteCompliant} ondersteund)
               </span>
               {verplichteCount > 0 && aanbevolenCount > 0 && ', '}
               {aanbevolenCount > 0 && (
                 <span style={{ color: '#28a745', fontWeight: '600' }}>
                   {aanbevolenCount} aanbevolen standaarden (waarvan{' '}
-                  {aanbevolenCompliant} compliant)
+                  {aanbevolenCompliant} ondersteund)
                 </span>
               )}
             </Paragraph>

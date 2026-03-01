@@ -1903,6 +1903,40 @@ export class ObjectStore {
   };
 
   /**
+   * Update an object property via multipart/form-data POST (postPatch).
+   * Used for file uploads where the field maps to a file-type property.
+   * @param {string|Object} register - Register identifier or object
+   * @param {string|Object} schema - Schema identifier or object
+   * @param {string} id - The object ID
+   * @param {string} fieldName - The property name for the file (e.g. 'bewijs')
+   * @param {File} file - The File object to upload
+   * @returns {Object} The updated object
+   */
+  @action
+  updateObjectWithFile = async (register, schema, id, fieldName, file) => {
+    const registerId = this.extractId(register);
+    const schemaId = this.extractId(schema);
+
+    if (!registerId || !schemaId || !id) {
+      throw new Error('register, schema and id are required for multipart update');
+    }
+
+    const form = new FormData();
+    form.append(fieldName, file);
+
+    const url = this._constructApiUrl(registerId, schemaId, id);
+    const response = await nextcloudApi.post(url, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to upload ${fieldName}: ${response.status}`);
+    }
+
+    return response.data;
+  };
+
+  /**
    * Patches an existing object
    * @param {string|Object} register - Register identifier or object
    * @param {string|Object} schema - Schema identifier or object

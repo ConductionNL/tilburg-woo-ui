@@ -289,13 +289,47 @@ const StandaardenFormNew = ({
     });
   };
 
-  // Update bewijs for a specific module-standard combination
+  // Update raw File object for multipart upload
+  const updateBewijsFile = (key, file) => {
+    setTableState((prev) => ({
+      ...prev,
+      [key]: {
+        ...prev[key],
+        bewijsFile: file,
+      },
+    }));
+
+    // Propagate to product state
+    const entry = tableState[key];
+    if (!entry) return;
+
+    setProduct((prev) => {
+      const modules = [...(prev.modules || [])];
+      const moduleIndex = entry.moduleId;
+      const app = modules[moduleIndex];
+      const compliancy = Array.isArray(app.compliancy) ? [...app.compliancy] : [];
+
+      const updatedCompliancy = compliancy.map((c) =>
+        c.standaardversie === entry.standardId ? { ...c, bewijsFile: file } : c
+      );
+
+      if (typeof app === 'object') {
+        modules[moduleIndex] = { ...app, compliancy: updatedCompliancy };
+        return { ...prev, modules };
+      }
+      return prev;
+    });
+  };
+
+  // Update bewijs preview (base64 data URL for display only)
   const updateBewijs = (key, bewijs) => {
     setTableState((prev) => ({
       ...prev,
       [key]: {
         ...prev[key],
         bewijs,
+        // Clear File object when bewijs is cleared
+        ...(bewijs === null && { bewijsFile: null }),
       },
     }));
 
@@ -305,19 +339,18 @@ const StandaardenFormNew = ({
 
     setProduct((prev) => {
       const modules = [...(prev.modules || [])];
-      const moduleIndex = entry.moduleId; // This should now be the direct module index
+      const moduleIndex = entry.moduleId;
       const app = modules[moduleIndex];
       const compliancy = Array.isArray(app.compliancy) ? [...app.compliancy] : [];
 
       const updatedCompliancy = compliancy.map((c) =>
-        c.standaardversie === entry.standardId ? { ...c, bewijs } : c
+        c.standaardversie === entry.standardId
+          ? { ...c, bewijs, ...(bewijs === null && { bewijsFile: null }) }
+          : c
       );
 
       if (typeof app === 'object') {
-        modules[moduleIndex] = {
-          ...app,
-          compliancy: updatedCompliancy,
-        };
+        modules[moduleIndex] = { ...app, compliancy: updatedCompliancy };
         return { ...prev, modules };
       }
       return prev;
@@ -557,6 +590,7 @@ const StandaardenFormNew = ({
                 }}
                 _value={entry.bewijs || ''}
                 onChange={(dataUrl) => updateBewijs(entry.key, dataUrl)}
+                onFileChange={(file) => updateBewijsFile(entry.key, file)}
                 onClear={() => updateBewijs(entry.key, null)}
                 accept={['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx']}
                 showPreview={false}
@@ -597,7 +631,7 @@ const StandaardenFormNew = ({
                   textAlign: 'center',
                 }}
               >
-                Compliant
+                Ondersteund
               </TableCell>
               <TableCell style={{ fontWeight: 'bold', backgroundColor: '#f8f9fa' }}>
                 Bewijs
@@ -642,13 +676,13 @@ const StandaardenFormNew = ({
               {totalModules !== 1 ? 's' : ''},{' '}
               <span style={{ color: '#dc3545', fontWeight: '600' }}>
                 {verplichteEntries.length} verplichte standaarden (waarvan{' '}
-                {verplichteCompliant} compliant)
+                {verplichteCompliant} ondersteund)
               </span>
               {verplichteEntries.length > 0 && aanbevolenEntries.length > 0 && ', '}
               {aanbevolenEntries.length > 0 && (
                 <span style={{ color: '#28a745', fontWeight: '600' }}>
                   {aanbevolenEntries.length} aanbevolen standaarden (waarvan{' '}
-                  {aanbevolenCompliant} compliant)
+                  {aanbevolenCompliant} ondersteund)
                 </span>
               )}
             </Paragraph>

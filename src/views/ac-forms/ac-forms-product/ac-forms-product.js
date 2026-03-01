@@ -1479,24 +1479,80 @@ const AcFormsProductInner = ({
       const productData = {
         ...product,
         naam: product.naam || product.productName, // Ensure naam is properly set
-        aanbieder: finalAanbieder, // ✅ Always include the aanbieder
+        aanbieder: finalAanbieder,
       };
+
+      // Collect pending file uploads before stripping them from JSON payload.
+      // Each entry maps a compliancy standardId to its raw File object per module.
+      const pendingFileUploads = [];
+      (productData.modules || []).forEach((mod, moduleIdx) => {
+        (mod.compliancy || []).forEach((comp) => {
+          if (comp.bewijsFile instanceof File) {
+            pendingFileUploads.push({
+              moduleIdx,
+              standardId: comp.standaardversie,
+              file: comp.bewijsFile,
+            });
+            // Remove base64 preview — the file will be uploaded via multipart
+            comp.bewijs = null;
+          }
+        });
+      });
+
       const sanitized = stripLocalIds(productData);
 
+      let savedProduct;
       if (productId) {
-        // Edit mode: update existing product via PUT
-        await store.object.updateObject(
+        savedProduct = await store.object.updateObject(
           'voorzieningen',
           'product',
           String(productId),
           sanitized
         );
       } else {
-        // Create mode: create new product via POST
-        await store.object.createObject('voorzieningen', 'product', sanitized);
+        savedProduct = await store.object.createObject(
+          'voorzieningen',
+          'product',
+          sanitized
+        );
       }
 
-      // createObject returns the created object directly on success
+      // Phase 2: Upload evidence files to individual compliancy objects via multipart.
+      // After save, the response contains modules with compliancy sub-object UUIDs.
+      if (pendingFileUploads.length > 0 && savedProduct) {
+        const savedModules = savedProduct.modules || [];
+        for (const upload of pendingFileUploads) {
+          const savedModule = savedModules[upload.moduleIdx];
+          if (!savedModule) continue;
+
+          const savedCompliancy = (savedModule.compliancy || []).find((c) => {
+            const compId =
+              typeof c === 'string' ? null : c?.standaardversie || c?.['@self']?.standaardversie;
+            return compId === upload.standardId;
+          });
+
+          // Get the compliancy object UUID for the multipart upload
+          const compliancyId =
+            typeof savedCompliancy === 'string'
+              ? savedCompliancy
+              : savedCompliancy?.['@self']?.id || savedCompliancy?.id;
+
+          if (compliancyId) {
+            try {
+              await store.object.updateObjectWithFile(
+                'voorzieningen',
+                'compliancy',
+                compliancyId,
+                'bewijs',
+                upload.file
+              );
+            } catch (fileErr) {
+              console.error('Failed to upload evidence file:', fileErr);
+            }
+          }
+        }
+      }
+
       setRegisterCallBack('success');
     } catch (err) {
       setRegisterCallBack('error');

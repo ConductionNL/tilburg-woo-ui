@@ -24,8 +24,10 @@ export const stripLocalIds = (value) => {
       }
       // Remove UI-only fields from compliancy objects
       if (k === 'standaardnaam') return;
-      // ✅ NEW: Remove filename field before saving
+      // Remove filename field before saving
       if (k === 'bewijsFilename') return;
+      // Remove raw File object (uploaded separately via multipart)
+      if (k === 'bewijsFile') return;
       // ✅ NEW: Remove aanbieder* fields (only used for creating new organization)
       if (
         [
