@@ -347,11 +347,11 @@ const ConGebruikStepInformatie = ({
               onSearch={() => {}} // Disable automatic $ref search by providing empty handler
               width='full'
               customProps={{
-                label: 'Applicatie versie',
+                label: 'Applicatieversie',
                 placeholder:
                   versionOptions.length === 0
                     ? 'Geen versies beschikbaar'
-                    : 'Selecteer een applicatie versie',
+                    : 'Selecteer een applicatieversie',
               }}
             />
           </div>

@@ -75,24 +75,25 @@ const ConFormDienstInformatieStage = memo(
         aria-labelledby='dienst-informatie-section-title'
       >
         <h2 id='dienst-informatie-section-title' className='sr-only'>
-          Dienst informatie
+          Registreer uw dienst
         </h2>
 
         <Paragraph style={{ marginBottom: '1.5rem' }}>
-          {dienstType === 'eigen-organisatie' ? (
-            <>Geef aan welke dienstverlening u verleent op uw applicatie.</>
-          ) : dienstType === 'andere-organisatie' ? (
-            <>
-              U gaat een dienst registreren voor een andere organisatie. In de
-              volgende stappen vult u de basisgegevens in en selecteert u relevante
-              applicaties.
-            </>
-          ) : (
-            <>
-              In de volgende stappen vult u de basisgegevens in en selecteert u
-              relevante applicaties.
-            </>
-          )}
+          Registreer hier een dienst die uw organisatie aanbiedt &mdash; bijvoorbeeld
+          functioneel beheer, implementatieondersteuning, of licentiereseller.
+          U kunt een dienst koppelen aan een product of applicatie van uw eigen
+          organisatie, maar ook aan producten of applicaties van andere leveranciers.
+          Door uw diensten te registreren helpt u gemeenten en andere organisaties om
+          snel te zien welke ondersteuning en expertise beschikbaar is.
+        </Paragraph>
+
+        <Paragraph style={{ marginBottom: '0.5rem' }}>
+          <strong>Informatie over uw dienst</strong>
+        </Paragraph>
+        <Paragraph style={{ marginBottom: '1.5rem' }}>
+          Vul de naam, website en een beschrijving van uw dienst in. Voeg eventueel
+          een logo toe. Gebruik een herkenbare naam, zoals: &quot;Functioneel beheer
+          voor Zaakgericht Werken&quot; of &quot;Reseller van Applicatie X&quot;.
         </Paragraph>
 
         <div className='con-dynamic-form-container'>
@@ -139,6 +140,9 @@ const ConFormDienstInformatieStage = memo(
               isDisabled={loading}
               width='full'
               schemas={schemas}
+              customProps={{
+                placeholder: 'Beschrijf in een of twee zinnen wat uw dienst inhoudt.',
+              }}
             />
 
             <ConSchemaEnhancedField

@@ -74,7 +74,7 @@ const ConFormKoppelingenStage = memo(
     ];
 
     const typeOptions = [
-      { value: 'n.v.t', label: 'N.v.t' },
+      { value: 'n.v.t.', label: 'N.v.t.' },
       { value: 'bestandsoverdracht', label: 'Bestandsoverdracht' },
       { value: 'digikoppeling', label: 'Digikoppeling' },
       { value: 'message que', label: 'Message queue' },

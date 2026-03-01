@@ -267,7 +267,7 @@ const AcFormsKoppeling = ({ store }) => {
   ];
 
   const typeOptions = [
-    { value: 'n.v.t', label: 'N.v.t' },
+    { value: 'n.v.t.', label: 'N.v.t.' },
     { value: 'bestandsoverdracht', label: 'Bestandsoverdracht' },
     { value: 'digikoppeling', label: 'Digikoppeling' },
     { value: 'message que', label: 'Message queue' },
@@ -291,8 +291,11 @@ const AcFormsKoppeling = ({ store }) => {
   };
 
   /**
-   * This wizard is only for Gemeente/Samenwerking. Fetch gebruik for the active organisation (afnemer)
-   * and derive allowed module IDs for the applicatie dropdown.
+   * Fetch allowed module IDs for the applicatie dropdown.
+   *
+   * For Gemeente/Samenwerking: fetch gebruik records (afnemer) and derive allowed module IDs.
+   * For Leverancier/Community: set 'ORGANISATION_OWNED' marker so the module fetch
+   * will load modules owned by the organisation instead.
    */
   useEffect(() => {
     const activeOrg = store?.user?.activeOrganization;
@@ -302,8 +305,21 @@ const AcFormsKoppeling = ({ store }) => {
       return;
     }
 
+    // Wait for fullActiveOrganisation to be loaded before deciding the fetch strategy
+    if (fullActiveOrganisation === null) return;
+
+    const orgType = fullActiveOrganisation?.type || '';
+    const isSupplierOrCommunity = orgType === 'Leverancier' || orgType === 'Community';
+
     let isMounted = true;
     setAllowedModuleIdsFromGebruik(null);
+
+    if (isSupplierOrCommunity) {
+      // Leverancier/Community: show only modules owned by the organisation
+      // Use special marker 'ORGANISATION_OWNED' to signal the module fetch effect
+      setAllowedModuleIdsFromGebruik('ORGANISATION_OWNED');
+      return;
+    }
 
     const fetchGebruik = async () => {
       try {
@@ -338,9 +354,13 @@ const AcFormsKoppeling = ({ store }) => {
     store?.user?.activeOrganization?.uuid,
     store?.user?.activeOrganization?.id,
     store,
+    fullActiveOrganisation,
   ]);
 
-  // Fetch modules (applications) from organisation's gebruik only
+  // Fetch modules (applications) based on the resolved strategy:
+  // - 'ORGANISATION_OWNED': fetch modules owned by the active organisation (for Leverancier/Community)
+  // - Array of IDs: fetch those specific modules (for Gemeente/Samenwerking with gebruik records)
+  // - Empty array: no modules available
   useEffect(() => {
     let isMounted = true;
     if (allowedModuleIdsFromGebruik === null) return;
@@ -348,6 +368,62 @@ const AcFormsKoppeling = ({ store }) => {
     const run = async () => {
       try {
         setOwnAppLoading(true);
+
+        // Leverancier/Community: fetch modules owned by the organisation
+        if (allowedModuleIdsFromGebruik === 'ORGANISATION_OWNED') {
+          const activeOrg = store?.user?.activeOrganization;
+          const activeOrgId = activeOrg?.uuid || activeOrg?.id;
+          const params = new URLSearchParams({
+            _limit: '20',
+            _page: '1',
+          });
+          if (activeOrgId) {
+            params.append('organisation', String(activeOrgId));
+          }
+          const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module?${params}`;
+          const res = await fetch(endpoint, {
+            headers: { Accept: 'application/json' },
+          });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const data = await res.json();
+          const list = Array.isArray(data)
+            ? data
+            : Array.isArray(data?.results)
+            ? data.results
+            : [];
+          const options = list.map((item, index) => {
+            const id =
+              item?.id ||
+              item?.['@self']?.id ||
+              item?.uuid ||
+              item?.value ||
+              item?.slug ||
+              index;
+            const label =
+              item?.naam ||
+              item?.name ||
+              item?.title ||
+              item?.label ||
+              item?.uuid ||
+              item?.id ||
+              item?.value ||
+              item?.slug ||
+              `Applicatie ${index + 1}`;
+            return {
+              value: String(id),
+              label: String(label),
+              data: item,
+              type: 'applicatie',
+            };
+          });
+          if (isMounted) {
+            setModulesOptions(options);
+            setOwnAppOptions(options);
+          }
+          return;
+        }
+
+        // Gemeente/Samenwerking: fetch specific modules from gebruik records
         if (allowedModuleIdsFromGebruik.length === 0) {
           if (isMounted) {
             setModulesOptions([]);
@@ -716,6 +792,15 @@ const AcFormsKoppeling = ({ store }) => {
           queryParams._search = q;
         }
 
+        // For Leverancier/Community: filter by organisation to show only own modules
+        if (allowedModuleIdsFromGebruik === 'ORGANISATION_OWNED') {
+          const activeOrg = store?.user?.activeOrganization;
+          const activeOrgId = activeOrg?.uuid || activeOrg?.id;
+          if (activeOrgId) {
+            queryParams.organisation = String(activeOrgId);
+          }
+        }
+
         await store.object.fetchCollection(
           'voorzieningen',
           'module',
@@ -728,9 +813,14 @@ const AcFormsKoppeling = ({ store }) => {
         );
         let list = collection?.results || collection || [];
 
-        if (allowedModuleIdsFromGebruik !== null) {
+        // For Gemeente/Samenwerking: filter by allowed IDs from gebruik records
+        if (
+          allowedModuleIdsFromGebruik !== null &&
+          allowedModuleIdsFromGebruik !== 'ORGANISATION_OWNED' &&
+          Array.isArray(allowedModuleIdsFromGebruik)
+        ) {
           const allowedSet = new Set(
-            (allowedModuleIdsFromGebruik || []).map((id) => String(id))
+            allowedModuleIdsFromGebruik.map((id) => String(id))
           );
           list = list.filter((item) => {
             const id = String(
