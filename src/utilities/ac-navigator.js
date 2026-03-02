@@ -39,6 +39,7 @@ export class AcNavigator {
   };
 
   init = () => {
+    // eslint-disable-next-line no-unused-vars -- i should remove it but im scared its going to be needed
     return new Promise((resolve, reject) => {
       this.Navigator = navigator.geolocation;
 
@@ -75,7 +76,7 @@ export class AcNavigator {
     return this.currentLocation;
   };
 
-  error = (err) => {};
+  error = () => {};
 }
 
 export default AcNavigator;

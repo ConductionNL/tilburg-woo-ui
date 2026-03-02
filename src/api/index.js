@@ -10,25 +10,28 @@ import PublicationsAPI from '@api/publications.api';
 import FaqsAPI from '@api/faqs.api';
 import PagesAPI from '@api/pages.api';
 import ThemesAPI from '@api/themes.api';
-import CategoriesAPI from './categories.api';
-import TermsAPI from './terms.api';
+import MenuAPI from '@api/menu.api';
+import AuthenticationAPI from '@api/authentication.api';
+import MijnOmgevingAPI from '@api/mijnOmgeving.api';
+import GemmaAPI from '@api/gemma.api';
+import AangebodenGebruikAPI from '@api/aangebodenGebruik.api';
 
 const onUploadProgress = (event) => {
   console.group('[Axios] => fn.onUploadProgress');
-  console.log('Event: ', event);
+  console.info('Event: ', event);
   console.groupEnd();
 };
 
 const onDownloadProgress = (event) => {
   console.group('[Axios] => fn.onDownloadProgress');
-  console.log('Event: ', event);
+  console.info('Event: ', event);
   console.groupEnd();
 };
 
 let _timeOut = null;
 let _errorTokens = [];
 
-const unauthenticatedState = (state) => {
+const unauthenticatedState = () => {
   const unauthenticatedEvent = new CustomEvent('unAuthenticate');
   window.dispatchEvent(unauthenticatedEvent);
 };
@@ -87,21 +90,7 @@ export class API {
     });
     addInterceptors(Client);
 
-    const PublicationsClient = axios.create({
-      ...config.publications,
-      paramsSerializer: {
-        encode: (param) => encodeURIComponent(param),
-      },
-    });
-    addInterceptors(PublicationsClient);
-
-    const ThemesClient = axios.create({
-      ...config.themes,
-      paramsSerializer: {
-        encode: (param) => encodeURIComponent(param),
-      },
-    });
-    addInterceptors(ThemesClient);
+    // All APIs now use the single Client
 
     const DownloadClient = axios.create({
       ...config.download,
@@ -118,13 +107,18 @@ export class API {
     window.addEventListener('cancelRequests', cancelRequests, false);
 
     this.auth = new AuthAPI({ Store, Client });
-    this.publications = new PublicationsAPI({ Store, Client: PublicationsClient });
+    this.publications = new PublicationsAPI({ Store, Client });
     this.faqs = new FaqsAPI({ Store, Client });
     this.pages = new PagesAPI({ Store, Client });
-    this.themes = new ThemesAPI({ Store, Client: ThemesClient });
-    this.categories = new CategoriesAPI({ Store, Client: Client });
-
-    this.terms = new TermsAPI({ Store, Client: Client });
+    this.themes = new ThemesAPI({ Store, Client });
+    this.menu = new MenuAPI({ Store, Client });
+    this.authentication = new AuthenticationAPI({
+      Store,
+      Client,
+    });
+    this.mijnOmgeving = new MijnOmgevingAPI({ Store, Client });
+    this.gemma = new GemmaAPI({ Store, Client });
+    this.aangebodenGebruik = new AangebodenGebruikAPI({ Store, Client });
   }
 }
 

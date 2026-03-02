@@ -8,13 +8,12 @@ import customParseFormat from 'dayjs/plugin/customParseFormat';
 require('dayjs/locale/nl');
 
 // Imports => Config
-import { getLocale, setLocale } from '@config/locale';
 
 export const AcFormatDate = (
   input,
   from = 'DD-MM-YYYY',
   to = 'DD MMM Y',
-  locale = null
+  // locale = null
 ) => {
   dayjs.locale('nl-NL');
   dayjs.extend(localizedFormat);
@@ -63,7 +62,7 @@ export const AcGetDaysDifference = (date, now = dayjs()) => {
   return dayjs(date).diff(now, 'days');
 };
 
-export const AcGetTimeUntilNow = (date, now = dayjs()) => {
+export const AcGetTimeUntilNow = (date) => {
   dayjs.extend(localizedFormat);
   dayjs.extend(relativeTime);
   dayjs.locale('nl-NL');

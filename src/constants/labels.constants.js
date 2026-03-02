@@ -1,19 +1,17 @@
 export const LABELS = {
-  APP_NAME: 'Publicaties Gemeente Tilburg',
+  APP_NAME: 'Open Tilburg',
   CLOSE: 'Sluiten',
   CLOSE_SINGULAR: 'Sluit',
   CONCEPTS_LIST: 'Begrippenlijst',
-  ENTER_QUERY: 'Vul je zoekterm in',
+  ENTER_QUERY: 'Zoek op naam of trefwoord',
   FILTER: 'Filter & sorteer',
   MENU: 'Menu',
   SEARCH: 'Zoeken',
   SEARCH_EXTENSIVE: 'Zoeken',
   SEARCH_RESULTS: 'Resultaten',
   CATEGORY: 'Categorie',
-  SOURCE: 'Bron',
-  CATEGORIES: 'Welke documenten vind je hier?',
-  CATEGORIES_EXPLAIN:
-    'Op deze website zijn alle openbare documenten van de gemeente Tilburg te vinden.',
+  CATEGORIES: 'Categorieën',
+  CATEGORIES_EXPLAIN: 'Bekijk de verschillende categorieën',
   TO_MAIN_CONTENT: 'Direct naar de inhoud',
   HIGHLIGHTED: 'Uitgelicht',
   SUBJECTS: 'Onderwerpen',
@@ -21,7 +19,7 @@ export const LABELS = {
   CHOSEN_FILTERS: 'Gekozen filters',
   NO_RESULTS: 'Geen resultaten gevonden',
   REFINE_SEARCH: 'Probeer een andere zoekterm of pas de filters aan.',
-  WHAT_ARE_YOU_LOOKING_FOR: 'Waar ben je naar op zoek?',
+  WHAT_ARE_YOU_LOOKING_FOR: 'Waar bent u naar op zoek?',
   READ_MORE_ABOUT: 'Lees meer over',
   VIEW_RESULTS: 'Bekijk resultaten',
   ADDITIONAL_INFO: 'Aanvullende informatie',
@@ -40,9 +38,7 @@ export const LABELS = {
   DOCUMENTS: 'Documenten',
   DOCUMENTS_EXPLAIN: 'Bekijk alle documenten',
   SEARCH_RESULTS_LOADING: 'Zoekresultaten worden geladen',
-  SEARCH_RESULTS_LOADED: 'Zoekresultaten geladen',
-  SEARCH_DATE_FILTER: 'Zoek op gekozen datum',
-  SEARCH_DATE: 'Publicatiedatum',
+  SEARCH_RESULTS_LOADED: 'Zoekresulten geladen',
   FOUND: 'Gevonden',
   RESULT: 'Resultaat',
   RESULTS: 'Resultaten',
@@ -51,20 +47,46 @@ export const LABELS = {
   COPY_LINK: 'Kopieer link',
   COPY_LINK_SUCCESS: 'Link gekopieerd!',
   COPY_LINK_ERROR: 'Kopiëren mislukt',
-  VIEW_ALL_THEMES: 'Toon alle onderwerpen',
+  VIEW_ALL_THEMES: 'Bekijk alle onderwerpen',
 
   THIS_WEBSITE: 'Deze website',
   QUICK_LINKS: 'Snel naar',
   SHOW_ALL_SUBJECTS: 'Toon alle onderwerpen',
   VIEW_DOCUMENTS: 'Bekijk de documenten',
 
-  THEMES: 'Zoeken op onderwerp',
-  THEMES_BUTTON: 'Onderwerpen',
+  THEMES: 'Onderwerpen',
+
+  AUTHENTICATION: 'Login',
+  MIJN_OMGEVING: 'Mijn omgeving',
+  GEMMA: 'GEMMA',
   ABOUT_CATEGORIES: 'Over categorieën',
+
+  WRONG_PAGE: '404 | Deze pagina bestaat niet',
 
   // Navigation & Footer Labels
   ORGANIZATION: 'Organisatie en werkwijze',
   EXTERNAL_LINK: 'Opent in een nieuw tabblad',
+
+  // Nextcloud Labels
+  NEXTCLOUD_LOGIN: 'Nextcloud Login',
+  NEXTCLOUD_AUTHORIZATION: 'Nextcloud Autorisatie',
+
+  // Beheer Account
+  MIJN_ACCOUNT: 'Mijn account',
+
+  // Beheer labels
+  BEHEER: 'Beheer',
+  BEHEER_TYPE: 'Beheer Type',
+  BEHEER_TYPE_DETAILS: 'Beheer Type Details',
+
+  // Register labels
+  REGISTER: 'Aanmelden',
+
+  // Directory labels
+  DIRECTORY: 'Directory',
+
+  // Forgot password labels
+  FORGOT_PASSWORD: 'Wachtwoord vergeten',
 };
 
 export const LABELS_DYNAMIC = {

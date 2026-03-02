@@ -4,3 +4,6 @@ export { useUIActions } from './use-ui-actions.hook';
 export { useClickOutside } from './use-click-outside.hook';
 export { useEscapeKey } from './use-escape-key.hook';
 export { useDocumentTitleFromPath } from './use-document-title-from-path.hook';
+export { useLaterEffect } from './con-use-later-effect';
+export { useDebouncedInput } from './con-use-debounced-input-hook';
+export { useFacetNameResolution } from './con-use-facet-name-resolution';

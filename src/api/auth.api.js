@@ -35,7 +35,32 @@ export class AuthAPI {
   }
 
   logout() {
-    return this.Client.get(ENDPOINTS.OAUTH.LOGOUT).then((response) => response.data);
+    return this.Client.post(ENDPOINTS.OAUTH.LOGOUT).then((response) => response.data);
+  }
+
+  // OpenConnector session-based authentication methods
+  sessionLogin(credentials) {
+    return this.Client.post(ENDPOINTS.OPENCONNECTOR.USER_LOGIN, credentials).then(
+      (response) => response.data
+    );
+  }
+
+  sessionLogout() {
+    return this.Client.post(ENDPOINTS.OPENCONNECTOR.USER_LOGOUT).then(
+      (response) => response.data
+    );
+  }
+
+  getUserProfile() {
+    return this.Client.get(ENDPOINTS.OPENCONNECTOR.USER_PROFILE).then(
+      (response) => response.data
+    );
+  }
+
+  updateUserProfile(userData) {
+    return this.Client.put(ENDPOINTS.OPENCONNECTOR.USER_PROFILE, userData).then(
+      (response) => response.data
+    );
   }
 }
 

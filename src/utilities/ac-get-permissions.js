@@ -6,11 +6,21 @@ export class User {
 		this.store = store;
 	}
 
-	is = (role) => {
-		const { current_roles } = this.store;
-		if (!AcIsSet(current_roles)) return false;
+	// Updated to use groups instead of roles
+	is = (group) => {
+		const { current_groups } = this.store;
+		if (!AcIsSet(current_groups)) return false;
 
-		return current_roles.indexOf(role) > -1;
+		return current_groups.indexOf(group) > -1;
+	};
+
+	// Alias for backward compatibility
+	hasRole = (group) => {
+		return this.is(group);
+	};
+
+	hasGroup = (group) => {
+		return this.is(group);
 	};
 
 	can = (permission, or) => {

@@ -1,70 +1,65 @@
-// Imports => Constants
-import { ROLES } from '@constants';
-
 // Imports => Utilities
 import { AcIsArray } from '@utils';
 
-const getRole = (role) => {
-  let result = role;
+const getGroupDisplayName = (group) => {
+  let result = group;
 
-  switch (role) {
-    case ROLES.CHUCK_NORRIS:
-      result = 'Super admin';
+  // Map group names to display names
+  switch (group) {
+    case 'admin':
+      result = 'Administrator';
       break;
-
-    case ROLES.ADMIN:
-      result = 'Admin';
+    case 'openregister':
+      result = 'Open Register';
       break;
-
-    case ROLES.RENTAL_COORDINATOR:
-      result = 'Rental Coordinator';
+    case 'editor':
+      result = 'Editor';
       break;
-
-    case ROLES.COMPANY_ADMIN:
-      result = 'Company Admin';
+    case 'viewer':
+      result = 'Viewer';
       break;
-
-    case ROLES.SERVICE_ENGINEER:
-      result = 'Service Engineer';
-      break;
-
-    case ROLES.OPERATOR:
-      result = 'Operator';
-      break;
-
-    case ROLES.USER:
-      result = 'User';
-      break;
-    case ROLES.CDE:
-      result = 'Client Desk Engineer';
+    case 'moderator':
+      result = 'Moderator';
       break;
     default:
-      result = null;
+      // Capitalize first letter and replace underscores/hyphens with spaces
+      result = group.charAt(0).toUpperCase() + group.slice(1).replace(/[_-]/g, ' ');
   }
 
   return result;
 };
 
-export const AcFormatRole = (role) => {
-  let result = role;
-  const pattern = new RegExp(/\,/gi);
+// Legacy function name for backward compatibility
+export const getRole = (role) => {
+  return getGroupDisplayName(role);
+};
 
-  if (AcIsArray(role) || pattern.test(role)) {
-    const arr = AcIsArray(role) ? role : role.split(',');
+// Format groups for display (new preferred method)
+export const AcFormatGroup = (group) => {
+  let result = group;
+  const pattern = new RegExp(/,/gi);
+
+  if (AcIsArray(group) || pattern.test(group)) {
+    const arr = AcIsArray(group) ? group : group.split(',');
     const len = arr.length;
     let n = 0;
     result = [];
 
     for (n; n < len; n++) {
       const line = arr[n].replace(/ /g, '');
-      const formatted = getRole(line);
+      const formatted = getGroupDisplayName(line);
       if (formatted) result.push(formatted);
     }
 
     result = result.join('<br/>');
   } else {
-    result = getRole(role);
+    result = getGroupDisplayName(group);
   }
 
   return result;
+};
+
+// Legacy function for backward compatibility
+export const AcFormatRole = (role) => {
+  return AcFormatGroup(role);
 };

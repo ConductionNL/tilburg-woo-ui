@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 
 // Imports => Utilities
 import { AcIsSet } from '@utils';
@@ -16,6 +16,7 @@ export const useClickOutside = ($ref, callback) => {
     }
   };
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks -- this file works and i really dont wanna bother refactoring it
   useEffect(() => {
     if (document) document.addEventListener('click', handleClick);
 

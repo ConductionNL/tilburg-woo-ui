@@ -1,109 +1,172 @@
 // Imports => Constants
 import { TITLES } from './titles.constants';
+import { VISUALS } from './visuals.constants';
 
 // Imports => Utilities
 import { AcUUID } from '@utils/ac-uuid';
 import { AcLockObject } from '@utils/ac-lock-object';
 
 // Imports => Views
-import { AcHome, AcPublication, AcSearch, AcSubjects, AcThemes } from '@views';
+import {
+  AcHome,
+  AcPublication,
+  AcSearch,
+  AcThemes,
+  AcMijnOmgeving,
+  AcGemma,
+  AcNextcloudAuthorization,
+  AcBeheer,
+  AcRegister,
+  AcViews,
+  AcObjects,
+  AcMyAccount,
+  AcLogin,
+  ConDirectory,
+  AcFormsGebruik,
+  AcFormsProduct,
+  AcFormsApplicatie,
+  AcFormsKoppeling,
+  ConFormsDienst,
+  ConFormsGebruikKoppeling,
+  ConFormsGebruikDienst,
+  ConViewsList,
+  ConBeheerViews,
+  ConBeheerViewsList,
+  ConFormsIndex,
+  ConPasswordReminder,
+  AcChat,
+} from '@views';
 import { LABELS } from '@constants/labels.constants';
+import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
 
 export const PATHS = AcLockObject({
   HOME: '/',
-  ABOUT: '/over-ons',
-  ACCESSIBILITY: '/toegankelijkheid',
-  CONTACT: '/contact',
-  COOKIES: 'https://www.tilburg.nl/cookies/',
-  FAQ: '/contact',
-  ORGANIZATION: 'https://www.werkenvoortilburg.nl/over-ons/afdelingen/',
-  PRIVACY: 'https://www.tilburg.nl/privacystatement/',
-  PROCLAIMER: 'https://www.tilburg.nl/proclaimer/',
+  // CMS-driven routes removed: ABOUT, ACCESSIBILITY, CONTACT, FAQ, ORGANIZATION, COOKIES, PRIVACY, PROCLAIMER, WEBSITE, WOO, REACH_OUT
   PUBLICATION: '/publicatie/:id',
-  REACH_OUT: 'https://www.tilburg.nl/contact/',
   SEARCH: '/zoeken/:query?',
   SEARCH_STATIC: '/zoeken',
-  // THEMES: '/onderwerpen',
-  WEBSITE: 'https://www.tilburg.nl/',
-  WOO: 'https://www.tilburg.nl/gemeente/wet-open-overheid-woo/',
+  AUTHENTICATION_STATIC: '/login',
+  PASSWORD_REMINDER_STATIC: '/reminder',
+  MIJN_OMGEVING_STATIC: '/mijn-omgeving',
+  GEMMA_STATIC: '/gemma',
+  THEMES: '/onderwerpen',
+  NEXTCLOUD_LOGIN: '/login',
+  NEXTCLOUD_AUTHORIZATION: '/authorization',
+  BEHEER: '/beheer',
+  BEHEER_VIEW: '/beheer/view',
+  BEHEER_TYPE: '/beheer/:type',
+  BEHEER_TYPE_DETAILS: '/beheer/:type/:id',
+  OBJECTS: '/objects/:register/:schema',
+  REGISTER: '/register',
+  AANMELDEN: '/aanmelden',
+  FORMS: '/forms',
+  FORMS_REGISTER: '/forms/register',
+  FORMS_GEBRUIK: '/forms/gebruik',
+  FORMS_GEBRUIK_APPLICATIE: '/forms/gebruik/applicatie',
+  FORMS_GEBRUIK_KOPPELING: '/forms/gebruik/koppeling',
+  FORMS_GEBRUIK_DIENST: '/forms/gebruik/dienst',
+  FORMS_PRODUCT: '/forms/product',
+  FORMS_APPLICATIE: '/forms/applicatie',
+  FORMS_KOPPELING: '/forms/koppeling',
+  FORMS_DIENST: '/forms/dienst',
+  VIEWS: '/views/:id',
+  VIEWS_LIST: '/views',
+  EXTENDEDVIEW: '/extendedview/:id',
+  BEHEER_VIEWS: '/beheer/views',
+  BEHEER_VIEWS_DETAIL: '/beheer/views/:id',
+  BEHEER_VIEW_DETAIL: '/beheer/view/:id',
+  MY_ACCOUNT: '/account',
+  DIRECTORY: '/directory',
+  CHAT: '/chat',
 });
 
 export const NAVIGATE_TO = AcLockObject({
   PUBLICATION: (id) => PATHS.PUBLICATION.replace(':id', id),
+  BEHEER_VIEW: () => PATHS.BEHEER_VIEW,
+  BEHEER_TYPE: (type) => PATHS.BEHEER_TYPE.replace(':type', type),
+  BEHEER_TYPE_DETAILS: (type, id) =>
+    PATHS.BEHEER_TYPE_DETAILS.replace(':type', type).replace(':id', id),
+  VIEWS: (id) => PATHS.VIEWS.replace(':id', id),
+  VIEWS_LIST: () => PATHS.VIEWS_LIST,
+  EXTENDEDVIEW: (id) => PATHS.EXTENDEDVIEW.replace(':id', id),
+  BEHEER_VIEWS: () => PATHS.BEHEER_VIEWS,
+  BEHEER_VIEWS_DETAIL: (id) => PATHS.BEHEER_VIEWS_DETAIL.replace(':id', id),
+  BEHEER_VIEW_DETAIL: (id) => PATHS.BEHEER_VIEW_DETAIL.replace(':id', id),
 });
 
+// Try to import container constants (generated at runtime)
+let containerConfig;
+try {
+  containerConfig = require('@constants/container.constants');
+} catch (error) {
+  console.warn(
+    'Container constants not available, falling back to hostname-based logic'
+  );
+  containerConfig = null;
+}
+
+const getTitle = () => {
+  // Use container config if available
+  if (containerConfig && containerConfig.getTitle) {
+    return containerConfig.getTitle();
+  }
+
+  // Fallback to hostname-based logic for production builds
+  const hostname = window.location.hostname;
+
+  switch (hostname) {
+    case 'vng.opencatalogi.nl':
+    case 'acceptatie.softwarecatalogus.nl':
+    case 'vng.test.opencatalogi.nl':
+      return 'softwarecatalogus';
+    case 'open-tilburg.accept.commonground.nu':
+      return 'Open Tilburg';
+    case 'open-dimpact.accept.commonground.nu':
+    case 'dimpact.opencatalogi.nl':
+      return 'Producten softwarecatalogus';
+    case 'open-rotterdam.accept.commonground.nu':
+      return 'Open Rotterdam';
+    case 'open-migrato.accept.commonground.nu':
+      return 'Open Migrato';
+    case 'opencatalogi.nl':
+    case 'developer.opencatalogi.nl':
+    case 'test.opencatalogi.nl':
+      return 'OpenCatalogi';
+    case 'opencatalogi.open-regels.nl':
+      return 'OpenRegels';
+    case 'localhost':
+      return 'Localhost softwarecatalogus';
+    case 'horstadmaas.accept.opencatalogi.nl':
+    case 'verwerkingsregister.horstaandemaas.nl':
+      return 'Horst aan de Maas';
+    case 'verwerkingsregister.venray.nl':
+      return 'Venray';
+    default:
+      return 'Open Tilburg';
+  }
+};
+
 export const ROUTES = {
-  ABOUT: {
-    id: AcUUID(),
-    name: 'About',
-    label: TITLES.ABOUT,
-    path: PATHS.ABOUT,
-    title: `${TITLES.BASE} | ${TITLES.ABOUT}`,
-  },
-  ACCESSIBILITY: {
-    id: AcUUID(),
-    name: 'Accessibility',
-    label: TITLES.ACCESSIBILITY,
-    path: PATHS.ACCESSIBILITY,
-    title: `${TITLES.BASE} | ${TITLES.ACCESSIBILITY}`,
-  },
-  CONTACT: {
-    id: AcUUID(),
-    name: 'Contact',
-    label: TITLES.CONTACT,
-    path: PATHS.CONTACT,
-    title: `${TITLES.BASE} | ${TITLES.CONTACT}`,
-  },
-  COOKIES: {
-    id: AcUUID(),
-    name: 'Cookies',
-    label: TITLES.COOKIES,
-    href: PATHS.COOKIES,
-    isExternal: true,
-  },
-  FAQ: {
-    id: AcUUID(),
-    name: 'FAQ',
-    label: TITLES.FAQ,
-    path: PATHS.FAQ,
-    title: `${TITLES.BASE} | ${TITLES.FAQ}`,
-  },
+  // CMS-driven routes removed: ABOUT, ACCESSIBILITY, CONTACT, COOKIES, FAQ
   HOME: {
     id: AcUUID(),
     name: 'Home',
     label: TITLES.HOME,
     path: PATHS.HOME,
-    title: `${TITLES.BASE} | ${TITLES.HOME}`,
+    title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | ${
+      TITLES.HOME
+    }`,
     component: AcHome,
   },
-  ORGANIZATION: {
-    id: AcUUID(),
-    name: 'Organization',
-    label: LABELS.ORGANIZATION,
-    href: PATHS.ORGANIZATION,
-    isExternal: true,
-    title: `${TITLES.BASE} | ${TITLES.ORGANIZATION}`,
-  },
-  PRIVACY: {
-    id: AcUUID(),
-    name: 'Privacy',
-    label: TITLES.PRIVACY,
-    href: PATHS.PRIVACY,
-    isExternal: true,
-  },
-  PROCLAIMER: {
-    id: AcUUID(),
-    name: 'Proclaimer',
-    label: TITLES.PROCLAIMER,
-    href: PATHS.PROCLAIMER,
-    isExternal: true,
-  },
+  // CMS-driven routes removed: ORGANIZATION, PRIVACY, PROCLAIMER
   PUBLICATION: {
     id: AcUUID(),
     name: 'Publication',
     label: TITLES.PUBLICATION,
     path: PATHS.PUBLICATION,
-    title: `${TITLES.BASE} | ${TITLES.PUBLICATION}`,
+    title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | ${
+      TITLES.PUBLICATION
+    }`,
     component: AcPublication,
   },
   SEARCH: {
@@ -111,70 +174,520 @@ export const ROUTES = {
     name: 'Search',
     label: LABELS.SEARCH_EXTENSIVE,
     path: PATHS.SEARCH_STATIC,
-    title: `${TITLES.BASE} | ${TITLES.SEARCH}`,
+    title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | ${
+      TITLES.SEARCH
+    }`,
     component: AcSearch,
   },
-  // THEMES: {
-  //   id: AcUUID(),
-  //   name: 'Themes',
-  //   label: TITLES.THEMES,
-  //   path: PATHS.THEMES,
-  //   title: `${TITLES.BASE} | ${TITLES.THEMES}`,
-  //   component: AcThemes,
-  // },
-  WEBSITE: {
+  AUTHENTICATION: {
     id: AcUUID(),
-    name: 'Website',
-    label: TITLES.WEBSITE,
-    href: PATHS.WEBSITE,
-    isExternal: true,
-    title: `${TITLES.BASE} | ${TITLES.WEBSITE}`,
+    name: 'Authentication',
+    label: LABELS.AUTHENTICATION,
+    path: PATHS.AUTHENTICATION_STATIC,
+    title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | Login`,
+    component: AcLogin,
   },
-  WOO: {
+  PASSWORD_REMINDER: {
     id: AcUUID(),
-    name: 'WOO',
-    label: TITLES.WOO,
-    href: PATHS.WOO,
-    isExternal: true,
-    title: `${TITLES.BASE} | ${TITLES.WOO}`,
+    name: 'Password Reminder',
+    label: 'Wachtwoord vergeten',
+    path: PATHS.PASSWORD_REMINDER_STATIC,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | Wachtwoord vergeten`,
+    component: ConPasswordReminder,
   },
-  REACH_OUT: {
+  MIJN_OMGEVING: {
     id: AcUUID(),
-    name: 'ReachOut',
-    label: TITLES.REACH_OUT,
-    href: PATHS.REACH_OUT,
-    isExternal: true,
-    title: `${TITLES.BASE} | ${TITLES.REACH_OUT}`,
+    name: 'Mijn omgeving',
+    label: LABELS.MIJN_OMGEVING,
+    path: PATHS.MIJN_OMGEVING_STATIC,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | Mijn omgeving`,
+    component: AcMijnOmgeving,
+  },
+  GEMMA: {
+    id: AcUUID(),
+    name: 'GEMMA',
+    label: LABELS.GEMMA,
+    path: PATHS.GEMMA_STATIC,
+    title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | GEMMA`,
+    component: AcGemma,
+  },
+  THEMES: {
+    id: AcUUID(),
+    name: 'Themes',
+    label: TITLES.THEMES,
+    path: PATHS.THEMES,
+    title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | ${
+      TITLES.THEMES
+    }`,
+    component: AcThemes,
+  },
+  // CMS-driven routes removed: ABOUT (duplicate), WEBSITE, WOO, REACH_OUT, ACCESSIBILITY (duplicate)
+  NEXTCLOUD_LOGIN: {
+    id: AcUUID(),
+    name: 'Nextcloud Login',
+    label: LABELS.NEXTCLOUD_LOGIN,
+    path: PATHS.NEXTCLOUD_LOGIN,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | Nextcloud Login`,
+  },
+  NEXTCLOUD_AUTHORIZATION: {
+    id: AcUUID(),
+    name: 'Nextcloud Authorization',
+    label: LABELS.NEXTCLOUD_AUTHORIZATION,
+    path: PATHS.NEXTCLOUD_AUTHORIZATION,
+    title: 'Nextcloud Authorization',
+    component: AcNextcloudAuthorization,
+  },
+  BEHEER: {
+    id: AcUUID(),
+    name: 'Beheer',
+    label: LABELS.BEHEER,
+    path: PATHS.BEHEER,
+    title: 'Beheer',
+    component: AcBeheer,
+  },
+  BEHEER_VIEW: {
+    id: AcUUID(),
+    name: 'Beheer View List',
+    label: 'AMEF Views',
+    path: PATHS.BEHEER_VIEW,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | AMEF Views`,
+    component: ConBeheerViewsList,
+  },
+  BEHEER_TYPE: {
+    id: AcUUID(),
+    name: 'Beheer Type List',
+    label: LABELS.BEHEER_TYPE,
+    path: PATHS.BEHEER_TYPE,
+    title: 'Beheer Type List',
+    component: AcBeheer,
+  },
+  BEHEER_TYPE_DETAILS: {
+    id: AcUUID(),
+    name: 'Beheer Type Details',
+    label: LABELS.BEHEER_TYPE_DETAILS,
+    path: PATHS.BEHEER_TYPE_DETAILS,
+    title: 'Beheer Type Details',
+    component: AcBeheer,
+  },
+  AANMELDEN: {
+    id: AcUUID(),
+    name: 'Aanmelden',
+    label: LABELS.REGISTER,
+    path: PATHS.AANMELDEN,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | Aanmelden`,
+    component: AcRegister,
+  },
+  REGISTER: {
+    id: AcUUID(),
+    name: 'Aanmelden',
+    label: LABELS.REGISTER,
+    path: PATHS.REGISTER,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | Aanmelden`,
+    component: AcRegister,
+  },
+  FORMS_INDEX: {
+    id: AcUUID(),
+    name: 'Formulieren',
+    label: 'Formulieren',
+    path: PATHS.FORMS,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | Formulieren`,
+    component: ConFormsIndex,
+  },
+  FORMS_REGISTER: {
+    id: AcUUID(),
+    name: 'Formulier Aanmelden',
+    label: 'Formulier Aanmelden',
+    path: PATHS.FORMS_REGISTER,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | Formulier Aanmelden`,
+    component: AcRegister,
+  },
+  FORMS_GEBRUIK: {
+    id: AcUUID(),
+    name: 'Formulier Gebruik',
+    label: 'Formulier Gebruik',
+    path: PATHS.FORMS_GEBRUIK,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | Formulier Gebruik`,
+    redirectTo: '/beheer/gebruik',
+  },
+  FORMS_GEBRUIK_APPLICATIE: {
+    id: AcUUID(),
+    name: 'Formulier Gebruik Applicatie',
+    label: 'Formulier Gebruik Applicatie',
+    path: PATHS.FORMS_GEBRUIK_APPLICATIE,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | Formulier Gebruik Applicatie`,
+    component: AcFormsGebruik,
+  },
+  FORMS_GEBRUIK_KOPPELING: {
+    id: AcUUID(),
+    name: 'Formulier Gebruik Koppeling',
+    label: 'Formulier Gebruik Koppeling',
+    path: PATHS.FORMS_GEBRUIK_KOPPELING,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | Formulier Gebruik Koppeling`,
+    component: ConFormsGebruikKoppeling,
+  },
+  FORMS_GEBRUIK_DIENST: {
+    id: AcUUID(),
+    name: 'Formulier Gebruik Dienst',
+    label: 'Formulier Gebruik Dienst',
+    path: PATHS.FORMS_GEBRUIK_DIENST,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | Formulier Gebruik Dienst`,
+    component: ConFormsGebruikDienst,
+  },
+  FORMS_PRODUCT: {
+    id: AcUUID(),
+    name: 'Formulier Product',
+    label: 'Formulier Product',
+    path: PATHS.FORMS_PRODUCT,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | Formulier Product`,
+    component: AcFormsProduct,
+  },
+  FORMS_APPLICATIE: {
+    id: AcUUID(),
+    name: 'Formulier Applicatie',
+    label: 'Formulier Applicatie',
+    path: PATHS.FORMS_APPLICATIE,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | Formulier Applicatie`,
+    component: AcFormsApplicatie,
+  },
+  FORMS_KOPPELING: {
+    id: AcUUID(),
+    name: 'Formulier Koppeling',
+    label: 'Formulier Koppeling',
+    path: PATHS.FORMS_KOPPELING,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | Formulier Koppeling`,
+    component: AcFormsKoppeling,
+  },
+  FORMS_DIENST: {
+    id: AcUUID(),
+    name: 'Formulier Dienst',
+    label: 'Formulier Dienst',
+    path: PATHS.FORMS_DIENST,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | Formulier Dienst`,
+    component: ConFormsDienst,
+  },
+  VIEWS_LIST: {
+    id: AcUUID(),
+    name: 'Views List',
+    label: 'GEMMA weergaven',
+    path: PATHS.VIEWS_LIST,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | GEMMA weergaven`,
+    component: ConViewsList,
+  },
+  BEHEER_VIEWS: {
+    id: AcUUID(),
+    name: 'Beheer Views',
+    label: 'GEMMA weergaven beheer',
+    path: PATHS.BEHEER_VIEWS,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | GEMMA weergaven beheer`,
+    component: ConBeheerViews,
+  },
+  BEHEER_VIEWS_DETAIL: {
+    id: AcUUID(),
+    name: 'Beheer Views Detail',
+    label: 'GEMMA weergaven beheer',
+    path: PATHS.BEHEER_VIEWS_DETAIL,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | GEMMA weergaven beheer`,
+    component: ConBeheerViews,
+  },
+  BEHEER_VIEW_DETAIL: {
+    id: AcUUID(),
+    name: 'Beheer View Detail',
+    label: 'GEMMA weergaven beheer',
+    path: PATHS.BEHEER_VIEW_DETAIL,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | GEMMA weergaven beheer`,
+    component: ConBeheerViews,
+  },
+  VIEWS: {
+    id: AcUUID(),
+    name: 'Views',
+    label: LABELS.VIEWS,
+    path: PATHS.VIEWS,
+    title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | Views`,
+    component: AcViews,
+  },
+  EXTENDEDVIEW: {
+    id: AcUUID(),
+    name: 'ExtendedView',
+    label: LABELS.VIEWS,
+    path: PATHS.EXTENDEDVIEW,
+    title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | Views`,
+    component: AcViews,
+  },
+  ACCOUNT: {
+    id: AcUUID(),
+    name: 'Beheer Mijn Account',
+    label: LABELS.MIJN_ACCOUNT,
+    path: PATHS.MY_ACCOUNT,
+    title: 'Mijn account',
+    component: AcMyAccount,
+  },
+  MIJN_ACCOUNT_REDIRECT: {
+    id: AcUUID(),
+    name: 'Mijn Account Redirect',
+    label: 'Mijn Account',
+    path: '/mijn-account',
+    title: 'Mijn account',
+    redirectTo: PATHS.MY_ACCOUNT,
+  },
+  DIRECTORY: {
+    id: AcUUID(),
+    name: 'Directory',
+    label: LABELS.DIRECTORY,
+    path: PATHS.DIRECTORY,
+    title: 'Directory',
+    component: ConDirectory,
+  },
+  CHAT: {
+    id: AcUUID(),
+    name: 'Chat',
+    label: 'Chat',
+    path: PATHS.CHAT,
+    title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | Chat`,
+    component: AcChat,
+  },
+  OBJECTS: {
+    id: AcUUID(),
+    name: 'Objects',
+    label: 'Objects',
+    path: PATHS.OBJECTS,
+    title: 'Objects',
+    component: AcObjects,
   },
 };
+
+export const VNG_ROUTES_SITEMAP = {
+  FAQ: {
+    label: 'FAQ',
+    href: '/over-ons',
+  },
+  ONDERWERPEN: {
+    label: 'Onderwerpen VNG',
+    href: 'https://vng.nl/rubrieken',
+  },
+  PRIVACYVERKLARING: {
+    label: 'Privacyverklaring',
+    href: 'https://www.softwarecatalogus.nl/Privacyverklaring%20softwarecatalogus',
+  },
+  OVER_VNG_REALISATIE: {
+    label: 'Over VNG Realisatie',
+    href: 'https://vng.nl/artikelen/vng-realisatie',
+  },
+  VACATURES: {
+    label: 'Vacatures',
+    href: 'https://vng.nl/artikelen/werken-bij-de-vng',
+  },
+};
+
+export const VNG_ROUTES_INFORMATIE = {
+  AGENDA: {
+    label: 'Agenda VNG',
+    href: 'https://vng.nl/agenda',
+  },
+  NIEUWS: {
+    label: 'Nieuws',
+    href: 'https://vng.nl/nieuws',
+  },
+  CONTACT: {
+    label: 'Contact',
+    href: 'https://vng.nl/contact',
+  },
+  MELD_AAN_VNG_REALISATIE: {
+    label: 'Meld aan VNG Realisatie',
+    href: 'mailto:softwarecatalogus@vng.nl?subject=softwarecatalogus: Terugmelding GEMMA softwarecatalogus&amp;body=Hierbij ontvangt u mijn op- en aanmerkingen over de pagina https://www.softwarecatalogus.nl/swchome in de GEMMA softwarecatalogus.',
+  },
+};
+
+export const VNG_ROUTES_BEDRIJVEN = {
+  TWITTER: {
+    label: 'Twitter',
+    href: 'https://twitter.com/VNGRealisatie',
+  },
+  LINKEDIN: {
+    label: 'LinkedIn',
+    href: 'https://www.linkedin.com/company/vng-realisatie/',
+  },
+  YOUTUBE: {
+    label: 'Youtube',
+    href: 'https://www.youtube.com/channel/UCg0bWcCn9Shnt57-L7hSbow',
+  },
+  GEMMA_NIEUWSBRIEF: {
+    label: 'Nieuwsbrief GEMMA',
+    href: 'https://www.gemmaonline.nl/index.php/GEMMA_nieuwsbrief',
+  },
+};
+
+export const DIMPACT_ROUTES_WHAT_WE_DO = {
+  WHAT_WE_DO: {
+    label: 'Wat we doen',
+    style: 'italic',
+  },
+  SERVICES: {
+    label: 'Diensten',
+    href: 'https://www.dimpact.nl/diensten',
+    iconLocation: 'left',
+  },
+  EVENTS: {
+    label: 'Evenementen',
+    href: 'https://www.dimpact.nl/evenementen',
+    iconLocation: 'left',
+  },
+  YEAR_REPORTS: {
+    label: 'Jaarverslagen',
+    href: 'https://www.dimpact.nl/over-ons/jaarverslagen',
+    iconLocation: 'left',
+  },
+  NEWS: {
+    label: 'Nieuws',
+    href: 'https://www.dimpact.nl/nieuws',
+    iconLocation: 'left',
+  },
+};
+export const DIMPACT_ROUTES_WHO_WE_ARE = {
+  WHO_WE_ARE: {
+    label: 'Wie we zijn',
+    style: 'italic',
+  },
+  ABOUT_US: {
+    label: 'Over ons',
+    href: 'https://www.dimpact.nl/over-ons',
+    iconLocation: 'left',
+  },
+  VACANCIES: {
+    label: 'Werken bij',
+    href: 'https://www.dimpact.nl/vacatures',
+    iconLocation: 'left',
+  },
+};
+export const DIMPACT_ROUTES_INFORMATION = {
+  PHONE_NUMBER: {
+    label: '088 346 0000',
+    href: 'tel:0883460000',
+    iconLocation: 'left',
+    icon: VISUALS.PHONE,
+  },
+  EMAIL: {
+    label: 'info@dimpact.nl',
+    href: 'mailto:info@dimpact.nl',
+    iconLocation: 'left',
+    icon: VISUALS.CONTACT,
+  },
+  KVK: {
+    label: 'KvK nummer: 0815 4067',
+    iconLocation: 'left',
+    icon: VISUALS.HOUSE,
+  },
+};
+
+// CMS-driven external routes removed - now managed by OpenCatalogi
 
 export const NAVIGATION_ITEMS = [ROUTES.HOME];
 
 export const FOOTER_PRIMARY_ABOUT = [
-  ROUTES.ABOUT,
+  // CMS-driven routes removed from footer - now managed by OpenCatalogi
   ROUTES.SEARCH,
-  // ROUTES.THEMES,
-  ROUTES.FAQ,
-  ROUTES.CONTACT,
+  ROUTES.THEMES,
 ];
 
-export const FOOTER_PRIMARY_QUICK = [
-  ROUTES.WEBSITE,
-  ROUTES.WOO,
-  ROUTES.REACH_OUT,
-  ROUTES.ORGANIZATION,
+export const VNG_FOOTER_ITEMS_SITEMAP = [
+  VNG_ROUTES_SITEMAP.FAQ,
+  VNG_ROUTES_SITEMAP.ONDERWERPEN,
+  VNG_ROUTES_SITEMAP.PRIVACYVERKLARING,
+  VNG_ROUTES_SITEMAP.OVER_VNG_REALISATIE,
+  VNG_ROUTES_SITEMAP.VACATURES,
+];
+export const VNG_FOOTER_ITEMS_INFORMATIE = [
+  VNG_ROUTES_INFORMATIE.CONTACT,
+  VNG_ROUTES_INFORMATIE.AGENDA,
+  VNG_ROUTES_INFORMATIE.NIEUWS,
+  VNG_ROUTES_INFORMATIE.MELD_AAN_VNG_REALISATIE,
+];
+export const VNG_FOOTER_ITEMS_BEDRIJVEN = [
+  VNG_ROUTES_BEDRIJVEN.TWITTER,
+  VNG_ROUTES_BEDRIJVEN.LINKEDIN,
+  VNG_ROUTES_BEDRIJVEN.YOUTUBE,
+  VNG_ROUTES_BEDRIJVEN.GEMMA_NIEUWSBRIEF,
 ];
 
-export const FOOTER_SECONDARY = [
-  ROUTES.ACCESSIBILITY,
-  ROUTES.PROCLAIMER,
-  ROUTES.COOKIES,
-  ROUTES.PRIVACY,
+export const DIMPACT_FOOTER_ITEMS_WHAT_WE_DO = [
+  DIMPACT_ROUTES_WHAT_WE_DO.WHAT_WE_DO,
+  DIMPACT_ROUTES_WHAT_WE_DO.SERVICES,
+  DIMPACT_ROUTES_WHAT_WE_DO.EVENTS,
+  DIMPACT_ROUTES_WHAT_WE_DO.YEAR_REPORTS,
+  DIMPACT_ROUTES_WHAT_WE_DO.NEWS,
 ];
+export const DIMPACT_FOOTER_ITEMS_WHO_WE_ARE = [
+  DIMPACT_ROUTES_WHO_WE_ARE.WHO_WE_ARE,
+  DIMPACT_ROUTES_WHO_WE_ARE.ABOUT_US,
+  DIMPACT_ROUTES_WHO_WE_ARE.VACANCIES,
+];
+export const DIMPACT_FOOTER_ITEMS_INFORMATION = [
+  DIMPACT_ROUTES_INFORMATION.PHONE_NUMBER,
+  DIMPACT_ROUTES_INFORMATION.EMAIL,
+  DIMPACT_ROUTES_INFORMATION.KVK,
+];
+
+// CMS-driven external links removed - now managed by OpenCatalogi
+export const EXTERNAL_LINKS = [];
+
+// CMS-driven footer links removed - now managed by OpenCatalogi
+export const FOOTER_PRIMARY_QUICK = [];
+
+export const FOOTER_SECONDARY = [];
 
 export const SUB_NAVIGATION_ITEMS = [];
 
 export const AUTHENTICATION_ROUTES = [];
+
+// Routes that require user authentication
+export const AUTHENTICATION_REQUIRED_ROUTES = [
+  PATHS.BEHEER,
+  PATHS.BEHEER_TYPE,
+  PATHS.BEHEER_TYPE_DETAILS,
+  PATHS.BEHEER_VIEWS,
+  PATHS.BEHEER_VIEWS_DETAIL,
+  PATHS.BEHEER_VIEW_DETAIL,
+  PATHS.MY_ACCOUNT,
+];
 
 export const DEFAULT_ROUTE = ROUTES.HOME;
 export const REDIRECT_ROUTE = ROUTES.HOME;

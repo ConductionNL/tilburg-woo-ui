@@ -37,7 +37,7 @@ export { AcFormatPercentage } from './ac-format-percentage';
 export { AcFormatPhonenumber } from './ac-format-phonenumber';
 export { AcFormatRawDataAsList } from './ac-format-raw-data-as-list';
 export { AcFormatRequestParameters } from './ac-format-request-parameters';
-export { AcFormatRole } from './ac-format-role';
+export { AcFormatRole, AcFormatGroup } from './ac-format-role';
 export { AcFormatSecondsToHms } from './ac-format-seconds-to-hm';
 export {
   AcGetAccessToken,
@@ -103,3 +103,59 @@ export { AcSanitizeHtml } from './ac-sanitize-html';
 export { AcBuildURLSearchParams } from './ac-build-url-search-params';
 export { AcValidateDate } from './ac-validate-date';
 export { AcRemoveTags, AcRemoveParagraphTags } from './ac-remove-tags';
+export { acSafeParseRedirectUri } from './ac-safe-parse-redirect-uri';
+export { getCookie, setCookie } from './ac-cookie';
+export { ConSorter } from './con-sorter';
+export { collapseExtendedObjects } from './con-collapse-extended-objects';
+export { smartSplit } from './con-smart-split';
+export { sortPropertiesByOrder } from './con-sort-properties-by-order';
+export { isJsonString } from './con-is-json-string';
+export {
+  TemplateProcessor,
+  createUserTemplateProcessor,
+  processUserTemplate,
+} from './con-template-processor';
+export {
+  withTemplateProcessing,
+  createTemplateComponents,
+} from './con-with-template-processing';
+export { extractText, extractTitle, extractSummary } from './con-extract-text';
+export { ConFormatDutchNumber } from './con-format-dutch-number';
+export {
+  isUUID,
+  shouldResolveToName,
+  extractReferenceIds,
+  extractReferenceIdsFromCollection,
+  resolveObjectReferencesToNames,
+  resolveCollectionReferencesToNames,
+  getDisplayValue,
+  createReferenceResolver,
+} from './con-detect-object-references';
+export {
+  isDataUrl,
+  isUrl,
+  getDataUrlDisplayName,
+  handleFileClick,
+} from './con-data-url-utils';
+export { getImageFromPublication } from './con-getImageFromPublication';
+export {
+  getTabHeaderIcon,
+  getTabHeaderName,
+} from './con-schema-tab-display-helpers';
+export {
+  extractUUIDs,
+  resolveUUIDsInText,
+  resolveUUIDsInArray,
+  resolveUUIDsInObject,
+  useResolvedText,
+  useResolvedArray,
+} from './con-resolve-uuids-in-text';
+export { normalizeSchemaName } from './con-normalize-schema-name';
+export {
+  buildGlossaryRegex,
+  buildTermLookup,
+  findGlossaryTerms,
+  highlightGlossaryTerms,
+} from './con-glossary-highlight';
+export { normalizeLinkToSchemaSlug } from './con-normalize-link-to-schema-slug';
+export { checkOrganizationPermissions } from './organization-permissions';
