@@ -1,453 +1,207 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { Link, useParams } from 'react-router-dom';
-import { toJS } from 'mobx';
-
-import { AcCard, AcContainer, AcFlex } from '@atoms';
-import { AcLoader, AcDrawer, AcTabList, AcSearchFilter, AcModal } from '@components';
-import { AcLink, AcTable } from '@molecules';
+import { useParams, useNavigate } from 'react-router-dom';
+import { AcLoader } from '@components';
 import { withStore } from '@stores';
+import { getTitle } from '@services/con-get-title';
 
-import {
-  Heading,
-  Paragraph,
-  Textbox,
-  PrimaryActionButton,
-  SecondaryActionButton,
-  Alert,
-} from '@utrecht/component-library-react/dist/css-module';
-import { LABELS, VISUALS } from '@constants';
-import acFormatDate from '@src/utilities/ac-format-date';
-import { Pagination } from '@amsterdam/design-system-react';
-import { StatusBadge } from '@utrecht/component-library-react';
-import _ from 'lodash';
-import { NAVIGATE_TO } from '@constants/routes.constants';
+import AcPublicationWooVerzoek from '@views/ac-publication/ac-publication-woo-verzoek';
+import AcPublicationSoftwarecatalogus from '@views/ac-publication/ac-publication-softwarecatalogus';
+import AcPublicationDefault from '@views/ac-publication/ac-publication-default';
+import AcPublicationOrganisation from '@views/ac-publication/ac-publication-organisation';
+import AcPublicationFormulier from './ac-publication-formulier';
+import AcPublicationProduct from './ac-publication-product';
+import AcPublicationModule from './ac-publication-module';
+import AcPublicationKoppeling from './ac-publication-koppeling';
+import AcPublicationGebruik from './ac-publication-gebruik';
+import AcPublicationDienst from './ac-publication-dienst';
+import AcPublicationContactperson from './ac-publication-contactperson';
+import AcPublicationModuleVersie from './ac-publication-moduleversie';
+import { AcContainer, AcFlex } from '@src/atoms';
+import { AcButton } from '@molecules';
+import { VISUALS } from '@constants';
+import ConGlossaryHighlight from '@components/con-glossary-highlight/con-glossary-highlight';
 
-const AcPublication = observer(({ store: { publications, terms } }) => {
+const AcPublication = observer(({ store: { publications } }) => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const {
     fetchPublication,
     resetPublication,
     get_single,
     loading,
-    attachmentPagination,
-    getSearchPageURL,
-    setAttachmentsPage,
-    getFilteredAttachments,
-    setAttachmentSearch,
-    attachmentSearch,
+    get_error,
+    fetchRelations,
+    resetRelations,
     fetchAttachments,
-    attachments,
     resetAttachments,
+    all_attachments,
+    all_publications,
+    fetchPublications,
   } = publications;
 
-  const drawerRef = useRef(null);
-  const modalRef = useRef(null);
-  const [copyStatus, setCopyStatus] = useState('idle'); // 'idle' | 'copied' | 'error'
-  const [termsLoaded, setTermsLoaded] = useState(false);
+  const currentPublicationFromList = all_publications.find(
+    (publication) => publication.id === id
+  );
+  const schema = currentPublicationFromList?.['@self']?.schema;
 
-  const hasTermsStore = Boolean(terms);
-  const {
-    fetchTerms = () => Promise.resolve(),
-    fetchTermsForPublication = () => Promise.resolve(),
-    setSearchQuery = () => {},
-    filtered_terms = [],
-    publication_terms = () => [],
-    is_loading = false,
-    is_loading_publication_terms = false,
-    all_terms = [],
-  } = terms || {};
+  // Add a state to track if all initial data is loaded
+  const [initialDataLoaded, setInitialDataLoaded] = useState(false);
 
-  const handleAllTermsSearch = (searchTerm) => {
-    if (hasTermsStore) {
-      // Set the search query
-      setSearchQuery(searchTerm);
-
-      // Calculate the current filtered count based on the new search term
-      if (!searchTerm) {
-        // If search is empty, return all terms
-        return all_terms?.length || 0;
-      } else {
-        // Filter terms manually to get accurate count
-        return (
-          all_terms?.filter((term) =>
-            term.name?.toLowerCase().includes(searchTerm.toLowerCase())
-          )?.length || 0
-        );
-      }
-    }
-    return 0;
-  };
-
-  const handleAttachmentSearch = (searchTerm) => {
-    setAttachmentSearch(searchTerm);
-    return getFilteredAttachments(false)?.length || 0;
-  };
-
-  const tabs = [
-    {
-      title: 'Deze pagina',
-      content: (
-        <>
-          {!hasTermsStore ? (
-            <Paragraph>Begrippen worden geladen...</Paragraph>
-          ) : is_loading_publication_terms ? (
-            <AcLoader />
-          ) : publication_terms(id)?.length ? (
-            publication_terms(id)
-              .slice()
-              .sort((a, b) => a.name.localeCompare(b.name))
-              .map((term) => (
-                <AcFlex column key={term.id || term.name}>
-                  <Heading level={3}>{term.name}</Heading>
-                  <Paragraph>{term.description}</Paragraph>
-                </AcFlex>
-              ))
-          ) : (
-            <Paragraph>Geen begrippen beschikbaar voor deze publicatie.</Paragraph>
-          )}
-        </>
-      ),
-    },
-    {
-      title: 'Alle begrippen',
-      content: (
-        <>
-          <AcSearchFilter
-            onSearch={handleAllTermsSearch}
-            ariaLabel='Zoek in alle begrippen'
-            label='Zoek in alle begrippen'
-            searchIconOnly={true}
-          />
-          {!hasTermsStore ? (
-            <Paragraph>Begrippen worden geladen...</Paragraph>
-          ) : is_loading ? (
-            <AcLoader />
-          ) : filtered_terms?.length ? (
-            filtered_terms
-              .slice()
-              .sort((a, b) => a.name.localeCompare(b.name))
-              .map((term) => (
-                <AcFlex column key={term.id || term.name}>
-                  <Heading level={3}>{term.name}</Heading>
-                  <Paragraph>{term.description}</Paragraph>
-                </AcFlex>
-              ))
-          ) : (
-            <Paragraph>
-              Geen begrippen gevonden die overeenkomen met uw zoekopdracht.
-            </Paragraph>
-          )}
-        </>
-      ),
-    },
-  ];
-
-  // Initial load of publication and terms data
   useEffect(() => {
+    fetchPublications();
     fetchPublication(id);
-    fetchAttachments(id);
-
-    // Only fetch terms if the store exists
-    if (hasTermsStore) {
-      fetchTerms();
-    }
-
-    return () => {
-      resetPublication();
-      resetAttachments();
-      // Reset terms loaded state on unmount
-      setTermsLoaded(false);
-    };
-  }, [id]);
-
-  // Second effect to fetch publication-specific terms after publication data is loaded
-  useEffect(() => {
-    if (hasTermsStore && get_single && !termsLoaded) {
-      // Call the fetchTermsForPublication method
-      fetchTermsForPublication(id);
-
-      // Mark as loaded to avoid repeated calls
-      setTermsLoaded(true);
-    }
-  }, [hasTermsStore, get_single, termsLoaded]);
+    return () => resetPublication();
+  }, [id, fetchPublication, fetchPublications, resetPublication]);
 
   useEffect(() => {
-    document.title = get_single?.title || 'Gemeente | Publicatie';
+    document.title =
+      get_single?.title ??
+      get_single?.titel ??
+      get_single?.name ??
+      get_single?.naam ??
+      `${getTitle()} | Publicatie`;
   }, [get_single]);
 
-  const openDrawer = () => {
-    drawerRef.current?.showModal();
-  };
-
-  const openDialog = () => {
-    modalRef.current?.showModal();
-  };
-
-  const copyLink = async () => {
-    try {
-      // Get the base URL (will be the actual domain in production)
-      const baseUrl = window.location.origin;
-      // Construct the publication URL
-      const url = `${baseUrl}/publicatie/${get_single?.id}`;
-
-      await navigator.clipboard.writeText(url);
-      setCopyStatus('copied');
-
-      setTimeout(() => {
-        setCopyStatus('idle');
-      }, 2000);
-    } catch (err) {
-      setCopyStatus('error');
+  useEffect(() => {
+    if (get_single?.uri) {
+      fetchRelations(get_single.uri);
     }
-  };
+    return () => resetRelations();
+  }, [get_single?.uri, fetchRelations, resetRelations]);
 
-  const getCopyButtonText = () => {
-    switch (copyStatus) {
-      case 'copied':
-        return LABELS.COPY_LINK_SUCCESS;
-      case 'error':
-        return LABELS.COPY_LINK_ERROR;
-      default:
-        return LABELS.COPY_LINK;
+  useEffect(() => {
+    // Only fetch attachments for schemas that actually use them
+    // Skip for Organisation/Product/Module/Koppeling/Gebruik/Dienst as they don't display attachments
+    const schemaSlug = get_single?.['@self']?.schema?.slug;
+    const shouldFetchAttachments =
+      schemaSlug &&
+      ![
+        'organisatie',
+        'product',
+        'module',
+        'koppeling',
+        'gebruik',
+        'dienst',
+      ].includes(schemaSlug);
+
+    if (get_single?.id && shouldFetchAttachments) {
+      fetchAttachments(get_single.id);
     }
-  };
+    return () => resetAttachments();
+  }, [
+    get_single?.id,
+    get_single?.['@self']?.schema?.slug,
+    fetchAttachments,
+    resetAttachments,
+  ]);
 
-  const mapAttachmentRow = (row, primary) => {
-    // Fallback for when there is no extension property
+  // Only set initialDataLoaded when ALL required data is available
+  useEffect(() => {
+    const schemaSlug = get_single?.['@self']?.schema?.slug;
+    const needsAttachments =
+      schemaSlug &&
+      ![
+        'organisatie',
+        'product',
+        'module',
+        'koppeling',
+        'gebruik',
+        'dienst',
+      ].includes(schemaSlug);
 
-    const formatFileSize = (bytes) => {
-      if (!bytes) return '-';
-      const mb = bytes / (1024 * 1024);
-      if (mb >= 1) {
-        return `${Math.round(mb)} MB`;
-      }
-      return `${Math.round(bytes / 1024)} KB`;
-    };
+    // For schemas that don't need attachments, only wait for get_single and loading to complete
+    // For schemas that do need attachments, also wait for all_attachments
+    const dataReady = needsAttachments
+      ? get_single && all_attachments && !loading.status
+      : get_single && !loading.status;
 
-    if (!primary) {
-      return [
-        <AcLink to={row.accessUrl} target='_blank'>
-          {`${row.title}` || 'Naamloos bestand'}
-          <span className='sr-only'>Opent in een nieuw tabblad</span>
-          <VISUALS.EXTERNAL_LINK_PINK />
-        </AcLink>,
-        formatFileSize(row.size),
-      ];
+    if (dataReady) {
+      setInitialDataLoaded(true);
     }
+  }, [get_single, all_attachments, loading.status]);
 
-    return [
-      <AcLink to={row.accessUrl} target='_blank'>
-        {`${row.title}` || 'Naamloos bestand'}
-        <span className='sr-only'>Opent in een nieuw tabblad</span>
-        <VISUALS.EXTERNAL_LINK_PINK />
-      </AcLink>,
-      _.upperFirst(row.labels[0]) || LABELS.UNKNOWN,
-      acFormatDate('2025-02-19T08:43:54Z', 'YYYY-MM-DD', 'DD MMMM YYYY') ||
-        LABELS.UNKNOWN,
-      formatFileSize(row.size),
-    ];
-  };
-
-  const renderPrimaryAttachments = useMemo(() => {
-    if (!getFilteredAttachments(true)?.length) {
-      return null;
-    }
-
+  // Show error state immediately if fetching the publication failed
+  if (get_error) {
     return (
-      <AcFlex column>
-        <Heading level={2}>{LABELS.DOCUMENTS_PRIMARY}</Heading>
-        <AcTable
-          header={[LABELS.DOCUMENT, LABELS.TYPE, LABELS.DATE, LABELS.SIZE]}
-          rows={getFilteredAttachments(true)?.map((attachment) =>
-            mapAttachmentRow(attachment, true)
-          )}
-        />
-      </AcFlex>
-    );
-  }, [get_single]);
+      <AcContainer compact margin='xl' className='ac-publication-container'>
+        <AcFlex column spacing='lg'>
+          <h2 style={{ margin: 0 }}>Kon publicatie niet laden</h2>
 
-  const renderAttachments = useMemo(() => {
-    // Check if we have any attachments at all (before filtering)
-    const hasAttachments =
-      attachments &&
-      attachments.filter((att) => att?.labels?.length === 0).length > 0;
+          <p style={{ fontWeight: 500, color: 'black' }}>
+            Er ging iets mis bij het laden van deze publicatie. Dit kan komen doordat
+            de publicatie niet (meer) bestaat of door een tijdelijke storing. Probeer
+            het later opnieuw of ga terug naar de vorige pagina.
+          </p>
 
-    // If no attachments at all, return null to hide the section
-    if (!hasAttachments) {
-      return null;
-    }
+          <small>
+            {get_error.status ? `Foutcode ${get_error.status}` : 'Onbekende fout'}
+            {get_error.message ? `: ${get_error.message}` : ''}
+          </small>
 
-    // Get filtered attachments based on search
-    const allAttachments = getFilteredAttachments(false);
-    const totalItems = allAttachments?.length || 0;
-
-    return (
-      <AcFlex column>
-        <AcFlex spacing={'md'} column>
-          <AcFlex alignItems='center' spacing='snail'>
-            <Heading level={2}>{LABELS.DOCUMENTS_SECONDARY}</Heading>{' '}
-            <StatusBadge>
-              {attachments?.filter((att) => att?.labels?.length === 0).length || 0}
-            </StatusBadge>
-          </AcFlex>
-          <AcSearchFilter
-            onSearch={handleAttachmentSearch}
-            initialValue={attachmentSearch}
-            label='Zoek in bijlagen'
-            placeholder='Welk document zoek je?'
-          />
-
-          {totalItems > 0 ? (
-            <>
-              <AcTable
-                header={[LABELS.DOCUMENT, LABELS.SIZE]}
-                rows={toJS(
-                  getFilteredAttachments(false, attachmentPagination.page)
-                )?.map((attachment) => mapAttachmentRow(attachment))}
-              />
-              {totalItems > attachmentPagination.perPage && (
-                <Pagination
-                  totalPages={Math.ceil(totalItems / attachmentPagination.perPage)}
-                  page={attachmentPagination.page}
-                  nextLabel=''
-                  previousLabel=''
-                  onPageChange={(page) => setAttachmentsPage(page)}
-                />
-              )}
-            </>
-          ) : (
-            <Alert type='info'>
-              <AcFlex spacing='sm'>
-                <VISUALS.INFO_BLUE />
-                <AcFlex column spacing='xs'>
-                  <Heading level={3}>Geen resultaten gevonden</Heading>
-                  <Paragraph>
-                    Pas je zoekopdracht aan om resultaten te vinden.
-                  </Paragraph>
-                </AcFlex>
-              </AcFlex>
-            </Alert>
-          )}
+          <div>
+            <AcButton
+              style='button'
+              buttonType='primary'
+              onClick={() => navigate(-1)}
+            >
+              <VISUALS.ARROW_LEFT className='ac-button__icon' /> Ga terug
+            </AcButton>
+          </div>
         </AcFlex>
-      </AcFlex>
+      </AcContainer>
     );
-  }, [attachments]);
+  }
 
-  if (loading.status) {
+  if (!initialDataLoaded) {
     return <AcLoader />;
   }
 
-  if (!loading.status && !get_single) {
-    return (
-      <AcContainer compact margin='xl'>
-        <Heading>Publicatie niet gevonden</Heading>
-        <Paragraph>
-          We konden de publicatie niet vinden. Ga terug naar{' '}
-          <Link to={getSearchPageURL()}>de zoekpagina</Link> om verder te zoeken.
-        </Paragraph>
-      </AcContainer>
-    );
-  }
+  if (get_single?.catalog?.title === 'Softwarecatalogus') {
+    return <AcPublicationSoftwarecatalogus />;
+  } else {
+    const publicationType = get_single?.['@self']?.schema?.slug.toLowerCase();
+    switch (get_single?.publicationType?.title) {
+      case 'Softwarecatalogus':
+        return <AcPublicationSoftwarecatalogus />;
+      case 'Formulier':
+        return <AcPublicationFormulier />;
+      case 'Woo verzoek/besluit':
+      case 'Woo-verzoeken en -besluiten':
+        return <AcPublicationWooVerzoek />;
+      default:
+        if (publicationType === 'organisatie') {
+          return <AcPublicationOrganisation />;
+        }
+        if (publicationType === 'suite') {
+          return <AcPublicationProduct />;
+        }
+        if (publicationType === 'module') {
+          return <AcPublicationModule />;
+        }
+        if (publicationType === 'moduleversie') {
+          return <AcPublicationModuleVersie />;
+        }
+        if (publicationType === 'koppeling') {
+          return <AcPublicationKoppeling />;
+        }
+        if (publicationType === 'gebruik') {
+          return <AcPublicationGebruik />;
+        }
+        if (publicationType === 'dienst') {
+          return <AcPublicationDienst />;
+        }
+        if (publicationType === 'contactpersoon') {
+          return <AcPublicationContactperson />;
+        }
+        return <AcPublicationDefault schema={schema} />;
+    }
+  };
 
   return (
-    <>
-      <AcContainer compact margin='xl'>
-        <AcFlex column spacing={'lg'}>
-          <Heading>{get_single?.title}</Heading>
-
-          <AcCard blue>
-            <Heading level={2}>{LABELS.SUMMARY}</Heading>
-            <Paragraph>
-              {get_single?.summary || LABELS.SUMMARY_UNAVAILABLE}
-            </Paragraph>
-            <SecondaryActionButton style='button' onClick={openDrawer}>
-              <VISUALS.LIST_ALT />
-              {LABELS.CONCEPTS_LIST}
-            </SecondaryActionButton>
-          </AcCard>
-
-          {renderPrimaryAttachments}
-          {renderAttachments}
-
-          <AcFlex column>
-            <Heading level={2}>{LABELS.ADDITIONAL_INFO}</Heading>
-            <AcTable
-              rows={[
-                [LABELS.CASE_NUMBER, get_single?.reference || LABELS.UNKNOWN],
-                [
-                  LABELS.CATEGORY,
-                  <AcLink
-                    href={getSearchPageURL({
-                      category: [get_single?.category],
-                    })}
-                  >
-                    {get_single?.category}
-                  </AcLink>,
-                ],
-                [
-                  LABELS.THEMES,
-                  get_single?.themes?.length
-                    ? get_single?.themes?.map((theme) => (
-                        <AcLink
-                          href={getSearchPageURL({
-                            themes: [theme.id],
-                          })}
-                        >
-                          {theme.title}
-                        </AcLink>
-                      ))
-                    : '-',
-                ],
-                [LABELS.SOURCE, get_single?.source || LABELS.UNKNOWN],
-              ]}
-            />
-          </AcFlex>
-          <SecondaryActionButton style='button' onClick={openDialog}>
-            <VISUALS.SHARE />
-            Link delen
-          </SecondaryActionButton>
-        </AcFlex>
-      </AcContainer>
-
-      <AcDrawer id='concepts-drawer' ref={drawerRef} title={LABELS.CONCEPTS_LIST}>
-        <AcTabList tabs={tabs} />
-      </AcDrawer>
-
-      <AcModal
-        id='share-modal'
-        ref={modalRef}
-        title={LABELS.SHARE_MODAL}
-        customFooter
-      >
-        <AcFlex column spacing='sm'>
-          <Paragraph>Kopieer de link naar uw klembord.</Paragraph>
-          <Textbox
-            value={`${window.location.origin}/publicatie/${get_single?.id}`}
-            readOnly
-          />
-          <div role='status' aria-live='polite' className='sr-only'>
-            {copyStatus === 'copied' && 'De link is gekopieerd naar uw klembord'}
-            {copyStatus === 'error' && 'Het kopiëren van de link is mislukt'}
-          </div>
-          <PrimaryActionButton
-            className='copy-button'
-            data-status={copyStatus}
-            style='button'
-            onClick={copyLink}
-            aria-label={getCopyButtonText()}
-          >
-            <div class='particles'>
-              <VISUALS.CHECK />
-              <div class='particles-inner'>
-                <VISUALS.PARTICLES />
-              </div>
-            </div>
-            {getCopyButtonText()}
-          </PrimaryActionButton>
-        </AcFlex>
-      </AcModal>
-    </>
+    <ConGlossaryHighlight as='div'>
+      {renderPublicationView()}
+    </ConGlossaryHighlight>
   );
 });
 
