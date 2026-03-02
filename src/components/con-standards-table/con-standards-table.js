@@ -404,6 +404,7 @@ const ConStandardsTable = ({
                   referentieComponenten: [refCompName],
                   parentStandardId: standardId,
                   fetchedData: versie,
+                  status: versie?.status || '',
                 });
               }
             });
@@ -501,6 +502,7 @@ const ConStandardsTable = ({
         type: 'TOEGEVOEGD',
         referentieComponent: 'Extra toegevoegd',
         fetchedData: versieData,
+        status: versieData?.status || '',
       });
     };
 
@@ -763,16 +765,36 @@ const ConStandardsTable = ({
         </TableHeader>
         <TableBody>
           {(() => {
-            // Group standards by type
-            const verplichtStandards = allStandards.filter(
-              (s) => s.type === 'VERPLICHT'
-            );
-            const aanbevolenStandards = allStandards.filter(
-              (s) => s.type === 'AANBEVOLEN'
-            );
-            const toegevoegdStandards = allStandards.filter(
-              (s) => s.type === 'TOEGEVOEGD'
-            );
+            // Helper: check if a standaardversie has an inactive status
+            const isInactiveStatus = (s) => {
+              const status = (s.status || s.fetchedData?.status || '').toLowerCase().trim();
+              return status === 'einde ondersteuning' || status === 'teruggetrokken';
+            };
+
+            // Helper: sort alphabetically by name (case-insensitive)
+            const sortByName = (a, b) => {
+              const nameA = (a.name || '').toLowerCase();
+              const nameB = (b.name || '').toLowerCase();
+              return nameA.localeCompare(nameB, 'nl');
+            };
+
+            // Separate active vs inactive standards
+            const activeStandards = allStandards.filter((s) => !isInactiveStatus(s));
+            const inactiveStandards = allStandards.filter((s) => isInactiveStatus(s));
+
+            // Group active standards by type and sort alphabetically
+            const verplichtStandards = activeStandards
+              .filter((s) => s.type === 'VERPLICHT')
+              .sort(sortByName);
+            const aanbevolenStandards = activeStandards
+              .filter((s) => s.type === 'AANBEVOLEN')
+              .sort(sortByName);
+            const toegevoegdStandards = activeStandards
+              .filter((s) => s.type === 'TOEGEVOEGD')
+              .sort(sortByName);
+
+            // Sort inactive standards alphabetically as well
+            const sortedInactiveStandards = inactiveStandards.sort(sortByName);
 
             const renderStandardRow = (versieEntry, idx) => {
               // Check if this standaardversie is in the complianceStandards array
@@ -966,9 +988,7 @@ const ConStandardsTable = ({
                             ? '#28a745'
                             : isOndersteund
                             ? '#A86200'
-                            : versieEntry.type === 'VERPLICHT'
-                            ? '#dc3545'
-                            : '#6c757d',
+                            : '#dc3545',
                           fontWeight: '600',
                           textTransform: 'uppercase',
                           padding: '3px 8px',
@@ -983,7 +1003,7 @@ const ConStandardsTable = ({
                         }}
                       >
                         {isCompliant
-                          ? 'COMPLIANT'
+                          ? 'ONDERSTEUND (MET BEWIJS)'
                           : isOndersteund
                           ? 'ONDERSTEUND'
                           : 'NIET ONDERSTEUND'}
@@ -1244,6 +1264,28 @@ const ConStandardsTable = ({
                 </TableRow>
               );
               toegevoegdStandards.forEach((standard, idx) => {
+                rows.push(renderStandardRow(standard, idx));
+              });
+            }
+
+            // Niet-actieve standaardversies section (einde ondersteuning / teruggetrokken)
+            if (sortedInactiveStandards.length > 0) {
+              rows.push(
+                <TableRow key='header-niet-actief'>
+                  <TableCell
+                    colSpan={3}
+                    style={{
+                      fontWeight: 'bold',
+                      backgroundColor: '#f0f0f0',
+                      padding: '12px',
+                      color: '#6c757d',
+                    }}
+                  >
+                    Niet-actieve standaardversies
+                  </TableCell>
+                </TableRow>
+              );
+              sortedInactiveStandards.forEach((standard, idx) => {
                 rows.push(renderStandardRow(standard, idx));
               });
             }
