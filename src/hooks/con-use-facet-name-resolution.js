@@ -33,7 +33,7 @@ export const useFacetNameResolution = (facets, objectStore) => {
               bucket.label = 'Applicatie';
             }
             if (bucket.label === 'Module Versie') {
-              bucket.label = 'Applicatie versie';
+              bucket.label = 'Applicatieversie';
             }
           });
         }

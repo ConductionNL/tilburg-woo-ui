@@ -461,6 +461,14 @@ export const ROUTES = {
     title: 'Mijn account',
     component: AcMyAccount,
   },
+  MIJN_ACCOUNT_REDIRECT: {
+    id: AcUUID(),
+    name: 'Mijn Account Redirect',
+    label: 'Mijn Account',
+    path: '/mijn-account',
+    title: 'Mijn account',
+    redirectTo: PATHS.MY_ACCOUNT,
+  },
   DIRECTORY: {
     id: AcUUID(),
     name: 'Directory',
