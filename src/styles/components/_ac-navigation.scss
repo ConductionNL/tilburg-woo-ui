@@ -70,6 +70,12 @@
     }
   }
 
+  &__user-item {
+    a {
+      font-weight: bold;
+    }
+  }
+
   nav {
     @include respond-max($screen-md) {
       position: absolute;
