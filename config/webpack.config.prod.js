@@ -58,6 +58,22 @@ const sassModuleRegex = /\.module\.(scss|sass)$/;
 
 const swSrc = paths.swSrc;
 
+// Generate build version for cache busting
+const BUILD_TIMESTAMP = new Date().toISOString();
+
+// Use GitHub CI information if available, otherwise use timestamp
+const BUILD_VERSION = process.env.GITHUB_SHA
+  ? `${process.env.GITHUB_RUN_NUMBER || 'build'}-${process.env.GITHUB_SHA.substring(
+      0,
+      7
+    )}-${Date.now()}`
+  : `${new Date().getFullYear()}.${(new Date().getMonth() + 1)
+      .toString()
+      .padStart(2, '0')}.${new Date()
+      .getDate()
+      .toString()
+      .padStart(2, '0')}-${Date.now()}`;
+
 // reduce it to a nice object, the same as before
 const enrichEnvVariables = (type) => {
   let _env = {
@@ -70,12 +86,14 @@ const enrichEnvVariables = (type) => {
     raw: {
       PUBLIC_URL: '',
       PUBLIC_PATH: '',
+      BUILD_TIMESTAMP: BUILD_TIMESTAMP,
+      BUILD_VERSION: BUILD_VERSION,
     },
   };
   const _type = type ? type : 'stringified';
 
   // Get the ENV variables from the .env file
-  const ENV = dotenv.config().parsed;
+  const ENV = dotenv.config().parsed || {};
 
   Object.keys(ENV).reduce((prev, next) => {
     prev[`process.env.${next}`] = JSON.stringify(ENV[next]);
@@ -85,6 +103,32 @@ const enrichEnvVariables = (type) => {
 
     return prev;
   }, {});
+
+  // Add Piwik Pro variables - always add these so InterpolateHtmlPlugin can replace placeholders
+  // Priority: .env file > process.env > empty string
+  const piwikVars = ['PIWIK_SRC_URL', 'PIWIK_DATA_LAYER', 'PIWIK_ID'];
+  piwikVars.forEach((key) => {
+    // If already in ENV (from .env file), it was added above, so skip
+    if (!(key in ENV)) {
+      // Get value from process.env or default to empty string
+      const value = process.env[key] !== undefined ? String(process.env[key]) : '';
+      _env.raw[key] = value;
+      if (!_env['stringified']['process.env']) {
+        _env['stringified']['process.env'] = {};
+      }
+      _env['stringified']['process.env'][key] = JSON.stringify(value);
+    }
+    // Ensure key exists in raw even if it was in ENV (to guarantee it's there)
+    if (!(key in _env.raw)) {
+      _env.raw[key] = ENV[key] || '';
+    }
+  });
+
+  // Add build info to both raw and stringified
+  _env.raw.BUILD_TIMESTAMP = BUILD_TIMESTAMP;
+  _env.raw.BUILD_VERSION = BUILD_VERSION;
+  _env.stringified['process.env'].BUILD_TIMESTAMP = JSON.stringify(BUILD_TIMESTAMP);
+  _env.stringified['process.env'].BUILD_VERSION = JSON.stringify(BUILD_VERSION);
 
   return _env[_type];
 };
@@ -543,7 +587,9 @@ module.exports = function (webpackEnv) {
       new WorkboxWebpackPlugin.InjectManifest({
         swSrc: swSrc,
         swDest: 'service-worker.js',
-        dontCacheBustURLsMatching: /\.[0-9a-f]{8}\./,
+        // Only skip cache busting for files that already have proper hashes
+        dontCacheBustURLsMatching:
+          /\.[0-9a-f]{8,13}\.(js|css|woff|woff2|png|jpg|jpeg|gif|svg)$/,
         exclude: [
           /\.map$/,
           /asset-manifest\.json$/,
@@ -558,6 +604,13 @@ module.exports = function (webpackEnv) {
         // to make lazy-loading failure scenarios less likely.
         // See https://github.com/cra-template/pwa/issues/13#issuecomment-722667270
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        // Force update when build changes
+        additionalManifestEntries: [
+          {
+            url: '/',
+            revision: BUILD_VERSION, // Use build version as revision
+          },
+        ],
       }),
     ],
     optimization: {
@@ -637,7 +690,8 @@ module.exports = function (webpackEnv) {
               ecma: 8,
             },
             compress: {
-              drop_console: true,
+              drop_console: false,
+              pure_funcs: ['console.log', 'console.debug'],
               drop_debugger: true,
               ecma: 5,
               warnings: false,

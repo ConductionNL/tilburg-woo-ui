@@ -1,0 +1,23 @@
+---
+description: Guidelines for handling console statements and eslint-disable comments
+alwaysApply: true
+---
+
+## Console Statements and ESLint Violations
+
+### Prohibited Practices
+- **NEVER use `eslint-disable`, `eslint-disable-next-line`, or `@ts-ignore` comments** - These are strictly prohibited per project rules
+
+### Debugging with Console Statements
+During active debugging:
+1. **It's OK to add `console.log()` statements** for investigation
+2. **When checking lints during debugging**, IGNORE `no-console` errors - these are temporary
+3. **When debugging is complete** or when the user asks to clean up:
+   - Remove ALL console.log statements
+   - Then check lints to ensure no `no-console` errors remain
+
+### Linting Strategy
+When you check for linter errors using `read_lints`:
+- **During debugging**: Ignore `no-console` errors (temporary debug statements)
+- **After debugging/cleanup**: Fix all linter errors including removing console statements
+- **Always**: Fix other linter errors properly - do NOT suppress with disable comments

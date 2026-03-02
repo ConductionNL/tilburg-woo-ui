@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "tilburg-woo-ui.fullname" . }}-config
+  labels:
+    {{- include "tilburg-woo-ui.labels" . | nindent 4 }}
+data:
+  # Application Configuration
+  NODE_ENV: {{ .Values.env.NODE_ENV | quote }}
+  BASE_URL: {{ .Values.env.BASE_URL | quote }}
+  BASE_URL_COMMONGROUND: {{ .Values.env.BASE_URL_COMMONGROUND | quote }}
+
+  NGINX_OPENCONNECTOR_UPSTREAM: {{ .Values.env.NGINX_OPENCONNECTOR_UPSTREAM | quote }}
+  NGINX_NEXTCLOUD_UPSTREAM: {{ .Values.env.NGINX_NEXTCLOUD_UPSTREAM | quote }}
+  NGINX_NEXTCLOUD_DOMAIN: {{ .Values.env.NGINX_NEXTCLOUD_DOMAIN | quote }}
+  NGINX_TARGET_HOST: {{ .Values.env.NGINX_TARGET_HOST | quote }}
+  
+  # Nginx static file server + API proxy to external backends  
+  NGINX_ROOT_DIR: {{ .Values.env.NGINX_ROOT_DIR | quote }}
+  # Nginx proxies /api/* calls to external Nextcloud/OpenConnector
+  
+  # Search Configuration
+  DEFAULT_SEARCH_SCHEMA: {{ .Values.env.DEFAULT_SEARCH_SCHEMA | quote }}
+  
+  {{- if .Values.development.enabled }}
+  # Development specific configuration
+  FAST_REFRESH: {{ .Values.development.env.FAST_REFRESH | quote }}
+  {{- end }}
+  
+  {{- range $key, $value := .Values.extraEnvVars }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }} 
