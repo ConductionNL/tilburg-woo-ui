@@ -1,5 +1,19 @@
 import clsx from 'clsx';
 
+/**
+ * A flexible container component that uses CSS Flexbox for layout
+ * @param {Object} props - Component props
+ * @param {React.ReactNode} props.children - Child elements to render inside the flex container
+ * @param {boolean} [props.column] - Whether to use column direction (default is row)
+ * @param {'xs'|'sm'|'md'|'lg'|'xl'|'xxl'} [props.spacing] - Gap spacing between flex items
+ * @param {'xs'|'sm'|'md'|'lg'|'xl'|'xxl'} [props.margin] - Margin around the flex container
+ * @param {'center'|'between'|'start'|'end'} [props.justifyContent] - Justify-content alignment
+ * @param {'center'|'start'|'end'} [props.alignItems] - Align-items alignment
+ * @param {boolean} [props.wrap] - Whether items should wrap to next line
+ * @param {boolean} [props.grow] - Whether container should grow to fill space
+ * @param {string} [props.className] - Additional CSS class names
+ * @returns {JSX.Element} Flex container div element
+ */
 const AcFlex = ({
   children,
   column,
@@ -10,7 +24,7 @@ const AcFlex = ({
   wrap,
   grow,
   className,
-  id,
+  style,
 }) => {
   const _CLASSES = clsx(
     'ac-flex',
@@ -25,7 +39,7 @@ const AcFlex = ({
   );
 
   return (
-    <div className={_CLASSES} id={id}>
+    <div className={_CLASSES} style={style}>
       {children}
     </div>
   );

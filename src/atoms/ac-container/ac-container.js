@@ -1,11 +1,12 @@
 import clsx from 'clsx';
 
-const AcContainer = ({ children, compact, spacing, margin, restProps }) => {
+const AcContainer = ({ children, compact, spacing, margin, className, restProps }) => {
   const _CLASSES = clsx(
     'container',
     compact && 'container--compact',
     spacing && `container--spacing-${spacing}`,
-    margin && `container--margin-${margin}`
+    margin && `container--margin-${margin}`,
+    className && className
   );
 
   return (

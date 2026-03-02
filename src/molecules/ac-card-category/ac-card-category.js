@@ -6,54 +6,48 @@ import { AcCard, AcFlex } from '@atoms';
 import { AcLink } from '@molecules';
 import { VISUALS } from '@constants';
 
-// Map Dutch icon names to their English VISUALS constant names
-const ICON_MAPPING = {
-  bereikbaarheidsgegevens: 'REACHABILITY',
-  bestuursstuk: 'GOVERNANCE_DOCUMENT',
-  organisatie: 'ORGANIZATION',
-  raadsstuk: 'COUNCIL_DOCUMENT',
-  'woo-verzoek': 'WOO_REQUEST',
-  convenant: 'CONVENANT',
+const ICON_MAP = {
+  raadsstuk: VISUALS.USERS,
+  bestuursstuk: VISUALS.DOCUMENT,
+  organisatie: VISUALS.BUILDING,
+  'woo-verzoek': VISUALS.ENVELOPE,
+  convenant: VISUALS.HAND_SHAKE,
+  bereikbaarheidsgegevens: VISUALS.PHONE,
+  document: VISUALS.DOCUMENT,
+  search: VISUALS.SEARCH,
+  contact: VISUALS.CONTACT,
+  themes: VISUALS.THEMES,
+  house: VISUALS.HOUSE,
+  world: VISUALS.WORLD,
+  cube: VISUALS.CUBE,
+  cubes: VISUALS.CUBES,
+  truck: VISUALS.TRUCK,
+  link: VISUALS.LINK,
+  scroll: VISUALS.SCROLL,
+  gear: VISUALS.GEAR,
 };
 
-const AcCardCategory = ({
-  image,
-  icon,
-  title,
-  summary,
-  linkUrl,
-  linkTitle,
-  isExternal = false,
-}) => {
-  // Convert icon names to their corresponding VISUALS constant
-  const getIconComponent = (iconName) => {
-    if (!iconName) return null;
-
-    // Check if we have a mapping for this icon name
-    const mappedName =
-      ICON_MAPPING[iconName] || iconName.toUpperCase().replace(/-|\s/g, '_');
-    const IconComponent = VISUALS[mappedName];
-    return IconComponent ? <IconComponent /> : null;
-  };
+const AcCardCategory = ({ image, icon, title, summary, linkUrl, linkTitle, isExternal }) => {
+  const IconComponent = icon && ICON_MAP[icon];
 
   return (
-    <AcCard category spaceBetween image={image} padding='md'>
-      <AcFlex spacing='sm'>
-        {getIconComponent(icon)}
+    <AcCard category spaceBetween padding="md">
+      <AcFlex spacing="sm" alignItems="center">
+        {IconComponent && <IconComponent />}
         <Heading level={3}>{title}</Heading>
       </AcFlex>
       <Paragraph>{summary}</Paragraph>
-      {isExternal ? (
-        <AcLink to={linkUrl} external>
+      {linkUrl && isExternal ? (
+        <a href={linkUrl} target="_blank" rel="noopener noreferrer" className="ac-link">
           {linkTitle}
-          <VISUALS.EXTERNAL_LINK_PINK />
-        </AcLink>
-      ) : (
+          <VISUALS.EXTERNAL_LINK />
+        </a>
+      ) : linkUrl ? (
         <AcLink to={linkUrl}>
           {linkTitle}
           <VISUALS.ARROW_RIGHT />
         </AcLink>
-      )}
+      ) : null}
     </AcCard>
   );
 };

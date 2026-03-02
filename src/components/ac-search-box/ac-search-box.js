@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import clsx from 'clsx';
 import {
   Heading,
@@ -10,7 +10,6 @@ import {
 import { LABELS, VISUALS } from '@constants';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
-import { Label } from '@amsterdam/design-system-react';
 import { AcFlex } from '@atoms';
 
 export const AcSearchBox = ({
@@ -21,11 +20,52 @@ export const AcSearchBox = ({
   spacing,
   defaultValue,
   onSubmitCallback,
+  disableAutoSearch = false,
   store: { publications },
 }) => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(defaultValue || '');
+  const debounceTimer = useRef(null);
+  const isFirstRender = useRef(true);
 
   const { mobileFiltersOpen, toggleMobileFilters } = publications;
+
+  // Debounced search effect - triggers search 300ms after user stops typing
+  // Only runs if disableAutoSearch is false
+  useEffect(() => {
+    // Skip if auto search is disabled
+    if (disableAutoSearch) {
+      return;
+    }
+
+    // Skip debounced search on initial render OR if searchQuery matches defaultValue
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+
+    // Don't trigger search if the value is still the same as defaultValue
+    // This prevents triggering search when component initializes with URL parameters
+    if (searchQuery === (defaultValue || '')) {
+      return;
+    }
+
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+
+    debounceTimer.current = setTimeout(() => {
+      if (onSubmitCallback instanceof Function) {
+        onSubmitCallback(searchQuery);
+      }
+    }, 300); // 300ms delay - optimal for fast APIs (reduced from 750ms)
+
+    // Cleanup timeout on component unmount
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
+  }, [searchQuery, defaultValue, disableAutoSearch]); // Added disableAutoSearch to dependencies
 
   const renderHeading = useMemo(() => {
     return title && <Heading level={1}>{title}</Heading>;
@@ -33,6 +73,11 @@ export const AcSearchBox = ({
 
   const submitCallback = (e) => {
     e.preventDefault();
+
+    // Clear debounce timer since user clicked search button
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
 
     if (!(onSubmitCallback instanceof Function)) {
       return;
@@ -58,7 +103,9 @@ export const AcSearchBox = ({
   return (
     <>
       <form className={_CLASSES} onSubmit={submitCallback}>
-        {renderHeading}
+        {renderHeading && (
+          <div className='ac-search-box__title-wrapper'>{renderHeading}</div>
+        )}
 
         <AcFlex column spacing='sm'>
           <FormLabel>{label}</FormLabel>
@@ -69,7 +116,7 @@ export const AcSearchBox = ({
               defaultValue={defaultValue}
             />
             <PrimaryActionButton type='submit'>
-              <VISUALS.SEARCH />
+              <VISUALS.SEARCH className='ac-search-box__search-icon' />
               <span>{LABELS.SEARCH}</span>
             </PrimaryActionButton>
           </div>

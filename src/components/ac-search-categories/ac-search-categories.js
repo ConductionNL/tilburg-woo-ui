@@ -1,11 +1,12 @@
 import React, { useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 
-import { AcButton, AcCheckbox } from '@molecules';
+import { AcButton, AcCheckbox, AcLink } from '@molecules';
 import { LABELS, VISUALS } from '@constants';
 import { AcModal } from '@components';
 import { AcFlex } from '@atoms';
 import { withStore } from '@stores';
+import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
 
 import {
   Heading,
@@ -16,78 +17,35 @@ const AcSearchCategories = ({ store: { publications } }) => {
   const modalRef = useRef(null);
   const handleOpenModal = () => modalRef?.current?.showModal();
 
-  const { categories_with_facets, category_checked, toggleSearchArrayValue } =
-    publications;
+  const { all_categories, category_checked, toggleSearchArrayValue } = publications;
 
   const renderModal = (
     <AcModal ref={modalRef} id='categories-modal' title='Categorieën'>
       <AcFlex column spacing='sm'>
         <Paragraph>
-          <strong>Bestuursstukken</strong>
+          <strong>Convenant</strong>
           <br />
-          Dit zijn documenten die beslissingen en beleidsregels van de overheid
-          bevatten. Ze geven inzicht in hoe de overheid werkt en welke keuzes er
-          worden gemaakt.
+          Een formele overeenkomst of afspraak tussen twee of meer partijen.
         </Paragraph>
         <Paragraph>
-          <strong>Raadsstukken</strong>
+          <strong>Bestuursstuk</strong>
           <br />
-          Dit zijn notulen en documenten van gemeenteraadsvergaderingen. Ze laten
-          zien wat er besproken en besloten is tijdens deze vergaderingen.
+          Document dat wordt gebruikt om beleid of richtlijnen vast te leggen.
         </Paragraph>
         <Paragraph>
-          <strong>Jaarplannen en verslagen</strong>
+          <strong>Woo-verzoek</strong>
           <br />
-          Dit zijn overzichten van geplande activiteiten en behaalde resultaten van
-          een jaar. Ze geven een beeld van de doelen en prestaties van de gemeente.
+          Verzoek bij een overheidsinstantie om informatie op te vragen.
         </Paragraph>
         <Paragraph>
-          <strong>Woo-dossiers</strong>
+          <strong>Raadstuk</strong>
           <br />
-          Dit zijn documenten die openbaar worden gemaakt op basis van Woo-verzoeken.
-          Ze bevatten informatie die door inwoners is opgevraagd.
+          Onderwerpen die worden besproken tijdens een gemeenteraadsvergadering.
         </Paragraph>
         <Paragraph>
-          <strong>Organisatie- en bereikbaarheidsinformatie</strong>
+          <strong>Organisatiegegevens</strong>
           <br />
-          Dit is informatie over de structuur en contactgegevens van een organisatie.
-          Het helpt inwoners om te weten wie ze kunnen benaderen voor bepaalde zaken.
-        </Paragraph>
-        <Paragraph>
-          <strong>Convenanten</strong>
-          <br />
-          Dit zijn afspraken en overeenkomsten tussen verschillende partijen. Ze
-          leggen vast wat de betrokken partijen van elkaar verwachten.
-        </Paragraph>
-        <Paragraph>
-          <strong>Beschikkingen</strong>
-          <br />
-          Dit zijn officiële besluiten van de gemeente over specifieke zaken. Ze
-          geven aan wat er wel of niet mag gebeuren in bepaalde situaties.
-        </Paragraph>
-        <Paragraph>
-          <strong>Adviezen van adviescolleges</strong>
-          <br />
-          Dit zijn aanbevelingen van adviesorganen over beleidsvoorstellen. Ze helpen
-          de gemeente om weloverwogen beslissingen te nemen.
-        </Paragraph>
-        <Paragraph>
-          <strong>Klachten</strong>
-          <br />
-          Dit zijn documenten met klachten van inwoners en de afhandeling daarvan. Ze
-          laten zien hoe de gemeente omgaat met ontevredenheid van inwoners.
-        </Paragraph>
-        <Paragraph>
-          <strong>Onderzoeksrapporten</strong>
-          <br />
-          Dit zijn verslagen van onderzoeken uitgevoerd door of voor de gemeente. Ze
-          bieden gedetailleerde informatie over specifieke onderwerpen.
-        </Paragraph>
-        <Paragraph>
-          <strong>Wet- en regelgeving</strong>
-          <br />
-          Dit zijn ontwerpen en definitieve versies van wetten en regels. Ze bepalen
-          wat er in een land of regio wel en niet mag.
+          <AcLink to='/contact'>Die kun je hier vinden</AcLink>
         </Paragraph>
       </AcFlex>
     </AcModal>
@@ -99,10 +57,20 @@ const AcSearchCategories = ({ store: { publications } }) => {
         <Heading level={4}>{LABELS.CATEGORIES}</Heading>
         {renderModal}
       </AcFlex>
-      <AcButton onClick={handleOpenModal} sr={LABELS.CATEGORIES_EXPLAIN}>
-        <VISUALS.QUESTION_MARK /> <span>{LABELS.ABOUT_CATEGORIES}</span>
+      <AcButton
+        onClick={handleOpenModal}
+        icon={
+          AcCheckIfSpecificHostname() ? (
+            <VISUALS.QUESTION_MARK_VNG />
+          ) : (
+            <VISUALS.QUESTION_MARK />
+          )
+        }
+        sr={LABELS.CATEGORIES_EXPLAIN}
+      >
+        <span>{LABELS.ABOUT_CATEGORIES}</span>
       </AcButton>
-      {categories_with_facets?.map((category, index) => (
+      {all_categories?.map((category, index) => (
         <AcCheckbox
           key={index}
           label={category._id}

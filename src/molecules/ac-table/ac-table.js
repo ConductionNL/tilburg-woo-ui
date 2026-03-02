@@ -10,39 +10,37 @@ import {
 
 const AcTable = ({ header = [], rows = [], footer = [] }) => {
   return (
-    <div className='utrecht-table-container'>
-      <Table>
-        {Array.isArray(header) && (
-          <TableHeader>
-            <TableRow>
-              {header.map((column) => (
-                <TableHeaderCell scope='col'>{column}</TableHeaderCell>
-              ))}
-            </TableRow>
-          </TableHeader>
-        )}
-        {Array.isArray(rows) && (
-          <TableBody>
-            {rows.map((row) => (
-              <TableRow>
-                {row.map((cell) => (
-                  <TableCell>{cell}</TableCell>
-                ))}
-              </TableRow>
+    <Table>
+      {Array.isArray(header) && (
+        <TableHeader>
+          <TableRow>
+            {header.map((column) => (
+              <TableHeaderCell key={column} scope='col'>{column}</TableHeaderCell>
             ))}
-          </TableBody>
-        )}
-        {Array.isArray(footer) && (
-          <TableFooter>
-            <TableRow>
-              {footer.map((column) => (
-                <TableCell>{column}</TableCell>
+          </TableRow>
+        </TableHeader>
+      )}
+      {Array.isArray(rows) && (
+        <TableBody>
+          {rows.map((row) => (
+            <TableRow key={row.id}>
+              {row.map((cell) => (
+                <TableCell key={cell}>{cell}</TableCell>
               ))}
             </TableRow>
-          </TableFooter>
-        )}
-      </Table>
-    </div>
+          ))}
+        </TableBody>
+      )}
+      {Array.isArray(footer) && (
+        <TableFooter>
+          <TableRow>
+            {footer.map((column) => (
+              <TableCell key={column}>{column}</TableCell>
+            ))}
+          </TableRow>
+        </TableFooter>
+      )}
+    </Table>
   );
 };
 
