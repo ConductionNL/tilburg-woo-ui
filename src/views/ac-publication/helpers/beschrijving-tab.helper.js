@@ -19,7 +19,7 @@ export const createBeschrijvingTab = (publication) => ({
   label: 'Beschrijving',
   icon: VISUALS.DOCUMENT_TEXT,
   render: () => {
-    const description = publication?.beschrijvingLang || publication?.['@self']?.description;
+    const description = publication?.beschrijvingLang;
     
     // Only render if we have a non-empty string (not a number or other type)
     const isValidDescription = 

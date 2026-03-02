@@ -221,7 +221,7 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications, user, object } 
               <Heading level={2}>Standaarden</Heading>
               <AcFlex spacing={'xs'} className='notice'>
                 <VISUALS.INFO />
-                Overzicht van ondersteunde standaarden en hun compliancy bewijs.
+                Overzicht van ondersteunde standaarden en hun bewijs.
               </AcFlex>
               <AcTable
                 header={['Standaardversie', 'Status', 'Bewijs']}

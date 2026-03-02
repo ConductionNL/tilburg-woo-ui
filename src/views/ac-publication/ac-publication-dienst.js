@@ -65,8 +65,32 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
   const [usedLoading, setUsedLoading] = useState(false);
   const [relatedTabIndex, setRelatedTabIndex] = useState(0);
   
+  // Filter out organisatie items from related tabs (aanbieder is redundant on dienst pages)
+  const filteredUses = useMemo(
+    () => uses.filter((item) => {
+      const slug = item?.['@self']?.schema?.slug || schemaCache.get(
+        typeof item?.['@self']?.schema === 'object'
+          ? item?.['@self']?.schema?.id
+          : item?.['@self']?.schema
+      );
+      return slug !== 'organisatie';
+    }),
+    [uses]
+  );
+  const filteredUsed = useMemo(
+    () => used.filter((item) => {
+      const slug = item?.['@self']?.schema?.slug || schemaCache.get(
+        typeof item?.['@self']?.schema === 'object'
+          ? item?.['@self']?.schema?.id
+          : item?.['@self']?.schema
+      );
+      return slug !== 'organisatie';
+    }),
+    [used]
+  );
+
   // Aggregated schemas from all related items via hook
-  const allRelatedItems = useMemo(() => [...uses, ...used], [uses, used]);
+  const allRelatedItems = useMemo(() => [...filteredUses, ...filteredUsed], [filteredUses, filteredUsed]);
   const { aggregatedSchemas, setAggregatedSchemas } = useResolveSchemaIds(allRelatedItems);
 
   // Related create actions (wizard-aware) like module/product pages
@@ -129,7 +153,7 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
     setUsesLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend[]=_schema`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend[]=_schema&_limit=100`,
         { method: 'GET', headers: { 'Content-Type': 'application/json' } }
       );
       if (!response.ok) return;
@@ -145,7 +169,7 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
     setUsedLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=_schema`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=_schema&_limit=100`,
         { method: 'GET', headers: { 'Content-Type': 'application/json' } }
       );
       if (!response.ok) return;
@@ -325,27 +349,25 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
               {get_single?.beschrijvingKort}
             </div>
           )}
-        </div>
-
-        <div>
-          <br />
           {!!get_single?.beschrijvingLang && (
-            <MDEditor.Markdown
-              wrapperElement={{ 'data-color-mode': 'light' }}
-              source={get_single?.beschrijvingLang}
-              remarkPlugins={[
-                [remarkGfm, { singleTilde: false }],
-                remarkDefinitionList,
-                remarkEmoji,
-                remarkSupersub,
-                remarkMark,
-              ]}
-              rehypePlugins={[
-                rehypeSlug,
-                [rehypeSanitize],
-                [remarkRehype, { handlers: { ...defListHastHandlers } }],
-              ]}
-            />
+            <div style={{ marginTop: 'var(--tilburg-space-block-md, 1rem)' }}>
+              <MDEditor.Markdown
+                wrapperElement={{ 'data-color-mode': 'light' }}
+                source={get_single?.beschrijvingLang}
+                remarkPlugins={[
+                  [remarkGfm, { singleTilde: false }],
+                  remarkDefinitionList,
+                  remarkEmoji,
+                  remarkSupersub,
+                  remarkMark,
+                ]}
+                rehypePlugins={[
+                  rehypeSlug,
+                  [rehypeSanitize],
+                  [remarkRehype, { handlers: { ...defListHastHandlers } }],
+                ]}
+              />
+            </div>
           )}
         </div>
 
@@ -409,10 +431,42 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
             </Heading>
             <div className='ac-register-review__section'>
               <div style={{ marginTop: '12px' }}>
-                {get_single?.dienstType && (
+                {get_single?.type && (
                   <div style={{ marginBottom: '8px' }}>
                     <strong>Diensttype: </strong>
-                    {get_single.type}
+                    {(() => {
+                      const rawType = get_single.type;
+
+                      if (
+                        typeof rawType === 'string' &&
+                        rawType.trim().startsWith('[')
+                      ) {
+                        try {
+                          const parsed = JSON.parse(rawType);
+                          if (Array.isArray(parsed)) {
+                            return parsed.map((item, index) => (
+                              <span key={index}>
+                                <ConUuidResolver>{String(item)}</ConUuidResolver>
+                                {index < parsed.length - 1 ? ', ' : ''}
+                              </span>
+                            ));
+                          }
+                        } catch (e) {
+                          return <ConUuidResolver>{String(rawType)}</ConUuidResolver>;
+                        }
+                      }
+
+                      if (Array.isArray(rawType)) {
+                        return rawType.map((typeId, index) => (
+                          <span key={index}>
+                            <ConUuidResolver>{String(typeId)}</ConUuidResolver>
+                            {index < rawType.length - 1 ? ', ' : ''}
+                          </span>
+                        ));
+                      }
+
+                      return <ConUuidResolver>{String(rawType)}</ConUuidResolver>;
+                    })()}
                   </div>
                 )}
                 {get_single?.status && (
@@ -428,8 +482,8 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
 
         <div style={{ marginTop: '2rem' }}>
           <RelatedTabs
-            uses={uses}
-            used={used}
+            uses={filteredUses}
+            used={filteredUsed}
             schemas={aggregatedSchemas}
             usesLoading={usesLoading}
             usedLoading={usedLoading}
@@ -439,6 +493,7 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
             object={object}
             navigateTo='publication'
             user={user}
+            customTabsBefore={[]}
           />
         </div>
 
