@@ -97,7 +97,7 @@ const ConKoppelingStageControleren = ({
     const fetchKoppelingData = async () => {
       try {
         setKoppelingLoading(true);
-        const url = `/api/apps/openregister/api/objects/voorzieningen/koppeling/${encodeURIComponent(
+        const url = `/api/openregister/api/objects/voorzieningen/koppeling/${encodeURIComponent(
           selectedKoppelingId
         )}?_extend[]=@self.schema&_extend[]=@self.relations&_published=false`;
         const res = await fetch(url, { headers: { Accept: 'application/json' } });

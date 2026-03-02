@@ -14,7 +14,7 @@ import { useLocation } from 'react-router-dom';
 const ConFormApplicatieTypeSelectStage = memo(() => {
   const location = useLocation();
   const applicatieWizards = Object.values(DASHBOARD_WIZARDS).filter(
-    (wizard) => wizard.schema === 'applicatie'
+    (wizard) => wizard.schema === 'module'
   );
 
   // Build a URL that preserves current query params while ensuring wizard params take precedence

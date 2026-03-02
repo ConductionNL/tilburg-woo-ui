@@ -171,7 +171,7 @@ const ConFormsDienst = ({ store, userStore }) => {
     setLeverancierLoading(true);
     try {
       const params = new URLSearchParams({
-        _limit: '20',
+        _limit: '40',
         _page: '1',
         _published: 'false',
       });
@@ -1359,7 +1359,7 @@ const ConFormsDienst = ({ store, userStore }) => {
       case 'aanbieder':
         return 'Aanbieder';
       case 'dienst-informatie':
-        return 'Dienstverlening op uw applicaties';
+        return 'Registreer uw dienst';
       case 'controleren':
         return 'Controleer uw gegevens';
       default:
@@ -1401,7 +1401,7 @@ const ConFormsDienst = ({ store, userStore }) => {
       id: 'd1e2n3s4-t5i6-n7f8-o9r0-m1a2t3i4e5f6',
       marker: stepper.defineStep('process-steps', 'dienst-informatie'),
       status: getStatus(currentStepNum, stepper.defineStep('process-steps-status')),
-      title: 'Dienst informatie',
+      title: 'Registreer uw dienst',
     });
 
     // Step 4: Controleren
@@ -1445,12 +1445,12 @@ const ConFormsDienst = ({ store, userStore }) => {
                 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
               >
                 <Icon style={{ width: '1em', height: '1em' }} />
-                Uw {isEditMode ? editModeTitle : newWizardName}
+                {isEditMode ? 'Dienst updaten' : 'Dienst registreren'}
               </Heading1>
               <Paragraph>
                 {isEditMode
                   ? 'Werk uw dienstgegevens bij in onze softwarecatalogus.'
-                  : 'Vul dit formulier in om een dienst voor uw en andere applicaties te registreren en vindbaar te maken in de softwarecatalogus.'}
+                  : 'Voer de gegevens van uw dienst in, selecteer de relevante producten en/of applicaties en controleer uw invoer.'}
               </Paragraph>
             </div>
           )}

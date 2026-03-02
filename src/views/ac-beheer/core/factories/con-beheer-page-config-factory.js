@@ -68,7 +68,7 @@ const BeheerPageConfigFactory = {
           ...baseConfig,
           schemaSlug: 'moduleversie',
           paginationKey: 'applicatiesversie',
-          title: 'Applicatie Versies',
+          title: 'Applicatieversies',
           routeType: 'applicatiesversie',
           defaultHeaders: ['naam', 'versie', 'status', 'releaseDatum'],
           customHeaders: {},
@@ -91,28 +91,24 @@ const BeheerPageConfigFactory = {
           disableDeleteAction: false, // Enable delete action voor applicaties
           disableImport: true, // Import not needed for applicaties
           disableView: true, // View not needed for applicaties
-          extend: ['moduleVersies'],
-          defaultHeaders: [
-            'naam',
-            'referentieComponenten',
-            'standaarden',
-            'categorie',
-            'links',
-          ],
+          extend: ['moduleVersies', 'contactpersoon', 'diensten'],
+          defaultHeaders: [],
           customHeaders: {
-            standaarden: {
-              id: 'standaarden',
-              label: 'Standaarden',
-              key: 'standaarden',
+            contactpersoon: {
+              id: 'contactpersoon',
+              label: 'Contactpersoon',
+              key: 'contactpersoon',
               customContent: (row) => {
-                if (row?.standaarden && typeof row?.standaarden === 'string') {
-                  return <AcColumn key={row.id}>Data invalid</AcColumn>;
+                const cp = row?.contactpersoon;
+                if (!cp) return '-';
+                // If it's an array, take the first one
+                const person = Array.isArray(cp) ? cp[0] : cp;
+                if (!person) return '-';
+                if (typeof person === 'string') {
+                  return <ConUuidResolver>{person}</ConUuidResolver>;
                 }
-                return (
-                  <AcColumn key={row.id}>
-                    {row?.standaarden?.map((standaard) => standaard.naam).join(', ')}
-                  </AcColumn>
-                );
+                const fullName = [person?.voornaam, person?.tussenvoegsel, person?.achternaam].filter(Boolean).join(' ');
+                return fullName || person?.['@self']?.name || '-';
               },
             },
             diensten: {
@@ -121,19 +117,11 @@ const BeheerPageConfigFactory = {
               key: 'diensten',
               customContent: (row) => {
                 const diensten = row?.diensten;
-
-                // If no diensten data, show dash
                 if (!diensten) return '-';
-
-                // If it's an array of UUIDs (strings)
                 if (Array.isArray(diensten)) {
                   if (diensten.length === 0) return '-';
-
-                  // Check if array contains UUIDs (strings) or objects
                   const firstItem = diensten[0];
-
                   if (typeof firstItem === 'string') {
-                    // Array of UUIDs - resolve each with ConUuidResolver
                     return (
                       <AcColumn key={row.id}>
                         {diensten.map((dienstId, index) => (
@@ -145,9 +133,8 @@ const BeheerPageConfigFactory = {
                       </AcColumn>
                     );
                   } else if (typeof firstItem === 'object' && firstItem !== null) {
-                    // Array of objects - get @self.name from each
                     const names = diensten
-                      .map((dienst) => dienst?.['@self']?.name || dienst?.name)
+                      .map((dienst) => dienst?.['@self']?.name || dienst?.naam || dienst?.name)
                       .filter(Boolean);
                     return (
                       <AcColumn key={row.id}>
@@ -156,14 +143,10 @@ const BeheerPageConfigFactory = {
                     );
                   }
                 }
-
-                // If it's a single object, get @self.name
                 if (typeof diensten === 'object' && diensten !== null) {
-                  const name = diensten?.['@self']?.name || diensten?.name;
+                  const name = diensten?.['@self']?.name || diensten?.naam || diensten?.name;
                   return <AcColumn key={row.id}>{name || '-'}</AcColumn>;
                 }
-
-                // Fallback
                 return '-';
               },
             },
@@ -221,85 +204,53 @@ const BeheerPageConfigFactory = {
                 return '-';
               },
             },
+            compliancy: {
+              id: 'compliancy',
+              label: 'Compliance',
+              key: 'compliancy',
+              customContent: (row) => {
+                const compliancy = row?.compliancy;
+
+                // If no data, show dash
+                if (!compliancy) return '-';
+
+                // If it's an array
+                if (Array.isArray(compliancy)) {
+                  if (compliancy.length === 0) return '-';
+
+                  const firstItem = compliancy[0];
+
+                  if (typeof firstItem === 'string') {
+                    // Array of UUIDs - resolve each with ConUuidResolver
+                    return (
+                      <AcColumn key={row.id}>
+                        {compliancy.map((compliancyId, index) => (
+                          <React.Fragment key={compliancyId}>
+                            <ConUuidResolver>{compliancyId}</ConUuidResolver>
+                            {index < compliancy.length - 1 && ', '}
+                          </React.Fragment>
+                        ))}
+                      </AcColumn>
+                    );
+                  } else if (typeof firstItem === 'object' && firstItem !== null) {
+                    // Array of objects - get readable name from each
+                    const names = compliancy
+                      .map((item) => item?.['@self']?.name || item?.naam || item?.name)
+                      .filter(Boolean);
+                    return (
+                      <AcColumn key={row.id}>
+                        {names.length > 0 ? names.join(', ') : '-'}
+                      </AcColumn>
+                    );
+                  }
+                }
+
+                // Fallback
+                return '-';
+              },
+            },
           },
-          // Unique actions that change based on user role (like publish/depublish toggle)
-          // Each action shows different label/params based on user group
-          uniqueActions: [
-            // Dienst action - changes based on user role
-            {
-              key: 'addDienst',
-              icon: <VISUALS.HAND_SHAKE />,
-              condition: (row) => row?.['@self']?.id || row?.id,
-              action: 'wizard',
-              wizardPath: '/forms/dienst',
-              // Dynamic label and params based on user role
-              getLabel: (userGroups) =>
-                userGroups.includes('gebruik-beheerder')
-                  ? 'Dienst toevoegen'
-                  : 'Dienst publiceren',
-              getWizardParams: (row, userGroups) =>
-                userGroups.includes('gebruik-beheerder')
-                  ? {
-                      type: 'ontbrekend-dienst',
-                      applicatie: row['@self']?.id || row.id,
-                    }
-                  : {
-                      type: 'dienst',
-                      applicatie: row['@self']?.id || row.id,
-                    },
-              // Show for both user groups
-              userGroupFilter: ['gebruik-beheerder', 'aanbod-beheerder'],
-            },
-            // Gebruik action - changes based on user role
-            {
-              key: 'addGebruik',
-              icon: <VISUALS.CLIPBOARD_CHECK />,
-              condition: (row) => row?.['@self']?.id || row?.id,
-              action: 'wizard',
-              wizardPath: '/forms/gebruik/applicatie',
-              // Dynamic label and params based on user role
-              getLabel: (userGroups) =>
-                userGroups.includes('gebruik-beheerder')
-                  ? 'Applicatie toevoegen'
-                  : 'Applicatiegebruik melden',
-              getWizardParams: (row, userGroups) =>
-                userGroups.includes('gebruik-beheerder')
-                  ? {
-                      applicatie: row['@self']?.id || row.id,
-                    }
-                  : {
-                      type: 'ontbrekend-organisatie',
-                      applicatie: row['@self']?.id || row.id,
-                    },
-              // Show for both user groups
-              userGroupFilter: ['gebruik-beheerder', 'aanbod-beheerder'],
-            },
-            // Koppeling action - changes based on user role
-            {
-              key: 'addKoppeling',
-              icon: <VISUALS.LINK />,
-              condition: (row) => row?.['@self']?.id || row?.id,
-              action: 'wizard',
-              wizardPath: '/forms/koppeling',
-              // Dynamic label and params based on user role
-              getLabel: (userGroups) =>
-                userGroups.includes('gebruik-beheerder')
-                  ? 'Koppeling toevoegen'
-                  : 'Koppeling publiceren',
-              getWizardParams: (row, userGroups) =>
-                userGroups.includes('gebruik-beheerder')
-                  ? {
-                      type: 'aanbieden-koppeling',
-                      applicatie: row['@self']?.id || row.id,
-                    }
-                  : {
-                      type: 'eigen-organisatie',
-                      applicatie: row['@self']?.id || row.id,
-                    },
-              // Show for both user groups
-              userGroupFilter: ['gebruik-beheerder', 'aanbod-beheerder'],
-            },
-          ],
+          uniqueActions: [],
           modals: [...baseConfig.modals],
         };
 
@@ -555,7 +506,7 @@ const BeheerPageConfigFactory = {
             },
             moduleVersie: {
               id: 'moduleVersie',
-              label: 'Applicatie versie',
+              label: 'Applicatieversie',
               key: 'moduleVersie',
               customContent: (row) => {
                 // Try direct property first, then fallback to relations
@@ -638,6 +589,7 @@ const BeheerPageConfigFactory = {
           paginationKey: 'contactpersoon',
           title: 'Contactpersoon',
           routeType: 'contactpersoon',
+          multi: false, // Disable _multi to enforce per-org RBAC scoping
           disableRelatedCreateActions: true, // Only show basic actions for contactpersonen
           disableImport: true, // Import not needed for contactpersonen
           disableView: true, // View not needed for contactpersonen

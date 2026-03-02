@@ -514,13 +514,17 @@ const ConGenericFormModal = ({
 
     const configs = {};
 
+    // Build context object for dynamic field configs that need user/org info
+    // fullOrganization has the register data (including type: Leverancier/Gemeente/Samenwerking)
+    const fieldConfigContext = { user, isEdit, fullOrganization };
+
     Object.entries(config.fieldConfigs).forEach(([fieldName, fieldConfig]) => {
       configs[fieldName] = {};
 
       // Handle dynamic configurations
       Object.entries(fieldConfig).forEach(([configKey, configValue]) => {
         if (typeof configValue === 'function') {
-          configs[fieldName][configKey] = configValue(formData, isEdit);
+          configs[fieldName][configKey] = configValue(formData, isEdit, fieldConfigContext);
         } else {
           configs[fieldName][configKey] = configValue;
         }
@@ -528,7 +532,7 @@ const ConGenericFormModal = ({
     });
 
     return configs;
-  }, [config, formData, isEdit]);
+  }, [config, formData, isEdit, user, fullOrganization]);
 
   // Handle field changes
   const handleFieldChange = useCallback((fieldName, value) => {

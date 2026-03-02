@@ -5,7 +5,6 @@
 
 import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { useNavigate } from 'react-router-dom';
 import { withStore } from '@stores';
 import { AcSection, AcFlex, AcContainer } from '@atoms';
 import { ConDynamicSidenav, AcLoader } from '@components';
@@ -15,7 +14,6 @@ import { VISUALS } from '@constants';
 
 const ConBeheerViewsList = ({ store }) => {
   const { gemma } = store;
-  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -34,12 +32,8 @@ const ConBeheerViewsList = ({ store }) => {
       }
     };
 
-    // Only fetch if we don't have views yet — filter server-side to reduce payload (33MB → 9.6MB)
-    if (!gemma.all_views || gemma.all_views.length === 0) {
-      loadViews({ publiceren: 'Softwarecatalogus en GEMMA Online en redactie', _unset: 'xml', _limit: 100 });
-    } else {
-      setIsLoading(false);
-    }
+    // Always fetch on mount — server-side filter keeps payload small (19 results)
+    loadViews({ publiceren: 'Softwarecatalogus en GEMMA Online en redactie', _unset: 'xml', _limit: 100 });
   }, [gemma]);
 
   // Pre-fetch gebruik, applicaties, deelnames, and modules in the background so they're
@@ -203,7 +197,7 @@ const ConBeheerViewsList = ({ store }) => {
               <Alert type='warning'>
                 <Heading level={4}>Geen resultaten gevonden</Heading>
                 <Paragraph>
-                  Er zijn geen views gevonden die overeenkomen met uw zoekopdracht "{searchQuery}".
+                  Er zijn geen views gevonden die overeenkomen met uw zoekopdracht &ldquo;{searchQuery}&rdquo;.
                 </Paragraph>
               </Alert>
             )}

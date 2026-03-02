@@ -89,7 +89,9 @@ const BeheerTable = forwardRef(({ store, ...props }, ref) => {
 
   const [data, setData] = useState([]);
   const [dataProperties, setDataProperties] = useState({});
-  const [loading, setLoading] = useState(false);
+  // Start in loading state when the component needs to fetch its own data,
+  // so the table shows "Loading..." instead of flashing "Geen data gevonden"
+  const [loading, setLoading] = useState(shouldFetchData || shouldFetchDataProperties);
 
   const [tableHeaders, setTableHeaders] = useState([]);
 
@@ -132,7 +134,10 @@ const BeheerTable = forwardRef(({ store, ...props }, ref) => {
     const params = {
       _limit: pagination?.limit || 9999,
       _page: pagination?.page || 1,
-      _multi: true, // Enable multitenancy
+      ...(config.multi !== false && { _multi: true }), // Enable multitenancy unless explicitly disabled
+      ...(Array.isArray(config.extend) && config.extend.length > 0 && {
+        '_extend[]': config.extend,
+      }),
       ...searchParams,
     };
 

@@ -272,7 +272,7 @@ const AcFormsKoppeling = ({ store }) => {
   ];
 
   const typeOptions = [
-    { value: 'n.v.t', label: 'N.v.t' },
+    { value: 'n.v.t.', label: 'N.v.t.' },
     { value: 'bestandsoverdracht', label: 'Bestandsoverdracht' },
     { value: 'digikoppeling', label: 'Digikoppeling' },
     { value: 'message que', label: 'Message queue' },
@@ -373,7 +373,7 @@ const AcFormsKoppeling = ({ store }) => {
     setLeverancierLoading(true);
     try {
       const params = new URLSearchParams({
-        _limit: '20',
+        _limit: '40',
         _page: '1',
         _published: 'false',
       });
@@ -460,7 +460,7 @@ const AcFormsKoppeling = ({ store }) => {
       try {
         setOwnAppLoading(true);
         const params = new URLSearchParams({
-          _limit: '20',
+          _limit: '40',
           _page: '1',
         });
 
@@ -653,7 +653,7 @@ const AcFormsKoppeling = ({ store }) => {
     
     try {
       const res = await fetch(
-        `/api/apps/openregister/api/objects/voorzieningen/module/${encodeURIComponent(
+        `/api/openregister/api/objects/voorzieningen/module/${encodeURIComponent(
           String(id)
         )}`,
         { headers: { Accept: 'application/json' } }
@@ -696,7 +696,7 @@ const AcFormsKoppeling = ({ store }) => {
       stepper.setCurrentStepByLabel('koppeling-zoeken');
       setPrefillLoading(true);
       try {
-        const url = `/api/apps/openregister/api/objects/voorzieningen/koppeling/${encodeURIComponent(
+        const url = `/api/openregister/api/objects/voorzieningen/koppeling/${encodeURIComponent(
           koppelingId
         )}?_extend[]=_schema&_extend[]=_relations`;
         const res = await fetch(url, { headers: { Accept: 'application/json' } });
@@ -1064,7 +1064,7 @@ const AcFormsKoppeling = ({ store }) => {
       try {
         // Fetch koppelingen where moduleA = moduleId
         const paramsA = new URLSearchParams({
-          _limit: '20',
+          _limit: '40',
           _page: '1',
         });
         paramsA.append('moduleA', moduleId);
@@ -1072,7 +1072,7 @@ const AcFormsKoppeling = ({ store }) => {
 
         // Fetch koppelingen where moduleB = moduleId
         const paramsB = new URLSearchParams({
-          _limit: '20',
+          _limit: '40',
           _page: '1',
         });
         paramsB.append('moduleB', moduleId);
@@ -1505,15 +1505,14 @@ const AcFormsKoppeling = ({ store }) => {
    * @param {Object} createdModuleIds - Optional object mapping rowId to created module ID
    * @param {string} createdOwnAppId - Optional ID of newly created own app (Applicatie A)
    */
-  const serializeRowsToPayload = (createdModuleIds = {}, createdOwnAppId = null) => {
-    return rows
-      .map((rowId) => {
-        let naam = (nameByRow[rowId] || '').trim();
+  const serializeRowsToPayload = async (createdModuleIds = {}, createdOwnAppId = null) => {
+    const results = [];
+    for (const rowId of rows) {
         // Use created own app ID if available, otherwise use selected existing app
         const appAId = createdOwnAppId || selectedAppAByRow[rowId] || ownApp?.value;
         // Use created module ID if available, otherwise use selected existing app
         const appBId = createdModuleIds[rowId] || selectedAppBByRow[rowId];
-        if (!appAId || !appBId) return null;
+        if (!appAId || !appBId) { results.push(null); continue; }
         const richting = directionByRow[rowId] || '';
         const soort = typeByRow[rowId] || '';
         const beschrijving = beschrijvingByRow[rowId] || '';
@@ -1522,27 +1521,25 @@ const AcFormsKoppeling = ({ store }) => {
         const standaarden = standaardenByRow[rowId] || [];
         const intermediair = intermediairByRow[rowId] || '';
 
-        // Generate default name if not provided: "AppA name → AppB name"
-        if (!naam) {
-          const appALabel =
-            (ownAppKeuze === 'nieuw' ? nieuweOwnApp?.naam : null) ||
-            selectedModuleLabels[appAId] ||
-            modulesOptions.find((opt) => String(opt.value) === String(appAId))
-              ?.label ||
-            ownAppOptions.find((opt) => String(opt.value) === String(appAId))
-              ?.label ||
-            ownApp?.label ||
-            appAId;
-          const appBLabel =
-            selectedModuleLabels[appBId] ||
-            modulesOptions.find((opt) => String(opt.value) === String(appBId))
-              ?.label ||
-            ownAppOptions.find((opt) => String(opt.value) === String(appBId))
-              ?.label ||
-            appBId;
-          const arrow = getArrowForDirection(richting);
-          naam = `${appALabel} ${arrow} ${appBLabel}`;
-        }
+        // Always auto-generate name: "AppA name → AppB name" (VNG #312)
+        const appALabel =
+          (ownAppKeuze === 'nieuw' ? nieuweOwnApp?.naam : null) ||
+          selectedModuleLabels[appAId] ||
+          modulesOptions.find((opt) => String(opt.value) === String(appAId))
+            ?.label ||
+          ownAppOptions.find((opt) => String(opt.value) === String(appAId))
+            ?.label ||
+          ownApp?.label ||
+          await ensureModuleOptionAndGetLabel(appAId);
+        const appBLabel =
+          selectedModuleLabels[appBId] ||
+          modulesOptions.find((opt) => String(opt.value) === String(appBId))
+            ?.label ||
+          ownAppOptions.find((opt) => String(opt.value) === String(appBId))
+            ?.label ||
+          await ensureModuleOptionAndGetLabel(appBId);
+        const arrow = getArrowForDirection(richting);
+        const naam = `${appALabel} ${arrow} ${appBLabel}`;
 
         // Check if the selected App B is a buitengemeentelijke voorziening
         // Check buitengemeentelijkeOptions directly for reliable BGV detection
@@ -1616,9 +1613,9 @@ const AcFormsKoppeling = ({ store }) => {
           }
         }
 
-        return payload;
-      })
-      .filter(Boolean);
+        results.push(payload);
+    }
+    return results.filter(Boolean);
   };
 
   const loadStandaardversies = useCallback(async () => {
@@ -2128,7 +2125,7 @@ const AcFormsKoppeling = ({ store }) => {
       }
 
       // Now serialize payloads with created module IDs and own app ID
-      const payloads = serializeRowsToPayload(createdModuleIds, createdOwnAppId);
+      const payloads = await serializeRowsToPayload(createdModuleIds, createdOwnAppId);
       if (!payloads.length) {
         setSaveLoading(false);
         return;
@@ -2141,7 +2138,7 @@ const AcFormsKoppeling = ({ store }) => {
         });
       }
 
-      const endpoint = '/api/apps/openregister/api/objects/voorzieningen/koppeling';
+      const endpoint = '/api/openregister/api/objects/voorzieningen/koppeling';
       // Align payloads with rows to decide POST vs PUT per row
       const requests = rows
         .map((rowId, index) => {
@@ -2637,7 +2634,6 @@ const AcFormsKoppeling = ({ store }) => {
                             directionByRow,
                             typeByRow,
                             koppelingIdByRow,
-                            payloads: serializeRowsToPayload(),
                           },
                           null,
                           2
