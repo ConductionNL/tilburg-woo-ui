@@ -618,8 +618,7 @@ const AcPublicationProduct = ({
                   <AcFlex column>
                     <b>Contactpersoon:</b>
                     <p>
-                      {contact?.voornaam} {contact?.tussenvoegsel}{' '}
-                      {contact?.achternaam}
+                      {[contact?.voornaam, contact?.tussenvoegsel, contact?.achternaam].filter(Boolean).join(' ')}
                     </p>
                     <Link
                       href={`mailto:${contact?.['e-mailadres']}`}
