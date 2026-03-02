@@ -44,7 +44,7 @@ const SCHEMA_NAMES = {
  * @param {string} props.className - Optional CSS class name
  * @returns {JSX.Element|null} The type badge content or null if no schema
  */
-const ConPublicationTypeBadge = ({ schemaSlug, className = 'con-publication-type-badge' }) => {
+const ConPublicationTypeBadge = ({ schemaSlug }) => {
   if (!schemaSlug) {
     return null;
   }

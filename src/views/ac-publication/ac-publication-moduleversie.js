@@ -21,7 +21,7 @@ import remarkEmoji from 'remark-emoji';
 import remarkSupersub from 'remark-supersub';
 import rehypeSlug from 'rehype-slug';
 import rehypeSanitize from 'rehype-sanitize';
-import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
+// import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 import { normalizeSchemaName } from '@src/utilities/con-normalize-schema-name';
 import { useResolveSchemaIds } from '@src/hooks/use-resolve-schema-ids.hook';
@@ -64,7 +64,7 @@ const AcPublicationModuleVersie = ({ store: { publications, user, object } }) =>
   
   // Aggregated schemas from all related items via hook
   const allRelatedItems = useMemo(() => [...uses, ...used], [uses, used]);
-  const { aggregatedSchemas, setAggregatedSchemas } = useResolveSchemaIds(allRelatedItems);
+  const { aggregatedSchemas } = useResolveSchemaIds(allRelatedItems);
 
   const fetchUses = useCallback(async () => {
     if (!id) return;

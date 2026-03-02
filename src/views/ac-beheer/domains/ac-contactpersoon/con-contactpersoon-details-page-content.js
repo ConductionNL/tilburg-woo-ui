@@ -1,8 +1,6 @@
 import {
   Heading,
-  Paragraph,
   Link,
-  Alert,
 } from '@utrecht/component-library-react/dist/css-module';
 import { AcColumn } from '@src/atoms';
 import { VISUALS } from '@src/constants';

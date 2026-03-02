@@ -7,7 +7,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { AcContainer, AcFlex } from '@atoms';
 import { AcLoader, ConDetailsActionsMenu, ConPublicationTypeBadge } from '@components';
 import { withStore } from '@stores';
-import { VISUALS } from '@constants';
+// import { VISUALS } from '@constants';
 import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
 import { schemaCache } from '@services/schemaCache.service';
@@ -27,7 +27,7 @@ import remarkEmoji from 'remark-emoji';
 import remarkSupersub from 'remark-supersub';
 import rehypeSlug from 'rehype-slug';
 import rehypeSanitize from 'rehype-sanitize';
-import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
+// import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
 
 const AcPublicationContactperson = ({ store: { publications, object, user } }) => {
@@ -75,7 +75,7 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
   });
 
   // Generate action menu items
-  const [actionMenuItems, setActionMenuItems] = useState([]);
+  const [, setActionMenuItems] = useState([]);
 
   // Delete modal state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -114,7 +114,7 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
   
   // Aggregated schemas from all related items via hook
   const allRelatedItems = useMemo(() => [...uses, ...used], [uses, used]);
-  const { aggregatedSchemas, setAggregatedSchemas } = useResolveSchemaIds(allRelatedItems);
+  const { aggregatedSchemas } = useResolveSchemaIds(allRelatedItems);
 
   const fetchUses = useCallback(async () => {
     if (!id) return;

@@ -4,7 +4,6 @@ import { ConRelatedObjectsLinks } from '@components';
 import {
   shouldResolveToName,
   getDisplayValue,
-  isUUID,
 } from './con-detect-object-references';
 import { isDataUrl, isUrl, getDataUrlDisplayName, handleFileClick } from '@utils';
 

@@ -27,7 +27,7 @@ const ICON_MAP = {
   gear: VISUALS.GEAR,
 };
 
-const AcCardCategory = ({ image, icon, title, summary, linkUrl, linkTitle, isExternal }) => {
+const AcCardCategory = ({ icon, title, summary, linkUrl, linkTitle, isExternal }) => {
   const IconComponent = icon && ICON_MAP[icon];
 
   return (

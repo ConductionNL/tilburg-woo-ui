@@ -5,7 +5,6 @@
 
 import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { useNavigate } from 'react-router-dom';
 import { withStore } from '@stores';
 import { AcSection, AcFlex, AcContainer } from '@atoms';
 import { ConDynamicSidenav, AcLoader } from '@components';
@@ -15,7 +14,6 @@ import { VISUALS } from '@constants';
 
 const ConBeheerViewsList = ({ store }) => {
   const { gemma } = store;
-  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -203,7 +201,7 @@ const ConBeheerViewsList = ({ store }) => {
               <Alert type='warning'>
                 <Heading level={4}>Geen resultaten gevonden</Heading>
                 <Paragraph>
-                  Er zijn geen views gevonden die overeenkomen met uw zoekopdracht "{searchQuery}".
+                  Er zijn geen views gevonden die overeenkomen met uw zoekopdracht &ldquo;{searchQuery}&rdquo;.
                 </Paragraph>
               </Alert>
             )}

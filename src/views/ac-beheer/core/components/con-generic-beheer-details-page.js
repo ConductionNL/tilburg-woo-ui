@@ -6,7 +6,6 @@ import { AcFlex, AcSection, AcTab, AcTabList, AcTabPanel, AcTabs } from '@atoms'
 import { ConDynamicSidenav, AcLoader, ConDetailsActionsMenu } from '@components';
 import {
   Heading,
-  Paragraph,
   Alert,
 } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@constants';

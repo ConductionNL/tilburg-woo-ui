@@ -241,6 +241,7 @@ const RelatedTabs = observer(
     gebruikLoading = false,
     excludeObjectIds = [],
     tabNameOverride = { schemaName: null, newTabName: null },
+    // eslint-disable-next-line no-unused-vars
     tabIndex,
     setTabIndex,
     object,
@@ -307,15 +308,6 @@ const RelatedTabs = observer(
     const afterCustom = normalizeCustomTabs(customTabsAfter);
 
     const allTabs = [...beforeCustom, ...schemaTabs, ...afterCustom];
-
-    // Determine if there are any visible custom tabs
-    const anyVisibleCustomTabs = [
-      ...(customTabsBefore || []),
-      ...(customTabsAfter || []),
-    ].some((t) => isVisible(t?.visible));
-
-    // Check if we have any data
-    const hasAnyData = mergedItems.length > 0;
 
     // Only show loader if we're loading AND have no tabs at all
     if (isLoading && allTabs.length === 0) {

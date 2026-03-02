@@ -35,16 +35,12 @@ const ConDetailsActionsMenu = ({
   id,
   schemaSlug,
   // title,
-  published,
   object,
   triggerStyle = 'button',
   showViewAction = true,
   showEditAction = true,
-  showPublishActions = true,
   uniqueActions = [],
   relatedActions = [],
-  onPublish,
-  onDepublish,
   onEdit,
   onDelete,
 }) => {
@@ -97,18 +93,6 @@ const ConDetailsActionsMenu = ({
     // Default view action - open publication page
     const publicationUrl = `/publicatie/${id}`;
     window.open(publicationUrl, '_blank');
-  };
-
-  const handlePublish = () => {
-    if (onPublish) {
-      onPublish(id);
-    }
-  };
-
-  const handleDepublish = () => {
-    if (onDepublish) {
-      onDepublish(id);
-    }
   };
 
   /**

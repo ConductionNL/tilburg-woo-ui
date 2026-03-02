@@ -12,7 +12,6 @@ import { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { AcContainer, AcCard } from '@atoms';
-import { LABELS } from '@constants';
 import { ConChatSidebar, ConChatArea, ConChatDossiers } from './components';
 
 import { Heading, Paragraph } from '@utrecht/component-library-react/dist/css-module';

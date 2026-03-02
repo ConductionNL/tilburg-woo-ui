@@ -36,7 +36,6 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications, user, object } 
     get_used_data,
     resetRelations,
     resetPublication,
-    resetUsedData,
     fetchRelations,
     fetchPublication,
     fetchUsed,

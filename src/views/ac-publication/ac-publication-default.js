@@ -143,7 +143,7 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
   });
 
   // Generate action menu items
-  const [actionMenuItems, setActionMenuItems] = useState([]);
+  const [, setActionMenuItems] = useState([]);
 
   // Delete modal state
   const [showDeleteModal, setShowDeleteModal] = useState(false);

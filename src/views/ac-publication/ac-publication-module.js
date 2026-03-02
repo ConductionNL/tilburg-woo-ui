@@ -276,7 +276,7 @@ const AcPublicationProduct = ({
 
   // Resolve schema IDs from uses/used items to full schema objects
   const allRelatedItems = useMemo(() => [...uses, ...used], [uses, used]);
-  const { aggregatedSchemas, setAggregatedSchemas } = useResolveSchemaIds(allRelatedItems);
+  const { aggregatedSchemas } = useResolveSchemaIds(allRelatedItems);
 
   // Extract contactpersoon from get_single (extended) or fallback to uses data
   const contact = useMemo(() => {
@@ -312,21 +312,7 @@ const AcPublicationProduct = ({
     return contactpersoonObject;
   }, [get_single?.contactpersoon, uses]);
 
-  const moduleVersies = useMemo(() => {
-    if (!used?.length) return null;
-
-    // Find the first contactpersoon object in the uses array
-    // (if multiple contactpersonen exist, we take the first one)
-    const moduleVersiesObjects = used.filter((use) => {
-      const useSchemaId = use?.['@self']?.schema;
-      const useSchemaSlug = useSchemaId ? schemaCache.get(useSchemaId) : null;
-      return useSchemaSlug === 'moduleversie';
-    });
-
-    if (!moduleVersiesObjects.length) return null;
-
-    return moduleVersiesObjects;
-  }, [used]);
+  // moduleVersies filtering removed — not currently used in this view
 
   // Resolved referentieComponenten names for custom tab rendering
   const [resolvedReferentieComponenten, setResolvedReferentieComponenten] = useState(

@@ -32,7 +32,7 @@ import remarkEmoji from 'remark-emoji';
 import remarkSupersub from 'remark-supersub';
 import rehypeSlug from 'rehype-slug';
 import rehypeSanitize from 'rehype-sanitize';
-import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
+// import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
 
 /**
  * Product Details Page (simplified for fixed type)
@@ -76,7 +76,7 @@ const AcPublicationProduct = ({
 
   // Resolve schema IDs from uses/used items to full schema objects
   const allRelatedItems = useMemo(() => [...uses, ...used], [uses, used]);
-  const { aggregatedSchemas, setAggregatedSchemas } = useResolveSchemaIds(allRelatedItems);
+  const { aggregatedSchemas } = useResolveSchemaIds(allRelatedItems);
 
   // Extract contactpersoon from uses data instead of get_single
   const contact = useMemo(() => {

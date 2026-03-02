@@ -65,15 +65,11 @@ const ConPublicationActions = ({
   id,
   schemaSlug,
   // title,
-  published,
   object,
   triggerStyle = 'buttonSlim',
   triggerSize,
   showViewAction = true,
   showEditAction = true,
-  showPublishActions = false,
-  onPublish,
-  onDepublish,
   additionalActions = [], // Array of { label, onClick, icon } objects
 }) => {
   // Don't render if user is not authenticated or no schema slug

@@ -8,9 +8,7 @@ import { VISUALS } from '@constants';
 import { AcButton } from '@molecules';
 import {
   Heading,
-  Paragraph,
   Link,
-  Alert,
 } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
 import { schemaCache } from '@services/schemaCache.service';
@@ -32,7 +30,7 @@ import remarkRehype from 'remark-rehype';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { useResolveSchemaIds } from '@src/hooks/use-resolve-schema-ids.hook';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
-import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
+// import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
 import { normalizeSchemaName } from '@src/utilities/con-normalize-schema-name';
 // import { checkOrganizationPermissions } from '@utils/organization-permissions';
 
@@ -67,7 +65,7 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
   
   // Aggregated schemas from all related items via hook
   const allRelatedItems = useMemo(() => [...uses, ...used], [uses, used]);
-  const { aggregatedSchemas, setAggregatedSchemas } = useResolveSchemaIds(allRelatedItems);
+  const { aggregatedSchemas } = useResolveSchemaIds(allRelatedItems);
 
   // Related create actions (wizard-aware) like module/product pages
   const openDynamicCreate = useCallback(
@@ -104,7 +102,7 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
     excludeSchemas,
   });
 
-  const [actionMenuItems, setActionMenuItems] = useState([]);
+  const [, setActionMenuItems] = useState([]);
 
   useEffect(() => {
     if (!schemaSlug || !id) return;

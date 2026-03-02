@@ -13,7 +13,6 @@
 
 // Imports => MOBX
 import { observable, computed, makeObservable, action, runInAction } from 'mobx';
-import { getCookie } from '@utils';
 
 // Try to import container constants (generated at runtime)
 let containerConfig;
@@ -46,46 +45,6 @@ const isChatEnabled = () => {
     return containerConfig.isChatEnabled();
   }
   return false;
-};
-
-/**
- * Get authentication headers for chat API requests
- * 
- * @returns {Object} Headers object with authentication
- */
-const getAuthHeaders = () => {
-  const headers = {
-    'Content-Type': 'application/json',
-    Accept: 'application/json',
-    Referer: window.location.origin + '/chat',
-  };
-
-  // Try Bearer token first (from cookies)
-  const accessToken = getCookie('nextcloud_access_token');
-  if (accessToken) {
-    headers.Authorization = `Bearer ${accessToken}`;
-    return headers;
-  }
-
-  // Fallback to basic auth (from user store)
-  try {
-    if (
-      window.app &&
-      window.app.store &&
-      window.app.store.user &&
-      window.app.store.user.basicAuthCredentials
-    ) {
-      const basicAuth = window.app.store.user.basicAuthCredentials;
-      if (basicAuth && basicAuth.username && basicAuth.password) {
-        const credentials = btoa(`${basicAuth.username}:${basicAuth.password}`);
-        headers.Authorization = `Basic ${credentials}`;
-      }
-    }
-  } catch (error) {
-    console.warn('Failed to get basic auth credentials for chat:', error);
-  }
-
-  return headers;
 };
 
 /**

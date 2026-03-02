@@ -10,8 +10,8 @@ import {
   Heading,
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
-import { LABELS, PATHS } from '@constants';
-import { AcCardCategory, AcLink } from '@molecules';
+import { LABELS } from '@constants';
+import { AcCardCategory } from '@molecules';
 import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
 import ConGlossaryHighlight from '@components/con-glossary-highlight/con-glossary-highlight';
 
