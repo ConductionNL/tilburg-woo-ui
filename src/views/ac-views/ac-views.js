@@ -45,18 +45,35 @@ const AcViews = ({ store: { gemma } }) => {
   useEffect(() => {
     if (!gemma.get_view) return;
 
-    // Handle both old and new API response structures
-    const nodes = gemma.get_view.nodes || gemma.get_view.viewNodes || [];
-    const connections =
-      gemma.get_view.connections || gemma.get_view.viewRelationships || [];
+    // Handle both old and new API response structures.
+    // The xml property contains the full AMEF data with viewNodes when top-level fields are empty.
+    const xmlData = gemma.get_view.xml || {};
+    const resolvedNodes = gemma.get_view.nodes || gemma.get_view.viewNodes || xmlData.viewNodes || xmlData.node || [];
+    const resolvedConnections =
+      gemma.get_view.connections || gemma.get_view.viewRelationships || xmlData.connection || [];
 
-    // Additional safety check to ensure view has required structure
-    if (nodes.length === 0 && connections.length === 0) {
+    // New API structure: xml.viewNodes already contains fully enriched node data
+    // (name, type, position, color, font, elementRef, etc.) — no per-node API calls needed.
+    if (Array.isArray(xmlData.viewNodes) && xmlData.viewNodes.length > 0) {
+      const sanitizedNodes = xmlData.viewNodes.map((node) => ({
+        ...node,
+        viewNodeId: node.viewNodeId || node.id || node.identifier || node.modelNodeId || 'unknown',
+        name: node.name || node.elementProperties?.name || 'unknown',
+        type: (node.elementProperties?.type || node.type || 'dataobject').toLowerCase(),
+        gemmaType: node.type || node.gemmaType || node.elementProperties?.gemmaType || null,
+      }));
+      setViewNodesData(sanitizedNodes);
+      setViewRelationsData(resolvedConnections);
+      return;
+    }
+
+    // Legacy path: nodes exist at top level but need per-node API enrichment
+    if (resolvedNodes.length === 0 && resolvedConnections.length === 0) {
       console.warn('View data is missing nodes and connections:', gemma.get_view);
       return;
     }
 
-    let viewNodesData = [];
+    let legacyViewNodesData = [];
     const hostname = window.location.hostname;
     const baseUrl =
       hostname === 'vng.test.opencatalogi.nl'
@@ -64,12 +81,12 @@ const AcViews = ({ store: { gemma } }) => {
         : 'https://vng.accept.commonground.nu/apps';
 
     const getViewNodesData = () => {
-      if (!gemma.get_view.nodes || !Array.isArray(gemma.get_view.nodes)) {
+      if (!Array.isArray(resolvedNodes) || resolvedNodes.length === 0) {
         console.warn('No nodes found in view data:', gemma.get_view);
         return Promise.resolve([]);
       }
 
-      const promises = gemma.get_view.nodes.map(async (node) => {
+      const promises = resolvedNodes.map(async (node) => {
         if (!node.elementRef) return null;
 
         try {
@@ -93,11 +110,11 @@ const AcViews = ({ store: { gemma } }) => {
       });
 
       return Promise.all(promises).then((results) => {
-        viewNodesData.push(...results.filter(Boolean));
+        legacyViewNodesData.push(...results.filter(Boolean));
       });
     };
 
-    const getChildNodesData = async (nodes = gemma.get_view?.nodes) => {
+    const getChildNodesData = async (nodes = resolvedNodes) => {
       if (!nodes || !Array.isArray(nodes)) {
         console.warn('No nodes provided for child processing');
         return Promise.resolve([]);
@@ -125,7 +142,7 @@ const AcViews = ({ store: { gemma } }) => {
               parent: node.elementRef,
             };
 
-            viewNodesData.push(childNode);
+            legacyViewNodesData.push(childNode);
 
             // Recursively process child nodes if they exist
             if (child.nodes) {
@@ -148,20 +165,16 @@ const AcViews = ({ store: { gemma } }) => {
     getViewNodesData()
       .then(() => getChildNodesData())
       .then(() => {
-        setViewNodesData(viewNodesData);
+        setViewNodesData(legacyViewNodesData);
       });
 
     const getViewRelationsData = () => {
-      if (
-        !gemma.get_view.connections ||
-        !Array.isArray(gemma.get_view.connections)
-      ) {
-        console.warn('No connections found in view data:', gemma.get_view);
+      if (!Array.isArray(resolvedConnections) || resolvedConnections.length === 0) {
         setViewRelationsData([]);
         return Promise.resolve([]);
       }
 
-      const relationshipPromises = gemma.get_view.connections.map(
+      const relationshipPromises = resolvedConnections.map(
         async (relationship) => {
           if (!relationship.relationshipRef) return null;
           if (relationship.relationshipRef.includes('@attribute')) return null;
@@ -189,7 +202,7 @@ const AcViews = ({ store: { gemma } }) => {
 
       return Promise.all(relationshipPromises).then((results) => {
         const validRelations = results.filter(Boolean);
-        if ((gemma.get_view.connections || []).length > 0) {
+        if (resolvedConnections.length > 0) {
           setViewRelationsData(validRelations);
         } else {
           setViewRelationsData([]);
@@ -228,6 +241,9 @@ const AcViews = ({ store: { gemma } }) => {
       defaultInteractive: false,
     });
 
+    // Freeze paper to suppress rendering during bulk cell addition.
+    paper.freeze();
+
     // Add click handler to the paper
     paper.on('element:pointerclick', (elementView) => {
       const model = elementView.model;
@@ -237,168 +253,219 @@ const AcViews = ({ store: { gemma } }) => {
       }
     });
 
-    const convertToViewNode = (node) => {
-      const nodeDataNode = viewNodesData.find((item) => item.id === node.elementRef);
+    let viewNodes = [];
+    let viewRelationships = [];
 
-      const getType = () => {
-        switch (nodeDataNode?.name) {
-          case 'StUF Geo IMGeo':
-            return 'constraint';
-          case 'SVB-BGT services en portaal':
-            return 'applicationcomponent';
-          default:
-            return 'dataobject';
+    // Detect whether viewNodesData comes from the new enriched API format
+    // (nodes have x/y/width/height/color directly) or the legacy format
+    // (nodes only have id/name/type from per-node API lookups).
+    const isEnrichedFormat = viewNodesData.length > 0 && viewNodesData[0].x !== undefined;
+
+    if (isEnrichedFormat) {
+      // New API path: viewNodesData already contains fully enriched nodes with
+      // position, color, font, parent hierarchy, etc.
+      // Apply topological sort so parents render before children.
+      const rawNodes = [...viewNodesData];
+      const sorted = [];
+      const placed = new Set();
+      const remaining = [...rawNodes];
+      let prevLength = -1;
+      while (remaining.length > 0 && remaining.length !== prevLength) {
+        prevLength = remaining.length;
+        const toRemove = [];
+        for (let i = 0; i < remaining.length; i++) {
+          const n = remaining[i];
+          if (!n.parent || placed.has(n.parent)) {
+            sorted.push(n);
+            placed.add(n.viewNodeId);
+            toRemove.push(i);
+          }
         }
-      };
+        for (let j = toRemove.length - 1; j >= 0; j--) {
+          remaining.splice(toRemove[j], 1);
+        }
+      }
+      // Append any remaining nodes (e.g. orphans with missing parents)
+      sorted.push(...remaining);
 
-      if (!node.elementRef) {
-        if (node.type === 'Label') {
+      // Convert absolute coordinates to parent-relative.
+      const absPos = {};
+      sorted.forEach((n) => {
+        const parentAbs = n.parent ? absPos[n.parent] : null;
+        absPos[n.viewNodeId] = { x: (n.x || 0), y: (n.y || 0) };
+        if (parentAbs) {
+          n.x = (n.x || 0) - parentAbs.x;
+          n.y = (n.y || 0) - parentAbs.y;
+        }
+      });
+
+      viewNodes = sorted;
+      viewRelationships = (viewRelationsData || []).map((r) => ({
+        modelRelationshipId: r.modelRelationshipId,
+        sourceId: r.sourceId,
+        targetId: r.targetId,
+        viewRelationshipId: r.viewRelationshipId,
+        type: (r.type || 'relationship').toLowerCase(),
+        bendpoints: Array.isArray(r.bendpoints)
+          ? r.bendpoints.map((b) => ({ x: parseFloat(b.x) || 0, y: parseFloat(b.y) || 0 }))
+          : [],
+        label: {},
+      }));
+    } else {
+      // Legacy path: viewNodesData has basic info from per-node API lookups;
+      // use gemma.get_view.nodes for position/style data.
+      const convertToViewNode = (node) => {
+        const nodeDataNode = viewNodesData.find((item) => item.id === node.elementRef);
+
+        const getType = () => {
+          switch (nodeDataNode?.name) {
+            case 'StUF Geo IMGeo':
+              return 'constraint';
+            case 'SVB-BGT services en portaal':
+              return 'applicationcomponent';
+            default:
+              return 'dataobject';
+          }
+        };
+
+        if (!node.elementRef) {
+          if (node.type === 'Label') {
+            return {
+              modelNodeId: node.identifier,
+              viewNodeId: node.identifier || 'unknown',
+              name: node.label,
+              type: node.type?.toLowerCase() || getType(),
+              x: node.position.x,
+              y: node.position.y,
+              width: node.position.w,
+              height: node.position.h,
+              parent: null,
+              description: node.label,
+              font: node.style.font,
+              elementRef: null,
+            };
+          }
+          if (!node.referentieComponenten) return;
+          const nodes = node.referentieComponenten?.map((refComponent) => {
+            const uniqueId = `${node.id}_${refComponent}`;
+            const nodeData = viewNodesData.find((item) => item.id === uniqueId);
+
+            if (!nodeData) return;
+
+            return {
+              modelNodeId: nodeData?.id,
+              viewNodeId: nodeData?.viewNodeId || 'unknown',
+              name: nodeData?.name || 'unknown',
+              type: nodeData?.type?.toLowerCase() || getType(),
+              x: nodeData?.position?.x || 0,
+              y: nodeData?.position?.y || 0,
+              width: nodeData?.position?.w || 0,
+              height: nodeData?.position?.h || 0,
+              parent: null,
+              description: nodeData?.description || null,
+              font: nodeData?.font || null,
+              elementRef: null,
+            };
+          });
+
+          return nodes;
+        } else {
           return {
-            modelNodeId: node.identifier,
+            modelNodeId: node.isChildNode ? node.identifier : node.elementRef,
             viewNodeId: node.identifier || 'unknown',
-            name: node.label,
-            type: node.type?.toLowerCase() || getType(),
+            name: nodeDataNode?.name || 'unknown',
+            type: nodeDataNode?.type?.toLowerCase() || getType(),
             x: node.position.x,
             y: node.position.y,
             width: node.position.w,
             height: node.position.h,
             parent: null,
-            description: node.label,
-            font: node.style.font,
-            elementRef: null,
+            color: `rgba(${node.style.fillColor.r}, ${node.style.fillColor.g}, ${node.style.fillColor.b}, ${node.style.fillColor.a})`,
+            borderColor: `rgba(${node.style.lineColor.r}, ${node.style.lineColor.g}, ${node.style.lineColor.b}, ${node.style.lineColor.a})`,
+            font: {
+              name: node.style.font.name,
+              size: node.style.font.size,
+              color: `rgba(${node.style.color.r}, ${node.style.color.g}, ${node.style.color.b}, ${node.style.color.a})`,
+            },
+            description: nodeDataNode?.description || null,
+            elementRef: node.elementRef || null,
+            onClick: () => {
+              window.open(
+                `https://www.gemmaonline.nl/wiki/GEMMA/${node.elementRef}`,
+                '_blank'
+              );
+            },
           };
         }
-        if (!node.referentieComponenten) return;
-        const nodes = node.referentieComponenten?.map((refComponent) => {
-          const uniqueId = `${node.id}_${refComponent}`;
-          const nodeData = viewNodesData.find((item) => item.id === uniqueId);
+      };
 
-          if (!nodeData) return;
+      const gemmaNodes = gemma.get_view.nodes || [];
 
-          return {
-            modelNodeId: nodeData?.id,
-            viewNodeId: nodeData?.viewNodeId || 'unknown',
-            name: nodeData?.name || 'unknown',
-            type: nodeData?.type?.toLowerCase() || getType(),
-            x: nodeData?.position?.x || 0,
-            y: nodeData?.position?.y || 0,
-            width: nodeData?.position?.w || 0,
-            height: nodeData?.position?.h || 0,
-            parent: null,
-            description: nodeData?.description || null,
-            font: nodeData?.font || null,
-            elementRef: null,
-          };
-        });
+      // Helper function to recursively collect all child nodes
+      const getAllChildNodes = (nodes) => {
+        return nodes.reduce((acc, node) => {
+          if (!node.nodes) return acc;
+          const children = node.nodes.map((child) => ({ ...child, isChildNode: true }));
+          const grandchildren = getAllChildNodes(node.nodes);
+          return [...acc, ...children, ...grandchildren];
+        }, []);
+      };
 
-        return nodes;
-      } else {
+      const gemmaChildNodes = getAllChildNodes(gemma.get_view.nodes || []).filter(Boolean);
+      const allNodes = [...gemmaNodes, ...gemmaChildNodes];
+
+      viewNodes = allNodes
+        .flatMap(convertToViewNode)
+        .filter(Boolean)
+        .filter((node) => node.type && node.name && node.viewNodeId);
+
+      const convertToViewRelationship = (relationship) => {
+        const relationshipData = viewRelationsData.find(
+          (item) => item.id === relationship.relationshipRef
+        );
+        const bendpoints = relationship.bendpoints
+          ? relationship.bendpoints.map((bendpoint) => ({
+              x: parseFloat(bendpoint.x) || 0,
+              y: parseFloat(bendpoint.y) || 0,
+            }))
+          : [];
         return {
-          modelNodeId: node.isChildNode ? node.identifier : node.elementRef,
-          viewNodeId: node.identifier || 'unknown',
-          name: nodeDataNode?.name || 'unknown',
-          type: nodeDataNode?.type?.toLowerCase() || getType(),
-          x: node.position.x,
-          y: node.position.y,
-          width: node.position.w,
-          height: node.position.h,
-          parent: null,
-          color: `rgba(${node.style.fillColor.r}, ${node.style.fillColor.g}, ${node.style.fillColor.b}, ${node.style.fillColor.a})`,
-          borderColor: `rgba(${node.style.lineColor.r}, ${node.style.lineColor.g}, ${node.style.lineColor.b}, ${node.style.lineColor.a})`,
-          font: {
-            name: node.style.font.name,
-            size: node.style.font.size,
-            color: `rgba(${node.style.color.r}, ${node.style.color.g}, ${node.style.color.b}, ${node.style.color.a})`,
-          },
-          description: nodeDataNode?.description || null,
-          elementRef: node.elementRef || null,
-          onClick: () => {
-            window.open(
-              `https://www.gemmaonline.nl/wiki/GEMMA/${node.elementRef}`,
-              '_blank'
-            );
+          modelRelationshipId: relationship.relationshipRef,
+          sourceId: relationship.source,
+          targetId: relationship.target,
+          viewRelationshipId: relationship.identifier,
+          type: relationshipData?.type?.toLowerCase() || 'access',
+          bendpoints: bendpoints,
+          label: {
+            text: relationshipData?.name || undefined,
+            ...(relationshipData?.name && {
+              markup: [
+                {
+                  style: {
+                    fontSize: relationship.style?.font?.size,
+                    fontFamily: relationship.style?.font?.name,
+                    fontColor: relationship.style?.color
+                      ? `rgba(${relationship.style.color.r}, ${relationship.style.color.g}, ${relationship.style.color.b}, ${relationship.style.color.a})`
+                      : undefined,
+                  },
+                },
+              ],
+            }),
           },
         };
-      }
-    };
-
-    const gemmaNodes = gemma.get_view.nodes || [];
-
-    // Helper function to recursively collect all child nodes
-    const getAllChildNodes = (nodes) => {
-      return nodes.reduce((acc, node) => {
-        if (!node.nodes) return acc;
-
-        // Add immediate child nodes
-        const children = node.nodes.map((child) => ({
-          ...child,
-          isChildNode: true,
-        }));
-
-        // Recursively get children of children
-        const grandchildren = getAllChildNodes(node.nodes);
-
-        return [...acc, ...children, ...grandchildren];
-      }, []);
-    };
-
-    const gemmaChildNodes = getAllChildNodes(gemma.get_view.nodes || []).filter(
-      Boolean
-    );
-
-    const allNodes = [...gemmaNodes, ...gemmaChildNodes];
-
-    const viewNodes = allNodes
-      .flatMap(convertToViewNode)
-      .filter(Boolean)
-      .filter((node) => node.type && node.name && node.viewNodeId);
-
-    const convertToViewRelationship = (relationship) => {
-      const relationshipData = viewRelationsData.find(
-        (item) => item.id === relationship.relationshipRef
-      );
-
-      // Convert bendpoint to array with numeric coordinates or return empty array
-      const bendpoints = relationship.bendpoints
-        ? relationship.bendpoints.map((bendpoint) => ({
-            x: parseFloat(bendpoint.x) || 0,
-            y: parseFloat(bendpoint.y) || 0,
-          }))
-        : [];
-      return {
-        modelRelationshipId: relationship.relationshipRef,
-        sourceId: relationship.source,
-        targetId: relationship.target,
-        viewRelationshipId: relationship.identifier,
-        type: relationshipData?.type?.toLowerCase() || 'access',
-        bendpoints: bendpoints,
-        label: {
-          text: relationshipData?.name || undefined,
-          ...(relationshipData?.name && {
-            markup: [
-              {
-                style: {
-                  fontSize: relationship.style.font.size,
-                  fontFamily: relationship.style.font.name,
-                  fontColor: `rgba(${relationship.style.color.r}, ${relationship.style.color.g}, ${relationship.style.color.b}, ${relationship.style.color.a})`,
-                },
-              },
-            ],
-          }),
-        },
       };
-    };
 
-    const viewRelationshipsArray =
-      (gemma.get_view.connections || []).length > 0
-        ? (gemma.get_view.connections || []).map((relationship, idx) =>
-            convertToViewRelationship(relationship, idx)
-          )
-        : [];
+      const viewRelationshipsArray =
+        (gemma.get_view.connections || []).length > 0
+          ? (gemma.get_view.connections || []).map((relationship, idx) =>
+              convertToViewRelationship(relationship, idx)
+            )
+          : [];
 
-    const viewRelationships = viewRelationshipsArray.filter(
-      (relationship) => relationship !== undefined
-    );
+      viewRelationships = viewRelationshipsArray.filter(
+        (relationship) => relationship !== undefined
+      );
+    }
 
     // Render the graph
     ViewRenderer.renderToGraph(
@@ -419,6 +486,9 @@ const AcViews = ({ store: { gemma } }) => {
         interactive: false,
       })
     );
+
+    // Unfreeze: triggers a single batch render of all cells at once.
+    paper.unfreeze();
 
     viewNodes.forEach((node) => {
       setNodeColor(node);

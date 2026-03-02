@@ -188,7 +188,8 @@ const AcSearch = ({ store: { publications, user, object } }) => {
               created={publication['@self']?.created}
               category={publication['@self'].schema.title}
               title={extractTitle(
-                publication.title ??
+                publication['@self']?.name ??
+                  publication.title ??
                   publication.titel ??
                   publication.name ??
                   publication.naam ??
@@ -243,7 +244,8 @@ const AcSearch = ({ store: { publications, user, object } }) => {
               id={publication.id || publication['@self']?.id}
               created={publication['@self']?.created}
               title={extractTitle(
-                publication.title ??
+                publication['@self']?.name ??
+                  publication.title ??
                   publication.titel ??
                   publication.name ??
                   publication.naam ??
@@ -262,7 +264,9 @@ const AcSearch = ({ store: { publications, user, object } }) => {
               created={selfData.created}
               category={selfData.schema.title}
               title={extractTitle(
-                publication.title ??
+                publication.titelViewSwc ??
+                  selfData?.name ??
+                  publication.title ??
                   publication.titel ??
                   publication.name ??
                   publication.naam ??
@@ -276,6 +280,7 @@ const AcSearch = ({ store: { publications, user, object } }) => {
               schemaSlug={selfData?.schema?.slug}
               self={selfData}
               key={index}
+              navigateTo={selfData?.schema?.slug === 'weergave' || selfData?.schema?.slug === 'view' ? 'view' : 'publication'}
             />
           );
       }
@@ -304,8 +309,9 @@ const AcSearch = ({ store: { publications, user, object } }) => {
             <AcFlex column spacing='sm' margin='sm'>
               <AcFlex justifyContent='between'>
                 <Heading level={2}>
-                  {ConFormatDutchNumber(pagination.total)}{' '}
-                  {LABELS_DYNAMIC.RESULTS(pagination.total).toLowerCase()}
+                  {is_loading
+                    ? LABELS.SEARCH_RESULTS_LOADING
+                    : `${ConFormatDutchNumber(pagination.total)} ${LABELS_DYNAMIC.RESULTS(pagination.total).toLowerCase()}`}
                 </Heading>
                 <div className='desktop-sorting'>
                   <AcSearchSort type='alt' />

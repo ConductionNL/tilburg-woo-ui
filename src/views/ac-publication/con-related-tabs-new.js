@@ -101,6 +101,8 @@ const getTabOrder = (schemaSlug) => {
   const order = {
     product: 1,
     module: 2,
+    moduleversie: 2.5,
+    moduleVersie: 2.5,
     dienst: 3,
     gebruik: 4,
     contactpersoon: 5,
@@ -399,7 +401,7 @@ const RelatedTabs = observer(
                       gap: '8px',
                     }}
                   >
-                    {Icon && <Icon />}
+                    {Icon && <span aria-hidden="true"><Icon /></span>}
                     {tab.label}
                     {typeof count === 'number' && ` (${count})`}
                   </span>

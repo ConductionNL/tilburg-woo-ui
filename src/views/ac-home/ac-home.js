@@ -2,7 +2,7 @@ import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { useEffect } from 'react';
 
-import { AcAbout, AcHero, AcLoader } from '@components';
+import { AcAbout, AcContentBlocks, AcHero, AcLoader, AcQuote } from '@components';
 import { AcRemoveParagraphTags, AcRemoveTags, AcSanitizeHtml } from '@utils';
 import { AcContainer, AcSection } from '@atoms';
 import AcColumn from '@atoms/ac-column/ac-column';
@@ -37,6 +37,17 @@ const AcHome = ({ store: { pages, publications, themes } }) => {
   return (
     <ConGlossaryHighlight as='div'>
       <AcHero contents={contents} />
+
+      {contents[1]?.data?.title && (
+        <AcQuote
+          title={AcRemoveTags(contents[1]?.data?.title)}
+          subtitle={AcRemoveTags(contents[1]?.data?.subtitle)}
+        />
+      )}
+
+      {contents[2]?.data?.blocks && contents[2].data.blocks.length > 0 && (
+        <AcContentBlocks blocks={contents[2].data.blocks} />
+      )}
 
       <AcSection spacing>
         <AcContainer>
