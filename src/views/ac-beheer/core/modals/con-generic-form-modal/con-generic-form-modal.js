@@ -1,0 +1,988 @@
+// eslint-disable-next-line import/no-unresolved
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { withStore } from '@stores';
+import { observer } from 'mobx-react-lite';
+import { AcModal, ConDebugViewer, ConDynamicSchemaForm } from '@components';
+import { VISUALS } from '@constants';
+import { AcFlex } from '@atoms';
+// eslint-disable-next-line import/no-unresolved
+import { Alert, Paragraph } from '@utrecht/component-library-react/dist/css-module';
+
+import { collapseExtendedObjects, normalizeSchemaName } from '@src/utilities';
+import FormModalConfigFactory from '@views/ac-beheer/core/factories/con-form-modal-config-factory.js';
+import { useRefOptions } from '@src/hooks/use-ref-options';
+import { filterFormDataByAuthorization } from '@utils/field-authorization';
+import _ from 'lodash';
+
+const DEFAULT_CONFIG_OVERRIDES = {};
+const DEFAULT_PRE_SELECTED = {};
+
+/**
+ * Generic Form Modal Component
+ * This component can handle all form modal types through configuration
+ *
+ * Key Features:
+ * - Uses FormModalConfigFactory for type-specific configurations
+ * - Automatically constructs API endpoints from beheer page config
+ * - Supports dynamic options loading and field dependencies
+ * - Handles field mappings between schema and internal form state
+ * - Integrates with object store for schema management
+ *
+ * @param {Object} props - Component props
+ * @param {string} props.type - The form type (e.g., 'applicaties', 'organisaties')
+ * @param {Object} props.data - The data object to edit (for edit mode)
+ * @param {boolean} props.showModal - Controls modal visibility
+ * @param {function} props.onClose - Called when modal closes
+ * @param {function} props.onSuccess - Called on successful submission
+ * @param {boolean} props.isEdit - Whether this is an edit operation
+ * @param {Object} props.preSelected - Pre-selected values for the form
+ * @param {Object} props.configOverrides - Configuration overrides
+ */
+const ConGenericFormModal = ({
+  store: { object, user },
+  type,
+  data = null,
+  showModal = false,
+  onClose,
+  onSuccess,
+  isEdit = false,
+  preSelected = DEFAULT_PRE_SELECTED,
+  configOverrides = DEFAULT_CONFIG_OVERRIDES,
+  onMounted,
+  metadata = {},
+}) => {
+  // Signal to parent that this modal component has mounted
+  useEffect(() => {
+    onMounted?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const modalRef = useRef(null);
+  const formRef = useRef(null);
+
+  // Get configuration for this form type
+  const config = useMemo(() => {
+    try {
+      const baseConfig = FormModalConfigFactory.createConfig(type);
+      // Only merge if configOverrides has actual properties
+      const hasOverrides =
+        configOverrides && Object.keys(configOverrides).length > 0;
+      const finalConfig = hasOverrides
+        ? { ...baseConfig, ...configOverrides }
+        : baseConfig;
+      return finalConfig;
+    } catch (err) {
+      console.error(`No configuration found for form type: ${type}`, err);
+      return null;
+    }
+  }, [type, configOverrides]);
+
+  // Form state
+  const [formData, setFormData] = useState({});
+  const [isValid, setIsValid] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
+  const [submitSuccess, setSubmitSuccess] = useState(null);
+  const [showSuccessCountdown, setShowSuccessCountdown] = useState(false);
+  const [countdownSeconds, setCountdownSeconds] = useState(3);
+
+  // Options state
+  const [options, setOptions] = useState({});
+  const [optionsLoading, setOptionsLoading] = useState({});
+
+  // Full organization data (fetched for context)
+  const [fullOrganization, setFullOrganization] = useState(null);
+
+  // Get current register from beheer config
+  const currentRegister = config?.beheerConfig?.registerSlug;
+
+  // Get schema type identifier
+  const schemaType = config?.beheerConfig?.schemaSlug
+    ? object.getSchemaType(config.beheerConfig.schemaSlug, 'form')
+    : null;
+
+  // Get schema from object store (read directly to enable MobX tracking)
+  const schema = schemaType ? object.getSchema(schemaType) : null;
+
+  // Generate disabled states for pre-selected fields
+  const preSelectedDisabledStates = useMemo(() => {
+    const disabledStates = {};
+
+    // Automatically disable any pre-selected fields to prevent user modification
+    Object.keys(preSelected || {}).forEach((fieldName) => {
+      disabledStates[fieldName] = true;
+    });
+
+    return disabledStates;
+  }, [preSelected]);
+
+  // Use the ref options hook for $ref-based fields (after schema is defined)
+  const {
+    optionsProviders: refOptionsProviders,
+    loadingStates: refLoadingStates,
+    disabledStates: refDisabledStates,
+    handleSearch,
+  } = useRefOptions(
+    { object, user },
+    currentRegister,
+    schema,
+    config?.fieldConfigs,
+    {
+      preSelected,
+      preSelectedLabels: metadata?.preSelectedLabels || {},
+    }
+  );
+
+  // Merge pre-selected disabled states with ref disabled states
+  const combinedDisabledStates = useMemo(
+    () => ({
+      ...refDisabledStates,
+      ...preSelectedDisabledStates,
+    }),
+    [refDisabledStates, preSelectedDisabledStates]
+  );
+
+  const schemaLoading = schemaType ? object.isSchemaLoading(schemaType) : false;
+
+  // Helper function to set options for a specific field
+  const setFieldOptions = useCallback((fieldName, fieldOptions) => {
+    setOptions((prev) => {
+      // Check if options actually changed to prevent unnecessary updates
+      const currentOptions = prev[fieldName];
+      const newOptions = fieldOptions || [];
+
+      // Compare arrays by length and content
+      if (currentOptions && currentOptions.length === newOptions.length) {
+        const hasChanged = !currentOptions.every(
+          (item, index) => JSON.stringify(item) === JSON.stringify(newOptions[index])
+        );
+        if (!hasChanged) {
+          return prev;
+        }
+      }
+
+      return {
+        ...prev,
+        [fieldName]: fieldOptions,
+      };
+    });
+  }, []);
+
+  // Helper function to set loading state for a specific field
+  const setFieldOptionsLoading = useCallback((fieldName, loading) => {
+    setOptionsLoading((prev) => ({
+      ...prev,
+      [fieldName]: loading,
+    }));
+  }, []);
+
+  // Load options for a field based on its configuration
+  const loadFieldOptions = useCallback(
+    async (fieldName, optionConfig) => {
+      if (typeof optionConfig === 'function') {
+        // Static options from function
+
+        setFieldOptions(fieldName, optionConfig());
+        return;
+      }
+
+      if (optionConfig.type === 'collection') {
+        // Dynamic options from API collection
+
+        setFieldOptionsLoading(fieldName, true);
+
+        try {
+          await object.fetchCollection(
+            optionConfig.register,
+            optionConfig.schema,
+            { ...optionConfig.params, page: 1, limit: 9999, _multi: true },
+            false,
+            'form-options'
+          );
+
+          const objectType = object.getTypeFromParams(
+            optionConfig.register,
+            optionConfig.schema,
+            null,
+            'form-options'
+          );
+
+          const collection = object.getCollection(objectType);
+          let results = collection.results || [];
+
+          // Apply filter if provided
+          if (optionConfig.filter && typeof optionConfig.filter === 'function') {
+            results = results.filter((item) => optionConfig.filter(item, formData));
+          }
+
+          // Map results to options format
+          const fieldOptions = results.map((item) => ({
+            value:
+              typeof optionConfig.valueField === 'function'
+                ? optionConfig.valueField(item)
+                : item[optionConfig.valueField],
+            label:
+              typeof optionConfig.labelField === 'function'
+                ? optionConfig.labelField(item)
+                : item[optionConfig.labelField],
+          }));
+
+          setFieldOptions(fieldName, fieldOptions);
+        } catch (error) {
+          console.error(`Error loading options for ${fieldName}:`, error);
+          setFieldOptions(fieldName, []);
+        } finally {
+          setFieldOptionsLoading(fieldName, false);
+        }
+      }
+    },
+    [object]
+  );
+
+  // Load all static and collection-based options when modal opens
+  useEffect(() => {
+    // Only run when modal is actually opened
+    if (!showModal || !config) {
+      return;
+    }
+
+    // Fetch schema using object store
+    if (config.beheerConfig?.schemaSlug) {
+      object
+        .fetchSchema(config.beheerConfig.schemaSlug, null, 'form')
+        .catch((error) => {
+          console.error('Schema fetch failed:', error);
+          setSubmitError(
+            `Schema kon niet worden geladen: ${error.message || error}`
+          );
+        });
+    }
+
+    // Load options
+    Object.entries(config.optionsProviders || {}).forEach(
+      ([fieldName, optionConfig]) => {
+        if (optionConfig.type !== 'dynamic') {
+          loadFieldOptions(fieldName, optionConfig);
+        }
+      }
+    );
+  }, [showModal, config?.beheerConfig?.schemaSlug]);
+
+  // Helper function to generate initial data from schema properties
+  // This automatically creates form defaults based on API schema definitions
+  const generateInitialDataFromSchema = useCallback((schema) => {
+    if (!schema?.properties) return {};
+
+    const schemaInitialData = {};
+
+    Object.entries(schema.properties).forEach(([fieldName, fieldSchema]) => {
+      // Use default value from schema if available
+      if (
+        fieldSchema.default !== undefined &&
+        fieldSchema.default !== null &&
+        fieldSchema.default !== ''
+      ) {
+        schemaInitialData[fieldName] = fieldSchema.default;
+        return;
+      }
+
+      // Generate appropriate default based on field type
+      switch (fieldSchema.type) {
+        case 'string':
+          schemaInitialData[fieldName] = '';
+          break;
+        case 'number':
+        case 'integer':
+          schemaInitialData[fieldName] = 0;
+          break;
+        case 'boolean':
+          schemaInitialData[fieldName] = false;
+          break;
+        case 'array':
+          schemaInitialData[fieldName] = [];
+          break;
+        case 'object':
+          schemaInitialData[fieldName] = {};
+          break;
+        default:
+          // For unknown types or null, use empty string
+          schemaInitialData[fieldName] = '';
+      }
+    });
+
+    return schemaInitialData;
+  }, []);
+
+  // Initialize form data when modal opens or data changes
+  const hasInitializedRef = useRef(false);
+  useEffect(() => {
+    if (!config || !showModal || hasInitializedRef.current) return;
+    if (schemaLoading || !schema?.properties) return; // wait for stable schema
+
+    const schemaInitialData = generateInitialDataFromSchema(schema);
+
+    // Resolve config initial data (supports function for contextual defaults)
+    const resolvedConfigInitialData =
+      typeof config.initialData === 'function'
+        ? config.initialData({ user, isEdit, data, preSelected, schema })
+        : _.cloneDeep(config.initialData);
+
+    const initialFormData = {
+      // Start with schema-generated initial data
+      ...schemaInitialData,
+      // Override with explicit initial data from config (allows custom defaults)
+      ...resolvedConfigInitialData,
+      // Apply pre-selected values
+      ...preSelected,
+      // If editing, apply the data directly (no field mappings needed)
+      ...(data &&
+        isEdit &&
+        (() => {
+          const mappedData = { ...data };
+
+          // Handle extended objects
+          Object.keys(mappedData).forEach((key) => {
+            if (
+              mappedData[key] &&
+              typeof mappedData[key] === 'object' &&
+              mappedData[key].id
+            ) {
+              mappedData[key] = collapseExtendedObjects(mappedData[key]);
+            }
+          });
+
+          // Format date fields: strip timestamps for HTML date inputs
+          // (e.g., "2026-01-01 00:00:00" -> "2026-01-01")
+          Object.keys(mappedData).forEach((key) => {
+            const property = schema?.properties?.[key];
+            if (
+              property?.format === 'date' &&
+              mappedData[key] &&
+              typeof mappedData[key] === 'string'
+            ) {
+              // Strip timestamp by taking only the date part
+              mappedData[key] = mappedData[key].split(' ')[0];
+            }
+          });
+
+          return mappedData;
+        })()),
+    };
+
+    setFormData(initialFormData);
+    hasInitializedRef.current = true;
+  }, [
+    showModal,
+    config?.initialData,
+    preSelected,
+    schemaLoading,
+    schema?.properties,
+  ]);
+
+  // Fetch full organization data when modal opens
+  useEffect(() => {
+    const fetchFullOrg = async () => {
+      const orgId = user?.activeOrganization?.uuid;
+      if (showModal && orgId) {
+        try {
+          await object.fetchObject('voorzieningen', 'organisatie', orgId, {
+            _published: 'false',
+          });
+          const fullOrg = object.getObject('voorzieningen_organisatie', orgId);
+          if (fullOrg) {
+            setFullOrganization(fullOrg);
+          }
+        } catch (error) {
+          console.error('Failed to fetch full organization:', error);
+        }
+      }
+    };
+
+    fetchFullOrg();
+  }, [showModal, user?.activeOrganization?.uuid, object]);
+
+  // Reset the guard when closing or changing type
+  useEffect(() => {
+    if (!showModal) {
+      hasInitializedRef.current = false;
+      setFullOrganization(null); // Clear org data when closing
+    }
+  }, [showModal]);
+
+  // Handle additional effects when form data changes
+  const previousFormDataRef = useRef({}); // Track previous form data for dependency comparison
+  useEffect(() => {
+    // Only run additional effects when modal is open
+    if (!showModal || !config?.additionalEffects?.length || !formData) {
+      return;
+    }
+
+    config.additionalEffects.forEach((effect) => {
+      const dependencies = effect.dependencies || [];
+
+      // Check if any dependency actually changed
+      const hasChangedDependency = dependencies.some((dep) => {
+        const currentValue = formData[dep];
+        const previousValue = previousFormDataRef.current[dep];
+        return !_.isEqual(currentValue, previousValue);
+      });
+
+      if (hasChangedDependency) {
+        effect.effect(formData, {
+          objectStore: object,
+          setOptions: setFieldOptions,
+          setOptionsLoading: setFieldOptionsLoading,
+        });
+      }
+    });
+
+    // Update previous form data reference
+    previousFormDataRef.current = { ...formData };
+  }, [showModal, config?.additionalEffects, formData]);
+
+  // Generate options providers for ConDynamicSchemaForm
+  const optionsProviders = useMemo(() => {
+    const providers = {};
+
+    // Priority 1: Manual options from config
+    Object.keys(config?.optionsProviders || {}).forEach((fieldName) => {
+      const configValue = config.optionsProviders[fieldName];
+
+      // Check if it's an enumFilter configuration - if so, pass it through as-is
+      if (configValue?.enumFilter) {
+        providers[fieldName] = configValue;
+      } else {
+        // Otherwise, use the loaded options from state
+        providers[fieldName] = options[fieldName] || [];
+      }
+    });
+
+    // Priority 2: Schema-based enum options (only if not already set)
+    // Skip if field already has an enumFilter config or other provider
+    if (schema?.properties) {
+      Object.entries(schema.properties).forEach(([fieldName, fieldSchema]) => {
+        // Only add schema enum if no provider exists yet
+        // Note: enumFilter configs are already set in Priority 1
+        if (fieldSchema.enum && !providers[fieldName]) {
+          providers[fieldName] = fieldSchema.enum.map((value) => ({
+            value,
+            label: value,
+          }));
+        }
+      });
+    }
+
+    // Priority 3: $ref-based options from the hook
+    Object.keys(refOptionsProviders || {}).forEach((fieldName) => {
+      if (!providers[fieldName]) {
+        providers[fieldName] = refOptionsProviders[fieldName] || [];
+      }
+    });
+
+    return providers;
+  }, [config, options, schema, refOptionsProviders]);
+
+  // Generate loading states for ConDynamicSchemaForm
+  const loadingStates = useMemo(() => {
+    return {
+      ...optionsLoading,
+      ...refLoadingStates,
+    };
+  }, [optionsLoading, refLoadingStates]);
+
+  // Merge options providers to prevent unnecessary re-renders
+  const combinedOptionsProviders = useMemo(
+    () => ({
+      ...optionsProviders,
+      ...refOptionsProviders,
+    }),
+    [optionsProviders, refOptionsProviders]
+  );
+
+  // Merge loading states to prevent unnecessary re-renders
+  const combinedLoadingStates = useMemo(
+    () => ({
+      ...loadingStates,
+      ...refLoadingStates,
+    }),
+    [loadingStates, refLoadingStates]
+  );
+
+  // Generate field configurations for ConDynamicSchemaForm
+  const fieldConfigs = useMemo(() => {
+    if (!config?.fieldConfigs) return {};
+
+    const configs = {};
+
+    // Build context object for dynamic field configs that need user/org info
+    // fullOrganization has the register data (including type: Leverancier/Gemeente/Samenwerking)
+    const fieldConfigContext = { user, isEdit, fullOrganization };
+
+    Object.entries(config.fieldConfigs).forEach(([fieldName, fieldConfig]) => {
+      configs[fieldName] = {};
+
+      // Handle dynamic configurations
+      Object.entries(fieldConfig).forEach(([configKey, configValue]) => {
+        if (typeof configValue === 'function') {
+          configs[fieldName][configKey] = configValue(formData, isEdit, fieldConfigContext);
+        } else {
+          configs[fieldName][configKey] = configValue;
+        }
+      });
+    });
+
+    return configs;
+  }, [config, formData, isEdit, user, fullOrganization]);
+
+  // Handle field changes
+  const handleFieldChange = useCallback((fieldName, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      [fieldName]: value,
+    }));
+  }, []);
+
+  // Handle form validation
+  const handleFormValidCheck = useCallback((valid) => {
+    setIsValid(valid);
+  }, []);
+
+  // Handle form submission
+  const handleSubmit = useCallback(async () => {
+    if (!config || !isValid) return;
+
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      // Transform data before submission (if needed)
+      const submitData = config.transformSubmitData
+        ? config.transformSubmitData(formData)
+        : formData;
+
+      // Filter out fields that the user doesn't have permission to update
+      const authorizedSubmitData = filterFormDataByAuthorization(
+        submitData,
+        schema,
+        user,
+        !isEdit // isCreate = true when not editing
+      );
+
+      let response;
+
+      if (isEdit) {
+        // Update existing object using object store
+        response = await object.updateObject(
+          config.beheerConfig.registerSlug,
+          config.beheerConfig.schemaSlug,
+          data.id,
+          authorizedSubmitData
+        );
+      } else {
+        // Create new object using object store
+        response = await object.createObject(
+          config.beheerConfig.registerSlug,
+          config.beheerConfig.schemaSlug,
+          authorizedSubmitData
+        );
+      }
+
+      // @TODO: applicaties and voorzieningversie's technically don't exist anymore, this needs to be fixed or removed
+      // Handle specific logic for applicaties (creating initial version)
+      if (!isEdit && type === 'applicaties') {
+        try {
+          const applicatieData = response;
+          const currentDate = new Date().toISOString();
+
+          // Create version 0.0.1 for the new application using object store
+          await object.createObject('voorzieningen', 'voorzieningversie', {
+            voorziening: applicatieData.id,
+            versienummer: '0.0.1',
+            releaseDatum: currentDate,
+            status: applicatieData.status,
+            inDatumOntwikkeling: currentDate,
+          });
+        } catch (versionError) {
+          console.warn(
+            'Failed to create initial version for application:',
+            versionError
+          );
+          // Don't fail the entire operation if version creation fails
+        }
+      }
+
+      // Handle outgoing relationship updates
+      if (
+        !isEdit &&
+        metadata?.isOutgoing &&
+        metadata?.currentObjectId &&
+        metadata?.relationshipField
+      ) {
+        try {
+          // Get the current object to update - use the CURRENT object's register/schema, not the target's
+          const currentObjectRegister =
+            metadata.currentObjectRegister || config.beheerConfig.registerSlug;
+          const currentObjectSchema = metadata.currentObjectSchema || 'voorziening'; // fallback for products
+
+          // Try different type suffixes to find the object in the store
+          const possibleTypes = [
+            object.getTypeFromParams(
+              currentObjectRegister,
+              currentObjectSchema,
+              metadata.currentObjectId,
+              null
+            ), // details page
+            object.getTypeFromParams(
+              currentObjectRegister,
+              currentObjectSchema,
+              null,
+              'list'
+            ), // list page
+            object.getTypeFromParams(
+              currentObjectRegister,
+              currentObjectSchema,
+              null,
+              null
+            ), // generic
+            `${currentObjectRegister}_${currentObjectSchema}`, // simple format
+          ];
+
+          let currentObject = null;
+
+          for (const objectType of possibleTypes) {
+            currentObject = object.getObject(objectType, metadata.currentObjectId);
+            if (currentObject) {
+              break;
+            }
+          }
+
+          // If object not found in store, try to fetch it fresh
+          if (!currentObject) {
+            try {
+              await object.fetchObject(
+                currentObjectRegister,
+                currentObjectSchema,
+                metadata.currentObjectId,
+                {
+                  _published: 'false',
+                }
+              );
+              // Try to find it again after fetching
+              for (const objectType of possibleTypes) {
+                currentObject = object.getObject(
+                  objectType,
+                  metadata.currentObjectId
+                );
+                if (currentObject) {
+                  break;
+                }
+              }
+            } catch (fetchError) {
+              console.warn('Failed to fetch current object:', fetchError);
+            }
+          }
+
+          if (currentObject) {
+            const currentFieldValue = currentObject[metadata.relationshipField];
+            let updatedFieldValue;
+
+            // Helper function to extract ID from value (handle both objects and strings)
+            const extractId = (value) => {
+              if (typeof value === 'string') return value;
+              if (typeof value === 'object' && value?.id) return value.id;
+              if (typeof value === 'object' && value?.['@self']?.id)
+                return value['@self'].id;
+              return value;
+            };
+
+            if (Array.isArray(currentFieldValue)) {
+              // Convert existing extended objects to IDs and add new ID
+              const existingIds = currentFieldValue.map(extractId).filter(Boolean);
+              updatedFieldValue = [...existingIds, response.id];
+            } else if (
+              currentFieldValue === null ||
+              currentFieldValue === undefined
+            ) {
+              // Initialize as array with new item
+              updatedFieldValue = [response.id];
+            } else {
+              // Field exists but not array - convert to array with extracted ID
+              const existingId = extractId(currentFieldValue);
+              updatedFieldValue = existingId
+                ? [existingId, response.id]
+                : [response.id];
+            }
+
+            // Update the current object using PATCH (partial update)
+            // Create a clean object with ONLY the field we want to update
+            const patchData = {};
+            patchData[metadata.relationshipField] = updatedFieldValue;
+
+            await object.patchObject(
+              currentObjectRegister,
+              currentObjectSchema,
+              metadata.currentObjectId,
+              patchData
+            );
+
+            // Refresh the current object to get the updated relationship
+            await object.fetchObject(
+              currentObjectRegister,
+              currentObjectSchema,
+              metadata.currentObjectId,
+              { '_extend[]': ['@self.schema'], _published: 'false' }
+            );
+
+            // Also refresh the related data (uses/used) to show the new item in tabs
+            await object.setActiveObject(
+              currentObjectRegister,
+              currentObjectSchema,
+              {
+                id: metadata.currentObjectId,
+              }
+            );
+          } else {
+            console.error(
+              '❌ Could not find current object in store after all attempts:',
+              {
+                searchedTypes: possibleTypes,
+                currentObjectId: metadata.currentObjectId,
+                register: currentObjectRegister,
+                schema: currentObjectSchema,
+              }
+            );
+          }
+        } catch (relationshipError) {
+          console.error(
+            '❌ Failed to update outgoing relationship:',
+            relationshipError
+          );
+          // Don't fail the entire operation if relationship update fails
+        }
+      }
+
+      setSubmitSuccess(
+        isEdit ? 'Gegevens succesvol bijgewerkt' : 'Gegevens succesvol toegevoegd'
+      );
+
+      // Show success countdown instead of just timeout
+      setShowSuccessCountdown(true);
+      setCountdownSeconds(3);
+
+      // Call success callback
+      onSuccess?.(response);
+    } catch (err) {
+      console.error('Error submitting form:', err);
+      setSubmitError(err.message || 'Er is een fout opgetreden bij het opslaan');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [config, isValid, formData, isEdit, data, type, object, onSuccess]);
+
+  // Countdown effect for success state
+  useEffect(() => {
+    if (showSuccessCountdown && countdownSeconds > 0) {
+      const timer = setTimeout(() => {
+        setCountdownSeconds((prev) => prev - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else if (showSuccessCountdown && countdownSeconds === 0) {
+      modalRef?.current?.close();
+    }
+  }, [showSuccessCountdown, countdownSeconds]);
+
+  // Generate modal buttons based on current state
+  const getModalButtons = () => {
+    // If success countdown is active, show countdown button
+    if (showSuccessCountdown) {
+      const plural = countdownSeconds === 1 ? '' : 'n';
+      return [
+        {
+          label: `Formulier sluit over ${countdownSeconds} seconde${plural}`,
+          icon: <VISUALS.CHECK />,
+          onClick: () => modalRef?.current?.close(),
+          buttonType: 'primary',
+          disabled: false,
+        },
+      ];
+    }
+
+    // Default form buttons
+    return [
+      {
+        label: 'Annuleren',
+        icon: <VISUALS.CLOSE />,
+        onClick: () => modalRef?.current?.close(),
+        buttonType: 'secondary',
+        disabled: isSubmitting,
+      },
+      {
+        label: 'Opslaan',
+        icon: <VISUALS.SAVE />,
+        onClick: handleSubmit,
+        disabled: !isValid || isSubmitting,
+        loading: isSubmitting,
+      },
+    ];
+  };
+
+  // Handle modal open
+  const handleModalOpen = () => modalRef?.current?.showModal();
+
+  // Handle modal close
+  const handleModalClose = () => {
+    if (!config) return;
+
+    // Manually remove overflow style from body as fallback
+    // The CSS selector body:has(.ac-modal[open]) should handle this, but sometimes it doesn't work
+    // this is just a dirty fix
+    if (document.body) {
+      document.body.style.overflow = '';
+    }
+
+    setFormData(_.cloneDeep(config.initialData));
+    setIsValid(false);
+    setSubmitError(null);
+    setSubmitSuccess(null);
+    setShowSuccessCountdown(false);
+    setCountdownSeconds(3);
+    setOptions({});
+    setOptionsLoading({});
+    formRef.current?.reset();
+    onClose?.();
+  };
+
+  // Open/close modal when showModal prop changes
+  useEffect(() => {
+    if (showModal) {
+      handleModalOpen();
+    } else {
+      // Manually remove overflow style from body when modal is closed
+      // This ensures cleanup even if the dialog gets unmounted quickly
+      // This is a dirty fix
+      if (document.body) {
+        document.body.style.overflow = '';
+      }
+    }
+  }, [showModal]);
+
+  // Add event listener for modal close
+  useEffect(() => {
+    const modal = modalRef.current;
+    if (modal) {
+      modal.addEventListener('close', handleModalClose);
+      return () => modal.removeEventListener('close', handleModalClose);
+    }
+  }, [modalRef.current]);
+
+  // Create enhanced user object with full organization for enum filtering (must be before early returns)
+  // IMPORTANT: Use Proxy to preserve MobX computed properties (like userGroups getter)
+  // Object spreading would copy only plain properties and lose MobX reactivity
+  const enhancedUser = useMemo(() => {
+    if (!fullOrganization) return user;
+
+    // Pre-compute the enhanced activeOrganization
+    const enhancedActiveOrg = {
+      ...user.activeOrganization,
+      ...fullOrganization,
+    };
+
+    // Use Proxy to intercept property access and preserve MobX getters
+    return new Proxy(user, {
+      get(target, prop) {
+        // Override only activeOrganization with enhanced version
+        if (prop === 'activeOrganization') {
+          return enhancedActiveOrg;
+        }
+        // Delegate all other properties to original MobX store
+        // This preserves computed properties like userGroups, isAuthenticated, etc.
+        return target[prop];
+      },
+    });
+  }, [user, fullOrganization]);
+
+  // Don't render if no configuration
+  if (!config) {
+    return null;
+  }
+
+  // Don't render if modal should not be shown
+  if (!showModal) {
+    return null;
+  }
+
+  // Generate title - prefer custom config name over schema title over type slug
+  const baseSchemaTitle =
+    config?.title || schema?.title || type.charAt(0).toUpperCase() + type.slice(1);
+  const schemaTitle = normalizeSchemaName(baseSchemaTitle);
+  const title = isEdit ? `${schemaTitle} bewerken` : `${schemaTitle} toevoegen`;
+
+  return (
+    <AcModal
+      ref={modalRef}
+      id={`${type}-form-modal`}
+      title={title}
+      layoutClassName='wide-content'
+      buttons={getModalButtons()}
+      buttonPosition='end'
+      disableDefaultButton
+    >
+      <ConDebugViewer data={formData} title='Form Data' />
+
+      {/* Status messages */}
+      {(submitError || submitSuccess) && (
+        <AcFlex column spacing='sm' style={{ marginBottom: '1rem' }}>
+          {submitError && (
+            <Alert type='error'>
+              <AcFlex spacing='sm'>
+                <VISUALS.CIRCLE_EXCLAMATION />
+                <Paragraph>{submitError}</Paragraph>
+              </AcFlex>
+            </Alert>
+          )}
+          {submitSuccess && (
+            <Alert type='info'>
+              <AcFlex spacing='sm'>
+                <VISUALS.INFO_BLUE />
+                <Paragraph>{submitSuccess}</Paragraph>
+              </AcFlex>
+            </Alert>
+          )}
+        </AcFlex>
+      )}
+
+      {/* Form content - hide during success countdown */}
+      {!showSuccessCountdown && (
+        <div className='con-dynamic-form-container'>
+          {schemaLoading ? (
+            <div>Schema wordt geladen...</div>
+          ) : schema ? (
+            <ConDynamicSchemaForm
+              ref={formRef}
+              schema={schema}
+              formData={formData}
+              onFieldChange={handleFieldChange}
+              fieldConfigs={fieldConfigs}
+              customFieldComponents={config.customComponents || {}}
+              optionsProviders={combinedOptionsProviders}
+              loadingStates={combinedLoadingStates}
+              disabledStates={combinedDisabledStates}
+              getIsValid={handleFormValidCheck}
+              honorImmutable={isEdit}
+              userIsAuthenticated={user.isAuthenticated}
+              user={enhancedUser}
+              isCreateMode={!isEdit}
+              onSearchHandlers={{ handleSearch }}
+            />
+          ) : (
+            <div>
+              Schema kon niet worden geladen. Controleer of het schema bestaat.
+            </div>
+          )}
+        </div>
+      )}
+    </AcModal>
+  );
+};
+
+export default withStore(observer(ConGenericFormModal));
