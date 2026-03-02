@@ -1,25 +1,14 @@
-@use '../../../styles/global/mixins/respond' as *;
-@use '../../../styles/global/breakpoints' as *;
-
 .utrecht-table {
-  min-inline-size: 100%;
   table-layout: auto !important;
-  font-size: 0.9375rem;
 
   &__cell,
   &__header-cell {
-    @include respond-max($screen-sm) {
-      white-space: nowrap;
-    }
-
     &:first-child {
-      padding-left: 0;
+      // padding-left: 0;
     }
   }
 
   &__cell {
-    min-inline-size: 8rem;
-
     a {
       display: inline-flex;
       align-items: center;
@@ -37,19 +26,4 @@
       }
     }
   }
-
-  thead,
-  tbody,
-  tr {
-    min-inline-size: 100%;
-  }
-}
-
-// Add a wrapper class for horizontal scrolling with fade effect
-.utrecht-table-container {
-  position: relative;
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch; // Smooth scrolling on iOS
-  margin-block-end: var(--utrecht-space-block-md, 1rem);
 }

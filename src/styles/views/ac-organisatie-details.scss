@@ -1,0 +1,187 @@
+.ac-organisatie-detail-markdown {
+  flex: 1 1 auto; // Description takes up most of the space
+  min-width: 0; // Prevents overflow
+  position: relative;
+  min-height: 2.5rem; // Ensures the button always has space
+  padding-right: 2.5rem; // Make space for the button
+
+  .utrecht-paragraph {
+    margin-bottom: var(--tilburg-space-column-mouse);
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+.ac-organisatie-detail-edit-button {
+  flex: 0 0 auto; // Button only takes as much space as it needs
+  align-self: flex-start; // Aligns button to the top
+  margin-left: 8px; // Optional: space between description and button
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 0.125rem;
+  min-width: auto;
+  width: 1.5rem;
+  height: 1.5rem;
+
+  svg {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+}
+
+.ac-organisatie-detail-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tilburg-space-block-mouse);
+  margin-bottom: var(--tilburg-space-block-rat);
+
+  &--full {
+    width: 100%;
+  }
+
+  &--half {
+    width: 50%;
+  }
+
+  .textarea-with-dimensions {
+    width: 100%;
+    min-height: 100px;
+    padding: var(--tilburg-space-block-snail);
+    border: 1px solid var(--tilburg-form-control-border-color);
+    border-radius: var(--tilburg-border-radius-md);
+    background: var(--tilburg-form-control-background-color);
+    font-family: inherit;
+    font-size: inherit;
+    line-height: 1.5;
+    resize: vertical;
+
+    &:focus {
+      outline: 2px solid var(--tilburg-color-blue-400);
+      outline-offset: 2px;
+    }
+
+    &:disabled {
+      background-color: var(--tilburg-color-gray-200);
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+  }
+
+  .character-count {
+    display: block;
+    font-size: 0.875rem;
+    color: var(--tilburg-color-gray-600);
+    margin-top: 0.5rem;
+  }
+
+  &-buttons {
+    display: flex;
+    gap: var(--tilburg-space-block-mouse);
+    margin-top: var(--tilburg-space-block-mouse);
+  }
+}
+
+.ac-organisatie-detail-form-label-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.ac-form-field__label-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.ac-organisatie-detail-form-flex {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start; // or stretch
+}
+
+.ac-organisatie-detail-form-textarea,
+.ac-organisatie-detail-preview {
+  flex: 1 1 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.ac-organisatie-detail-form-textarea textarea {
+  flex: 1 1 0;
+  height: 100%;
+  min-height: 200px; // or whatever you prefer
+  resize: vertical;
+}
+
+.ac-organisatie-detail-preview {
+  min-height: 200px; // match the textarea min-height
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.ac-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ac-description-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+
+  p,
+  .markdown-preview {
+    flex: 1 1 auto;
+  }
+}
+
+.ac-description-edit-btn {
+  border: none !important;
+}
+
+.ac-description-row {
+  > * {
+    flex: 1 !important;
+  }
+}
+
+.ac-description-row-empty {
+  opacity: 0.5;
+  color: var(--tilburg-color-gray-600);
+}
+
+.ac-organisatie-detail-form-wrapper {
+  width: -webkit-fill-available;
+}
+
+.ac-organisatie-details-alert-paragraph {
+  color: var(--utrecht-alert-warning-color) !important;
+}
+
+.ac-organisatie-detail-form-preview {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-width: 0;
+  margin-bottom: 0; // Remove extra space if needed
+
+  .ac-form-field__label-with-icon {
+    margin-bottom: 0.5rem;
+  }
+}
+
+.ac-header-row__logo-container {
+  align-items: end;
+}
+
+.ac-organisatie-tab-header {
+  align-items: center;
+  margin-block-end: var(--tilburg-space-block-mouse);
+}

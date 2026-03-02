@@ -44,7 +44,7 @@
     }
   }
 
-  &::backdrop {
+  &--backdrop::backdrop {
     opacity: 0;
     background-color: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(5px);
@@ -63,11 +63,6 @@
     font-family: var(--tilburg-typography-font-family-secondary), sans-serif;
   }
 
-  h3 {
-    font-size: var(--tilburg-typography-font-size-md);
-    font-family: var(--tilburg-typography-font-family-secondary), sans-serif;
-  }
-
   &__header {
     block-size: var(--header-height);
     padding: var(--tilburg-space-row-rabbit);
@@ -78,13 +73,10 @@
     min-block-size: calc(100dvh - var(--header-height));
     padding-block-start: var(--tilburg-space-row-cat);
     padding-inline: var(--tilburg-space-row-rat);
-
-    .utrecht-paragraph {
-      font-size: var(--tilburg-typography-font-size-sm);
-    }
   }
 }
 
 body:has(.ac-drawer[open]) {
   overflow-y: clip;
 }
+

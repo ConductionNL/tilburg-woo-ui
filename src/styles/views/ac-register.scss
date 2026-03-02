@@ -1,0 +1,329 @@
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding-block: 0;
+  padding-inline: 0;
+  margin-block: -1px;
+  margin-inline: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.ac-register-form-field {
+  &__no-width-limit {
+    max-inline-size: none !important;
+  }
+}
+
+.required-indicator {
+  color: var(--tilburg-color-red-400);
+  margin-inline-start: 0.25rem;
+}
+
+.ac-register__error-list {
+  margin-inline: var(--tilburg-space-column-rat);
+}
+
+.ac-register-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ac-register-form-container {
+  flex: 3;
+}
+
+.ac-register-process-steps {
+  flex: 1;
+}
+
+.ac-register-form-heading {
+  margin-block-end: var(--tilburg-space-block-rat) !important;
+  margin-inline-start: calc(22.7% + var(--tilburg-space-block-cat));
+}
+
+.ac-register-form-section {
+  flex: 3;
+}
+
+.ac-register-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--tilburg-space-block-rat);
+}
+
+.form-group {
+  margin-block-end: var(--tilburg-space-block-rat);
+}
+
+// Style for form labels to match the design
+.utrecht-heading-4,
+.ac-form-field__label {
+  margin-block-end: var(--tilburg-space-block-mouse);
+  font-weight: 500;
+}
+
+// Ensure inputs and selects have consistent styling
+.ac-beheer-select,
+.ac-form-field__input {
+  width: 100%;
+  min-height: 40px;
+  border-radius: 4px;
+}
+
+.ac-register-form-buttons {
+  margin-block-start: var(--tilburg-space-block-rat);
+}
+
+.ac-register-form-buttons-not-first-step {
+  display: flex;
+  justify-content: space-between;
+}
+
+.ac-register-form-next-button {
+  float: right;
+}
+
+.ac-register-button--loading {
+  animation-name: ckw;
+  animation-duration: 1s;
+  /* Things added */
+  animation-iteration-count: infinite;
+  transform-origin: 50% 50%;
+  display: inline-block;
+  /* <--- */
+}
+
+.ac-register-review {
+  display: grid;
+  gap: var(--tilburg-space-block-cat);
+
+  &__section {
+    background-color: var(--tilburg-color-gray-50);
+    border-radius: 4px;
+    padding: var(--tilburg-space-block-cat);
+    position: relative;
+  }
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    .utrecht-heading-4 {
+      color: var(--tilburg-color-gray-900);
+      margin: 0;
+      padding: 0;
+    }
+  }
+
+  .utrecht-heading-4 {
+    color: var(--tilburg-color-gray-900);
+    margin-block-end: var(--tilburg-space-block-mouse);
+  }
+
+  &__field {
+    margin-block-end: var(--tilburg-space-block-snail);
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: var(--tilburg-space-block-mouse);
+    align-items: baseline;
+
+    &:last-child {
+      margin-block-end: 0;
+    }
+
+    strong {
+      color: var(--tilburg-color-gray-700);
+      font-weight: 600;
+    }
+
+    &--full-width {
+      display: block;
+      grid-template-columns: unset;
+
+      strong {
+        display: block;
+        margin-block-end: var(--tilburg-space-block-snail);
+      }
+    }
+  }
+
+  // New class for description fields that need full width
+  &__description {
+    margin-block-end: var(--tilburg-space-block-mouse);
+    // Remove grid layout - content flows vertically
+
+    &:last-child {
+      margin-block-end: 0;
+    }
+
+    &__heading {
+      color: var(--tilburg-color-gray-700);
+      font-weight: 600;
+      display: block;
+      margin-block-end: var(--tilburg-space-block-snail);
+    }
+  }
+
+  .utrecht-separator.ac-register-review__separator {
+    margin-block-start: var(--tilburg-space-block-cat);
+    margin-block-end: var(--tilburg-space-block-cat);
+    margin-inline: 0;
+  }
+
+  .utrecht-separator.ac-register-review-header__separator {
+    margin-block-end: var(--tilburg-space-block-cat);
+    margin-inline: 0;
+  }
+
+  &__logo {
+    width: auto;
+    max-width: 200px;
+    height: 40px;
+    margin-inline-start: var(--tilburg-space-block-cat);
+    display: flex;
+    align-items: center;
+
+    img {
+      aspect-ratio: auto;
+      width: auto;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    span {
+      display: block;
+      text-align: right;
+      color: var(--tilburg-color-gray-700);
+    }
+  }
+}
+
+.ac-register-form-field-error {
+  color: var(--tilburg-color-red-400);
+  font-size: 0.875rem;
+  margin-block-start: 0.25rem;
+  display: block;
+  font-weight: 500;
+}
+
+.ac-register-form-field-info {
+  color: var(--tilburg-color-blue-400);
+  font-size: 0.875rem;
+  margin-block-start: 0.25rem;
+  display: block;
+}
+
+.ac-register-form-field-help {
+  color: var(--tilburg-color-gray-700);
+  font-size: 0.875rem;
+  margin-block-start: 0.25rem;
+  display: block;
+  user-select: none;
+}
+
+// Ensure focus indicators are visible
+.ac-form-field__input:focus,
+.ac-beheer-select .select__control--is-focused {
+  outline: 2px solid var(--tilburg-color-blue-400);
+  outline-offset: 2px;
+}
+
+// Ensure disabled states are clear
+.ac-form-field__input:disabled,
+.ac-beheer-select--is-disabled {
+  background-color: var(--tilburg-color-gray-200);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.ac-register-form-checkbox-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-block-start: 20px;
+}
+
+.preview-button {
+  padding-block: 8px;
+  padding-inline: 16px;
+  border-radius: var(--tilburg-border-radius-md);
+  border: 1px solid var(--tilburg-form-control-border-color);
+  background: var(--tilburg-form-control-background-color);
+  cursor: pointer;
+
+  &.active {
+    background: var(--tilburg-form-control-border-color);
+    color: var(--tilburg-form-control-background-color);
+  }
+
+  &:hover {
+    opacity: 0.9;
+  }
+}
+
+.markdown-preview {
+  padding: var(--tilburg-space-block-snail);
+  border: 1px solid var(--tilburg-form-control-border-color);
+  border-radius: var(--tilburg-border-radius-md);
+  background: var(--tilburg-form-control-background-color);
+  overflow-y: auto;
+  line-height: 1.5;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.textarea-with-dimensions.utrecht-textarea {
+  height: var(--textarea-height);
+  width: var(--textarea-width);
+  resize: vertical !important;
+  overflow: auto;
+}
+
+.form-field-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.preview-button {
+  font-size: 14px;
+  padding-block: 4px;
+  padding-inline: 8px;
+}
+
+.character-count {
+  display: block;
+  font-size: 0.875rem;
+  color: #666;
+  margin-block-start: 0.5rem;
+}
+
+.ac-register-form-alert {
+  margin-block-end: var(--tilburg-space-block-rat);
+}
+
+// Add a close (X) button for alerts
+.ac-register-form-alert-close-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+  color: var(--tilburg-color-gray-700);
+  z-index: 2;
+  padding: 3px;
+}
+
+.ac-register-form-alert-link {
+  display: inline !important;
+}

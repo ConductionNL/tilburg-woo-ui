@@ -1,0 +1,20 @@
+// =============================================== //
+// patch react-select multi-select input location  //
+// =============================================== //
+// detect react-select multi-select div
+div[class$="-container"]:has(
+    > span[id^="react-select-"][id$="-live-region"]
+) {
+    // get the control div, hosting the flex div with the input
+    > div[class$="-control"] {
+        > div:nth-child(1) {
+            // patch flex div to center the items + input
+            align-items: center;
+
+            // patch input to have some space from other items
+            > div[data-value]:last-child {
+                margin-inline-start: 4px;
+            }
+        }
+    }
+}

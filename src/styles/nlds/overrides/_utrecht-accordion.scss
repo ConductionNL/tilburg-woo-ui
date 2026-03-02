@@ -1,0 +1,93 @@
+.utrecht-accordion {
+  &__button {
+    padding-block-end: var(--utrecht-accordion-button-padding-block-end) !important;
+    padding-block-start: var(
+      --utrecht-accordion-button-padding-block-start
+    ) !important;
+    padding-inline-end: var(
+      --utrecht-accordion-button-padding-inline-end
+    ) !important;
+    padding-inline-start: var(
+      --utrecht-accordion-button-padding-inline-start
+    ) !important;
+
+    border-radius: var(--utrecht-accordion-button-border-radius) !important;
+    border-top-left-radius: var(
+      --utrecht-accordion-button-border-top-left-radius,
+      var(--utrecht-accordion-button-border-radius)
+    ) !important;
+    border-top-right-radius: var(
+      --utrecht-accordion-button-border-top-right-radius,
+      var(--utrecht-accordion-button-border-radius)
+    ) !important;
+    border-bottom-left-radius: var(
+      --utrecht-accordion-button-border-bottom-left-radius,
+      var(--utrecht-accordion-button-border-radius)
+    ) !important;
+    border-bottom-right-radius: var(
+      --utrecht-accordion-button-border-bottom-right-radius,
+      var(--utrecht-accordion-button-border-radius)
+    ) !important;
+
+    line-height: var(--utrecht-accordion-button-line-height) !important;
+
+    &[aria-expanded='true'] {
+      background-color: var(
+        --utrecht-accordion-button-active-background-color
+      ) !important;
+      border-bottom-color: var(
+        --utrecht-accordion-button-active-border-bottom-color,
+        var(--utrecht-accordion-button-border-color)
+      ) !important;
+      border-bottom-style: var(
+        --utrecht-accordion-button-active-border-bottom-style,
+        var(--utrecht-accordion-button-border-style)
+      ) !important;
+      border-bottom-width: var(
+        --utrecht-accordion-button-active-border-bottom-width,
+        var(--utrecht-accordion-button-border-width)
+      ) !important;
+      border-bottom-left-radius: var(
+        --utrecht-accordion-button-active-border-bottom-left-radius,
+        var(--utrecht-accordion-button-border-radius)
+      ) !important;
+      border-bottom-right-radius: var(
+        --utrecht-accordion-button-active-border-bottom-right-radius,
+        var(--utrecht-accordion-button-border-radius)
+      ) !important;
+    }
+  }
+
+  &__panel {
+    background-color: var(--utrecht-accordion-panel-background-color) !important;
+    border-top-left-radius: var(
+      --utrecht-accordion-panel-border-top-left-radius,
+      var(--utrecht-accordion-panel-border-radius)
+    ) !important;
+    border-top-right-radius: var(
+      --utrecht-accordion-panel-border-top-right-radius,
+      var(--utrecht-accordion-panel-border-radius)
+    ) !important;
+    border-bottom-left-radius: var(
+      --utrecht-accordion-panel-border-bottom-left-radius,
+      var(--utrecht-accordion-panel-border-radius)
+    ) !important;
+    border-bottom-right-radius: var(
+      --utrecht-accordion-panel-border-bottom-right-radius,
+      var(--utrecht-accordion-panel-border-radius)
+    ) !important;
+    border-top-color: var(
+      --utrecht-accordion-panel-border-top-color,
+      var(--utrecht-accordion-panel-border-color)
+    ) !important;
+    border-top-style: var(
+      --utrecht-accordion-panel-border-top-style,
+      var(--utrecht-accordion-panel-border-style)
+    ) !important;
+    border-top-width: var(
+      --utrecht-accordion-panel-border-top-width,
+      var(--utrecht-accordion-panel-border-width)
+    ) !important;
+    line-height: var(--utrecht-accordion-panel-line-height) !important;
+  }
+}

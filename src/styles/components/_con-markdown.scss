@@ -1,0 +1,17 @@
+.con-markdown {
+  ol {
+    padding-left: 0;
+    list-style-position: outside;
+  }
+
+  li {
+    margin-left: 1rem;
+  }
+
+  p > code {
+    background-color: var(--tilburg-color-gray-200);
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+  }
+}

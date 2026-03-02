@@ -3,9 +3,6 @@
  * Generated on Thu, 30 May 2024 13:54:04 GMT
  */
 
-@use '../global/breakpoints' as *;
-@use '../global/mixins/respond' as *;
-
 .tilburg-theme {
   --ams-pagination-button-border-color: transparent;
   --ams-pagination-button-background-color: transparent;
@@ -118,7 +115,7 @@
   --tilburg-box-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
   --tilburg-box-shadow-sm: [object Object];
   --tilburg-typography-font-family-secondary: 'Roboto', sans-serif;
-  --tilburg-typography-font-family-primary: 'Roboto Condensed', sans-serif;
+  --tilburg-typography-font-family-primary: TradeGothicCondensed18;
   --tilburg-typography-font-weight-bold: 700;
   --tilburg-typography-font-weight-normal: 400;
   --tilburg-typography-line-height-lg: 200%;
@@ -226,7 +223,7 @@
   --tilburg-color-blue-400: #026596;
   --tilburg-color-blue-300: #009dda;
   --tilburg-color-blue-200: #b9e4fc;
-  --tilburg-color-blue-100: #e6f7ff;
+  --tilburg-color-blue-100: #e6f6ff;
   --tilburg-color-extra-limegreen: #8bc63f;
   --tilburg-color-extra-purple: #513090;
   --tilburg-color-extra-yellow: #fbdd27;
@@ -252,9 +249,9 @@
   --tilburg-border-width-md: 2px;
   --tilburg-border-width-sm: 1px;
   --tilburg-border-radius-round: 999px;
-  --tilburg-border-radius-lg: 0px;
-  --tilburg-border-radius-md: 0px;
-  --tilburg-border-radius-sm: 0px;
+  --tilburg-border-radius-lg: 16px;
+  --tilburg-border-radius-md: 8px;
+  --tilburg-border-radius-sm: 4px;
   --ams-pagination-ellipses-padding-inline-start: var(--tilburg-space-inline-ant);
   --ams-pagination-ellipses-padding-inline-end: var(--tilburg-space-inline-ant);
   --ams-pagination-ellipses-padding-block-start: var(--tilburg-space-block-snail);
@@ -397,8 +394,8 @@
   --utrecht-button-icon-gap: var(--tilburg-space-text-beetle);
   --utrecht-button-border-width: var(--tilburg-border-width-sm);
   --utrecht-button-border-radius: var(--tilburg-border-radius-md);
-  --utrecht-button-color: var(--tilburg-color-blue-400);
-  --utrecht-button-border-color: var(--tilburg-color-blue-400);
+  --utrecht-button-color: var(--tilburg-color-gray-900);
+  --utrecht-button-border-color: var(--tilburg-color-gray-900);
   --utrecht-button-secondary-action-active-background-color: var(
     --tilburg-color-gray-100
   );
@@ -553,12 +550,7 @@
   --tilburg-document-line-height: var(--tilburg-typography-line-height-md);
   --tilburg-document-strong-font-weight: var(--tilburg-typography-font-weight-bold);
   --tilburg-document-font-weight: var(--tilburg-typography-font-weight-normal);
-  --tilburg-document-font-size: var(--tilburg-typography-font-size-lg);
-
-  @include respond-max($screen-md) {
-    --tilburg-document-font-size: var(--tilburg-typography-font-size-md);
-  }
-
+  --tilburg-document-font-size: var(--tilburg-typography-font-size-md);
   --tilburg-document-font-family: var(--tilburg-typography-font-family-secondary);
   --tilburg-document-subtle-color: var(--tilburg-color-gray-600);
   --tilburg-document-inverse-color: var(--tilburg-color-white);
@@ -567,7 +559,7 @@
   --tilburg-document-background-color: var(--tilburg-color-white);
   --tilburg-heading-font-weight: var(--tilburg-typography-font-weight-bold);
   --tilburg-heading-font-family: var(--tilburg-typography-font-family-primary);
-  --tilburg-heading-color: var(--tilburg-color-black-txt);
+  --tilburg-heading-color: var(--tilburg-color-blue-500);
   --ams-pagination-description-font-weight: var(--tilburg-document-font-weight);
   --ams-pagination-description-color: var(--tilburg-document-color);
   --ams-pagination-ellipses-font-weight: var(--tilburg-document-font-weight);
@@ -780,10 +772,10 @@
   --utrecht-heading-5-color: var(--tilburg-heading-color);
   --utrecht-heading-4-font-weight: var(--tilburg-heading-font-weight);
   --utrecht-heading-4-font-family: var(--tilburg-heading-font-family);
-  --utrecht-heading-4-color: var(--tilburg-color-blue-500);
+  --utrecht-heading-4-color: var(--tilburg-heading-color);
   --utrecht-heading-3-font-weight: var(--tilburg-heading-font-weight);
   --utrecht-heading-3-font-family: var(--tilburg-heading-font-family);
-  --utrecht-heading-3-color: var(--tilburg-color-blue-500);
+  --utrecht-heading-3-color: var(--tilburg-heading-color);
   --utrecht-heading-2-font-weight: var(--tilburg-heading-font-weight);
   --utrecht-heading-2-font-family: var(--tilburg-heading-font-family);
   --utrecht-heading-2-color: var(--tilburg-heading-color);
@@ -792,7 +784,7 @@
   --utrecht-heading-1-color: var(--tilburg-heading-color);
   --utrecht-form-label-line-height: var(--tilburg-document-line-height);
   --utrecht-form-label-font-weight: var(--tilburg-document-strong-font-weight);
-  --utrecht-form-label-font-size: var(--tilburg-typography-font-size-md);
+  --utrecht-form-label-font-size: var(--tilburg-document-font-size);
   --utrecht-form-label-font-family: var(--tilburg-document-font-family);
   --utrecht-form-label-color: var(--tilburg-document-color);
   --utrecht-form-field-error-message-line-height: var(
@@ -930,7 +922,7 @@
   --utrecht-button-subtle-font-weight: var(--tilburg-document-strong-font-weight);
   --utrecht-button-font-weight: var(--tilburg-document-strong-font-weight);
   --utrecht-button-font-size: var(--tilburg-document-font-size);
-  --utrecht-button-font-family: var(--tilburg-typography-font-family-primary);
+  --utrecht-button-font-family: var(--tilburg-document-font-family);
   --utrecht-button-icon-size: var(--tilburg-icon-functional-size);
   --utrecht-button-secondary-action-active-color: var(
     --tilburg-interaction-active-color
@@ -1087,4 +1079,148 @@
   --utrecht-separator-margin-block-end: var(--tilburg-space-block-snail);
   --utrecht-separator-block-size: var(--tilburg-size-4xs);
   --utrecht-separator-color: var(--tilburg-line-border-color);
+
+  --tilburg-header-background-color: var(--tilburg-color-blue-300);
+  --tilburg-footer-background-color: var(--tilburg-color-blue-400);
+  --tilburg-footer-color: var(--tilburg-color-white);
+  --tilburg-footer-link-text-decoration: underline;
+  --tilburg-footer-link-hover-text-decoration: none;
+  --tilburg-footer-marker-color: var(--tilburg-color-blue-300);
+  --tilburg-logo-color: var(--tilburg-color-white);
+  --tilburg-search-card-hover-border-color: var(--tilburg-color-pink-300);
+  --tilburg-navigation-font-weight: 700;
+  --tilburg-navigation-background-color: var(--tilburg-color-blue-400);
+  --tilburg-navigation-color: var(--tilburg-color-white);
+  --tilburg-navigation-hover-font-weight: var(--tilburg-typography-font-weight-bold);
+  --tilburg-navigation-hover-background-color: var(--tilburg-color-blue-500);
+  --tilburg-navigation-hover-color: #ffffff;
+  --tilburg-navigation-font-family: 'Montserrat', sans-serif;
+  --tilburg-navigation-mobile-item-border-bottom-color: var(
+    --tilburg-color-blue-300
+  );
+  --tilburg-navigation-mobile-background-color: var(--tilburg-color-blue-400);
+
+  --tilburg-erm-font-size: 10px;
+
+  --ams-date-input-background-color: var(--utrecht-textbox-background-color);
+  --ams-date-input-box-shadow: '';
+  --ams-date-input-color: var(--utrecht-textbox-color);
+  --ams-date-input-font-family: var(--utrecht-textbox-font-family);
+  --ams-date-input-font-size: var(--utrecht-textbox-font-size);
+  --ams-date-input-font-weight: var(--utrecht-textbox-font-weight);
+  --ams-date-input-line-height: var(--utrecht-textbox-line-height);
+  --ams-date-input-min-block-size: var(--utrecht-textbox-min-block-size);
+  --ams-date-input-min-inline-size: var(--utrecht-textbox-min-inline-size);
+  --ams-date-input-outline-offset: var(--utrecht-textbox-outline-offset);
+  --ams-date-input-padding-block: var(--utrecht-textbox-padding-block-start);
+  --ams-date-input-padding-inline: var(--utrecht-textbox-padding-inline-start);
+  --ams-date-input-calender-picker-indicator-background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNSIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSJXaW5kb3dUZXh0IiBkPSJNMjAgM2gtMVYxaC0ydjJIN1YxSDV2Mkg0Yy0xLjEgMC0yIC45LTIgMnYxNmMwIDEuMS45IDIgMiAyaDE2YzEuMSAwIDItLjkgMi0yVjVjMC0xLjEtLjktMi0yLTJ6bTAgMThINFY4aDE2djEzeiIvPjxwYXRoIGZpbGw9Im5vbmUiIGQ9Ik0wIDBoMjR2MjRIMHoiLz48L3N2Zz4=');
+  --ams-date-input-hover-calender-picker-indicator-background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNSIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSJXaW5kb3dUZXh0IiBkPSJNMjAgM2gtMVYxaC0ydjJIN1YxSDV2Mkg0Yy0xLjEgMC0yIC45LTIgMnYxNmMwIDEuMS45IDIgMiAyaDE2YzEuMSAwIDItLjkgMi0yVjVjMC0xLjEtLjktMi0yLTJ6bTAgMThINFY4aDE2djEzeiIvPjxwYXRoIGZpbGw9Im5vbmUiIGQ9Ik0wIDBoMjR2MjRIMHoiLz48L3N2Zz4=');
+  --ams-date-input-border-color: var(--utrecht-textbox-border-color);
+  --ams-date-input-border-style: solid;
+  --ams-date-input-border-width: var(--utrecht-textbox-border-width);
+  --ams-date-input-border-radius: var(--utrecht-textbox-border-radius);
+  --ams-date-input-margin-block: var(--utrecht-textbox-margin-block);
+
+  --denhaag-sidenav-link-padding-block-end: 5px;
+  --denhaag-sidenav-link-padding-block-start: 5px;
+  --denhaag-sidenav-item-margin-inline-end: 0;
+  --denhaag-sidenav-item-margin-inline-start: 0;
+  --denhaag-sidenav-item-margin-block-end: 0;
+  --denhaag-sidenav-item-margin-block-start: 0;
+  --denhaag-sidenav-item-line-height: 1.5;
+  --denhaag-sidenav-item-height: 48px;
+  --denhaag-sidenav-mobile-display: none;
+  --denhaag-sidenav-min-width: 14.5rem;
+  --denhaag-sidenav-flex-direction: column;
+  --denhaag-sidenav-display: flex;
+  --denhaag-sidenav-link-active-font-weight: 700;
+  --denhaag-sidenav-link-active-color: var(--tilburg-interaction-color);
+  --denhaag-sidenav-link-hover-color: var(--tilburg-interaction-color);
+  --denhaag-sidenav-link-color: var(--tilburg-color-blue-500);
+  --denhaag-sidenav-link-label-gap: 0.5rem;
+  --denhaag-sidenav-item-font-weight: 400;
+  // --denhaag-sidenav-item-font-size: var(--tilburg-typography-font-size-lg);
+  --denhaag-sidenav-item-font-size: 25px;
+  --denhaag-sidenav-item-font-family: var(--tilburg-typography-font-family-primary);
+  --denhaag-sidenav-row-gap: 5px;
+
+  --conduction-tabs-tab-background-color: transparent;
+  --conduction-tabs-tab-color: var(--utrecht-document-color);
+  --conduction-tabs-tab-border-width: unset;
+  --conduction-tabs-tab-border-style: unset;
+  --conduction-tabs-tab-border-color: unset;
+  --conduction-tabs-tab-border-bottom: unset;
+  --conduction-tabs-tab-border-bottom-width: unset;
+  --conduction-tabs-tab-border-bottom-style: unset;
+  --conduction-tabs-tab-border-bottom-color: unset;
+  --conduction-tabs-tab-bottom: -3px;
+  --conduction-tabs-tab-padding-block-start: 6px;
+  --conduction-tabs-tab-padding-block-end: 6px;
+  --conduction-tabs-tab-padding-inline-start: 12px;
+  --conduction-tabs-tab-padding-inline-end: 12px;
+  --conduction-tabs-tab-margin-inline-end: unset;
+  --conduction-tabs-tab-font-size: 14px;
+  --conduction-tabs-tab-font-weight: 400;
+  --conduction-tabs-tab-font-family: var(--utrecht-document-font-family);
+  --conduction-tabs-tab-max-width: unset;
+  --conduction-tabs-tab-min-height: 48px;
+  --conduction-tabs-tab-min-width: 160px;
+  --conduction-tabs-tab-letter-spacing: 0.02857em;
+  --conduction-tabs-tab-text-transform: unset;
+  --conduction-tabs-tab-button-bottom: 0px;
+
+  --conduction-tabs-scroll-button-background-color: var(
+    --utrecht-button-primary-action-active-background-color
+  );
+  --conduction-tabs-scroll-button-color: var(--utrecht-button-primary-action-color);
+  --conduction-tabs-scroll-button-hover-background-color: var(
+    --utrecht-button-primary-action-hover-background-color
+  );
+  --conduction-tabs-scroll-button-hover-color: var(
+    --utrecht-button-primary-action-hover-color
+  );
+  --conduction-tabs-scroll-button-border-width: unset;
+  --conduction-tabs-scroll-button-border-style: unset;
+  --conduction-tabs-scroll-button-border-color: unset;
+
+  --conduction-tabs-tab-selected-background-color: transparent;
+  --conduction-tabs-tab-selected-color: var(--tilburg-color-blue-500);
+  --conduction-tabs-tab-selected-box-shadow: unset;
+  --conduction-tabs-tab-selected-border-width: unset;
+  --conduction-tabs-tab-selected-border-style: unset;
+  --conduction-tabs-tab-selected-border-color: unset;
+  --conduction-tabs-tab-selected-border-bottom: unset;
+  --conduction-tabs-tab-selected-border-bottom-width: 0.3rem;
+  --conduction-tabs-tab-selected-border-bottom-style: solid;
+  --conduction-tabs-tab-selected-border-bottom-color: var(--tilburg-color-pink-300);
+  --conduction-tabs-tab-selected-font-weight: 700;
+  --conduction-tabs-tab-selected-font-family: unset;
+
+  --conduction-tabs-tab-selected-hover-background-color: unset;
+  --conduction-tabs-tab-selected-hover-color: var(--tilburg-color-blue-500);
+  --conduction-tabs-tab-selected-hover-text-decoration: unset;
+  --conduction-tabs-tab-selected-hover-font-weight: 700;
+
+  --conduction-tabs-tab-hover-background-color: transparent;
+  --conduction-tabs-tab-hover-color: var(--utrecht-document-color);
+  --conduction-tabs-tab-hover-text-decoration: unset;
+  --conduction-tabs-tab-hover-font-weight: 700;
+
+  --conduction-tabs-tab-list-padding-inline-start: 2px;
+  --conduction-tabs-tab-list-padding-inline-end: 2px;
+  --conduction-tabs-tab-list-margin-block-end: 0px;
+  --conduction-tabs-tab-list-border-bottom-width: 0.3rem;
+  --conduction-tabs-tab-list-border-bottom-style: solid;
+  --conduction-tabs-tab-list-border-bottom-color: var(--tilburg-line-border-color);
+
+  --conduction-tabs-tab-panel-background-color: unset;
+  --conduction-tabs-tab-panel-padding-block-start: 24px;
+  --conduction-tabs-tab-panel-padding-block-end: 24px;
+  --conduction-tabs-tab-panel-padding-inline-start: 24px;
+  --conduction-tabs-tab-panel-padding-inline-end: 24px;
+  --conduction-tabs-tab-panel-border-width: unset;
+  --conduction-tabs-tab-panel-border-style: unset;
+  --conduction-tabs-tab-panel-border-color: unset;
+  --conduction-tabs-tab-panel-border-top: unset;
 }

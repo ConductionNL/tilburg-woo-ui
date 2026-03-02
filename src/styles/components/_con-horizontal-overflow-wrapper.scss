@@ -1,0 +1,56 @@
+:root {
+  --conduction-horizontal-overflow-wrapper-background-color: unset;
+  --conduction-horizontal-overflow-wrapper-buttons-top: 12px;
+  --conduction-horizontal-overflow-wrapper-margin-inline-start: 8px;
+  --conduction-horizontal-overflow-wrapper-margin-inline-end: 8px;
+  --conduction-horizontal-overflow-wrapper-margin-block-start: 8px;
+  --conduction-horizontal-overflow-wrapper-margin-block-end: 8px;
+  --conduction-horizontal-overflow-wrapper-width: 100%;
+  --conduction-horizontal-overflow-wrapper-z-index: 1;
+}
+
+.con-horizontal-overflow-wrapper__container {
+  position: relative;
+  width: var(--conduction-horizontal-overflow-wrapper-width);
+  min-width: 0;
+  flex: 1;
+  background-color: var(--conduction-horizontal-overflow-wrapper-background-color);
+}
+
+.con-horizontal-overflow-wrapper__wrapper {
+  overflow-x: scroll;
+  width: var(--conduction-horizontal-overflow-wrapper-width);
+  min-width: 0;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.con-horizontal-overflow-wrapper__content {
+  min-width: min-content;
+  width: 100%;
+  display: inline-block;
+}
+
+.con-horizontal-overflow-wrapper__scroll-button {
+  position: sticky;
+  top: var(--conduction-horizontal-overflow-wrapper-buttons-top);
+  z-index: var(--conduction-horizontal-overflow-wrapper-z-index);
+
+  margin-inline-start: var(
+    --conduction-horizontal-overflow-wrapper-margin-inline-start
+  );
+  margin-inline-end: var(--conduction-horizontal-overflow-wrapper-margin-inline-end);
+  margin-block-start: var(
+    --conduction-horizontal-overflow-wrapper-margin-block-start
+  );
+  margin-block-end: var(--conduction-horizontal-overflow-wrapper-margin-block-end);
+
+  &.con-horizontal-overflow-wrapper__scroll-button--right {
+    left: 100%;
+  }
+}
+
+/* Hide scrollbar */
+.con-horizontal-overflow-wrapper__wrapper::-webkit-scrollbar {
+  display: none;
+}

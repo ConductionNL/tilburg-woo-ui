@@ -1,0 +1,10 @@
+.dimpact-theme {
+  .utrecht-table {
+    &__cell,
+    &__header-cell {
+      &:first-child {
+        padding-left: var(--utrecht-table-cell-padding-inline-start);
+      }
+    }
+  }
+}

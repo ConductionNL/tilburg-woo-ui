@@ -1,0 +1,7 @@
+// if link is styled as button
+.ac-authentication-form {
+  margin-block: 15px;
+}
+.ac-authentication-form > :not(:last-child) {
+  margin-block-end: 5px;
+}

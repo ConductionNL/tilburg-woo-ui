@@ -1,0 +1,83 @@
+.con-table {
+  &-cell {
+    vertical-align: inherit !important;
+  }
+
+  &-header {
+    &-content {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      gap: 6px;
+
+      &-sortable {
+        cursor: pointer;
+      }
+
+      &__sort-button-container {
+        width: 8px;
+        min-width: 8px;
+        padding-block-start: 2px;
+      }
+
+      & .con-table-sort-icon-non {
+        opacity: 0.2;
+      }
+      &:hover .con-table-sort-icon-non {
+        opacity: 0.6;
+      }
+      & .con-table-sort-icon-asc {
+        opacity: 0.6;
+      }
+      & .con-table-sort-icon-desc {
+        opacity: 0.6;
+      }
+    }
+  }
+}
+
+.con-table-header-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: space-between;
+}
+
+.con-table-header-content__label:hover {
+  cursor: pointer;
+}
+
+.con-table-header-sort-button-container {
+  display: flex;
+
+  &-sortable {
+    cursor: pointer;
+  }
+}
+
+.con-table-checkbox-cell {
+  align-content: space-around;
+}
+
+.con-table-checkbox input {
+  min-block-size: 16px !important;
+  min-inline-size: 16px !important;
+  block-size: 16px !important;
+  inline-size: 16px !important;
+}
+
+// Sticky Actions column
+.con-table-actions-column {
+  position: sticky !important;
+  right: 0 !important;
+  background-color: var(--utrecht-color-white, #ffffff) !important;
+  border-left: 1px solid var(--utrecht-table-border-color, #d1d5db) !important;
+  z-index: 10 !important;
+  min-width: 120px !important;
+
+  // Add shadow to indicate sticky column
+  box-shadow: -2px 0 4px rgba(0, 0, 0, 0.1) !important;
+
+  // Ensure content doesn't overflow
+  overflow: visible !important;
+}
