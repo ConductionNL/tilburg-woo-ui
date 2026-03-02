@@ -54,16 +54,21 @@ const ConCardGebruik = ({
       </AcFlex>
       <Paragraph>
         Geschikt voor:{' '}
-        {referentieComponenten?.length > 0
-          ? referentieComponenten
-              .slice()
-              .sort((a, b) => String(a).localeCompare(String(b)))
-              .map((component, index) => (
-                <span key={component}>
-                  {index > 0 && ', '}
-                  <ConUuidResolver>{component}</ConUuidResolver>
-                </span>
-              ))
+        {referentieComponenten?.filter(Boolean).length > 0
+          ? <>
+              {referentieComponenten
+                .filter(Boolean)
+                .slice(0, 2)
+                .map((component, index) => (
+                  <span key={component}>
+                    {index > 0 && ', '}
+                    <ConUuidResolver>{component}</ConUuidResolver>
+                  </span>
+                ))}
+              {referentieComponenten.filter(Boolean).length > 2 && (
+                <span>, +{referentieComponenten.filter(Boolean).length - 2} meer</span>
+              )}
+            </>
           : '-'}
       </Paragraph>
       <AcFlex justifyContent='between' className='meta'>

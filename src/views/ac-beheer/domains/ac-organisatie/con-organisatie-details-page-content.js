@@ -46,7 +46,7 @@ const ConOrganisatieDetailsPageContent = ({
     setUsesLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_published=false`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_published=false&_limit=100`,
         {
           method: 'GET',
           headers: {

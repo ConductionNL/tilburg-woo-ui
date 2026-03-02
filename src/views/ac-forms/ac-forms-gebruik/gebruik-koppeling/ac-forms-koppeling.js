@@ -602,7 +602,7 @@ const AcFormsKoppeling = ({ store }) => {
     if (existing) return existing.label || String(id);
     try {
       const res = await fetch(
-        `/api/apps/openregister/api/objects/voorzieningen/module/${encodeURIComponent(
+        `/api/openregister/api/objects/voorzieningen/module/${encodeURIComponent(
           String(id)
         )}?_published=false`,
         { headers: { Accept: 'application/json' } }
@@ -714,7 +714,7 @@ const AcFormsKoppeling = ({ store }) => {
           try {
             const koppelingFetches = koppelingenIds.map((id) =>
               fetch(
-                `/api/apps/openregister/api/objects/voorzieningen/koppeling/${encodeURIComponent(
+                `/api/openregister/api/objects/voorzieningen/koppeling/${encodeURIComponent(
                   id
                 )}?_extend[]=@self.schema&_extend[]=@self.relations&_published=false`,
                 { headers: { Accept: 'application/json' } }
@@ -1290,7 +1290,7 @@ const AcFormsKoppeling = ({ store }) => {
       // Fetch the koppeling to get its applicaties and ensure it's in search results
       const fetchKoppelingForPreselection = async () => {
         try {
-          const url = `/api/apps/openregister/api/objects/voorzieningen/koppeling/${encodeURIComponent(
+          const url = `/api/openregister/api/objects/voorzieningen/koppeling/${encodeURIComponent(
             koppelingIdFromUrl
           )}?_extend[]=@self.schema&_extend[]=@self.relations&_published=false`;
           const res = await fetch(url, { headers: { Accept: 'application/json' } });
@@ -1931,7 +1931,7 @@ const AcFormsKoppeling = ({ store }) => {
     setSaveErrors([]);
 
     try {
-      const endpoint = '/api/apps/openregister/api/objects/voorzieningen/koppeling';
+      const endpoint = '/api/openregister/api/objects/voorzieningen/koppeling';
       // Build requests for all payloads
       const requests = payloads.map((body, index) => {
         if (!body) return null;

@@ -88,8 +88,6 @@ const ConKoppelingStageToevoegen = ({
   setStartDatumUitTeFaserenByRow,
   startDatumUitGefaseerdByRow,
   setStartDatumUitGefaseerdByRow,
-  nameByRow,
-  setNameByRow,
   isEditMode,
   schemas,
   applicatieKeuzeByRow,
@@ -329,7 +327,7 @@ const ConKoppelingStageToevoegen = ({
       const fetchModuleB = async () => {
         try {
           const res = await fetch(
-            `/api/apps/openregister/api/objects/voorzieningen/module/${encodeURIComponent(
+            `/api/openregister/api/objects/voorzieningen/module/${encodeURIComponent(
               String(selectedModuleBId)
             )}`,
             { headers: { Accept: 'application/json' } }
@@ -1080,31 +1078,6 @@ const ConKoppelingStageToevoegen = ({
                   marginTop: '1rem',
                 }}
               >
-                <div>
-                  <label
-                    className='utrecht-form-label'
-                    htmlFor={`koppeling-naam-${rowId}`}
-                    style={{ display: 'block' }}
-                  >
-                    Naam
-                    <span className='required-indicator' aria-hidden='true'>
-                      *
-                    </span>
-                    <span className='sr-only'>(verplicht)</span>
-                  </label>
-                  <Textbox
-                    id={`koppeling-naam-${rowId}`}
-                    value={nameByRow[rowId] || ''}
-                    onChange={(e) =>
-                      setNameByRow((prev) => ({
-                        ...prev,
-                        [rowId]: e?.target?.value || '',
-                      }))
-                    }
-                    placeholder='Naam van de koppeling'
-                    required
-                  />
-                </div>
                 <div>
                   <label
                     className='utrecht-form-label'

@@ -676,7 +676,7 @@ const AcFormsGebruik = ({ store }) => {
       try {
         // Fetch gebruik schema
         const gebruikResponse = await fetch(
-          '/api/apps/openregister/api/schemas/gebruik'
+          '/api/openregister/api/schemas/gebruik'
         );
         let gebruikSchema = null;
         if (gebruikResponse.ok) {
@@ -2615,7 +2615,6 @@ const AcFormsGebruik = ({ store }) => {
                       diensten: [],
                       startDatumInProductie: new Date().toISOString().split('T')[0],
                       startDatumGepland: '',
-                      startDatumInProductie: '',
                       startDatumUitTeFaseren: '',
                       startDatumUitGefaseerd: '',
                     });

@@ -653,7 +653,7 @@ const AcFormsKoppeling = ({ store }) => {
     
     try {
       const res = await fetch(
-        `/api/apps/openregister/api/objects/voorzieningen/module/${encodeURIComponent(
+        `/api/openregister/api/objects/voorzieningen/module/${encodeURIComponent(
           String(id)
         )}`,
         { headers: { Accept: 'application/json' } }
@@ -696,7 +696,7 @@ const AcFormsKoppeling = ({ store }) => {
       stepper.setCurrentStepByLabel('koppeling-zoeken');
       setPrefillLoading(true);
       try {
-        const url = `/api/apps/openregister/api/objects/voorzieningen/koppeling/${encodeURIComponent(
+        const url = `/api/openregister/api/objects/voorzieningen/koppeling/${encodeURIComponent(
           koppelingId
         )}?_extend[]=_schema&_extend[]=_relations`;
         const res = await fetch(url, { headers: { Accept: 'application/json' } });
@@ -1508,7 +1508,6 @@ const AcFormsKoppeling = ({ store }) => {
   const serializeRowsToPayload = async (createdModuleIds = {}, createdOwnAppId = null) => {
     const results = [];
     for (const rowId of rows) {
-        let naam = (nameByRow[rowId] || '').trim();
         // Use created own app ID if available, otherwise use selected existing app
         const appAId = createdOwnAppId || selectedAppAByRow[rowId] || ownApp?.value;
         // Use created module ID if available, otherwise use selected existing app
@@ -1522,28 +1521,25 @@ const AcFormsKoppeling = ({ store }) => {
         const standaarden = standaardenByRow[rowId] || [];
         const intermediair = intermediairByRow[rowId] || '';
 
-        // Generate default name if not provided: "AppA name → AppB name"
-        // Resolve labels via API if not cached to avoid UUIDs in names
-        if (!naam) {
-          const appALabel =
-            (ownAppKeuze === 'nieuw' ? nieuweOwnApp?.naam : null) ||
-            selectedModuleLabels[appAId] ||
-            modulesOptions.find((opt) => String(opt.value) === String(appAId))
-              ?.label ||
-            ownAppOptions.find((opt) => String(opt.value) === String(appAId))
-              ?.label ||
-            ownApp?.label ||
-            await ensureModuleOptionAndGetLabel(appAId);
-          const appBLabel =
-            selectedModuleLabels[appBId] ||
-            modulesOptions.find((opt) => String(opt.value) === String(appBId))
-              ?.label ||
-            ownAppOptions.find((opt) => String(opt.value) === String(appBId))
-              ?.label ||
-            await ensureModuleOptionAndGetLabel(appBId);
-          const arrow = getArrowForDirection(richting);
-          naam = `${appALabel} ${arrow} ${appBLabel}`;
-        }
+        // Always auto-generate name: "AppA name → AppB name" (VNG #312)
+        const appALabel =
+          (ownAppKeuze === 'nieuw' ? nieuweOwnApp?.naam : null) ||
+          selectedModuleLabels[appAId] ||
+          modulesOptions.find((opt) => String(opt.value) === String(appAId))
+            ?.label ||
+          ownAppOptions.find((opt) => String(opt.value) === String(appAId))
+            ?.label ||
+          ownApp?.label ||
+          await ensureModuleOptionAndGetLabel(appAId);
+        const appBLabel =
+          selectedModuleLabels[appBId] ||
+          modulesOptions.find((opt) => String(opt.value) === String(appBId))
+            ?.label ||
+          ownAppOptions.find((opt) => String(opt.value) === String(appBId))
+            ?.label ||
+          await ensureModuleOptionAndGetLabel(appBId);
+        const arrow = getArrowForDirection(richting);
+        const naam = `${appALabel} ${arrow} ${appBLabel}`;
 
         // Check if the selected App B is a buitengemeentelijke voorziening
         // Check buitengemeentelijkeOptions directly for reliable BGV detection
@@ -2142,7 +2138,7 @@ const AcFormsKoppeling = ({ store }) => {
         });
       }
 
-      const endpoint = '/api/apps/openregister/api/objects/voorzieningen/koppeling';
+      const endpoint = '/api/openregister/api/objects/voorzieningen/koppeling';
       // Align payloads with rows to decide POST vs PUT per row
       const requests = rows
         .map((rowId, index) => {

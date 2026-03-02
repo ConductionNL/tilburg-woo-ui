@@ -95,7 +95,6 @@ const ConKoppelingStageControleren = ({
   beschrijvingLangByRow,
   statusByRow,
   statusOptions,
-  nameByRow,
   getArrowForDirection,
   saveResult,
   saveErrors,
@@ -335,7 +334,6 @@ const ConKoppelingStageControleren = ({
               <div>
                 <UnorderedList>
                   {rows.map((rowId) => {
-                    const naam = (nameByRow[rowId] || '').trim();
                     const appAValue =
                       selectedAppAByRow[rowId] || ownApp?.value || '';
                     const appALabel =
@@ -384,13 +382,8 @@ const ConKoppelingStageControleren = ({
 
                     return (
                       <UnorderedListItem key={rowId}>
-                        {naam && (
-                          <div style={{ marginBottom: '0.25rem' }}>
-                            <strong>{naam}</strong>
-                          </div>
-                        )}
-                        <div>
-                          {appALabel} {dirArrow} {appBLabel}
+                        <div style={{ marginBottom: '0.25rem' }}>
+                          <strong>{appALabel} {dirArrow} {appBLabel}</strong>
                         </div>
                         <div style={{ color: '#666', fontSize: '0.9rem' }}>
                           {statusLabel && <div>Status: {statusLabel}</div>}

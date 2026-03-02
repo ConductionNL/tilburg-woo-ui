@@ -189,7 +189,7 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
     setUsesLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend=_schema,_register`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend=_schema,_register&_limit=100`,
         {
           method: 'GET',
           headers: {
@@ -215,7 +215,7 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
     setUsedLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend=_schema,_register`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend=_schema,_register&_limit=100`,
         {
           method: 'GET',
           headers: {
