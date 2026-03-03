@@ -16,7 +16,7 @@ import {
 import { TOOLTIP_ID } from '@src/index.web';
 
 /**
- * Content for the module version (applicatie versie) details page
+ * Content for the module version (applicatieversie) details page
  *
  * note:
  * Structured to match con-product-details layout with vertical content flow
@@ -97,7 +97,7 @@ const ConModuleVersionDetailsPageContent = ({
     ? checkOrganizationPermissions(user, data)
     : {
         canEdit: false,
-        reason: 'Kan niet bewerken omdat de applicatie versie niet gevonden is',
+        reason: 'Kan niet bewerken omdat de applicatieversie niet gevonden is',
       };
 
   const actualCanEdit = canEdit && hasEditPermission;
@@ -225,8 +225,8 @@ const ConModuleVersionDetailsPageContent = ({
           objectId={data?.['@self']?.id}
           field='beschrijvingKort'
           label='Korte beschrijving'
-          placeholder='Een korte beschrijving van de applicatie versie'
-          tooltip='Een korte beschrijving van de applicatie versie'
+          placeholder='Een korte beschrijving van de applicatieversie'
+          tooltip='Een korte beschrijving van de applicatieversie'
           maxLength={255}
           isMarkdown={false}
           value={data.beschrijvingKort}
@@ -246,8 +246,8 @@ const ConModuleVersionDetailsPageContent = ({
           objectId={data?.['@self']?.id}
           field='beschrijvingLang'
           label='Lange beschrijving'
-          placeholder='Een uitgebreide beschrijving van de applicatie versie'
-          tooltip='Een uitgebreide beschrijving van de applicatie versie'
+          placeholder='Een uitgebreide beschrijving van de applicatieversie'
+          tooltip='Een uitgebreide beschrijving van de applicatieversie'
           maxLength={5000}
           isMarkdown={true}
           value={data.beschrijvingLang}
@@ -346,7 +346,7 @@ const ConModuleVersionDetailsPageContent = ({
 /* Warning card for unpublished objects - LEGACY: No longer needed */
 // const UnpublishedWarning = ({ data }) => {
 //   if (data?.['@self']?.published) return null;
-//   const schemaName = data?.['@self']?.schema?.title || 'Applicatie versie';
+//   const schemaName = data?.['@self']?.schema?.title || 'Applicatieversie';
 //   const objectName = data?.['@self']?.name;
 //
 //   return (

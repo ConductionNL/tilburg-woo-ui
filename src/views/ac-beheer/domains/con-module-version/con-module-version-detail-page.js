@@ -12,7 +12,7 @@ import BeheerModalFactory from '@views/ac-beheer/core/factories/con-beheer-modal
 import ConModuleVersionDetailsPageContent from './con-module-version-detail-page-content';
 
 /**
- * Module Version Details Page (Applicatie Versie)
+ * Module Version Details Page (Applicatieversie)
  * - Fixed config for moduleversie; no dynamic type switching
  * - Fetches object, schema and related data (uses/used)
  * - Renders dynamic Uses/Used tabs
