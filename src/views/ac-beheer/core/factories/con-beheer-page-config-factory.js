@@ -68,7 +68,7 @@ const BeheerPageConfigFactory = {
           ...baseConfig,
           schemaSlug: 'moduleversie',
           paginationKey: 'applicatiesversie',
-          title: 'Applicatie Versies',
+          title: 'Applicatieversies',
           routeType: 'applicatiesversie',
           defaultHeaders: ['naam', 'versie', 'status', 'releaseDatum'],
           customHeaders: {},
@@ -555,7 +555,7 @@ const BeheerPageConfigFactory = {
             },
             moduleVersie: {
               id: 'moduleVersie',
-              label: 'Applicatie versie',
+              label: 'Applicatieversie',
               key: 'moduleVersie',
               customContent: (row) => {
                 // Try direct property first, then fallback to relations

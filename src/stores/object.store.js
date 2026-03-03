@@ -70,14 +70,18 @@ nextcloudApi.interceptors.response.use(
     ok: response.status >= 200 && response.status < 300,
   }),
   (error) => {
-    // Handle 401 Unauthorized errors by redirecting to login
+    // Handle 401 Unauthorized errors by redirecting to login,
+    // but only on authenticated pages (/beheer). Public pages should
+    // silently handle 401s since users are not expected to be logged in.
     if (error.response?.status === 401) {
       const currentPath = window.location.pathname + window.location.search;
-      // NOTE: Using window.location.href here is appropriate since this is a global
-      // axios interceptor outside React component context and handles auth failures
-      window.location.href = `/login?redirect_url=${encodeURIComponent(
-        currentPath
-      )}`;
+      if (window.location.pathname.startsWith('/beheer')) {
+        // NOTE: Using window.location.href here is appropriate since this is a global
+        // axios interceptor outside React component context and handles auth failures
+        window.location.href = `/login?redirect_url=${encodeURIComponent(
+          currentPath
+        )}`;
+      }
     }
     return Promise.reject(error);
   }
@@ -1900,6 +1904,40 @@ export class ObjectStore {
     } finally {
       this.setLoading(requestType, false);
     }
+  };
+
+  /**
+   * Update an object property via multipart/form-data POST (postPatch).
+   * Used for file uploads where the field maps to a file-type property.
+   * @param {string|Object} register - Register identifier or object
+   * @param {string|Object} schema - Schema identifier or object
+   * @param {string} id - The object ID
+   * @param {string} fieldName - The property name for the file (e.g. 'bewijs')
+   * @param {File} file - The File object to upload
+   * @returns {Object} The updated object
+   */
+  @action
+  updateObjectWithFile = async (register, schema, id, fieldName, file) => {
+    const registerId = this.extractId(register);
+    const schemaId = this.extractId(schema);
+
+    if (!registerId || !schemaId || !id) {
+      throw new Error('register, schema and id are required for multipart update');
+    }
+
+    const form = new FormData();
+    form.append(fieldName, file);
+
+    const url = this._constructApiUrl(registerId, schemaId, id);
+    const response = await nextcloudApi.post(url, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to upload ${fieldName}: ${response.status}`);
+    }
+
+    return response.data;
   };
 
   /**
@@ -4495,7 +4533,7 @@ export class ObjectStore {
    * @param {string} register - Optional register slug (defaults to 'voorzieningen')
    */
   @action
-  refreshWarmupDataForType = async (schemaSlug, register = 'voorzieningen') => {
+  refreshWarmupDataForType = async (schemaSlug, register = 'voorzieningen', extraParams = {}) => {
     if (!schemaSlug) {
       console.error('refreshWarmupDataForType: schemaSlug is required');
       return;
@@ -4519,10 +4557,11 @@ export class ObjectStore {
           await this.fetchSchema(schemaSlug);
         }
 
-        // Fetch objects with limit 10000
+        // Fetch objects with limit 10000, merging any extra params (e.g. _extend)
         await this.fetchCollection(register, schemaSlug, {
           _limit: 10000,
           _multi: true, // Enable multitenancy
+          ...extraParams,
         });
 
         // Mark as completed now that data has arrived

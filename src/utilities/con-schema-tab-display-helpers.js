@@ -44,9 +44,9 @@ export const getTabHeaderName = (headerName, singular = false) => {
     kwetsbaarheid: ['Kwetsbaarheid', 'Kwetsbaarheden'],
     koppeling: ['Koppeling', 'Koppelingen'],
     contactpersoon: ['Contactpersoon', 'Contactpersonen'],
-    moduleversie: ['Applicatie Versie', 'Applicatie Versies'],
-    moduleVersie: ['Applicatie Versie', 'Applicatie Versies'],
-    Moduleversie: ['Applicatie Versie', 'Applicatie Versies']
+    moduleversie: ['Applicatieversie', 'Applicatieversies'],
+    moduleVersie: ['Applicatieversie', 'Applicatieversies'],
+    Moduleversie: ['Applicatieversie', 'Applicatieversies']
   };
 
   const translation = translations[headerName];
