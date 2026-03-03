@@ -58,7 +58,7 @@ const getTodayDateString = () => {
 };
 
 /**
- * Applicatie Versie Stage Component
+ * Applicatieversie Stage Component
  *
  * This stage manages version information for the applicatie.
  *

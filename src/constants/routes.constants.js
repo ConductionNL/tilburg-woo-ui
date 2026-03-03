@@ -19,7 +19,6 @@ import {
   AcRegister,
   AcViews,
   AcObjects,
-  AcMyAccount,
   AcLogin,
   ConDirectory,
   AcFormsGebruik,
@@ -75,7 +74,6 @@ export const PATHS = AcLockObject({
   BEHEER_VIEWS: '/beheer/views',
   BEHEER_VIEWS_DETAIL: '/beheer/views/:id',
   BEHEER_VIEW_DETAIL: '/beheer/view/:id',
-  MY_ACCOUNT: '/account',
   DIRECTORY: '/directory',
   CHAT: '/chat',
 });
@@ -453,14 +451,6 @@ export const ROUTES = {
     title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | Views`,
     component: AcViews,
   },
-  ACCOUNT: {
-    id: AcUUID(),
-    name: 'Beheer Mijn Account',
-    label: LABELS.MIJN_ACCOUNT,
-    path: PATHS.MY_ACCOUNT,
-    title: 'Mijn account',
-    component: AcMyAccount,
-  },
   DIRECTORY: {
     id: AcUUID(),
     name: 'Directory',
@@ -678,7 +668,6 @@ export const AUTHENTICATION_REQUIRED_ROUTES = [
   PATHS.BEHEER_VIEWS,
   PATHS.BEHEER_VIEWS_DETAIL,
   PATHS.BEHEER_VIEW_DETAIL,
-  PATHS.MY_ACCOUNT,
 ];
 
 export const DEFAULT_ROUTE = ROUTES.HOME;

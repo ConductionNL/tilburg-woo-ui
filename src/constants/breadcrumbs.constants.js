@@ -31,7 +31,7 @@ export const BREADCRUMB_ITEMS = {
       type === 'module'
         ? 'Applicatie'
         : type === 'moduleversion' || type === 'moduleversie'
-        ? 'Applicatie versie'
+        ? 'Applicatieversie'
         : prettifyPathname(type),
     href: `/beheer/${type}`,
     isActive: type !== 'my-account' && type !== 'my-organisation',
@@ -40,7 +40,6 @@ export const BREADCRUMB_ITEMS = {
   VIEWS: { label: 'Views' },
   VIEWS_LIST: { label: 'GEMMA weergaven', href: '/views' },
   BEHEER_VIEWS: { label: 'GEMMA weergaven beheer' },
-  MY_ACCOUNT: { label: 'Mijn account' },
   DIRECTORY: { label: 'Directory', href: '/directory' },
   PUBLICATIE: { label: 'Publicatie' },
 };
@@ -120,6 +119,5 @@ export const BREADCRUMBS = {
     if (viewName) items.push({ label: viewName });
     return items;
   },
-  MY_ACCOUNT: [BREADCRUMB_ITEMS.MY_ACCOUNT],
   DIRECTORY: [BREADCRUMB_ITEMS.DIRECTORY],
 };

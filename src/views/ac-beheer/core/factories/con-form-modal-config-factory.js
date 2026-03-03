@@ -312,7 +312,7 @@ const FormModalConfigFactory = {
       case 'applicatiesversie':
         return {
           ...baseConfig,
-          title: 'Applicatie versie', // Override the title to show "Applicatie versie"
+          title: 'Applicatieversie', // Override the title to show "Applicatieversie"
           /**
            * Initialize module field from relation data when editing
            * Similar to how contactpersoon sets organisatie - we override the module field
