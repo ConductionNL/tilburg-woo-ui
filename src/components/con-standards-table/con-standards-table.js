@@ -23,6 +23,18 @@ import { validateWebsite } from '@src/views/ac-forms/validation/form-validations
  * with their compliance status. The relationship is:
  * referentieComponenten → standaarden (aanbevolen/verplicht) → standaardVersies
  *
+ * STATUS-BASED CATEGORIZATION:
+ * - VERPLICHT/AANBEVOLEN: Only versions with active status ("in gebruik" or "in ontwikkeling")
+ * - TOEGEVOEGD: 
+ *   1. Versions manually added (in compliantVersieIds but not in referentieComponenten)
+ *   2. Inactive versions from referentieComponenten ("einde ondersteuning" or "teruggetrokken") 
+ *      that are in compliantVersieIds (supported)
+ * - HIDDEN: Inactive versions from referentieComponenten that are NOT in compliantVersieIds (not supported)
+ *
+ * ID NORMALIZATION:
+ * All ID comparisons normalize the "id-" prefix to handle different ID formats consistently.
+ * This ensures no duplicates appear regardless of whether IDs come as "UUID" or "id-UUID".
+ *
  * It can be used both in publication pages and beheer module details pages.
  *
  * @param {Object} props
@@ -37,6 +49,9 @@ import { validateWebsite } from '@src/views/ac-forms/validation/form-validations
  * @param {Array} props.referentieComponentenWithStandards - Optional: Pre-fetched referentieComponenten data
  * @param {boolean} props.loading - Optional: Loading state when using external data
  * @param {Function} props.onReferentieComponentenChange - Callback when referentieComponenten data changes
+ * @param {boolean} props.isEditing - Optional: Whether the component is in editing mode
+ * @param {Function} props.onComplianceChange - Optional: Callback when compliance data changes (editing mode)
+ * @param {boolean} props.disabled - Optional: Whether the component inputs are disabled
  */
 
 /**
@@ -427,8 +442,118 @@ const ConStandardsTable = ({
     ]
   );
 
-  // Get all standaardversies from referentieComponenten using the helper function
-  const allReferentieStandaardversies = useMemo(
+  // Helper function to check if a versie is in the compliancy list
+  const isInCompliancyList = useCallback(
+    (versieId) => {
+      const normalizedVersieId = String(versieId).replace(/^id-/, '');
+      
+      // Check in compliantVersieIds array
+      const inCompliantVersieIds = compliantVersieIds?.some((id) => {
+        const normalizedId = String(id).replace(/^id-/, '');
+        if (normalizedId === normalizedVersieId) return true;
+
+        const versieData = effectiveStandaardversies?.find(
+          (versie) =>
+            String(versie.id) === String(versieId) ||
+            String(versie.identifier) === String(versieId) ||
+            String(versie.value) === String(versieId)
+        );
+
+        if (versieData) {
+          const possibleIds = [
+            String(versieData.id),
+            String(versieData.identifier),
+            String(versieData.value),
+          ].filter(Boolean).map(id => String(id).replace(/^id-/, ''));
+          
+          return possibleIds.includes(normalizedId);
+        }
+
+        return false;
+      });
+
+      if (inCompliantVersieIds) return true;
+
+      // Check in complianceStandards array
+      return complianceStandards?.some((compliancy) => {
+        const normalizedStandaardversie = String(compliancy.standaardversie).replace(/^id-/, '');
+        const normalizedStandaardGemma = String(compliancy.standaardGemma).replace(/^id-/, '');
+        
+        if (normalizedStandaardversie === normalizedVersieId) return true;
+        if (normalizedStandaardGemma === normalizedVersieId) return true;
+
+        const versieData = effectiveStandaardversies?.find(
+          (versie) =>
+            String(versie.id) === String(versieId) ||
+            String(versie.identifier) === String(versieId) ||
+            String(versie.value) === String(versieId)
+        );
+
+        if (versieData) {
+          const possibleIds = [
+            String(versieData.id),
+            String(versieData.identifier),
+            String(versieData.value),
+          ].filter(Boolean).map(id => String(id).replace(/^id-/, ''));
+          
+          return possibleIds.includes(normalizedStandaardversie) || possibleIds.includes(normalizedStandaardGemma);
+        }
+
+        return false;
+      });
+    },
+    [compliantVersieIds, complianceStandards, effectiveStandaardversies]
+  );
+
+  // Helper function to check if a versie has inactive status
+  const hasInactiveStatus = useCallback(
+    (versieId) => {
+      const normalizedVersieId = String(versieId).replace(/^id-/, '');
+      
+      const versieData = effectiveStandaardversies?.find((versie) => {
+        const normalizedId = String(versie.id).replace(/^id-/, '');
+        const normalizedIdentifier = String(versie.identifier).replace(/^id-/, '');
+        const normalizedValue = String(versie.value).replace(/^id-/, '');
+        
+        return normalizedId === normalizedVersieId ||
+               normalizedIdentifier === normalizedVersieId ||
+               normalizedValue === normalizedVersieId;
+      });
+
+      if (!versieData) return false;
+
+      const status = (versieData.status || '').toLowerCase().trim();
+      return status === 'einde ondersteuning' || status === 'teruggetrokken';
+    },
+    [effectiveStandaardversies]
+  );
+
+  // Helper function to check if a versie has active status
+  const hasActiveStatus = useCallback(
+    (versieId) => {
+      const normalizedVersieId = String(versieId).replace(/^id-/, '');
+      
+      const versieData = effectiveStandaardversies?.find((versie) => {
+        const normalizedId = String(versie.id).replace(/^id-/, '');
+        const normalizedIdentifier = String(versie.identifier).replace(/^id-/, '');
+        const normalizedValue = String(versie.value).replace(/^id-/, '');
+        
+        return normalizedId === normalizedVersieId ||
+               normalizedIdentifier === normalizedVersieId ||
+               normalizedValue === normalizedVersieId;
+      });
+
+      if (!versieData) return true;
+
+      const status = (versieData.status || '').toLowerCase().trim();
+      return status === 'in gebruik' || status === 'in ontwikkeling';
+    },
+    [effectiveStandaardversies]
+  );
+
+  // Get all standaardversies from referentieComponenten (unfiltered)
+  // This includes ALL versions from referentieComponenten, regardless of status
+  const allReferentieStandaardversiesUnfiltered = useMemo(
     () =>
       getAllStandaardVersiesFromReferentieComponenten(
         effectiveReferentieComponentenWithStandards
@@ -438,6 +563,21 @@ const ConStandardsTable = ({
       getAllStandaardVersiesFromReferentieComponenten,
     ]
   );
+
+  // Get all standaardversies from referentieComponenten (filtered)
+  // This filters out:
+  // 1. Inactive versions that ARE in compliancy (will be shown in toegevoegd instead)
+  // 2. Inactive versions that are NOT in compliancy (should not be shown at all)
+  const allReferentieStandaardversies = useMemo(() => {
+    return allReferentieStandaardversiesUnfiltered.filter((versie) => {
+      const versieId = versie.id;
+      const isActive = hasActiveStatus(versieId);
+
+      // Keep only active versions (in gebruik or in ontwikkeling) in VERPLICHT/AANBEVOLEN lists
+      // Inactive versions will be handled by toegevoegd logic if they're in compliancy
+      return isActive;
+    });
+  }, [allReferentieStandaardversiesUnfiltered, hasActiveStatus]);
 
   // Get IDs of standaardversies from referentieComponenten
   const referentieStandaardversieIds = useMemo(() => {
@@ -450,6 +590,18 @@ const ConStandardsTable = ({
 
     // Helper function to check if a versie ID is in referentieComponenten
     const isInReferentieComponenten = (versieId) => {
+      // Normalize the incoming ID
+      const normalizedVersieId = String(versieId).replace(/^id-/, '');
+      
+      // Check in the referentieStandaardversieIds set (with normalization)
+      const directMatch = Array.from(referentieStandaardversieIds).some((refId) => {
+        const normalizedRefId = String(refId).replace(/^id-/, '');
+        return normalizedRefId === normalizedVersieId;
+      });
+      
+      if (directMatch) return true;
+      
+      // Also check by looking up the versie data and comparing all possible ID formats
       const versieData = effectiveStandaardversies?.find(
         (versie) =>
           String(versie.id) === String(versieId) ||
@@ -465,15 +617,30 @@ const ConStandardsTable = ({
           String(versieData.uuid),
         ].filter(Boolean);
 
-        return possibleIds.some((id) => referentieStandaardversieIds.has(id));
+        return possibleIds.some((id) => {
+          const normalizedId = String(id).replace(/^id-/, '');
+          return Array.from(referentieStandaardversieIds).some((refId) => {
+            const normalizedRefId = String(refId).replace(/^id-/, '');
+            return normalizedRefId === normalizedId;
+          });
+        });
       }
 
-      return referentieStandaardversieIds.has(String(versieId));
+      return false;
     };
 
     // Helper function to add a toegevoegd versie
     const addToegeveogdVersie = (versieId, providedName = null) => {
-      if (toegevoegdMap.has(versieId)) return;
+      // Normalize the incoming ID
+      const normalizedVersieId = String(versieId).replace(/^id-/, '');
+      
+      // Check if this version is already in the map (check both formats)
+      const alreadyExists = Array.from(toegevoegdMap.keys()).some((existingKey) => {
+        const normalizedExisting = String(existingKey).replace(/^id-/, '');
+        return normalizedExisting === normalizedVersieId;
+      });
+      
+      if (alreadyExists) return;
 
       const versieData = effectiveStandaardversies?.find(
         (versie) =>
@@ -526,12 +693,25 @@ const ConStandardsTable = ({
       });
     }
 
+    // NEW: Check for standaardversies from referentieComponenten that have inactive status
+    // and are in the compliancy list - these should also be categorized as TOEGEVOEGD
+    allReferentieStandaardversiesUnfiltered.forEach((versie) => {
+      const versieId = versie.id;
+      // If this versie has inactive status AND is in the compliancy list, add it to toegevoegd
+      if (hasInactiveStatus(versieId) && isInCompliancyList(versieId)) {
+        addToegeveogdVersie(versieId, versie.name);
+      }
+    });
+
     return Array.from(toegevoegdMap.values());
   }, [
     complianceStandards,
     compliantVersieIds,
     referentieStandaardversieIds,
     effectiveStandaardversies,
+    allReferentieStandaardversiesUnfiltered,
+    isInCompliancyList,
+    hasInactiveStatus,
   ]);
 
   // Combine referentie standaardversies with toegevoegde standaardversies
@@ -765,12 +945,6 @@ const ConStandardsTable = ({
         </TableHeader>
         <TableBody>
           {(() => {
-            // Helper: check if a standaardversie has an inactive status
-            const isInactiveStatus = (s) => {
-              const status = (s.status || s.fetchedData?.status || '').toLowerCase().trim();
-              return status === 'einde ondersteuning' || status === 'teruggetrokken';
-            };
-
             // Helper: sort alphabetically by name (case-insensitive)
             const sortByName = (a, b) => {
               const nameA = (a.name || '').toLowerCase();
@@ -778,23 +952,18 @@ const ConStandardsTable = ({
               return nameA.localeCompare(nameB, 'nl');
             };
 
-            // Separate active vs inactive standards
-            const activeStandards = allStandards.filter((s) => !isInactiveStatus(s));
-            const inactiveStandards = allStandards.filter((s) => isInactiveStatus(s));
-
-            // Group active standards by type and sort alphabetically
-            const verplichtStandards = activeStandards
+            // Group all standards by type and sort alphabetically
+            // Note: All standards in allStandards should now be displayable
+            // (inactive versions not in compliancy are already filtered out)
+            const verplichtStandards = allStandards
               .filter((s) => s.type === 'VERPLICHT')
               .sort(sortByName);
-            const aanbevolenStandards = activeStandards
+            const aanbevolenStandards = allStandards
               .filter((s) => s.type === 'AANBEVOLEN')
               .sort(sortByName);
-            const toegevoegdStandards = activeStandards
+            const toegevoegdStandards = allStandards
               .filter((s) => s.type === 'TOEGEVOEGD')
               .sort(sortByName);
-
-            // Sort inactive standards alphabetically as well
-            const sortedInactiveStandards = inactiveStandards.sort(sortByName);
 
             const renderStandardRow = (versieEntry, idx) => {
               // Check if this standaardversie is in the complianceStandards array
@@ -885,7 +1054,8 @@ const ConStandardsTable = ({
                 hasBewijsFile || hasBewijsDataUrl || hasBewijsHttpUrl || hasUrl;
               // Ondersteund means in compliancy or compliantVersieIds but no evidence yet
               const isOndersteund =
-                (!!complianceStandard && isInCompliantVersieIds) &&
+                !!complianceStandard &&
+                isInCompliantVersieIds &&
                 !hasBewijsDataUrl &&
                 !hasBewijsHttpUrl &&
                 !hasUrl;
@@ -988,7 +1158,7 @@ const ConStandardsTable = ({
                             ? '#28a745'
                             : isOndersteund
                             ? '#A86200'
-                            : '#dc3545',
+                            : '#6c757d',
                           fontWeight: '600',
                           textTransform: 'uppercase',
                           padding: '3px 8px',
@@ -1003,7 +1173,7 @@ const ConStandardsTable = ({
                         }}
                       >
                         {isCompliant
-                          ? 'ONDERSTEUND (MET BEWIJS)'
+                          ? 'ONDERSTEUND'
                           : isOndersteund
                           ? 'ONDERSTEUND'
                           : 'NIET ONDERSTEUND'}
@@ -1264,28 +1434,6 @@ const ConStandardsTable = ({
                 </TableRow>
               );
               toegevoegdStandards.forEach((standard, idx) => {
-                rows.push(renderStandardRow(standard, idx));
-              });
-            }
-
-            // Niet-actieve standaardversies section (einde ondersteuning / teruggetrokken)
-            if (sortedInactiveStandards.length > 0) {
-              rows.push(
-                <TableRow key='header-niet-actief'>
-                  <TableCell
-                    colSpan={3}
-                    style={{
-                      fontWeight: 'bold',
-                      backgroundColor: '#f0f0f0',
-                      padding: '12px',
-                      color: '#6c757d',
-                    }}
-                  >
-                    Niet-actieve standaardversies
-                  </TableCell>
-                </TableRow>
-              );
-              sortedInactiveStandards.forEach((standard, idx) => {
                 rows.push(renderStandardRow(standard, idx));
               });
             }

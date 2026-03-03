@@ -443,11 +443,23 @@ const ConFormApplicatieControlerenStage = memo(
                       applicatie.referentieComponenten || []
                     }
                     complianceStandards={applicatie.compliancy || []}
-                    compliantVersieIds={
-                      applicatie.standaardVersies ||
-                      applicatie.standaardversies ||
-                      []
-                    }
+                    compliantVersieIds={(() => {
+                      // Deduplicate standaardVersies array by normalizing IDs
+                      const versies = applicatie.standaardVersies ||
+                        applicatie.standaardversies ||
+                        [];
+                      
+                      // Use a Map to deduplicate based on normalized IDs
+                      const deduplicatedMap = new Map();
+                      versies.forEach((id) => {
+                        const normalizedId = String(id).replace(/^id-/, '');
+                        if (!deduplicatedMap.has(normalizedId)) {
+                          deduplicatedMap.set(normalizedId, id);
+                        }
+                      });
+                      
+                      return Array.from(deduplicatedMap.values());
+                    })()}
                     referentieComponentenWithStandards={
                       referentieComponentenWithStandards?.length > 0
                         ? referentieComponentenWithStandards
