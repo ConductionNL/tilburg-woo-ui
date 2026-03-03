@@ -19,7 +19,8 @@ export const DASHBOARD_WIZARDS = {
   EIGEN_APPLICATIE: {
     id: 'eigen-applicatie',
     name: 'Applicatie publiceren',
-    description: 'Voeg een applicatie van uw eigen organisatie toe aan de softwarecatalogus',
+    description:
+      'Voeg een applicatie van uw eigen organisatie toe aan de softwarecatalogus',
     icon: VISUALS.CUBE,
     path: PATHS.FORMS_APPLICATIE,
     requiresAuth: true,
@@ -27,7 +28,7 @@ export const DASHBOARD_WIZARDS = {
     groupTypes: ['leverancier', 'gemeente', 'samenwerking'],
     params: { type: 'eigen' },
     color: '#0078c8',
-    schema: 'module',
+    schema: 'applicatie',
   },
   DIENST: {
     id: 'dienst',

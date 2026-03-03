@@ -327,13 +327,13 @@ const ConSchemaEnhancedField = ({
       `🔍 ConSchemaEnhancedField: Using INTERNAL $ref search for ${fieldName}`
     );
     return {
-      handleSearch: async (fieldPath, query) => {
+      handleSearch: async (fieldPath, refSchemaSlug, searchQuery) => {
         console.info(
-          `🔍 ConSchemaEnhancedField: Internal search triggered for ${fieldPath}:`,
-          query
+          `ConSchemaEnhancedField: Internal search triggered for ${fieldPath}:`,
+          searchQuery
         );
         if (refOptionsResult.fetchOptions) {
-          await refOptionsResult.fetchOptions(fieldPath, query);
+          await refOptionsResult.fetchOptions(fieldPath, refSchemaSlug, searchQuery);
         }
       },
     };

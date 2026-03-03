@@ -14,8 +14,25 @@ const AcNavigation = ({ store: { menu, user } }) => {
   const activeMenu = getMenuFromPosition(
     1,
     user.isAuthenticated,
-    user.userGroups || []
+    user?.userGroups || []
   );
+
+  // Filter out login/register items when user is authenticated
+  const LOGIN_PATHS = ['/login', '/inloggen', '/aanmelden', '/register'];
+  const LOGIN_NAMES = ['inloggen', 'aanmelden', 'registreren'];
+
+  const isLoginItem = (item) => {
+    const linkMatch =
+      item.link && LOGIN_PATHS.some((path) => item.link.toLowerCase() === path);
+    const nameMatch =
+      item.name && LOGIN_NAMES.some((name) => item.name.toLowerCase() === name);
+    return linkMatch || nameMatch;
+  };
+
+  const filteredItems =
+    activeMenu?.items?.filter(
+      (item) => !(user.isAuthenticated && isLoginItem(item))
+    ) || [];
 
   // Icon component for finding icons based on a variable
   const Icon = ({ icon }) => {
@@ -46,21 +63,18 @@ const AcNavigation = ({ store: { menu, user } }) => {
         {isMenuOpen ? LABELS.CLOSE_SINGULAR : LABELS.MENU}
       </button>
       <nav aria-label='Gebruikersmenu'>
-        {activeMenu &&
-          activeMenu.items &&
-          Array.isArray(activeMenu.items) &&
-          activeMenu.items.length > 0 && (
-            <ul>
-              {activeMenu.items.map((menuItem) => (
-                <li key={menuItem.name || menuItem.link}>
-                  <Link to={menuItem.link}>
-                    <Icon icon={menuItem.icon} />
-                    {menuItem.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
+        {(filteredItems.length > 0 || user.isAuthenticated) && (
+          <ul>
+            {filteredItems.map((menuItem) => (
+              <li key={menuItem.name || menuItem.link}>
+                <Link to={menuItem.link}>
+                  <Icon icon={menuItem.icon} />
+                  {menuItem.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
       </nav>
     </div>
   );
