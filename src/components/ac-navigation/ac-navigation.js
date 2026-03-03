@@ -23,11 +23,9 @@ const AcNavigation = ({ store: { menu, user } }) => {
 
   const isLoginItem = (item) => {
     const linkMatch =
-      item.link &&
-      LOGIN_PATHS.some((path) => item.link.toLowerCase() === path);
+      item.link && LOGIN_PATHS.some((path) => item.link.toLowerCase() === path);
     const nameMatch =
-      item.name &&
-      LOGIN_NAMES.some((name) => item.name.toLowerCase() === name);
+      item.name && LOGIN_NAMES.some((name) => item.name.toLowerCase() === name);
     return linkMatch || nameMatch;
   };
 
@@ -35,18 +33,6 @@ const AcNavigation = ({ store: { menu, user } }) => {
     activeMenu?.items?.filter(
       (item) => !(user.isAuthenticated && isLoginItem(item))
     ) || [];
-
-  // Build user display name for mobile menu
-  const getUserDisplayName = () => {
-    if (!user.user) return null;
-    const parts = [
-      user.user.firstName,
-      user.user.middleName,
-      user.user.lastName,
-    ].filter(Boolean);
-    if (parts.length > 0) return parts.join(' ');
-    return user.user.displayName || user.user.email || null;
-  };
 
   // Icon component for finding icons based on a variable
   const Icon = ({ icon }) => {
@@ -79,14 +65,6 @@ const AcNavigation = ({ store: { menu, user } }) => {
       <nav aria-label='Gebruikersmenu'>
         {(filteredItems.length > 0 || user.isAuthenticated) && (
           <ul>
-            {user.isAuthenticated && (
-              <li className='ac-navigation__user-item'>
-                <Link to='/beheer/my-account'>
-                  <Icon icon='USER' />
-                  {getUserDisplayName() || 'Mijn account'}
-                </Link>
-              </li>
-            )}
             {filteredItems.map((menuItem) => (
               <li key={menuItem.name || menuItem.link}>
                 <Link to={menuItem.link}>
@@ -95,14 +73,6 @@ const AcNavigation = ({ store: { menu, user } }) => {
                 </Link>
               </li>
             ))}
-            {user.isAuthenticated && (
-              <li>
-                <Link to='/logout'>
-                  <Icon icon='LOGOUT' />
-                  Uitloggen
-                </Link>
-              </li>
-            )}
           </ul>
         )}
       </nav>
