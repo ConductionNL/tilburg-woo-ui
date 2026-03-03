@@ -76,6 +76,13 @@ export const checkOrganizationPermissions = (user, object, objectStore = null) =
     return { canEdit: true, reason: null };
   }
 
+  // Fallback: check if the object's own id matches the user's active org UUID.
+  // For imported register objects, @self.organisation is the importer's NC org,
+  // not the register object's own UUID.
+  if (object?.id && String(object.id) === String(userOrgId)) {
+    return { canEdit: true, reason: null };
+  }
+
   // Check if organization names match (fallback)
   const userOrgName = userActiveOrg.name || userActiveOrg.naam;
   const objectOrgName = objectOrg?.name || objectOrg?.naam;

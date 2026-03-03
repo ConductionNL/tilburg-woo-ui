@@ -21,7 +21,7 @@ export const canReadField = (user, fieldSchema) => {
   }
 
   // Get user's groups
-  const userGroups = user.userGroups || [];
+  const userGroups = user?.userGroups || [];
 
   // Handle object authorization format: { read: [...], create: [...], update: [...] }
   if (typeof authorization !== 'object') {
@@ -84,7 +84,7 @@ export const canEditField = (user, fieldSchema, isCreate = false) => {
   }
 
   // Get user's groups
-  const userGroups = user.userGroups || [];
+  const userGroups = user?.userGroups || [];
 
   // Handle object authorization format: { read: [...], create: [...], update: [...] }
   if (typeof authorization !== 'object') {

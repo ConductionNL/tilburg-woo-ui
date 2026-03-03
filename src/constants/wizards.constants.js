@@ -19,7 +19,8 @@ export const DASHBOARD_WIZARDS = {
   EIGEN_APPLICATIE: {
     id: 'eigen-applicatie',
     name: 'Applicatie publiceren',
-    description: 'Voeg een applicatie van uw eigen organisatie toe aan de softwarecatalogus',
+    description:
+      'Voeg een applicatie van uw eigen organisatie toe aan de softwarecatalogus',
     icon: VISUALS.CUBE,
     path: PATHS.FORMS_APPLICATIE,
     requiresAuth: true,
@@ -29,19 +30,6 @@ export const DASHBOARD_WIZARDS = {
     color: '#0078c8',
     schema: 'applicatie',
   },
-  // ONTBREKEND_APPLICATIE: {
-  //   id: 'ontbrekend-applicatie',
-  //   name: 'Applicatie toevoegen',
-  //   description: 'Meld een applicatie dat nog niet in de softwarecatalogus staat',
-  //   icon: VISUALS.CUBE,
-  //   path: PATHS.FORMS_APPLICATIE,
-  //   requiresAuth: true,
-  //   requiresOrganization: false,
-  //   groupTypes: ['leverancier', 'gemeente', 'samenwerking', 'community'],
-  //   params: { type: 'ontbrekend-applicatie' },
-  //   color: '#0078c8',
-  //   schema: 'applicatie',
-  // },
   DIENST: {
     id: 'dienst',
     name: 'Dienst publiceren',

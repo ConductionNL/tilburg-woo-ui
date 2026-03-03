@@ -123,23 +123,18 @@ const ConCardOrganisationApplication = ({
         <AcFlex column>
           {referenceComponents?.length > 0 && (
             <Paragraph small>
-              {referenceComponents.length > 2 ? (
-                <>
-                  Geschikt voor {referenceComponents.length} referentiecomponent
-                  {referenceComponents.length !== 1 ? 'en' : ''}
-                </>
-              ) : (
-                <>
-                  Geschikt voor:{' '}
-                  {referenceComponents
-                    .filter(Boolean)
-                    .map((component, index) => (
-                      <span key={component}>
-                        {index > 0 && ', '}
-                        <ConUuidResolver>{component}</ConUuidResolver>
-                      </span>
-                    ))}
-                </>
+              Geschikt voor:{' '}
+              {referenceComponents
+                .filter(Boolean)
+                .slice(0, 2)
+                .map((component, index) => (
+                  <span key={component}>
+                    {index > 0 && ', '}
+                    <ConUuidResolver>{component}</ConUuidResolver>
+                  </span>
+                ))}
+              {referenceComponents.filter(Boolean).length > 2 && (
+                <span>, +{referenceComponents.filter(Boolean).length - 2} meer</span>
               )}
             </Paragraph>
           )}

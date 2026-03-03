@@ -8,7 +8,7 @@ import acFormatDate from '@src/utilities/ac-format-date';
 import { extractTitle, extractSummary } from '@src/utilities/con-extract-text';
 
 /**
- * Renders a card for an Applicatie versie (moduleversie) with version, status, related module and key dates.
+ * Renders a card for an Applicatieversie (moduleversie) with version, status, related module and key dates.
  */
 const ConCardModuleVersie = ({
   skeleton,

@@ -27,7 +27,7 @@ import { normalizeSchemaName } from '@src/utilities/con-normalize-schema-name';
 import { useResolveSchemaIds } from '@src/hooks/use-resolve-schema-ids.hook';
 
 /**
- * Module Version (Applicatie Versie) Publication Page
+ * Module Version (Applicatieversie) Publication Page
  * - Fetches object, schema and related data (uses/used)
  * - Renders version information and related tabs
  * - Supports unique action menu items and edit/delete via external modals
@@ -168,7 +168,7 @@ const AcPublicationModuleVersie = ({ store: { publications, user, object } }) =>
                   get_single?.naam ||
                   get_single?.versie ||
                   get_single?.id ||
-                  'Applicatie versie'}
+                  'Applicatieversie'}
               </Heading>
             </div>
           </Heading>

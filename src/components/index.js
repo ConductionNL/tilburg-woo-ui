@@ -1,12 +1,14 @@
 import loadable from '@loadable/component';
 
 const AcAbout = loadable(() => import('@components/ac-about/ac-about'));
+const AcContentBlocks = loadable(() => import('@components/ac-content-blocks/ac-content-blocks'));
 const AcDrawer = loadable(() => import('@components/ac-drawer/ac-drawer'));
 const AcFaq = loadable(() => import('@components/ac-faq/ac-faq'));
 const AcFeatured = loadable(() => import('@components/ac-featured/ac-featured'));
 const AcFooter = loadable(() => import('@components/ac-footer/ac-footer'));
 const AcHeader = loadable(() => import('@components/ac-header/ac-header'));
 const AcHero = loadable(() => import('@components/ac-hero/ac-hero'));
+const AcQuote = loadable(() => import('@components/ac-quote/ac-quote'));
 const AcIntro = loadable(() => import('@components/ac-intro/ac-intro'));
 const AcLoader = loadable(() => import('@components/ac-loader/ac-loader'));
 const AcModal = loadable(() => import('@components/ac-modal/ac-modal'));
@@ -141,6 +143,7 @@ import ConPublicationTypeBadge from '@src/components/con-publication-type-badge/
 
 export {
   AcAbout,
+  AcContentBlocks,
   AcCNavigation,
   AcDrawer,
   AcFaq,
@@ -148,6 +151,7 @@ export {
   AcFooter,
   AcHeader,
   AcHero,
+  AcQuote,
   AcIntro,
   AcLoader,
   AcModal,
