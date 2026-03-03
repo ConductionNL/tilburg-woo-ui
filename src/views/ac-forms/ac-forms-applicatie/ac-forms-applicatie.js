@@ -63,7 +63,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
   const [registerCallBack, setRegisterCallBack] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState({ message: null, errors: null });
-  const [currentStep, setCurrentStep] = useState(3);
+  const [currentStep, setCurrentStep] = useState(0);
 
   // Edit-mode prefill state
   const [prefillLoading, setPrefillLoading] = useState(false);
