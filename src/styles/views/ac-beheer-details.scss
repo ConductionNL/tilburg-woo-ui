@@ -126,10 +126,17 @@
     padding-inline: var(--tilburg-space-block-rabbit);
     background-color: var(--tilburg-color-gray-50);
     min-width: 250px;
+    max-width: 400px;
     border-radius: 4px;
+    overflow: hidden;
+    word-break: break-word;
   }
   &--contact-info * a {
     display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
   }
 
   &--side-content {

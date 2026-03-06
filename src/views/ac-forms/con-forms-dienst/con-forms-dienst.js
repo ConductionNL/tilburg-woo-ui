@@ -1461,8 +1461,8 @@ const ConFormsDienst = ({ store, userStore }) => {
             <div>
               <Heading1>
                 {isEditMode
-                  ? '🎉 Dienst succesvol geüpdatet!'
-                  : '🎉 Dienst succesvol aangemeld!'}
+                  ? '🎉 Dienst succesvol bijgewerkt!'
+                  : '🎉 Dienst succesvol gepubliceerd!'}
               </Heading1>
               <Alert type='ok'>
                 <Paragraph>
@@ -1541,7 +1541,7 @@ const ConFormsDienst = ({ store, userStore }) => {
                   }}
                   sx={{ marginLeft: '1rem' }}
                 >
-                  Nieuwe dienst aanmelden
+                  Nieuwe dienst publiceren
                 </AcButton>
               </div>
             </div>
@@ -1713,8 +1713,8 @@ const ConFormsDienst = ({ store, userStore }) => {
                         {saving
                           ? 'Bezig met opslaan...'
                           : isEditMode
-                          ? 'Dienst updaten'
-                          : 'Dienst registreren'}
+                          ? 'Dienst bijwerken'
+                          : 'Dienst publiceren'}
                       </AcButton>
                     )}
                   </div>

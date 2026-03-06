@@ -757,8 +757,9 @@ const ConGenericFormModal = ({
         }
       }
 
+      const entityName = config?.title || 'Gegevens';
       setSubmitSuccess(
-        isEdit ? 'Gegevens succesvol bijgewerkt' : 'Gegevens succesvol toegevoegd'
+        isEdit ? `${entityName} succesvol bijgewerkt` : `${entityName} succesvol toegevoegd`
       );
 
       // Show success countdown instead of just timeout

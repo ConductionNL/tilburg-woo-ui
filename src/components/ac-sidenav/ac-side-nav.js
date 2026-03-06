@@ -96,7 +96,7 @@ const AcSideNav = () => {
               current={window.location.pathname.startsWith('/beheer/contactpersonen')}
             >
               <VISUALS.USERS />
-              Contactpersonen
+              Gebruikers
             </SidenavLink>
           </SidenavItem>
         </SidenavList>

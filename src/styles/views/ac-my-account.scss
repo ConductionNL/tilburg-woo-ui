@@ -1,5 +1,14 @@
 // Account page specific styling for register review sections
 .ac-register-review__section {
+  // Prevent long URLs from expanding the info block beyond bounds
+  a {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+    display: inline-block;
+  }
+
   .ac-beheer-select,
   .ac-form-field__input {
     width: 100%;
