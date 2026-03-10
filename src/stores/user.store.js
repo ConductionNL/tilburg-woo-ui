@@ -377,9 +377,18 @@ export class UserStore {
     this.setLoading(true);
 
     try {
-      // If we already have a user and are marked as authenticated, return true immediately
-      // Don't warmup cache here as session hasn't changed
+      // If we already have a user and are marked as authenticated, still refresh
+      // the profile to ensure organisation data is current (prevents stale org UUID).
       if (this.isAuthenticated && this.user) {
+        try {
+          if (app.store.api && app.store.api.auth) {
+            const userData = await app.store.api.auth.getUserProfile();
+            this.setUser(userData);
+          }
+        } catch (e) {
+          // Profile refresh failed — keep cached data rather than logging out
+          console.warn('Profile refresh failed, using cached data:', e.message);
+        }
         this.setLoading(false);
         return true;
       }
