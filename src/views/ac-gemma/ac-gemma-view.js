@@ -1038,15 +1038,15 @@ const AcGemmaView = ({ store, viewId }) => {
             className={clsx('ac-gemma-select')}
             onChange={(e) => setView(e.value)}
             loading={!gemma.all_views || gemma.all_views.length === 0}
-            options={gemma.all_views.map((v) => ({ value: v.id, label: v.name }))}
+            options={gemma.all_views.map((v) => ({ value: v.id, label: v.name || v['@self']?.name || 'Unnamed View' }))}
           />
 
           {gemma.get_view && (
             <div className='ac-gemma-view-header'>
               <div className='ac-gemma-view-header-title-container'>
                 {/* New view object provides 'name' and 'description' fields */}
-                <h1 className='ac-gemma-view-header-title'>{gemma.get_view.name}</h1>
-                <div>{gemma.get_view.description}</div>
+                <h1 className='ac-gemma-view-header-title'>{gemma.get_view.name || gemma.get_view['@self']?.name || 'Unnamed View'}</h1>
+                <div>{gemma.get_view.description || gemma.get_view.documentation}</div>
               </div>
 
               <PrimaryActionButton

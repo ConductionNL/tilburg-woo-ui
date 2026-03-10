@@ -26,7 +26,7 @@ const AcViews = ({ store: { gemma } }) => {
         (property) => property.propertyDefinitionRef === 'propid-70'
       )?.value ||
       view.name ||
-      view['@self'].name ||
+      view['@self']?.name ||
       'Unnamed View'
     );
   };
