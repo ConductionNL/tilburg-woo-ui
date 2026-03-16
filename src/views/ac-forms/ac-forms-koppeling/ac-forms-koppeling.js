@@ -1281,16 +1281,13 @@ const AcFormsKoppeling = ({ store }) => {
         const appAId = selectedAppAByRow[rowId] || ownApp?.value;
         const appBId = selectedAppBByRow[rowId];
         const richting = directionByRow[rowId];
-        const naam = nameByRow[rowId];
         if (!appAId) missingA = true;
         if (!appBId) missingB = true;
         if (!richting) missingR = true;
-        if (!naam || !naam.trim()) missingN = true;
       }
       if (missingA) missing.push('Applicatie A');
       if (missingB) missing.push('Applicatie B');
       if (missingR) missing.push('Richting');
-      if (missingN) missing.push('Naam');
       if (missing.length > 0) {
         messages.push(`Verplichte velden nog niet ingevuld: ${missing.join(', ')}`);
       }
@@ -1388,14 +1385,14 @@ const AcFormsKoppeling = ({ store }) => {
     // Koppeling step (renamed from Toevoegen)
     if (currentStepLabel === 'koppeling') {
       if (!rows.length) return false;
-      // Require Applicatie A, Applicatie B (or new app data), Richting, and Naam for all rows
+      // Require Applicatie A, Applicatie B (or new app data), and Richting for all rows
+      // Note: naam is auto-generated from "[App A] → [App B]" per #312 (not user-editable)
       for (const rowId of rows) {
         // Use mock ID '__new_own_app__' when creating a new own app
         const appAId =
           selectedAppAByRow[rowId] ||
           (ownAppKeuze === 'nieuw' ? '__new_own_app__' : ownApp?.value);
         const richting = directionByRow[rowId];
-        const naam = nameByRow[rowId];
 
         // Check if using new application flow for this row
         if (applicatieKeuzeByRow[rowId] === 'nieuw') {
@@ -1431,7 +1428,7 @@ const AcFormsKoppeling = ({ store }) => {
           if (!appBId) return false;
         }
 
-        if (!appAId || !richting || !naam || !naam.trim()) return false;
+        if (!appAId || !richting) return false;
       }
       return true;
     }
