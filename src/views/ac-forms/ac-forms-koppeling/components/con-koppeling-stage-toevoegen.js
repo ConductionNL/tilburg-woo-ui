@@ -103,6 +103,8 @@ const ConKoppelingStageToevoegen = ({
   searchLeveranciers,
   ownAppKeuze = 'bestaand', // Whether own app (Applicatie A) is existing or new
   nieuweOwnApp = {}, // New own app data when ownAppKeuze === 'nieuw'
+  nameByRow = {},
+  setNameByRow,
 }) => {
   const [appBOptionsByRow, setAppBOptionsByRow] = useState({});
   const [appBLoadingByRow, setAppBLoadingByRow] = useState({});
@@ -327,7 +329,7 @@ const ConKoppelingStageToevoegen = ({
       const fetchModuleB = async () => {
         try {
           const res = await fetch(
-            `/api/openregister/api/objects/voorzieningen/module/${encodeURIComponent(
+            `${BASE_URL}/openregister/api/objects/voorzieningen/module/${encodeURIComponent(
               String(selectedModuleBId)
             )}`,
             { headers: { Accept: 'application/json' } }
@@ -1078,6 +1080,31 @@ const ConKoppelingStageToevoegen = ({
                   marginTop: '1rem',
                 }}
               >
+                <div>
+                  <label
+                    className='utrecht-form-label'
+                    htmlFor={`koppeling-naam-${rowId}`}
+                    style={{ display: 'block' }}
+                  >
+                    Naam <span style={{ color: 'var(--tilburg-color-error, #d32f2f)' }}>*</span>
+                  </label>
+                  <Textbox
+                    id={`koppeling-naam-${rowId}`}
+                    value={nameByRow[rowId] || ''}
+                    onChange={(e) => {
+                      if (setNameByRow) {
+                        setNameByRow((prev) => ({
+                          ...prev,
+                          [rowId]: e?.target?.value || '',
+                        }));
+                      }
+                    }}
+                    disabled={loading}
+                    style={{ height: '40px' }}
+                    placeholder='Naam van de koppeling'
+                    required
+                  />
+                </div>
                 <div>
                   <label
                     className='utrecht-form-label'

@@ -413,7 +413,7 @@ export const ROUTES = {
     title: `${
       AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
     } | GEMMA weergaven beheer`,
-    component: ConBeheerViews,
+    component: ConBeheerViewsList,
   },
   BEHEER_VIEWS_DETAIL: {
     id: AcUUID(),

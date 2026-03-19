@@ -676,7 +676,7 @@ const AcFormsGebruik = ({ store }) => {
       try {
         // Fetch gebruik schema
         const gebruikResponse = await fetch(
-          '/api/openregister/api/schemas/gebruik'
+          `${commongroundApiUrl()}/openregister/api/schemas/gebruik`
         );
         let gebruikSchema = null;
         if (gebruikResponse.ok) {

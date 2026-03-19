@@ -653,7 +653,7 @@ const AcFormsKoppeling = ({ store }) => {
     
     try {
       const res = await fetch(
-        `/api/openregister/api/objects/voorzieningen/module/${encodeURIComponent(
+        `${BASE_URL}/openregister/api/objects/voorzieningen/module/${encodeURIComponent(
           String(id)
         )}`,
         { headers: { Accept: 'application/json' } }
@@ -696,7 +696,7 @@ const AcFormsKoppeling = ({ store }) => {
       stepper.setCurrentStepByLabel('koppeling-zoeken');
       setPrefillLoading(true);
       try {
-        const url = `/api/openregister/api/objects/voorzieningen/koppeling/${encodeURIComponent(
+        const url = `${BASE_URL}/openregister/api/objects/voorzieningen/koppeling/${encodeURIComponent(
           koppelingId
         )}?_extend[]=_schema&_extend[]=_relations`;
         const res = await fetch(url, { headers: { Accept: 'application/json' } });
@@ -2138,7 +2138,7 @@ const AcFormsKoppeling = ({ store }) => {
         });
       }
 
-      const endpoint = '/api/openregister/api/objects/voorzieningen/koppeling';
+      const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/koppeling`;
       // Align payloads with rows to decide POST vs PUT per row
       const requests = rows
         .map((rowId, index) => {
