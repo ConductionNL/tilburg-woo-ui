@@ -355,6 +355,8 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
                 ([key]) => !schema?.configuration?.excludedProperties?.includes(key)
               )
               .filter(([key]) => !configuredMetaFields.includes(key))
+              .filter(([, fieldSchema]) => fieldSchema?.visible !== false)
+              .filter(([, fieldSchema]) => fieldSchema?.hideOnView !== true)
               // eslint-disable-next-line no-unused-vars
               .filter(([_, fieldSchema]) =>
                 user?.isAuthenticated ? canReadField(user, fieldSchema) : true
