@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { AcFlex, AcSection, AcGrid, AcContainer } from '@atoms';
@@ -28,7 +28,7 @@ const AcDashboard = ({ store }) => {
   const [refreshKey, setRefreshKey] = useState(0); // Key to force component refresh
   const [isLoadingOrganization, setIsLoadingOrganization] = useState(true);
 
-  const userGroups = user?.user?.groups || [];
+  const userGroups = user?.userGroups || [];
 
   const fetchOrganisatieData = useCallback(async () => {
     const activeOrganizationId = user?.activeOrganization?.uuid;
@@ -103,11 +103,12 @@ const AcDashboard = ({ store }) => {
     fetchOrganisatieData();
   }, [fetchOrganisatieData]);
 
-  // Get available wizards for this user - only calculate when userOrganization is loaded
-  const availableWizards = useMemo(() => {
-    if (!userOrganization) return [];
-    return getDashboardWizards(user, userOrganization);
-  }, [user, userOrganization]);
+  // Get available wizards for this user based on their groups.
+  // Not wrapped in useMemo — the user store reference never changes,
+  // so useMemo caches the result from the first render and MobX
+  // loses track of user.user.groups, preventing re-renders when
+  // groups load after initial mount (e.g. samenwerking users).
+  const availableWizards = getDashboardWizards(user);
 
   return (
     <AcSection spacing className='ac-mijn-omgeving-section'>
@@ -209,34 +210,28 @@ const AcDashboard = ({ store }) => {
                   <div>
                     <Paragraph>
                       Via deze omgeving publiceert en beheert u uw aanbod voor
-                      gemeenten. Hier legt u vast:
+                      gemeenten. U kunt hier de volgende zaken registreren:
                     </Paragraph>
 
                     <ul style={{ marginInlineStart: '1.2rem' }}>
-                      <li>welke applicaties en diensten u aanbiedt</li>
-                      <li>welke koppelingen beschikbaar zijn</li>
-                      <li>
-                        hoe uw oplossing aansluit op de GEMeentelijke Model
-                        Architectuur (GEMMA)
-                      </li>
-                      <li>
-                        dat uw applicatie beschikbaar is voor opname in het
-                        gemeentelijke applicatielandschap
-                      </li>
+                      <li>Applicaties</li>
+                      <li>Diensten</li>
+                      <li>Koppelingen</li>
+                      <li>Standaarden</li>
                     </ul>
                   </div>
 
                   <Paragraph>
-                    Wilt u een nieuwe applicatie, dienst of koppeling publiceren?
-                    Gebruik dan de acties bovenaan deze pagina. Een overzicht van uw
-                    reeds gepubliceerde applicaties, diensten en koppelingen vindt u
-                    via het linkermenu.
+                    Een nieuw item publiceert u via de opties in het linkermenu.
+                    Eventueel eerder geregistreerde items vindt u onder het kopje
+                    &ldquo;Beheer&rdquo; in het linkermenu.
                   </Paragraph>
 
                   <Paragraph>
-                    Gemeenten gebruiken deze informatie bij het vergelijken,
-                    selecteren en inkopen van applicaties. Zorg daarom dat uw
-                    gegevens volledig en actueel zijn.
+                    Gemeenten gebruiken deze informatie om een beter beeld te
+                    krijgen van de markt en het eigen applicatielandschap in kaart
+                    te brengen met behulp van de GEMeentelijke Model Architectuur
+                    (GEMMA).
                   </Paragraph>
                 </>
               )}

@@ -116,7 +116,7 @@ const ConMyOrganisationPage = ({ store }) => {
     try {
       // Use the object store to fetch related data instead of publications endpoint
       const response = await fetch(
-        `${commongroundApiUrl()}/openregister/api/objects/voorzieningen/organisatie/${organisationId}/uses?_published=false`,
+        `${commongroundApiUrl()}/openregister/api/objects/voorzieningen/organisatie/${organisationId}/uses?_published=false&_limit=100`,
         {
           method: 'GET',
           headers: {
@@ -145,7 +145,7 @@ const ConMyOrganisationPage = ({ store }) => {
     try {
       // Use the object store to fetch related data instead of publications endpoint
       const response = await fetch(
-        `${commongroundApiUrl()}/openregister/api/objects/voorzieningen/organisatie/${organisationId}/used?_published=false`,
+        `${commongroundApiUrl()}/openregister/api/objects/voorzieningen/organisatie/${organisationId}/used?_published=false&_limit=100`,
         {
           method: 'GET',
           headers: {

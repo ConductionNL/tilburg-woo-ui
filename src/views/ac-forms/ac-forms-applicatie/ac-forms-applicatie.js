@@ -131,10 +131,9 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
    * @returns {boolean} True if Versies step should be shown
    */
   const shouldShowVersiesStep = useCallback(() => {
-    return (applicatie?.cloudDienstverleningsmodel || '').includes(
-      'On-premises (self-managed)'
-    );
-  }, [applicatie?.cloudDienstverleningsmodel]);
+    // Show version step for all hosting types (SaaS, On-premises, hybrid, etc.)
+    return true;
+  }, []);
 
   /**
    * Helper function to get the correct step index accounting for optional steps
@@ -1122,7 +1121,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
 
       try {
         const queryParams = {
-          _limit: '20',
+          _limit: '40',
           _page: '1',
         };
 
@@ -1826,6 +1825,63 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
         ...applicatie,
         aanbieder: finalAanbieder,
       };
+
+      // Ensure all koppelingen have a proper naam field before submitting.
+      // The backend's name template resolution may fail to resolve the parent UUID
+      // to a name during cascade creation (the parent isn't persisted yet).
+      // By explicitly setting naam here, we guarantee human-readable koppeling names.
+      if (Array.isArray(applicatieData.koppelingen)) {
+        const directionArrowMap = {
+          AnaarB: '\u2192',
+          BnaarA: '\u2190',
+          'bi-directioneel': '\u2194',
+        };
+        const allOptions = [
+          ...modulesOptions,
+          ...(buitengemeentelijkeOptions || []).filter(
+            (buitenOpt) =>
+              !modulesOptions.some(
+                (o) => String(o.value) === String(buitenOpt.value)
+              )
+          ),
+        ];
+
+        applicatieData.koppelingen = applicatieData.koppelingen.map(
+          (koppeling) => {
+            if (!koppeling) return koppeling;
+            // Skip if naam is already set with a proper (non-UUID) value
+            if (
+              koppeling.naam &&
+              koppeling.naam.trim() &&
+              !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(
+                koppeling.naam.trim()
+              )
+            ) {
+              return koppeling;
+            }
+
+            // Generate naam from applicatie name + direction + module B label
+            const appALabel = applicatie.naam || 'Deze applicatie';
+            const appBId = koppeling.moduleB || koppeling.buitengemeentelijkVoorziening;
+            const appBOption = appBId
+              ? allOptions.find((o) => String(o.value) === String(appBId))
+              : null;
+            const appBLabel = appBOption?.label || appBId || '';
+            const arrow =
+              directionArrowMap[koppeling.gegevensuitwisselingRichting] ||
+              '\u2194';
+
+            if (appBLabel) {
+              return {
+                ...koppeling,
+                naam: `${appALabel} ${arrow} ${appBLabel}`,
+              };
+            }
+
+            return koppeling;
+          }
+        );
+      }
 
       // Filter out empty moduleVersies entries before submitting
       // Only keep versions that have at least a version number or status

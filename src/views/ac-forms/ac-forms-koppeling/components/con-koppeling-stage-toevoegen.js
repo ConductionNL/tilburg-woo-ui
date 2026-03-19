@@ -88,8 +88,6 @@ const ConKoppelingStageToevoegen = ({
   setStartDatumUitTeFaserenByRow,
   startDatumUitGefaseerdByRow,
   setStartDatumUitGefaseerdByRow,
-  nameByRow,
-  setNameByRow,
   isEditMode,
   schemas,
   applicatieKeuzeByRow,
@@ -105,6 +103,8 @@ const ConKoppelingStageToevoegen = ({
   searchLeveranciers,
   ownAppKeuze = 'bestaand', // Whether own app (Applicatie A) is existing or new
   nieuweOwnApp = {}, // New own app data when ownAppKeuze === 'nieuw'
+  nameByRow = {},
+  setNameByRow,
 }) => {
   const [appBOptionsByRow, setAppBOptionsByRow] = useState({});
   const [appBLoadingByRow, setAppBLoadingByRow] = useState({});
@@ -329,7 +329,7 @@ const ConKoppelingStageToevoegen = ({
       const fetchModuleB = async () => {
         try {
           const res = await fetch(
-            `/api/apps/openregister/api/objects/voorzieningen/module/${encodeURIComponent(
+            `${BASE_URL}/openregister/api/objects/voorzieningen/module/${encodeURIComponent(
               String(selectedModuleBId)
             )}`,
             { headers: { Accept: 'application/json' } }
@@ -1086,21 +1086,21 @@ const ConKoppelingStageToevoegen = ({
                     htmlFor={`koppeling-naam-${rowId}`}
                     style={{ display: 'block' }}
                   >
-                    Naam
-                    <span className='required-indicator' aria-hidden='true'>
-                      *
-                    </span>
-                    <span className='sr-only'>(verplicht)</span>
+                    Naam <span style={{ color: 'var(--tilburg-color-error, #d32f2f)' }}>*</span>
                   </label>
                   <Textbox
                     id={`koppeling-naam-${rowId}`}
                     value={nameByRow[rowId] || ''}
-                    onChange={(e) =>
-                      setNameByRow((prev) => ({
-                        ...prev,
-                        [rowId]: e?.target?.value || '',
-                      }))
-                    }
+                    onChange={(e) => {
+                      if (setNameByRow) {
+                        setNameByRow((prev) => ({
+                          ...prev,
+                          [rowId]: e?.target?.value || '',
+                        }));
+                      }
+                    }}
+                    disabled={loading}
+                    style={{ height: '40px' }}
                     placeholder='Naam van de koppeling'
                     required
                   />

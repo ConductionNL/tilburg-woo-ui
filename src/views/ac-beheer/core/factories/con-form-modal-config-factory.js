@@ -49,7 +49,8 @@ import BeheerPageConfigFactory from './con-beheer-page-config-factory';
  *      rollen: {
  *        enumFilter: 'include',
  *        values: (formData, context) => {
- *          if (context?.user?.activeOrganization?.type === 'Leverancier') {
+ *          const orgType = context?.fullOrganization?.type || context?.user?.activeOrganization?.description;
+ *          if (orgType === 'Leverancier') {
  *            return ['aanbod-beheerder'];
  *          }
  *          return ['aanbod-beheerder', 'gebruik-beheerder', ...];
@@ -551,19 +552,30 @@ const FormModalConfigFactory = {
           },
           optionsProviders: {
             // Use enumFilter to dynamically filter rollen based on organization type
-            // If org type is 'Leverancier', only show 'aanbod-beheerder'
+            // - Leverancier: rollen field is hidden entirely (see fieldConfigs below)
+            // - Gemeente/Samenwerking: show relevant roles, exclude internal Organisatie-beheerder
             rollen: {
               enumFilter: 'include',
               values: (formData, context) => {
-                const orgType = context?.user?.activeOrganization?.type;
+                // Check org type from multiple sources:
+                // 1. fullOrganization (register data) has explicit 'type' field
+                // 2. user.activeOrganization.description contains the org type string (e.g. "Leverancier")
+                const orgType = context?.fullOrganization?.type
+                  || context?.user?.activeOrganization?.description;
 
-                // If organization type is 'Leverancier', only allow 'Aanbod-beheerder'
+                // If organization type is 'Leverancier', return empty (field is hidden anyway)
                 if (orgType === 'Leverancier') {
                   return ['Aanbod-beheerder'];
                 }
 
-                // Otherwise, return null to show all enum values from schema
-                return null;
+                // For Gemeente/Samenwerking: show user-selectable roles
+                // Exclude 'Organisatie-beheerder' as it's an internal/system role
+                return [
+                  'Gebruik-beheerder',
+                  'Gebruik-raadpleger',
+                  'Functioneel-beheerder',
+                  'Aanbod-beheerder',
+                ];
               },
             },
           },
@@ -581,6 +593,19 @@ const FormModalConfigFactory = {
             telefoonnummer: {
               visible: true,
               required: (formData) => formData.aanspreekPunt,
+            },
+            // Hide rollen for Leveranciers (auto-assigned as Aanbod-beheerder in backend)
+            // Show for Gemeente/Samenwerking where multiple roles are possible
+            // Third argument is fieldConfigContext: { user, isEdit, fullOrganization }
+            rollen: {
+              visible: (_formData, _isEdit, context) => {
+                // Check org type from multiple sources:
+                // 1. fullOrganization (register data) has explicit 'type' field
+                // 2. user.activeOrganization.description contains the org type string
+                const orgType = context?.fullOrganization?.type
+                  || context?.user?.activeOrganization?.description;
+                return orgType !== 'Leverancier';
+              },
             },
           },
         };
