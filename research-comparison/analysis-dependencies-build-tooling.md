@@ -114,7 +114,8 @@ Ours has substantial additional dependencies reflecting our extended feature set
 - `@conduction/theme` — Conduction design tokens (used in `src/styles/nlds/index.scss`)
 - `@gemeente-denhaag/components-react` — Used in sidenav and form views
 - `@nl-design-system-unstable/rotterdam-design-tokens` — Used in `src/styles/nlds/index.scss`
-- `@utrecht/component-library-react 9.0.3`, `@utrecht/components` — Newer Utrecht library (Acato pins `^3.0.1-alpha.41`)
+- `@utrecht/component-library-react 9.0.3` — Utrecht React component library (Acato pins `^3.0.1-alpha.41`, much older)
+- `@utrecht/components ^3.0.1-alpha.42` — **deprecated** umbrella CSS package; Utrecht has since split this into individual `@utrecht/*-css` packages (which Acato uses)
 - `@uiw/react-md-editor`, `react-markdown` + `rehype-*` / `remark-*` plugins — Markdown rendering (used in publication views and schema form)
 - `rollbar` — Error tracking (used in `src/config/index.js`)
 - `react-select` — Used in pagination, table search, API select field
@@ -150,13 +151,24 @@ API_URL_COMMONGROUND_TOKEN="..."
 ```
 We have no equivalent — developers must consult Docker Compose files or institutional knowledge to understand what env vars are expected.
 
-### 10. Utrecht component library version gap
+### 10. Utrecht component library — two different stories
+
+Two distinct Utrecht concerns are easy to conflate. They are not:
+
+**(a) React component library — version gap:**
 
 | Package | Ours | Acato |
 |---|---|---|
 | `@utrecht/component-library-react` | `9.0.3` (pinned) | `^3.0.1-alpha.41` |
 
-This is a major version difference (9.x vs 3.x alpha). This likely means our version is significantly more recent. No regression risk here — Acato is behind.
+Major version difference (9.x vs 3.x alpha). Ours is significantly more recent. No regression risk here — Acato is behind.
+
+**(b) CSS packaging — Acato is on the supported path, we are not:**
+
+- **Ours** uses `@utrecht/components ^3.0.1-alpha.42` — a single umbrella CSS package that has been **deprecated** by the Utrecht maintainers. The intended path forward is to install only the individual component CSS packages you actually use.
+- **Acato** uses individual `@utrecht/*-css` packages (`@utrecht/button-css`, `@utrecht/link-css`, `@utrecht/paragraph-css`, …) — the supported approach.
+
+These are two separate packages with overlapping `3.0.1-alpha.*` version strings; do not read this as "Acato is also on 3.x of `@utrecht/components`" — Acato does not depend on `@utrecht/components` at all.
 
 ---
 
@@ -173,7 +185,7 @@ This is a major version difference (9.x vs 3.x alpha). This likely means our ver
 - `.env.example`
 - Updated Babel plugin names (`@babel/plugin-transform-*`)
 - Newer `webpack 5.94.0`, `webpack-dev-server ^5.2.2` (major), `dompurify 3.2.4`
-- Individual Utrecht CSS packages (`@utrecht/button-css`, `@utrecht/link-css`, etc.) instead of our single `@utrecht/components` umbrella
+- Individual Utrecht CSS packages (`@utrecht/button-css`, `@utrecht/link-css`, etc.) — the supported successor to our deprecated `@utrecht/components` umbrella package
 
 ---
 
@@ -190,4 +202,5 @@ This is a major version difference (9.x vs 3.x alpha). This likely means our ver
 | Acato's Dockerfile (Apache, static) | **Keep ours** — our Nginx setup with runtime env injection and proxy is far more capable | — |
 | Acato's ESLint (babel-eslint, react-app only) | **Keep ours** — our setup is more modern and thorough | — |
 | GitHub Actions (ours only) | **Keep ours** — no equivalent in Acato | — |
-| Utrecht `@utrecht/button-css` etc. (individual packages) | **Keep ours** — we use the newer umbrella package `@utrecht/components 9.0.3`; Acato is behind on Utrecht | — |
+| `@utrecht/component-library-react` 9.0.3 (React lib) | **Keep ours** — ours is on 9.x; Acato pins 3.0.1-alpha | — |
+| Utrecht CSS packaging | **Adopt Acato's approach** — migrate off the deprecated `@utrecht/components` umbrella to the individual `@utrecht/*-css` packages (`@utrecht/button-css`, `@utrecht/link-css`, etc.); Acato is on the supported path | Medium |

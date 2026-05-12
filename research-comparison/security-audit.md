@@ -161,7 +161,7 @@ if (window.app && window.app.store && window.app.store.user &&
 }
 ```
 
-The global `window.app` exposes the full MobX store tree including plaintext credentials. Any XSS, browser extension, or third-party script can call `window.app.store.user.basicAuthCredentials` to extract credentials. The same pattern exists in `config/index.js`.
+The global `window.app` exposes the full MobX store tree including plaintext credentials. Any XSS, browser extension, or third-party script can call `window.app.store.user.basicAuthCredentials` to extract credentials. The same pattern exists in [src/config/index.js](tilburg-woo-ui/src/config/index.js) and in [src/stores/publications.store.js:32-64](tilburg-woo-ui/src/stores/publications.store.js#L32-L64) (`getAuthHeaders` reaches into `window.app.store.user.basicAuthCredentials` for search/facets fetches).
 
 **Fix:** Remove the global store reference from `window`. Pass credentials through a context or store accessor that does not expose the raw username/password, and remove the basic auth fallback once Bearer token support is complete (see the `TODO` in `config/index.js:106`).
 

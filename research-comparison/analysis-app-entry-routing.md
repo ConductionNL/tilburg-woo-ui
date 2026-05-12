@@ -57,7 +57,7 @@
 ### `routes.constants.js` — large surface difference, expected per repo charter
 
 - **Ours**: ~30 `PATHS` entries, ~30 `ROUTES` entries. Components imported include all admin/forms/views/auth/chat/gemma/directory views. Includes `AUTHENTICATION_REQUIRED_ROUTES` array. Title helper `getTitle()` reads `containerConfig` then falls back to hostname switch covering 9 hosts. Adds VNG/DIMPACT footer route groups for theming.
-- **Acato**: 14 `PATHS` and 14 `ROUTES`, most of which are CMS-page placeholders (`ABOUT`, `ACCESSIBILITY`, `CONTACT`, `COOKIES`, `FAQ`, `ORGANIZATION`, `PRIVACY`, `PROCLAIMER`, `WEBSITE`, `WOO`, `REACH_OUT`). Only `HOME`, `PUBLICATION`, `SEARCH`, `SITEMAP` have a `component`; rest are external `href` or expected to be matched by the CMS-page loop in `App.web.js`. Titles use static `TITLES.BASE` constant.
+- **Acato**: 15 active `PATHS` and 15 active `ROUTES` (plus `THEMES` commented out in both maps), most of which are CMS-page placeholders (`ABOUT`, `ACCESSIBILITY`, `CONTACT`, `COOKIES`, `FAQ`, `ORGANIZATION`, `PRIVACY`, `PROCLAIMER`, `WEBSITE`, `WOO`, `REACH_OUT`). Only `HOME`, `PUBLICATION`, `SEARCH`, `SITEMAP` have a `component`; rest are external `href` or expected to be matched by the CMS-page loop in `App.web.js`. Titles use static `TITLES.BASE` constant.
 - `THEMES` route exists in ours as a real route; in Acato's it is commented out.
 - `SITEMAP` route exists in Acato's but **not** in ours.
 - Acato's `FOOTER_PRIMARY_*` and `FOOTER_SECONDARY` are populated with real entries; ours have been emptied (`EXTERNAL_LINKS = []`, `FOOTER_PRIMARY_QUICK = []`, `FOOTER_SECONDARY = []`, `SUB_NAVIGATION_ITEMS = []`) with comments noting that CMS-driven external links were "removed - now managed by OpenCatalogi".
