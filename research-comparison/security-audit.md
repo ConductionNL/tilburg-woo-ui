@@ -23,7 +23,7 @@ The most serious findings are in the CORS configuration and token storage. The X
 
 ### C1 — CORS reflects any origin with credentials enabled
 
-**File:** [config/nginx.conf.template](tilburg-woo-ui/config/nginx.conf.template)
+**File:** [config/nginx.conf.template](../config/nginx.conf.template)
 
 The API proxy block reflects the request's `Origin` header back verbatim in `Access-Control-Allow-Origin`, combined with `Access-Control-Allow-Credentials: true`:
 
@@ -50,7 +50,7 @@ add_header Access-Control-Allow-Origin $cors_origin always;
 
 ### H1 — Auth token cookie missing `Secure` flag
 
-**File:** [src/stores/user.store.js:287](tilburg-woo-ui/src/stores/user.store.js#L287)
+**File:** [src/stores/user.store.js:287](../src/stores/user.store.js#L287)
 
 ```js
 document.cookie = `openconnector_access_token=${data.access_token}; path=/; SameSite=Lax`;
@@ -64,7 +64,7 @@ The `openconnector_access_token` cookie — the app's primary authentication cre
 
 ### H2 — Access tokens stored in localStorage
 
-**File:** [src/utilities/ac-storage.js:6-7](tilburg-woo-ui/src/utilities/ac-storage.js#L6)
+**File:** [src/utilities/ac-storage.js:6-7](../src/utilities/ac-storage.js#L6)
 
 ```js
 const _type_of_storage = process.env.STORAGE || 'local';
@@ -79,7 +79,7 @@ const _storage = window[`${_type_of_storage}Storage`];
 
 ### H3 — Nextcloud OAuth tokens set with `httpOnly: false`
 
-**File:** [src/views/ac-nextcloud-authorization/ac-nextcloud-authorization.js:125-137](tilburg-woo-ui/src/views/ac-nextcloud-authorization/ac-nextcloud-authorization.js#L125)
+**File:** [src/views/ac-nextcloud-authorization/ac-nextcloud-authorization.js:125-137](../src/views/ac-nextcloud-authorization/ac-nextcloud-authorization.js#L125)
 
 ```js
 setCookie('nextcloud_access_token', access_token, expires_in, {
@@ -99,7 +99,7 @@ setCookie('nextcloud_access_token', access_token, expires_in, {
 
 ### M1 — Missing security headers: CSP, HSTS, Referrer-Policy
 
-**File:** [config/nginx.conf.template](tilburg-woo-ui/config/nginx.conf.template)
+**File:** [config/nginx.conf.template](../config/nginx.conf.template)
 
 Current headers:
 ```nginx
@@ -130,7 +130,7 @@ CSP will require tuning based on actual script/style sources (inline styles from
 
 ### M2 — `dangerouslySetInnerHTML` with unsanitized DOM clone
 
-**File:** [src/views/con-beheer-views/con-beheer-views.js:87, :1154](tilburg-woo-ui/src/views/con-beheer-views/con-beheer-views.js#L87)
+**File:** [src/views/con-beheer-views/con-beheer-views.js:87, :1154](../src/views/con-beheer-views/con-beheer-views.js#L87)
 
 ```js
 const clonedContainer = container.cloneNode(true);   // line 87
@@ -150,7 +150,7 @@ Compare: `con-template-text.js` correctly wraps its `dangerouslySetInnerHTML` wi
 
 ### M3 — Basic auth credentials accessible on `window.app`
 
-**File:** [src/stores/chat.store.js:74-82](tilburg-woo-ui/src/stores/chat.store.js#L74)
+**File:** [src/stores/chat.store.js:74-82](../src/stores/chat.store.js#L74)
 
 ```js
 if (window.app && window.app.store && window.app.store.user &&
@@ -161,7 +161,7 @@ if (window.app && window.app.store && window.app.store.user &&
 }
 ```
 
-The global `window.app` exposes the full MobX store tree including plaintext credentials. Any XSS, browser extension, or third-party script can call `window.app.store.user.basicAuthCredentials` to extract credentials. The same pattern exists in [src/config/index.js](tilburg-woo-ui/src/config/index.js) and in [src/stores/publications.store.js:32-64](tilburg-woo-ui/src/stores/publications.store.js#L32-L64) (`getAuthHeaders` reaches into `window.app.store.user.basicAuthCredentials` for search/facets fetches).
+The global `window.app` exposes the full MobX store tree including plaintext credentials. Any XSS, browser extension, or third-party script can call `window.app.store.user.basicAuthCredentials` to extract credentials. The same pattern exists in [src/config/index.js](../src/config/index.js) and in [src/stores/publications.store.js:32-64](../src/stores/publications.store.js#L32-L64) (`getAuthHeaders` reaches into `window.app.store.user.basicAuthCredentials` for search/facets fetches).
 
 **Fix:** Remove the global store reference from `window`. Pass credentials through a context or store accessor that does not expose the raw username/password, and remove the basic auth fallback once Bearer token support is complete (see the `TODO` in `config/index.js:106`).
 
@@ -169,7 +169,7 @@ The global `window.app` exposes the full MobX store tree including plaintext cre
 
 ### M4 — `redirect_url` read from sessionStorage without validation
 
-**File:** [src/views/ac-nextcloud-authorization/ac-nextcloud-authorization.js:75-143](tilburg-woo-ui/src/views/ac-nextcloud-authorization/ac-nextcloud-authorization.js#L75)
+**File:** [src/views/ac-nextcloud-authorization/ac-nextcloud-authorization.js:75-143](../src/views/ac-nextcloud-authorization/ac-nextcloud-authorization.js#L75)
 
 ```js
 const redirect_url = sessionStorage.getItem('redirect_url');
@@ -188,7 +188,7 @@ Risk is low but this is worth validating: confirm the value is a relative path b
 
 ### L1 — `dompurify` version behind Acato's
 
-**File:** [package.json](tilburg-woo-ui/package.json)
+**File:** [package.json](../package.json)
 
 Our version is `^3.1.4`, Acato pins `3.2.4`. DOMPurify 3.2.x includes security fixes. This was already flagged in the dependency analysis — prioritise the bump.
 
@@ -196,7 +196,7 @@ Our version is `^3.1.4`, Acato pins `3.2.4`. DOMPurify 3.2.x includes security f
 
 ### L2 — `rollbar-sourcemap-webpack-plugin` uploads source maps to Rollbar
 
-**File:** [package.json](tilburg-woo-ui/package.json) (devDependency)
+**File:** [package.json](../package.json) (devDependency)
 
 If source maps are uploaded to Rollbar in production builds, any party with access to the Rollbar account (or a leaked Rollbar token) can read the original unminified source code. Verify the plugin is only configured when `ENABLE_ROLLBAR=true` and that the `ROLLBAR_KEY` is rotated if it has ever appeared in any committed config file.
 
@@ -204,7 +204,7 @@ If source maps are uploaded to Rollbar in production builds, any party with acce
 
 ### L3 — `X-XSS-Protection` header should be removed
 
-**File:** [config/nginx.conf.template:29](tilburg-woo-ui/config/nginx.conf.template#L29)
+**File:** [config/nginx.conf.template:29](../config/nginx.conf.template#L29)
 
 `X-XSS-Protection "1; mode=block"` is ignored by all modern browsers and in some edge cases has been used to introduce XSS via the IE XSS auditor. Remove it and replace with CSP (M1).
 
@@ -212,7 +212,7 @@ If source maps are uploaded to Rollbar in production builds, any party with acce
 
 ### L4 — TODO: Bearer token endpoint still uses basic auth fallback
 
-**File:** [src/config/index.js:106](tilburg-woo-ui/src/config/index.js#L106)
+**File:** [src/config/index.js:106](../src/config/index.js#L106)
 
 ```js
 // TODO: Implement Bearer token endpoint in OpenConnector to replace basic auth

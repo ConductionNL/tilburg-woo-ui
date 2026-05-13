@@ -7,23 +7,23 @@
 ## Files Compared
 
 **Both (paths exist in both repos — content diverges):**
-- [tilburg-woo-ui/src/components/ac-header/ac-header.js](tilburg-woo-ui/src/components/ac-header/ac-header.js) vs [tilburg-woo-ui_acato/src/components/ac-header/ac-header.js](tilburg-woo-ui_acato/src/components/ac-header/ac-header.js)
-- [tilburg-woo-ui/src/components/ac-footer/ac-footer.js](tilburg-woo-ui/src/components/ac-footer/ac-footer.js) vs [tilburg-woo-ui_acato/src/components/ac-footer/ac-footer.js](tilburg-woo-ui_acato/src/components/ac-footer/ac-footer.js)
-- [tilburg-woo-ui/src/components/ac-navigation/ac-navigation.js](tilburg-woo-ui/src/components/ac-navigation/ac-navigation.js) vs [tilburg-woo-ui_acato/src/components/ac-navigation/ac-navigation.js](tilburg-woo-ui_acato/src/components/ac-navigation/ac-navigation.js)
-- [tilburg-woo-ui/src/components/ac-drawer/ac-drawer.js](tilburg-woo-ui/src/components/ac-drawer/ac-drawer.js) vs [tilburg-woo-ui_acato/src/components/ac-drawer/ac-drawer.js](tilburg-woo-ui_acato/src/components/ac-drawer/ac-drawer.js)
-- [tilburg-woo-ui/src/molecules/ac-breadcrumbs/ac-breadcrumbs.js](tilburg-woo-ui/src/molecules/ac-breadcrumbs/ac-breadcrumbs.js) vs [tilburg-woo-ui_acato/src/molecules/ac-breadcrumbs/ac-breadcrumbs.js](tilburg-woo-ui_acato/src/molecules/ac-breadcrumbs/ac-breadcrumbs.js)
+- [src/components/ac-header/ac-header.js](../src/components/ac-header/ac-header.js) (Acato's equivalent at the same path)
+- [src/components/ac-footer/ac-footer.js](../src/components/ac-footer/ac-footer.js) (Acato's equivalent at the same path)
+- [src/components/ac-navigation/ac-navigation.js](../src/components/ac-navigation/ac-navigation.js) (Acato's equivalent at the same path)
+- [src/components/ac-drawer/ac-drawer.js](../src/components/ac-drawer/ac-drawer.js) (Acato's equivalent at the same path)
+- [src/molecules/ac-breadcrumbs/ac-breadcrumbs.js](../src/molecules/ac-breadcrumbs/ac-breadcrumbs.js) (Acato's equivalent at the same path)
 - Matching SCSS pairs: `_ac-header.scss`, `_ac-footer.scss`, `_ac-navigation.scss`, `_ac-drawer.scss` (all four differ)
 
 **Ours only:**
-- [tilburg-woo-ui/src/components/ac-c-navigation/ac-c-navigation.js](tilburg-woo-ui/src/components/ac-c-navigation/ac-c-navigation.js) — secondary nav with dropdown
-- [tilburg-woo-ui/src/components/ac-sidenav/ac-side-nav.js](tilburg-woo-ui/src/components/ac-sidenav/ac-side-nav.js) — hardcoded admin sidenav (older)
-- [tilburg-woo-ui/src/components/con-dynamic-sidenav/con-dynamic-sidenav.js](tilburg-woo-ui/src/components/con-dynamic-sidenav/con-dynamic-sidenav.js) — backend-driven admin sidenav
-- [tilburg-woo-ui/src/api/menu.api.js](tilburg-woo-ui/src/api/menu.api.js) — menu list/single endpoints
-- [tilburg-woo-ui/src/stores/menu.store.js](tilburg-woo-ui/src/stores/menu.store.js) — menu store with positions, auth filtering, group filtering, template processing
-- [tilburg-woo-ui/src/styles/components/_ac-c-navigation.scss](tilburg-woo-ui/src/styles/components/_ac-c-navigation.scss)
+- [src/components/ac-c-navigation/ac-c-navigation.js](../src/components/ac-c-navigation/ac-c-navigation.js) — secondary nav with dropdown
+- [src/components/ac-sidenav/ac-side-nav.js](../src/components/ac-sidenav/ac-side-nav.js) — hardcoded admin sidenav (older)
+- [src/components/con-dynamic-sidenav/con-dynamic-sidenav.js](../src/components/con-dynamic-sidenav/con-dynamic-sidenav.js) — backend-driven admin sidenav
+- [src/api/menu.api.js](../src/api/menu.api.js) — menu list/single endpoints
+- [src/stores/menu.store.js](../src/stores/menu.store.js) — menu store with positions, auth filtering, group filtering, template processing
+- [src/styles/components/_ac-c-navigation.scss](../src/styles/components/_ac-c-navigation.scss)
 - `menuPositions.png` (documentation image)
 
-**Acato only:** none in this category. Footer relies on static `FOOTER_PRIMARY_ABOUT`, `FOOTER_PRIMARY_QUICK`, `FOOTER_SECONDARY` arrays exported from [tilburg-woo-ui_acato/src/constants/routes.constants.js:158-173](tilburg-woo-ui_acato/src/constants/routes.constants.js#L158).
+**Acato only:** none in this category. Footer relies on static `FOOTER_PRIMARY_ABOUT`, `FOOTER_PRIMARY_QUICK`, `FOOTER_SECONDARY` arrays exported from Acato's `src/constants/routes.constants.js:158-173`.
 
 ---
 
@@ -44,22 +44,22 @@
 The biggest difference, and it cascades everywhere.
 
 - **Acato** hardcodes navigation everywhere:
-  - `AcNavigation` lists four static `<Link>` items (Over Open Tilburg, Zoeken, Onderwerpen [commented out], Contact) — see [tilburg-woo-ui_acato/src/components/ac-navigation/ac-navigation.js:23-49](tilburg-woo-ui_acato/src/components/ac-navigation/ac-navigation.js#L23-L49).
+  - `AcNavigation` lists four static `<Link>` items (Over Open Tilburg, Zoeken, Onderwerpen [commented out], Contact) — see Acato's `src/components/ac-navigation/ac-navigation.js:23-49`.
   - `AcFooter` maps over three static arrays imported from `routes.constants.js`.
   - No store, no API call, no notion of menu "positions."
 
 - **Ours** runs a full dynamic menu system backed by `MenuStore` + `MenuAPI`:
   - Menus are fetched once into `menu.all_menu_items` and looked up by **position** (1=main nav, 2=secondary nav, 3/4/5=footer columns, 6=sub-footer, 7=admin dashboard sidenav). Positions are documented visually in `menuPositions.png`.
-  - The store applies `hideBeforeLogin` / `hideAfterLogin` flags per menu and per item, plus a `groups[]` allowlist that intersects with `user.userGroups` ([tilburg-woo-ui/src/stores/menu.store.js:134-162](tilburg-woo-ui/src/stores/menu.store.js#L134-L162)).
-  - Menu titles/names run through `processUserTemplate` so backend strings can interpolate user data ([tilburg-woo-ui/src/stores/menu.store.js:177-189](tilburg-woo-ui/src/stores/menu.store.js#L177-L189)).
-  - Position-7 lookup has a `title === 'Dashboard'` tiebreaker to skip test menus ([tilburg-woo-ui/src/stores/menu.store.js:81-90](tilburg-woo-ui/src/stores/menu.store.js#L81-L90)).
+  - The store applies `hideBeforeLogin` / `hideAfterLogin` flags per menu and per item, plus a `groups[]` allowlist that intersects with `user.userGroups` ([src/stores/menu.store.js:134-162](../src/stores/menu.store.js#L134-L162)).
+  - Menu titles/names run through `processUserTemplate` so backend strings can interpolate user data ([src/stores/menu.store.js:177-189](../src/stores/menu.store.js#L177-L189)).
+  - Position-7 lookup has a `title === 'Dashboard'` tiebreaker to skip test menus ([src/stores/menu.store.js:81-90](../src/stores/menu.store.js#L81-L90)).
 
 ### 2. `AcHeader` complexity
 
 - **Acato (50 LOC)**: pure rendering. Two zones: logo + nav, then breadcrumbs.
 - **Ours (260 LOC)**: three zones (main, secondary, breadcrumbs). Adds:
   - Authenticated-user info link with avatar, full name fallback chain (`firstName middleName lastName` → `displayName` → `email`), and the active organisation name in parentheses.
-  - A multi-attempt async fetch of the full organisation object (up to 3 retries, 200 ms apart) so the display name reflects the canonical `@self.name` rather than the session snapshot ([tilburg-woo-ui/src/components/ac-header/ac-header.js:41-92](tilburg-woo-ui/src/components/ac-header/ac-header.js#L41-L92)).
+  - A multi-attempt async fetch of the full organisation object (up to 3 retries, 200 ms apart) so the display name reflects the canonical `@self.name` rather than the session snapshot ([src/components/ac-header/ac-header.js:41-92](../src/components/ac-header/ac-header.js#L41-L92)).
   - A secondary navigation strip rendering `AcCNavigation` from menu position 2, with an **additional inline `getIconForMenuItem` mapper** that injects the admin (position 7) menu as a dropdown when the viewport is `≤ 1024 px` and the user is on a `/beheer/*` route — a mobile collapse of the admin sidenav.
   - Skip-link target is `#main` (Acato uses `${pathname}#main`).
   - Uses `<ConLogo variant="header">` and `<h1>{getTitle()}</h1>` rather than Acato's `<VISUALS.LOGO />` + `<span>{LABELS.APP_NAME}</span>`.
@@ -67,7 +67,7 @@ The biggest difference, and it cascades everywhere.
 ### 3. `AcNavigation`
 
 - **Acato**: hardcoded `<ul>`, no store, no auth awareness.
-- **Ours**: reads `menu.getMenuFromPosition(1, isAuthenticated, userGroups)`, filters out login/register items when already authenticated using a small `LOGIN_PATHS` / `LOGIN_NAMES` allowlist ([tilburg-woo-ui/src/components/ac-navigation/ac-navigation.js:21-35](tilburg-woo-ui/src/components/ac-navigation/ac-navigation.js#L21-L35)), and triggers `fetchMenus()` on mount if the store is empty. Icons resolved by string name against `VISUALS`.
+- **Ours**: reads `menu.getMenuFromPosition(1, isAuthenticated, userGroups)`, filters out login/register items when already authenticated using a small `LOGIN_PATHS` / `LOGIN_NAMES` allowlist ([src/components/ac-navigation/ac-navigation.js:21-35](../src/components/ac-navigation/ac-navigation.js#L21-L35)), and triggers `fetchMenus()` on mount if the store is empty. Icons resolved by string name against `VISUALS`.
 
 ### 4. `AcFooter`
 
@@ -98,11 +98,11 @@ All four shared style files differ (header +145 lines vs Acato, footer +75, nav 
 
 ## Only in ours
 
-- **`AcCNavigation`** ([ac-c-navigation.js](tilburg-woo-ui/src/components/ac-c-navigation/ac-c-navigation.js)) — a horizontal secondary navigation bar that supports nested dropdowns (`items[].items`) and `dropdown-overflow` styling when an item has more than 8 sub-items. Currently rendered only from `AcHeader` for position-2 menus and the injected admin dropdown.
-- **`AcSideNav`** ([ac-side-nav.js](tilburg-woo-ui/src/components/ac-sidenav/ac-side-nav.js)) — a hardcoded `@gemeente-denhaag/components-react` sidenav with 9 fixed beheer routes. Looks like dead/legacy code — `ConDynamicSidenav` covers the same purpose dynamically.
-- **`ConDynamicSidenav`** ([con-dynamic-sidenav.js](tilburg-woo-ui/src/components/con-dynamic-sidenav/con-dynamic-sidenav.js)) — same sidenav idea but reads from menu position 7, with its own `getIconForMenuItem` icon-mapping helper (duplicated from `AcHeader`).
-- **`MenuStore`** ([menu.store.js](tilburg-woo-ui/src/stores/menu.store.js)) — full MobX store: `fetchMenus`, `fetchMenu(id)`, `getMenuFromPosition`, `getMenusFromPositions`, `getFooterMenus`, `getSubFooterMenus`, `getAdminMenus`, `getAdminDashboardMenu`, `shouldShowMenu`, `shouldShowMenuItem`, `filterMenuItems`, `processMenuTemplate`.
-- **`MenuAPI`** ([menu.api.js](tilburg-woo-ui/src/api/menu.api.js)) — `list()` (limit 100) and `single(id)` against `ENDPOINTS.MENU`.
+- **`AcCNavigation`** ([ac-c-navigation.js](../src/components/ac-c-navigation/ac-c-navigation.js)) — a horizontal secondary navigation bar that supports nested dropdowns (`items[].items`) and `dropdown-overflow` styling when an item has more than 8 sub-items. Currently rendered only from `AcHeader` for position-2 menus and the injected admin dropdown.
+- **`AcSideNav`** ([ac-side-nav.js](../src/components/ac-sidenav/ac-side-nav.js)) — a hardcoded `@gemeente-denhaag/components-react` sidenav with 9 fixed beheer routes. Looks like dead/legacy code — `ConDynamicSidenav` covers the same purpose dynamically.
+- **`ConDynamicSidenav`** ([con-dynamic-sidenav.js](../src/components/con-dynamic-sidenav/con-dynamic-sidenav.js)) — same sidenav idea but reads from menu position 7, with its own `getIconForMenuItem` icon-mapping helper (duplicated from `AcHeader`).
+- **`MenuStore`** ([menu.store.js](../src/stores/menu.store.js)) — full MobX store: `fetchMenus`, `fetchMenu(id)`, `getMenuFromPosition`, `getMenusFromPositions`, `getFooterMenus`, `getSubFooterMenus`, `getAdminMenus`, `getAdminDashboardMenu`, `shouldShowMenu`, `shouldShowMenuItem`, `filterMenuItems`, `processMenuTemplate`.
+- **`MenuAPI`** ([menu.api.js](../src/api/menu.api.js)) — `list()` (limit 100) and `single(id)` against `ENDPOINTS.MENU`.
 
 ---
 

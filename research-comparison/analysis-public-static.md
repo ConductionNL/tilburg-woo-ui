@@ -25,7 +25,7 @@
 **Acato only:**
 - `public/placeholder.png`
 
-> Acato has no `static/` directory at all. Our `static/` directory exists solely to host one Avenir font file referenced from [src/styles/global/_fontfaces.scss:134](tilburg-woo-ui/src/styles/global/_fontfaces.scss#L134).
+> Acato has no `static/` directory at all. Our `static/` directory exists solely to host one Avenir font file referenced from [src/styles/global/_fontfaces.scss:134](../src/styles/global/_fontfaces.scss#L134).
 
 ---
 
@@ -33,7 +33,7 @@
 
 - **`public/robots.txt`** — byte-identical (`md5: 50d8a01…`). Both files are the same 23-byte permissive `User-agent: * / Disallow:` stub.
 - **`public/favicon.svg`** — byte-identical (`md5: 7de552d…`, 375 KB).
-- **`public/home-hero-background.png`** — byte-identical (`md5: 6d65633…`, 1.4 MB). Both repos load it from the same path (`/home-hero-background.png`) in [ac-hero.js](tilburg-woo-ui/src/components/ac-hero/ac-hero.js#L78).
+- **`public/home-hero-background.png`** — byte-identical (`md5: 6d65633…`, 1.4 MB). Both repos load it from the same path (`/home-hero-background.png`) in [ac-hero.js](../src/components/ac-hero/ac-hero.js#L78).
 - **`public/index.html`** common shell — `<!DOCTYPE html>`, `<html lang="nl" translate="no">`, the same set of meta tags (charset, X-UA-Compatible, viewport, format-detection, description), the same favicon SVG fallback link, the same `dns-prefetch` placeholders for `%API_URL%` and `%STORAGE_URL%`, the same Apple/Android touch-icon and webmanifest block under `/meta/`, the same `mask-icon` with color `#0091c5`, `theme-color #ffffff`, `<base href="/">`, the same external font kit preconnect/link (`cdn.fonts.net/kit/98d15e86-…`), and the same `<noscript>` + `<div id="root">` body. The differences are confined to the small set of insertions below.
 - **`public/.htaccess`** — the vast majority is identical: `Options`/`ServerSignature` block, the same set of base security headers (X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Set-Cookie HttpOnly/Secure/SameSite=Lax, X-Permitted-Cross-Domain-Policies, Feature-Policy, Permissions-Policy), the same generic / HTML / MIME / `mod_expires` / GZIP blocks, the same 1-year font cache and 4-week image cache `FilesMatch` rules, the same `Limit GET` / deny-everything-else block, the same PHP and `mod_speling` blocks, and the same SPA `RewriteRule ^ /index.html [L]` fallback.
 
@@ -45,7 +45,7 @@
 |---|---|---|
 | Cache-busting meta tags | Adds `<meta name="build-timestamp" content="%BUILD_TIMESTAMP%">` and `<meta name="build-version" content="%BUILD_VERSION%">` (lines 17–19). Filled in by our build pipeline; ties into the `CACHE-BUSTING-GUIDE.md` system. | Absent. |
 | Favicon links | Both favicon links carry `id` attributes (`id="favicon"` for SVG, `id="faviconMeta"` for the `.ico`). Lets runtime JS swap the favicon via `getElementById`. | Same two links, but without the `id` attributes, so they can't be swapped at runtime. |
-| Runtime config bootstrap | Inlines `<script src="%PUBLIC_URL%/runtime-config.js"></script>` in `<head>` (line 76), **before** the React bundle. This is the entry point of the runtime-config system (see [generate-runtime-config.js](tilburg-woo-ui/scripts/generate-runtime-config.js) and [container.constants.js](tilburg-woo-ui/src/constants/container.constants.js)). | No runtime-config script. Acato relies purely on build-time webpack env injection. |
+| Runtime config bootstrap | Inlines `<script src="%PUBLIC_URL%/runtime-config.js"></script>` in `<head>` (line 76), **before** the React bundle. This is the entry point of the runtime-config system (see [generate-runtime-config.js](../scripts/generate-runtime-config.js) and [container.constants.js](../src/constants/container.constants.js)). | No runtime-config script. Acato relies purely on build-time webpack env injection. |
 | Analytics in `<body>` | Inlines a 24-line Piwik Pro Analytics bootstrap (lines 80–104) that reads `%PIWIK_SRC_URL%`, `%PIWIK_DATA_LAYER%`, and `%PIWIK_ID%` placeholders. If any value is missing it logs an error or no-ops; otherwise it injects the Piwik tag script and seeds `window[dataLayerName]`. | Inlines a one-liner `<script async src="https://siteimproveanalytics.com/js/siteanalyze_6006199.js"></script>` — Siteimprove instead of Piwik. |
 | `<body>` element | `<body id="body">` — extra DOM id (handy for global selectors). | `<body>` — no id. |
 
@@ -78,14 +78,14 @@ Three meaningful differences. The other diffs are whitespace / comment phrasing 
 
    Notes:
    - Both keep `script-src 'self' siteimproveanalytics.com`, even though our `index.html` injects Piwik (not Siteimprove) and Acato's injects Siteimprove. Our CSP therefore allows a script our HTML never loads (Siteimprove) but does **not** allow our actual analytics (Piwik). If `%PIWIK_SRC_URL%` resolves to anything outside `'self'`, browsers will block it under the current CSP. This is worth flagging — see Recommendation.
-   - Both repos whitelist `*.rollbar.com` and `*.commonground.nu` in `connect-src`. The Rollbar entry is load-bearing for us (matches the [rollbar dependency](tilburg-woo-ui/package.json) and `ENABLE_ROLLBAR` toggle) and appears to be a leftover in Acato — they ship no Rollbar code. Ours additionally widens `connect-src` for opencatalogi APIs and Nextcloud (the chat/nextcloud-auth feature in category 14/16), which Acato lacks.
+   - Both repos whitelist `*.rollbar.com` and `*.commonground.nu` in `connect-src`. The Rollbar entry is load-bearing for us (matches the [rollbar dependency](../package.json) and `ENABLE_ROLLBAR` toggle) and appears to be a leftover in Acato — they ship no Rollbar code. Ours additionally widens `connect-src` for opencatalogi APIs and Nextcloud (the chat/nextcloud-auth feature in category 14/16), which Acato lacks.
    - Acato's `*.digitaloceanspaces.com` (img-src only) implies their deployment hosts images on DigitalOcean Spaces; we don't, so we don't need it.
 
 The header set is otherwise identical. There is no difference in Feature-Policy, Permissions-Policy, Referrer-Policy, Set-Cookie hardening, gzip/deflate, MIME mapping, `mod_expires`, or the SPA rewrite rule.
 
 ## Only in ours
 
-- **`public/runtime-config.js`** — auto-generated stub that defines `window.RUNTIME_CONFIG = { … }` (≈ 55 keys covering site identity, auth flags, feature toggles, Rollbar config, Chat/GEMMA endpoints, Nginx upstreams, theme variant, footer copy, etc.). Loaded synchronously before the React bundle via `<script src="%PUBLIC_URL%/runtime-config.js">` and consumed by [container.constants.js](tilburg-woo-ui/src/constants/container.constants.js#L363) (`getRuntimeConfig`). Generated at container start by [scripts/generate-runtime-config.js](tilburg-woo-ui/scripts/generate-runtime-config.js); the file checked into `public/` is a development-mode template (note `"SITE_TITLE": "Hot Reload Development 🔥"`). This is the foundation of our env-var-driven multi-tenant deployment story and has no equivalent in Acato.
+- **`public/runtime-config.js`** — auto-generated stub that defines `window.RUNTIME_CONFIG = { … }` (≈ 55 keys covering site identity, auth flags, feature toggles, Rollbar config, Chat/GEMMA endpoints, Nginx upstreams, theme variant, footer copy, etc.). Loaded synchronously before the React bundle via `<script src="%PUBLIC_URL%/runtime-config.js">` and consumed by [container.constants.js](../src/constants/container.constants.js#L363) (`getRuntimeConfig`). Generated at container start by [scripts/generate-runtime-config.js](../scripts/generate-runtime-config.js); the file checked into `public/` is a development-mode template (note `"SITE_TITLE": "Hot Reload Development 🔥"`). This is the foundation of our env-var-driven multi-tenant deployment story and has no equivalent in Acato.
 
 - **`public/card-placeholder-1.png`, `card-placeholder-2.png`, `card-placeholder-3.png`** — three card-sized placeholder images (~160–180 KB each). **No references found anywhere in the repo** (searched `src/`, `public/`, `config/`, `scripts/`, `helm/`, all `.js/.scss/.html/.yaml/.tpl/.conf` files). They may be intended for runtime use through a future configurable card image, or be a leftover from a removed design iteration. Treat as unused until proven otherwise.
 
@@ -93,11 +93,11 @@ The header set is otherwise identical. There is no difference in Feature-Policy,
 
 - **`public/vng-favicon.ico`** — VNG-branded favicon (`.ico`). **No references found in the repo** — index.html points to `%PUBLIC_URL%/favicon.svg` and `%PUBLIC_URL%/meta/favicon.ico`, not this file. Likely intended for runtime favicon swapping via the `id="favicon"` / `id="faviconMeta"` hooks plus the `FAVICON_URL` runtime-config key, but I could not find code that actually performs the swap. Worth verifying with whoever added the runtime-config theming hooks.
 
-- **`static/fonts/avenir-lt-w01-55-roman.woff2`** — Avenir LT W01 55 Roman, 17 KB. Referenced exactly once from [src/styles/global/_fontfaces.scss:134](tilburg-woo-ui/src/styles/global/_fontfaces.scss#L134) (`url("../../../static/fonts/avenir-lt-w01-55-roman.woff2") format("woff2")`). The path `../../../static/fonts/…` walks out of `src/styles/global/` to the repo-root `static/` directory, which is why this folder exists outside `public/`. Acato's font stack does not include Avenir.
+- **`static/fonts/avenir-lt-w01-55-roman.woff2`** — Avenir LT W01 55 Roman, 17 KB. Referenced exactly once from [src/styles/global/_fontfaces.scss:134](../src/styles/global/_fontfaces.scss#L134) (`url("../../../static/fonts/avenir-lt-w01-55-roman.woff2") format("woff2")`). The path `../../../static/fonts/…` walks out of `src/styles/global/` to the repo-root `static/` directory, which is why this folder exists outside `public/`. Acato's font stack does not include Avenir.
 
 ## Only in Acato's
 
-- **`public/placeholder.png`** — single generic placeholder (~330 KB). **No references found** in `src/` or `public/` of Acato either. **However**, our mock theme data in [src/stores/themes.store.js:22–40](tilburg-woo-ui/src/stores/themes.store.js#L22-L40) references `'/placeholder.png'` four times. That path resolves to **a 404 in our build** (we have no `public/placeholder.png`), whereas Acato's repo has the file. This is the only case in this category where Acato has an asset we should arguably copy in: it would silently fix a broken image whenever `ENABLE_MOCK_THEMES` is on and the themes API is unavailable.
+- **`public/placeholder.png`** — single generic placeholder (~330 KB). **No references found** in `src/` or `public/` of Acato either. **However**, our mock theme data in [src/stores/themes.store.js:22–40](../src/stores/themes.store.js#L22-L40) references `'/placeholder.png'` four times. That path resolves to **a 404 in our build** (we have no `public/placeholder.png`), whereas Acato's repo has the file. This is the only case in this category where Acato has an asset we should arguably copy in: it would silently fix a broken image whenever `ENABLE_MOCK_THEMES` is on and the themes API is unavailable.
 
 ## Recommendation
 
@@ -116,7 +116,7 @@ The header set is otherwise identical. There is no difference in Feature-Policy,
 | `public/card-placeholder-1/2/3.png`, `about-tilburg-placeholder.png` | **Needs decision.** | Currently unreferenced in the codebase. Either (a) find/restore the code that consumed them and keep, or (b) delete to shed ~800 KB of dead bytes. **Don't silently drop without checking with whoever added them** — they may be loaded via runtime-config or external CMS content. |
 | `public/vng-favicon.ico` | **Needs decision.** | Unreferenced today; the `id="favicon"` + `FAVICON_URL` infrastructure suggests it was meant for runtime favicon swapping. Either wire up the swap (small JS hook reading `FAVICON_URL` and replacing `document.getElementById('favicon').href`) or delete the asset. |
 | `static/fonts/avenir-lt-w01-55-roman.woff2` | **Keep ours.** | Actively referenced from `_fontfaces.scss`. |
-| `public/placeholder.png` (Acato only) | **Take from Acato — small but real fix.** | Drops a 404 in our mock-themes flow ([themes.store.js:22–40](tilburg-woo-ui/src/stores/themes.store.js#L22-L40)). Alternative: change the mock data to reference one of our existing placeholders (e.g. `card-placeholder-1.png`) and delete the broken refs instead — that ties this decision to the "unreferenced placeholders" decision above. |
+| `public/placeholder.png` (Acato only) | **Take from Acato — small but real fix.** | Drops a 404 in our mock-themes flow ([themes.store.js:22–40](../src/stores/themes.store.js#L22-L40)). Alternative: change the mock data to reference one of our existing placeholders (e.g. `card-placeholder-1.png`) and delete the broken refs instead — that ties this decision to the "unreferenced placeholders" decision above. |
 
 ### Items requiring a human decision (not just technical)
 

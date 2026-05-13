@@ -8,7 +8,7 @@
 
 A small, self-contained feature that scans rendered content for glossary terms, wraps each first hit in a `<mark>` and exposes definitions through a side drawer. The terms are fetched from `/opencatalogi/api/glossary` once on app boot.
 
-**Acato has nothing in this category.** No store, no drawer, no highlight component, no `con-glossary*` files anywhere in [tilburg-woo-ui_acato/src/](../../tilburg-woo-ui_acato/src/). The only glossary-shaped trace is one line in Acato's [src/utilities/ac-match-substring.js:20](../../tilburg-woo-ui_acato/src/utilities/ac-match-substring.js#L20) that still emits a `data-glossary-id='${id}'` attribute on its `<mark>` output — a dormant hook from a common ancestor with no consumer on their side.
+**Acato has nothing in this category.** No store, no drawer, no highlight component, no `con-glossary*` files anywhere in Acato's `src/`. The only glossary-shaped trace is one line in Acato's `src/utilities/ac-match-substring.js:20` that still emits a `data-glossary-id='${id}'` attribute on its `<mark>` output — a dormant hook from a common ancestor with no consumer on their side.
 
 This category is ours-only — the verdict is **keep**, no merge decision needed.
 

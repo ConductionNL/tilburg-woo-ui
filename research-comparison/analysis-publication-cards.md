@@ -35,7 +35,7 @@
 
 Two changes:
 1. **Ours adds an `organisation` prop** (line 7, 18) that emits an `ac-card--organisation` modifier class. Acato's atom has no awareness of this variant.
-2. **Ours fixes a JSX bug**: the content wrapper uses `className='ac-card__content'`, while Acato's still uses the invalid HTML attribute `class='ac-card__content'` ([acato/src/atoms/ac-card/ac-card.js:26](../../tilburg-woo-ui_acato/src/atoms/ac-card/ac-card.js#L26)). In React, `class` is silently dropped — Acato's atom does not actually emit the content-wrapper class. This is a real bug in Acato's version.
+2. **Ours fixes a JSX bug**: the content wrapper uses `className='ac-card__content'`, while Acato's still uses the invalid HTML attribute `class='ac-card__content'` (Acato's `src/atoms/ac-card/ac-card.js:26`). In React, `class` is silently dropped — Acato's atom does not actually emit the content-wrapper class. This is a real bug in Acato's version.
 
 ### `ac-card-intro.js` (molecule)
 

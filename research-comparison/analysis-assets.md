@@ -78,7 +78,7 @@ This is the **most surprising finding** in this category — despite both repos 
 
 ### Fonts — `roboto-condensed.woff2` (Acato only)
 
-Referenced exactly once in [tilburg-woo-ui_acato/src/styles/global/_fontfaces.scss](../../tilburg-woo-ui_acato/src/styles/global/_fontfaces.scss) (Acato's font stack). Ours has no `roboto-condensed` reference anywhere under `src/`. This means Acato actually uses Roboto Condensed; we dropped it (and presumably whichever component it was styling) somewhere during our fork.
+Referenced exactly once in Acato's `src/styles/global/_fontfaces.scss`. Ours has no `roboto-condensed` reference anywhere under `src/`. This means Acato actually uses Roboto Condensed; we dropped it (and presumably whichever component it was styling) somewhere during our fork.
 
 ### Images — diverged shared (12 of 26)
 
@@ -113,7 +113,7 @@ Each icon is a detailed line-art SVG for a Dutch WOO (Wet open overheid) publica
 - `raadsstuk.svg` (2.2 KB) — council document
 - `woo-verzoek.svg` (877 B) — WOO request
 
-They are wired up in [tilburg-woo-ui_acato/src/constants/visuals.constants.js](../../tilburg-woo-ui_acato/src/constants/visuals.constants.js) and consumed by `ac-card-category.js` and `ac-themes.js` (category 6 themes browsing). Our codebase has no equivalent icon set for these specific WOO document types — our publication-type system is broader (gebruik, koppeling, dienst, module, organisatie, applicatie…) and uses a different visual vocabulary.
+They are wired up in Acato's `src/constants/visuals.constants.js` and consumed by `ac-card-category.js` and `ac-themes.js` (category 6 themes browsing). Our codebase has no equivalent icon set for these specific WOO document types — our publication-type system is broader (gebruik, koppeling, dienst, module, organisatie, applicatie…) and uses a different visual vocabulary.
 
 ### Images — Ours only (57 additional SVGs)
 
@@ -142,7 +142,7 @@ These are all FontAwesome-style line icons exported individually as SVGs. They d
 |---|---|---|
 | `AC Icons` font set | **No action.** | Byte-identical across repos. |
 | `roboto-v30-latin-*` fonts | **No action.** | Byte-identical across repos. |
-| `roboto-condensed.woff2` (Acato only) | **Skip — verify first.** | If our `_fontfaces.scss` no longer declares it and no component requests `font-family: 'Roboto Condensed'`, dropping it was intentional. Worth a one-grep verification (`grep -r "roboto.condensed\|Roboto Condensed" tilburg-woo-ui/src/styles`) but no action expected. |
+| `roboto-condensed.woff2` (Acato only) | **Skip — verify first.** | If our `_fontfaces.scss` no longer declares it and no component requests `font-family: 'Roboto Condensed'`, dropping it was intentional. Worth a one-grep verification (`grep -r "roboto.condensed\|Roboto Condensed" src/styles`) but no action expected. |
 | All four locale files | **No action.** | Byte-identical. If we ever need to backport translation additions from upstream, expect zero conflicts — but also expect zero new strings, because Acato hasn't edited them since the fork either. |
 | 14 byte-identical SVGs | **No action.** | |
 | 4 cosmetic-refactor SVGs (`arrow-right`, `chevron-right`, `info`, `question-mark`) | **Keep ours.** | Ours add `viewBox` declarations on a couple of them, which improves cross-browser sizing. No reason to revert. |
