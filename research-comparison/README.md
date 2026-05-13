@@ -53,7 +53,7 @@ For just the items requiring a human/business judgment, see **[DECISIONS.md](DEC
 
 ## How the analyses are structured
 
-Each analysis file follows the template in [CLAUDE.md](../../CLAUDE.md):
+Each analysis file follows the same template:
 
 1. **Branches Compared** — at the top of every file
 2. **Files Compared** — exact file list scoped to that category
@@ -62,4 +62,4 @@ Each analysis file follows the template in [CLAUDE.md](../../CLAUDE.md):
 5. **Only in ours** / **Only in Acato's** — uncontested adds
 6. **Recommendation** — per-difference call (take Acato / keep ours / merge / needs decision)
 
-Cross-references between analyses (e.g. auth touching stores) point to the **primary** category for that file — see the table at the end of [file-category-index.md](../../file-category-index.md).
+Cross-references between analyses (e.g. auth touching stores) point to the **primary** category for that file.

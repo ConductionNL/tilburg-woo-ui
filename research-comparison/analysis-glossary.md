@@ -10,7 +10,7 @@ A small, self-contained feature that scans rendered content for glossary terms, 
 
 **Acato has nothing in this category.** No store, no drawer, no highlight component, no `con-glossary*` files anywhere in [tilburg-woo-ui_acato/src/](../../tilburg-woo-ui_acato/src/). The only glossary-shaped trace is one line in Acato's [src/utilities/ac-match-substring.js:20](../../tilburg-woo-ui_acato/src/utilities/ac-match-substring.js#L20) that still emits a `data-glossary-id='${id}'` attribute on its `<mark>` output — a dormant hook from a common ancestor with no consumer on their side.
 
-Per `CLAUDE.md` rules: ours-only → **keep, no decision needed**.
+This category is ours-only — the verdict is **keep**, no merge decision needed.
 
 ## Files inventoried
 

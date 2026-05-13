@@ -139,4 +139,4 @@ A few things stood out while inventorying these files; flagging them here so the
 
 ## Recommendation
 
-**Keep everything in this file.** Per the project rules in `CLAUDE.md`, ours-only files are "keep, no decision needed". The observations above are non-blocking cleanup candidates for separate hygiene work, not merge decisions.
+**Keep everything in this file.** This category is ours-only — there's no Acato counterpart to merge against, so the verdict is keep, no merge decision needed. The observations above are non-blocking cleanup candidates for separate hygiene work, not merge decisions.

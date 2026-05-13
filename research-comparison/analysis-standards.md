@@ -10,7 +10,7 @@ Compliance-tracking surface for VNG-GEMMA **standaarden** (standards) and **stan
 
 **Acato has nothing in this category.** No standards table, no schema resolver, no `vng-gemma/element` calls, no `referentieComponenten`/`compliancy` data model. Acato's portal is read-only public WOO; the entire softwarecatalogus standards-tracking domain is built on top of the fork.
 
-Per `CLAUDE.md` rules: ours-only → **keep, no decision needed**. This file inventories the surface so the dependency graph is legible.
+This category is ours-only — the verdict is **keep**, no merge decision needed. This file inventories the surface so the dependency graph is legible.
 
 ## Files Inventoried
 

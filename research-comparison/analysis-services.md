@@ -8,7 +8,7 @@
 
 Everything under [src/services/](../src/services/) — 7 files total. **Acato has no `services/` directory.** Verified: `ls tilburg-woo-ui_acato/src/` shows `api`, `atoms`, `components`, `config`, `constants`, `hooks`, `molecules`, `stores`, `styles`, `utilities`, `views` — no `services` folder, no equivalent files scattered elsewhere.
 
-Per `CLAUDE.md` rules: ours-only → "keep, no decision needed". This file is an inventory; recommendation is **keep**.
+This category is ours-only — the verdict is **keep**, no merge decision needed. This file is an inventory.
 
 ## Files Inventoried
 

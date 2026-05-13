@@ -13,7 +13,7 @@ Two functionally distinct features bundled in this category by the file index:
 
 **Acato has nothing in this category.** No `ac-chat`, no `ac-gemma`, no `con-views-list`, no chat/gemma store or api file, and none of the supporting dependencies (`@conduction/archimate-diagram-engine`, `@arktect-co/archimate-diagram-engine`, `jointjs`, `svg-pan-zoom`). Acato's repo is a read-only public WOO portal; both these features sit firmly on the Conduction softwarecatalogus side of the fork.
 
-Per `CLAUDE.md` rules: ours-only → "keep, no decision needed". This file is an inventory and a note on the considerable internal debt inside the GEMMA half.
+This category is ours-only — the verdict is **keep**, no merge decision needed. This file is an inventory and a note on the considerable internal debt inside the GEMMA half.
 
 ## Files Inventoried
 

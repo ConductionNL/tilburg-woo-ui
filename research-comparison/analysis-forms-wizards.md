@@ -10,7 +10,7 @@ Multi-step registration wizards under [src/views/ac-forms/](../src/views/ac-form
 
 **Acato has nothing in this category.** No `ac-forms/`, no stage components, no stepper, no wizard constants, no `/forms` routes. Acato's portal is read-only public WOO. The entire submission funnel is built on top of the fork.
 
-Per `CLAUDE.md` rules: ours-only → "keep, no decision needed". This file is an inventory to make the surface area legible; no recommendation other than **keep**.
+This category is ours-only — the verdict is **keep**, no merge decision needed. This file is an inventory to make the surface area legible.
 
 ## Files Inventoried
 

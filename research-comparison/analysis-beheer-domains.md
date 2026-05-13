@@ -16,7 +16,7 @@ This file covers **only** the files under [src/views/ac-beheer/domains/](../src/
 
 **Acato has nothing here.** No `/beheer` route, no admin panel, no per-domain pages. Every file inventoried is built on top of the fork.
 
-Per `CLAUDE.md` rules: ours-only → "keep, no decision needed". This file is an inventory to make the surface area legible; no recommendation other than **keep**.
+This category is ours-only — the verdict is **keep**, no merge decision needed. This file is an inventory to make the surface area legible.
 
 ## Files Inventoried
 

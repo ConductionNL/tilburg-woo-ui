@@ -13,7 +13,7 @@ Four files from category 27 — the bits that catch, format, and surface error s
 - [src/utilities/ac-format-error.js](../src/utilities/ac-format-error.js) (72 LoC) — `AcFormatErrorMessage`, `AcFormatErrorCode`, `AcHasErrors`.
 - [src/styles/global/_fallback-error-page.scss](../src/styles/global/_fallback-error-page.scss) (12 LoC) — two flex rules for the page.
 
-**Acato has nothing in this category.** No interceptors, no fallback view, no error formatter. Their portal lets axios errors bubble; failed requests just leave their MobX stores in their default loading/empty state. Per `CLAUDE.md` rules: ours-only → keep, no decision needed.
+**Acato has nothing in this category.** No interceptors, no fallback view, no error formatter. Their portal lets axios errors bubble; failed requests just leave their MobX stores in their default loading/empty state. This category is ours-only — the verdict is **keep**, no merge decision needed.
 
 ## How the pieces compose
 
@@ -42,7 +42,7 @@ Runtime errors that React doesn't catch surface as a blank screen; route misses 
 
 ## Rollbar
 
-[CLAUDE.md](../../CLAUDE.md) lists Rollbar error tracking under "What Exists Only in Our Version." In this category's files: **not visible**. The package is in `package.json` (`rollbar`, `rollbar-sourcemap-webpack-plugin`), `process.env.ROLLBAR_KEY` / `ROLLBAR_ENVIRONMENT` are read into [config/index.js#L79-L84](../src/config/index.js#L79-L84), and `ENABLE_ROLLBAR` is a container constant — but no `new Rollbar(...)`, no `Provider`, no `errorHandler` exists in `src/`. The integration is **scaffolded but not wired**, same status as the fallback page.
+Rollbar error tracking is listed as an ours-only feature in the project overview. In this category's files: **not visible**. The package is in `package.json` (`rollbar`, `rollbar-sourcemap-webpack-plugin`), `process.env.ROLLBAR_KEY` / `ROLLBAR_ENVIRONMENT` are read into [config/index.js#L79-L84](../src/config/index.js#L79-L84), and `ENABLE_ROLLBAR` is a container constant — but no `new Rollbar(...)`, no `Provider`, no `errorHandler` exists in `src/`. The integration is **scaffolded but not wired**, same status as the fallback page.
 
 ## Observations
 

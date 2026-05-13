@@ -125,7 +125,7 @@ Nothing in this category is exclusive to us at the file level — but functional
 - Multi-tenant intro paragraph branching (`AcCheckIfSpecificHostname`).
 - CMS-driven theme ordering (`sort` field) and external-link support.
 - Mock data fallback and feature flag wiring.
-- Extra `VISUALS.HOUSE/WORLD/CUBE/...` icons exposed through the icon map (since our repo ships ~55 additional SVGs per `file-category-index.md` §20).
+- Extra `VISUALS.HOUSE/WORLD/CUBE/...` icons exposed through the icon map (our repo ships ~55 additional SVGs — see the assets analysis).
 
 ---
 

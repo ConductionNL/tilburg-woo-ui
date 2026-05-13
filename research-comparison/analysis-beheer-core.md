@@ -23,7 +23,7 @@ The Conduction-built admin panel ("Beheer") — a CRUD console for ~12 OpenRegis
 
 **Acato has nothing in this category.** No `/beheer` route, no admin views, no `ConDynamicSchemaForm`, no `ObjectStore`, no `ToastersStore`, no OpenRegister-backed CRUD plumbing of any kind. Their portal is read-only WOO publications. Every file inventoried here was built on top of the fork.
 
-Per `CLAUDE.md` rules: ours-only → "keep, no decision needed". This file is an inventory to make the surface area legible; no recommendation other than **keep**.
+This category is ours-only — the verdict is **keep**, no merge decision needed. This file is an inventory to make the surface area legible.
 
 ## Files Inventoried
 
@@ -261,11 +261,11 @@ Satellite components in `src/components/`:
 
 8. **`ConTemplateText` is exported but unused in our app code.** Same situation — exported, no callers. Probably abandoned after the `processUserTemplate` flow was inlined elsewhere.
 
-9. **`ConModulesChoiceSwitch` and `ConExistingModulesInfoBox` are technically forms-only.** They sit in `src/components/` (so `file-category-index.md` placed them under category 15) but are only imported by `ac-forms-product/**`. Cross-reference for the wizard analysis.
+9. **`ConModulesChoiceSwitch` and `ConExistingModulesInfoBox` are technically forms-only.** They sit in `src/components/` (so they were grouped under the Beheer category) but are only imported by `ac-forms-product/**`. Cross-reference for the wizard analysis.
 
 10. **`AcObjects` is a tiny shim for a single hostname/route case.** [ac-objects.js](../src/views/ac-beheer/ac-objects.js) only maps the `vng-gemma/view` and `vng-gemma/extendview` registers into `ConBeheerPageWrapper`; everything else redirects to `/beheer`. Wired through `routes.constants.js:OBJECTS`. Could fold into `AcBeheer`'s dispatch but standalone is clearer for the VNG-specific path.
 
-11. **`ac-views.js` is the public-facing GEMMA view renderer.** [ac-views/ac-views.js](../src/views/ac-views/ac-views.js) (784 LoC) lives outside `ac-beheer/` but `file-category-index.md` lists it here because it's part of the same archimate/JointJS bundle. It uses `@conduction/archimate-diagram-engine` + `svg-pan-zoom` and contains a hard-coded hostname switch ([line 60-64](../src/views/ac-views/ac-views.js#L60-L64)) between `vng.test.opencatalogi.nl` and `vng.accept.commonground.nu`. Cross-references with category 16 (Chat & GEMMA) where the rest of `gemma.store` / `gemma.api` live — this view, the list view, and the beheer-views detail were built together but currently overlap with each other.
+11. **`ac-views.js` is the public-facing GEMMA view renderer.** [ac-views/ac-views.js](../src/views/ac-views/ac-views.js) (784 LoC) lives outside `ac-beheer/` but is grouped under this category because it's part of the same archimate/JointJS bundle. It uses `@conduction/archimate-diagram-engine` + `svg-pan-zoom` and contains a hard-coded hostname switch ([line 60-64](../src/views/ac-views/ac-views.js#L60-L64)) between `vng.test.opencatalogi.nl` and `vng.accept.commonground.nu`. Cross-references with category 16 (Chat & GEMMA) where the rest of `gemma.store` / `gemma.api` live — this view, the list view, and the beheer-views detail were built together but currently overlap with each other.
 
 12. **`con-beheer-views*` did *not* go through `ConGenericBeheerPage`.** Both files re-implement loading/filters/canvas state from scratch. Reason is obvious (the JointJS + archimate-diagram-engine canvas is incompatible with a generic table), but it leaves the GEMMA-view admin pages as a parallel implementation rather than a config-driven type. Acceptable but flag as not-pluggable.
 

@@ -8,7 +8,7 @@
 
 The signed-in user's self-service surface area: the "Mijn Account" view, the four modals that mutate user / organisation data from that view, the `/mijn-omgeving` placeholder route, and the supporting `user` and `mijnOmgeving` stores + API.
 
-**Acato has nothing in this category.** No `ac-my-account/`, no `ac-mijn-omgeving/`, no `user.store.js`, no `mijnOmgeving.api.js`. Acato's portal is read-only public WOO with no concept of an authenticated end-user — there is nothing to compare against. Per `CLAUDE.md` rules: ours-only → "keep, no decision needed".
+**Acato has nothing in this category.** No `ac-my-account/`, no `ac-mijn-omgeving/`, no `user.store.js`, no `mijnOmgeving.api.js`. Acato's portal is read-only public WOO with no concept of an authenticated end-user — there is nothing to compare against. This category is ours-only — the verdict is **keep**, no merge decision needed.
 
 ## Files Inventoried
 
@@ -89,7 +89,7 @@ The two halves of the category were probably designed in parallel and only the M
 
 ## The `user.store.js` cross-cutting role
 
-`user.store.js` is filed under this category in [file-category-index.md](../../file-category-index.md) but is referenced from at least **26 files** across the codebase — auth gates, header/footer, organisation selector, all forms wizards that filter steps by role, beheer dashboard, login view, and three other stores (chat, object, publications). Highlights of its surface:
+`user.store.js` is filed under this category but is referenced from at least **26 files** across the codebase — auth gates, header/footer, organisation selector, all forms wizards that filter steps by role, beheer dashboard, login view, and three other stores (chat, object, publications). Highlights of its surface:
 
 - **Auth lifecycle** — `sessionLogin`, `oauthLogin`, `checkAuthStatus`, `logout`, `login` (convenience wrapper). Stores `access_token` as a cookie + replays it on every request.
 - **Profile** — `fetchUserProfile`, `updateUser`, `user`, `currentUser`, `userDisplayName`, `userFullName`, `userInitials`, `userEmail`, `userPhone`.
@@ -98,7 +98,7 @@ The two halves of the category were probably designed in parallel and only the M
 - **Route gating** — `canAccessRoute(path)` lazy-requires `AUTHENTICATION_REQUIRED_ROUTES` from `routes.constants.js` and checks `isAuthenticated`.
 - **Persistence** — `saveToStorage / initializeFromStorage / clearStorage` keep auth state in `localStorage['woo-user-state']`. `clearNextcloudCookies` knows about ~15 named cookies plus dynamic `oc*` / `nc_*` patterns.
 
-Cross-references called out in [file-category-index.md](../../file-category-index.md): also relevant to **14 Auth** (where it's the actual login state holder for [ac-login.js](../src/views/ac-login/ac-login.js) and [ac-protected-route.js](../src/components/ac-protected-route/ac-protected-route.js)) and **15 Beheer** (where org-switching, role gating and `getOrganizationDashboardUrl()` drive the admin layout). Treat this file as the shared user-state hub, not a "my account" detail.
+Cross-references: also relevant to the **Authentication** category (where it's the actual login state holder for [ac-login.js](../src/views/ac-login/ac-login.js) and [ac-protected-route.js](../src/components/ac-protected-route/ac-protected-route.js)) and the **Beheer** category (where org-switching, role gating and `getOrganizationDashboardUrl()` drive the admin layout). Treat this file as the shared user-state hub, not a "my account" detail.
 
 ## Observations worth flagging
 

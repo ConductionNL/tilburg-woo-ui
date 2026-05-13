@@ -10,7 +10,7 @@ Login, registration, password reminder, Nextcloud OAuth handoff, route protectio
 
 **Acato has nothing in this category.** No `/login`, `/register`, `/reminder`, or `/authorization` routes; no `AuthStore`/`AuthAPI`; no protected-route wrapper; no role or authorisation utilities. Acato's portal is fully anonymous public WOO and never authenticates a visitor.
 
-Per `CLAUDE.md` rules: ours-only → "keep, no decision needed". This file is an inventory to make the surface area legible and to flag the dead/duplicated code that has accumulated alongside the live flow.
+This category is ours-only — the verdict is **keep**, no merge decision needed. This file is an inventory to make the surface area legible and to flag the dead/duplicated code that has accumulated alongside the live flow.
 
 ## Files Inventoried
 
@@ -136,7 +136,7 @@ Endpoint constants confirm the misnomer: [endpoints.constants.js:31-34](../src/c
 
 6. **`con-authentication-filters` has 6-of-8 exports unused.** Of the 8 helpers in [con-authentication-filters.js](../src/utilities/con-authentication-filters.js), only `filterPageSections` (used by ac-sections-handler) and `shouldShowFormField` (used by con-dynamic-schema-form's field-utilities) are actually called. `filterContentItems`, `shouldShowContent`, `shouldShowSection`, `shouldShowProperty`, `filterEntityData`, `filterFormFieldConfigs` are exported and bundled but not used anywhere.
 
-7. **`con-register-resolver` is misfiled under auth.** The name suggests user-registration, but reading the file ([con-register-resolver.js:1-6](../src/components/con-register-resolver/con-register-resolver.js#L1-L6)): *"Resolves register IDs to slugs. Works like ConUuidResolver but for register IDs."* It reads from `registerCache.service` and maps openregister catalog register IDs (e.g. `'vng-gemma'`) to display names. Belongs in category 11 (Stores — register cache) or 15 (Beheer — schema resolver), not auth. Should be re-categorised in `file-category-index.md`.
+7. **`con-register-resolver` is misfiled under auth.** The name suggests user-registration, but reading the file ([con-register-resolver.js:1-6](../src/components/con-register-resolver/con-register-resolver.js#L1-L6)): *"Resolves register IDs to slugs. Works like ConUuidResolver but for register IDs."* It reads from `registerCache.service` and maps openregister catalog register IDs (e.g. `'vng-gemma'`) to display names. Belongs in the Stores (register cache) or Beheer (schema resolver) category, not auth. Should be re-categorised.
 
 8. **`con-logo-preview` is hosted under `views/ac-register/` but is not auth-specific.** Despite living next to the register view, it has 5+ deep-import consumers outside the auth flow: `con-module-version-detail-page-content`, `ac-publication-default`, `con-generic-beheer-details-page`, `con-dienst-details-page-content`, `ac-publication-organisation`. Belongs under `atoms/` or `components/` — currently every consumer reaches through `@views/ac-register/con-logo-preview`, coupling unrelated modules to the auth view's path.
 
@@ -162,7 +162,7 @@ If we ever decide to tidy this category as separate hygiene work (not part of th
 1. **Delete `authentication.store.js` + `authentication.api.js` + `ENDPOINTS.AUTHENTICATION`.** Pure dead clones of the publications store/api (observation 2). Verify by grepping `store.authentication` and `api.authentication` — currently no external consumers.
 2. **Decide whether to finish or rip out the OAuth/`AuthStore` path** (observation 1). It's been in fallback-only mode long enough that `oauthLogin` has its body commented out. If the OpenConnector session flow is the permanent answer, `AuthStore`, the 5 OAuth methods in `auth.api.js`, and the OAuth-token utilities in `ac-accesstoken.js` can all go.
 3. **Either implement `AcPasswordReminder` or hide the entry point** (observation 3). Today the "Wachtwoord vergeten?" button leads to a UI that silently does nothing.
-4. **Move `con-register-resolver` out of the auth category** in `file-category-index.md` (observation 7).
+4. **Move `con-register-resolver` out of the auth category** (observation 7).
 5. **Move `con-logo-preview` to `components/` or `atoms/`** (observation 8) so the 5+ non-auth consumers don't deep-import from a views directory.
 6. **Drop unused exports**: `AUTH_MODES`, `ROLES`, `AUTH_KEYS.PROVIDER`, `acSafeParseRedirectUri`, the six unused helpers in `con-authentication-filters`, the four unused token helpers in `ac-accesstoken.js`.
 7. **Resolve the duplicate register routes** (observation 10) — pick one of `/aanmelden`, `/register`, `/forms/register` and remove the others, or document them as intentional aliases.

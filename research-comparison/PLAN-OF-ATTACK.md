@@ -2,7 +2,7 @@
 
 **Audience:** Project owner / steering. Sequence-over-dates roadmap based on the 30-category analysis in this folder.
 
-**Inputs:** [README.md](README.md) (verdict per category), [DECISIONS.md](DECISIONS.md) (items needing a human call), [CLAUDE.md](../../CLAUDE.md) (scope and rules of the research phase).
+**Inputs:** [README.md](README.md) (verdict per category) and [DECISIONS.md](DECISIONS.md) (items needing a human call).
 
 **Premise:** Both repos share a common ancestor; ours has grown into a full CMS + portal while Acato has stayed a lightweight public WOO viewer. The goal of this plan is not to "re-merge" the two repos — they have diverged on purpose. The goal is to:
 
