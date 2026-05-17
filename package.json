@@ -88,7 +88,7 @@
     "@babel/helper-module-imports": "^7.22.5",
     "@babel/helper-module-transforms": "7.22.5",
     "@babel/plugin-proposal-decorators": "7.22.5",
-    "@babel/plugin-transform-class-properties": "^7.18.6",
+    "@babel/plugin-transform-class-properties": "^7.28.6",
     "@babel/plugin-transform-private-methods": "^7.18.6",
     "@babel/plugin-transform-private-property-in-object": "^7.21.11",
     "@babel/plugin-transform-react-jsx": "7.22.5",
