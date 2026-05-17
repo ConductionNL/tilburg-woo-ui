@@ -4231,10 +4231,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@utrecht/paragraph-css@npm:^2.3.1":
-  version: 2.3.1
-  resolution: "@utrecht/paragraph-css@npm:2.3.1"
-  checksum: 10c0/882dea99e305e53c60952bcf503efe1ca2828f542dacac078b8874d7bc82e21d8596229cc429744ffc43f0bab02ae5137b8e98d9b29fa4191e98bcaaa00b4ee8
+"@utrecht/paragraph-css@npm:^4.0.1":
+  version: 4.0.1
+  resolution: "@utrecht/paragraph-css@npm:4.0.1"
+  checksum: 10c0/c7ca873f2adb9ad67d89f5e13aa4d64ae2dbf07a95ec013dbaf383c9638184fc352119ef7fb272437243a120f01e6d4c7aa149a1681393ae4ba43ce93694f579
   languageName: node
   linkType: hard
 
@@ -12502,7 +12502,7 @@ __metadata:
     "@utrecht/heading-css": "npm:^1.4.1"
     "@utrecht/link-css": "npm:^1.6.1"
     "@utrecht/ordered-list-css": "npm:^1.5.2"
-    "@utrecht/paragraph-css": "npm:^2.3.1"
+    "@utrecht/paragraph-css": "npm:^4.0.1"
     "@utrecht/unordered-list-css": "npm:^1.5.1"
     axios: "npm:1.8.2"
     babel-loader: "npm:9.1.2"
