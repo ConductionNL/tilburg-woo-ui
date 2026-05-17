@@ -32,28 +32,28 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@amsterdam/design-system-react-icons@npm:0.1.12":
-  version: 0.1.12
-  resolution: "@amsterdam/design-system-react-icons@npm:0.1.12"
+"@amsterdam/design-system-react-icons@npm:2.0.0":
+  version: 2.0.0
+  resolution: "@amsterdam/design-system-react-icons@npm:2.0.0"
   peerDependencies:
-    react: 16 - 18
-    react-dom: 16 - 18
-  checksum: 10c0/a126b21e52f28afe0ecfa774bae234754289d1a768d2c04b4644a5b345604117fc8963ccc436417c18750ebd35aadc822d03ba46353b1f8ac81b72f0ac6f9920
+    react: 16 - 19
+    react-dom: 16 - 19
+  checksum: 10c0/e32ce6f8f5ad468d985ed32e855823585152d9501fb76080e316f918a1a04f5e47381c2ac0f56bf942fae37b10ee44c634e376a13c46e204357776c85996fbf4
   languageName: node
   linkType: hard
 
-"@amsterdam/design-system-react@npm:^0.9.0":
-  version: 0.9.0
-  resolution: "@amsterdam/design-system-react@npm:0.9.0"
+"@amsterdam/design-system-react@npm:^4.1.0":
+  version: 4.1.0
+  resolution: "@amsterdam/design-system-react@npm:4.1.0"
   dependencies:
-    "@amsterdam/design-system-react-icons": "npm:0.1.12"
-    "@babel/runtime": "npm:7.24.6"
+    "@amsterdam/design-system-react-icons": "npm:2.0.0"
+    "@babel/runtime": "npm:7.29.2"
     clsx: "npm:2.1.1"
   peerDependencies:
-    "@amsterdam/design-system-css": 0.9.0
-    react: 16 - 18
-    react-dom: 16 - 18
-  checksum: 10c0/4c4054f16d66c1af7c009209ae034e71f896ed1a9f449cb65cd2874141445f45332ee251042e86476e63a1a6ae277e964cffbd322df63754eaaf06a3d5150163
+    "@amsterdam/design-system-css": 4.1.0
+    react: 16 - 19
+    react-dom: 16 - 19
+  checksum: 10c0/01ef78ad396b541746091c0849cf49c67dbd1907e61511016e795d809a7da2aec72ca5485748b2cc5d6c1b900af427ee5116f00354b5608717138bdd059166b9
   languageName: node
   linkType: hard
 
@@ -2032,19 +2032,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/runtime@npm:7.24.6":
-  version: 7.24.6
-  resolution: "@babel/runtime@npm:7.24.6"
-  dependencies:
-    regenerator-runtime: "npm:^0.14.0"
-  checksum: 10c0/224ad205de33ea28979baaec89eea4c4d4e9482000dd87d15b97859365511cdd4d06517712504024f5d33a5fb9412f9b91c96f1d923974adf9359e1575cde049
-  languageName: node
-  linkType: hard
-
 "@babel/runtime@npm:7.27.4":
   version: 7.27.4
   resolution: "@babel/runtime@npm:7.27.4"
   checksum: 10c0/ca99e964179c31615e1352e058cc9024df7111c829631c90eec84caba6703cc32acc81503771847c306b3c70b815609fe82dde8682936debe295b0b283b2dc6e
+  languageName: node
+  linkType: hard
+
+"@babel/runtime@npm:7.29.2":
+  version: 7.29.2
+  resolution: "@babel/runtime@npm:7.29.2"
+  checksum: 10c0/30b80a0140d16467792e1bbeb06f655b0dab70407da38dfac7fedae9c859f9ae9d846ef14ad77bd3814c064295fe9b1bc551f1541ea14646ae9f22b71a8bc17a
   languageName: node
   linkType: hard
 
@@ -12479,7 +12477,7 @@ __metadata:
   resolution: "open-tilburg-ui@workspace:."
   dependencies:
     "@amsterdam/design-system-css": "npm:^0.9.0"
-    "@amsterdam/design-system-react": "npm:^0.9.0"
+    "@amsterdam/design-system-react": "npm:^4.1.0"
     "@babel/cli": "npm:7.22.5"
     "@babel/core": "npm:7.22.5"
     "@babel/helper-module-imports": "npm:^7.22.5"
