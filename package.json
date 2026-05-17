@@ -60,7 +60,7 @@
     "@utrecht/ordered-list-css": "^1.5.2",
     "@utrecht/paragraph-css": "^2.3.1",
     "@utrecht/unordered-list-css": "^1.5.1",
-    "axios": "1.8.2",
+    "axios": "1.16.1",
     "blazy": "^1.8.2",
     "clsx": "^1.2.1",
     "dayjs": "^1.11.8",
