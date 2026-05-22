@@ -32,14 +32,10 @@
 
 - **"Begrippenlijst"-knop**, rechtsonder in het scherm. Wij hebben deze knop; Acato niet. De knop werkt momenteel niet — klikken doet niets.
     - **Keuze:** de knop fixen zodat hij wél werkt, of de knop helemaal verwijderen?
-- **Secundaire navigatiebalk** onder de header (Home / Organisaties / Applicaties). Wij hebben deze balk; Acato niet.
-    - **Keuze:** de secundaire navigatiebalk behouden, of verwijderen zodat de header er rustiger uitziet zoals bij Acato?
-- **Extra "General"-kaart in het Onderwerpen-grid.** Wij tonen tussen de onderwerpen een extra kaart met de titel "General" die naar een vooraf gefilterde zoekopdracht leidt. Acato heeft deze kaart niet.
-    - **Keuze:** de "General"-kaart als ingang houden, of weghalen omdat het Onderwerpen-grid daar al voor dient?
-- **Achtergrondafbeelding van de hero.** Acato toont een Tilburgse stadsfoto als hero-achtergrond. Wij tonen geen afbeelding — alleen een donkerblauwe achtergrond.
-    - **Keuze:** een achtergrondfoto configureren (zoals Acato), of de donkerblauwe achtergrond houden?
-- **Kruimelpad (breadcrumbs).** Acato heeft een kruimelpad, maar dat is niet zichtbaar op de homepage — alleen op andere pagina's. Wij tonen het kruimelpad op alle pagina's.
-    - **Keuze:** het kruimelpad op de homepage blijven tonen, of verbergen zoals Acato doet (omdat een kruimelpad op de landingspagina weinig toevoegt)?
+- **Secundaire navigatiebalk** onder de header (Home / Organisaties / Applicaties), zichtbaar op de homepage. Wij hebben deze balk; Acato niet.
+    - **Keuze:** de secundaire navigatiebalk op de homepage behouden, of verbergen zodat de homepage er rustiger uitziet zoals bij Acato?
+- **"General"-kaart op de homepage.** Wij tonen één kaart met de titel "General" die naar een vooraf gefilterde zoekopdracht leidt. Verder staat er niets in dat blok. Acato heeft deze kaart niet.
+    - **Keuze:** de "General"-kaart als ingang houden, of weghalen?
 
 ---
 
