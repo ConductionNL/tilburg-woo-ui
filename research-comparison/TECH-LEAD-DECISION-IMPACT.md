@@ -1,4 +1,4 @@
-# Tech Lead — Technische impact van de PO-keuzes
+# Tech Lead — Technische impact van de PO-keuzes <!-- omit in toc -->
 
 > **Companion bij** [PO-VISUAL-COMPARISON.md](./PO-VISUAL-COMPARISON.md).
 > Voor elke **Keuze** in dat document staat hier wat er technisch achter zit: de architecturale impact, de afhankelijkheden, en de risico's of dingen die alleen op tech-lead-niveau gewogen kunnen worden.
@@ -9,23 +9,23 @@
 
 ---
 
-## Inhoudsopgave
+## Inhoudsopgave <!-- omit in toc -->
 
-- [Tech Lead — Technische impact van de PO-keuzes](#tech-lead--technische-impact-van-de-po-keuzes)
-  - [Inhoudsopgave](#inhoudsopgave)
-  - [1. Homepage](#1-homepage)
-    - [1.1 Begrippenlijst-knop](#11-begrippenlijst-knop)
-    - [1.2 Secundaire navigatiebalk](#12-secundaire-navigatiebalk)
-    - [1.3 General-kaart](#13-general-kaart)
-    - [1.4 Uitgelicht-blok](#14-uitgelicht-blok)
-    - [1.5 Welkom/Over-sectie (AcAbout)](#15-welkomover-sectie-acabout)
-  - [2. Zoekpagina](#2-zoekpagina)
-    - [2.1 Resultaatkaarten](#21-resultaatkaarten)
-    - [2.2 Filters](#22-filters)
-  - [3. Publicatiepagina](#3-publicatiepagina)
-    - [3.1 Generieke vs. specifieke pagina](#31-generieke-vs-specifieke-pagina)
-    - [3.2 Plek van Begrippenlijst-knop](#32-plek-van-begrippenlijst-knop)
-  - [Samenvatting voor de tech lead](#samenvatting-voor-de-tech-lead)
+- [1. Homepage](#1-homepage)
+  - [1.1 Begrippenlijst-knop](#11-begrippenlijst-knop)
+  - [1.2 Secundaire navigatiebalk](#12-secundaire-navigatiebalk)
+  - [1.3 General-kaart](#13-general-kaart)
+  - [1.4 Uitgelicht-blok](#14-uitgelicht-blok)
+  - [1.5 Welkom/Over-sectie (AcAbout)](#15-welkomover-sectie-acabout)
+- [2. Zoekpagina](#2-zoekpagina)
+  - [2.1 Resultaatkaarten](#21-resultaatkaarten)
+  - [2.2 Filters](#22-filters)
+  - [2.3 Auto-zoek tijdens typen](#23-auto-zoek-tijdens-typen)
+  - [2.4 Toegankelijkheid: skip-link en DOM-volgorde](#24-toegankelijkheid-skip-link-en-dom-volgorde)
+- [3. Publicatiepagina](#3-publicatiepagina)
+  - [3.1 Generieke vs. specifieke pagina](#31-generieke-vs-specifieke-pagina)
+  - [3.2 Plek van Begrippenlijst-knop](#32-plek-van-begrippenlijst-knop)
+- [Samenvatting voor de tech lead](#samenvatting-voor-de-tech-lead)
 
 ---
 
@@ -196,36 +196,159 @@ Niet-effectief in ons:
 
 ### 2.1 Resultaatkaarten
 
-**Technisch concept:** de keuze raakt twee dingen tegelijk — data én layout.
+**Technisch concept:** zes type-specifieke kaart-componenten + een generieke fallback aan onze kant; één generieke kaart aan Acato's kant. De keuze raakt dus tegelijk **data-laag** (welke velden moeten op de kaart) én **render-laag** (welke component pakken we per resultaat).
 
-Acato's generieke kaart werkt bij hen omdat hun data uniform is. Bij ons kan de data van een resultaat **van alles zijn** — elk documenttype heeft een andere structuur, andere velden. Eén kaart bouwen die daar zinnig mee om kan gaan is mogelijk maar lastig: je moet per veldtype regelen wat zichtbaar is, in welke volgorde, en wat te doen als een veld ontbreekt.
+**Onze switch** in `views/ac-search/ac-search.js` schakelt op `publication['@self'].schema.slug` en kiest een component:
 
-Daarbovenop hebben onze type-specifieke kaarten elk hun eigen layout-trucjes: bij de ene staat een datum onderaan, bij de andere een aantal of een statusbadge, weer een andere toont een icoon-set. Die kleine layout-eigenheden voegen waarde toe — ze maken in één oogopslag duidelijk wat voor type document je voor je hebt. Bij genericiseren raak je die kwijt, ook als de data-kant netjes opgelost is.
+| `schema.slug` | Component | Karakteristieke velden op de kaart |
+|---|---|---|
+| `product`, `module`, `organisatie` | `ConCardOrganisationApplication` | logo, type-label, organisatie-naam, referentie-componenten, `created`-datum |
+| `moduleversie` | `ConCardModuleVersie` | versie, status, datum-in-ontwikkeling / in-gebruik / einde-ondersteuning / teruggetrokken, moduleUuid |
+| `dienst` | `ConCardDienst` | category, aanbieder, status, type, `created` |
+| `contactpersoon` | `ConCardContactpersoon` | voor-/tussen-/achternaam, functie, foto, e-mail, telefoon, organisatie |
+| `gebruik` | `ConCardGebruik` | product, module, organisatie, referentie-componenten, status |
+| `koppeling` | `ConCardKoppeling` | category, themes, navigateTo='publication' |
+| anders | `AcSearchResult` (generiek) | titel, samenvatting, themes, type-label |
+
+**Acato's variant** is één `<AcSearchResult {...publication} />`-aanroep voor alle resultaten — geen switch, geen schema-check. Werkt bij hen omdat hun datacontract uniform is en ze geen reden hebben gehad om type-eigenheden te modelleren.
+
+**"Eén kaart" ≠ "informatie-armere kaart".** Een generieke component kan alle huidige inhoud blijven dragen via conditionele blokken of opt-in-props — bijvoorbeeld `{schema.slug === 'applicatie' && <GeschiktVoorBlock ... />}`, of een prop `showServiceTypeLabel` die alleen bij `dienst` op `true` staat. Het verschil tussen onze huidige zes kaarten en één rijke generieke kaart is dan een **organisatie-keuze**: zes losse componenten met elk hun eigen JSX, of één component met type-condities/props. Beide kunnen dezelfde uiteindelijke UI produceren.
 
 **Trade-off:**
-- **Behouden (per type een eigen kaart).** Elk type houdt zijn eigen layout en metadata. Belangrijk voor de softwarecatalogus — daar draait een branch (`softwarecatalogus-performance`) die hierop steunt.
-- **Vervangen door één uniforme kaart.** Eén component die met willekeurige data overweg kan en de beschikbare velden netjes uitstalt. Geen informatieverlies, wel verlies van de type-specifieke layout-eigenheden (datum onderaan, aantal-badge, icoon-set, etc).
+- **N losse kaarten houden (huidige aanpak).** Elke kaart is een vrijstaande component. Voordeel: geen interferentie tussen typen, makkelijk per-type uit te breiden. Nadeel: visuele consistentie tussen kaart-typen moet handmatig bewaakt worden; dezelfde wijziging (bv. plaats van de datum) moet in zes plekken doorgevoerd worden.
+- **Eén configureerbare generieke kaart met type-condities/props.** Eén component die via `schema.slug` (of expliciete props) bepaalt welke optionele blokken renderen. Voordeel: één plek voor visuele consistentie en gedeelde features. Nadeel: refactor-werk, en de component zelf wordt complexer (meer condities); risico op een god-component als er steeds nieuwe type-eigenheden bij komen.
+- **Acato's huidige minimale kaart overnemen.** Eén component zónder type-condities — alleen titel/samenvatting/datum/type. Dit *is* wel informatieverlies (logo, status, foto, "Geschikt voor:", versie-status etc. vervallen). Alleen aan te bevelen als de PO bewust kiest voor uniformiteit.
 
 **Wat de tech lead extra moet weten:**
-- **Blokkeer "vervangen"-paden tot de softwarecatalogus-branch gemerged of geannuleerd is.** Tussentijds genericiseren vernietigt werk in flight en levert merge-conflicten.
-- Belangrijk om bij PO de twee kosten apart te benoemen: niet alleen "minder herkenbaar per type", maar ook "kleine layout-features per type vervallen". Het is geen pure styling-keuze.
+- **Blokkeer kaart-refactoring tot de softwarecatalogus-branch gemerged of geannuleerd is.** Tussentijdse herstructurering vernietigt werk in flight en levert merge-conflicten — los van of we naar één configureerbare kaart gaan of bij N blijven.
+- **De huidige live dataset (performance-accept) emitteert effectief drie typen: applicatie, dienst, organisatie.** Het type-verschil tussen die drie is klein: alle drie hebben icon + titel + "Aangeboden door" + samenvatting + labels; applicatie krijgt een extra "Geschikt voor:"-blok vóór de labels; dienst krijgt een extra label voor dienst-type ná datum + publicatie-type. Dat zijn twee condities — niet zes parallelle kaarten — en suggereert dat optie 2 (één configureerbare kaart) op de huidige content-set met beperkte conditional-logica realistisch is. Onze zes-kaarten-switch dekt typen die in de live data nu niet allemaal voorkomen.
+- Onze kaart-keuze is **afhankelijk van een rijk datacontract** dat ons backend levert. Zie 2.5 hieronder — de publication-request stuurt `_extend: '_schema,_register,_names'` en de store roept `enrichPublications` aan om UUIDs naar objecten te resolven. Zonder die enrichment kunnen de meeste type-eigenheden niet weergegeven worden, ongeacht of we één of zes kaarten gebruiken. De infrastructuur achter de data blijft hetzelfde tussen optie 1 en optie 2.
 
 ---
 
 ### 2.2 Filters
 
-**Technisch concept:** onze filter-UI wordt **dynamisch opgebouwd** uit wat de back-end op dit moment aan filters aanlevert — welke filters je ziet hangt af van de zoekopdracht en wat OpenCatalogi terugstuurt, niet van een vaste lijst in onze code. Acato heeft enkel twee vaste datum-velden (date-from / date-to), hardcoded in hun formulier.
+**Technisch concept:** twee structureel verschillende architecturen, niet een gradueel verschil in welke filters er staan.
 
-Een datum-control naast ons facet-paneel hangen is een opzichzelfstaande **toevoeging**, niet een herbouw van het filtersysteem — dat is goed om los te houden van de bredere "behouden / vervangen / combineren"-keuze hieronder.
+**Ons systeem** (`molecules/con-facets-filters/con-facets-filters.js`, ~920 regels):
+- Onafhankelijke `fetchFacets()`-call op elke URL-wijziging, met `_facets: 'extend'` en `_limit: 0`.
+- Bouwt filter-groepen on-the-fly uit `response.facets` + `response.facetable`-metadata. Backend bepaalt welke filters renderen.
+- Resolveert UUID's automatisch naar leesbare labels (lazy lookup tegen de object-store).
+- Heeft "synthetische buckets" voor actieve filters met telling 0 (zodat een gekozen waarde niet uit de UI verdwijnt zodra je 'm aanvinkt).
+- Bevat een **facet-zoekveld** waarmee de gebruiker kan filteren *binnen* een facet-groep met veel waardes.
+- Toont actieve filters als chips bovenaan (`ConActiveFilters`) met een "wis alles"-knop.
 
-**Trade-off:**
-- **Facetten houden (status quo).** Geen datumfilter — onveranderd.
-- **Vervangen door datum-only.** Functioneel een forse achteruitgang. Niet aanbevolen.
-- **Hybride: datumfilter erbij.** Twee paden: (a) de bestaande date-component los naast het facet-paneel renderen — UI-only, triviaal, of (b) een date-bucket-renderer in het facet-systeem hangen, vergelijkbaar met wat er al voor andere bucket-types staat — heeft back-end-afhankelijkheid die los geverifieerd moet worden.
+**Acato's systeem** (`molecules/ac-search-filters/ac-search-filters.js`, ~140 regels):
+- Drie hardcoded filter-componenten in vaste volgorde: `<AcSearchDate />` (altijd), `<AcSearchCategories />` (alleen als `all_categories.length > 0`), `<AcSearchThemes />` (alleen als `all_themes.length > 0`).
+- Categorieën en thema's komen mee uit de zoekresponse-aggregations, niet uit een aparte facets-call. Eén roundtrip in plaats van twee.
+- Geen actieve-filter-chips, geen wis-alles, geen UUID-resolving, geen synthetische buckets, geen facet-zoekveld.
+
+**Datum-filter: code-vergelijking (twee verschillen tegelijk):**
+
+| | Param-vorm | Sleutel-naam |
+|---|---|---|
+| **Ons** (`store.setQueryDate` → URL) | `?published[after]=…&published[before]=…` (flat) | `after` / `before` |
+| **Acato** | `?@self[published][gte]=…&@self[published][lte]=…` (genest onder `@self`) | `gte` / `lte` |
+
+Acato heeft de OpenCatalogi-backend zelf geschreven; hun param-vorm is daarmee waarschijnlijk wat de backend echt accepteert. **Onze param-vorm is hoogstwaarschijnlijk een stille bug:** ons date-component bestaat (`components/ac-search-date/`), zit niet in onze filters-molecule, en als iemand 'm activeert zal de backend de waarden waarschijnlijk niet honoreren. Runtime-verificatie nodig: één request naar het zoek-eindpunt met `published[after]=2020-01-01` en kijken of het filter daadwerkelijk effect heeft.
+
+**Twee opties (vervangen is geen optie):** ons facet-systeem dekt al wat Acato met hun hardcoded categorieën/thema's-filters doet. Het enige gat is **het datumfilter**. "Vervangen door Acato's drie filters" zou een strikte downgrade zijn (Type, Organisatietype, Geregistreerd door, Diensttype en alle facet-gedreven groepen zouden vervallen) en is daarom niet in de keuze-lijst opgenomen.
+
+- **Status quo houden.** Geen datumfilter — onveranderd.
+- **Datumfilter toevoegen naast facetten.** Twee paden:
+    1. **Acato's `@self[published][gte/lte]`-vorm overnemen** in onze `setQueryDate`. Triviale aanpassing in `stores/publications.store.js` en in `components/ac-search-date/ac-search-date.js` (lees-kant). Wel: nieuwe URL-vorm betekent dat bestaande gedeelde zoek-URL's met datumparameters niet meer werken (geen back-compat-shim nodig — er waren waarschijnlijk geen dergelijke URL's in productie omdat het filter niet zichtbaar was). Het bestaande `AcSearchDate`-component los naast `<ConFacetsFilters />` renderen in `ac-search-filters.js` — UI-only, paar regels.
+    2. **Een date-bucket toevoegen aan de facet-laag.** Vereist een nieuw bucket-type in `ConFacetsFilters`. Groter werk; alleen relevant als de backend datum als facet teruggeeft.
 
 **Wat de tech lead extra moet weten:**
-- Er staat een **openstaande verificatievraag** uit de openwoo-research over wat de OpenCatalogi-back-end precies als datum-parameter accepteert (`published[after/before]` zoals wij sturen, of `@self.published[gte/lte]`). Dat kan een **stille bug** zijn: ons huidige datum-component werkt op het zoek-eindpunt, maar of het backend-side iets uithaalt is niet zeker. Snel runtime-checken — een paar minuten werk dat los van de PO-keuze sowieso opgelost moet worden.
-- De facet-laag heeft bekende technische schuld (zware debug-logging, lodash-full-import). Niet meenemen in deze PO-keuze; dat is een aparte cleanup-pass.
+- Bekende technische schuld in onze publications-store: **75 console-statements** in `publications.store.js` (vs. 0 in Acato), waaronder `console.group`/`console.info`-paren rond `setQueryDate`, `fetchPublications`, `fetchFacets`, enrichment-flow. Niet in de PO-keuze meenemen; aparte cleanup-pass.
+- **AbortController-pad alleen aan onze kant.** We cancelen stale requests bij snelle filter-wijzigingen (~21 referenties in de store). Acato heeft dit niet — bij hen kunnen requests out-of-order terugkomen. Bij eventuele migratie naar Acato's eenvoudigere fetch-laag verliezen we deze race-condition-bescherming.
+- **Twee fetch-passes vs. één.** Onze view roept op elke URL-wijziging zowel `fetchPublications()` als `fetchFacets()` aan (parallel). Acato roept eenmalig `fetchAggregations()` aan op mount, en alleen `fetchPublications()` op URL-wijziging — aggregations gelden voor hen voor de hele sessie. Op een grote dataset is onze tweede call zwaarder dan strikt nodig (we vragen facets opnieuw op voor élke zoekopdracht, inclusief paginering).
+
+---
+
+### 2.3 Auto-zoek tijdens typen
+
+**Technisch concept:** wij hebben een debounced auto-submit op de zoekbalk (`ac-search-box.js`); Acato niet.
+
+**Bij ons** (`components/ac-search-box/ac-search-box.js:32-68`):
+- 300 ms debounce na laatste toetsaanslag.
+- Eerste render-guard (`isFirstRender`) voorkomt zoeken op mount.
+- Defensive check: alleen submitten als `searchQuery !== defaultValue`, om opnieuw zoeken te voorkomen wanneer de component met URL-parameters initialiseert.
+- Cleanup van de timeout bij unmount.
+- Optionele `disableAutoSearch`-prop om het gedrag uit te schakelen waar nodig (in de homepage-hero bijvoorbeeld).
+
+**Bij Acato** (`ac-search-box.js:24-40`): pure form-submit. Geen `useEffect`, geen timer, geen refs. Bevestigt pas op klik op de zoek-knop of op Enter.
+
+**Wat de tech lead extra moet weten:**
+- **Backend-belasting per typende gebruiker is hoger bij ons.** Bij een zoekterm van 8 tekens, langzaam getypt, kunnen er 7-8 requests vertrekken. Op snelle typers blijft het bij 1 (debounce vangt af). Voor productie geen probleem zolang het zoek-endpoint snel is en niet rate-limited. Bij langzamere backends (development of staging) kan auto-search merkbaar minder responsief voelen dan submit-only — paradoxaal, maar je ziet de oude resultaten zichtbaar verversen.
+- **`disableAutoSearch=true`** wordt nu alleen door de homepage-hero gebruikt (om te voorkomen dat de homepage de pagina-overgang doet voor de gebruiker klaar is met typen). Als de PO besluit auto-search uit te zetten op de zoekpagina, hoeft het component zelf niet aangepast te worden — alleen `disableAutoSearch` op de juiste plek meegeven.
+- **De 300 ms-waarde** komt uit een eerdere tune-down van 750 ms (zie comment op regel 60). Heel langzaam typende gebruikers kunnen daarmee onbedoeld een request triggeren halverwege hun zoekterm. Geen actie nodig, wel goed om te weten bij future-feedback.
+
+---
+
+### 2.4 Toegankelijkheid: skip-link en DOM-volgorde
+
+**Technisch concept:** beide repos hebben een SkipLink — maar in verschillende scope, met verschillende targets, en ónze versie heeft twee concrete bugs die fixed moeten worden.
+
+**De twee implementaties naast elkaar:**
+
+| | Plek | Target | Label | Render |
+|---|---|---|---|---|
+| **Ons** ([`ac-header.js:208`](../src/components/ac-header/ac-header.js#L208)) | Globaal in `AcHeader` — op elke pagina | `#main` → `<main id='main'>` in `App.web.js:253` (wrapt alles onder de header) | "Direct naar de inhoud" | `<p><a class="utrecht-skip-link utrecht-skip-link--visible-on-focus">` via `@utrecht/component-library-react` |
+| **Acato** ([`views/ac-search/ac-search.js:149`](../../tilburg-woo-ui_acato/src/views/ac-search/ac-search.js#L149)) | Alleen in de zoekpagina-view | `#search-results` → de resultaten-`<AcFlex>` | "Ga direct naar zoekresultaten" | Zelfde `<SkipLink>`-component |
+
+Op de zoekpagina landt ónze skip-link tussen de broodkruimels en de blauwe zoekbalk-kaart (vóór filters en resultaten); Acato's bij de eerste resultatenkaart. Twee verschillende design-intenties — globaal skip-to-main vs. page-specific skip-to-results.
+
+**Bug #1 — `<base href="/">` breekt fragment-only hrefs.** In [`public/index.html:64`](../public/index.html#L64) staat `<base href="/" />`. Per HTML-spec resolven fragment-only hrefs (`<a href="#main">`) tegen de base-URL i.p.v. tegen het huidige document. Op `/zoeken` resolvet `<a href="#main">` dus naar `/#main` → React Router triggert een navigatie naar de homepage met `#main` als hash. Gebruiker landt op homepage, niet op de hoofdinhoud van de huidige pagina.
+
+**Voorgestelde fix voor bug #1:**
+
+```js
+// Was (ac-header.js:208):
+<SkipLink id='skip-link' href='#main'>
+
+// Wordt:
+<SkipLink id='skip-link' href={`${location.pathname}${location.search}#main`}>
+```
+
+`useLocation` is al geïmporteerd en `location` is al gedestructureerd in dezelfde component — geen nieuwe imports. Effect:
+- `${location.pathname}` maakt het pad absoluut → `<base>`-resolutie is een no-op.
+- `${location.search}` behoudt de query-string → React Router ziet pathname en search ongewijzigd, dus alleen hash verandert, geen remount, geen verlies van filters/zoekopdracht.
+- Op `/zoeken?_search=foo&_page=2` rendert de href als `/zoeken?_search=foo&_page=2#main`.
+
+**Reikwijdte van bug #1:** dit raakt **elke** fragment-only `<a href="#...">` in onze app, niet alleen deze SkipLink. Acato heeft dezelfde `<base>`-tag ([`tilburg-woo-ui_acato/public/index.html:60`](../../tilburg-woo-ui_acato/public/index.html#L60)) en heeft de workaround ook toegepast in hun zoekpagina-SkipLink (`href={`${location.pathname}#search-results`}`), maar zónder `location.search` — dus zij hebben een mini-regressie waar wij die niet hebben.
+
+**Aparte schoonmaakactie (los van deze fix):** de `<base href="/">` is in moderne React-SPA's meestal cargo-cult — interne navigatie loopt via `<Link to="/...">` (absoluut), externe links zijn volledige URL's, assets worden via de bundler ingeladen. Weghalen zou bug #1 in één klap oplossen voor alle fragment-links. Risico: CMS-geleverde HTML of relatieve `<img>`/`<a>`-references zonder leading slash zouden anders resolven. Niet bundelen met de SkipLink-fix; aparte PR met smoke-test.
+
+**Bug #2 — spatiebalk activeert de skip-link niet (ARIA-mismatch, niet WCAG).** De `<SkipLink>` uit `@utrecht/component-library-react` rendert een platte `<a>` ([`index.mjs:2659-2671`](../node_modules/@utrecht/component-library-react/dist/css-module/index.mjs#L2659)). Browser-default voor `<a>`: alleen Enter activeert, spatie niet (dat is button-gedrag).
+
+Strict gezien is dit **geen WCAG-overtreding** — een anchor is een legitiem semantic element voor een skip-link en WCAG geeft geen voorschrift voor spatie-activatie op anchors. De pijn zit in **ARIA-conventies**: onze SkipLink is gestyled als een knop (rechthoek met achtergrondkleur, padding, hover-state), en hulptechnologie + ervaren toetsenbordgebruikers verwachten dat iets dat eruitziet als een knop ook met zowel Enter als spatie te activeren is. De semantische rol (anchor) en de visuele rol (button) komen niet overeen.
+
+**Fix-opties voor bug #2** (van licht naar zwaar):
+
+1. **`role="button"` + `onKeyDown`-handler.** Houdt het anchor-element maar geeft het ARIA-button-semantiek + bijbehorend keyboard-gedrag:
+   ```js
+   const handleKeyDown = (e) => {
+     if (e.key === ' ') {
+       e.preventDefault(); // voorkomt scrollen-met-spatie
+       e.currentTarget.click();
+     }
+   };
+
+   <SkipLink
+     id='skip-link'
+     role='button'
+     href={`${location.pathname}${location.search}#main`}
+     onKeyDown={handleKeyDown}
+   >
+   ```
+   Minimale wijziging; behoudt URL-update via href; lost de ARIA-mismatch op (visuele knop = ARIA-knop).
+2. **Vervang door `<button>` met handmatige `scrollIntoView` + focus.** Schoner semantisch model — element is écht een knop, met natuurlijke keyboard-ondersteuning. Verliest URL-update (geen hash in URL) en vereist meer code (focus-management op het target-element).
+3. **Visueel terug naar link-style.** Geen achtergrondkleur, geen padding — pure tekstlink. Dan past de anchor-semantiek wel bij wat de gebruiker ziet en is spatie-activatie niet verwacht. Vereist design-akkoord.
+
+Aanbeveling: optie 1. Eén handler-regel + één role-attribute.
+
+**Reikwijdte van bug #2:** zit in de upstream-componenten-bibliotheek, dus elke `<SkipLink>` in onze app (en in Acato's app) heeft dit. Onze app heeft er momenteel maar één, dus een lokale wrapper of een handler-prop op het ene call-site is voldoende. Als we ooit upstream willen bijdragen, is dat een aparte issue richting `@utrecht/component-library-react`.
 
 ---
 
@@ -268,19 +391,29 @@ De default-view leunt al op een schema-driven render (`formatBySchema`, `sortPro
 **Drie committed werkitems (PO heeft besloten — geen keuze meer):**
 1. **Begrippenlijst-knop fixen** (Keuze 1.1). Drawer opent niet bij klik; debug-traject store-action vs. drawer-mount.
 2. **Secundaire navigatiebalk** blijft op alle pagina's (Keuze 1.2). Niets te doen.
-3. Daarnaast los oppakken: de dode `ConGlossaryHighlight`-wrapper op de publication-view (Keuze 3.1, raakt 3.2) en verifiëren of het datum-filter URL-formaat (Keuze 2.2 achtergrond) daadwerkelijk iets uithaalt back-end-side.
+3. Daarnaast los oppakken: de dode `ConGlossaryHighlight`-wrapper op de publication-view (Keuze 3.1, raakt 3.2).
 
 **Twee keuzes met merge-risico tegen werk in flight:**
 - Keuze 2.1 (resultaatkaarten genericiseren) en Keuze 3.1 (publicatiepagina genericiseren). **Blokkeren** zolang de softwarecatalogus-branch nog leeft.
 
-**Drie nog-open keuzes met een datacontract-component:**
+**Drie nog-open keuzes met een datacontract-component (homepage):**
 - Keuze 1.3 ("General"-kaart). Beide repos delen de UI-component, verschillen zitten in endpoint + datacontract + bedoeling (themadossiers vs. documentsoorten). Bron-verificatie van de huidige one-thema-situatie is in elk geval eerste stap; optie 2 of 3 vereist contract- en/of CMS-werk.
 - Keuze 1.4 (Uitgelicht-blok). Wij missen de hele data-laag (`fetchLatestPublications` + getters) en hebben een dode UI-shell. PO moet eerst beslissen: redactionele `featured`-vlag of altijd-automatisch laatste-N. Daarna: store-action overnemen + lege `AcFeatured` vervangen + drie regels in `ac-home.js`. Verifieer of onze publications-backend een `featured`-filter accepteert.
 - Keuze 1.5 (Welkom/Over-sectie). Vooral: ontbreekt bij ons het extra `list`-tekstveld dat Acato post-fork heeft toegevoegd. Adoptie raakt drie lagen (component, home-uitlees, CMS-content-index). Plus secundair: blauwe achtergrond + onze conditional-render-guard behouden.
+
+**Twee nog-open keuzes op de zoekpagina:**
+- Keuze 2.2 (filters). Ons facet-systeem dekt al wat Acato met hardcoded categorieën/thema's-filters doet — het enige gat is een datumfilter. PO-keuze: status quo of datumfilter erbij. Vervangen door Acato's filters is geen optie (downgrade) en is uit de keuze-lijst gehouden. Toevoegen vereist URL-param-fix omdat onze datumkeys (`published[after/before]`) waarschijnlijk niet door de backend worden herkend; Acato stuurt `@self[published][gte/lte]`. **Runtime-verifiëren los van de PO-keuze.**
+- Keuze 2.3 (auto-zoek). Behouden (sneller maar meer backend-calls) of submit-only (zoals Acato). `disableAutoSearch`-prop al aanwezig — overstap is configuratie, geen herbouw.
+
+**Twee bugs op de zoekpagina (geen PO-keuze, gewoon fixen):**
+- 2.4 bug #1: skip-link navigeert per ongeluk naar homepage door `<base href="/">`-quirk. Voorgestelde fix is één regel in `ac-header.js:208`: `href={`${location.pathname}${location.search}#main`}`. Raakt ook alle andere fragment-only `<a href="#...">` in de app — overweeg `<base>`-tag weghalen in aparte PR.
+- 2.4 bug #2: skip-link werkt niet met spatiebalk — niet een WCAG-overtreding maar wel een ARIA-mismatch (gestyled als knop, gerendered als anchor). Fix: `role='button'` + `onKeyDown`-handler op de SkipLink die op spatie `e.preventDefault()` doet en `click()` aanroept. Acato heeft dezelfde bug — zit upstream in `@utrecht/component-library-react`.
 
 **Onafhankelijke opschoonpunten gevonden tijdens analyse (los van PO-keuzes):**
 - `ac-publication-default-old.js` is vermoedelijk dode code.
 - Onze `ac-featured.js` is dode code zolang Keuze 1.4 nog niet "activeren" is — rendert drie lege `<AcSearchResult />`, wordt nergens geïmporteerd. Mag los gesloopt worden óf in één klap vervangen als 1.4 vooruit gaat.
 - `paragraph`- en `content`-mappings in `themes.store.js` zijn dood (worden door `AcCardCategory` niet gelezen).
 - `image`-prop in `AcCardCategory` is dood (gedestructureerd, niet gebruikt in JSX).
+- **75 console-statements** in `publications.store.js` (vs. 0 in Acato), waaronder een `console.group`/`console.info`-paar rond `setQueryDate`. Maakt devtools-output op de zoekpagina onleesbaar. Aparte cleanup-pass.
+- **Datumfilter URL-formaat verifiëren back-end-side.** Onze code stuurt `published[after/before]`, Acato stuurt `@self[published][gte/lte]`. Latente bug onafhankelijk van Keuze 2.2 — runtime-check kost minuten.
 - **`AcLink` mist een echte external-modus.** Het component gebruikt `react-router-dom`'s `<Link>` voor álle URL's, ook absolute externe URL's. Dat is een misbruik van `<Link>` (die alleen voor interne SPA-navigatie bedoeld is) en levert externe links zonder `target="_blank"` of `rel="noopener noreferrer"`. Onze homepage-kaart omzeilt dit door bij `isExternal` direct een plain `<a>` te renderen — maar elders in de codebase waar `AcLink` voor externe URL's wordt gebruikt is dit een latente bug. Aanrader: `AcLink` zelf de external-tak laten dragen. Voorwaarde als we Acato's categorieën-model overnemen.
