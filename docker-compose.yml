@@ -34,15 +34,15 @@ services:
       # API Configuration (Updated to use localhost:8080)
       - BASE_URL=/api/apps
       - BASE_URL_COMMONGROUND=/api/apps
-      - API_TARGET_URL=https://softwarecatalogus.performance.accept.commonground.nu
-
-      # Nextcloud/Target Configuration
-      - NEXTCLOUD_HOST=softwarecatalogus.performance.accept.commonground.nu
-      - NEXTCLOUD_PORT=443
+      - API_TARGET_URL=http://host.docker.internal:8080
+      
+      # Nextcloud/Target Configuration  
+      - NEXTCLOUD_HOST=localhost
+      - NEXTCLOUD_PORT=8080
       # Nginx Proxy Configuration
-      - NGINX_NEXTCLOUD_UPSTREAM=https://softwarecatalogus.performance.accept.commonground.nu
-      - NGINX_NEXTCLOUD_DOMAIN=softwarecatalogus.performance.accept.commonground.nu
-      - NGINX_TARGET_HOST=softwarecatalogus.performance.accept.commonground.nu
+      - NGINX_NEXTCLOUD_UPSTREAM=http://host.docker.internal:8080
+      - NGINX_NEXTCLOUD_DOMAIN=localhost
+      - NGINX_TARGET_HOST=localhost
       - NGINX_ROOT_DIR=/app/public
       # Authentication Configuration
       - GRANT_TYPE=authorization_code
