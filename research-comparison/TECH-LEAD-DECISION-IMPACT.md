@@ -23,8 +23,9 @@
   - [2.3 Auto-zoek tijdens typen](#23-auto-zoek-tijdens-typen)
   - [2.4 Toegankelijkheid: skip-link en DOM-volgorde](#24-toegankelijkheid-skip-link-en-dom-volgorde)
 - [3. Publicatiepagina](#3-publicatiepagina)
-  - [3.1 Generieke vs. specifieke pagina](#31-generieke-vs-specifieke-pagina)
-  - [3.2 Plek van Begrippenlijst-knop](#32-plek-van-begrippenlijst-knop)
+  - [3.1 Layout per documenttype → richting één generieke layout](#31-layout-per-documenttype--richting-één-generieke-layout)
+  - [3.2 Deel-modal ("Deel deze pagina")](#32-deel-modal-deel-deze-pagina)
+  - [3.3 Dode `ConGlossaryHighlight`-wrapper op de publication-router](#33-dode-conglossaryhighlight-wrapper-op-de-publication-router)
 - [Samenvatting voor de tech lead](#samenvatting-voor-de-tech-lead)
 
 ---
@@ -354,47 +355,137 @@ Aanbeveling: optie 1. Eén handler-regel + één role-attribute.
 
 ## 3. Publicatiepagina
 
-### 3.1 Generieke vs. specifieke pagina
+### 3.1 Layout per documenttype → richting één generieke layout
 
-**Technisch concept:** dit is dezelfde architecturale spanning als bij de resultaatkaart (2.1), maar dan met meer types en grotere views. Acato heeft één publicatie-layout omdat hun datacontract uniform is. Wij hebben **dertien layouts** (default, softwarecatalogus, organisation, product, module, moduleversie, koppeling, dienst, gebruik, contactperson, woo-verzoek, formulier — plus een ongebruikt `default-old`), omdat we dertien semantisch verschillende documenttypes serveren met elk hun eigen kenmerken: contactenpaginas met privacy-conform-tonen, module-pagina's met versie-tabs en gerelateerde-content-blokken, gebruik-pagina's met compliance-status, organisation-pagina's met logo + contactpersonen, etc.
+**PO-richting:** committed naar één generieke (schema-gedreven) layout op termijn. Niet als big-bang; per type bekijkend of het schema-gestuurd afgehandeld kan worden.
 
-De default-view leunt al op een schema-driven render (`formatBySchema`, `sortPropertiesByOrder`). De type-specifieke views bestaan omdat schema-driven render alléén niet voldoende is voor die rijke layouts.
+**Technisch concept:** dezelfde architecturale spanning als bij de resultaatkaart (2.1), maar met meer types en grotere views. Acato heeft één publicatie-layout omdat hun datacontract uniform is. Wij hebben **dertien layouts** — default (schema-gedreven), softwarecatalogus, organisation, product, module, moduleversie, koppeling, dienst, gebruik, contactperson, woo-verzoek, formulier, plus de ongebruikte `default-old`/`default1` orphans — omdat we semantisch verschillende documenttypes serveren met elk hun eigen rijke features (versie-tabs, contact-grids, compliance-blokken, standards-tabel, etc.).
 
-**Trade-off:**
-- **Behouden.** Dertien parallelle views die meegroeien als schema's wijzigen — dat is de onderhoudskost.
-- **Genericiseren naar één view.** Niet als kopieer-werk uit te voeren: type-specifieke features (versie-tabs, contact-grids, compliance-blokken) moeten ofwel in default opgenomen worden (default wordt onhoudbaar) ofwel gesloopt (PO-impact, en mogelijk klant-impact).
-- **Incrementele convergentie.** Per type bekijken of het schema-gestuurd afgehandeld kan worden, beginnen bij de simpelste (formulier, woo-verzoek). Geen big-bang, continue verbetering. **Tech-lead-favoriet** als de PO-onderliggende zorg "te veel inconsistentie tussen pagina's" is.
+**Dispatch** ([`views/ac-publication/ac-publication.js:160-198`](../src/views/ac-publication/ac-publication.js#L160-L198)). Twee-laags switch:
+1. Eerst `get_single?.catalog?.title === 'Softwarecatalogus'` → softwarecatalogus-view.
+2. Anders schakelt op `publicationType.title` (Softwarecatalogus, Formulier, Woo-verzoek/besluit) en valt terug op `@self.schema.slug.toLowerCase()` voor de overige typen (organisatie, suite, module, moduleversie, koppeling, gebruik, dienst, contactpersoon). Geen match → `AcPublicationDefault` (schema-gedreven generic layout).
+
+De default-view leunt al op een schema-driven render (`formatBySchema`, `sortPropertiesByOrder`). De type-specifieke views bestaan omdat schema-driven alléén niet voldoende is voor die rijke layouts.
+
+**Convergentiepad (geen big-bang):**
+- Per type bekijken of het schema-gestuurd afgehandeld kan worden, beginnen bij de simpelste (formulier, woo-verzoek). Continue verbetering.
+- Type-specifieke features die *niet* schema-gedreven kunnen (versie-tabs, contact-grids, compliance-blokken, standards-tabel) ofwel opnemen in default ofwel slopen na PO-overleg per geval.
+- Volledige convergentie blijft afhankelijk van wat de softwarecatalogus-branch nodig heeft — die leunt actief op de type-specifieke views. **Coördinatie met die branch is voorwaarde**; tussentijdse big-bang-refactor levert merge-conflicten en verloren werk.
 
 **Wat de tech lead extra moet weten:**
-- **Bug gevonden tijdens analyse:** de top-level publication-view heeft een dode glossary-highlight-wrapper. Een switch-statement returned al voordat de wrapper bereikt wordt, dus in-page term-highlights werken momenteel **niet** op publicatiepagina's. Onafhankelijk van deze PO-keuze op te lossen, en raakt direct aan Keuze 9 hieronder (zonder die wrapper kan een Begrippenlijst-knop in de samenvattingskaart geen contextuele "Deze pagina"-tab vullen).
-- `ac-publication-default-old.js` ligt onaangeroerd in de map. Vermoedelijk dode code. Los opruimen.
-- Acato's "generiek" werkt mede omdat ze veel minder content-types hebben. Onze schaal-factor 13× is geen detail; het is **de reden** dat we hier zijn.
+- **`ac-publication-default-old.js` is dode code.** Ligt onaangeroerd in de map. Los opruimen.
+- **`ac-publication-default1.js` is ook dode code** — orphan default-view die nergens vanuit de router wordt aangeroepen, met dependencies op verouderde mock-data (`MOCK_CONCEPTS`). Idem opruimen.
+- **Twee related-tabs-implementaties coëxisteren.** [`con-related-tabs.js`](../src/molecules/con-related-tabs/con-related-tabs.js) (~613 regels, ouder) en `con-related-tabs-new.js` (~439 regels, current). De softwarecatalogus-variant gebruikt de oude; de overige type-specifieke views gebruiken `new`. Consolideren naar één is onafhankelijke schoonmaakactie, los van convergentie.
+- **Acato's "generiek" werkt mede omdat ze veel minder content-types hebben.** Onze schaal-factor 13× is geen detail; het is **de reden** dat we hier zijn.
+- **Niet beginnen vóór 3.3 is opgelost.** De dode wrapper-bug (zie 3.3) staat op precies de plek waar convergentie-werk eindigt — een `return` aan het eind van de router. Eerst die router-flow opschonen, dan pas type-specifieke views consolideren.
 
 ---
 
-### 3.2 Plek van Begrippenlijst-knop
+### 3.2 Deel-modal ("Deel deze pagina")
 
-**Technisch concept:** Keuze 1.1 is nu "behouden + fixen", dus de feature blijft. Hier gaat het puur over plaatsing. Onze huidige floating-button hangt globaal in de App-shell, zichtbaar op elke publieke pagina. Verplaatsen naar de samenvattingskaart vereist dat er een **gedeelde samenvattingskaart-component** is — die is er niet in dezelfde vorm. Elk van de dertien publication-views heeft zijn eigen header/samenvattings-blok. "Naar de samenvatting verplaatsen" betekent dus óf 13× toevoegen, óf eerst een gedeelde samenvattings-component extracten (dat is een refactor los van deze PO-keuze).
+**PO-keuze (open):** modal alsnog inbouwen of geen deel-knop op publicatiepagina's?
 
-**Trade-off:**
-- **Rechtsonder houden.** Geen wijziging.
-- **Naar samenvattingskaart verplaatsen.** Feitelijk een **vóór-refactor van de publication-views** als je het netjes wilt — er is geen gedeelde samenvattings-component om in te haken.
-- **Beide plekken.** Alleen toevoegen, niets weghalen. Risico: UX-dupliek (dezelfde actie op twee plekken). Vraag PO of dat acceptabel is — sommige design-systemen vinden dat oké, andere niet.
+**Technisch concept:** een feature die **Acato post-fork heeft afgebouwd**. De CSS voor de copy-button-animatie zit in onze gedeelde stylesheet (`ac-publication.scss`) — meegenomen bij de fork als scaffolding-rest — maar de UI is nooit aangesloten. Activeren is dus geen ontwerp-werk, alleen wiring.
+
+**Hoe Acato het rendert** ([`tilburg-woo-ui_acato/src/views/ac-publication/ac-publication.js:399-445`](../../tilburg-woo-ui_acato/src/views/ac-publication/ac-publication.js#L399-L445)):
+- Knop "Deel deze pagina" net na de hoofd-content.
+- Klik opent `<AcModal>` met titel "Dit delen" (via `LABELS.SHARE_MODAL`).
+- Modal-inhoud: paragraaf "Kopieer de link naar uw klembord…" + read-only `<Textbox>` met `${window.location.origin}/publicatie/${get_single?.id}` + primary-action kopiëer-knop.
+- Klik op kopiëer-knop: `navigator.clipboard.writeText(url)` in try/catch, zet `copyStatus` op `'copied'` of `'error'`, auto-reset na 5s.
+- Visuele feedback: check-icoon + particle-burst-animatie (CSS in `ac-publication.scss`).
+- A11y: `<div role='status' aria-live='polite'>` kondigt "De link is gekopieerd…" of foutmelding aan voor schermlezers.
+
+**Bij ons** ([`tilburg-woo-ui/src/views/ac-publication/`](../src/views/ac-publication/)):
+- Geen deel-knop in enige variant.
+- CSS-regels voor `.copy-button` + particle-animatie staan wel in `ac-publication.scss` — meegekomen bij de fork, niet aangeroepen door enig component. **Dode CSS.**
+- Geen store-state of methode voor "deel deze pagina". Inbouwen is from-scratch, niet uitbreiden.
 
 **Wat de tech lead extra moet weten:**
-- Eerst de **dode-wrapper-bug uit 3.1** oplossen voordat hier werk in gaat. Anders bouw je een knop op een plek waar de glossary-context op de publicatiepagina sowieso niet werkt.
+- **Adoptie is enkele uren werk.** Knop + modal-component overnemen uit Acato's `ac-publication.js`, lokale state voor `copyStatus`, `navigator.clipboard` met fallback (clipboard-API werkt alleen op https/localhost — voor http-omgevingen `document.execCommand('copy')` als backup). Geen wijzigingen aan de store nodig.
+- **In welke type-specifieke views verschijnt de knop?** Als de PO ja zegt: per variant overnemen of in een gedeelde "footer-actions"-component extraheren die alle varianten kunnen renderen. Tweede is netter maar vereist een mini-refactor van de dertien views — overweeg dit te bundelen met de convergentie van 3.1.
+- **De CSS-regels gaan ervan uit dat er een `.particles` + `.particles-inner` div in de markup zit.** Die divs renderen wij niet. Bij activatie: Acato's markup-structuur volgen, anders is de animatie alsnog dood.
+- **Onafhankelijke schoonmaakactie:** als de PO "skip" zegt, **alsnog de dode CSS opruimen** uit `ac-publication.scss`.
+
+---
+
+### 3.3 Dode `ConGlossaryHighlight`-wrapper op de publication-router
+
+**PO-keuze:** geen. Dit is een bug, niet een feature-decision. Direct aan deze tech-keuze-lijst toegevoegd omdat ze blokkeert wat op andere pagina's wel werkt.
+
+**Technisch concept:** de router in [`views/ac-publication/ac-publication.js:160-205`](../src/views/ac-publication/ac-publication.js#L160-L205) heeft een glossary-highlight-wrapper aan het eind staan die nooit wordt bereikt. Daardoor worden begrippen in de paginatekst niet gemarkeerd — een feature die wel werkt op de homepage en op content-pagina's werkt op publicatiepagina's dus stil niet.
+
+**Reproductie:**
+
+```js
+if (get_single?.catalog?.title === 'Softwarecatalogus') {
+  return <AcPublicationSoftwarecatalogus />;
+} else {
+  switch (...) {
+    case 'Softwarecatalogus': return <AcPublicationSoftwarecatalogus />;
+    // ... 12 andere returns ...
+    default:
+      // ... per slug returns ...
+      return <AcPublicationDefault schema={schema} />;
+  }
+};
+
+return (
+  <ConGlossaryHighlight as='div'>
+    {renderPublicationView()}   // <-- ReferenceError als ooit bereikt
+  </ConGlossaryHighlight>
+);
+```
+
+Elke tak van de if/else en switch heeft een eigen `return`. Het component exit altijd voordat regel 201 wordt geraakt. Twee bugs tegelijk:
+1. **Onbereikbare wrapper** — de hele `<ConGlossaryHighlight>`-regel is dode code.
+2. **Niet-bestaande functie-aanroep** — `renderPublicationView()` is nergens gedeclareerd. Áls het pad ooit bereikt werd, zou het een `ReferenceError` gooien. Bewijs dat het pad inderdaad onbereikbaar is — anders zou de pagina al lang crashen.
+
+**Voorgestelde fix:** de logica refactoren naar één `return` aan het eind via een lokale variabele:
+
+```js
+let view;
+if (get_single?.catalog?.title === 'Softwarecatalogus') {
+  view = <AcPublicationSoftwarecatalogus />;
+} else {
+  const publicationType = get_single?.['@self']?.schema?.slug?.toLowerCase();
+  switch (get_single?.publicationType?.title) {
+    case 'Softwarecatalogus': view = <AcPublicationSoftwarecatalogus />; break;
+    // ... etc ...
+    default:
+      if (publicationType === 'organisatie') view = <AcPublicationOrganisation />;
+      else if (publicationType === 'suite') view = <AcPublicationProduct />;
+      // ... etc ...
+      else view = <AcPublicationDefault schema={schema} />;
+  }
+}
+
+return (
+  <ConGlossaryHighlight as='div'>
+    {view}
+  </ConGlossaryHighlight>
+);
+```
+
+**Alternatief** (niet aanbevolen): de wrapper *binnen* elke type-specifieke view zelf zetten. Schaalt slechter (13× toevoegen, makkelijk om er één te vergeten bij een nieuwe variant) en wijkt af van hoe het op andere pagina-types werkt.
+
+**Wat de tech lead extra moet weten:**
+- **Geen Acato-feature.** Acato heeft geen inline-markering, alleen een drawer-lijst met begrippen. Onze inline-markering is een eigen post-fork uitbreiding die op andere pagina-types (home, content) wél werkt — dit is een lokale regressie op de publicatie-router.
+- **Test-pad na fix:** open een publicatie waarvan de tekst minstens één bekend begrip uit de glossary-store bevat; bevestig dat het begrip gemarkeerd is in de tekst en dat klikken de drawer opent met dat begrip uitgeklapt.
+- **Volgorde t.o.v. 3.1.** Eerst de router-flow opschonen via deze fix (één return, geen onbereikbare code, geen onbekende functie-aanroep). Pas dan convergentie van de dertien type-specifieke views aanpakken — anders refactor je dezelfde router-code twee keer.
+- **Volgorde t.o.v. Keuze 1.1 (Begrippenlijst-knop op homepage).** Die fix raakt het *openen* van de drawer; deze 3.3-fix raakt het *vullen* van de "Deze pagina"-context. Twee verschillende bugs in twee verschillende lagen — beide moeten gefixt worden voor de glossary end-to-end werkt vanaf een publicatiepagina. Niet afhankelijk maar wel complementair.
 
 ---
 
 ## Samenvatting voor de tech lead
 
-**Drie committed werkitems (PO heeft besloten — geen keuze meer):**
+**Committed werkitems (PO heeft besloten — geen keuze meer):**
 1. **Begrippenlijst-knop fixen** (Keuze 1.1). Drawer opent niet bij klik; debug-traject store-action vs. drawer-mount.
 2. **Secundaire navigatiebalk** blijft op alle pagina's (Keuze 1.2). Niets te doen.
-3. Daarnaast los oppakken: de dode `ConGlossaryHighlight`-wrapper op de publication-view (Keuze 3.1, raakt 3.2).
+3. **Convergentie van publication-views richting één generieke (schema-gedreven) layout** (3.1). Incrementeel, per type. Voorwaarde: softwarecatalogus-branch eerst gemerged of afgerond + 3.3 eerst opgelost.
+4. **Dode `ConGlossaryHighlight`-wrapper op de publication-router fixen** (3.3). Router-flow naar één `return` refactoren; raakt ook de niet-bestaande `renderPublicationView()`-aanroep.
 
-**Twee keuzes met merge-risico tegen werk in flight:**
-- Keuze 2.1 (resultaatkaarten genericiseren) en Keuze 3.1 (publicatiepagina genericiseren). **Blokkeren** zolang de softwarecatalogus-branch nog leeft.
+**Eén keuze met merge-risico tegen werk in flight:**
+- Keuze 2.1 (resultaatkaarten genericiseren). **Blokkeren** zolang de softwarecatalogus-branch nog leeft. Convergentie van publication-views (3.1) heeft hetzelfde merge-risico maar is al committed — coördineer met de branch-houder.
 
 **Drie nog-open keuzes met een datacontract-component (homepage):**
 - Keuze 1.3 ("General"-kaart). Beide repos delen de UI-component, verschillen zitten in endpoint + datacontract + bedoeling (themadossiers vs. documentsoorten). Bron-verificatie van de huidige one-thema-situatie is in elk geval eerste stap; optie 2 of 3 vereist contract- en/of CMS-werk.
@@ -409,11 +500,17 @@ De default-view leunt al op een schema-driven render (`formatBySchema`, `sortPro
 - 2.4 bug #1: skip-link navigeert per ongeluk naar homepage door `<base href="/">`-quirk. Voorgestelde fix is één regel in `ac-header.js:208`: `href={`${location.pathname}${location.search}#main`}`. Raakt ook alle andere fragment-only `<a href="#...">` in de app — overweeg `<base>`-tag weghalen in aparte PR.
 - 2.4 bug #2: skip-link werkt niet met spatiebalk — niet een WCAG-overtreding maar wel een ARIA-mismatch (gestyled als knop, gerendered als anchor). Fix: `role='button'` + `onKeyDown`-handler op de SkipLink die op spatie `e.preventDefault()` doet en `click()` aanroept. Acato heeft dezelfde bug — zit upstream in `@utrecht/component-library-react`.
 
+**Eén nog-open keuze op de publicatiepagina:**
+- Keuze 3.2 (Deel-modal). Adoptie ~paar uur werk; modal-markup uit Acato overnemen, copy-handler met `navigator.clipboard`, dode CSS-animatie wordt dan werkelijk gebruikt. Geen merge-risico met de softwarecatalogus-branch. Side-effect: als PO "skip" zegt, alsnog de dode CSS opruimen.
+
 **Onafhankelijke opschoonpunten gevonden tijdens analyse (los van PO-keuzes):**
 - `ac-publication-default-old.js` is vermoedelijk dode code.
+- `ac-publication-default1.js` is ook dode code — orphan default-view die nergens vanuit de router wordt aangeroepen, met `MOCK_CONCEPTS`-dependency.
+- Twee related-tabs-implementaties in publicatie-views (`con-related-tabs.js` ~613 regels vs. `con-related-tabs-new.js` ~439 regels). Softwarecatalogus gebruikt de oude; de overige type-specifieke views de nieuwe. Consolideren naar één.
 - Onze `ac-featured.js` is dode code zolang Keuze 1.4 nog niet "activeren" is — rendert drie lege `<AcSearchResult />`, wordt nergens geïmporteerd. Mag los gesloopt worden óf in één klap vervangen als 1.4 vooruit gaat.
 - `paragraph`- en `content`-mappings in `themes.store.js` zijn dood (worden door `AcCardCategory` niet gelezen).
 - `image`-prop in `AcCardCategory` is dood (gedestructureerd, niet gebruikt in JSX).
 - **75 console-statements** in `publications.store.js` (vs. 0 in Acato), waaronder een `console.group`/`console.info`-paar rond `setQueryDate`. Maakt devtools-output op de zoekpagina onleesbaar. Aparte cleanup-pass.
 - **Datumfilter URL-formaat verifiëren back-end-side.** Onze code stuurt `published[after/before]`, Acato stuurt `@self[published][gte/lte]`. Latente bug onafhankelijk van Keuze 2.2 — runtime-check kost minuten.
 - **`AcLink` mist een echte external-modus.** Het component gebruikt `react-router-dom`'s `<Link>` voor álle URL's, ook absolute externe URL's. Dat is een misbruik van `<Link>` (die alleen voor interne SPA-navigatie bedoeld is) en levert externe links zonder `target="_blank"` of `rel="noopener noreferrer"`. Onze homepage-kaart omzeilt dit door bij `isExternal` direct een plain `<a>` te renderen — maar elders in de codebase waar `AcLink` voor externe URL's wordt gebruikt is dit een latente bug. Aanrader: `AcLink` zelf de external-tak laten dragen. Voorwaarde als we Acato's categorieën-model overnemen.
+- Dode copy-button-CSS in `ac-publication.scss` (`.copy-button`, `.particles`, `.particles-inner`) — meegekomen bij de fork, niet aangeroepen. Opruimen als Keuze 3.2 "skip" wordt, behouden als 3.2 "inbouwen" wordt.

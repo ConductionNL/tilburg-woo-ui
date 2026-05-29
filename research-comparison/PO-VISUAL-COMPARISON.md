@@ -14,8 +14,6 @@
 1. [Homepage](#1-homepage)
 2. [Zoekpagina (filters, sortering, paginering)](#2-zoekpagina)
 3. [Publicatiepagina](#3-publicatiepagina)
-4. [Beheeromgeving (alleen wij)](#4-beheeromgeving-alleen-wij)
-5. [Onderwerpen-, over-ons- en andere contentpagina's](#5-onderwerpen--over-ons--en-andere-contentpaginas)
 
 ---
 
@@ -107,7 +105,17 @@
 
 ### PO walkthrough-aantekeningen (2026-05-22)
 
-- **Generieke vs. specifieke pagina.** Acato's pagina is generiek; de onze is specifiek per documenttype.
-    - **Keuze:** de documenttype-specifieke layouts behouden (elke type krijgt een eigen presentatie), of overstappen op één generieke layout zoals Acato (alle pagina's zien er hetzelfde uit, ongeacht het documenttype)?
-- **"Begrippenlijst"-knop in de samenvatting.** Acato heeft die knop toegevoegd aan de samenvattingskaart, net zoals wij hem hebben rechtsonder in het scherm (zie aantekening in §1 Homepage).
-    - **Keuze:** de "Begrippenlijst"-knop op zijn huidige plek (rechtsonder) houden, verplaatsen naar de samenvattingskaart zoals Acato, of beide plekken behouden?
+- **Eén layout voor alles vs. een eigen layout per documenttype.** Hoe de pagina wordt opgebouwd verschilt fundamenteel:
+    - **Bij Acato:** één opbouw voor *alle* publicaties — titel, samenvattingskaart, bijlagen-tabellen, "Aanvullende informatie"-blok. Hun data is overal hetzelfde gestructureerd, dus er is geen reden om per type te variëren.
+    - **Bij ons:** elk documenttype krijgt zijn eigen pagina-opbouw. Een organisatie ziet er anders uit dan een applicatie/module, een moduleversie heeft een eigen status-blok met datums, een contactpersoon heeft een aparte presentatie met foto en contactgegevens, etc. In totaal zo'n dertien varianten — voor organisatie, applicatie/module, moduleversie, product, dienst, koppeling, gebruik, contactpersoon, softwarecatalogus, formulier, woo-verzoek, plus een algemene terugval-pagina voor de rest.
+    - **Richting:** we groeien toe naar één generieke layout, maar niet in één keer. Per type wordt bekeken of het in de algemene terugval-pagina past. Tot dan blijven de type-specifieke pagina's bestaan voor velden die anders niet zichtbaar zouden zijn.
+    - **Geen PO-keuze** — dit is een ontwikkelingsspoor, geen productbeslissing. Goed om te weten dat het verschil bestaat en de richting bekend is.
+- **"Deel deze pagina"-knop.** Onder de hoofd-content van een publicatie:
+    - **Bij Acato:** een knop "Deel deze pagina" opent een venster met de publicatie-link in een tekstvak en een kopiëer-knop. Bij klikken wordt de link gekopieerd, met een korte animatie als bevestiging, en het kopiëren wordt voor schermlezers aangekondigd ("De link is gekopieerd…" of een foutmelding). Werkende feature, door Acato na de splitsing afgebouwd.
+    - **Bij ons:** geen deel-knop, geen venster. De vormgeving (kleuren, animatie) staat wel klaar in onze code — meegekomen bij de splitsing — maar wordt nergens gebruikt.
+    - **Keuze:** de deel-knop alsnog inbouwen (Acato's versie kan worden overgenomen, en de animatie kan want de vormgeving hebben we al), of geen deel-knop op publicatiepagina's?
+- **Begrippen-markering in de paginatekst werkt niet (bug).** Het idee: terwijl een gebruiker een publicatie leest, worden bekende begrippen in de tekst automatisch onderstreept of gemarkeerd. Klik je op zo'n begrip, dan opent de begrippenlijst met dat begrip al uitgeklapt.
+    - **Bij ons (bedoeld):** elke publicatiepagina wordt automatisch nagelopen op bekende begrippen, en die worden in de tekst gemarkeerd. Op de homepage en op contentpagina's werkt dat ook zo.
+    - **Bij ons (werkelijk):** door een fout in de pagina-code wordt deze stap op publicatiepagina's overgeslagen. Begrippen in de paginatekst worden dus niet gemarkeerd; klikken op een term in de tekst doet niets.
+    - **Bij Acato:** geen markering in de tekst — zij hebben een paneel met de tabs "Deze pagina" + "Alle begrippen" waar begrippen worden gelijst, los van de paginatekst zelf. Een andere benadering, geen vergelijkbare fout.
+    - **Geen PO-keuze** — dit is een bug aan onze kant die los gefixt moet worden. Pas daarna is de markering werkelijk zichtbaar voor gebruikers.
