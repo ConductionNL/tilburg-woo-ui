@@ -6,7 +6,7 @@ A Helm chart for deploying the Tilburg WOO UI application on Kubernetes.
 
 - Kubernetes 1.16+
 - Helm 3.0+
-- Container images available at [ghcr.io/conductionnl/tilburg-woo-ui](https://github.com/ConductionNL/tilburg-woo-ui/pkgs/container/tilburg-woo-ui)
+- Container images available at [ghcr.io/conductionnl/tilburg-woo-ui](https://codeberg.org/Conduction/tilburg-woo-ui/pkgs/container/tilburg-woo-ui)
 
 ## Installation
 
@@ -140,7 +140,7 @@ Based on the docker-compose.yml configuration:
 
 ## Available Image Tags
 
-Based on the [GitHub Container Registry](https://github.com/ConductionNL/tilburg-woo-ui/pkgs/container/tilburg-woo-ui):
+Based on the [GitHub Container Registry](https://codeberg.org/Conduction/tilburg-woo-ui/pkgs/container/tilburg-woo-ui):
 
 - `latest` - Latest stable release
 - `softwarecatalogus-7bc70ef` - Latest commit from softwarecatalogus branch
@@ -255,5 +255,5 @@ kubectl get ingress -l app.kubernetes.io/name=tilburg-woo-ui
 ## Support
 
 For issues and questions:
-- GitHub Issues: [https://github.com/ConductionNL/tilburg-woo-ui/issues](https://github.com/ConductionNL/tilburg-woo-ui/issues)
-- Repository: [https://github.com/ConductionNL/tilburg-woo-ui](https://github.com/ConductionNL/tilburg-woo-ui) 
+- GitHub Issues: [https://codeberg.org/Conduction/tilburg-woo-ui/issues](https://codeberg.org/Conduction/tilburg-woo-ui/issues)
+- Repository: [https://codeberg.org/Conduction/tilburg-woo-ui](https://codeberg.org/Conduction/tilburg-woo-ui) 

@@ -4,12 +4,12 @@ description: A Helm chart for Tilburg WOO UI application with enhanced security 
 type: application
 version: 0.2.0
 appVersion: "latest"
-home: https://github.com/ConductionNL/tilburg-woo-ui
+home: https://codeberg.org/Conduction/tilburg-woo-ui
 sources:
-  - https://github.com/ConductionNL/tilburg-woo-ui
+  - https://codeberg.org/Conduction/tilburg-woo-ui
 maintainers:
   - name: ConductionNL
-    url: https://github.com/ConductionNL
+    url: https://codeberg.org/Conduction
 keywords:
   - woo
   - tilburg
