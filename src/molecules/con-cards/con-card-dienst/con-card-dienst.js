@@ -10,8 +10,6 @@ import {
   extractSummary,
 } from '@src/utilities/con-extract-text';
 import { NAVIGATE_TO } from '@constants/routes.constants';
-import { useResolvedText } from '@src/utilities/con-resolve-uuids-in-text';
-
 const ConCardDienst = ({
   skeleton,
   title,
@@ -23,14 +21,10 @@ const ConCardDienst = ({
   aanbieder,
   status,
   type,
-  objectStore,
   navigateTo = 'publication',
 }) => {
-  // Resolve aanbieder (organisatie) name if UUID provided
-  const { resolvedText: resolvedAanbieder } = useResolvedText(
-    typeof aanbieder === 'object' ? aanbieder?.value : aanbieder,
-    objectStore
-  );
+  // Get the aanbieder value (handle both object and string formats)
+  const aanbiederValue = typeof aanbieder === 'object' ? aanbieder?.value : aanbieder;
 
   const onClick = () => {
     switch (navigateTo) {
@@ -60,8 +54,10 @@ const ConCardDienst = ({
           <Heading level={3}>
             <ConUuidResolver>{extractTitle(title)}</ConUuidResolver>
           </Heading>
-          {aanbieder && (
-            <Paragraph small>(Aangeboden door {resolvedAanbieder})</Paragraph>
+          {aanbiederValue && (
+            <Paragraph small>
+              (Aangeboden door <ConUuidResolver>{aanbiederValue}</ConUuidResolver>)
+            </Paragraph>
           )}
         </AcFlex>
       </AcFlex>
@@ -78,7 +74,50 @@ const ConCardDienst = ({
           {type && (
             <>
               <VISUALS.ELLIPSE />
-              <Paragraph small>{extractText(type)}</Paragraph>
+              <Paragraph small>
+                {(() => {
+                  // Check if it's a string that looks like a JSON array
+                  if (typeof type === 'string' && type.trim().startsWith('[')) {
+                    try {
+                      const parsed = JSON.parse(type);
+                      if (Array.isArray(parsed)) {
+                        return parsed
+                          .map((item) => extractText(item))
+                          .filter(Boolean)
+                          .join(', ');
+                      }
+                    } catch (e) {
+                      // If parsing fails, just display as-is
+                      return extractText(type);
+                    }
+                  }
+                  
+                  // Handle actual arrays
+                  if (Array.isArray(type)) {
+                    return type
+                      .map((typeItem) => {
+                        // Handle objects with naam/name/label
+                        if (typeof typeItem === 'object' && typeItem !== null) {
+                          return extractText(
+                            typeItem.naam || typeItem.name || typeItem.label || typeItem
+                          );
+                        }
+                        return extractText(typeItem);
+                      })
+                      .filter(Boolean)
+                      .join(', ');
+                  }
+                  
+                  // Handle single object with naam/name/label
+                  if (typeof type === 'object' && type !== null) {
+                    return extractText(
+                      type.naam || type.name || type.label || type
+                    );
+                  }
+                  
+                  return extractText(type);
+                })()}
+              </Paragraph>
             </>
           )}
           {status && (

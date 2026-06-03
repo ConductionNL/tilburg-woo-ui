@@ -24,7 +24,7 @@ const AcLogin = loadable(() => import('@views/ac-login/ac-login'));
 const ConDirectory = loadable(() => import('@views/con-directory/con-directory'));
 const AcObjects = loadable(() => import('@views/ac-beheer/ac-objects'));
 const AcFormsGebruik = loadable(() =>
-  import('@views/ac-forms/ac-forms-gebruik/ac-forms-gebruik')
+  import('@views/ac-forms/ac-forms-gebruik/gebruik-application/ac-forms-gebruik')
 );
 const AcFormsProduct = loadable(() =>
   import('@views/ac-forms/ac-forms-product/ac-forms-product')
@@ -33,10 +33,10 @@ const AcFormsApplicatie = loadable(() =>
   import('@views/ac-forms/ac-forms-applicatie/ac-forms-applicatie')
 );
 const AcFormsKoppeling = loadable(() =>
-  import('@views/ac-forms/ac-forms-koppeling/ac-forms-koppeling')
+  import('@src/views/ac-forms/ac-forms-koppeling/ac-forms-koppeling')
 );
 const ConFormsDienst = loadable(() =>
-  import('@views/ac-forms/con-forms-dienst/con-forms-dienst')
+  import('@src/views/ac-forms/con-forms-dienst/con-forms-dienst')
 );
 const ConFormsIndex = loadable(() =>
   import('@views/ac-forms/con-forms-index/con-forms-index')
@@ -45,9 +45,19 @@ const ConViewsList = loadable(() => import('@views/con-views-list/con-views-list
 const ConBeheerViews = loadable(() =>
   import('@views/con-beheer-views/con-beheer-views')
 );
+const ConBeheerViewsList = loadable(() =>
+  import('@views/con-beheer-views-list/con-beheer-views-list')
+);
 const ConPasswordReminder = loadable(() =>
   import('@views/ac-password-reminder/ac-password-reminder')
 );
+const ConFormsGebruikKoppeling = loadable(() =>
+  import('@views/ac-forms/ac-forms-gebruik/gebruik-koppeling/ac-forms-koppeling')
+);
+const ConFormsGebruikDienst = loadable(() =>
+  import('@views/ac-forms/ac-forms-gebruik/gebruik-dienst/con-forms-dienst')
+);
+const AcChat = loadable(() => import('@views/ac-chat/ac-chat'));
 
 export {
   AcHome,
@@ -73,5 +83,9 @@ export {
   ConFormsIndex,
   ConViewsList,
   ConBeheerViews,
+  ConBeheerViewsList,
   ConPasswordReminder,
+  ConFormsGebruikKoppeling,
+  ConFormsGebruikDienst,
+  AcChat,
 };

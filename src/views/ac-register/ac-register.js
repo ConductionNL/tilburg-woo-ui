@@ -25,6 +25,11 @@ import { useNavigate } from 'react-router-dom';
 import { useDebouncedInput } from '@src/hooks/index';
 import { ConMarkdown } from '@src/components';
 import LogoUploadField from '@views/ac-beheer/shared/components/con-logo-upload-field';
+import {
+  uploadFileToObject,
+  uploadFileToObjectDirect,
+  isDataUrlNeedingUpload,
+} from '@src/utilities';
 import { validateWebsite as centralValidateWebsite } from '@views/ac-forms/validation/form-validations';
 
 const organizationTypes = [
@@ -64,7 +69,8 @@ const AcRegister = () => {
     organizationType: 'Leverancier',
     email: '',
   });
-  const [logoDataUrl, setLogoDataUrl] = useState(null);
+  // logo can be: File (new selection), string URL (existing), or null/empty
+  const [logo, setLogo] = useState(null);
   const [touched, setTouched] = useState({
     name: false,
     contactPersons: {
@@ -144,7 +150,7 @@ const AcRegister = () => {
   const handleRegister = async () => {
     setLoading(true);
     try {
-      // Create a copy of the organization data
+      // Step 1: Create organization first (without logo)
       const organizationData = {
         naam: organization.name,
         website: organization.website,
@@ -152,9 +158,9 @@ const AcRegister = () => {
         oin: organization.oin,
         cbs: organization.cbs,
         telefoonnummer: organization.phone,
+        status: 'Deactief',
         rol: organization.role,
         beschrijvingKort: organization.summary,
-        logo: logoDataUrl,
         contactpersonen: [
           {
             voornaam: organization.contactPersons[0].firstName,
@@ -170,7 +176,7 @@ const AcRegister = () => {
       };
 
       const response = await fetch(
-        `${BASE_URL}/openconnector/api/endpoint/register`,
+        `${BASE_URL}/openregister/api/objects/voorzieningen/organisatie`,
         {
           method: 'POST',
           headers: {
@@ -180,21 +186,77 @@ const AcRegister = () => {
         }
       );
 
-      if (response.ok) {
-        const data = await response.json();
-
-        if (data.status === 'error') {
-          setRegisterCallBack('error');
-          setError({ message: data.message, errors: data.errors });
-        } else {
-          setRegisterCallBack('success');
-        }
-      } else {
+      if (!response.ok) {
         const data = await response.json();
         setRegisterCallBack('error');
         setError({ message: data.message, errors: data.errors });
         throw new Error('Aanmelden mislukt');
       }
+
+      const data = await response.json();
+
+      if (data.status === 'error') {
+        setRegisterCallBack('error');
+        setError({ message: data.message, errors: data.errors });
+        return;
+      }
+
+      // Step 2: Upload logo file if it exists and update organization with downloadUrl
+      // Check if logo needs to be uploaded
+      // - File object: needs upload
+      // - base64 data URL: needs upload (backward compatibility)
+      // - string URL: already uploaded, no action needed
+      const logoIsFile = logo instanceof File;
+      const hasLogoDataUrl = isDataUrlNeedingUpload(logo);
+      const needsLogoUpload = logoIsFile || hasLogoDataUrl;
+
+      if (needsLogoUpload && data.id) {
+        try {
+          let uploadResult;
+          if (logoIsFile) {
+            // Upload File object directly
+            uploadResult = await uploadFileToObjectDirect(
+              logo,
+              'voorzieningen',
+              'organisatie',
+              data.id,
+              'logo'
+              // No filename needed - comes from File.name
+            );
+          } else {
+            // Upload base64 data URL (backward compatibility)
+            uploadResult = await uploadFileToObject(
+              logo,
+              'voorzieningen',
+              'organisatie',
+              data.id,
+              'logo',
+              'logo.png'
+            );
+          }
+
+          // If we got a downloadUrl, update the organization with the logo URL
+          if (uploadResult && uploadResult.fileData?.downloadUrl) {
+            await fetch(
+              `${BASE_URL}/openregister/api/objects/voorzieningen/organisatie/${data.id}`,
+              {
+                method: 'PATCH',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  logo: uploadResult.fileData.downloadUrl,
+                }),
+              }
+            );
+          }
+        } catch (uploadError) {
+          console.error('Error uploading logo:', uploadError);
+          // Organization is already created, just without logo
+        }
+      }
+
+      setRegisterCallBack('success');
     } catch (error) {
       setRegisterCallBack('error');
       console.error(error);
@@ -261,8 +323,8 @@ const AcRegister = () => {
               validateEmail,
               validatePhone,
               touched,
-              logoDataUrl,
-              setLogoDataUrl,
+              logo,
+              setLogo,
             }}
           />
         );
@@ -287,7 +349,7 @@ const AcRegister = () => {
           <ReviewForm
             {...{
               organization,
-              logoDataUrl,
+              logo,
               confirmationCheckbox,
               setConfirmationCheckbox,
             }}
@@ -888,8 +950,8 @@ const OrganizationOptionalForm = memo(
     loading,
     validateEmail,
     validatePhone,
-    logoDataUrl,
-    setLogoDataUrl,
+    logo,
+    setLogo,
   }) => {
     const dimensions = { width: '100%', height: '234px' };
     const counterRef = useRef(null);
@@ -1003,15 +1065,18 @@ const OrganizationOptionalForm = memo(
 
             <LogoUploadField
               fieldConfig={{ label: 'Logo', filename: undefined }}
-              _value={logoDataUrl || ''}
-              onChange={(dataUrl) => setLogoDataUrl(dataUrl || null)}
-              onChangeFileName={() => {}}
-              onClear={() => setLogoDataUrl(null)}
+              _value={logo || ''}
+              onChange={(value) => setLogo(value || null)}
+              onClear={() => {
+                setLogo(null);
+              }}
               validation={{ required: false }}
               propertyName={'logo'}
               isDisabled={loading}
               showPreview={true}
               size={'normal'}
+              useFileObjects={true}
+              enableFileSizeCheck={false}
             />
 
             {(organization.organizationType === 'Gemeente' ||
@@ -1209,16 +1274,16 @@ const ContactInformationForm = memo(
 );
 
 const ReviewForm = memo(
-  ({ organization, logoDataUrl, confirmationCheckbox, setConfirmationCheckbox }) => {
+  ({ organization, logo, confirmationCheckbox, setConfirmationCheckbox }) => {
     return (
       <div className='ac-register-form-section'>
         <div className='ac-register-review'>
           <div className='ac-register-review__section'>
             <div className='ac-register-review__header'>
               <h4 className='utrecht-heading-4'>Organisatiegegevens</h4>
-              {logoDataUrl && (
+              {logo && (
                 <ConLogoPreview
-                  logoUrl={logoDataUrl}
+                  logoUrl={logo}
                   className='ac-register-review__logo'
                 />
               )}

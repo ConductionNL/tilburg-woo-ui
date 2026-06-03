@@ -23,9 +23,8 @@ const AcDashboard = ({ store }) => {
   const navigate = useNavigate();
   const { user, object } = store;
 
-  const [orgIsPublished, setOrgIsPublished] = useState(false);
   const [userOrganization, setUserOrganization] = useState(null);
-  const [hasSuggestions, setHasSuggestions] = useState(true); // Start as true, let component set to false if no data
+  const [hasSuggestions, setHasSuggestions] = useState(null); // null = checking, true = has suggestions, false = no suggestions
   const [refreshKey, setRefreshKey] = useState(0); // Key to force component refresh
   const [isLoadingOrganization, setIsLoadingOrganization] = useState(true);
 
@@ -44,7 +43,6 @@ const AcDashboard = ({ store }) => {
 
     if (cachedOrganization) {
       // Use cached data immediately
-      setOrgIsPublished(!!cachedOrganization?.['@self']?.published);
       setUserOrganization(cachedOrganization);
       setIsLoadingOrganization(false);
       return;
@@ -67,7 +65,6 @@ const AcDashboard = ({ store }) => {
         activeOrganizationId
       );
       if (result) {
-        setOrgIsPublished(!!result?.['@self']?.published);
         setUserOrganization(result);
       }
     } catch (error) {
@@ -82,8 +79,8 @@ const AcDashboard = ({ store }) => {
     (updatedUserData) => {
       console.info('Organization switched successfully:', updatedUserData);
 
-      // Reset suggestions state to show info box initially
-      setHasSuggestions(true);
+      // Reset suggestions state to checking mode
+      setHasSuggestions(null);
 
       // Refresh organization data for new organization
       fetchOrganisatieData();
@@ -142,7 +139,13 @@ const AcDashboard = ({ store }) => {
                   <ConSpinLoader />
                 </AcFlex>
               ) : availableWizards.length > 0 ? (
-                <AcGrid columns={4} gap='xl' className='ac-dashboard-wizard-grid'>
+                <AcGrid
+                  columns={
+                    availableWizards.length >= 4 ? 4 : availableWizards.length
+                  }
+                  gap='xl'
+                  className='ac-dashboard-wizard-grid'
+                >
                   {availableWizards.map((wizard) => (
                     <AcTile
                       key={wizard.id}
@@ -163,44 +166,33 @@ const AcDashboard = ({ store }) => {
               )}
             </div>
 
-            {/* Warning card for unpublished organization */}
-            {!orgIsPublished && (
-              <Alert type='warning'>
-                <Heading level={4}>
-                  Uw organisatie staat nog niet gepubliceerd in de software catalogus
-                </Heading>
-                <Paragraph>
-                  Dit betekent dat uw organisatie momenteel niet zichtbaar is in de
-                  zoekfunctie van de catalogus. Bezoekers kunnen uw organisatie en de
-                  bijbehorende producten en diensten nog niet vinden. Gebruik de
-                  &quot;Publiceren&quot; actie om uw organisatie beschikbaar te maken
-                  voor bezoekers en deel te nemen aan de software catalogus.
-                </Paragraph>
-                <AcFlex justifyContent='end'>
-                  <Link href='/beheer/my-organisation'>Naar Mijn Organisatie</Link>
-                </AcFlex>
-              </Alert>
-            )}
-
             {/* Aangeboden Suggesties Table - Shows suggestions from other organizations */}
-            {hasSuggestions && (
-              <Alert type='info'>
-                <Heading level={4}>Aangeboden Suggesties</Heading>
-                <Paragraph>
-                  Hieronder vindt u suggesties die door andere organisaties voor u
-                  zijn aangemaakt. Dit kunnen koppelingen, gebruik of andere
-                  registraties zijn. U kunt deze overnemen om ze toe te voegen aan uw
-                  organisatie, of afwijzen als ze niet relevant zijn.
-                </Paragraph>
-                <div style={{ marginTop: 'var(--tilburg-space-block-md)' }}>
-                  <ConAangebodenSuggestiesTable
-                    id={user?.activeOrganization?.uuid}
-                    key={refreshKey}
-                    onDataChange={setHasSuggestions}
-                  />
-                </div>
-              </Alert>
-            )}
+            <div
+              style={{
+                visibility: hasSuggestions === true ? 'visible' : 'hidden',
+                height: hasSuggestions === true ? 'auto' : 0,
+                overflow: 'hidden',
+              }}
+            >
+              <div className='ac-dashboard-suggestions-fade-in'>
+                <Alert type='info'>
+                  <Heading level={4}>Aangeboden Suggesties</Heading>
+                  <Paragraph>
+                    Hieronder vindt u suggesties die door andere organisaties voor u
+                    zijn aangemaakt. Dit kunnen koppelingen, gebruik of andere
+                    registraties zijn. U kunt deze overnemen om ze toe te voegen aan uw
+                    organisatie, of afwijzen als ze niet relevant zijn.
+                  </Paragraph>
+                  <div style={{ marginTop: 'var(--tilburg-space-block-md)' }}>
+                    <ConAangebodenSuggestiesTable
+                      id={user?.activeOrganization?.uuid}
+                      key={refreshKey}
+                      onDataChange={setHasSuggestions}
+                    />
+                  </div>
+                </Alert>
+              </div>
+            </div>
 
             {/* Welcome Section */}
             <div className='ac-register-review__section'>

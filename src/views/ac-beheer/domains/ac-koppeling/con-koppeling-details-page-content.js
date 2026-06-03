@@ -1,7 +1,5 @@
 import {
   Heading,
-  Paragraph,
-  Alert,
 } from '@utrecht/component-library-react/dist/css-module';
 import { AcColumn, AcFlex } from '@src/atoms';
 import { VISUALS } from '@src/constants';
@@ -17,6 +15,45 @@ import { TOOLTIP_ID } from '@src/index.web';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
 import { useNavigate } from 'react-router-dom';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
+import { AcFormatDate } from '@src/utilities/ac-format-date';
+
+/**
+ * Gets all dates that have values, to show the full history/trail of status changes.
+ * Returns an array of date objects with label and formatted value.
+ */
+const getAllDatesWithValues = (data) => {
+  const dates = [];
+
+  if (data?.datumInOntwikkeling) {
+    dates.push({
+      label: 'Startdatum In ontwikkeling',
+      value: AcFormatDate(data.datumInOntwikkeling, 'YYYY-MM-DD', 'D MMMM YYYY'),
+    });
+  }
+
+  if (data?.datumInGebruik) {
+    dates.push({
+      label: 'Startdatum In gebruik',
+      value: AcFormatDate(data.datumInGebruik, 'YYYY-MM-DD', 'D MMMM YYYY'),
+    });
+  }
+
+  if (data?.datumEindeOndersteuning) {
+    dates.push({
+      label: 'Startdatum Einde ondersteuning',
+      value: AcFormatDate(data.datumEindeOndersteuning, 'YYYY-MM-DD', 'D MMMM YYYY'),
+    });
+  }
+
+  if (data?.datumTeruggetrokken) {
+    dates.push({
+      label: 'Startdatum Teruggetrokken',
+      value: AcFormatDate(data.datumTeruggetrokken, 'YYYY-MM-DD', 'D MMMM YYYY'),
+    });
+  }
+
+  return dates;
+};
 
 /**
  * Koppeling Details Content
@@ -89,6 +126,14 @@ const ConKoppelingDetailsPageContent = ({
     );
   }, [data]);
 
+  const intermediairId = useMemo(() => {
+    return (
+      data?.['@self']?.relations?.gerealiseerdMetIntermediairModule ||
+      data?.gerealiseerdMetIntermediairModule ||
+      null
+    );
+  }, [data]);
+
   const { canEdit: hasEditPermission, reason } = data
     ? checkOrganizationPermissions(user, data)
     : {
@@ -116,11 +161,9 @@ const ConKoppelingDetailsPageContent = ({
           alignItems: 'center',
         }}
       >
-        <Heading level={4}>
-          <div className='con-beheer-details--header-container'>
-            <Heading className='con-beheer-details--title'>{title}</Heading>
-          </div>
-        </Heading>
+        <div className='con-beheer-details--header-container'>
+          <Heading className='con-beheer-details--title'>{title}</Heading>
+        </div>
         <div className='ac-register-review__header-controls'>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <ConActionMenu>
@@ -164,7 +207,8 @@ const ConKoppelingDetailsPageContent = ({
                   Bewerken
                 </ConActionMenu.Button>
 
-                {data && !data['@self']?.published && (
+                {/* Publish/Depublish actions - LEGACY: No longer needed */}
+                {/* {data && !data['@self']?.published && (
                   <ConActionMenu.Button
                     icon={<VISUALS.PUBLISH />}
                     onClick={() => actionMenuProps?.setOpenModal?.('publish')}
@@ -194,7 +238,7 @@ const ConKoppelingDetailsPageContent = ({
                   >
                     Depubliceren
                   </ConActionMenu.Button>
-                )}
+                )} */}
 
                 <ConActionMenu.Button
                   icon={<VISUALS.TRASHCAN />}
@@ -215,7 +259,8 @@ const ConKoppelingDetailsPageContent = ({
         </div>
       </div>
 
-      <UnpublishedWarning data={data} />
+      {/* Unpublished warning - LEGACY: No longer needed */}
+      {/* <UnpublishedWarning data={data} /> */}
 
       <Heading level={3} style={{ marginBlockStart: '1rem' }}>
         Koppeling
@@ -266,7 +311,7 @@ const ConKoppelingDetailsPageContent = ({
           )}
           {data?.type && (
             <div style={{ marginBottom: '8px' }}>
-              <strong>Type: </strong>
+              <strong>Transportprotocol: </strong>
               {data.type}
             </div>
           )}
@@ -276,14 +321,45 @@ const ConKoppelingDetailsPageContent = ({
               {data.status}
             </div>
           )}
-          {data?.standaardversies && (
+          {(() => {
+            const allDates = getAllDatesWithValues(data);
+            return allDates.length > 0
+              ? allDates.map((dateInfo, index) => (
+                  <div key={index} style={{ marginBottom: '8px' }}>
+                    <strong>{dateInfo.label}: </strong>
+                    {dateInfo.value}
+                  </div>
+                ))
+              : null;
+          })()}
+          {data?.beschrijvingKort && (
             <div style={{ marginBottom: '8px' }}>
-              <strong>Standaarden: </strong>
-              {data.standaardversies.map((s) => (
-                <div key={s}>
-                  <ConUuidResolver>{String(s)}</ConUuidResolver>
-                </div>
-              ))}
+              <strong>Korte beschrijving: </strong>
+              {data.beschrijvingKort}
+            </div>
+          )}
+          {intermediairId && (
+            <div style={{ marginBottom: '8px' }}>
+              <strong>Intermediair: </strong>
+              <ConUuidResolver>{String(intermediairId)}</ConUuidResolver>
+            </div>
+          )}
+          {data?.standaardversies && data.standaardversies.length > 0 && (
+            <div style={{ marginBottom: '8px' }}>
+              <strong>Standaardversies:</strong>
+              <ul
+                style={{
+                  margin: '0.5rem 0 0 0',
+                  paddingInlineStart: '1.25rem',
+                  listStyleType: 'disc',
+                }}
+              >
+                {data.standaardversies.map((s) => (
+                  <li key={s} style={{ marginBottom: '0.25rem' }}>
+                    <ConUuidResolver>{String(s)}</ConUuidResolver>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
           {data?.dienst && (
@@ -317,22 +393,22 @@ const ConKoppelingDetailsPageContent = ({
   );
 };
 
-/* Warning card for unpublished objects */
-const UnpublishedWarning = ({ data }) => {
-  if (data?.['@self']?.published) return null;
-  const schemaName = data?.['@self']?.schema?.title;
-  const title = schemaName ? `${schemaName}` : '';
-  const objectName = data?.['@self']?.name;
-
-  return (
-    <Alert type='warning' style={{ marginBottom: '1rem' }}>
-      <Heading level={4}>{title} is nog niet gepubliceerd</Heading>
-      <Paragraph>
-        {objectName} is momenteel niet zichtbaar in de zoekfunctie. Gebruik de
-        &quot;Publiceren&quot; actie om deze gegevens zichtbaar te maken.
-      </Paragraph>
-    </Alert>
-  );
-};
+/* Warning card for unpublished objects - LEGACY: No longer needed */
+// const UnpublishedWarning = ({ data }) => {
+//   if (data?.['@self']?.published) return null;
+//   const schemaName = data?.['@self']?.schema?.title;
+//   const title = schemaName ? `${schemaName}` : '';
+//   const objectName = data?.['@self']?.name;
+//
+//   return (
+//     <Alert type='warning' style={{ marginBottom: '1rem' }}>
+//       <Heading level={4}>{title} is nog niet gepubliceerd</Heading>
+//       <Paragraph>
+//         {objectName} is momenteel niet zichtbaar in de zoekfunctie. Gebruik de
+//         &quot;Publiceren&quot; actie om deze gegevens zichtbaar te maken.
+//       </Paragraph>
+//     </Alert>
+//   );
+// };
 
 export default ConKoppelingDetailsPageContent;

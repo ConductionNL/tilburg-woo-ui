@@ -116,7 +116,7 @@ const AcMijnOmgeving = () => {
     // const baseUrl = config.mijnOmgeving.baseURL;
     // const baseUrl = 'https://vng.accept.commonground.nu/apps';
     const baseUrl = 'http://localhost:8080/apps';
-    const url = `${baseUrl}/openconnector/api/endpoint/synchronize-model`;
+    const url = `${baseUrl}/openregister/api/objects/vng-gemma/synchronize-model`;
 
     try {
       setSyncGemmaLoading(true);
@@ -149,7 +149,7 @@ const AcMijnOmgeving = () => {
       // const baseUrl = config.mijnOmgeving.baseURL;
       // const baseUrl = 'https://vng.accept.commonground.nu/apps';
       const baseUrl = 'http://localhost:8080/apps';
-      const url = `${baseUrl}/openconnector/api/endpoint/model`;
+      const url = `${baseUrl}/openregister/api/objects/vng-gemma/model`;
 
       const response = await fetch(url, {
         method: 'GET',

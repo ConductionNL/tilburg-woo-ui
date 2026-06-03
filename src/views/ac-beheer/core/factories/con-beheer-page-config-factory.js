@@ -79,6 +79,7 @@ const BeheerPageConfigFactory = {
       // removed plural alias 'extendviews'
       case 'module':
       case 'applicaties':
+      case 'applications':
       case 'modules':
         return {
           ...baseConfig,
@@ -88,6 +89,8 @@ const BeheerPageConfigFactory = {
           routeType: 'applicaties',
           disableRelatedCreateActions: true, // Enable koppeling toevoegen voor applicaties
           disableDeleteAction: false, // Enable delete action voor applicaties
+          disableImport: true, // Import not needed for applicaties
+          disableView: true, // View not needed for applicaties
           extend: ['moduleVersies'],
           defaultHeaders: [
             'naam',
@@ -147,7 +150,7 @@ const BeheerPageConfigFactory = {
               icon: <VISUALS.CLIPBOARD_CHECK />,
               condition: (row) => row?.['@self']?.id || row?.id,
               action: 'wizard',
-              wizardPath: '/forms/gebruik',
+              wizardPath: '/forms/gebruik/applicatie',
               // Dynamic label and params based on user role
               getLabel: (userGroups) =>
                 userGroups.includes('gebruik-beheerder')
@@ -202,6 +205,8 @@ const BeheerPageConfigFactory = {
           paginationKey: 'diensten',
           title: 'Diensten',
           routeType: 'diensten',
+          disableImport: true, // Import not needed for diensten
+          disableView: true, // View not needed for diensten
           defaultHeaders: ['name', 'voorzieningName', 'email'],
           customHeaders: {
             voorziening: {
@@ -237,6 +242,55 @@ const BeheerPageConfigFactory = {
                 (r) => r?.leverancier?.contactgegevens?.email
               ),
             },
+            type: {
+              id: 'type',
+              label: 'Type',
+              key: 'type',
+              customContent: (row) => {
+                const rawType = row?.type;
+                if (!rawType) return '-';
+
+                // Check if it's a string that looks like a JSON array
+                if (typeof rawType === 'string' && rawType.trim().startsWith('[')) {
+                  try {
+                    const parsed = JSON.parse(rawType);
+                    if (Array.isArray(parsed)) {
+                      return parsed
+                        .map((item) =>
+                          typeof item === 'string' ? item : String(item)
+                        )
+                        .join(', ');
+                    }
+                  } catch (e) {
+                    // If parsing fails, return as-is
+                    return rawType;
+                  }
+                }
+
+                // Handle actual arrays
+                if (Array.isArray(rawType) && rawType.length > 0) {
+                  return rawType
+                    .map((typeItem) =>
+                      typeof typeItem === 'object'
+                        ? typeItem.naam ||
+                          typeItem.name ||
+                          typeItem.label ||
+                          typeItem
+                        : String(typeItem)
+                    )
+                    .join(', ');
+                }
+
+                // Handle objects
+                if (typeof rawType === 'object') {
+                  return String(
+                    rawType.naam || rawType.name || rawType.label || rawType
+                  );
+                }
+
+                return String(rawType);
+              },
+            },
           },
           modals: [...baseConfig.modals],
         };
@@ -250,8 +304,123 @@ const BeheerPageConfigFactory = {
           title: 'Gebruik',
           routeType: 'gebruik',
           disableRelatedCreateActions: true,
-          defaultHeaders: ['voorzieningId', 'diensten', 'status', 'contact'],
+          disableImport: true, // Import not needed for gebruik
+          disableView: true, // View not needed for gebruik
+          defaultHeaders: ['type', 'voorzieningId', 'diensten', 'status', 'contact'],
+          /**
+           * Custom edit URL handler for gebruik
+           * If koppelingen array is filled, redirect to koppeling wizard
+           * If diensten array is filled, redirect to dienst wizard
+           * Otherwise, use default gebruik wizard behavior
+           * For Leverancier/Community organizations, use ontbrekend-organisatie type
+           * @param {Object} row - The row data containing the gebruik to edit
+           * @param {Object} fullActiveOrganisation - The full organization data containing type
+           * @returns {string|null} The URL to navigate to for editing, or null to use default behavior
+           */
+          getEditUrl: (row, fullActiveOrganisation) => {
+            const gebruikId = row?.['@self']?.id || row?.id;
+            if (!gebruikId) return null;
+
+            // Check if organization type is Leverancier or Community
+            // These organization types don't have their own gebruik objects,
+            // they only manage gebruik for gemeentes or other organizations
+            const orgType = fullActiveOrganisation?.type;
+            const isLeverancierOrCommunity =
+              orgType === 'Leverancier' || orgType === 'Community';
+
+            // Check if koppelingen array is filled - redirect to koppeling wizard
+            // Also check @self.relations.koppelingen as fallback
+            const koppelingen =
+              row?.koppelingen || row?.['@self']?.relations?.koppelingen;
+            if (Array.isArray(koppelingen) && koppelingen.length > 0) {
+              const koppelingType = isLeverancierOrCommunity
+                ? 'ontbrekend-organisatie'
+                : 'eigen-organisatie';
+              return `/forms/gebruik/koppeling?type=${koppelingType}&id=${gebruikId}`;
+            }
+
+            // Check if diensten array is filled - redirect to dienst wizard
+            // Also check @self.relations.diensten as fallback
+            const diensten = row?.diensten || row?.['@self']?.relations?.diensten;
+            if (Array.isArray(diensten) && diensten.length > 0) {
+              const dienstType = isLeverancierOrCommunity
+                ? 'ontbrekend-organisatie'
+                : 'dienst';
+              return `/forms/gebruik/dienst?type=${dienstType}&id=${gebruikId}`;
+            }
+
+            // For Leverancier/Community, use ontbrekend-organisatie type for default gebruik wizard
+            if (isLeverancierOrCommunity) {
+              return `/forms/gebruik/applicatie?type=ontbrekend-organisatie&id=${gebruikId}`;
+            }
+
+            // Return null to use default wizard behavior
+            return null;
+          },
           // extend: ['contactpersoon'],
+          // Virtual columns are columns that don't exist in the schema but are added to the table
+          virtualColumns: [
+            {
+              id: 'type',
+              order: 0,
+              label: 'Type',
+              key: 'type',
+              customContent: (row) => {
+                // Determine icon based on filled fields:
+                // - koppelingen filled → Koppeling icon
+                // - diensten filled → Dienst icon
+                // - neither filled → Applicatie icon
+                const hasKoppelingen =
+                  Array.isArray(row?.koppelingen) && row.koppelingen.length > 0;
+                const hasDiensten =
+                  Array.isArray(row?.diensten) && row.diensten.length > 0;
+
+                let IconComponent;
+                let title;
+
+                if (hasKoppelingen) {
+                  IconComponent = VISUALS.LINK;
+                  title = 'Koppeling';
+                } else if (hasDiensten) {
+                  IconComponent = VISUALS.HAND_SHAKE;
+                  title = 'Dienst';
+                } else {
+                  IconComponent = VISUALS.CUBE;
+                  title = 'Applicatie';
+                }
+
+                return (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                    title={title}
+                  >
+                    <IconComponent
+                      style={{
+                        width: '24px',
+                        height: '24px',
+                        color: 'var(--tilburg-interaction-active-color)',
+                      }}
+                    />
+                  </div>
+                );
+              },
+              sortComparator: byNested((row) => {
+                // Sort by type name: Applicatie, Dienst, Koppeling (alphabetical)
+                const hasKoppelingen =
+                  Array.isArray(row?.koppelingen) && row.koppelingen.length > 0;
+                const hasDiensten =
+                  Array.isArray(row?.diensten) && row.diensten.length > 0;
+
+                if (hasKoppelingen) return 'Koppeling';
+                if (hasDiensten) return 'Dienst';
+                return 'Applicatie';
+              }),
+            },
+          ],
           customHeaders: {
             contactpersoon: {
               id: 'contactpersoon',
@@ -274,13 +443,10 @@ const BeheerPageConfigFactory = {
               label: 'Applicatie',
               key: 'module',
               customContent: (row) => {
-                return (
-                  (
-                    <ConUuidResolver>
-                      {row['@self']?.relations?.module || '-'}
-                    </ConUuidResolver>
-                  ) || '-'
-                );
+                // Try direct property first, then fallback to relations
+                const moduleId = row.module || row['@self']?.relations?.module;
+                if (!moduleId) return '-';
+                return <ConUuidResolver>{String(moduleId)}</ConUuidResolver>;
               },
             },
             moduleVersie: {
@@ -288,13 +454,11 @@ const BeheerPageConfigFactory = {
               label: 'Applicatie versie',
               key: 'moduleVersie',
               customContent: (row) => {
-                return (
-                  (
-                    <ConUuidResolver>
-                      {row['@self']?.relations?.moduleVersie || '-'}
-                    </ConUuidResolver>
-                  ) || '-'
-                );
+                // Try direct property first, then fallback to relations
+                const moduleVersieId =
+                  row.moduleVersie || row['@self']?.relations?.moduleVersie;
+                if (!moduleVersieId) return '-';
+                return <ConUuidResolver>{String(moduleVersieId)}</ConUuidResolver>;
               },
             },
           },
@@ -309,6 +473,8 @@ const BeheerPageConfigFactory = {
           paginationKey: 'koppeling',
           title: 'Koppelingen',
           routeType: 'koppeling',
+          disableImport: true, // Import not needed for koppelingen
+          disableView: true, // View not needed for koppelingen
           // Ensure relations are present to compensate for backend bug (moduleA/moduleB null)
           extend: ['@self.relations'],
           defaultHeaders: [
@@ -358,6 +524,8 @@ const BeheerPageConfigFactory = {
           title: 'Contactpersoon',
           routeType: 'contactpersoon',
           disableRelatedCreateActions: true, // Only show basic actions for contactpersonen
+          disableImport: true, // Import not needed for contactpersonen
+          disableView: true, // View not needed for contactpersonen
           defaultHeaders: [
             'username',
             'name',
@@ -413,6 +581,20 @@ const BeheerPageConfigFactory = {
                   row.achternaam && row.achternaam !== 'null' ? row.achternaam : '';
                 const fullName = [voornaam, achternaam].filter(Boolean).join(' ');
                 return fullName || '-';
+              },
+            },
+            eMailadres: {
+              id: 'e-mailadres',
+              label: 'E-mailadres',
+              key: 'eMailadres',
+              customContent: (row) => {
+                // Display email address from API response
+                const email =
+                  row.eMailadres ||
+                  row['eMailadres'] ||
+                  row['e-mailadres'] ||
+                  'NO EMAIL FOUND';
+                return email;
               },
             },
           },

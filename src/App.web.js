@@ -1,7 +1,7 @@
 // Imports => React
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
-import { Route, Routes, useNavigate } from 'react-router-dom';
+import { Route, Routes, useNavigate, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useAutoFocus, useDocumentTitleFromPath } from '@hooks';
 import loadable from '@loadable/component';
@@ -61,17 +61,11 @@ const AcLogout = withStore(
 );
 
 const App = ({ store }) => {
-  const { fetchPages, all_pages, getFilteredPages } = store.pages;
   const { user } = store;
   const resetFocus = useAutoFocus();
 
-  useEffect(() => {
-    fetchPages();
-    // Warm up names cache in background for better UX
-    store.object.warmupNamesCache().catch((error) => {
-      console.warn('⚠️ Names cache warmup failed during app initialization:', error);
-    });
-  }, []);
+  // Names cache warmup removed - names are now efficiently loaded via _extend=_names
+  // on search and collection endpoints, eliminating the need for bulk fetching
 
   // Warm up schema cache only when user is authenticated AND on public pages
   // Skip on authenticated-only routes (/beheer, /forms, /account) since those pages already fetch schemas
@@ -243,36 +237,26 @@ const App = ({ store }) => {
     setTheme();
   }, []);
 
-  if (!all_pages?.length) {
-    return (
-      <div className={'ac-app-container'} tabIndex='-1' ref={resetFocus}>
-        <AcHeader store={store} />
-        <main id='main' className='ac-app-main'>
-          <AcFallbackErrorPage />
-        </main>
-        <AcFooter />
-      </div>
-    );
-  }
-
   return (
     <div className={'ac-app-container'} tabIndex='-1' ref={resetFocus}>
       <AcHeader store={store} />
       <main id='main' className='ac-app-main'>
         <Routes>
-          {/* CMS-driven pages */}
-          {getFilteredPages(user.isAuthenticated).map((page) => (
-            <Route
-              key={`route-${page.id}`}
-              path={page.slug}
-              element={getView(page)}
-            />
-          ))}
-
-          {/* Static routes */}
+          {/* Static routes - these take precedence over catch-all */}
           {Object.values(ROUTES)
-            .filter((route) => route.component)
+            .filter((route) => route.component || route.redirectTo)
             .map((route) => {
+              // Handle redirect routes
+              if (route.redirectTo) {
+                return (
+                  <Route
+                    key={`redirect-route-${route.id}`}
+                    path={route.path}
+                    element={<Navigate to={route.redirectTo} replace />}
+                  />
+                );
+              }
+
               // Check if this route requires authentication
               const requiresAuth = AUTHENTICATION_REQUIRED_ROUTES.includes(
                 route.path
@@ -302,11 +286,11 @@ const App = ({ store }) => {
             element={<AcLogout store={store} />}
           />
 
-          {/* Fallback route */}
+          {/* Catch-all route for CMS pages - fetches on demand */}
           <Route
-            key={`default-route-${DEFAULT_ROUTE.id}`}
-            path={'*'}
-            element={<AcHome store={store} />}
+            key='cms-pages-catchall'
+            path='*'
+            element={<AcContent store={store} />}
           />
         </Routes>
       </main>

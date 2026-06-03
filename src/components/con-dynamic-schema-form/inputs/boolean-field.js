@@ -1,9 +1,10 @@
 import React from 'react';
 import { AcCheckbox } from '@molecules';
 
-const BooleanField = ({ label, value, onChange, disabled }) => {
+const BooleanField = ({ id, label, value, onChange, disabled }) => {
   return (
     <AcCheckbox
+      id={id}
       label={label}
       checked={!!value}
       onChange={(v) => onChange(!!v)}

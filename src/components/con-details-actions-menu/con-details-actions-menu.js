@@ -148,6 +148,7 @@ const ConDetailsActionsMenu = ({
         icon={canEdit ? <VISUALS.GEAR /> : <VISUALS.PLUS />}
         buttonType={triggerStyle === 'buttonSlim' ? 'secondary' : 'primary'}
         style={triggerStyle}
+        sr={canEdit ? 'Acties bewerken' : 'Acties toevoegen'}
       ></ConActionMenu.Trigger>
 
       <ConActionMenu.Menu position='right'>
@@ -174,8 +175,8 @@ const ConDetailsActionsMenu = ({
               </ConActionMenu.Button>
             )}
 
-            {/* Publish/Depublish actions */}
-            {showPublishActions && !published && (
+            {/* Publish/Depublish actions - LEGACY: No longer needed */}
+            {/* {showPublishActions && !published && (
               <ConActionMenu.Button
                 icon={<VISUALS.PUBLISH />}
                 onClick={canEdit ? handlePublish : undefined}
@@ -203,7 +204,7 @@ const ConDetailsActionsMenu = ({
               >
                 Depubliceren
               </ConActionMenu.Button>
-            )}
+            )} */}
 
             {/* Delete action */}
             {onDelete && (

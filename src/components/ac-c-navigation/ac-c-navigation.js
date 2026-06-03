@@ -24,27 +24,31 @@ const AcCNavigation = ({ items = [], mobileLogo, layoutClassName }) => {
         layoutClassName && layoutClassName
       )}
     >
-      <div className='ac-c-navigation__menu-toggle-container'>
+      {/* @TODO: this element is not being shown due to line 412-414 of `_ac-c-navigation.scss`, decide what to do with this */}
+      {/* <div className='ac-c-navigation__menu-toggle-container'>
         {mobileLogo}
 
         <button
           className='ac-c-navigation__menu-toggle'
           onClick={() => setIsOpen((o) => !o)}
         ></button>
-      </div>
-      <nav className={clsx('ac-c-navigation__primary', isOpen && 'isOpen')}>
+      </div> */}
+      <nav
+        className={clsx('ac-c-navigation__primary', isOpen && 'isOpen')}
+        aria-label='Hoofdnavigatie'
+      >
         <ul className='ac-c-navigation__ul'>
           {items.map(({ name, icon, link, slug, items }, idx) => (
-            <Link
+            <li
               key={idx}
-              to={!items.length && link}
-              className='ac-c-navigation__link-container'
+              className={clsx(
+                'ac-c-navigation__li',
+                isCurrent(slug) && 'ac-c-navigation__current'
+              )}
             >
-              <li
-                className={clsx(
-                  'ac-c-navigation__li',
-                  isCurrent(slug) && 'ac-c-navigation__current'
-                )}
+              <Link
+                to={!items?.length && link}
+                className='ac-c-navigation__link-container'
               >
                 <div
                   className={clsx(
@@ -58,7 +62,7 @@ const AcCNavigation = ({ items = [], mobileLogo, layoutClassName }) => {
                   {name}
                 </div>
 
-                {items.length > 0 && (
+                {items?.length > 0 && (
                   <ul
                     className={clsx('ac-c-navigation__dropdown', [
                       items.length > 8 && 'ac-c-navigation__dropdown-overflow',
@@ -79,7 +83,7 @@ const AcCNavigation = ({ items = [], mobileLogo, layoutClassName }) => {
                             'ac-c-navigation__label',
                             isCurrent(slug) &&
                               'ac-c-navigation__dropdown-current-link',
-                              icon && 'ac-c-navigation__icon'
+                            icon && 'ac-c-navigation__icon'
                           )}
                         >
                           {icon}
@@ -89,8 +93,8 @@ const AcCNavigation = ({ items = [], mobileLogo, layoutClassName }) => {
                     ))}
                   </ul>
                 )}
-              </li>
-            </Link>
+              </Link>
+            </li>
           ))}
         </ul>
       </nav>

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcFlex, AcSection } from '@atoms';
-import { ConDynamicSidenav } from '@components';
+import { ConDynamicSidenav, ConExternalLink } from '@components';
 import {
   Heading,
   Link,
@@ -114,8 +114,9 @@ const ConMyOrganisationPage = ({ store }) => {
     if (!organisationId) return;
     setUsesLoading(true);
     try {
+      // Use the object store to fetch related data instead of publications endpoint
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${organisationId}/uses?_published=false`,
+        `${commongroundApiUrl()}/openregister/api/objects/voorzieningen/organisatie/${organisationId}/uses?_published=false`,
         {
           method: 'GET',
           headers: {
@@ -125,10 +126,11 @@ const ConMyOrganisationPage = ({ store }) => {
       );
       if (!response.ok) {
         console.error('Error fetching uses:', response.statusText);
+        setUses([]);
         return;
       }
       const data = await response.json();
-      setUses(data.results || []);
+      setUses(data.results || data || []);
     } catch (error) {
       console.error('Error fetching uses:', error);
       setUses([]);
@@ -141,8 +143,9 @@ const ConMyOrganisationPage = ({ store }) => {
     if (!organisationId) return;
     setUsedLoading(true);
     try {
+      // Use the object store to fetch related data instead of publications endpoint
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${organisationId}/used?_published=false`,
+        `${commongroundApiUrl()}/openregister/api/objects/voorzieningen/organisatie/${organisationId}/used?_published=false`,
         {
           method: 'GET',
           headers: {
@@ -152,10 +155,11 @@ const ConMyOrganisationPage = ({ store }) => {
       );
       if (!response.ok) {
         console.error('Error fetching used:', response.statusText);
+        setUsed([]);
         return;
       }
       const data = await response.json();
-      setUsed(data.results || []);
+      setUsed(data.results || data || []);
     } catch (error) {
       console.error('Error fetching used:', error);
       setUsed([]);
@@ -251,8 +255,11 @@ const ConMyOrganisationPage = ({ store }) => {
           setActiveOrganisation(userData.organisations.active);
 
           // Fetch full organization data if we have an active organization
-          if (userData.organisations.active?.uuid) {
-            await fetchFullOrganisationData(userData.organisations.active.uuid);
+          // Try uuid first, then id as fallback
+          const orgId = userData.organisations.active?.uuid || 
+                        userData.organisations.active?.id;
+          if (orgId) {
+            await fetchFullOrganisationData(orgId);
           }
         }
 
@@ -358,10 +365,7 @@ const ConMyOrganisationPage = ({ store }) => {
 
         <AcColumn gap='sm' horizontalOverflowWrapper>
           {loading && <AcLoader />}
-          {!loading &&
-            organisations &&
-            organisations.available &&
-            !!organisations.results?.length && (
+          {!loading && activeOrganisation && (
               <>
                 <div
                   className='ac-register-review__organisation-header'
@@ -371,27 +375,26 @@ const ConMyOrganisationPage = ({ store }) => {
                     alignItems: 'center',
                   }}
                 >
-                  <Heading level={4}>
-                    <div className='con-beheer-details--header-container'>
-                      {fullActiveOrganisation?.['@self']?.image ||
-                        (fullActiveOrganisation?.logo && (
-                          <ConLogoPreview
-                            className='con-beheer-details--logo-container'
-                            logoUrl={
-                              fullActiveOrganisation?.['@self']?.image ||
-                              fullActiveOrganisation?.logo
-                            }
-                          />
-                        ))}
+                <div className='con-beheer-details--header-container'>
+                    {fullActiveOrganisation?.['@self']?.image ||
+                    (fullActiveOrganisation?.logo && (
+                        <ConLogoPreview
+                        className='con-beheer-details--logo-container'
+                        logoUrl={
+                            fullActiveOrganisation?.['@self']?.image ||
+                            fullActiveOrganisation?.logo
+                        }
+                        />
+                    ))}
 
-                      <Heading className='con-beheer-details--title'>
-                        {fullActiveOrganisation?.['@self']?.name ||
-                          fullActiveOrganisation?.id ||
-                          activeOrganisation?.name ||
-                          'Organisatie'}
-                      </Heading>
-                    </div>
-                  </Heading>
+                    <Heading className='con-beheer-details--title'>
+                    {fullActiveOrganisation?.['@self']?.name ||
+                        fullActiveOrganisation?.id ||
+                        activeOrganisation?.name ||
+                        'Organisatie'}
+                    </Heading>
+                </div>
+          
                   <div className='ac-register-review__header-controls'>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <ConActionMenu>
@@ -465,63 +468,28 @@ const ConMyOrganisationPage = ({ store }) => {
                             Deelnames
                           </ConActionMenu.Button>
 
-                          {fullActiveOrganisation &&
-                            !fullActiveOrganisation['@self']?.published && (
-                              <ConActionMenu.Button
-                                icon={<VISUALS.PUBLISH />}
-                                onClick={() => {
-                                  canEdit ? handlePublishOrganization() : undefined;
-                                }}
-                                disabled={!canEdit}
-                                data-tooltip-id={!canEdit ? TOOLTIP_ID : undefined}
-                                data-tooltip-content={
-                                  !canEdit
-                                    ? getDisabledActionTooltip('publish', reason)
-                                    : undefined
-                                }
-                              >
-                                Publiceren
-                              </ConActionMenu.Button>
-                            )}
-                          {fullActiveOrganisation &&
-                            fullActiveOrganisation['@self']?.published && (
-                              <ConActionMenu.Button
-                                icon={<VISUALS.PUBLISH_OFF />}
-                                onClick={
-                                  canEdit ? handleDepublishOrganization : undefined
-                                }
-                                disabled={!canEdit}
-                                data-tooltip-id={!canEdit ? TOOLTIP_ID : undefined}
-                                data-tooltip-content={
-                                  !canEdit
-                                    ? getDisabledActionTooltip('depublish', reason)
-                                    : undefined
-                                }
-                              >
-                                Depubliceren
-                              </ConActionMenu.Button>
-                            )}
+                          {/* Publiceren/Depubliceren buttons removed - no longer used */}
                         </ConActionMenu.Menu>
                       </ConActionMenu>
                     </div>
                   </div>
                 </div>
 
-                {/* Warning alert for unpublished organization */}
+                {/* Warning alert for inactive organization */}
                 {fullActiveOrganisation &&
-                  !fullActiveOrganisation?.['@self']?.published && (
+                  fullActiveOrganisation?.status !== 'actief' && 
+                  fullActiveOrganisation?.status !== 'Actief' && (
                     <Alert type='warning'>
                       <Heading level={4}>
-                        Uw organisatie staat nog niet gepubliceerd in de software
-                        catalogus
+                        Uw organisatie heeft nog geen actieve status
                       </Heading>
                       <Paragraph>
-                        Dit betekent dat uw organisatie momenteel niet zichtbaar is
-                        in de zoekfunctie van de catalogus. Bezoekers kunnen uw
-                        organisatie en de bijbehorende producten en diensten nog niet
-                        vinden. Gebruik de &quot;Publiceren&quot; actie om uw
-                        organisatie beschikbaar te maken voor bezoekers en deel te
-                        nemen aan de software catalogus.
+                        Om volledige toegang te krijgen tot alle functies van de catalogus, 
+                        heeft uw organisatie een actieve status nodig. Neem contact op met 
+                        VNG om uw organisatie te activeren:{' '}
+                        <ConExternalLink href='mailto:support@vng.nl'>
+                          support@vng.nl
+                        </ConExternalLink>
                       </Paragraph>
                     </Alert>
                   )}
@@ -626,19 +594,15 @@ const ConMyOrganisationPage = ({ store }) => {
                           </div>
                         )}
                         {fullActiveOrganisation?.website && (
-                          <div style={{ marginBottom: '8px' }}>
-                            <strong>Website: </strong>
-                            <Link
-                              href={
-                                fullActiveOrganisation.website.startsWith('http')
-                                  ? fullActiveOrganisation.website
-                                  : `https://${fullActiveOrganisation.website}`
-                              }
-                              target='_blank'
-                              rel='noopener noreferrer'
-                            >
-                              {fullActiveOrganisation.website}
-                            </Link>
+                          <div
+                            style={{
+                              display: 'flex',
+                              gap: '4px',
+                              marginBottom: '8px',
+                            }}
+                          >
+                            <strong>Website:</strong>
+                            <ConExternalLink href={fullActiveOrganisation.website} />
                           </div>
                         )}
                       </div>
@@ -654,9 +618,7 @@ const ConMyOrganisationPage = ({ store }) => {
                       uses={uses}
                       used={used}
                       gebruikId={fullActiveOrganisation?.id}
-                      gebruikSchemaId={
-                        fullActiveOrganisation?.['@self']?.schema
-                      }
+                      gebruikSchemaId={fullActiveOrganisation?.['@self']?.schema}
                       usesLoading={usesLoading}
                       usedLoading={usedLoading}
                       tabIndex={relatedTabIndex}
@@ -683,10 +645,16 @@ const ConMyOrganisationPage = ({ store }) => {
               showModal={showOrgModal}
               onClose={() => setShowOrgModal(false)}
               onSuccess={handleOrgFormSuccess}
-              type='organisaties'
+              type='organisatie'
               isEdit={true}
               fieldConfigs={{
                 status: {
+                  visible: false,
+                },
+                beschrijvingKort: {
+                  visible: false,
+                },
+                beschrijvingLang: {
                   visible: false,
                 },
               }}

@@ -27,10 +27,14 @@ import {
   AcFormsApplicatie,
   AcFormsKoppeling,
   ConFormsDienst,
+  ConFormsGebruikKoppeling,
+  ConFormsGebruikDienst,
   ConViewsList,
   ConBeheerViews,
+  ConBeheerViewsList,
   ConFormsIndex,
   ConPasswordReminder,
+  AcChat,
 } from '@views';
 import { LABELS } from '@constants/labels.constants';
 import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
@@ -49,6 +53,7 @@ export const PATHS = AcLockObject({
   NEXTCLOUD_LOGIN: '/login',
   NEXTCLOUD_AUTHORIZATION: '/authorization',
   BEHEER: '/beheer',
+  BEHEER_VIEW: '/beheer/view',
   BEHEER_TYPE: '/beheer/:type',
   BEHEER_TYPE_DETAILS: '/beheer/:type/:id',
   OBJECTS: '/objects/:register/:schema',
@@ -57,6 +62,9 @@ export const PATHS = AcLockObject({
   FORMS: '/forms',
   FORMS_REGISTER: '/forms/register',
   FORMS_GEBRUIK: '/forms/gebruik',
+  FORMS_GEBRUIK_APPLICATIE: '/forms/gebruik/applicatie',
+  FORMS_GEBRUIK_KOPPELING: '/forms/gebruik/koppeling',
+  FORMS_GEBRUIK_DIENST: '/forms/gebruik/dienst',
   FORMS_PRODUCT: '/forms/product',
   FORMS_APPLICATIE: '/forms/applicatie',
   FORMS_KOPPELING: '/forms/koppeling',
@@ -69,10 +77,12 @@ export const PATHS = AcLockObject({
   BEHEER_VIEW_DETAIL: '/beheer/view/:id',
   MY_ACCOUNT: '/account',
   DIRECTORY: '/directory',
+  CHAT: '/chat',
 });
 
 export const NAVIGATE_TO = AcLockObject({
   PUBLICATION: (id) => PATHS.PUBLICATION.replace(':id', id),
+  BEHEER_VIEW: () => PATHS.BEHEER_VIEW,
   BEHEER_TYPE: (type) => PATHS.BEHEER_TYPE.replace(':type', type),
   BEHEER_TYPE_DETAILS: (type, id) =>
     PATHS.BEHEER_TYPE_DETAILS.replace(':type', type).replace(':id', id),
@@ -182,7 +192,9 @@ export const ROUTES = {
     name: 'Password Reminder',
     label: 'Wachtwoord vergeten',
     path: PATHS.PASSWORD_REMINDER_STATIC,
-    title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | Wachtwoord vergeten`,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | Wachtwoord vergeten`,
     component: ConPasswordReminder,
   },
   MIJN_OMGEVING: {
@@ -238,6 +250,16 @@ export const ROUTES = {
     path: PATHS.BEHEER,
     title: 'Beheer',
     component: AcBeheer,
+  },
+  BEHEER_VIEW: {
+    id: AcUUID(),
+    name: 'Beheer View List',
+    label: 'AMEF Views',
+    path: PATHS.BEHEER_VIEW,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | AMEF Views`,
+    component: ConBeheerViewsList,
   },
   BEHEER_TYPE: {
     id: AcUUID(),
@@ -303,7 +325,37 @@ export const ROUTES = {
     title: `${
       AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
     } | Formulier Gebruik`,
+    redirectTo: '/beheer/gebruik',
+  },
+  FORMS_GEBRUIK_APPLICATIE: {
+    id: AcUUID(),
+    name: 'Formulier Gebruik Applicatie',
+    label: 'Formulier Gebruik Applicatie',
+    path: PATHS.FORMS_GEBRUIK_APPLICATIE,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | Formulier Gebruik Applicatie`,
     component: AcFormsGebruik,
+  },
+  FORMS_GEBRUIK_KOPPELING: {
+    id: AcUUID(),
+    name: 'Formulier Gebruik Koppeling',
+    label: 'Formulier Gebruik Koppeling',
+    path: PATHS.FORMS_GEBRUIK_KOPPELING,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | Formulier Gebruik Koppeling`,
+    component: ConFormsGebruikKoppeling,
+  },
+  FORMS_GEBRUIK_DIENST: {
+    id: AcUUID(),
+    name: 'Formulier Gebruik Dienst',
+    label: 'Formulier Gebruik Dienst',
+    path: PATHS.FORMS_GEBRUIK_DIENST,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | Formulier Gebruik Dienst`,
+    component: ConFormsGebruikDienst,
   },
   FORMS_PRODUCT: {
     id: AcUUID(),
@@ -320,7 +372,9 @@ export const ROUTES = {
     name: 'Formulier Applicatie',
     label: 'Formulier Applicatie',
     path: PATHS.FORMS_APPLICATIE,
-    title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | Formulier Applicatie`,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | Formulier Applicatie`,
     component: AcFormsApplicatie,
   },
   FORMS_KOPPELING: {
@@ -414,6 +468,14 @@ export const ROUTES = {
     path: PATHS.DIRECTORY,
     title: 'Directory',
     component: ConDirectory,
+  },
+  CHAT: {
+    id: AcUUID(),
+    name: 'Chat',
+    label: 'Chat',
+    path: PATHS.CHAT,
+    title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | Chat`,
+    component: AcChat,
   },
   OBJECTS: {
     id: AcUUID(),

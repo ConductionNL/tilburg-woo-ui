@@ -225,6 +225,38 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
   const [openModal, setOpenModal] = useState(null);
   const [modalSelectedRows, setModalSelectedRows] = useState([]);
 
+  // Full organization data for checking type (Leverancier, Community, etc.)
+  const [fullActiveOrganisation, setFullActiveOrganisation] = useState(null);
+
+  // Fetch full organization data to get the type
+  useEffect(() => {
+    const fetchFullOrganisationData = async () => {
+      const activeOrg = user?.activeOrganization;
+      const organisationId = activeOrg?.uuid || activeOrg?.id;
+
+      if (!organisationId) return;
+
+      try {
+        await object.fetchObject('voorzieningen', 'organisatie', organisationId, {
+          '_extend[]': ['@self.schema'],
+        });
+
+        const fullOrgData = object.getObject(
+          'voorzieningen_organisatie',
+          organisationId
+        );
+
+        if (fullOrgData) {
+          setFullActiveOrganisation(fullOrgData);
+        }
+      } catch (error) {
+        console.error('Error fetching full organization data:', error);
+      }
+    };
+
+    fetchFullOrganisationData();
+  }, [user?.activeOrganization?.uuid, user?.activeOrganization?.id, object]);
+
   // Local search input state for immediate UI updates
   const [localSearchInput, setLocalSearchInput] = useState('');
 
@@ -263,6 +295,9 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
   // Check warmup status for loading state (warmup state uses schemaSlug as key)
   const warmupLoading = config?.schemaSlug
     ? object.isWarmupInProgress(config.schemaSlug)
+    : false;
+  const warmupCompleted = config?.schemaSlug
+    ? object.isWarmupCompleted(config.schemaSlug)
     : false;
   const warmupError = config?.schemaSlug
     ? object.getWarmupError(config.schemaSlug)
@@ -332,7 +367,12 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
 
   // Refresh warmup data when type changes
   useEffect(() => {
-    if (!baseConfig || baseConfig.isDynamicEntry) {
+    if (
+      !baseConfig ||
+      baseConfig.isDynamicEntry ||
+      warmupLoading || // do not warmup if the warmup is in progress
+      !warmupCompleted // do not warmup if the initial warmup is not completed
+    ) {
       return;
     }
 
@@ -755,6 +795,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
       : headers.filter((header) => defaultHeaderIds.includes(header.id));
 
     const nextKey = next.map((h) => h.id).join(',');
+
     const currentKey = tableHeaders.map((h) => h.id).join(',');
 
     if (nextKey === currentKey) return;
@@ -815,6 +856,16 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
           label: 'Bewerken',
           icon: <VISUALS.PENCIL />,
           onClick: () => {
+            // Check for custom getEditUrl handler in config first
+            // Pass full organization data to allow organization-type-specific routing
+            if (typeof config?.getEditUrl === 'function') {
+              const customUrl = config.getEditUrl(row, fullActiveOrganisation);
+              if (customUrl) {
+                navigate(customUrl);
+                return;
+              }
+            }
+
             // Prefer wizard editing when available; fallback to legacy modal
             if (config?.schemaSlug) {
               const slug =
@@ -842,8 +893,8 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
         },
       ];
 
-      // Add publish/depublish actions as standard options
-      const publishActions = [];
+      // Add publish/depublish actions as standard options - LEGACY: No longer needed
+      /* const publishActions = [];
       if (!row['@self']?.published) {
         publishActions.push({
           key: 'publish',
@@ -875,7 +926,8 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
             ? getDisabledActionTooltip('depublish', reason)
             : undefined,
         });
-      }
+      } */
+      const publishActions = []; // LEGACY: Empty array to maintain compatibility
 
       // Add unique actions based on configuration
       const uniqueActions = (() => {
@@ -1064,7 +1116,19 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
 
   // Build table headers with status icon if configured
   const finalTableHeaders = useMemo(() => {
-    const headers = [...tableHeaders];
+    const virtualColumns = Array.isArray(config.virtualColumns)
+      ? config.virtualColumns
+      : [];
+    const virtualColumnsHeaders = virtualColumns.map((column) => ({
+      id: column.id,
+      label: column.label,
+      key: column.key,
+      customContent: column.customContent,
+      customHeader: column.customHeader,
+      sortComparator: column.sortComparator,
+    }));
+
+    const headers = [...virtualColumnsHeaders, ...tableHeaders];
 
     if (config.statusIcon) {
       headers.unshift({
@@ -1154,12 +1218,15 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
                 buttonType={showSearch ? 'primary' : 'secondary'}
                 onClick={() => setShowSearch(!showSearch)}
                 icon={<VISUALS.SEARCH />}
+                sr={showSearch ? 'Verberg zoekbalk' : 'Toon zoekbalk'}
               />
 
               <SecondaryActionButton
                 onClick={() => filterHeadersDrawerRef.current.showModal()}
+                aria-label='Filters openen'
               >
                 <VISUALS.FILTER />
+                <span className='sr-only'>Filters openen</span>
               </SecondaryActionButton>
               {showManageActions && (
                 <>
@@ -1183,7 +1250,11 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
                         onClick={() => {
                           // Phase 4: Refresh warmup data for this specific type
                           if (config?.schemaSlug) {
-                            object.refreshWarmupDataForType(config.schemaSlug);
+                            object.refreshWarmupDataForType(
+                              config.schemaSlug,
+                              undefined,
+                              true
+                            );
                           }
                         }}
                         disabled={loading || warmupLoading}
@@ -1206,21 +1277,25 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
                         </ConActionMenu.Button>
                       </ConActionMenu.SubMenu>
 
-                      <ConActionMenu.Button
-                        icon={<VISUALS.UPLOAD />}
-                        onClick={() => setOpenModal('import')}
-                      >
-                        Importeren
-                      </ConActionMenu.Button>
+                      {!config.disableImport && (
+                        <ConActionMenu.Button
+                          icon={<VISUALS.UPLOAD />}
+                          onClick={() => setOpenModal('import')}
+                        >
+                          Importeren
+                        </ConActionMenu.Button>
+                      )}
 
-                      <ConActionMenu.Button icon={<VISUALS.EYE />} disabled={true}>
-                        Weergeven als view
-                      </ConActionMenu.Button>
+                      {!config.disableView && (
+                        <ConActionMenu.Button icon={<VISUALS.EYE />} disabled={true}>
+                          Weergeven als view
+                        </ConActionMenu.Button>
+                      )}
 
                       <ConActionMenu.Divider />
 
-                      {/* Bulk publish/depublish actions based on selection */}
-                      <ConActionMenu.Button
+                      {/* Bulk publish/depublish actions - LEGACY: No longer needed */}
+                      {/* <ConActionMenu.Button
                         icon={<VISUALS.PUBLISH />}
                         onClick={handleMultiplePublish}
                         disabled={
@@ -1242,7 +1317,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
                         Depubliceren
                       </ConActionMenu.Button>
 
-                      <ConActionMenu.Divider />
+                      <ConActionMenu.Divider /> */}
 
                       <ConActionMenu.Button
                         icon={<VISUALS.TRASHCAN />}
@@ -1386,7 +1461,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
                       ref={tableRef}
                       truncateLines={3}
                       showSortButtons
-                      loading={loading || schemaLoading || warmupLoading}
+                      loading={warmupLoading}
                       // Names resolution props
                       objectStore={object}
                       schema={schemaData}

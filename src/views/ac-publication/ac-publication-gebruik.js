@@ -1,20 +1,20 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AcColumn, AcContainer, AcFlex } from '@atoms';
-import { AcLoader, ConDetailsActionsMenu } from '@components';
+import { AcLoader, ConDetailsActionsMenu, ConPublicationTypeBadge } from '@components';
 // import { VISUALS } from '@constants';
 import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
 import { schemaCache } from '@services/schemaCache.service';
-import RelatedTabs from '@views/ac-publication/con-related-tabs';
+import RelatedTabs from '@views/ac-publication/con-related-tabs-new';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
+import { createBeschrijvingTab } from './helpers/beschrijving-tab.helper';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
 // import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
-import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
-import { normalizeSchemaName } from '@src/utilities/con-normalize-schema-name';
+import { AcFormatDate } from '@src/utilities/ac-format-date';
 // import { checkOrganizationPermissions } from '@utils/organization-permissions';
 
 /**
@@ -45,22 +45,64 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
   const [usesLoading, setUsesLoading] = useState(false);
   const [usedLoading, setUsedLoading] = useState(false);
   const [relatedTabIndex, setRelatedTabIndex] = useState(0);
-  const fetchedIds = useRef(new Set());
+  
+  // Aggregated schemas from all endpoints (indexed by schema ID)
+  const [aggregatedSchemas, setAggregatedSchemas] = useState({});
 
   // Resolved names state for referentiecomponenten (needed for sorting and GEMMA links)
   const [sortedReferentiecomponenten, setSortedReferentiecomponenten] = useState([]);
+
+  // Full organization data for checking type (Leverancier, Community, etc.)
+  const [fullActiveOrganisation, setFullActiveOrganisation] = useState(null);
+
+  // Fetch full organization data to get the type
+  useEffect(() => {
+    const fetchFullOrganisationData = async () => {
+      const activeOrg = user?.activeOrganization;
+      const organisationId = activeOrg?.uuid || activeOrg?.id;
+
+      if (!organisationId) return;
+
+      try {
+        await object.fetchObject('voorzieningen', 'organisatie', organisationId, {
+          '_extend[]': ['@self.schema'],
+        });
+
+        const fullOrgData = object.getObject(
+          'voorzieningen_organisatie',
+          organisationId
+        );
+
+        if (fullOrgData) {
+          setFullActiveOrganisation(fullOrgData);
+        }
+      } catch (error) {
+        console.error('Error fetching full organization data:', error);
+      }
+    };
+
+    fetchFullOrganisationData();
+  }, [user?.activeOrganization?.uuid, user?.activeOrganization?.id, object]);
 
   const fetchUses = useCallback(async () => {
     if (!id) return;
     setUsesLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend[]=_schema`,
         { method: 'GET', headers: { 'Content-Type': 'application/json' } }
       );
       if (!response.ok) return;
       const json = await response.json();
       setUses(json.results || []);
+      
+      // Extract and aggregate schemas from @self.schemas
+      if (json['@self']?.schemas) {
+        setAggregatedSchemas(prev => ({
+          ...prev,
+          ...json['@self'].schemas
+        }));
+      }
     } finally {
       setUsesLoading(false);
     }
@@ -71,20 +113,27 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
     setUsedLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=_schema`,
         { method: 'GET', headers: { 'Content-Type': 'application/json' } }
       );
       if (!response.ok) return;
       const json = await response.json();
       setUsed(json.results || []);
+      
+      // Extract and aggregate schemas from @self.schemas
+      if (json['@self']?.schemas) {
+        setAggregatedSchemas(prev => ({
+          ...prev,
+          ...json['@self'].schemas
+        }));
+      }
     } finally {
       setUsedLoading(false);
     }
   }, [id]);
 
   useEffect(() => {
-    if (!id || fetchedIds.current.has(id)) return;
-    fetchedIds.current.add(id);
+    if (!id) return;
     fetchUses();
     fetchUsed();
   }, [id, fetchUses, fetchUsed]);
@@ -121,6 +170,48 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
 
   const status = get_single?.status || '-';
 
+  // Get all status dates that are set
+  const statusDates = [
+    {
+      label: 'Startdatum Verwerving',
+      value: get_single?.startDatumVerwerving
+        ? AcFormatDate(get_single.startDatumVerwerving, 'YYYY-MM-DD', 'D MMMM YYYY')
+        : null,
+    },
+    {
+      label: 'Startdatum Gepland',
+      value: get_single?.startDatumGepland
+        ? AcFormatDate(get_single.startDatumGepland, 'YYYY-MM-DD', 'D MMMM YYYY')
+        : null,
+    },
+    {
+      label: 'Startdatum In productie',
+      value: get_single?.startDatumInProductie
+        ? AcFormatDate(get_single.startDatumInProductie, 'YYYY-MM-DD', 'D MMMM YYYY')
+        : null,
+    },
+    {
+      label: 'Startdatum Uit te faseren',
+      value: get_single?.startDatumUitTeFaseren
+        ? AcFormatDate(
+            get_single.startDatumUitTeFaseren,
+            'YYYY-MM-DD',
+            'D MMMM YYYY'
+          )
+        : null,
+    },
+    {
+      label: 'Startdatum Uitgefaseerd',
+      value: get_single?.startDatumUitGefaseerd
+        ? AcFormatDate(
+            get_single.startDatumUitGefaseerd,
+            'YYYY-MM-DD',
+            'D MMMM YYYY'
+          )
+        : null,
+    },
+  ].filter((item) => item.value);
+
   // Extract deelnemer IDs from the data
   const deelnemerIds = Array.isArray(get_single?.deelnemers)
     ? get_single.deelnemers.map((deelnemer) => {
@@ -140,11 +231,7 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
       <AcColumn gap='sm' horizontalOverflowWrapper>
         <AcFlex spacing='sm' justifyContent='end' alignItems='center'>
           <Heading className='con-module-publication--header-type'>
-            {(() => {
-              const Icon = schemaSlug ? getTabHeaderIcon(schemaSlug) : null;
-              return Icon ? <Icon /> : null;
-            })()}
-            {schemaSlug ? getTabHeaderName(schemaSlug, true) : null}
+            <ConPublicationTypeBadge schemaSlug={schemaSlug} />
           </Heading>
           <ConDetailsActionsMenu
             user={user}
@@ -158,21 +245,26 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
             showPublishActions={true}
             onDelete={handleDelete}
             onEdit={() => {
-              if (schemaSlug) {
-                const wizardSchemaName = normalizeSchemaName(schemaSlug).toLowerCase();
-                const wizards = Object.values(DASHBOARD_WIZARDS);
-                const wizard = wizards.find((w) => w.schema === wizardSchemaName);
-                if (wizard) {
-                  const baseUrl = getWizardUrl(wizard);
-                  const url = new URL(baseUrl, window.location.origin);
-                  url.searchParams.set('id', id);
-                  navigate(url.pathname + url.search);
-                  return;
-                }
+              // Check if organization type is Leverancier or Community
+              // These organization types don't have their own gebruik objects,
+              // they only manage gebruik for gemeentes or other organizations
+              const orgType = fullActiveOrganisation?.type;
+              const isLeverancierOrCommunity =
+                orgType === 'Leverancier' || orgType === 'Community';
+
+              // For Leverancier/Community, use ontbrekend-organisatie type
+              const gebruikType = isLeverancierOrCommunity
+                ? 'ontbrekend-organisatie'
+                : '';
+              const url = new URL(
+                '/forms/gebruik/applicatie',
+                window.location.origin
+              );
+              if (gebruikType) {
+                url.searchParams.set('type', gebruikType);
               }
-              // Fallback to beheer detail page in same tab with edit modal
-              const beheerUrl = `/beheer/${schemaSlug}/${id}?showEditModal=true`;
-              navigate(beheerUrl);
+              url.searchParams.set('id', id);
+              navigate(url.pathname + url.search);
             }}
             triggerStyle='button'
           />
@@ -187,6 +279,13 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
               <strong>Status: </strong>
               {status}
             </div>
+
+            {statusDates.map((dateItem) => (
+              <div key={dateItem.label} style={{ marginBottom: '8px' }}>
+                <strong>{dateItem.label}: </strong>
+                {dateItem.value}
+              </div>
+            ))}
           </div>
 
           {sortedReferentiecomponenten.length > 0 && (
@@ -199,6 +298,7 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
                       href={`https://www.gemmaonline.nl/wiki/GEMMA/id-${item.id}`}
                       target='_blank'
                       rel='noopener noreferrer'
+                      style={{ minHeight: '24px' }}
                     >
                       {item.label}
                     </Link>
@@ -224,19 +324,20 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
 
         <div style={{ marginTop: '2rem' }}>
           <RelatedTabs
-            id={id}
             uses={uses}
             used={used}
+            gebruik={[]}
+            schemas={aggregatedSchemas}
             usesLoading={usesLoading}
             usedLoading={usedLoading}
-            gebruikId={id}
-            gebruikSchemaId={schemaId}
-            gebruikSchemaSlug={get_single?.['@self']?.schema?.slug}
+            gebruikLoading={false}
+            excludeObjectIds={[]}
             tabIndex={relatedTabIndex}
             setTabIndex={setRelatedTabIndex}
             object={object}
             navigateTo='publication'
             user={user}
+            customTabsBefore={[createBeschrijvingTab(get_single)]}
           />
         </div>
 

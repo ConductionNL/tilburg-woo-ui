@@ -8,7 +8,13 @@ import { AcFlex } from '@atoms';
 // eslint-disable-next-line import/no-unresolved
 import { Alert, Paragraph } from '@utrecht/component-library-react/dist/css-module';
 
-import { collapseExtendedObjects, normalizeSchemaName } from '@src/utilities';
+import {
+  collapseExtendedObjects,
+  normalizeSchemaName,
+  uploadFileToObject,
+  uploadFileToObjectDirect,
+  isDataUrlNeedingUpload,
+} from '@src/utilities';
 import FormModalConfigFactory from '@views/ac-beheer/core/factories/con-form-modal-config-factory.js';
 import { useRefOptions } from '@src/hooks/use-ref-options';
 import _ from 'lodash';
@@ -194,7 +200,7 @@ const ConGenericFormModal = ({
           await object.fetchCollection(
             optionConfig.register,
             optionConfig.schema,
-            { ...optionConfig.params, page: 1, limit: 9999, _published: 'false' },
+            { ...optionConfig.params, page: 1, limit: 9999, _multi: true },
             false,
             'form-options'
           );
@@ -347,6 +353,16 @@ const ConGenericFormModal = ({
               mappedData[key].id
             ) {
               mappedData[key] = collapseExtendedObjects(mappedData[key]);
+            }
+          });
+
+          // Format date fields: strip timestamps for HTML date inputs
+          // (e.g., "2026-01-01 00:00:00" -> "2026-01-01")
+          Object.keys(mappedData).forEach((key) => {
+            const property = schema?.properties?.[key];
+            if (property?.format === 'date' && mappedData[key] && typeof mappedData[key] === 'string') {
+              // Strip timestamp by taking only the date part
+              mappedData[key] = mappedData[key].split(' ')[0];
             }
           });
 
@@ -537,27 +553,134 @@ const ConGenericFormModal = ({
 
     try {
       // Transform data before submission (if needed)
-      const submitData = config.transformSubmitData
+      let submitData = config.transformSubmitData
         ? config.transformSubmitData(formData)
         : formData;
+
+      // Check if logo needs to be uploaded
+      // - File object: needs upload
+      // - base64 data URL: needs upload (backward compatibility)
+      // - string URL: already uploaded, no action needed
+      const logoIsFile = submitData.logo instanceof File;
+      const hasLogoDataUrl = isDataUrlNeedingUpload(submitData.logo);
+      const needsLogoUpload = logoIsFile || hasLogoDataUrl;
 
       let response;
 
       if (isEdit) {
-        // Update existing object using object store
+        // Step 1: Upload logo if needed
+        let logoDownloadUrl = null;
+        if (needsLogoUpload) {
+          let uploadResult;
+          if (logoIsFile) {
+            // Upload File object directly
+            uploadResult = await uploadFileToObjectDirect(
+              submitData.logo,
+              config.beheerConfig.registerSlug,
+              config.beheerConfig.schemaSlug,
+              data.id,
+              'logo'
+              // No filename needed - comes from File.name
+            );
+          } else {
+            // Upload base64 data URL (backward compatibility)
+            uploadResult = await uploadFileToObject(
+              submitData.logo,
+              config.beheerConfig.registerSlug,
+              config.beheerConfig.schemaSlug,
+              data.id,
+              'logo',
+              'logo.png'
+            );
+          }
+
+          // Get the download URL from the upload response
+          if (uploadResult && uploadResult.fileData?.downloadUrl) {
+            logoDownloadUrl = uploadResult.fileData.downloadUrl;
+          }
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+
+        // Step 2: Prepare update payload with all form data
+        const updatePayload = { ...submitData };
+
+        // Remove logo from payload if it was uploaded (don't send File or base64)
+        if (needsLogoUpload) {
+          delete updatePayload.logo;
+        }
+
+        // Always strip UI-only fields
+        delete updatePayload.logoFilename;
+        delete updatePayload.logoAccessUrl;
+
+        // Step 3: Send the PATCH to update the object
         response = await object.updateObject(
           config.beheerConfig.registerSlug,
           config.beheerConfig.schemaSlug,
           data.id,
-          submitData
+          updatePayload
         );
+
+        // Step 4: Update with downloadUrl if logo was uploaded
+        if (logoDownloadUrl) {
+          await object.updateObject(
+            config.beheerConfig.registerSlug,
+            config.beheerConfig.schemaSlug,
+            data.id,
+            { logo: logoDownloadUrl }
+          );
+        }
       } else {
-        // Create new object using object store
+        // Step 1: Create new object without logo
+        const createData = { ...submitData };
+        if (needsLogoUpload) {
+          delete createData.logo;
+        }
+
+        // Always strip UI-only fields
+        delete createData.logoFilename;
+        delete createData.logoAccessUrl;
+
         response = await object.createObject(
           config.beheerConfig.registerSlug,
           config.beheerConfig.schemaSlug,
-          submitData
+          createData
         );
+
+        // Step 2: Upload logo if needed and we got a response with an ID
+        if (needsLogoUpload && response?.id) {
+          let uploadResult;
+          if (logoIsFile) {
+            // Upload File object directly
+            uploadResult = await uploadFileToObjectDirect(
+              submitData.logo,
+              config.beheerConfig.registerSlug,
+              config.beheerConfig.schemaSlug,
+              response.id,
+              'logo'
+            );
+          } else {
+            // Upload base64 data URL (backward compatibility)
+            uploadResult = await uploadFileToObject(
+              submitData.logo,
+              config.beheerConfig.registerSlug,
+              config.beheerConfig.schemaSlug,
+              response.id,
+              'logo',
+              'logo.png'
+            );
+          }
+
+          // If we got a downloadUrl, update the object with the logo URL
+          if (uploadResult && uploadResult.fileData?.downloadUrl) {
+            await object.updateObject(
+              config.beheerConfig.registerSlug,
+              config.beheerConfig.schemaSlug,
+              response.id,
+              { logo: uploadResult.fileData.downloadUrl }
+            );
+          }
+        }
       }
 
       // @TODO: applicaties and voorzieningversie's technically don't exist anymore, this needs to be fixed or removed

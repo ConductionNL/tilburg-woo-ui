@@ -29,7 +29,7 @@ export const AcSearchBox = ({
 
   const { mobileFiltersOpen, toggleMobileFilters } = publications;
 
-  // Debounced search effect - triggers search 500ms after user stops typing
+  // Debounced search effect - triggers search 300ms after user stops typing
   // Only runs if disableAutoSearch is false
   useEffect(() => {
     // Skip if auto search is disabled
@@ -57,7 +57,7 @@ export const AcSearchBox = ({
       if (onSubmitCallback instanceof Function) {
         onSubmitCallback(searchQuery);
       }
-    }, 750); // 750ms delay
+    }, 300); // 300ms delay - optimal for fast APIs (reduced from 750ms)
 
     // Cleanup timeout on component unmount
     return () => {

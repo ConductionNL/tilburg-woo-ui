@@ -39,6 +39,7 @@ import {
 } from './utils/validation.utils';
 import { getPageDescription as utilGetPageDescription } from './utils/texts.utils';
 import { commongroundApiUrl } from '@config';
+import { uploadFileToObject, isDataUrlNeedingUpload } from '@src/utilities';
 
 // Stage Components
 import ConFormProductopbouwStage from './components/con-form-productopbouw-stage';
@@ -87,12 +88,13 @@ import { getActiveWizard } from '@src/constants/wizards.constants';
  * - This file performs multiple read-only fetches for form setup and options:
  *
  *   **Schema Definitions** (fetched on component mount):
- *   - Product:        `${BASE_URL}/openregister/api/schemas/product`
+ *   - Suite:          `${BASE_URL}/openregister/api/schemas/suite`
  *   - Module:         `${BASE_URL}/openregister/api/schemas/module`
  *   - ModuleVersie:   `${BASE_URL}/openregister/api/schemas/moduleversie`
  *   - Dienst:         `${BASE_URL}/openregister/api/schemas/dienst`
  *   - Koppeling:      `${BASE_URL}/openregister/api/schemas/koppeling`
  *   - Compliancy:     `${BASE_URL}/openregister/api/schemas/compliancy`
+ *   - Organisatie:    `${BASE_URL}/openregister/api/schemas/organisatie`
  *   Used to provide field types, validation, descriptions, and enhanced form generation.
  *
  *   **Select Options** (for dropdown fields):
@@ -701,7 +703,7 @@ const AcFormsProductInner = ({
     const fetchSchemas = async () => {
       setSchemasLoading(true);
       const schemaTypes = [
-        'product',
+        'suite',
         'module',
         'dienst',
         'koppeling',
@@ -731,8 +733,8 @@ const AcFormsProductInner = ({
 
         setSchemas(fetchedSchemas);
 
-        // Update product object with schema-based defaults if product schema was loaded
-        if (fetchedSchemas.product) {
+        // Update product object with schema-based defaults if suite schema was loaded
+        if (fetchedSchemas.suite) {
           setProduct((prevProduct) => {
             // Only update if current product is the default/empty state
             // Don't override if user has already started filling the form
@@ -741,7 +743,7 @@ const AcFormsProductInner = ({
               !prevProduct.website &&
               !prevProduct.beschrijvingKort;
             if (isEmpty) {
-              return createDefaultProductFromSchema(fetchedSchemas.product);
+              return createDefaultProductFromSchema(fetchedSchemas.suite);
             }
             return prevProduct;
           });
@@ -766,7 +768,7 @@ const AcFormsProductInner = ({
     const fetchUserOrganization = async () => {
       try {
         const response = await fetch(
-          `${commongroundApiUrl()}/openconnector/api/user/me`,
+          `${commongroundApiUrl()}/openregister/api/user/me`,
           {
             method: 'GET',
             headers: {
@@ -972,14 +974,18 @@ const AcFormsProductInner = ({
         _limit: '500',
         _page: '1',
         gemmaType: 'Referentiecomponent',
-        '_extend[]': '@self.schema',
       });
+      
+      // Add multiple extend parameters to include standards
+      queryParams.append('_extend[]', '_schema');
+      queryParams.append('_extend[]', 'aanbevolenStandaarden');
+      queryParams.append('_extend[]', 'verplichteStandaarden');
 
       console.info('📋 Fetching standards from openconnector endpoint...');
 
       // Fetch standards from openconnector endpoint using normal fetch
       const response = await fetch(
-        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
         {
           method: 'GET',
           headers: {
@@ -991,6 +997,7 @@ const AcFormsProductInner = ({
 
       const mapToOption = (item, index) => {
         const label =
+          item?.['@self']?.name ||
           item?.xml?.name?._value ||
           item?.naam ||
           item?.name ||
@@ -1025,76 +1032,148 @@ const AcFormsProductInner = ({
     }
   }, [schemas, getReferentieComponentenQueryParams, store]);
 
-  // TODO remove this once we have the standaarden options loaded from the object store cache
-  const loadStandaarden = useCallback(async () => {
-    if (!schemas?.module) return;
+  // Function to load standaarden based on selected referentiecomponenten
+  const loadStandaardenFromReferentieComponenten = useCallback(async (selectedRefComps) => {
+    if (!schemas?.module || !selectedRefComps || selectedRefComps.length === 0) {
+      console.info('⏭️ No referentiecomponenten selected, skipping standaarden load');
+      setStandaardenOptions([]);
+      return;
+    }
 
-    console.info('📋 Loading standaarden via object store cache...');
+    console.info('📋 Loading standaarden from selected referentiecomponenten...');
     setStandaardenOptionsLoading(true);
 
     try {
-      const queryParams = new URLSearchParams({
-        _limit: '500',
-        _page: '1',
-        gemmaType: 'Standaard',
-        '_extend[]': '@self.schema',
+      // Step 1: Aggregate all standaard IDs from selected referentiecomponenten
+      const standaardIds = new Set();
+      
+      selectedRefComps.forEach((refCompValue) => {
+        // Find the full referentiecomponent data
+        const refCompOption = referentieComponentenOptions.find(opt => opt.value === refCompValue);
+        if (!refCompOption?.data) return;
+
+        const refCompData = refCompOption.data;
+        
+        // Collect aanbevolen standaarden IDs
+        if (Array.isArray(refCompData.aanbevolenStandaarden)) {
+          refCompData.aanbevolenStandaarden.forEach(standaard => {
+            const id = standaard?.['@self']?.id || standaard?.id || standaard;
+            if (id) standaardIds.add(id);
+          });
+        }
+        
+        // Collect verplichte standaarden IDs
+        if (Array.isArray(refCompData.verplichteStandaarden)) {
+          refCompData.verplichteStandaarden.forEach(standaard => {
+            const id = standaard?.['@self']?.id || standaard?.id || standaard;
+            if (id) standaardIds.add(id);
+          });
+        }
       });
 
-      console.info('📋 Fetching standards from openconnector endpoint...');
+      console.info(`📊 Found ${standaardIds.size} unique standaarden from selected components`);
 
-      // Fetch standards from openconnector endpoint using normal fetch
-      const response = await fetch(
-        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+      if (standaardIds.size === 0) {
+        console.warn('⚠️ No standaarden found in selected referentiecomponenten');
+        setStandaardenOptions([]);
+        setStandaardenOptionsLoading(false);
+        return;
+      }
+
+      // Step 2: Fetch each standaard with _extend[]=standaardVersies
+      const standaardenPromises = Array.from(standaardIds).map(async (standaardId) => {
+        try {
+          const queryParams = new URLSearchParams({
+            '_extend[]': 'standaardVersies',
+          });
+          
+          const response = await fetch(
+            `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element/${standaardId}?${queryParams}`,
+            {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            }
+          );
+          
+          if (!response.ok) {
+            console.error(`Failed to fetch standaard ${standaardId}:`, response.status);
+            return null;
+          }
+          
+          return await response.json();
+        } catch (e) {
+          console.error(`Error fetching standaard ${standaardId}:`, e);
+          return null;
         }
-      );
-      const list = await response.json();
+      });
 
-      const options = list.results
-        .map((item, index) => {
-          const label =
-            item?.xml?.name?._value ||
-            item?.naam ||
-            item?.name ||
-            item?.title ||
-            item?.label ||
-            `Standaard ${index + 1}`;
-          const value = item?.value || item?.id || item?.slug || label;
-          return { value: String(value), label: String(label), data: item };
-        })
-        .filter((o) => o.label && o.value);
+      const standaarden = (await Promise.all(standaardenPromises)).filter(Boolean);
+
+      console.info(`✅ Fetched ${standaarden.length} standaarden with their versions`);
+
+      // Step 3: Map to options
+      const options = standaarden.map((item, index) => {
+        const label =
+          item?.['@self']?.name ||
+          item?.xml?.name?._value ||
+          item?.naam ||
+          item?.name ||
+          item?.title ||
+          item?.label ||
+          `Standaard ${index + 1}`;
+        const value = item?.['@self']?.id || item?.id || item?.value || item?.slug || label;
+        return { 
+          value: String(value), 
+          label: String(label), 
+          data: item // Contains standaardVersies array with full objects
+        };
+      }).filter((o) => o.label && o.value);
 
       setStandaardenOptions(options);
-      console.info(`✅ Loaded ${options.length} standaarden (cache-first)`);
+      console.info(`✅ Loaded ${options.length} standaarden options`);
     } catch (e) {
       console.error('Failed to load standaarden:', e);
       setStandaardenOptions([]);
     } finally {
       setStandaardenOptionsLoading(false);
     }
-  }, [schemas, getStandaardenQueryParams, store]);
+  }, [schemas?.module, referentieComponentenOptions]);
 
-  // ✅ Load referentiecomponenten and standaarden when schemas are available
+  // Legacy function kept for backward compatibility (now unused)
+  const loadStandaarden = useCallback(async () => {
+    console.warn('⚠️ loadStandaarden() called but should use loadStandaardenFromReferentieComponenten()');
+  }, []);
+
+  // ✅ Load referentiecomponenten when schemas are available
   useEffect(() => {
     if (!schemas?.module) return;
 
     // Only load if we haven't loaded yet and we're not currently loading
     const shouldLoadRefs =
       referentieComponentenOptions.length === 0 && !referentieComponentenLoading;
-    const shouldLoadStandards =
-      standaardenOptions.length === 0 && !standaardenOptionsLoading;
 
-    if (shouldLoadRefs || shouldLoadStandards) {
-      const tasks = [];
-      if (shouldLoadRefs) tasks.push(loadReferentieComponenten());
-      if (shouldLoadStandards) tasks.push(loadStandaarden());
-      Promise.all(tasks).catch(() => {});
+    if (shouldLoadRefs) {
+      loadReferentieComponenten();
     }
   }, [schemas?.module]);
+
+  // ✅ Load standaarden when referentiecomponenten are selected
+  useEffect(() => {
+    if (!schemas?.module) return;
+    if (referentieComponentenOptions.length === 0) return; // Wait for options to load
+
+    // Get the IDs/values from referentieComponentenWithStandards
+    const selectedRefCompValues = referentieComponentenWithStandards.map(rc => rc.id || rc.value);
+    
+    if (selectedRefCompValues.length > 0) {
+      loadStandaardenFromReferentieComponenten(selectedRefCompValues);
+    } else {
+      // Clear standaarden if no referentiecomponenten selected
+      setStandaardenOptions([]);
+    }
+  }, [referentieComponentenWithStandards, referentieComponentenOptions, schemas?.module, loadStandaardenFromReferentieComponenten]);
 
   // Modules options with search functionality
   const [modulesOptions, setModulesOptions] = useState([]);
@@ -1254,6 +1333,7 @@ const AcFormsProductInner = ({
         website: apiProduct.website || '',
         logo: apiProduct.logo || '',
         logoFilename: '',
+        logoAccessUrl: null,
         hostingLocatie: apiProduct.hostingLocatie || '',
         hostingJurisdictie: apiProduct.hostingJurisdictie || '',
         contactpersoon: apiProduct.contactpersoon || '',
@@ -1311,7 +1391,7 @@ const AcFormsProductInner = ({
           String(productId),
           {
             '_extend[]': [
-              '@self.schema',
+              '_schema',
               'modules',
               'modules.koppelingen',
               'modules.diensten',
@@ -1332,6 +1412,34 @@ const AcFormsProductInner = ({
             referentieComponentenOptions
           );
           setProduct({ ...mapped, modules: mapped.modules || [] });
+
+          // Fetch logo file metadata if logo exists and is not a data URL
+          if (mapped.logo && !isDataUrlNeedingUpload(mapped.logo)) {
+            try {
+              const filesResponse = await fetch(
+                `${commongroundApiUrl()}/openregister/api/objects/voorzieningen/product/${productId}/files`
+              );
+              if (filesResponse.ok) {
+                const filesData = await filesResponse.json();
+                const files = filesData.results || [];
+                // Find the logo file (usually named 'logo.png' or similar)
+                const logoFile = files.find(
+                  (f) =>
+                    f.title?.toLowerCase().includes('logo') ||
+                    f.name?.toLowerCase().includes('logo')
+                );
+                if (logoFile) {
+                  setProduct((prev) => ({
+                    ...prev,
+                    logoFilename: logoFile.title || logoFile.name || 'logo.png',
+                    logoAccessUrl: logoFile.accessUrl || null,
+                  }));
+                }
+              }
+            } catch (error) {
+              console.warn('Failed to fetch logo metadata:', error);
+            }
+          }
         }
       } catch (e) {
         setPrefillError(
@@ -1349,6 +1457,131 @@ const AcFormsProductInner = ({
 
   // State for aanbieder selection
   const [aanbiederkeuze, setAanbiederKeuze] = useState('bestaand'); // 'bestaand' or 'nieuw'
+
+  /**
+   * Upload all evidence files (bewijs) in modules' compliancy arrays
+   * Uploads each file separately (not batched) for reliability
+   *
+   * IMPORTANT: Evidence files are uploaded to the MODULE, not the product!
+   * The file ID (not path) is saved in compliancy.bewijs for later fetching.
+   *
+   * This allows:
+   * - Fetching files via: GET /api/objects/voorzieningen/module/{moduleId}/files/{fileId}
+   * - Matching files to specific standards in compliancy
+   * - Flexible file management per module
+   *
+   * @param {Array} modules - Array of modules with compliancy arrays
+   * @returns {Promise<Array>} Array of modules with bewijs set to file IDs
+   */
+  const uploadCompliancyEvidence = async (modules) => {
+    if (!Array.isArray(modules) || modules.length === 0) {
+      return modules;
+    }
+
+    const processedModules = await Promise.all(
+      modules.map(async (module) => {
+        if (typeof module !== 'object' || !module.compliancy || !module.id) {
+          return module;
+        }
+
+        // Upload each file separately
+        const processedCompliancy = await Promise.all(
+          module.compliancy.map(async (comp) => {
+            // If bewijs is a data URL, upload it
+            if (isDataUrlNeedingUpload(comp.bewijs)) {
+              try {
+                const filename = comp.bewijsFilename || 'evidence.pdf';
+
+                const uploadResult = await uploadFileToObject(
+                  comp.bewijs,
+                  'voorzieningen',
+                  'module',
+                  String(module.id),
+                  'bewijs',
+                  filename
+                );
+
+                if (uploadResult?.id) {
+                  // Keep bewijsFilename for display, replace bewijs with file ID
+                  return {
+                    ...comp,
+                    bewijs: uploadResult.id, // Save file ID
+                    bewijsFilename: filename, // Keep filename for display in review stage
+                  };
+                } else {
+                  console.error(
+                    'File upload succeeded but no ID returned for standard:',
+                    comp.standaardversie
+                  );
+                  // Return compliancy without bewijs if no ID
+                  const { ...restComp } = comp;
+                  delete restComp.bewijs;
+                  delete restComp.bewijsFilename;
+                  return restComp;
+                }
+              } catch (error) {
+                console.error(
+                  'Failed to upload evidence for standard:',
+                  comp.standaardversie,
+                  error
+                );
+                // Return compliancy without bewijs if upload failed
+                const { ...restComp } = comp;
+                delete restComp.bewijs;
+                delete restComp.bewijsFilename;
+                return restComp;
+              }
+            }
+
+            // If bewijs is not a data URL (already a file ID), keep it
+            if (comp.bewijs && !isDataUrlNeedingUpload(comp.bewijs)) {
+              // Keep both bewijs and bewijsFilename for display
+              return {
+                ...comp,
+                bewijs: comp.bewijs, // Keep existing file ID
+                bewijsFilename: comp.bewijsFilename, // Keep filename
+              };
+            }
+
+            // No bewijs, remove bewijsFilename
+            const { ...restComp } = comp;
+            delete restComp.bewijsFilename;
+            return restComp;
+          })
+        );
+
+        return {
+          ...module,
+          compliancy: processedCompliancy,
+        };
+      })
+    );
+
+    return processedModules;
+  };
+
+  /**
+   * Helper to remove bewijsFilename and bewijsAccessUrl from modules before sending to API
+   * These fields are kept in local state for display, but shouldn't be sent to backend
+   */
+  const stripBewijsFilenamesForAPI = (modules) => {
+    if (!modules || !Array.isArray(modules)) return modules;
+
+    return modules.map((module) => {
+      if (module.compliancy && Array.isArray(module.compliancy)) {
+        return {
+          ...module,
+          compliancy: module.compliancy.map((comp) => {
+            const { ...restComp } = comp;
+            delete restComp.bewijsFilename;
+            delete restComp.bewijsAccessUrl;
+            return restComp;
+          }),
+        };
+      }
+      return module;
+    });
+  };
 
   const handleRegister = async () => {
     setLoading(true);
@@ -1405,20 +1638,168 @@ const AcFormsProductInner = ({
       };
       const sanitized = stripLocalIds(productData);
 
+      // Check if logo needs to be uploaded separately
+      const hasLogoDataUrl = isDataUrlNeedingUpload(sanitized.logo);
+
+      let response;
+
       if (productId) {
-        // Edit mode: update existing product via PUT
-        await store.object.updateObject(
+        // === EDIT MODE ===
+        // Step 1: Upload logo if it's a data URL and get the downloadUrl
+        let logoDownloadUrl = null;
+        if (hasLogoDataUrl) {
+          const uploadResult = await uploadFileToObject(
+            sanitized.logo,
+            'voorzieningen',
+            'product',
+            String(productId),
+            'logo',
+            sanitized.logoFilename || 'logo.png'
+          );
+
+          // Capture the downloadUrl for separate update
+          if (uploadResult && uploadResult.fileData?.downloadUrl) {
+            logoDownloadUrl = uploadResult.fileData.downloadUrl;
+          }
+
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+
+        // Step 2: Upload evidence files for existing modules and get file IDs
+        let modulesWithFileIds = sanitized.modules;
+        if (sanitized.modules && sanitized.modules.length > 0) {
+          modulesWithFileIds = await uploadCompliancyEvidence(sanitized.modules);
+        }
+
+        // Update local product state with modules including bewijsFilename for display
+        setProduct((prev) => ({
+          ...prev,
+          modules: modulesWithFileIds,
+        }));
+
+        // Step 3: Update product with file IDs in compliancy (without bewijsFilename for API)
+        const updatePayload = {
+          ...sanitized,
+          modules: stripBewijsFilenamesForAPI(modulesWithFileIds),
+        };
+
+        // Remove logo if it was uploaded (don't send base64)
+        if (hasLogoDataUrl) {
+          delete updatePayload.logo;
+        }
+
+        // Always strip UI-only fields
+        delete updatePayload.logoFilename;
+        delete updatePayload.logoAccessUrl;
+
+        response = await store.object.updateObject(
           'voorzieningen',
           'product',
           String(productId),
-          sanitized
+          updatePayload
         );
+
+        // Step 4: Update with downloadUrl if logo was uploaded
+        if (logoDownloadUrl) {
+          await store.object.updateObject(
+            'voorzieningen',
+            'product',
+            String(productId),
+            { logo: logoDownloadUrl }
+          );
+        }
       } else {
-        // Create mode: create new product via POST
-        await store.object.createObject('voorzieningen', 'product', sanitized);
+        // === CREATE MODE ===
+        // Step 1: Create product without logo and without evidence files
+        const createPayload = { ...sanitized };
+        if (hasLogoDataUrl) {
+          createPayload.logo = undefined;
+        }
+        delete createPayload.logoFilename;
+        delete createPayload.logoAccessUrl;
+
+        // Remove bewijs data URLs from compliancy before creation
+        if (createPayload.modules) {
+          createPayload.modules = createPayload.modules.map((module) => {
+            if (module.compliancy) {
+              return {
+                ...module,
+                compliancy: module.compliancy.map((comp) => {
+                  const { ...restComp } = comp;
+                  // Only include bewijs if it's not a data URL
+                  if (comp.bewijs && !isDataUrlNeedingUpload(comp.bewijs)) {
+                    return { ...restComp, bewijs: comp.bewijs };
+                  }
+                  delete restComp.bewijs;
+                  delete restComp.bewijsFilename;
+                  return restComp;
+                }),
+              };
+            }
+            return module;
+          });
+        }
+
+        response = await store.object.createObject(
+          'voorzieningen',
+          'product',
+          createPayload
+        );
+
+        // Step 2: Upload logo after creation if it's a data URL
+        if (hasLogoDataUrl && response?.id) {
+          const uploadResult = await uploadFileToObject(
+            sanitized.logo,
+            'voorzieningen',
+            'product',
+            String(response.id),
+            'logo',
+            sanitized.logoFilename || 'logo.png'
+          );
+
+          // If we got a downloadUrl, update the product with the logo URL
+          if (uploadResult && uploadResult.fileData?.downloadUrl) {
+            await store.object.updateObject(
+              'voorzieningen',
+              'product',
+              String(response.id),
+              { logo: uploadResult.fileData.downloadUrl }
+            );
+          }
+        }
+
+        // Step 3: Upload evidence files for newly created modules and update with file IDs
+        if (response?.id && response?.modules && sanitized.modules) {
+          // Map created modules with IDs to original modules with bewijs
+          const modulesWithIds = response.modules.map((createdModule, index) => {
+            const originalModule = sanitized.modules[index];
+            return {
+              ...originalModule,
+              id: createdModule.id || createdModule,
+            };
+          });
+
+          const modulesWithFileIds = await uploadCompliancyEvidence(modulesWithIds);
+
+          // Update local product state with modules including bewijsFilename for display
+          setProduct((prev) => ({
+            ...prev,
+            modules: modulesWithFileIds,
+          }));
+
+          // Update product with file IDs in compliancy (strip bewijsFilename for API)
+          await store.object.updateObject(
+            'voorzieningen',
+            'product',
+            String(response.id),
+            {
+              modules: stripBewijsFilenamesForAPI(modulesWithFileIds),
+            }
+          );
+        }
       }
 
-      // createObject returns the created object directly on success
+      // createObject/updateObject returns the object directly on success
       setRegisterCallBack('success');
     } catch (err) {
       setRegisterCallBack('error');

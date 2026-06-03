@@ -51,10 +51,15 @@ const AcSearch = ({ store: { publications, user, object } }) => {
     updateQuery(paramsObj);
   };
 
-  // On GET params change.
+  // On GET params change - optimized order
   useEffect(() => {
     setQuery();
+    
+    // Step 1: Fetch publications first (fastest, shows results immediately)
     fetchPublications();
+    
+    // Step 2: Fetch facets after publications (only once, not on every search change)
+    // This is heavier and not needed for initial display
     fetchFacets();
   }, [location.search]);
 
@@ -126,26 +131,29 @@ const AcSearch = ({ store: { publications, user, object } }) => {
     }
 
     return all_publications?.map((publication, index) => {
-      switch (publication['@self'].schema.slug) {
+      const selfData = publication['@self'];
+
+      switch (selfData.schema.slug) {
         case 'product':
         case 'module':
         case 'organisatie':
           return (
             <ConCardOrganisationApplication
               {...publication}
-              id={publication.id || publication['@self']?.id}
-              title={extractTitle(publication['@self'].name)}
+              self={selfData}
+              id={publication.id || selfData?.id}
+              title={extractTitle(selfData.name)}
               summary={extractSummary(
-                publication['@self']?.summary || publication?.beschrijvingKort
+                selfData?.summary || publication?.beschrijvingKort
               )}
               logo={getImageFromPublication(publication)}
-              cardType={publication['@self'].schema.slug}
-              type={publication['@self'].schema.title}
+              cardType={selfData.schema.slug}
+              type={selfData.schema.title}
               user={user}
               referenceComponents={publication.referentieComponenten}
-              updated={publication['@self'].updated}
-              published={publication['@self'].published}
-              organisation={publication['@self'].organisation}
+              updated={selfData.updated}
+              published={selfData.published}
+              organisation={selfData.organisation}
               objectStore={object}
               key={index}
             />
@@ -251,11 +259,10 @@ const AcSearch = ({ store: { publications, user, object } }) => {
         default:
           return (
             <AcSearchResult
-              {...publication}
-              id={publication.id || publication['@self']?.id}
-              published={publication['@self'].published}
-              updated={publication['@self'].updated}
-              category={publication['@self'].schema.title}
+              id={publication.id || selfData?.id}
+              published={selfData.published}
+              updated={selfData.updated}
+              category={selfData.schema.title}
               title={extractTitle(
                 publication.title ??
                   publication.titel ??
@@ -266,8 +273,10 @@ const AcSearch = ({ store: { publications, user, object } }) => {
               summary={extractSummary(
                 publication?.summary || publication?.beschrijving
               )}
+              themes={publication.themes}
               user={user}
-              schemaSlug={publication['@self']?.schema?.slug}
+              schemaSlug={selfData?.schema?.slug}
+              self={selfData}
               key={index}
             />
           );
