@@ -58,7 +58,7 @@
     "@utrecht/heading-css": "^1.4.1",
     "@utrecht/link-css": "^1.6.1",
     "@utrecht/ordered-list-css": "^1.5.2",
-    "@utrecht/paragraph-css": "^2.3.1",
+    "@utrecht/paragraph-css": "^4.0.1",
     "@utrecht/unordered-list-css": "^1.5.1",
     "axios": "1.8.2",
     "blazy": "^1.8.2",
