@@ -172,11 +172,7 @@ const AcRegister = () => {
       );
 
       // Attach logo as a file if available, otherwise send empty string.
-      if (logoFile) {
-        formData.append('logo', logoFile);
-      } else {
-        formData.append('logo', '');
-      }
+      formData.append('logo', logoFile || '');
 
       const response = await fetch(
         `${BASE_URL}/openregister/api/objects/voorzieningen/organisatie`,

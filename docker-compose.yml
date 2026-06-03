@@ -18,7 +18,7 @@ services:
       - ./yarn.lock:/app/yarn.lock:ro
       - ./scripts:/app/scripts:ro
     ports:
-      - "3003:3000"
+      - "3000:3000"
     environment:
       - NODE_ENV=development
       - GENERATE_SOURCEMAP=true
