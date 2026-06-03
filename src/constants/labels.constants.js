@@ -38,7 +38,7 @@ export const LABELS = {
   DOCUMENTS: 'Documenten',
   DOCUMENTS_EXPLAIN: 'Bekijk alle documenten',
   SEARCH_RESULTS_LOADING: 'Zoekresultaten worden geladen',
-  SEARCH_RESULTS_LOADED: 'Zoekresulten geladen',
+  SEARCH_RESULTS_LOADED: 'Zoekresultaten geladen',
   FOUND: 'Gevonden',
   RESULT: 'Resultaat',
   RESULTS: 'Resultaten',

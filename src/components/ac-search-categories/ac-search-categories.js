@@ -38,7 +38,7 @@ const AcSearchCategories = ({ store: { publications } }) => {
           Verzoek bij een overheidsinstantie om informatie op te vragen.
         </Paragraph>
         <Paragraph>
-          <strong>Raadstuk</strong>
+          <strong>Raadsstuk</strong>
           <br />
           Onderwerpen die worden besproken tijdens een gemeenteraadsvergadering.
         </Paragraph>

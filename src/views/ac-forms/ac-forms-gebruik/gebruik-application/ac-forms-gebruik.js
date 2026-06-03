@@ -431,7 +431,7 @@ const AcFormsGebruik = ({ store }) => {
           id: 'informatie-substep',
           marker: informatieMarker,
           status: getStatus(stepper.getCurrentStep(), informatieMarker),
-          title: 'Gebruikinformatie',
+          title: 'Gebruiksinformatie',
         },
         {
           id: 'referentiecomponenten-substep',

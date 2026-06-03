@@ -123,7 +123,7 @@ export const currentStepName = (stepIndex, formType, product, isMultiApplicatie)
       return 'Productinformatie';
     case 2:
       if (shouldShowAanbiederStep(formType)) {
-        return 'Aanbieder informatie';
+        return 'Aanbiederinformatie';
       }
     // fallthrough
     case 3:

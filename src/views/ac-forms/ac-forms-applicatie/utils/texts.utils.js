@@ -12,7 +12,7 @@ export const getPageTitle = (formType) => {
     case 'ontbrekend':
       return 'Ontbrekend product melden';
     default:
-      return 'Product Aanmelden';
+      return 'Product aanmelden';
   }
 };
 
