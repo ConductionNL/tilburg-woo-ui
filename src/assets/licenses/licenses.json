@@ -1,0 +1,27 @@
+[
+  {
+    "name": "Apache License, Version 2.0",
+    "SPDX ID": "Apache-2.0",
+    "category": "Popular / Strong Community",
+    "URL": "https://opensource.org/license/apache-2-0"
+  },
+  {
+    "name": "GNU General Public License",
+    "SPDX ID": "GPL-2.0",
+    "category": "Popular / Strong Community",
+    "URL": "https://opensource.org/license/gpl-2-0"
+  },
+
+  {
+    "name": "BSD License",
+    "SPDX ID": "BSD-2-Clause",
+    "category": "Popular / Strong Community",
+    "URL": "https://opensource.org/license/bsd-2-clause"
+  },
+  {
+    "name": "MIT License",
+    "SPDX ID": "MIT",
+    "category": "Popular / Strong Community",
+    "URL": "https://opensource.org/license/mit"
+  }
+]

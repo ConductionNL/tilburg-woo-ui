@@ -77,8 +77,8 @@ pipelines:
             - yarn build:web
             - docker login $DOCKER_DOMAIN -u $DOCKER_HUB_USER -p $DOCKER_HUB_PASSWORD
             - COMMIT_HASH=$BITBUCKET_COMMIT
-            - docker build -t $DOCKER_DOMAIN/acato/tilburg-woo-ui:accept-$COMMIT_HASH .
-            - docker push $DOCKER_DOMAIN/acato/tilburg-woo-ui:accept-$COMMIT_HASH
+            - docker build -t $DOCKER_DOMAIN/acato/tilburg-woo-ui:accept-$SHORT_COMMIT_HASH .
+            - docker push $DOCKER_DOMAIN/acato/tilburg-woo-ui:accept-$SHORT_COMMIT_HASH
           services:
             - docker
   custom: # Pipelines that are triggered manually
@@ -122,8 +122,8 @@ pipelines:
           artifacts:
             - node_modules/**
       - step:
-          name: Deploy to open.tilburg.nl (PROD)
-          deployment: open-tilburg-nl
+          name: Build and push tot container registry
+          deployment: production
           script:
             - unset CI
             - env | awk -F"DOTENV_" '/^DOTENV_/ {print $2}' >> .env
@@ -131,8 +131,8 @@ pipelines:
             - yarn build:web
             - docker login $DOCKER_DOMAIN -u $DOCKER_HUB_USER -p $DOCKER_HUB_PASSWORD
             - SHORT_COMMIT_HASH=$(echo $BITBUCKET_COMMIT | cut -c 1-7)
-            - docker build -t $DOCKER_DOMAIN/acato/tilburg-woo-ui:prod-$SHORT_COMMIT_HASH .
-            - docker push $DOCKER_DOMAIN/acato/tilburg-woo-ui:prod-$SHORT_COMMIT_HASH
+            - docker build -t $DOCKER_DOMAIN/acato/tilburg-woo-ui:$SHORT_COMMIT_HASH .
+            - docker push $DOCKER_DOMAIN/acato/tilburg-woo-ui:$SHORT_COMMIT_HASH
           services:
               - docker
 definitions:

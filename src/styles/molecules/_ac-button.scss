@@ -1,7 +1,4 @@
 .ac-button {
-  font-family: var(--tilburg-typography-font-family-primary), sans-serif;
-  font-weight: var(--tilburg-typography-font-weight-bold);
-
   &.utrecht-link {
     padding: 0;
     border: none;
@@ -9,6 +6,34 @@
 
     &:where(:hover, :focus-visible) {
       text-decoration: underline;
+    }
+  }
+
+  &__icon-container {
+    flex-shrink: 0;
+  }
+
+  &.utrecht-button--slim {
+    padding: 0 var(--tilburg-space-column-snail);
+    font-size: var(--tilburg-font-size-sm);
+    line-height: 1.2;
+    min-height: auto;
+  }
+
+  &--loading {
+    &:has(svg) {
+      svg {
+        animation: spin 1s linear infinite;
+      }
+    }
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
     }
   }
 
@@ -54,4 +79,30 @@
       }
     }
   }
+}
+
+// Ensure secondary button disabled state matches primary button exactly
+.ac-button.utrecht-button--secondary-action:disabled,
+.ac-button.utrecht-button--secondary-action[disabled] {
+  color: var(--utrecht-button-primary-action-disabled-color) !important;
+  background-color: var(
+    --utrecht-button-primary-action-disabled-background-color
+  ) !important;
+  border-color: var(
+    --utrecht-button-primary-action-disabled-border-color
+  ) !important;
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+// Also handle the slim variant specifically
+.ac-button.utrecht-button--secondary-action.utrecht-button--slim:disabled,
+.ac-button.utrecht-button--secondary-action.utrecht-button--slim[disabled] {
+  color: var(--utrecht-button-primary-action-disabled-color) !important;
+  background-color: var(
+    --utrecht-button-primary-action-disabled-background-color
+  ) !important;
+  border-color: var(
+    --utrecht-button-primary-action-disabled-border-color
+  ) !important;
 }

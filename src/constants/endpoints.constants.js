@@ -1,45 +1,72 @@
 import { AcLockObject } from '@utils/ac-lock-object';
 
-const API = '/api';
-const FAQS = '/faqs';
-const PUBLIC = '/public';
-const PAGES = '/pages';
-const PUBLICATIONS = '/publications';
-const SEARCH = '/search';
-const ATTACHMENTS = '/attachments';
-const THEMES = '/themes';
-const CATEGORIES = '/categories';
-const TERMS = '/terms';
-
-// For Conduction API, so publications/themes
-const API_CONDUCTION = '';
+// Note: Using relative endpoints for GEMMA; base resolved by proxy configuration
 
 export const ENDPOINTS = AcLockObject({
-  PUBLICATIONS: {
-    SEARCH: `${API_CONDUCTION}${SEARCH}${PUBLICATIONS}`, // GET
-    SINGLE: (_id) =>
-      `${API_CONDUCTION}${SEARCH}${PUBLICATIONS}/${_id}?extend%5B%5D=themes&extend%5B%5D=catalog`, // GET
-    ATTACHMENTS: (_id) =>
-      `${API_CONDUCTION}${SEARCH}${PUBLICATIONS}/${_id}${ATTACHMENTS}`, // GET
+  OAUTH: {
+    LOGIN: `/oauth/login`,
+    REGISTER: `/oauth/register`,
+    FORGOT_PASSWORD: `/oauth/forgot-password`,
+    RESET_PASSWORD: `/oauth/reset-password`,
+    REFRESH: `/oauth/refresh`,
+    LOGOUT: `/oauth/logout`,
   },
-  THEMES: {
-    INDEX: `${API_CONDUCTION}${SEARCH}${THEMES}`,
+  OPENCONNECTOR: {
+    USER_LOGIN: `/openregister/api/user/login`,
+    USER_LOGOUT: `/openregister/api/user/logout`,
+    USER_PROFILE: `/openregister/api/user/me`,
+  },
+  PUBLICATIONS: {
+    SEARCH: `/opencatalogi/api/publications`, // GET
+    SINGLE: (_id) => `/opencatalogi/api/publications/${_id}?_extend=_schema,_register,themes,contactpersoon,compliancy`, // GET
+    RELATIONS: (_uri) =>
+      `/opencatalogi/api/publications?_extend[]=publicationType&_extend[]=catalog&_relations=${_uri}`, // GET
+    ATTACHMENTS: (_id) => `/opencatalogi/api/publications/${_id}/attachments`, // GET
+    USED: (_id) => `/opencatalogi/api/publications/${_id}/used?_extend[]=_schema&_limit=100`, // GET
+  },
+  MIJN_OMGEVING: {
+    SEARCH: `/mijn-omgeving`, // GET
+    SINGLE: (_id) => `/mijn-omgeving/${_id}`, // GET
+  },
+  AUTHENTICATION: {
+    SEARCH: `/publications`, // GET
+    SINGLE: (_id) => `/publications/${_id}`, // GET
   },
   FAQS: {
-    INDEX: `${API}${PUBLIC}${FAQS}`, // GET
-    SHOW: (_id) => `${API}${PUBLIC}${FAQS}${_id}`, // GET
+    INDEX: `/faqs`, // GET
+    SHOW: (_id) => `/faqs/${_id}`, // GET
   },
   PAGES: {
-    INDEX: `${API}${PUBLIC}${PAGES}`, // GET
-    SHOW: (_slug) => `${API}${PUBLIC}${PAGES}${_slug}`, // GET
+    INDEX: `/opencatalogi/api/pages`, // GET
+    SHOW: (_slug) => `/opencatalogi/api/pages${_slug}`, // GET
   },
-  CATEGORIES: {
-    INDEX: `${API}${PUBLIC}${CATEGORIES}`, // GET
-    SHOW: (_id) => `${API}${PUBLIC}${CATEGORIES}/${_id}`, // GET
+  THEMES: {
+    INDEX: `/opencatalogi/api/themes`, // GET
   },
-  TERMS: {
-    INDEX: `${API}${PUBLIC}${TERMS}`, // GET
-    SHOW: (_id) => `${API}${PUBLIC}${TERMS}/${_id}`, // GET
+  GEMMA: {
+    VIEWS: `/openregister/api/objects/vng-gemma/view`,
+    VIEW: (_id) => `/openregister/api/objects/vng-gemma/view/${_id}`,
+    ELEMENT_REFERENCES: (_id) =>
+      `/openregister/api/objects/vng-gemma/element?identifier=${_id}`,
+    RELATIONSHIPS: (_id) =>
+      `/openregister/api/objects/vng-gemma/relationships?identifier=${_id}`,
+    VOORZIENING_GEBRUIK: `/openregister/api/objects/voorzieningen/gebruik`,
+    MODULES: `/openregister/api/objects/voorzieningen/module`,
+  }, // GET
+  MENU: {
+    INDEX: `/opencatalogi/api/menus`, // GET
+    SINGLE: (_id) => `/opencatalogi/api/menus/${_id}`, // GET
+  },
+  AANGEBODEN_GEBRUIK: {
+    AANBOD: `/softwarecatalog/api/aanbod`, // GET
+    ACCEPT: (_id) => `/softwarecatalog/api/aanbod/${_id}/accept`, // PUT
+    DENY: (_id) => `/softwarecatalog/api/aanbod/${_id}/deny`, // DELETE
+    AFNEMER: `/softwarecatalog/api/aangeboden-gebruik/afnemer`, // GET
+    DEELNEMERS: `/softwarecatalog/api/aangeboden-gebruik/deelnemers`, // GET
+    SET_SELF: (_id) => `/softwarecatalog/api/aangeboden-gebruik/${_id}/set-self`, // PUT
+    DENY_OLD: (_id) => `/softwarecatalog/api/aangeboden-gebruik/${_id}/deny`, // DELETE
+    KOPPELING: (_id) => `/softwarecatalog/api/koppelingen-gebruik/${_id}`, // GET
+    DOCS: `/softwarecatalog/api/aangeboden-gebruik/docs`, // GET
   },
 });
 

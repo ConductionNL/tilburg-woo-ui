@@ -1,0 +1,50 @@
+.con-publication-detail {
+  &__organisation {
+    &_actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-block-end: 32px;
+    }
+    &_header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 100px;
+      margin-block-end: 50px;
+      &_info {
+        display: flex;
+        justify-content: space-between;
+      }
+      &_contact {
+        align-self: center;
+        text-align: -webkit-right;
+        & * a {
+          display: block;
+        }
+      }
+    }
+  }
+}
+
+.con-product-publication {
+  &--header-container {
+    flex: 3;
+  }
+
+  &--header-actions {
+    flex: 1;
+  }
+
+  &--header-type {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    text-align: center;
+
+    & > svg {
+      height: var(--utrecht-heading-1-font-size);
+      width: var(--utrecht-heading-1-font-size);
+    }
+  }
+}

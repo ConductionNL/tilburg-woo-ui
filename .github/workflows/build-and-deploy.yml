@@ -1,0 +1,141 @@
+name: Build and Deploy Docker Images
+
+on:
+  push:
+    branches:
+      - softwarecatalogus
+      - development
+      - softwarecatalog-gebruik
+      # - softwarecatalogus-performance
+      - softwarecatalogus-igs
+  pull_request:
+    branches:
+      - softwarecatalogus
+      - development
+      - softwarecatalog-gebruik
+      # - softwarecatalogus-performance
+      - softwarecatalogus-igs
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.17.0'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Set Yarn version
+        run: yarn set version 4.1.1
+
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
+
+      - name: Cache yarn dependencies
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Build application
+        run: yarn build:web
+        env:
+          CI: false
+          # Add build context for better cache busting
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_REF: ${{ github.ref }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
+
+      - name: Verify cache busting
+        run: |
+          echo "🔍 Verifying cache busting implementation..."
+          
+          # Check if index.html contains build version
+          if grep -q "build-version" public_html/index.html; then
+            BUILD_VERSION=$(grep -o 'content="[^"]*"' public_html/index.html | grep build-version | cut -d'"' -f2)
+            echo "✅ Build version found: $BUILD_VERSION"
+          else
+            echo "❌ Build version not found in HTML"
+            exit 1
+          fi
+          
+          # Check if assets have hash in filename
+          JS_FILES=$(find public_html/static/js -name "*.js" | head -3)
+          CSS_FILES=$(find public_html/static/css -name "*.css" | head -3)
+          
+          echo "📦 Sample JS files with hashes:"
+          echo "$JS_FILES"
+          echo "📦 Sample CSS files with hashes:"  
+          echo "$CSS_FILES"
+          
+          # Verify hash pattern exists
+          if echo "$JS_FILES" | grep -E '\.[a-f0-9]{8,13}\.(chunk\.)?js$'; then
+            echo "✅ JavaScript files have proper hash-based cache busting"
+          else
+            echo "❌ JavaScript files missing hash-based cache busting"
+            exit 1
+          fi
+          
+          if echo "$CSS_FILES" | grep -E '\.[a-f0-9]{8,13}\.(chunk\.)?css$'; then
+            echo "✅ CSS files have proper hash-based cache busting"
+          else
+            echo "❌ CSS files missing hash-based cache busting"  
+            exit 1
+          fi
+          
+          echo "🎉 Cache busting verification completed successfully!"
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix=commit-
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/softwarecatalogus' }}
+            type=raw,value=gebruik,enable=${{ github.ref == 'refs/heads/softwarecatalog-gebruik' }}
+            type=raw,value=dev,enable=${{ github.ref == 'refs/heads/development' }}
+            type=raw,value=igs,enable=${{ github.ref == 'refs/heads/igs' }}
+            type=raw,value=performance,enable=${{ github.ref == 'refs/heads/softwarecatalogus-performance' }}
+
+      - name: Build and push Docker image
+        id: build-and-push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Image digest
+        run: echo ${{ steps.build-and-push.outputs.digest }} 

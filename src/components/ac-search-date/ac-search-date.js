@@ -1,77 +1,83 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { observer } from 'mobx-react-lite';
+
 import { withStore } from '@stores';
 import { AcFlex } from '@atoms';
-import { AcFormField, AcButton } from '@molecules';
-import { LABELS } from '@constants';
-import { SecondaryActionButton } from '@utrecht/component-library-react';
-import { Heading } from '@utrecht/component-library-react/dist/css-module';
+import { DateInput } from '@amsterdam/design-system-react';
+import { Heading4 } from '@utrecht/component-library-react';
+
+const isValidDate = (date) => {
+  const testedDate = new Date(date);
+  return testedDate instanceof Date && !isNaN(testedDate);
+};
 
 const AcSearchDate = ({ store: { publications } }) => {
   const { setQueryDate, search_query } = publications;
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [errors, setErrors] = useState({ after: '', before: '' });
 
-  // Initialize dates from URL params
-  useEffect(() => {
-    if (search_query?.published?.after) {
-      setStartDate(
-        new Date(search_query.published.after).toISOString().split('T')[0]
-      );
-    }
-    if (search_query?.published?.before) {
-      setEndDate(
-        new Date(search_query.published.before).toISOString().split('T')[0]
-      );
-    }
-  }, []);
+  const setDate = (key, value) => {
+    setErrors((prevErrors) => ({
+      ...prevErrors,
+      [key]: '',
+    }));
 
-  const handleStartDateChange = (e) => {
-    setStartDate(e.target.value);
+    if (value !== '' && isValidDate(value)) {
+      const dateParts = value.split('-');
+      const dateObject = new Date(+dateParts[0], dateParts[1] - 1, +dateParts[2]);
+      const ISODate = dateObject.toISOString();
+
+      setQueryDate(key, ISODate);
+    }
+
+    if (value === '') {
+      setQueryDate(key, null);
+    }
   };
 
-  const handleEndDateChange = (e) => {
-    setEndDate(e.target.value);
+  const handleKeyDown = (key, event) => {
+    if (event.key === 'Enter') {
+      setDate(key, event.target.value);
+    }
   };
 
-  const applyDateFilter = () => {
-    if (startDate) {
-      setQueryDate('after', new Date(startDate).toISOString());
-    } else {
-      setQueryDate('after', null);
-    }
+  const defaultValue = (isoDate) => {
+    if (!isoDate) return;
+    const date = new Date(isoDate);
+    const year = date.getFullYear();
+    let month = date.getMonth() + 1;
+    let day = date.getDate();
 
-    if (endDate) {
-      setQueryDate('before', new Date(endDate).toISOString());
-    } else {
-      setQueryDate('before', null);
+    if (day < 10) {
+      day = '0' + day;
     }
+    if (month < 10) {
+      month = '0' + month;
+    }
+    return day + '-' + month + '-' + year;
   };
 
   return (
     <AcFlex column spacing='sm' className='ac-search-filters__date'>
-      <Heading level={3}>{LABELS.SEARCH_DATE}</Heading>
-      <AcFormField
-        id='date_after'
-        label='Datum vanaf (dd-mm-jjjj)'
-        type='date'
-        value={startDate}
-        onChange={handleStartDateChange}
-        max={endDate || undefined}
-      />
-
-      <AcFormField
-        id='date_before'
-        label='Datum tot en met (dd-mm-jjjj)'
-        type='date'
-        value={endDate}
-        onChange={handleEndDateChange}
-        min={startDate || undefined}
-      />
-
-      <SecondaryActionButton onClick={applyDateFilter}>
-        {LABELS.SEARCH_DATE_FILTER}
-      </SecondaryActionButton>
+      <div className='ac-search-filters__date-item-container'>
+        <Heading4>Datum vanaf (dd-mm-yyyy)</Heading4>
+        <DateInput
+          id={'date_after'}
+          invalid={!!errors.after}
+          defaultValue={defaultValue(search_query?.published?.after)}
+          onBlur={(event) => setDate('after', event.target.value)}
+          onKeyDown={(event) => handleKeyDown('after', event)}
+        />
+      </div>
+      <div className='ac-search-filters__date-item-container'>
+        <Heading4>Datum tot en met (dd-mm-yyyy)</Heading4>
+        <DateInput
+          id={'date_before'}
+          invalid={!!errors.before}
+          defaultValue={defaultValue(search_query?.published?.before)}
+          onBlur={(event) => setDate('before', event.target.value)}
+          onKeyDown={(event) => handleKeyDown('before', event)}
+        />
+      </div>
     </AcFlex>
   );
 };

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Session Test</title>
+</head>
+<body>
+    <h1>Nextcloud Session Test</h1>
+    <div id="results"></div>
+    
+    <script>
+        const baseUrl = 'https://softwarecatalogus.accept.opencatalogi.nl';
+        const results = document.getElementById('results');
+        
+        function log(message) {
+            console.log(message);
+            results.innerHTML += '<p>' + message + '</p>';
+        }
+        
+        async function testLogin() {
+            try {
+                log('🔐 Testing login...');
+                
+                const loginResponse = await fetch(`${baseUrl}/api/apps/openconnector/api/user/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'include', // Important: include cookies
+                    body: JSON.stringify({
+                        username: 'info@conduction.nl',
+                        password: 'YguxP(7bl=5v@N6u'
+                    })
+                });
+                
+                log(`Login Status: ${loginResponse.status}`);
+                log(`Login Headers: ${JSON.stringify([...loginResponse.headers])}`);
+                
+                if (loginResponse.ok) {
+                    const loginData = await loginResponse.json();
+                    log(`✅ Login successful: ${JSON.stringify(loginData)}`);
+                    
+                    // Show all cookies
+                    log(`🍪 All cookies: ${document.cookie}`);
+                    
+                    // Now test /me endpoint
+                    await testMe();
+                } else {
+                    const errorData = await loginResponse.text();
+                    log(`❌ Login failed: ${errorData}`);
+                }
+                
+            } catch (error) {
+                log(`❌ Login error: ${error.message}`);
+            }
+        }
+        
+        async function testMe() {
+            try {
+                log('👤 Testing /me endpoint...');
+                
+                const meResponse = await fetch(`${baseUrl}/api/apps/openregister/api/user/me`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'include' // Important: include cookies
+                });
+                
+                log(`Me Status: ${meResponse.status}`);
+                log(`Me Headers: ${JSON.stringify([...meResponse.headers])}`);
+                
+                if (meResponse.ok) {
+                    const meData = await meResponse.json();
+                    log(`✅ Me successful: ${JSON.stringify(meData)}`);
+                } else {
+                    const errorData = await meResponse.text();
+                    log(`❌ Me failed: ${errorData}`);
+                }
+                
+            } catch (error) {
+                log(`❌ Me error: ${error.message}`);
+            }
+        }
+        
+        // Start the test
+        testLogin();
+    </script>
+</body>
+</html>

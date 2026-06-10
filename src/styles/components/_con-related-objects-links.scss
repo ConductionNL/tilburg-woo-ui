@@ -1,0 +1,15 @@
+// Con Related Objects Links Component styling
+.con-related-objects-links {
+  display: inline;
+  
+  // Force links to display inline instead of block/line-break
+  &__link {
+    display: inline !important;
+    white-space: nowrap;
+    
+    // Override any potential block-level styling from utrecht-link
+    &.utrecht-link {
+      display: inline !important;
+    }
+  }
+}

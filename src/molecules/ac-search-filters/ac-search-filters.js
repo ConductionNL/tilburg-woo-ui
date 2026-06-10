@@ -6,14 +6,8 @@ import clsx from 'clsx';
 
 import { AcFlex } from '@atoms';
 import { withStore } from '@stores';
-import { AcButton } from '@molecules';
+import { AcButton, ConFacetsFilters } from '@molecules';
 import { LABELS, VISUALS } from '@constants';
-import {
-  AcSearchCategories,
-  AcSearchDate,
-  AcSearchSubjects,
-  AcSearchThemes,
-} from '@components';
 
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import AcSearchSort from '@components/ac-search-sort/ac-search-sort';
@@ -22,7 +16,7 @@ const AcSearchFilters = ({ store: { publications } }) => {
   const overlayRef = useRef(null);
   const wrapperRef = useRef(null);
 
-  const { all_categories, toggleMobileFilters, mobileFiltersOpen } = publications;
+  const { toggleMobileFilters, mobileFiltersOpen } = publications;
 
   const handleCloseFilters = () => {
     toggleMobileFilters();
@@ -98,15 +92,8 @@ const AcSearchFilters = ({ store: { publications } }) => {
               <AcSearchSort />
             </AcFlex>
           )}
-          <AcSearchDate />
-          {all_categories?.length > 0 && (
-            <AcFlex column spacing='xs' className='ac-search-filters__category'>
-              <AcSearchCategories />
-            </AcFlex>
-          )}
-          <AcFlex column spacing='xs' className='ac-search-filters__subjects'>
-            <AcSearchThemes />
-          </AcFlex>
+
+          <ConFacetsFilters />
         </AcFlex>
         {mobileFiltersOpen && (
           <div

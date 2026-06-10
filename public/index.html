@@ -13,8 +13,12 @@
       name="description"
       content=""
     />
+    
+    <!-- Cache Busting: Build Info -->
+    <meta name="build-timestamp" content="%BUILD_TIMESTAMP%" />
+    <meta name="build-version" content="%BUILD_VERSION%" />
 
-    <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.svg" />
+    <link id="favicon" rel="shortcut icon" href="%PUBLIC_URL%/favicon.svg" />
 
     <!-- Prefetch | Preload -->
     <link rel="dns-prefetch" href="%API_URL%" />
@@ -48,7 +52,7 @@
       href="%PUBLIC_URL%/meta/safari-pinned-tab.svg"
       color="#0091c5"
     />
-    <link rel="shortcut icon" href="%PUBLIC_URL%/meta/favicon.ico" />
+    <link id="faviconMeta" rel="shortcut icon" href="%PUBLIC_URL%/meta/favicon.ico" />
     <meta name="msapplication-TileColor" content="#ffffff" />
     <meta
       name="msapplication-config"
@@ -66,13 +70,40 @@
     <link rel="preconnect" href="https://cdn.fonts.net">
     <link href="https://cdn.fonts.net/kit/98d15e86-0ba4-4c49-97a9-a796340ef3f3/98d15e86-0ba4-4c49-97a9-a796340ef3f3.css"
           rel="stylesheet"/>
+
+    <!-- Runtime Configuration (loaded BEFORE React bundle) -->
+    <!-- This file is generated at container startup with environment-specific values -->
+    <script src="%PUBLIC_URL%/runtime-config.js"></script>
   </head>
 
-  <body>
+  <body id="body">
+    <!-- Piwik Pro Analytics - MUST BE FIRST SCRIPT IN BODY -->
+    <script>
+      (function() {
+        var srcUrl = '%PIWIK_SRC_URL%';
+        var dataLayerName = '%PIWIK_DATA_LAYER%';
+        var id = '%PIWIK_ID%';
+  
+        // if nothing is set, do nothing
+        if ([srcUrl, dataLayerName, id].every(v => !v || v.trim() === '')) return;
+  
+        // if error in the config (with intent to setup Piwik Pro Analytics) throw an error
+        if ([srcUrl, dataLayerName, id].some(v => !v || v.trim() === '')) {
+          console.error('Piwik Pro Analytics: srcUrl, dataLayerName of id is niet ingesteld');
+          return;
+        }
+        
+        (function(window, document, srcUrl, dataLayerName, id) {
+        window[dataLayerName]=window[dataLayerName]||[],window[dataLayerName].push({start:(new Date).getTime(),event:"stg.start"});var scripts=document.getElementsByTagName('script')[0],tags=document.createElement('script');
+        var qP=[];dataLayerName!=="dataLayer"&&qP.push("data_layer_name="+dataLayerName);var qPString=qP.length>0?("?"+qP.join("&")):"";
+        tags.async=!0,tags.src=srcUrl+id+".js"+qPString,scripts.parentNode.insertBefore(tags,scripts);
+        !function(a,n,i){a[n]=a[n]||{};for(var c=0;c<i.length;c++)!function(i){a[n][i]=a[n][i]||{},a[n][i].api=a[n][i].api||function(){var a=[].slice.call(arguments,0);"string"==typeof a[0]&&window[dataLayerName].push({event:n+"."+i+":"+a[0],parameters:[].slice.call(arguments,1)})}}(i[c])}(window,"ppms",["tm","cm"]);
+        })(window, document, srcUrl, dataLayerName, id);
+      })();
+    </script>
+    <!-- End of Piwik Pro Analytics -->
+
     <noscript> You need to enable JavaScript to run this app. </noscript>
     <div id="root"></div>
-
-    <!-- Scripts -->
-    <script async src="https://siteimproveanalytics.com/js/siteanalyze_6006199.js"></script>
   </body>
 </html>

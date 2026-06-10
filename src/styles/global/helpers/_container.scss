@@ -6,16 +6,20 @@
   max-width: 100%;
 
   &--compact {
-    width: calc(936px + var(--tilburg-space-column-rat) * 2);
+    width: 744px;
     margin-block: var(--tilburg-space-row-tiger);
   }
 
   @include respond-min($screen-lg) {
-    max-width: calc(1128px + var(--tilburg-space-column-rat) * 2);
+    max-width: 1200px;
   }
 
   &.stretch {
     max-width: 100%;
+  }
+
+  &.default-space {
+
   }
 
   &--spacing {
@@ -67,16 +71,6 @@
 
     &-xxl {
       margin-block: var(--tilburg-space-block-pig);
-    }
-  }
-
-  &:has(.utrecht-skip-link) {
-    position: relative;
-
-    .utrecht-skip-link:focus-visible {
-      position: absolute;
-      top: 0;
-      left: 0;
     }
   }
 }

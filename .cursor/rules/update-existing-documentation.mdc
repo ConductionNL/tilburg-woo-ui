@@ -1,0 +1,5 @@
+---
+alwaysApply: true
+---
+When changing functionality check if it has existing documentation, if so make sure its up to date with reality.
+Documentation comes in either .MD file form, or as a JSdoc comment at the top of the file.

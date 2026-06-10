@@ -1,0 +1,41 @@
+// Organization Selector Component Styles
+.con-organization-selector {
+  // Ensure consistent styling with existing selects
+  &.ac-dashboard-org-selector {
+    .react-select__control {
+      min-height: 38px;
+      border-radius: 4px;
+      border: 1px solid var(--tilburg-color-border-default, #d1d5db);
+
+      &:hover {
+        border-color: var(--tilburg-color-border-hover, #9ca3af);
+      }
+
+      &--is-focused {
+        border-color: var(--tilburg-color-primary-500, #3b82f6);
+        box-shadow: 0 0 0 1px var(--tilburg-color-primary-500, #3b82f6);
+      }
+    }
+
+    .react-select__value-container {
+      padding: 2px 8px;
+    }
+
+    .react-select__single-value {
+      color: var(--tilburg-color-text-default, #374151);
+    }
+
+    .react-select__placeholder {
+      color: var(--tilburg-color-text-muted, #6b7280);
+    }
+  }
+}
+
+// Dashboard specific styles
+.ac-dashboard-wizards-header {
+  margin-bottom: var(--tilburg-space-block-md, 1rem);
+
+  .con-organization-selector {
+    flex-shrink: 0;
+  }
+}

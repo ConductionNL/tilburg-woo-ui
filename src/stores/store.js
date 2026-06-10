@@ -1,19 +1,25 @@
 // Imports => Dependencies
-import React, { createContext } from 'react';
 import { makeObservable, observable, computed, action, runInAction } from 'mobx';
 
 // Imports => API
 import API from '@api';
 
 // Imports => Stores
+
 import AuthStore from '@stores/auth.store';
+import UserStore from '@stores/user.store';
 import ToastersStore from '@stores/toasters.store';
 import FaqsStore from '@stores/faqs.store';
 import PagesStore from '@stores/pages.store';
 import PublicationsStore from '@stores/publications.store';
 import ThemesStore from '@stores/themes.store';
-import CategoriesStore from '@stores/categories.store';
-import TermsStore from '@stores/terms.store';
+import MenuStore from '@stores/menu.store';
+import AuthenticationStore from '@stores/authentication.store';
+import MijnOmgevingStore from '@stores/mijnOmgeving.store';
+import GemmaStore from '@stores/gemma.store';
+import ObjectStore from '@stores/object.store';
+import ChatStore from '@stores/chat.store';
+import GlossaryStore from '@stores/glossary.store';
 
 class Store {
   constructor(config) {
@@ -24,18 +30,19 @@ class Store {
     this.api = new API(config, this);
 
     this.auth = new AuthStore(this);
+    this.user = new UserStore(this);
     this.publications = new PublicationsStore(this);
     this.faqs = new FaqsStore(this);
     this.pages = new PagesStore(this);
     this.toasters = new ToastersStore(this);
     this.themes = new ThemesStore(this);
-    this.categories = new CategoriesStore(this);
-
-    try {
-      this.terms = new TermsStore(this);
-    } catch (error) {
-      console.error('Error creating TermsStore:', error);
-    }
+    this.menu = new MenuStore(this);
+    this.authentication = new AuthenticationStore(this);
+    this.mijnOmgeving = new MijnOmgevingStore(this);
+    this.gemma = new GemmaStore(this);
+    this.object = new ObjectStore(this);
+    this.chat = new ChatStore(this);
+    this.glossary = new GlossaryStore(this);
 
     window.addEventListener(
       'swFreshContentReady',
@@ -64,14 +71,14 @@ class Store {
   }
 
   @action
-  handleSWFreshContentReady = (event) => {
+  handleSWFreshContentReady = () => {
     runInAction(() => {
       this.freshContentReady = true;
     });
   };
 
   @action
-  handleSWCacheReady = (event) => {
+  handleSWCacheReady = () => {
     this.toasters.add({
       variant: 'info',
       title: 'Cache is gereed',

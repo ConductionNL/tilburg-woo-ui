@@ -1,0 +1,155 @@
+.ac-beheer-details {
+  &--remove-width {
+    width: unset !important;
+  }
+
+  &--100-width {
+    width: 100%;
+    min-width: 0;
+  }
+
+  &--list {
+    margin-inline-start: 20px;
+    list-style-type: disc;
+  }
+
+  &--grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  &--actions {
+    margin-block-end: var(--tilburg-space-block-cat);
+  }
+
+  &--tabs-container {
+    width: 100%;
+    min-height: 60vh; /* Ensure decent minimum height for tab content */
+
+    .ac-tabs {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Make tab panels expand to fill available space */
+    .ac-tabs [class*='react-tabs__tab-panel--selected'] {
+      flex: 1;
+      min-height: 50vh; /* Minimum height for tab content */
+      display: flex;
+      flex-direction: column;
+
+      /* Remove restrictive padding for more space */
+      padding: 1rem 0;
+
+      /* Ensure tables inside tabs can use full width */
+      .con-table,
+      .ac-table {
+        width: 100%;
+        min-width: 0;
+      }
+    }
+  }
+}
+
+.con-beheer-details {
+  &--header-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1 1 auto; /* allow grow/shrink */
+    min-width: 0; /* let title shrink instead of forcing wrap */
+  }
+
+  &--logo-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 80px;
+    margin-block-end: 5px;
+    // Keep this code commented out for now, but if SVG logos start displaying incorrectly (too small/squished),
+    // uncomment to enforce a minimum width of 100px for all logos
+    // min-width: 100px;
+    max-width: 200px;
+  }
+
+  &--logo-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  &--title {
+    flex: 1 1 auto;
+    min-width: 0;
+    white-space: normal; /* allow wrapping when needed */
+    overflow-wrap: break-word; /* wrap at spaces, break long words if needed */
+    word-break: break-word; /* WebKit fallback */
+    hyphens: auto; /* nicer word breaks when possible */
+  }
+}
+
+.con-product-details {
+  &--header {
+    display: flex;
+    gap: 100px; /* Add some spacing between the flex items */
+
+    &-short-stats {
+      margin-block-start: 1rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+
+      &-item {
+        display: flex;
+        gap: 4px;
+      }
+    }
+    &--content {
+      flex: 2;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    &--description {
+      margin-block-end: var(--tilburg-space-block-mouse);
+    }
+  }
+
+  &--content-main {
+    flex: 3;
+  }
+
+  &--contact-info {
+    padding-block: var(--tilburg-space-block-rabbit);
+    padding-inline: var(--tilburg-space-block-rabbit);
+    background-color: var(--tilburg-color-gray-50);
+    min-width: 250px;
+    border-radius: 4px;
+  }
+  &--contact-info * a {
+    display: block;
+  }
+
+  &--side-content {
+    flex: 1;
+    width: auto !important;
+
+    &-tabs li {
+        flex-grow: 1;
+    }
+  }
+
+  &--content {
+    display: flex;
+    gap: 20px;
+    &-main {
+      flex: 2;
+    }
+    &-side {
+      flex: 1;
+      min-width: 300px;
+    }
+  }
+}

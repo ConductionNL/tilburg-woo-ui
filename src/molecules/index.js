@@ -1,4 +1,5 @@
 import loadable from '@loadable/component';
+import { createElement } from 'preact/compat';
 
 const AcCardCategory = loadable(() =>
   import('@molecules/ac-card-category/ac-card-category')
@@ -20,6 +21,25 @@ const AcSearchFilters = loadable(() =>
 const AcCheckbox = loadable(() => import('@molecules/ac-checkbox/ac-checkbox'));
 const AcSelect = loadable(() => import('@molecules/ac-select/ac-select'));
 const AcTable = loadable(() => import('@molecules/ac-table/ac-table'));
+const ConFacetsFilters = loadable(() =>
+  import('@molecules/con-facets-filters/con-facets-filters')
+);
+const ConActiveFilters = loadable(() =>
+  import('@molecules/con-active-filters/con-active-filters')
+);
+const AcTile = loadable(() => import('@molecules/ac-tile/ac-tile'));
+
+// ConAccordion: keep compound API under lazy loading
+const ConAccordionLoadable = loadable(() =>
+  import('@molecules/con-accordion/con-accordion')
+);
+const ConAccordionItemLoadable = loadable(() =>
+  import('@molecules/con-accordion/con-accordion').then((m) => ({
+    default: m.default.Item,
+  }))
+);
+const ConAccordion = (props) => createElement(ConAccordionLoadable, props);
+ConAccordion.Item = (props) => createElement(ConAccordionItemLoadable, props);
 
 export {
   AcBreadcrumbs,
@@ -34,4 +54,8 @@ export {
   AcSelect,
   AcFormField,
   AcTable,
+  ConFacetsFilters,
+  ConActiveFilters,
+  AcTile,
+  ConAccordion,
 };

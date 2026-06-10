@@ -11,12 +11,12 @@
     }
   }
 
-  :is(h3, h4, p:not(:has([class*='--checkbox']))) {
+  :is(h3, h4) {
     margin-block-end: var(--tilburg-space-block-beetle);
   }
 
   &__wrapper {
-    inline-size: 265px;
+    inline-size: 360px;
 
     @include respond-max($screen-md) {
       position: relative;
@@ -29,6 +29,7 @@
       overflow-y: scroll;
       overscroll-behavior-y: contain;
       z-index: 2;
+      padding-block-end: var(--tilburg-space-row-elephant);
 
       > div:first-of-type {
         position: relative;
@@ -59,25 +60,29 @@
   }
 
   &__date {
-    .utrecht-form-field {
-      overflow-x: clip;
-    }
-
-    input {
-      block-size: 48px;
-      inline-size: 350px;
-    }
-
-    button {
-      inline-size: 100%;
-      max-inline-size: unset;
-    }
+    // ...
   }
 
   &__category,
   &__subjects {
     .utrecht-form-field--checkbox:not(:last-child) {
       margin-block-end: var(--tilburg-space-block-beetle);
+    }
+
+    .ac-card__content {
+      padding: 0 !important;
+    }
+  }
+
+  // Disabled filter checkboxes: more gray while results/facets are loading
+  &__subjects .utrecht-form-field--checkbox:has(input:disabled) {
+    opacity: 0.6;
+
+    .utrecht-form-field__label,
+    .ac-checkbox-label,
+    .utrecht-form-field__input {
+      color: var(--tilburg-color-gray-500, #6b7280);
+      cursor: not-allowed;
     }
   }
 
@@ -97,12 +102,6 @@
     }
   }
 
-  &__subjects {
-    @include respond-max($screen-md) {
-      padding-block-end: var(--tilburg-space-row-elephant);
-    }
-  }
-
   &__button {
     display: none;
 
@@ -118,4 +117,8 @@
       z-index: 3;
     }
   }
+}
+
+.ac-search-filters__date-item-container > input {
+  min-width: -webkit-fill-available;
 }

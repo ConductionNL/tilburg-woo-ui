@@ -8,7 +8,7 @@ import {
 import { AcFlex } from '@atoms';
 
 const AcSearchFilter = ({
-  placeholder = 'Waar ben je naar op zoek?',
+  placeholder = 'Waar bent u naar op zoek?',
   onSearch,
   initialValue = '',
   label = 'Zoek in begrippen',
@@ -53,22 +53,16 @@ const AcSearchFilter = ({
             <span className={searchIconOnly ? 'sr-only' : ''}>Zoeken</span>
           </PrimaryActionButton>
         </AcFlex>
-
-        <div
-          className='ac-search-filter__results-container'
-          aria-live='polite'
-          aria-atomic='true'
-        >
-          {currentSearchTerm && (
-            <div className='ac-search-filter__results'>
-              Gezocht op: <strong>{currentSearchTerm}</strong> ({resultCount}{' '}
-              {LABELS_DYNAMIC.RESULTS(resultCount).toLowerCase()})
-              <br />
-              <button onClick={clearSearch}>Wis zoekopdracht</button>
-            </div>
-          )}
-        </div>
       </form>
+
+      {currentSearchTerm && (
+        <div className='ac-search-filter__results'>
+          Gezocht op: <strong>{currentSearchTerm}</strong> ({resultCount}{' '}
+          {LABELS_DYNAMIC.RESULTS(resultCount).toLowerCase()})
+          <br />
+          <button onClick={clearSearch}>Wis zoekopdracht</button>
+        </div>
+      )}
     </div>
   );
 };

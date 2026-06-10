@@ -1,0 +1,219 @@
+.ac-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+  position: relative;
+  box-sizing: border-box;
+  text-align: center;
+  white-space: normal;
+
+  background-color: var(--conduction-tabs-tab-background-color);
+  color: var(--conduction-tabs-tab-color);
+  border-width: var(--conduction-tabs-tab-border-width);
+  border-style: var(--conduction-tabs-tab-border-style);
+  border-color: var(--conduction-tabs-tab-border-color);
+  border-bottom: var(--conduction-tabs-tab-border-bottom);
+  border-bottom-width: var(--conduction-tabs-tab-border-bottom-width);
+  border-bottom-style: var(--conduction-tabs-tab-border-bottom-style);
+  border-bottom-color: var(--conduction-tabs-tab-border-bottom-color);
+  bottom: var(--conduction-tabs-tab-bottom);
+  padding-block-start: var(--conduction-tabs-tab-padding-block-start);
+  padding-block-end: var(--conduction-tabs-tab-padding-block-end);
+  padding-inline-start: var(--conduction-tabs-tab-padding-inline-start);
+  padding-inline-end: var(--conduction-tabs-tab-padding-inline-end);
+  font-size: var(--conduction-tabs-tab-font-size);
+  font-weight: var(--conduction-tabs-tab-font-weight);
+  font-family: var(--conduction-tabs-tab-font-family);
+  min-height: var(--conduction-tabs-tab-min-height);
+  letter-spacing: var(--conduction-tabs-tab-letter-spacing);
+  text-transform: var(--conduction-tabs-tab-text-transform);
+  flex-shrink: 0;
+}
+
+.ac-tabButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+  position: relative;
+  box-sizing: border-box;
+  text-align: center;
+  white-space: normal;
+
+  border-width: var(
+    --conduction-tabs-scroll-button-border-width,
+    var(--conduction-tabs-tab-border-width)
+  );
+  border-style: var(
+    --conduction-tabs-scroll-button-border-style,
+    var(--conduction-tabs-tab-border-style)
+  );
+  border-color: var(
+    --conduction-tabs-scroll-button-border-color,
+    var(--conduction-tabs-tab-border-color)
+  );
+  background-color: var(--conduction-tabs-scroll-button-background-color);
+  color: var(--conduction-tabs-tab-button-color);
+  bottom: var(--conduction-tabs-tab-button-bottom);
+  padding-block-start: var(--conduction-tabs-tab-padding-block-start);
+  padding-block-end: var(--conduction-tabs-tab-padding-block-end);
+  padding-inline-start: var(--conduction-tabs-tab-padding-inline-start);
+  padding-inline-end: var(--conduction-tabs-tab-padding-inline-end);
+  font-size: var(--conduction-tabs-tab-font-size);
+  font-weight: var(--conduction-tabs-tab-font-weight);
+  font-family: var(--conduction-tabs-tab-font-family);
+  min-height: var(--conduction-tabs-tab-min-height);
+  letter-spacing: var(--conduction-tabs-tab-letter-spacing);
+  text-transform: var(--conduction-tabs-tab-text-transform);
+}
+
+.ac-tabButton:hover {
+  background-color: var(--conduction-tabs-scroll-button-hover-background-color);
+  color: var(--conduction-tabs-scroll-button-hover-color);
+}
+.ac-tabButton:hover > * {
+  background-color: var(--conduction-tabs-scroll-button-hover-background-color);
+  color: var(--conduction-tabs-scroll-button-hover-color);
+}
+
+.ac-tabListContainer {
+  flex: 0 0 100%; /* Let it fill the entire space horizontally */
+}
+
+/* TabSelected */
+.ac-tab[aria-selected='true'] {
+  background-color: var(--conduction-tabs-tab-selected-background-color);
+  color: var(--conduction-tabs-tab-selected-color);
+  box-shadow: var(--conduction-tabs-tab-selected-box-shadow);
+  border-width: var(--conduction-tabs-tab-selected-border-width);
+  border-style: var(--conduction-tabs-tab-selected-border-style);
+  border-color: var(--conduction-tabs-tab-selected-border-color);
+  border-bottom: var(--conduction-tabs-tab-selected-border-bottom);
+  border-bottom-width: var(--conduction-tabs-tab-selected-border-bottom-width);
+  border-bottom-style: var(--conduction-tabs-tab-selected-border-bottom-style);
+  border-bottom-color: var(--conduction-tabs-tab-selected-border-bottom-color);
+  font-weight: var(--conduction-tabs-tab-selected-font-weight);
+  font-family: var(--conduction-tabs-tab-selected-font-family);
+}
+
+.ac-tab[aria-selected='true']:hover {
+  background-color: var(--conduction-tabs-tab-selected-hover-background-color);
+  color: var(--conduction-tabs-tab-selected-hover-color);
+  text-decoration: var(--conduction-tabs-tab-selected-hover-text-decoration);
+  font-weight: var(--conduction-tabs-tab-selected-hover-font-weight);
+}
+.ac-tab:hover {
+  background-color: var(--conduction-tabs-tab-hover-background-color);
+  color: var(--conduction-tabs-tab-hover-color);
+  text-decoration: var(--conduction-tabs-tab-hover-text-decoration);
+  font-weight: var(
+    --conduction-tabs-tab-hover-font-weight,
+    var(--conduction-tabs-tab-font-weight)
+  );
+}
+
+.ac-tabList {
+  display: flex;
+  padding-inline-start: var(--conduction-tabs-tab-list-padding-inline-start);
+  padding-inline-end: var(--conduction-tabs-tab-list-padding-inline-end);
+  margin-block-end: var(--conduction-tabs-tab-list-margin-block-end);
+  border-bottom-width: var(--conduction-tabs-tab-list-border-bottom-width);
+  border-bottom-style: var(--conduction-tabs-tab-list-border-bottom-style);
+  border-bottom-color: var(--conduction-tabs-tab-list-border-bottom-color);
+  width: auto;
+}
+
+.ac-tabListOverflow {
+  display: flex;
+  padding-inline-start: var(--conduction-tabs-tab-list-padding-inline-start);
+  padding-inline-end: var(--conduction-tabs-tab-list-padding-inline-end);
+  margin-block-end: var(--conduction-tabs-tab-list-margin-block-end);
+  border-bottom-width: var(--conduction-tabs-tab-list-border-bottom-width);
+  border-bottom-style: var(--conduction-tabs-tab-list-border-bottom-style);
+  border-bottom-color: var(--conduction-tabs-tab-list-border-bottom-color);
+  width: max-content;
+}
+
+.ac-tabList :not(:last-child) {
+  margin-inline-end: var(--conduction-tabs-tab-margin-inline-end);
+}
+
+/* TabPanel */
+.ac-tabs [class*='react-tabs__tab-panel--selected'] {
+  background-color: var(--conduction-tabs-tab-panel-background-color);
+  padding-block-start: var(--conduction-tabs-tab-panel-padding-block-start);
+  padding-block-end: var(--conduction-tabs-tab-panel-padding-block-end);
+  padding-inline-start: var(--conduction-tabs-tab-panel-padding-inline-start);
+  padding-inline-end: var(--conduction-tabs-tab-panel-padding-inline-end);
+  border-width: var(--conduction-tabs-tab-panel-border-width);
+  border-style: var(--conduction-tabs-tab-panel-border-style);
+  border-color: var(--conduction-tabs-tab-panel-border-color);
+  border-top: var(--conduction-tabs-tab-panel-border-top);
+  /* === added by AI === (so I have no clue if it'll break, but it works for now) */
+  width: 100%;
+  overflow-x: auto;
+  min-width: 0; /* Allows grid items to shrink below their minimum content size */
+  /* =================== */
+}
+
+.ac-tab-scrollButton {
+  background-color: var(--conduction-tabs-scroll-button-background-color);
+  color: var(--conduction-tabs-scroll-button-color);
+}
+
+.ac-tab-scrollButton > * path {
+  fill: var(--conduction-tabs-scroll-button-color);
+}
+
+.ac-tab-container {
+  position: relative;
+  /* === added by AI === */
+  width: 100%;
+  overflow-x: hidden;
+  /* =================== */
+}
+
+.ac-tab-wrapper {
+  /* overflow-x: auto; */
+  /* === added by AI === */
+  overflow-x: auto;
+  width: 100%;
+  /* =================== */
+  display: flex;
+}
+.ac-tab-wrapperTouchscreen {
+  overflow-x: scroll;
+}
+
+.ac-tab-scrollRightButton,
+.ac-tab-scrollLeftButton {
+  position: absolute;
+}
+
+.ac-tab-scrollRightButton {
+  right: 0;
+}
+
+.ac-tab-scrollLeftButton {
+  left: 0;
+  z-index: 1;
+}
+
+/* Hide scrollbar */
+.ac-tab-wrapper::-webkit-scrollbar {
+  display: none;
+}
+.ac-tab-wrapper {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.ac-tabs {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  width: 100%;
+  overflow-x: hidden;
+}

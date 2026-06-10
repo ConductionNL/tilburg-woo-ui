@@ -1,9 +1,11 @@
 import clsx from 'clsx';
 
-const AcGrid = ({ children, row = 3 }) => {
-  const _CLASSES = clsx('ac-grid', row && `ac-grid--${row}`);
+const AcGrid = ({ children, columns = 1, className, style }) => {
+  document.documentElement.style.setProperty('--ac-grid-columns', columns);
 
-  return <div className={_CLASSES}>{children}</div>;
+  const _CLASSES = clsx('ac-grid', `columns-${columns}`, className);
+
+  return <div className={_CLASSES} style={style}>{children}</div>;
 };
 
 export default AcGrid;

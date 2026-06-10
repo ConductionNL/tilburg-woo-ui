@@ -1,0 +1,198 @@
+// Account page specific styling for register review sections
+.ac-register-review__section {
+  .ac-beheer-select,
+  .ac-form-field__input {
+    width: 100%;
+    min-height: 40px;
+    border-radius: 4px;
+  }
+
+  .utrecht-form-label .utrecht-heading-4 {
+    margin-bottom: var(--tilburg-space-block-mouse);
+    font-weight: 500;
+    color: var(--tilburg-color-gray-700);
+  }
+
+  .ac-account-review__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 100px;
+    margin-block-end: 50px;
+  }
+
+  .ac-account-review__header-info {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  // Header controls layout (select + button)
+  .ac-register-review__header-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    .ac-register-review__org-select {
+      min-width: 200px;
+    }
+
+    // Ensure button styling is consistent
+    .ac-button {
+      flex-shrink: 0;
+    }
+  }
+
+  // More space between button and separator line
+  .ac-register-review-header__separator {
+    margin-top: var(--tilburg-space-block-cat) !important;
+  }
+
+  .ac-my-account__separator {
+    margin-block: var(--tilburg-space-block-cat) !important;
+  }
+}
+
+.ac-mijn-omgeving-section {
+  .ac-register-form-section {
+    margin-block-start: var(--tilburg-space-block-rat);
+  }
+
+  .ac-register-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--tilburg-space-block-rat);
+  }
+
+  .ac-register-form-buttons {
+    margin-block-start: var(--tilburg-space-block-rat);
+  }
+
+  .ac-register-form-field-error {
+    display: block;
+    color: var(--tilburg-color-red-400);
+    font-size: 0.875rem;
+    margin-block-start: var(--tilburg-space-block-beetle);
+  }
+
+  .ac-alert-close-btn {
+    margin-left: var(--tilburg-space-inline-mouse);
+    padding: 0.25rem 0.5rem;
+    min-width: 32px;
+    min-height: 32px;
+    height: 32px;
+    width: 32px;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  // Fix for alert content width so close button aligns right
+  .utrecht-alert__content {
+    width: 100%;
+  }
+}
+
+.ac-register-review__contact-image--round {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ac-register-review__contact-image--round img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ac-register-review__contact-image--round svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.con-my-account-description {
+  background-color: inherit !important;
+}
+
+.con-my-account-deelnames-modal {
+  &__error {
+    color: '#a00';
+    margin: 0;
+  }
+
+  &__paragraph {
+    margin: 0;
+  }
+
+  &__input {
+    width: 100%;
+  }
+
+  &__column {
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+  }
+}
+
+.ac-register-review__contact {
+  align-self: center;
+  text-align: -webkit-right;
+}
+
+.ac-register-review__contact * a {
+  display: block;
+}
+
+// Right-align link lists inside account tabs
+.ac-account--tabs-container {
+  ul {
+    text-align: right;
+  }
+}
+
+.ac-account--tabs-container {
+  width: 100%;
+}
+
+.ac-account-review__header-info {
+  a {
+    word-break: break-word;
+  }
+}
+
+// Contact image avatar: 100x100 circle. If the source isn't round, crop center.
+.ac-register-review__contact-image--round {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ac-register-review__contact-image--round img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ac-register-review__contact-image--round svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.ac-register-review__organisation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}

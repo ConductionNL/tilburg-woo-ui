@@ -25,6 +25,18 @@ export class PublicationsAPI {
     );
   }
 
+  relations(uri) {
+    return this.Client.get(ENDPOINTS.PUBLICATIONS.RELATIONS(uri)).then(
+      (response) => response.data.results
+    );
+  }
+
+  used(id) {
+    return this.Client.get(ENDPOINTS.PUBLICATIONS.USED(id)).then(
+      (response) => response.data
+    );
+  }
+
   themes(params) {
     return this.Client.get(ENDPOINTS.THEMES, { params }).then(
       (response) => response.data

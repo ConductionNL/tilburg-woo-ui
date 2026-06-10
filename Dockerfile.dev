@@ -1,0 +1,113 @@
+# Development Dockerfile for React application with watch builds
+FROM node:18.17.0-alpine as base
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apk add --no-cache git curl
+
+# Enable Corepack for Yarn 4
+RUN corepack enable
+
+# Copy package files
+COPY package.json yarn.lock .yarnrc.yml ./
+
+# Set Yarn version
+RUN yarn set version 4.1.1
+
+# Install dependencies
+RUN yarn install
+
+# Copy source code
+COPY . .
+
+# Development stage with watch build + nginx (Port 81)
+FROM base as development
+
+# Install nginx and gettext (for envsubst)
+RUN apk add --no-cache nginx gettext
+
+# Create nginx directories
+RUN mkdir -p /var/log/nginx /var/lib/nginx/tmp /etc/nginx/conf.d
+
+# Copy nginx configuration template
+COPY config/nginx.conf.template /etc/nginx/nginx.conf.template
+
+# Create startup script that substitutes environment variables
+RUN echo '#!/bin/sh' > /start-dev.sh && \
+    echo 'echo "Starting development server with nginx proxy..."' >> /start-dev.sh && \
+    echo 'echo "Nginx upstream: $NGINX_OPENCONNECTOR_UPSTREAM"' >> /start-dev.sh && \
+    echo '' >> /start-dev.sh && \
+    echo '# Substitute environment variables in nginx config' >> /start-dev.sh && \
+    echo 'envsubst '"'"'$NGINX_OPENCONNECTOR_UPSTREAM $NGINX_NEXTCLOUD_UPSTREAM $NGINX_NEXTCLOUD_DOMAIN $NGINX_TARGET_HOST $NGINX_ROOT_DIR'"'"' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf' >> /start-dev.sh && \
+    echo '' >> /start-dev.sh && \
+    echo '# Start nginx' >> /start-dev.sh && \
+    echo 'nginx &' >> /start-dev.sh && \
+    echo '' >> /start-dev.sh && \
+    echo '# Generate runtime configuration (NOT bundled by webpack)' >> /start-dev.sh && \
+    echo 'node scripts/generate-runtime-config.js /app/public_html/runtime-config.js' >> /start-dev.sh && \
+    echo '' >> /start-dev.sh && \
+    echo '# Run linting check on startup' >> /start-dev.sh && \
+    echo 'echo "Running linting checks..."' >> /start-dev.sh && \
+    echo 'yarn lint:check || echo "⚠️  Linting issues found - check output above"' >> /start-dev.sh && \
+    echo '' >> /start-dev.sh && \
+    echo '# Watch for changes and rebuild' >> /start-dev.sh && \
+    echo 'while true; do' >> /start-dev.sh && \
+    echo '  echo "Building for development..."' >> /start-dev.sh && \
+    echo '  NODE_ENV=development yarn build:web' >> /start-dev.sh && \
+    echo '  cp -r public_html/* /app/public_html/' >> /start-dev.sh && \
+              echo '  echo "Build complete. Watching for changes..."' >> /start-dev.sh && \
+    echo '  inotifywait -r -e modify,create,delete src/ public/ package.json' >> /start-dev.sh && \
+    echo 'done' >> /start-dev.sh
+
+# Install inotify-tools for file watching
+RUN apk add --no-cache inotify-tools
+
+# Make startup script executable
+RUN chmod +x /start-dev.sh
+
+# Create public_html directory for nginx
+RUN mkdir -p /app/public_html
+
+# Expose port 81
+EXPOSE 81
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:81/ || exit 1
+
+# Start watch build + nginx
+CMD ["/bin/sh", "/start-dev.sh"]
+
+# Hot reload stage (Port 3000)
+FROM base as hot-reload
+
+# Create startup script that generates container constants and starts webpack dev server
+RUN echo '#!/bin/sh' > /start-hot.sh && \
+    echo 'echo "Starting hot reload development server..."' >> /start-hot.sh && \
+    echo 'echo "Generating container constants..."' >> /start-hot.sh && \
+    echo '' >> /start-hot.sh && \
+    echo '# Generate runtime configuration (NOT bundled by webpack)' >> /start-hot.sh && \
+    echo 'mkdir -p /app/public' >> /start-hot.sh && \
+    echo 'node scripts/generate-runtime-config.js /app/public/runtime-config.js' >> /start-hot.sh && \
+    echo '' >> /start-hot.sh && \
+    echo '# Run linting check on startup' >> /start-hot.sh && \
+    echo 'echo "Running linting checks..."' >> /start-hot.sh && \
+    echo 'yarn lint:check || echo "⚠️  Linting issues found - check output above"' >> /start-hot.sh && \
+    echo '' >> /start-hot.sh && \
+    echo '# Start webpack dev server with hot reload' >> /start-hot.sh && \
+    echo 'exec yarn start' >> /start-hot.sh
+
+# Make startup script executable
+RUN chmod +x /start-hot.sh
+
+# Expose port 3000
+EXPOSE 3000
+
+# Health check for hot reload
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:3000/ || exit 1
+
+# Start development server with hot reload
+CMD ["/bin/sh", "/start-hot.sh"] 

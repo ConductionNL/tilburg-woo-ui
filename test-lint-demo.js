@@ -1,0 +1,24 @@
+// Demo bestand om linting te testen
+// Dit simuleert de situatie die we hadden met useNavigate
+
+import { useNavigate } from 'react-router';
+import axios from 'axios';
+
+export default function useNextcloudRequestsDemo() {
+  // Dit zou een ESLint fout geven: 'useNavigate' is not defined
+  const navigate = useNavigate();
+
+  const makeRequest = async (url) => {
+    try {
+      const response = await axios.get(url);
+      return response;
+    } catch (error) {
+      if (error.response?.status === 401) {
+        navigate('/login'); // useNavigate gebruikt zonder import!
+      }
+      throw error;
+    }
+  };
+
+  return { makeRequest };
+}

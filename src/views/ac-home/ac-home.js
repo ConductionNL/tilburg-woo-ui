@@ -2,7 +2,7 @@ import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { useEffect } from 'react';
 
-import { AcAbout, AcHero, AcLoader, AcFeatured } from '@components';
+import { AcAbout, AcContentBlocks, AcHero, AcLoader, AcQuote } from '@components';
 import { AcRemoveParagraphTags, AcRemoveTags, AcSanitizeHtml } from '@utils';
 import { AcContainer, AcSection } from '@atoms';
 import AcColumn from '@atoms/ac-column/ac-column';
@@ -12,107 +12,102 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 import { LABELS, PATHS } from '@constants';
 import { AcCardCategory, AcLink } from '@molecules';
-import AcGrid from '@atoms/ac-grid/ac-grid';
-import { VISUALS } from '@constants';
+import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
+import ConGlossaryHighlight from '@components/con-glossary-highlight/con-glossary-highlight';
 
-const AcHome = ({ store: { pages, publications, themes, categories } }) => {
+import AcGrid from '@atoms/ac-grid/ac-grid';
+
+const AcHome = ({ store: { pages, publications, themes } }) => {
   const { fetchPage, resetPage, get_single } = pages;
-  const {
-    getSearchPageURL,
-    fetchLatestPublications,
-    latest_publications,
-    is_loading_latest,
-  } = publications;
+  const { getSearchPageURL } = publications;
   const { all_themes, fetchThemes } = themes;
-  const {
-    all_categories,
-    fetchCategories,
-    is_loading: is_loading_categories,
-  } = categories;
 
   useEffect(() => {
     fetchPage('/home');
     fetchThemes();
-    fetchLatestPublications(3);
-    fetchCategories();
     return () => resetPage();
   }, []);
 
   const contents = get_single.contents;
 
-  if (!contents || is_loading_categories) {
+  if (!contents) {
     return <AcLoader />;
   }
 
-  console.log('contents', contents);
-
   return (
-    <>
-      <AcHero />
+    <ConGlossaryHighlight as='div'>
+      <AcHero contents={contents} />
 
-      <AcSection spacing>
-        <AcContainer>
-          <AcColumn gap='rat'>
-            <Heading level={2}>Welke documenten vind je hier binnenkort?</Heading>
-            <Paragraph>
-              In de komende maanden worden op deze website steeds meer openbare
-              documenten geplaatst.
-            </Paragraph>
-          </AcColumn>
-          <br />
-          <AcGrid row={3}>
-            {all_categories?.map((category, index) => (
-              <AcCardCategory key={index} {...category} />
-            ))}
-          </AcGrid>
-        </AcContainer>
-      </AcSection>
-
-      {/* <AcSection spacing blue>
-        <AcContainer>
-          <AcColumn gap='tiger'>
-            <AcColumn gap='rat'>
-              <Heading level={2}>{LABELS.THEMES}</Heading>
-              <Paragraph>
-                Bekijk alle documenten van belangrijke onderwerpen die spelen binnen
-                de gemeente Tilburg.
-              </Paragraph>
-            </AcColumn>
-            <AcGrid row={3}>
-              {all_themes?.slice(0, 3).map((subject, index) => (
-                <AcCardCategory
-                  key={index}
-                  {...subject}
-                  linkUrl={getSearchPageURL({
-                    themes: [subject.id],
-                  })}
-                  linkTitle={LABELS.VIEW_DOCUMENTS}
-                />
-              ))}
-            </AcGrid>
-            <AcLink type='button' animate to={PATHS.THEMES}>
-              {LABELS.VIEW_ALL_THEMES}
-              <VISUALS.ARROW_RIGHT />
-            </AcLink>
-          </AcColumn>
-        </AcContainer>
-      </AcSection> */}
-
-      {latest_publications?.length > 0 && (
-        <AcFeatured
-          publications={latest_publications}
-          isLoading={is_loading_latest}
+      {contents[1]?.data?.title && (
+        <AcQuote
+          title={AcRemoveTags(contents[1]?.data?.title)}
+          subtitle={AcRemoveTags(contents[1]?.data?.subtitle)}
         />
       )}
 
-      <AcAbout
-        title={AcRemoveTags(contents[0]?.data?.content)}
-        content={AcSanitizeHtml(AcRemoveParagraphTags(contents[1]?.data?.content))}
-        list={AcSanitizeHtml(AcRemoveParagraphTags(contents[2]?.data?.content))}
-        link={AcSanitizeHtml(AcRemoveParagraphTags(contents[3]?.data?.content))}
-        image={contents[4]?.data}
-      />
-    </>
+      {contents[2]?.data?.blocks && contents[2].data.blocks.length > 0 && (
+        <AcContentBlocks blocks={contents[2].data.blocks} />
+      )}
+
+      <AcSection spacing>
+        <AcContainer>
+          <AcColumn gap='tiger'>
+            <AcColumn>
+              <Heading>{LABELS.THEMES}</Heading>
+              {AcCheckIfSpecificHostname() ? (
+                <Paragraph>
+                  Bekijk het overzicht van onderwerpen die relevant zijn voor
+                  gemeenten en leveranciers binnen het domein van gemeentelijke ICT.
+                </Paragraph>
+              ) : (
+                <Paragraph>
+                  Bekijk onze publicatiesdossiers van belangrijke onderwerpen die
+                  spelen binnen de gemeente Tilburg.
+                </Paragraph>
+              )}
+            </AcColumn>
+            <AcGrid columns={3}>
+              {all_themes
+                ?.map((subject, index) => (
+                  <AcCardCategory
+                    key={index}
+                    {...subject}
+                    linkUrl={subject.linkUrl || getSearchPageURL({
+                      themes: [subject.id],
+                    })}
+                    linkTitle={subject.linkTitle || LABELS.VIEW_DOCUMENTS}
+                    isExternal={subject.isExternal || false}
+                  />
+                ))}
+            </AcGrid>
+          </AcColumn>
+        </AcContainer>
+      </AcSection>
+
+      {(() => {
+        const title = AcRemoveTags(contents[3]?.data?.content);
+        const content = AcSanitizeHtml(
+          AcRemoveParagraphTags(contents[4]?.data?.content)
+        );
+        const link = AcSanitizeHtml(
+          AcRemoveParagraphTags(contents[5]?.data?.content)
+        );
+
+        // if no title or content exist, don't render the component (to comply with best practices)
+        if (!title || !content) {
+          return null;
+        }
+
+        return (
+          <AcAbout
+            title={title}
+            content={content}
+            link={link}
+            image={contents[6]?.data}
+          />
+        );
+      })()}
+    </ConGlossaryHighlight>
   );
 };
 

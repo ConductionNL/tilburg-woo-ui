@@ -100,10 +100,19 @@ export class AuthStore {
     let expired = true;
 
     if (expires_at) {
+      // expires_at = new Date(expires_at);
       expired = expires_at && dayjs(expires_at, 'x').isBefore(now);
     }
 
+    console.group('[store] Auth => Is Authorized');
+    console.info('Expires_at: ', dayjs(expires_at, 'x').format('LLLL'));
+    console.info('Now:', dayjs(now).format('LLLL'));
+    console.info('Is Expired: ', expired);
+
     authorized = AcIsSet(access_token) && !expired ? true : false;
+
+    console.info('Authorized: ', authorized);
+    console.groupEnd();
 
     return authorized === true;
   }
@@ -148,6 +157,8 @@ export class AuthStore {
         this.set(KEYS.EXPIRES_IN, expires_in);
         this.set(KEYS.EXPIRES_AT, expires_at);
       }
+
+      console.groupEnd();
 
       resolve();
     });
@@ -256,6 +267,10 @@ export class AuthStore {
       this.clearAuthentication();
 
       resolve();
+
+      // clear collections on logout for cleanup
+      // also allows the warmup process to re-fetch the data again on login
+      app.store.object.clearCollections();
     });
   };
 
@@ -266,19 +281,18 @@ export class AuthStore {
     const cancelRequestsEvent = new CustomEvent('cancelRequests');
     window.dispatchEvent(cancelRequestsEvent);
 
-    return new Promise(async (resolve) => {
-      await this.logout();
-      await this.clearAuthentication();
+    return new Promise((resolve) => {
+      Promise.all([this.logout(), this.clearAuthentication()]).then(() => {
+        app.store.toasters.clear_queue();
+        app.store.toasters.add({
+          variant: 'error',
+          title: 'De huidige sessie is beeindigd.',
+          description:
+            'Wegens inactiviteit ben je automatisch uitgelogd en is de actieve sessie beëindigd.',
+        });
 
-      app.store.toasters.clear_queue();
-      app.store.toasters.add({
-        variant: 'error',
-        title: 'De huidige sessie is beeindigd.',
-        description:
-          'Wegens inactiviteit ben je automatisch uitgelogd en is de actieve sessie beëindigd.',
+        resolve();
       });
-
-      resolve();
     });
   };
 
@@ -311,14 +325,19 @@ export class AuthStore {
     if (!AcIsSet(target)) return;
     if (AcIsUndefined(this[target])) return;
 
+    // developer note: idk what is going on here but im too scared to find out
     return new Promise((resolve) => {
+      // eslint-disable-next-line no-undef
       runInAction(() => {
+        // eslint-disable-next-line no-undef
         this[target] = _default[target];
       });
 
+      // eslint-disable-next-line no-undef
       if (save && AcIsNull(_default[target])) {
         AcRemoveState(target);
       } else if (save) {
+        // eslint-disable-next-line no-undef
         AcSaveState(target, _default[target]);
       }
 

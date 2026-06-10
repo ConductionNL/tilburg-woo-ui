@@ -1,0 +1,308 @@
+// WYSIWYG Markdown Editor Styles
+// Using @uiw/react-md-editor for user-friendly markdown editing
+
+.con-wysiwyg-markdown-field {
+  width: 100%;
+}
+
+.con-lightweight-markdown-editor {
+  width: 100%;
+
+  // Header styling
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--tilburg-space-block-snail);
+  }
+
+  // Editor container
+  &__editor {
+    width: 100%;
+
+    // Loading fallback
+    &__loading {
+      padding: var(--tilburg-space-block-mouse);
+      text-align: center;
+      color: var(--tilburg-color-gray-600);
+      font-style: italic;
+    }
+
+    // Fallback textarea (before editor loads)
+    &__fallback {
+      width: 100%;
+      min-height: 200px;
+      resize: vertical;
+      font-family: inherit;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+  }
+
+  // Override @uiw/react-md-editor styles to match design system
+  :global(.w-md-editor) {
+    background-color: var(--tilburg-color-white);
+    border: 2px solid var(--tilburg-color-gray-300);
+    border-radius: 4px;
+
+    &:focus-within {
+      outline: 2px solid var(--tilburg-color-blue-400);
+      outline-offset: 2px;
+      border-color: var(--tilburg-color-blue-400);
+    }
+
+    // Toolbar styling
+    .w-md-editor-toolbar {
+      background-color: var(--tilburg-color-gray-50);
+      border-bottom: 1px solid var(--tilburg-color-gray-200);
+      padding: 8px 12px;
+
+      // Toolbar buttons
+      .w-md-editor-toolbar-item > button {
+        color: var(--tilburg-color-gray-700);
+        border: none;
+        background: transparent;
+        padding: 4px 6px;
+        border-radius: 3px;
+        font-size: 14px;
+        transition: all 0.2s ease;
+
+        &:hover {
+          background-color: var(--tilburg-color-gray-200);
+          color: var(--tilburg-color-gray-900);
+        }
+
+        &:active,
+        &.w-md-editor-toolbar-item-active {
+          background-color: var(--tilburg-color-blue-100);
+          color: var(--tilburg-color-blue-700);
+        }
+      }
+
+      // Dividers
+      .w-md-editor-toolbar-divider {
+        background-color: var(--tilburg-color-gray-300);
+        margin: 0 8px;
+      }
+    }
+
+    // Text area styling
+    .w-md-editor-text-areacode,
+    .w-md-editor-text-input,
+    .w-md-editor-text-textarea {
+      color: var(--tilburg-color-gray-900) !important;
+      font-size: 14px !important;
+      line-height: 1.6 !important;
+      font-family: inherit !important;
+      background-color: var(--tilburg-color-white) !important;
+      border: none !important;
+      padding: 16px !important;
+
+      &:focus {
+        outline: none !important;
+      }
+
+      &::placeholder {
+        color: var(--tilburg-color-gray-500) !important;
+      }
+    }
+
+    // Preview styling
+    .w-md-editor-preview {
+      background-color: var(--tilburg-color-white);
+      color: var(--tilburg-color-gray-900);
+      padding: 16px;
+
+      // Match ConMarkdown styling
+      font-family: inherit;
+      line-height: 1.6;
+
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        color: var(--tilburg-color-gray-900);
+        margin-top: 1.5em;
+        margin-bottom: 0.5em;
+        line-height: 1.3;
+      }
+
+      h1 {
+        font-size: 1.8em;
+        font-weight: 700;
+      }
+      h2 {
+        font-size: 1.5em;
+        font-weight: 600;
+      }
+      h3 {
+        font-size: 1.3em;
+        font-weight: 600;
+      }
+      h4 {
+        font-size: 1.1em;
+        font-weight: 600;
+      }
+      h5 {
+        font-size: 1em;
+        font-weight: 600;
+      }
+      h6 {
+        font-size: 0.9em;
+        font-weight: 600;
+      }
+
+      p {
+        margin-bottom: 1em;
+      }
+
+      ul,
+      ol {
+        margin-bottom: 1em;
+        padding-left: 2em;
+      }
+
+      blockquote {
+        border-left: 4px solid var(--tilburg-color-blue-300);
+        padding-left: 1em;
+        margin: 1em 0;
+        color: var(--tilburg-color-gray-700);
+        background-color: var(--tilburg-color-blue-50);
+        padding: 0.5em 1em;
+        border-radius: 0 4px 4px 0;
+      }
+
+      code {
+        background-color: var(--tilburg-color-gray-100);
+        padding: 2px 4px;
+        border-radius: 3px;
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        font-size: 0.9em;
+      }
+
+      pre {
+        background-color: var(--tilburg-color-gray-100);
+        padding: 1em;
+        border-radius: 4px;
+        overflow-x: auto;
+        margin-bottom: 1em;
+
+        code {
+          background: none;
+          padding: 0;
+        }
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 1em;
+
+        th,
+        td {
+          padding: 8px 12px;
+          border: 1px solid var(--tilburg-color-gray-300);
+          text-align: left;
+        }
+
+        th {
+          background-color: var(--tilburg-color-gray-50);
+          font-weight: 600;
+        }
+      }
+
+      a {
+        color: var(--tilburg-color-blue-600);
+        text-decoration: underline;
+
+        &:hover {
+          color: var(--tilburg-color-blue-800);
+        }
+      }
+    }
+
+    // Split view (edit + preview)
+    &.w-md-editor-split {
+      .w-md-editor-text,
+      .w-md-editor-preview {
+        width: 50%;
+      }
+
+      .w-md-editor-text {
+        border-right: 1px solid var(--tilburg-color-gray-200);
+      }
+    }
+
+    // Drag bar (between edit and preview)
+    .w-md-editor-bar {
+      background-color: var(--tilburg-color-gray-200);
+
+      &:hover {
+        background-color: var(--tilburg-color-gray-300);
+      }
+    }
+  }
+
+  // Disabled state
+  &:has(:disabled) {
+    :global(.w-md-editor) {
+      background-color: var(--tilburg-color-gray-100);
+      cursor: not-allowed;
+
+      .w-md-editor-toolbar {
+        background-color: var(--tilburg-color-gray-150);
+
+        button {
+          cursor: not-allowed;
+          opacity: 0.6;
+
+          &:hover {
+            background: transparent;
+          }
+        }
+      }
+
+      .w-md-editor-text-areacode,
+      .w-md-editor-text-input,
+      .w-md-editor-text-textarea {
+        background-color: var(--tilburg-color-gray-100) !important;
+        cursor: not-allowed !important;
+      }
+    }
+  }
+
+  // Dark mode support (if needed in the future)
+  @media (prefers-color-scheme: dark) {
+    :global(.w-md-editor[data-color-mode='auto']) {
+      // Dark mode styles would go here
+    }
+  }
+}
+
+// Mobile responsiveness
+@media (max-width: 768px) {
+  .con-wysiwyg-markdown-field {
+    :global(.w-md-editor) {
+      // Stack toolbar items on mobile
+      .w-md-editor-toolbar {
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+
+      // Force single column on mobile
+      &.w-md-editor-split {
+        .w-md-editor-text,
+        .w-md-editor-preview {
+          width: 100%;
+        }
+
+        .w-md-editor-text {
+          border-right: none;
+          border-bottom: 1px solid var(--tilburg-color-gray-200);
+        }
+      }
+    }
+  }
+}

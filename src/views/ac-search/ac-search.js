@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 
 import { AcSearchFilters, AcSearchResult } from '@molecules';
 import { AcCard, AcContainer, AcFlex } from '@atoms';
@@ -12,62 +12,61 @@ import {
   Alert,
   Heading,
   Paragraph,
-  SkipLink,
 } from '@utrecht/component-library-react/dist/css-module';
 import { Pagination } from '@amsterdam/design-system-react';
-import { AcSearchParamsToObject } from '@utils';
+import {
+  AcSearchParamsToObject,
+  ConFormatDutchNumber,
+  getImageFromPublication,
+} from '@utils';
+import { extractTitle, extractSummary } from '@src/utilities/con-extract-text';
+import {
+  ConCardOrganisationApplication,
+  ConCardDienst,
+  ConCardContactpersoon,
+  ConCardGebruik,
+  ConCardModuleVersie,
+  ConCardKoppeling,
+} from '@molecules/con-cards';
 
-const AcSearch = ({ store: { publications } }) => {
+const AcSearch = ({ store: { publications, user, object } }) => {
   const location = useLocation();
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const {
-    search_query,
     pagination,
-    setPage,
     updateQuery,
-    setSearchQuery,
-    fetchAggregations,
     fetchPublications,
+    fetchFacets,
     is_loading,
-    getSearchPageURL,
+    // getSearchPageURL,
     all_publications,
-    resetSearchQuery,
-    resetAggregations,
   } = publications;
 
   const setQuery = () => {
-    updateQuery(AcSearchParamsToObject(searchParams));
+    const paramsObj = AcSearchParamsToObject(searchParams);
+    if (!paramsObj._search) {
+      paramsObj._search = null;
+    }
+    updateQuery(paramsObj);
   };
 
+  // On GET params change - optimized order
   useEffect(() => {
     setQuery();
-
-    fetchAggregations();
-
-    return () => {
-      resetSearchQuery();
-      resetAggregations();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (getSearchPageURL() === location.pathname + location.search) {
-      return;
-    }
-
-    navigate(getSearchPageURL());
-  }, [search_query, ...Object.values(search_query?.published || {})]);
-
-  // On GET params change.
-  useEffect(() => {
-    setQuery();
+    
+    // Step 1: Fetch publications first (fastest, shows results immediately)
     fetchPublications();
+    
+    // Step 2: Fetch facets after publications (only once, not on every search change)
+    // This is heavier and not needed for initial display
+    fetchFacets();
   }, [location.search]);
 
   const onPaginationChange = (page) => {
-    setPage(page);
+    const params = new URLSearchParams(searchParams);
+    params.set('_page', page);
+    setSearchParams(params);
   };
 
   const renderPagination = useMemo(() => {
@@ -90,7 +89,14 @@ const AcSearch = ({ store: { publications } }) => {
   }, [is_loading, pagination?.page]);
 
   const onSearchSubmit = (query) => {
-    setSearchQuery(query);
+    const params = new URLSearchParams(searchParams);
+    if (query && query.trim()) {
+      params.set('_search', query.trim());
+    } else {
+      params.delete('_search');
+    }
+    params.set('_page', 1);
+    setSearchParams(params);
   };
 
   const screenReaderText = useMemo(() => {
@@ -98,14 +104,10 @@ const AcSearch = ({ store: { publications } }) => {
       return LABELS.SEARCH_RESULTS_LOADING;
     }
 
-    // Make sure count is defined before using it
-    const count = all_publications?.length || 0;
-    const resultText = LABELS_DYNAMIC.RESULTS(count);
-
-    return `${
-      LABELS.SEARCH_RESULTS_LOADED
-    }. ${count} ${resultText.toLowerCase()} ${LABELS.FOUND.toLowerCase()}.`;
-  }, [is_loading, all_publications?.length, location.search]);
+    return `${LABELS.SEARCH_RESULTS_LOADED} ${LABELS_DYNAMIC.RESULTS(
+      all_publications?.length
+    )} ${LABELS.FOUND.toLowerCase()}.`;
+  }, [is_loading, all_publications?.length]);
 
   const renderPublications = useMemo(() => {
     if (is_loading) {
@@ -128,39 +130,188 @@ const AcSearch = ({ store: { publications } }) => {
       );
     }
 
-    return all_publications?.map((publication, index) => (
-      <AcSearchResult {...publication} key={index} />
-    ));
+    return all_publications?.map((publication, index) => {
+      const selfData = publication['@self'];
+
+      switch (selfData.schema.slug) {
+        case 'product':
+        case 'module':
+        case 'organisatie':
+          return (
+            <ConCardOrganisationApplication
+              {...publication}
+              self={selfData}
+              id={publication.id || selfData?.id}
+              title={extractTitle(selfData.name)}
+              summary={extractSummary(
+                selfData?.summary || publication?.beschrijvingKort
+              )}
+              logo={getImageFromPublication(publication)}
+              cardType={selfData.schema.slug}
+              type={selfData.schema.title}
+              user={user}
+              referenceComponents={publication.referentieComponenten}
+              created={selfData.created}
+              organisation={selfData.organisation}
+              objectStore={object}
+              key={index}
+            />
+          );
+        case 'moduleversie':
+          return (
+            <ConCardModuleVersie
+              {...publication}
+              id={publication.id || publication['@self']?.id}
+              versie={publication.versie || publication['@self']?.name}
+              beschrijvingKort={publication.beschrijvingKort}
+              beschrijvingLang={
+                publication.beschrijvingLang || publication['@self']?.summary
+              }
+              status={publication.status}
+              datumInOntwikkeling={publication.datumInOntwikkeling}
+              datumInGebruik={publication.datumInGebruik}
+              datumEindeOndersteuning={publication.datumEindeOndersteuning}
+              datumTeruggetrokken={publication.datumTeruggetrokken}
+              organisation={publication['@self']?.organisation}
+              moduleUuid={
+                publication['@self']?.relations?.module || publication.module
+              }
+              objectStore={object}
+              key={index}
+            />
+          );
+        case 'dienst':
+          return (
+            <ConCardDienst
+              {...publication}
+              id={publication.id || publication['@self']?.id}
+              created={publication['@self']?.created}
+              category={publication['@self'].schema.title}
+              title={extractTitle(
+                publication['@self']?.name ??
+                  publication.title ??
+                  publication.titel ??
+                  publication.name ??
+                  publication.naam ??
+                  publication.id
+              )}
+              summary={extractSummary(publication?.beschrijvingKort)}
+              aanbieder={
+                publication['@self']?.relations?.aanbieder || publication.aanbieder
+              }
+              status={publication.status}
+              type={publication.type}
+              objectStore={object}
+              key={index}
+            />
+          );
+        case 'contactpersoon':
+          return (
+            <ConCardContactpersoon
+              {...publication}
+              id={publication.id || publication['@self']?.id}
+              firstName={publication.voornaam}
+              middleName={publication.tussenvoegsel}
+              lastName={publication.achternaam}
+              functie={publication.functie}
+              image={publication['@self'].image || publication.image}
+              email={publication['e-mailadres']}
+              telefoon={publication.telefoonnummer}
+              organisation={publication.organisatie}
+              objectStore={object}
+              key={index}
+            />
+          );
+        case 'gebruik':
+          return (
+            <ConCardGebruik
+              {...publication}
+              id={publication.id || publication['@self']?.id}
+              product={publication.product}
+              module={publication.module}
+              organisation={publication['@self'].organisation}
+              referentieComponenten={publication.gebruiktVoorReferentiecomponenten}
+              status={publication.status}
+              objectStore={object}
+              key={index}
+            />
+          );
+        case 'koppeling':
+          return (
+            <ConCardKoppeling
+              {...publication}
+              key={index}
+              id={publication.id || publication['@self']?.id}
+              created={publication['@self']?.created}
+              title={extractTitle(
+                publication['@self']?.name ??
+                  publication.title ??
+                  publication.titel ??
+                  publication.name ??
+                  publication.naam ??
+                  publication.id
+              )}
+              item={publication}
+              category={publication['@self']?.schema?.title}
+              themes={publication.themes}
+              navigateTo='publication'
+            />
+          );
+        default:
+          return (
+            <AcSearchResult
+              id={publication.id || selfData?.id}
+              created={selfData.created}
+              category={selfData.schema.title}
+              title={extractTitle(
+                publication.titelViewSwc ??
+                  selfData?.name ??
+                  publication.title ??
+                  publication.titel ??
+                  publication.name ??
+                  publication.naam ??
+                  publication.id
+              )}
+              summary={extractSummary(
+                publication?.summary || publication?.beschrijving
+              )}
+              themes={publication.themes}
+              user={user}
+              schemaSlug={selfData?.schema?.slug}
+              self={selfData}
+              key={index}
+              navigateTo={selfData?.schema?.slug === 'weergave' || selfData?.schema?.slug === 'view' ? 'view' : 'publication'}
+            />
+          );
+      }
+    });
   }, [is_loading, all_publications, pagination?.limit]);
 
   return (
     <>
       <AcContainer spacing='lg'>
-        <Heading level={1}>Zoeken in publicaties</Heading>
-        <AcCard blue>
+        <AcCard blue padding='md'>
           <AcSearchBox
             page='search'
             onSubmitCallback={onSearchSubmit}
-            label={LABELS.WHAT_ARE_YOU_LOOKING_FOR}
-            defaultValue={search_query._search}
+            label={LABELS.SEARCH}
+            defaultValue={searchParams.get('_search') || ''}
           />
         </AcCard>
       </AcContainer>
       <AcContainer spacing='sm' margin='xl'>
-        <SkipLink href={`${location.pathname}#search-results`}>
-          Ga direct naar zoekresultaten
-        </SkipLink>
-        <AcFlex spacing='xl' className='ac-search-results'>
-          <AcSearchFilters />
-          <AcFlex column grow spacing='xs'>
+        <div className='ac-search-layout'>
+          {/* Results and pagination come first in DOM/tab order */}
+          <div className='ac-search-layout__main'>
             <div className='sr-only' aria-live='polite' aria-atomic='true'>
               {screenReaderText}
             </div>
-            <AcFlex id='search-results' column spacing='sm' margin='sm'>
+            <AcFlex column spacing='sm' margin='sm'>
               <AcFlex justifyContent='between'>
                 <Heading level={2}>
-                  {all_publications?.length}{' '}
-                  {LABELS_DYNAMIC.RESULTS(all_publications?.length).toLowerCase()}
+                  {is_loading
+                    ? LABELS.SEARCH_RESULTS_LOADING
+                    : `${ConFormatDutchNumber(pagination.total)} ${LABELS_DYNAMIC.RESULTS(pagination.total).toLowerCase()}`}
                 </Heading>
                 <div className='desktop-sorting'>
                   <AcSearchSort type='alt' />
@@ -169,8 +320,13 @@ const AcSearch = ({ store: { publications } }) => {
               {renderPublications}
               {pagination?.pages > 1 && renderPagination}
             </AcFlex>
-          </AcFlex>
-        </AcFlex>
+          </div>
+
+          {/* Filters come last in DOM/tab order */}
+          <div className='ac-search-layout__filters'>
+            <AcSearchFilters />
+          </div>
+        </div>
       </AcContainer>
     </>
   );

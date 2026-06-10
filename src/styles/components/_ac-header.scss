@@ -3,15 +3,12 @@
 
 .ac-header {
   --navigation-bar-height: 96px;
+  min-height: 50px;
 
   position: relative;
-  padding-inline: var(--tilburg-space-column-cat);
-  background-color: var(--tilburg-color-blue-400);
 
-  @include respond-max($screen-lg) {
+  @include respond-max($screen-md) {
     --navigation-bar-height: 72px;
-
-    padding-inline: 0;
   }
 
   .container {
@@ -26,16 +23,60 @@
     justify-content: space-between;
     align-items: center;
     block-size: var(--navigation-bar-height);
-    background-color: var(--tilburg-color-blue-400);
+    background-color: var(--tilburg-header-background-color);
   }
 
-  .logo-container {
+  &__right-section {
     display: flex;
     align-items: center;
-    text-decoration: none;
+    gap: var(--tilburg-space-column-rat, 1rem);
+    margin-inline-end: 1rem;
+  }
 
-    &:where(:hover, :focus-visible) {
+  &__navigation-wrapper {
+    display: flex;
+    align-items: center;
+    flex: 1;
+  }
+
+  &__user-section {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    margin-inline-end: 1rem;
+  }
+
+  &__logo {
+    > * {
+      display: flex;
+      align-items: center;
+      margin-inline-start: 1rem;
+      gap: var(--tilburg-space-column-pig);
+      color: var(--tilburg-logo-color);
+      font-size: var(--tilburg-typography-font-size-3xl);
+      font-weight: var(--tilburg-typography-font-weight-bold);
+      font-family: var(--tilburg-typography-font-family-primary), sans-serif;
       text-decoration: none;
+      text-transform: uppercase;
+
+      @include respond-max($screen-md) {
+        gap: var(--tilburg-space-column-rabbit);
+        font-size: var(--tilburg-typography-font-size-2xl);
+      }
+
+      @include respond-max($screen-sm) {
+        font-size: var(--tilburg-typography-font-size-xl);
+      }
+    }
+
+    // small visual correction due to font-family rendering
+    .logo-text {
+    //   margin-block-start: 1rem;
+      color: var(--tilburg-header-logo-text-color, inherit);
+      @include respond-max($screen-sm) {
+        word-break: break-word;
+      }
+      font-size: var(--tilburg-typography-font-size-3xl);
     }
 
     svg {
@@ -45,30 +86,19 @@
     }
   }
 
-  .logo-text {
-    color: var(--tilburg-color-white);
-    font-size: var(--tilburg-typography-font-size-lg);
-    font-weight: var(--tilburg-typography-font-weight-bold);
-    font-family: var(--tilburg-typography-font-family-primary), sans-serif;
-    text-decoration: none;
-    text-transform: uppercase;
-    text-wrap: balance;
-
-    @include respond-max($screen-lg) {
-      font-size: var(--tilburg-typography-font-size-md);
-    }
-  }
-
   &__navigation-secondary {
-    padding-block: var(--tilburg-space-block-mouse);
-    background-color: var(--tilburg-color-gray-50);
-    margin-inline-start: calc(var(--tilburg-space-column-cat) * -1);
-    inline-size: calc(100% + var(--tilburg-space-column-cat) * 2);
+    background-color: var(
+      --conduction-primary-top-nav-background-color,
+      var(--tilburg-color-gray-50)
+    );
 
-    @include respond-max($screen-lg) {
-      margin-inline-start: 0;
-      inline-size: 100%;
+    // Ensure sub menu content aligns perfectly with breadcrumbs
+    .container {
+      padding-inline-start: 0;
+      padding-inline-end: 0;
+    }
 
+    @include respond-max($screen-md) {
       .container {
         flex-direction: column;
         align-items: flex-start;
@@ -77,6 +107,121 @@
 
     &:has(.container:empty) {
       padding: 0;
+    }
+  }
+  &__navigation-breadcrumb {
+    padding-block-start: var(
+      --utrecht-breadcrumb-nav-padding-block-start,
+      var(--tilburg-space-block-mouse)
+    );
+    padding-block-end: var(
+      --utrecht-breadcrumb-nav-padding-block-end,
+      var(--tilburg-space-block-mouse)
+    );
+    background-color: var(
+      --utrecht-breadcrumb-nav-background-color,
+      var(--tilburg-color-gray-50)
+    );
+
+    @include respond-max($screen-md) {
+      .container {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+
+    &:has(.container:empty) {
+      padding: 0;
+    }
+  }
+
+  &__user-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-inline-end: var(--tilburg-space-column-mouse, 0.5rem);
+    text-decoration: none;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+    white-space: nowrap; // Prevent text from wrapping
+    
+    &:hover {
+      background-color: rgba(2, 119, 189, 0.08);
+      text-decoration: none;
+    }
+    
+    &:focus {
+      outline: 2px solid rgb(2, 119, 189);
+      outline-offset: 2px;
+      text-decoration: none;
+    }
+    
+    @include respond-max($screen-md) {
+      display: none; // Hide on mobile to save space
+    }
+    
+    .ac-header__user-icon {
+      color: rgb(2, 119, 189);
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+    
+    .ac-header__username {
+      font-family: Montserrat, sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: rgb(2, 119, 189);
+      line-height: 1;
+      text-decoration: none;
+      white-space: nowrap; // Prevent text from wrapping
+      overflow: hidden;
+      text-overflow: ellipsis; // Show ... if text is too long
+    }
+    
+    .ac-header__organization {
+      font-family: Montserrat, sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: rgb(2, 119, 189);
+      line-height: 1;
+      text-decoration: none;
+      white-space: nowrap; // Prevent text from wrapping
+      overflow: hidden;
+      text-overflow: ellipsis; // Show ... if text is too long
+    }
+    
+    .ac-header__logout-btn,
+    .ac-header__login-btn {
+      padding: 0.5rem 1rem;
+      background: var(--utrecht-button-primary-action-background-color, #007bc7);
+      color: var(--utrecht-button-primary-action-color, #fff);
+      border: none;
+      border-radius: 4px;
+      text-decoration: none;
+      cursor: pointer;
+      font-size: 0.9rem;
+      
+      &:hover {
+        background: var(--utrecht-button-primary-action-hover-background-color, #005a94);
+      }
+      
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+    
+    .ac-header__login-btn {
+      background: transparent;
+      color: var(--utrecht-button-secondary-action-color, #007bc7);
+      border: 1px solid var(--utrecht-button-secondary-action-border-color, #007bc7);
+      
+      &:hover {
+        background: var(--utrecht-button-secondary-action-hover-background-color, #f0f8ff);
+      }
     }
   }
 

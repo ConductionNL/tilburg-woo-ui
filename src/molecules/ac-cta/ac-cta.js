@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@constants';
 

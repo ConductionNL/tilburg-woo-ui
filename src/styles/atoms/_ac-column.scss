@@ -2,6 +2,11 @@
   display: flex;
   flex-direction: column;
 
+  &--horizontal-overflow-wrapper {
+    min-width: 0;
+    flex: 1;
+  }
+
   &--gap-horse {
     gap: var(--tilburg-space-column-horse);
   }
@@ -10,23 +15,7 @@
     gap: var(--tilburg-space-column-tiger);
   }
 
-  &--gap-pig {
-    gap: var(--tilburg-space-column-pig);
-  }
-
-  &--gap-dog {
-    gap: var(--tilburg-space-column-dog);
-  }
-
-  &--gap-cat {
-    gap: var(--tilburg-space-column-cat);
-  }
-
-  &--gap-rabbit {
-    gap: var(--tilburg-space-column-rabbit);
-  }
-
-  &--gap-rat {
-    gap: var(--tilburg-space-column-rat);
+  &--gap-sm {
+    gap: var(--tilburg-space-column-mouse);
   }
 }
