@@ -12,7 +12,7 @@ export const CONTAINER_CONFIG = AcLockObject({
   THEME_VARIANT: 'development',
   FAVICON_URL: '/favicon.svg',
   ENVIRONMENT_NAME: 'development',
-  BASE_URL: '/api/apps',
+  BASE_URL: '/index.php/apps',
   GRANT_TYPE: 'authorization_code',
   CLIENT_ID: '',
   CLIENT_SECRET: '',
