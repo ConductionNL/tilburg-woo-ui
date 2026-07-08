@@ -148,3 +148,20 @@
     &:disabled { opacity: 0.5; cursor: default; }
   }
 }
+
+.portaliq-portal-form {
+  margin: 1rem 0 1.5rem;
+  padding: 1.25rem;
+  border: 1px solid var(--ac-color-border, #d2d2d2);
+  border-radius: 6px;
+  background: var(--ac-color-surface, #fff);
+}
+.portaliq-portal-form-title { margin: 0 0 1rem; font-size: 1.125rem; }
+.portaliq-portal-form-error { color: var(--ac-color-error, #b00020); margin-top: .75rem; }
+.portaliq-portal-form-actions {
+  display: flex;
+  gap: .75rem;
+  margin-top: 1.25rem;
+  justify-content: flex-end;
+}
+.portaliq-portal-block--action { display: flex; flex-direction: column; }

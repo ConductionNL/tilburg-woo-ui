@@ -10,11 +10,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ConBeheerTable } from '@views/ac-beheer/shared/components';
 
 import { portalApi, getToken } from './portalApi';
+import PortalCreateForm from './PortalCreateForm';
 
 export default function PortalHome() {
   const [token, setToken] = useState(() => getToken());
   const [state, setState] = useState({ loading: true, session: null, contributions: null });
   const [activeKey, setActiveKey] = useState(null);
+  const [refreshTick, setRefreshTick] = useState(0);
 
   const refresh = useCallback(async () => {
     setState((s) => ({ ...s, loading: true }));
@@ -58,6 +60,7 @@ export default function PortalHome() {
   async function logout() { await portalApi.logout(); setToken(null); }
 
   const findCollection = (contribution, id) => (contribution.collections || []).find((c) => c.id === id) || null;
+  const findAction = (contribution, id) => (contribution.actions || []).find((a) => a.id === id) || null;
 
   if (state.loading) {
     return <div className='portaliq-portal-loading'>…</div>;
@@ -105,6 +108,17 @@ export default function PortalHome() {
               </div>
             );
           }
+          if (block.type === 'action') {
+            const a = findAction(active.contribution, block.action);
+            if (!a || a.type !== 'create') { return null; }
+            // Create via the REAL ConDynamicSchemaForm; on success bump the tick
+            // so the collection table below remounts and shows the new row.
+            return (
+              <div key={i} className='portaliq-portal-block portaliq-portal-block--action'>
+                <PortalCreateForm action={a} user={portalUser} onCreated={() => setRefreshTick((t) => t + 1)} />
+              </div>
+            );
+          }
           if (block.type === 'collection') {
             const c = findCollection(active.contribution, block.collection);
             if (!c) { return null; }
@@ -113,10 +127,11 @@ export default function PortalHome() {
             // the register/schema; the table fetches the collection + its schema
             // (for headers) through the scoped endpoints; `user` unlocks the
             // schema-driven columns (canReadField requires an authed user).
+            // `key` includes refreshTick so a create remounts + refetches.
             return (
               <div key={i} className='portaliq-portal-block'>
                 {c.label && <h2>{c.label}</h2>}
-                <ConBeheerTable metadata={{ register: c.register, schema: c.schema }} user={portalUser} />
+                <ConBeheerTable key={`${c.id}-${refreshTick}`} metadata={{ register: c.register, schema: c.schema }} user={portalUser} />
               </div>
             );
           }
