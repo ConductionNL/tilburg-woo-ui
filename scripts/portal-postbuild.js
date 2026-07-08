@@ -23,6 +23,9 @@ h = h.replace(/<link id="faviconMeta"[^>]*>/,
 // 4. strip the inline analytics (Matomo/Piwik) snippet — it is empty here and its
 //    inline execution is blocked by the strict same-origin CSP.
 h = h.replace(/<script(?![^>]*\ssrc=)[^>]*>[\s\S]*?<\/script>/g, '');
+// 4b. strip external analytics (siteimprove) — the strict same-origin CSP blocks
+//     it anyway, so remove it to keep the portal console clean.
+h = h.replace(/<script[^>]*\ssrc="https?:\/\/[^"]*(siteimprove|analytics)[^"]*"[^>]*><\/script>/gi, '');
 // 5. repoint runtime-config.js to the portal mount (must not 404 at root).
 h = h.replace('src="/runtime-config.js"', 'src="/index.php/apps/portaliq/portal/runtime-config.js"');
 
