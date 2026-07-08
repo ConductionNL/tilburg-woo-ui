@@ -113,11 +113,14 @@ export const portalApi = {
       return { ok: false, status: 0 };
     }
   },
-  async devLogin(audience) {
+  async devLogin(audience, subjectRef, organisation) {
+    const payload = { audience: audience || 'supplier' };
+    if (subjectRef) { payload.subjectRef = subjectRef; }
+    if (organisation) { payload.organisation = organisation; }
     const res = await fetch(`${API_BASE}/session/dev-login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({ audience: audience || 'supplier' }),
+      body: JSON.stringify(payload),
     });
     if (!res.ok) {
       return null;

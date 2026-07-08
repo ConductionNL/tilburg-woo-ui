@@ -53,8 +53,16 @@ export default function PortalHome() {
       : null
   ), [state.session]);
 
-  async function devLogin() {
-    const minted = await portalApi.devLogin('supplier');
+  // Dev-only audience switcher: each entry mints a session for a different
+  // subject so you can see how the SAME engine renders each app's contributions.
+  const DEV_AUDIENCES = [
+    { audience: 'supplier', subjectRef: 'dev-supplier', label: 'Leverancier (supplier)' },
+    { audience: 'client', subjectRef: 'dev-client', label: 'Klant (client)' },
+    { audience: 'manager', subjectRef: 'dev-manager', label: 'Manager (manager)' },
+  ];
+
+  async function devLogin(aud) {
+    const minted = await portalApi.devLogin(aud.audience, aud.subjectRef, 'dev-org');
     if (minted) { setToken(minted); }
   }
   async function logout() { await portalApi.logout(); setToken(null); }
@@ -72,7 +80,21 @@ export default function PortalHome() {
         <h1>Welkom</h1>
         <p>Log in om uw gegevens te bekijken.</p>
         <button type='button' className='ac-button ac-button--primary' disabled>Inloggen met eHerkenning</button>
-        <button type='button' className='ac-button ac-button--secondary' onClick={devLogin}>Dev-login (test)</button>
+        <div className='portaliq-portal-devlogin'>
+          <span className='portaliq-portal-devlogin-label'>Dev-login (test) — kies een rol:</span>
+          <div className='portaliq-portal-devlogin-buttons'>
+            {DEV_AUDIENCES.map((aud) => (
+              <button
+                key={aud.audience}
+                type='button'
+                className='ac-button ac-button--secondary'
+                onClick={() => devLogin(aud)}
+              >
+                {aud.label}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }

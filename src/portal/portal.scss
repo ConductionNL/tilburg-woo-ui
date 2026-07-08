@@ -165,3 +165,16 @@
   justify-content: flex-end;
 }
 .portaliq-portal-block--action { display: flex; flex-direction: column; }
+
+.portaliq-portal-devlogin {
+  margin-top: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: .6rem;
+}
+.portaliq-portal-devlogin-label { font-size: .85rem; opacity: .7; }
+.portaliq-portal-devlogin-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .6rem;
+}
