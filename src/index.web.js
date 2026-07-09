@@ -56,7 +56,7 @@ if (IS_PORTAL) {
 } else {
   render(
     <StoreContext.Provider value={store}>
-      <Router history={history}>
+      <Router history={history} basename="/index.php/apps/portaliq/woo">
         <Tooltip delayShow={1000} className='ac-gemma-tooltip' id={TOOLTIP_ID} />
         <App />
       </Router>
