@@ -26,6 +26,17 @@ export function setToken(token) {
   } catch (e) {
     /* storage unavailable */
   }
+  // Mirror into the cookie the OpenRegister store's request interceptor reads, so
+  // the reused engine authenticates with the same portal session (portal mode).
+  try {
+    if (token) {
+      document.cookie = `nextcloud_access_token=${token}; path=/`;
+    } else {
+      document.cookie = 'nextcloud_access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    }
+  } catch (e) {
+    /* document unavailable */
+  }
 }
 
 function authHeaders() {
@@ -102,11 +113,14 @@ export const portalApi = {
       return { ok: false, status: 0 };
     }
   },
-  async devLogin(audience) {
+  async devLogin(audience, subjectRef, organisation) {
+    const payload = { audience: audience || 'supplier' };
+    if (subjectRef) { payload.subjectRef = subjectRef; }
+    if (organisation) { payload.organisation = organisation; }
     const res = await fetch(`${API_BASE}/session/dev-login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({ audience: audience || 'supplier' }),
+      body: JSON.stringify(payload),
     });
     if (!res.ok) {
       return null;

@@ -538,10 +538,10 @@ const AcMyAccount = ({ store }) => {
                       <div style={{ flex: 2 }}>
                         <Heading level={4}>
                           <div className='con-beheer-details--header-container'>
-                            {fullActiveOrganisation?.['@self']?.image && (
+                            {fullActiveOrganisation?.['@self']?.image || fullActiveOrganisation?.logo && (
                               <ConLogoPreview
                                 className='con-beheer-details--logo-container'
-                                logoUrl={fullActiveOrganisation?.['@self']?.image}
+                                logoUrl={fullActiveOrganisation?.['@self']?.image || fullActiveOrganisation?.logo}
                               />
                             )}
 

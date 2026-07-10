@@ -8,7 +8,13 @@ import { AcFlex } from '@atoms';
 // eslint-disable-next-line import/no-unresolved
 import { Alert, Paragraph } from '@utrecht/component-library-react/dist/css-module';
 
-import { collapseExtendedObjects, normalizeSchemaName } from '@src/utilities';
+import {
+  collapseExtendedObjects,
+  normalizeSchemaName,
+  uploadFileToObject,
+  uploadFileToObjectDirect,
+  isDataUrlNeedingUpload,
+} from '@src/utilities';
 import FormModalConfigFactory from '@views/ac-beheer/core/factories/con-form-modal-config-factory.js';
 import { useRefOptions } from '@src/hooks/use-ref-options';
 import { filterFormDataByAuthorization } from '@utils/field-authorization';
@@ -556,7 +562,7 @@ const ConGenericFormModal = ({
 
     try {
       // Transform data before submission (if needed)
-      const submitData = config.transformSubmitData
+      let submitData = config.transformSubmitData
         ? config.transformSubmitData(formData)
         : formData;
 
@@ -568,23 +574,130 @@ const ConGenericFormModal = ({
         !isEdit // isCreate = true when not editing
       );
 
+      // Check if logo needs to be uploaded
+      // - File object: needs upload
+      // - base64 data URL: needs upload (backward compatibility)
+      // - string URL: already uploaded, no action needed
+      const logoIsFile = authorizedSubmitData.logo instanceof File;
+      const hasLogoDataUrl = isDataUrlNeedingUpload(authorizedSubmitData.logo);
+      const needsLogoUpload = logoIsFile || hasLogoDataUrl;
+
       let response;
 
       if (isEdit) {
-        // Update existing object using object store
+        // Step 1: Upload logo if needed
+        let logoDownloadUrl = null;
+        if (needsLogoUpload) {
+          let uploadResult;
+          if (logoIsFile) {
+            // Upload File object directly
+            uploadResult = await uploadFileToObjectDirect(
+              authorizedSubmitData.logo,
+              config.beheerConfig.registerSlug,
+              config.beheerConfig.schemaSlug,
+              data.id,
+              'logo'
+              // No filename needed - comes from File.name
+            );
+          } else {
+            // Upload base64 data URL (backward compatibility)
+            uploadResult = await uploadFileToObject(
+              authorizedSubmitData.logo,
+              config.beheerConfig.registerSlug,
+              config.beheerConfig.schemaSlug,
+              data.id,
+              'logo',
+              'logo.png'
+            );
+          }
+
+          // Get the download URL from the upload response
+          if (uploadResult && uploadResult.fileData?.downloadUrl) {
+            logoDownloadUrl = uploadResult.fileData.downloadUrl;
+          }
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+
+        // Step 2: Prepare update payload with all (authorization-filtered) form data
+        const updatePayload = { ...authorizedSubmitData };
+
+        // Remove logo from payload if it was uploaded (don't send File or base64)
+        if (needsLogoUpload) {
+          delete updatePayload.logo;
+        }
+
+        // Always strip UI-only fields
+        delete updatePayload.logoFilename;
+        delete updatePayload.logoAccessUrl;
+
+        // Step 3: Send the PATCH to update the object
         response = await object.updateObject(
           config.beheerConfig.registerSlug,
           config.beheerConfig.schemaSlug,
           data.id,
-          authorizedSubmitData
+          updatePayload
         );
+
+        // Step 4: Update with downloadUrl if logo was uploaded
+        if (logoDownloadUrl) {
+          await object.updateObject(
+            config.beheerConfig.registerSlug,
+            config.beheerConfig.schemaSlug,
+            data.id,
+            { logo: logoDownloadUrl }
+          );
+        }
       } else {
-        // Create new object using object store
+        // Step 1: Create new object without logo (authorization-filtered)
+        const createData = { ...authorizedSubmitData };
+        if (needsLogoUpload) {
+          delete createData.logo;
+        }
+
+        // Always strip UI-only fields
+        delete createData.logoFilename;
+        delete createData.logoAccessUrl;
+
         response = await object.createObject(
           config.beheerConfig.registerSlug,
           config.beheerConfig.schemaSlug,
-          authorizedSubmitData
+          createData
         );
+
+        // Step 2: Upload logo if needed and we got a response with an ID
+        if (needsLogoUpload && response?.id) {
+          let uploadResult;
+          if (logoIsFile) {
+            // Upload File object directly
+            uploadResult = await uploadFileToObjectDirect(
+              authorizedSubmitData.logo,
+              config.beheerConfig.registerSlug,
+              config.beheerConfig.schemaSlug,
+              response.id,
+              'logo'
+            );
+          } else {
+            // Upload base64 data URL (backward compatibility)
+            uploadResult = await uploadFileToObject(
+              authorizedSubmitData.logo,
+              config.beheerConfig.registerSlug,
+              config.beheerConfig.schemaSlug,
+              response.id,
+              'logo',
+              'logo.png'
+            );
+          }
+
+          // If we got a downloadUrl, update the object with the logo URL
+          if (uploadResult && uploadResult.fileData?.downloadUrl) {
+            await object.updateObject(
+              config.beheerConfig.registerSlug,
+              config.beheerConfig.schemaSlug,
+              response.id,
+              { logo: uploadResult.fileData.downloadUrl }
+            );
+          }
+        }
       }
 
       // @TODO: applicaties and voorzieningversie's technically don't exist anymore, this needs to be fixed or removed

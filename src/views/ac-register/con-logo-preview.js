@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 
@@ -178,6 +178,7 @@ const ConLogoPreview = ({
   const [isValid, setIsValid] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [processedUrl, setProcessedUrl] = useState(null);
+  const blobUrlRef = useRef(null);
 
   const resolvedFileId = fileId ?? (isFileId(logoUrl) ? logoUrl : null);
   const effectiveLogoUrl = resolvedFileId ? null : logoUrl;
@@ -232,13 +233,37 @@ const ConLogoPreview = ({
     setIsValid(false);
     setIsLoading(true);
 
-    validateAndProcessLogoUrl(effectiveLogoUrl).then(
-      ({ isValid: valid, processedUrl: nextProcessedUrl }) => {
-        setIsValid(valid);
-        setProcessedUrl((prev) => (valid ? nextProcessedUrl : prev));
-        setIsLoading(false);
+    // Cleanup previous blob URL if it exists
+    if (blobUrlRef.current) {
+      URL.revokeObjectURL(blobUrlRef.current);
+      blobUrlRef.current = null;
+    }
+
+    // Handle File objects directly (new selections not yet uploaded)
+    if (effectiveLogoUrl instanceof File) {
+      const blobUrl = URL.createObjectURL(effectiveLogoUrl);
+      blobUrlRef.current = blobUrl;
+      setIsValid(true);
+      setProcessedUrl(blobUrl);
+      setIsLoading(false);
+    } else {
+      // Handle string URLs (data URLs, base64, regular URLs)
+      validateAndProcessLogoUrl(effectiveLogoUrl).then(
+        ({ isValid: valid, processedUrl: nextProcessedUrl }) => {
+          setIsValid(valid);
+          setProcessedUrl((prev) => (valid ? nextProcessedUrl : prev));
+          setIsLoading(false);
+        }
+      );
+    }
+
+    // Cleanup function: revoke blob URL on unmount or change
+    return () => {
+      if (blobUrlRef.current) {
+        URL.revokeObjectURL(blobUrlRef.current);
+        blobUrlRef.current = null;
       }
-    );
+    };
   }, [effectiveLogoUrl, resolvedFileId]);
 
   const displayUrl = processedUrl || effectiveLogoUrl;
