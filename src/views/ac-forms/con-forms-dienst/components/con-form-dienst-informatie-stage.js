@@ -166,6 +166,8 @@ const ConFormDienstInformatieStage = memo(
               customProps={{
                 inputType: 'file',
                 format: 'base64',
+                useFileObjects: true,
+                enableFileSizeCheck: false, // Disable file size checks for File objects mode
               }}
             />
 

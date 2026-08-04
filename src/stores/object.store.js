@@ -33,9 +33,98 @@ const nextcloudApi = axios.create({
   },
 });
 
+// --- Portaliq portal mode ------------------------------------------------
+// When the SPA runs as the Portaliq per-subject portal (window.RUNTIME_CONFIG
+// .portalMode), the SAME store speaks to Portaliq's SUBJECT-SCOPED /portal/api
+// instead of OpenRegister. We repoint the request URLs and reshape the responses
+// so the store + the schema-driven views work unchanged. Auth is unchanged: the
+// request interceptor still sends `Bearer <nextcloud_access_token cookie>`, and
+// the portal boot sets that cookie to the portal session token.
+const PORTAL_MODE = !!(
+  typeof window !== 'undefined' &&
+  window.RUNTIME_CONFIG &&
+  window.RUNTIME_CONFIG.portalMode === true
+);
+const PORTAL_API = '/portaliq/portal/api'; // relative to baseURL (/index.php/apps)
+
+function portalRewriteUrl(url) {
+  if (!url) return url;
+  const [path, query] = url.split('?');
+  const q = query ? `?${query}` : '';
+  let m;
+  // objects/{register}/{schema}[/{id}[/{sub}]] -> scoped collections
+  if ((m = path.match(/^\/openregister\/api\/objects\/([^/]+)\/([^/]+)(?:\/(.*))?$/))) {
+    const rest = m[3] ? `/${m[3]}` : '';
+    return `${PORTAL_API}/collections/${m[1]}/${m[2]}${rest}${q}`;
+  }
+  // schemas/{slug} -> scoped schema definition
+  if ((m = path.match(/^\/openregister\/api\/schemas\/([^/]+)$/))) {
+    return `${PORTAL_API}/schema/${m[1]}${q}`;
+  }
+  // user/me -> scoped session
+  if (/^\/openregister\/api\/user\/me$/.test(path)) {
+    return `${PORTAL_API}/session${q}`;
+  }
+  return url; // names/warmup/etc. have no scoped equivalent — left to 404 gracefully
+}
+
+function portalSessionToUser(session) {
+  const org = session.organisation || '';
+  return {
+    id: session.subjectRef,
+    uuid: session.subjectRef,
+    displayName: session.subjectRef,
+    name: session.subjectRef,
+    email: '',
+    groups: ['user'],
+    organisations: {
+      results: org ? [{ uuid: org, id: org, name: org, slug: org }] : [],
+      active: { uuid: org, id: org, name: org, slug: org },
+      total: org ? 1 : 0,
+    },
+    isEnabled: true,
+  };
+}
+
+function portalReshapeResponse(response) {
+  const url = response?.config?.url || '';
+  const data = response?.data;
+  if (!url.includes(`${PORTAL_API}/`)) return response;
+
+  // collection LIST: /collections/{r}/{s} (no id) -> {results,total,...}
+  if (/\/portal\/api\/collections\/[^/]+\/[^/?]+(?:\?|$)/.test(url) && data && Array.isArray(data.objects)) {
+    const objects = data.objects;
+    response.data = {
+      results: objects,
+      total: objects.length,
+      page: 1,
+      pages: 1,
+      limit: objects.length,
+      next: null,
+      prev: null,
+    };
+    return response;
+  }
+  // single object: /collections/{r}/{s}/{id} -> the object itself
+  if (/\/portal\/api\/collections\/[^/]+\/[^/]+\/[^/?]+/.test(url) && data && data.object) {
+    response.data = data.object;
+    return response;
+  }
+  // session -> a minimal user shape the user.store understands
+  if (url.includes(`${PORTAL_API}/session`) && data && data.authenticated) {
+    response.data = portalSessionToUser(data);
+    return response;
+  }
+  return response;
+}
+// -------------------------------------------------------------------------
+
 // Add Authorization header interceptor for OAuth tokens AND basic auth fallback
 nextcloudApi.interceptors.request.use(
   (config) => {
+    if (PORTAL_MODE) {
+      config.url = portalRewriteUrl(config.url);
+    }
     const accessToken = getCookie('nextcloud_access_token');
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
@@ -65,15 +154,17 @@ nextcloudApi.interceptors.request.use(
 
 // Global error handling
 nextcloudApi.interceptors.response.use(
-  (response) => ({
-    ...response,
-    ok: response.status >= 200 && response.status < 300,
-  }),
+  (response) => {
+    const shaped = PORTAL_MODE ? portalReshapeResponse(response) : response;
+    return { ...shaped, ok: shaped.status >= 200 && shaped.status < 300 };
+  },
   (error) => {
-    // Handle 401 Unauthorized errors by redirecting to login,
-    // but only on authenticated pages (/beheer). Public pages should
-    // silently handle 401s since users are not expected to be logged in.
-    if (error.response?.status === 401) {
+    // Handle 401 Unauthorized errors by redirecting to login, but only on
+    // authenticated pages (/beheer). Public pages should silently handle 401s
+    // since users are not expected to be logged in. In portal mode there is no
+    // Nextcloud /login page — the portal shell handles auth — so we never
+    // hard-redirect; the caller sees the rejection.
+    if (error.response?.status === 401 && !PORTAL_MODE) {
       const currentPath = window.location.pathname + window.location.search;
       if (window.location.pathname.startsWith('/beheer')) {
         // NOTE: Using window.location.href here is appropriate since this is a global
@@ -1149,7 +1240,7 @@ export class ObjectStore {
         if (Object.keys(namesToCache).length > 0) {
           this.setNamesInCache(namesToCache);
         }
-          }
+      }
 
       const paginationInfo = {
         total: data.total || 0,
@@ -4528,12 +4619,17 @@ export class ObjectStore {
   /**
    * Refreshes warmup data for a single specific type.
    * This bypasses the security check that prevents warmup from running multiple times.
-   * Useful for manual refresh operations.
+   * Useful for automated/manual refresh operations.
+   * 
+   * It also avoids triggering loading state changes unless explicitly requested.
+   * Which is useful for manual refresh operations.
    * @param {string} schemaSlug - The schema slug to refresh (e.g., 'module')
    * @param {string} register - Optional register slug (defaults to 'voorzieningen')
+   * @param {object} extraParams - Optional extra query params merged into the fetch (e.g. _extend)
+   * @param {boolean} triggerLoading - Optional flag to trigger loading state (defaults to false)
    */
   @action
-  refreshWarmupDataForType = async (schemaSlug, register = 'voorzieningen', extraParams = {}) => {
+  refreshWarmupDataForType = async (schemaSlug, register = 'voorzieningen', extraParams = {}, triggerLoading = false) => {
     if (!schemaSlug) {
       console.error('refreshWarmupDataForType: schemaSlug is required');
       return;
@@ -4544,7 +4640,10 @@ export class ObjectStore {
 
       // Reset warmup state for this type to force refresh
       runInAction(() => {
-        this.warmupInProgress[schemaSlug] = true;
+        // only set warmupInProgress if it has not warmup up this type before.
+        if (this.warmupInProgress[schemaSlug] === undefined || triggerLoading) {
+          this.warmupInProgress[schemaSlug] = true;
+        }
         this.warmupCompleted[schemaSlug] = false;
         this.warmupErrors[schemaSlug] = null;
       });
@@ -4567,8 +4666,8 @@ export class ObjectStore {
         // Mark as completed now that data has arrived
         const collection = this.getCollection(collectionType);
         runInAction(() => {
-          this.warmupCompleted[schemaSlug] = true;
           this.warmupInProgress[schemaSlug] = false;
+          this.warmupCompleted[schemaSlug] = true;
           this.warmupErrors[schemaSlug] = null;
         });
 

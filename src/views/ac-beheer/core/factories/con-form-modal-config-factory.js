@@ -190,6 +190,12 @@ const FormModalConfigFactory = {
           },
           fieldConfigs: {
             type: { visible: false }, // Hide the type field in applicaties modal
+            logoFilename: { visible: false }, // Hide UI-only field from form
+            logoAccessUrl: { visible: false }, // Hide UI-only field from form
+            logo: {
+              useFileObjects: true, // Enable File objects mode
+              enableFileSizeCheck: false, // Disable file size checks
+            },
             licentietype: {
               // Ensure no default value is set for licentietype
               defaultValue: '',
@@ -498,6 +504,12 @@ const FormModalConfigFactory = {
           fieldConfigs: {
             // Only hide the fields we don't want to show
             id: { visible: false },
+            logoFilename: { visible: false }, // Hide UI-only field from form
+            logoAccessUrl: { visible: false }, // Hide UI-only field from form,
+            logo: {
+              useFileObjects: true, // Enable File objects mode
+              enableFileSizeCheck: false, // Disable file size checks
+            },
             beschrijvingKort: { visible: false },
             beschrijvingLang: { visible: false },
             type: { visible: (formData, isEdit) => !isEdit }, // Only show type field when adding new organisation
@@ -537,9 +549,11 @@ const FormModalConfigFactory = {
            * - Prefill organisatie from active organisation when creating (not editing) and when not pre-selected
            */
           title: 'Gebruiker',
-          initialData: ({ user, isEdit, preSelected } = {}) => {
+          initialData: ({ user, isEdit, preSelected, data } = {}) => {
             const activeOrg = user?.activeOrganization || null;
             const orgId = String(activeOrg?.uuid);
+
+            console.log({data})
 
             return {
               voorkeuren: { taal: 'NL-nl', thema: 'licht' },

@@ -143,6 +143,8 @@ const ConFormApplicatieInformatieStage = memo(
               customProps={{
                 inputType: 'file',
                 format: 'base64',
+                useFileObjects: true,
+                enableFileSizeCheck: false,
                 description: 'Het logo van de applicatie of de organisatie.',
               }}
             />

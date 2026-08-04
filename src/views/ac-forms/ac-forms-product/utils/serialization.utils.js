@@ -1,7 +1,11 @@
 /**
  * stripLocalIds
+ * Recursively removes UI-only fields (like _localId, standaardnaam) from a value
  * Recursively removes UI-only fields (like _localId, standaardnaam, bewijsFilename, aanbieder*) from a value
  * before sending to the API. Preserves existing IDs by converting them back to the 'id' field.
+ *
+ * NOTE: bewijsFilename is NOT removed here because it's needed during the upload process.
+ * It will be removed after files are uploaded in uploadCompliancyEvidence.
  *
  * @param {any} value - Arbitrary value to sanitize
  * @returns {any} A sanitized deep copy of the input value
