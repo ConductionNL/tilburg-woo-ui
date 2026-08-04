@@ -5,10 +5,14 @@ on:
     branches:
       - softwarecatalogus
       - development
+      - softwarecatalog-gebruik
+      - softwarecatalogus-performance
   pull_request:
     branches:
       - softwarecatalogus
       - development
+      - softwarecatalog-gebruik
+      - softwarecatalogus-performance
 
 env:
   REGISTRY: ghcr.io
@@ -117,14 +121,16 @@ jobs:
             type=ref,event=pr
             type=sha,prefix=commit-
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/softwarecatalogus' }}
+            type=raw,value=gebruik,enable=${{ github.ref == 'refs/heads/softwarecatalog-gebruik' }}
             type=raw,value=dev,enable=${{ github.ref == 'refs/heads/development' }}
+            type=raw,value=performance,enable=${{ github.ref == 'refs/heads/softwarecatalogus-performance' }}
 
       - name: Build and push Docker image
         id: build-and-push
         uses: docker/build-push-action@v5
         with:
           context: .
-          push: true
+          push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 

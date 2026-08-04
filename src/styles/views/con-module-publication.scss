@@ -11,7 +11,9 @@
   &--header-type {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.5rem;
+    text-align: center;
 
     & > svg {
         height: var(--utrecht-heading-1-font-size);

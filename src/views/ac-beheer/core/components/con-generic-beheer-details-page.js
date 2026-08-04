@@ -118,7 +118,7 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
     const fetchGebruik = async () => {
       try {
         const response = await fetch(
-          `${commongroundApiUrl()}/softwarecatalog/api/gebruik?_source=database&_extend[]=@self.schema`,
+          `${commongroundApiUrl()}/softwarecatalog/api/gebruik?_extend[]=@self.schema`,
           {
             method: 'GET',
             signal: abortController.signal,
@@ -381,7 +381,7 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
                       object={data}
                       showViewAction={false}
                       showEditAction={true}
-                      showPublishActions={true}
+                      showPublishActions={false} // LEGACY: Changed from true - Publish actions no longer needed
                       uniqueActions={[
                         ...(config.uniqueActions
                           ?.filter((action) => action.condition?.(data))
@@ -453,14 +453,14 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
                         }
                         setOpenModal('edit');
                       }}
-                      onPublish={() => setOpenModal('publish')}
-                      onDepublish={() => setOpenModal('depublish')}
+                      // onPublish={() => setOpenModal('publish')} {/* LEGACY: Publish actions no longer needed */}
+                      // onDepublish={() => setOpenModal('depublish')} {/* LEGACY: Publish actions no longer needed */}
                     />
                   )}
                 </AcFlex>
 
-                {/* Warning card for unpublished objects */}
-                {!data?.['@self']?.published && (
+                {/* Warning card for unpublished objects - LEGACY: No longer needed */}
+                {/* {!data?.['@self']?.published && (
                   <Alert type='warning'>
                     <Heading level={4}>Dit object is nog niet gepubliceerd</Heading>
                     <Paragraph>
@@ -470,7 +470,7 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
                       voor bezoekers.
                     </Paragraph>
                   </Alert>
-                )}
+                )} */}
 
                 <AcColumn gap='tiger'>
                   <>

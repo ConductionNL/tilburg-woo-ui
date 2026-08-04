@@ -144,6 +144,7 @@ nextcloudApi.interceptors.response.use(
  *
  * #### State Setters
  * - `setCollection(type, results, append)` - Sets collection data
+ * - `clearCollections()` - Clears all collections
  * - `setLoading(type, isLoading)` - Sets loading state for operation-specific tracking
  * - `setError(type, error)` - Sets error state for operation-specific tracking
  * - `setSuccess(type, success)` - Sets success state for operation-specific tracking
@@ -179,12 +180,13 @@ nextcloudApi.interceptors.response.use(
  * - `getTypeFromParams(register, schema, id, suffix)` - Gets object type from register, schema, id, suffix (uses unified type creation)
  *
  * ### Names Cache System for UUID → Name Resolution
+ * Names are now automatically loaded via _extend=_names on collection/search endpoints.
  * - `getNamesForSingleId(id)` - Gets single name from cache or backend fallback
  * - `getNamesForMultipleIds(ids)` - Gets multiple names from cache or backend fallback
  * - `setNamesInCacheSingle(id, name)` - Sets single name in cache
  * - `setNamesInCache(nameMap)` - Sets multiple names in cache
  * - `processRelatedNamesFromResponse(apiResponse)` - Processes related names from API responses
- * - `warmupNamesCache()` - Warms up cache by fetching all available names
+ * - `warmupNamesCache()` - DEPRECATED: Use _extend=_names instead
  * - `triggerNamesWarmup()` - Triggers manual backend warmup via POST endpoint
  * - `getNamesStatsFromBackend()` - Gets cache statistics from backend
  * - `clearNamesCache()` - Clears all names from cache
@@ -316,12 +318,12 @@ nextcloudApi.interceptors.response.use(
  * await store.object.cacheLoad();
  *
  * // Names cache system for UUID to name resolution
+ * // Names are automatically populated via _extend=_names on collection/search endpoints
  * const name = await store.object.getNamesForSingleId('uuid-123');
  * const names = await store.object.getNamesForMultipleIds(['uuid-123', 'uuid-456']);
  * store.object.setNamesInCache({ 'uuid-123': 'Product Name' });
  * store.object.processRelatedNamesFromResponse(apiResponse);
- * await store.object.warmupNamesCache();
- * await store.object.triggerNamesWarmup();
+ * // warmupNamesCache() is DEPRECATED - use _extend=_names instead
  * const backendStats = await store.object.getNamesStatsFromBackend();
  *
  * // Register cache system for UUID to slug resolution
@@ -335,11 +337,6 @@ export class ObjectStore {
     // Request cancellation infrastructure
     this.abortControllers = new Map();
   }
-
-  // IMPORTANT
-  // this key is used to track changes to the collection
-  // which is then used to trigger a re-render on a component (or on a useMemo)
-  COLLECTION_CHANGE_KEY = Symbol('collectionChangeKey');
 
   // Observable state
   /**
@@ -626,6 +623,14 @@ export class ObjectStore {
   };
 
   /**
+   * Clears all collections
+   */
+  @action
+  clearCollections = () => {
+    this.collections = {};
+  };
+
+  /**
    * Sets the collection data for a specific type
    * @param {string} type - The collection type identifier
    * @param {Array<Object>} results - Array of objects to set as collection results
@@ -646,8 +651,6 @@ export class ObjectStore {
 
     // Replace the array contents - MobX will track this change
     this.collections[type].results.replace(newResults);
-
-    this.COLLECTION_CHANGE_KEY = Symbol('collectionChangeKey');
   };
 
   /**
@@ -858,7 +861,6 @@ export class ObjectStore {
     const queryParams = {
       _limit: params._limit || params.limit || 20,
       _page: params._page || params.page || 1,
-      _source: 'database', // Always use database as source
       ...params,
     };
 
@@ -1008,7 +1010,10 @@ export class ObjectStore {
     try {
       const endpoint = `${this._constructApiUrl(registerId, schemaId)}/export`;
       const response = await nextcloudApi.get(endpoint, {
-        params: { type },
+        params: { 
+          type,
+          _multi: true, // Force multitenancy for exports
+        },
         responseType: 'blob',
         signal: controller.signal,
       });
@@ -1126,6 +1131,22 @@ export class ObjectStore {
         this.processRelatedNamesFromResponse(data);
       }
 
+      // Cache names from the fetched objects themselves
+      if (data.results && Array.isArray(data.results)) {
+        const namesToCache = {};
+        data.results.forEach((item) => {
+          const itemId = item?.id || item?.['@self']?.id;
+          const itemName =
+            item?.naam || item?.name || item?.title || item?.['@self']?.name;
+          if (itemId && itemName && typeof itemName === 'string') {
+            namesToCache[itemId] = itemName;
+          }
+        });
+        if (Object.keys(namesToCache).length > 0) {
+          this.setNamesInCache(namesToCache);
+        }
+      }
+
       const paginationInfo = {
         total: data.total || 0,
         page: data.page || 1,
@@ -1209,13 +1230,27 @@ export class ObjectStore {
       const response = await nextcloudApi.get(
         this._constructApiUrl(register, schema, id),
         {
-          params: this._constructQueryParams(queryParams),
+          params: queryParams, // Pass params directly, don't add _limit/_page for single object fetches
           signal: controller.signal,
         }
       );
       if (!response.ok) throw new Error(`Failed to fetch ${type} object`);
 
       const data = response.data;
+
+      // Process related names if present in response (for UUID resolution)
+      if (data.relatedNames) {
+        this.processRelatedNamesFromResponse(data);
+      }
+
+      // Cache the name for the fetched object itself
+      const objectId = data?.id || data?.['@self']?.id;
+      const objectName =
+        data?.naam || data?.name || data?.title || data?.['@self']?.name;
+      if (objectId && objectName && typeof objectName === 'string') {
+        this.setNamesInCacheSingle(objectId, objectName);
+      }
+
       runInAction(() => {
         // run in action to avoid Strict MobX warnings
         if (!this.objects[type]) this.objects[type] = {};
@@ -1364,8 +1399,10 @@ export class ObjectStore {
     try {
       const endpoint = `/openregister/api/schemas/${schemaId}`;
 
+      // Schema endpoints don't need pagination parameters (_limit, _page)
+      // Pass params directly without constructQueryParams to avoid adding pagination
       const response = await nextcloudApi.get(endpoint, {
-        params: this._constructQueryParams(params),
+        params: params,
         signal: controller.signal,
       });
 
@@ -1606,8 +1643,6 @@ export class ObjectStore {
       // Add new object to collection
       collection.results.push(objectData);
     }
-
-    this.COLLECTION_CHANGE_KEY = Symbol('collectionChangeKey');
   };
 
   /**
@@ -1631,8 +1666,6 @@ export class ObjectStore {
         collection.results.splice(index, 1);
       }
     });
-
-    this.COLLECTION_CHANGE_KEY = Symbol('collectionChangeKey');
   };
 
   /**
@@ -1660,6 +1693,18 @@ export class ObjectStore {
       if (!response.ok) throw new Error(`Failed to create ${type} object`);
 
       const newObject = response.data;
+
+      // Cache the name for the new object if it has one
+      const objectId = newObject?.id || newObject?.['@self']?.id;
+      const objectName =
+        newObject?.naam ||
+        newObject?.name ||
+        newObject?.title ||
+        newObject?.['@self']?.name;
+      if (objectId && objectName) {
+        this.setNamesInCacheSingle(objectId, objectName);
+      }
+
       runInAction(() => {
         // run in action to avoid Strict MobX warnings
         if (!this.objects[type]) this.objects[type] = {};
@@ -1699,9 +1744,9 @@ export class ObjectStore {
    * @note register and schema ar retrieved from the objectItem, if the objectItem doesnt have them, the object is not saved
    */
   @action
-  saveObject = async (objectItem) => {
-    const registerId = this.extractId(objectItem['@self']?.register);
-    const schemaId = this.extractId(objectItem['@self']?.schema);
+  saveObject = async (objectItem, register = null, schema = null) => {
+    const registerId = register || this.extractId(objectItem['@self']?.register);
+    const schemaId = schema || this.extractId(objectItem['@self']?.schema);
 
     if (!objectItem || !registerId || !schemaId) {
       throw new Error('Object item, register and schema are required');
@@ -1810,6 +1855,18 @@ export class ObjectStore {
       if (!response.ok) throw new Error(`Failed to update ${type} object`);
 
       const updatedObject = response.data;
+
+      // Cache the name for the updated object if it has one
+      const objectId = updatedObject?.id || updatedObject?.['@self']?.id;
+      const objectName =
+        updatedObject?.naam ||
+        updatedObject?.name ||
+        updatedObject?.title ||
+        updatedObject?.['@self']?.name;
+      if (objectId && objectName) {
+        this.setNamesInCacheSingle(objectId, objectName);
+      }
+
       runInAction(() => {
         // run in action to avoid Strict MobX warnings
         if (!this.objects[type]) this.objects[type] = {};
@@ -3098,6 +3155,11 @@ export class ObjectStore {
 
   /**
    * Waits for names cache warmup to complete if it's in progress
+   * 
+   * **Note:** This is no longer used by getNamesForSingleId/getNamesForMultipleIds
+   * to avoid blocking UI rendering. Kept for potential future use cases where
+   * explicit warmup waiting might be desired.
+   * 
    * @returns {Promise<void>}
    */
   async waitForNamesWarmup() {
@@ -3129,6 +3191,13 @@ export class ObjectStore {
 
   /**
    * Gets a single name from cache, falls back to backend if not found
+   * 
+   * **Optimized behavior (no warmup blocking):**
+   * - Checks cache first for instant response
+   * - If not found, immediately fetches from backend (doesn't wait for warmup)
+   * - Background warmup will populate cache for future requests
+   * - This ensures components can load filters/UI immediately without delay
+   * 
    * @param {string} id - The UUID to resolve to a name
    * @returns {Promise<string>} The name for the given ID, or the ID if no name found
    */
@@ -3146,21 +3215,6 @@ export class ObjectStore {
       }
       // Cache expired, remove it
       delete this.namesCache[id];
-    }
-
-    // Wait for warmup to complete before making API calls
-    await this.waitForNamesWarmup();
-
-    // Check cache again after warmup (it might have been populated)
-    const cachedAfterWarmup = this.namesCache[id];
-    if (cachedAfterWarmup) {
-      const age = Date.now() - cachedAfterWarmup.timestamp;
-      if (age < this.namesCacheConfig.maxAge) {
-        console.info(
-          `📋 Name cache hit after warmup for ${id}: ${cachedAfterWarmup.name}`
-        );
-        return cachedAfterWarmup.name;
-      }
     }
 
     // Check if there's already a pending request for this ID to prevent duplicate calls
@@ -3223,6 +3277,13 @@ export class ObjectStore {
 
   /**
    * Gets multiple names from cache, falls back to backend for missing ones
+   * 
+   * **Optimized behavior (no warmup blocking):**
+   * - Checks cache first for all IDs
+   * - Immediately fetches missing IDs from backend (doesn't wait for warmup)
+   * - Background warmup will populate cache for future requests
+   * - Bulk fetches missing IDs in a single API call for efficiency
+   * 
    * @param {string[]} ids - Array of UUIDs to resolve to names
    * @returns {Promise<{[id: string]: string}>} Object with id -> name mappings
    */
@@ -3260,31 +3321,14 @@ export class ObjectStore {
       }`
     );
 
-    // Wait for warmup to complete before making API calls
-    await this.waitForNamesWarmup();
-
-    // Check cache again after warmup (it might have been populated)
-    const stillMissingIds = [];
-    missingIds.forEach((id) => {
-      const cachedAfterWarmup = this.namesCache[id];
-      if (cachedAfterWarmup) {
-        const age = Date.now() - cachedAfterWarmup.timestamp;
-        if (age < this.namesCacheConfig.maxAge) {
-          results[id] = cachedAfterWarmup.name;
-          return;
-        }
-      }
-      stillMissingIds.push(id);
-    });
-
     // Fetch missing names from backend
-    if (stillMissingIds.length > 0) {
+    if (missingIds.length > 0) {
       try {
         console.info(
-          `🌐 Fetching names for ${stillMissingIds.length} IDs from backend`
+          `🌐 Fetching names for ${missingIds.length} IDs from backend`
         );
         const response = await nextcloudApi.post('/openregister/api/names', {
-          ids: stillMissingIds,
+          ids: missingIds,
         });
 
         if (response.ok && response.data?.names) {
@@ -3314,7 +3358,7 @@ export class ObjectStore {
             }), caching UUIDs to prevent future API calls`
           );
           const failedLookups = {};
-          stillMissingIds.forEach((id) => {
+          missingIds.forEach((id) => {
             failedLookups[id] = id;
           });
           this.setNamesInCache(failedLookups);
@@ -3324,7 +3368,7 @@ export class ObjectStore {
 
     // Fill in missing names with IDs as fallback and cache them
     const uncachedFallbacks = {};
-    stillMissingIds.forEach((id) => {
+    missingIds.forEach((id) => {
       if (!results[id]) {
         results[id] = id;
         uncachedFallbacks[id] = id;
@@ -3461,44 +3505,17 @@ export class ObjectStore {
   };
 
   /**
-   * Warms up the names cache by fetching all available names
+   * DEPRECATED: Names are now efficiently loaded via _extend=_names on collection endpoints.
+   * This method is kept for backwards compatibility but should not be used.
    * @returns {Promise<number>} Number of names loaded into cache
+   * @deprecated Use _extend=_names on API calls instead of bulk warmup
    */
   @action
   warmupNamesCache = async () => {
-    const requestType = 'names_warmup';
-    this.setLoading(requestType, true);
-    this.setError(requestType, null);
-
-    try {
-      console.info('🔥 Starting names cache warmup');
-      const response = await nextcloudApi.get('/openregister/api/names');
-
-      if (!response.ok) {
-        throw new Error(
-          `Failed to warmup names cache: ${response.status} ${response.statusText}`
-        );
-      }
-
-      const allNames = response.data?.names || {};
-      const count = Object.keys(allNames).length;
-
-      this.setNamesInCache(allNames);
-
-      console.info(`✅ Names cache warmed up with ${count} names:`, {
-        total: response.data?.total,
-        cached: response.data?.cached,
-        executionTime: response.data?.execution_time,
-        cacheStats: response.data?.cache_stats,
-      });
-      return count;
-    } catch (error) {
-      console.error('❌ Names cache warmup failed:', error);
-      this.setError(requestType, error.message);
-      throw error;
-    } finally {
-      this.setLoading(requestType, false);
-    }
+    console.warn(
+      '⚠️ warmupNamesCache is deprecated - names are now loaded via _extend=_names on API calls'
+    );
+    return 0;
   };
 
   /**
@@ -3509,7 +3526,7 @@ export class ObjectStore {
     'organisatie',
     'module',
     'moduleversie',
-    'product',
+    'suite',
     'dienst',
     'gebruik',
     'koppeling',
@@ -3704,6 +3721,14 @@ export class ObjectStore {
   initialCacheWarmingCompleted = false;
 
   /**
+   * Flag to track if beheer data warmup has been completed for this session
+   * Prevents redundant warmup on every /beheer page visit
+   * @type {boolean}
+   */
+  @observable
+  beheerDataWarmedUp = false;
+
+  /**
    * Fetches all core registers and populates the registerCache
    * Called during warmupBeheerData to ensure ConRegisterResolver works
    */
@@ -3743,7 +3768,40 @@ export class ObjectStore {
    */
   @action
   fetchRegister = async (registerSlug) => {
+    // Check if register is already cached
+    const cachedRegister = this.getRegister(registerSlug);
+    if (cachedRegister) {
+      console.info(`ℹ️ Register ${registerSlug} already cached, skipping fetch`);
+      return cachedRegister;
+    }
+
     const requestType = `register_${registerSlug}`;
+    
+    // Check if a request is already in progress for this register
+    if (this.isLoading(requestType)) {
+      console.info(`ℹ️ Register ${registerSlug} fetch already in progress, waiting...`);
+      // Wait for existing request to complete by checking loading state periodically
+      return new Promise((resolve, reject) => {
+        const checkInterval = setInterval(() => {
+          if (!this.isLoading(requestType)) {
+            clearInterval(checkInterval);
+            const result = this.getRegister(registerSlug);
+            if (result) {
+              resolve(result);
+            } else {
+              reject(new Error(`Register ${registerSlug} fetch failed`));
+            }
+          }
+        }, 100);
+        
+        // Timeout after 10 seconds
+        setTimeout(() => {
+          clearInterval(checkInterval);
+          reject(new Error(`Timeout waiting for register ${registerSlug} fetch`));
+        }, 10000);
+      });
+    }
+    
     this.setLoading(requestType, true);
     this.setError(requestType, null);
 
@@ -3976,6 +4034,7 @@ export class ObjectStore {
   @action
   resetCacheWarmingFlag = () => {
     this.initialCacheWarmingCompleted = false;
+    this.beheerDataWarmedUp = false;
   };
 
   /**
@@ -4168,56 +4227,78 @@ export class ObjectStore {
       }
       // Replace the array contents
       this.collections[collectionType].results.replace(updatedResults);
-
-      this.COLLECTION_CHANGE_KEY = Symbol('collectionChangeKey');
     });
   };
 
   /**
-   * Waits for names cache warmup to complete
-   * If warmup is in progress, waits for it. If not started, triggers it.
+   * Starts background resolution of UUID strings in a collection
+   * Returns immediately after collecting UUIDs, resolution happens asynchronously
+   * When names arrive, updates the data in place
+   * @param {string} register - The register slug (e.g., 'voorzieningen')
+   * @param {string} schemaSlug - The schema slug (e.g., 'module')
+   */
+  resolveRefsInCollectionBackground = (register, schemaSlug) => {
+    const collectionType = this.getTypeFromParams(register, schemaSlug);
+    const collection = this.getCollection(collectionType);
+
+    if (!collection || !collection.results || collection.results.length === 0) {
+      return;
+    }
+
+    // Collect all UUIDs that need resolution
+    const uuidsToResolve = new Set();
+
+    // Scan all objects for UUIDs
+    collection.results.forEach((obj) => {
+      this._collectUUIDs(obj, uuidsToResolve);
+    });
+
+    if (uuidsToResolve.size === 0) {
+      return;
+    }
+
+    // Start resolution in background - don't await
+    const uuidArray = Array.from(uuidsToResolve);
+    this.getNamesForMultipleIds(uuidArray)
+      .then((resolvedNames) => {
+        // Update objects in store with resolved names when they arrive
+        runInAction(() => {
+          const currentCollection = this.getCollection(collectionType);
+          if (!currentCollection || !currentCollection.results) {
+            return;
+          }
+
+          const updatedResults = currentCollection.results.map((obj) => {
+            return this._replaceUUIDsWithNames(obj, resolvedNames);
+          });
+
+          // Update the collection in store - ensure it's observable
+          if (!this.collections[collectionType]) {
+            this.collections[collectionType] = observable({
+              results: observable([]),
+            });
+          }
+          // Replace the array contents
+          this.collections[collectionType].results.replace(updatedResults);
+        });
+      })
+      .catch((error) => {
+        console.error(
+          `Error resolving refs in background for ${schemaSlug}:`,
+          error
+        );
+      });
+  };
+
+  /**
+   * Names cache warmup removed - names are now efficiently loaded via _extend=_names
+   * on search and collection endpoints. This method is kept as a no-op for backwards compatibility.
    * @returns {Promise<void>}
+   * @deprecated Names are now loaded automatically via _extend=_names
    */
   waitForNamesCacheWarmup = async () => {
-    const warmupType = 'names_warmup';
-
-    // Check if warmup is already in progress
-    if (this.isLoading(warmupType)) {
-      console.info('Names cache warmup in progress, waiting...');
-      // Poll until warmup completes, max 30 seconds
-      let c = 0;
-      while (this.isLoading(warmupType)) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        c++;
-        if (c >= 300) {
-          console.warn(
-            'Names cache warmup timed out (30 seconds), continuing anyway'
-          );
-          break;
-        }
-      }
-      console.info('Names cache warmup completed');
-      return;
-    }
-
-    // Check if names cache has data (warmup might have completed already)
-    const cacheStats = this.getNamesStats();
-    if (cacheStats.totalNames > 0) {
-      console.info(
-        `Names cache already has ${cacheStats.totalNames} names, skipping warmup`
-      );
-      return;
-    }
-
-    // Trigger warmup if not started
-    console.info('Starting names cache warmup...');
-    try {
-      await this.warmupNamesCache();
-      console.info('Names cache warmup completed successfully');
-    } catch (error) {
-      console.warn('Names cache warmup failed, continuing anyway:', error);
-      // Continue even if warmup fails - getNamesForMultipleIds will fallback to backend
-    }
+    console.info('ℹ️ Names cache warmup skipped - names loaded via _extend=_names');
+    return;
   };
 
   /**
@@ -4226,6 +4307,12 @@ export class ObjectStore {
    */
   @action
   warmupBeheerData = async () => {
+    // Guard: Skip if already warmed up for this session
+    if (this.beheerDataWarmedUp) {
+      console.info('ℹ️ Beheer data already warmed up, skipping...');
+      return;
+    }
+
     try {
       // Fetch registers first to populate registerCache
       // This ensures ConRegisterResolver works correctly
@@ -4275,10 +4362,10 @@ export class ObjectStore {
             await this.fetchSchema(schemaSlug);
           }
 
-          // Fetch objects with limit 10000 and _published: false
+          // Fetch objects with limit 10000
           await this.fetchCollection(register, schemaSlug, {
             _limit: 10000,
-            _published: 'false',
+            _multi: true, // Enable multitenancy
           });
         } catch (error) {
           console.error(`Error fetching data for ${schemaSlug}:`, error);
@@ -4295,10 +4382,7 @@ export class ObjectStore {
       // Wait for all parallel fetches to complete
       await Promise.allSettled(warmupPromises);
 
-      // Wait for names cache warmup to complete before resolving refs
-      await this.waitForNamesCacheWarmup();
-
-      // Now resolve $ref properties for all types that were fetched
+      // Mark completion for all successfully fetched types (data has arrived)
       for (const schemaSlug of typesToWarmup) {
         // Skip if warmup failed for this type
         if (this.warmupErrors[schemaSlug]) {
@@ -4308,38 +4392,19 @@ export class ObjectStore {
         const collectionType = this.getTypeFromParams(register, schemaSlug);
         const collection = this.getCollection(collectionType);
 
-        // Check if fetch returned data
+        // Mark as completed now that data has arrived
+        runInAction(() => {
+          this.warmupCompleted[schemaSlug] = true;
+          this.warmupInProgress[schemaSlug] = false;
+          this.warmupErrors[schemaSlug] = null;
+        });
+
+        console.info(`Warmup completed for ${schemaSlug} (data loaded)`);
+
+        // Start background name resolution (non-blocking)
         if (collection?.results?.length > 0) {
-          try {
-            // Resolve $ref properties using name cache
-            await this.resolveRefsInCollection(register, schemaSlug);
-
-            // Mark as completed
-            runInAction(() => {
-              this.warmupCompleted[schemaSlug] = true;
-              this.warmupInProgress[schemaSlug] = false;
-              this.warmupErrors[schemaSlug] = null;
-            });
-
-            console.info(`Warmup completed for ${schemaSlug}`);
-          } catch (error) {
-            console.error(`Error resolving refs for ${schemaSlug}:`, error);
-            const errorMessage =
-              AcFormatErrorMessage(error) || error.message || 'Unknown error';
-            runInAction(() => {
-              this.warmupErrors[schemaSlug] = errorMessage;
-              this.warmupInProgress[schemaSlug] = false;
-            });
-          }
-        } else {
-          // Collection fetched but has no data - mark as completed anyway
-          runInAction(() => {
-            this.warmupCompleted[schemaSlug] = true;
-            this.warmupInProgress[schemaSlug] = false;
-            this.warmupErrors[schemaSlug] = null;
-          });
-
-          console.info(`Warmup completed for ${schemaSlug} (no data)`);
+          // Trigger background resolution - will update data in place when names arrive
+          this.resolveRefsInCollectionBackground(register, schemaSlug);
         }
       }
 
@@ -4361,6 +4426,12 @@ export class ObjectStore {
           });
         }
       }
+
+      // Mark beheer data as warmed up for this session
+      runInAction(() => {
+        this.beheerDataWarmedUp = true;
+      });
+      console.info('✅ Beheer data warmup completed');
     } catch (error) {
       console.error('Error in warmupBeheerData:', error);
       AcFormatErrorMessage(error);
@@ -4370,12 +4441,16 @@ export class ObjectStore {
   /**
    * Refreshes warmup data for a single specific type.
    * This bypasses the security check that prevents warmup from running multiple times.
-   * Useful for manual refresh operations.
+   * Useful for automated/manual refresh operations.
+   * 
+   * It also avoids triggering loading state changes unless explicitly requested.
+   * Which is useful for manual refresh operations.
    * @param {string} schemaSlug - The schema slug to refresh (e.g., 'module')
    * @param {string} register - Optional register slug (defaults to 'voorzieningen')
+   * @param {boolean} triggerLoading - Optional flag to trigger loading state (defaults to false)
    */
   @action
-  refreshWarmupDataForType = async (schemaSlug, register = 'voorzieningen') => {
+  refreshWarmupDataForType = async (schemaSlug, register = 'voorzieningen', triggerLoading = false) => {
     if (!schemaSlug) {
       console.error('refreshWarmupDataForType: schemaSlug is required');
       return;
@@ -4386,7 +4461,10 @@ export class ObjectStore {
 
       // Reset warmup state for this type to force refresh
       runInAction(() => {
-        this.warmupInProgress[schemaSlug] = true;
+        // only set warmupInProgress if it has not warmup up this type before.
+        if (this.warmupInProgress[schemaSlug] === undefined || triggerLoading) {
+          this.warmupInProgress[schemaSlug] = true;
+        }
         this.warmupCompleted[schemaSlug] = false;
         this.warmupErrors[schemaSlug] = null;
       });
@@ -4399,34 +4477,26 @@ export class ObjectStore {
           await this.fetchSchema(schemaSlug);
         }
 
-        // Fetch objects with limit 10000 and _published: false
+        // Fetch objects with limit 10000
         await this.fetchCollection(register, schemaSlug, {
           _limit: 10000,
-          _published: 'false',
+          _multi: true, // Enable multitenancy
         });
 
-        // Wait for names cache warmup to complete before resolving refs
-        await this.waitForNamesCacheWarmup();
-
-        // Resolve $ref properties using name cache
+        // Mark as completed now that data has arrived
         const collection = this.getCollection(collectionType);
+        runInAction(() => {
+          this.warmupInProgress[schemaSlug] = false;
+          this.warmupCompleted[schemaSlug] = true;
+          this.warmupErrors[schemaSlug] = null;
+        });
+
+        console.info(`Warmup refresh completed for ${schemaSlug} (data loaded)`);
+
+        // Start background name resolution (non-blocking)
         if (collection && collection.results && collection.results.length > 0) {
-          await this.resolveRefsInCollection(register, schemaSlug);
-
-          // Mark as completed
-          runInAction(() => {
-            this.warmupCompleted[schemaSlug] = true;
-            this.warmupInProgress[schemaSlug] = false;
-            this.warmupErrors[schemaSlug] = null;
-          });
-
-          console.info(`Warmup refresh completed for ${schemaSlug}`);
-        } else {
-          // No data fetched, but mark as completed anyway
-          runInAction(() => {
-            this.warmupCompleted[schemaSlug] = true;
-            this.warmupInProgress[schemaSlug] = false;
-          });
+          // Trigger background resolution - will update data in place when names arrive
+          this.resolveRefsInCollectionBackground(register, schemaSlug);
         }
       } catch (error) {
         console.error(`Error refreshing warmup data for ${schemaSlug}:`, error);

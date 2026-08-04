@@ -40,9 +40,11 @@ const DetailsPageConfigFactory = {
     };
 
     switch (type) {
+      case 'module':
       case 'applicaties':
         return {
           ...baseDetailsConfig,
+          extend: [...detailsExtend, 'contactpersoon'],
           excludedProperties: [
             'id',
             'naam',
@@ -91,8 +93,10 @@ const DetailsPageConfigFactory = {
         };
 
       case 'diensten':
+      case 'dienst':
         return {
           ...baseDetailsConfig,
+          extend: [...detailsExtend, 'contactpersoon'],
           excludedProperties: [
             'id',
             'naam',
@@ -128,6 +132,7 @@ const DetailsPageConfigFactory = {
           },
         };
 
+      case 'organisatie':
       case 'organisaties':
         return {
           ...baseDetailsConfig,

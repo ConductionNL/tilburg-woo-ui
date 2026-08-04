@@ -1,11 +1,11 @@
 import {
   Heading,
-  Paragraph,
   Link,
 } from '@utrecht/component-library-react/dist/css-module';
 import { AcColumn, AcFlex } from '@src/atoms';
 import { VISUALS } from '@src/constants';
 import ConLogoPreview from '@src/views/ac-register/con-logo-preview';
+import { ConExternalLink } from '@src/components';
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import { commongroundApiUrl } from '@src/config';
 import ConEditableDescription from '../../shared/components/con-editable-description/con-editable-description';
@@ -188,20 +188,18 @@ const ConModuleDetailsPageContent = ({
           alignItems: 'center',
         }}
       >
-        <Heading level={4}>
-          <div className='con-beheer-details--header-container'>
-            {(data?.logo || data?.['@self']?.image) && (
-              <ConLogoPreview
-                className='con-beheer-details--logo-container'
-                logoUrl={data?.logo || data?.['@self']?.image}
-              />
-            )}
+        <div className='con-beheer-details--header-container'>
+          {(data?.logo || data?.['@self']?.image) && (
+            <ConLogoPreview
+              className='con-beheer-details--logo-container'
+              logoUrl={data?.logo || data?.['@self']?.image}
+            />
+          )}
 
-            <Heading className='con-beheer-details--title'>
-              {data?.naam || data?.['@self']?.name || data?.['@self']?.id}
-            </Heading>
-          </div>
-        </Heading>
+          <Heading className='con-beheer-details--title'>
+            {data?.naam || data?.['@self']?.name || data?.['@self']?.id}
+          </Heading>
+        </div>
 
         <div className='ac-register-review__header-controls'>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -291,7 +289,8 @@ const ConModuleDetailsPageContent = ({
                   Bewerk standaarden
                 </ConActionMenu.Button>
 
-                {data && !data['@self']?.published && (
+                {/* Publish/Depublish actions - LEGACY: No longer needed */}
+                {/* {data && !data['@self']?.published && (
                   <ConActionMenu.Button
                     icon={<VISUALS.PUBLISH />}
                     onClick={() => actionMenuProps?.setOpenModal?.('publish')}
@@ -321,7 +320,7 @@ const ConModuleDetailsPageContent = ({
                   >
                     Depubliceren
                   </ConActionMenu.Button>
-                )}
+                )} */}
 
                 <ConActionMenu.Button
                   icon={<VISUALS.TRASHCAN />}
@@ -342,8 +341,8 @@ const ConModuleDetailsPageContent = ({
         </div>
       </div>
 
-      {/* Unpublished warning */}
-      <UnpublishedWarning data={data} />
+      {/* Unpublished warning - LEGACY: No longer needed */}
+      {/* <UnpublishedWarning data={data} /> */}
 
       {/* Short description */}
       <div style={{ flex: 2 }}>
@@ -414,18 +413,8 @@ const ConModuleDetailsPageContent = ({
             <div style={{ marginTop: '12px' }}>
               {data?.website && (
                 <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
-                  <strong>Website: </strong>
-                  <Link
-                    href={
-                      data?.website.startsWith('http')
-                        ? data?.website
-                        : `https://${data?.website}`
-                    }
-                    target='_blank'
-                    rel='noopener noreferrer'
-                  >
-                    {data?.website}
-                  </Link>
+                  <strong>Website:</strong>
+                  <ConExternalLink href={data?.website} />
                 </div>
               )}
               {contact && typeof contact === 'object' ? (
@@ -535,7 +524,6 @@ const ConModuleDetailsPageContent = ({
       <SuitableForSection
         referentieComponenten={data.referentieComponenten}
         referentieComponentenWithStandards={referentieComponentenWithStandards}
-        objectStore={object}
       />
 
       {/* Standaarden Section */}
@@ -547,6 +535,7 @@ const ConModuleDetailsPageContent = ({
           objectId={data?.['@self']?.id}
           referentieComponenten={data.referentieComponenten}
           complianceStandards={data.compliancy}
+          compliantVersieIds={data.standaardVersies || data.standaardversies || []}
           referentieComponentenWithStandards={
             referentieComponentenWithStandards?.length > 0
               ? referentieComponentenWithStandards
@@ -593,12 +582,11 @@ const ConModuleDetailsPageContent = ({
 const SuitableForSection = ({
   referentieComponenten,
   referentieComponentenWithStandards,
-  objectStore,
 }) => {
   const [resolved, setResolved] = useState([]);
 
   useEffect(() => {
-    const resolveWithIds = async () => {
+    const resolveWithIds = () => {
       if (
         !Array.isArray(referentieComponenten) ||
         referentieComponenten.length === 0
@@ -616,32 +604,17 @@ const SuitableForSection = ({
 
           return {
             id: refCompData?.fullData?.id || id, // Use actual object ID if available
-            name: refCompData?.naam || id,
           };
         });
         setResolved(resolvedWithObjectIds);
         return;
       }
 
-      // Fallback to the original resolution method
-      try {
-        const results = await Promise.all(
-          referentieComponenten.map(async (id) => {
-            try {
-              const name = await objectStore.getNamesForSingleId(id);
-              return { id, name };
-            } catch (error) {
-              return { id, name: id };
-            }
-          })
-        );
-        setResolved(results);
-      } catch (e) {
-        setResolved(referentieComponenten.map((id) => ({ id, name: id })));
-      }
+      // Fallback: just use the IDs, ConUuidResolver will handle the resolution
+      setResolved(referentieComponenten.map((id) => ({ id })));
     };
     resolveWithIds();
-  }, [referentieComponenten, referentieComponentenWithStandards, objectStore]);
+  }, [referentieComponenten, referentieComponentenWithStandards]);
 
   if (!resolved.length) return null;
 
@@ -658,8 +631,11 @@ const SuitableForSection = ({
                 href={`https://www.gemmaonline.nl/wiki/GEMMA/id-${item.id}`}
                 target='_blank'
                 rel='noopener noreferrer'
+                style={{
+                  minHeight: '24px',
+                }}
               >
-                {item.name}
+                <ConUuidResolver>{String(item.id)}</ConUuidResolver>
               </Link>
             </div>
           ))}
@@ -669,23 +645,23 @@ const SuitableForSection = ({
   );
 };
 
-/* Warning card for unpublished objects */
-const UnpublishedWarning = ({ data }) => {
-  if (data?.['@self']?.published) return null;
-  const schemaName = data?.['@self']?.schema?.title;
-  const title = schemaName ? `${schemaName}` : '';
-  const objectName = data?.['@self']?.name;
-
-  return (
-    <div className='ac-alert ac-alert--warning' style={{ marginBottom: '1rem' }}>
-      <Heading level={4}>{title} is nog niet gepubliceerd</Heading>
-      <Paragraph>
-        {objectName} is momenteel niet zichtbaar in de zoekfunctie van{' '}
-        {schemaName || 'de catalogus'}. Gebruik de &quot;Publiceren&quot; actie om
-        deze gegevens beschikbaar te maken voor bezoekers.
-      </Paragraph>
-    </div>
-  );
-};
+/* Warning card for unpublished objects - LEGACY: No longer needed */
+// const UnpublishedWarning = ({ data }) => {
+//   if (data?.['@self']?.published) return null;
+//   const schemaName = data?.['@self']?.schema?.title;
+//   const title = schemaName ? `${schemaName}` : '';
+//   const objectName = data?.['@self']?.name;
+//
+//   return (
+//     <div className='ac-alert ac-alert--warning' style={{ marginBottom: '1rem' }}>
+//       <Heading level={4}>{title} is nog niet gepubliceerd</Heading>
+//       <Paragraph>
+//         {objectName} is momenteel niet zichtbaar in de zoekfunctie van{' '}
+//         {schemaName || 'de catalogus'}. Gebruik de &quot;Publiceren&quot; actie om
+//         deze gegevens beschikbaar te maken voor bezoekers.
+//       </Paragraph>
+//     </div>
+//   );
+// };
 
 export default ConModuleDetailsPageContent;

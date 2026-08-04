@@ -37,7 +37,7 @@ const ConFormDienstInformatieStage = memo(
           }
 
           // Fallback to /me endpoint once
-          const meUrl = `${BASE_URL}/openconnector/api/user/me`;
+          const meUrl = `${BASE_URL}/openregister/api/user/me`;
           let me = null;
           try {
             const res = await fetch(meUrl, {
@@ -79,19 +79,13 @@ const ConFormDienstInformatieStage = memo(
         </h2>
 
         <Paragraph style={{ marginBottom: '1.5rem' }}>
-          <strong>Registreer uw dienst</strong>
-          <br />
           {dienstType === 'eigen-organisatie' ? (
-            <>
-              U gaat een dienst registreren voor uw eigen organisatie.
-              In de volgende stappen vult u de basisgegevens in en selecteert u
-              relevante applicaties.
-            </>
+            <>Geef aan welke dienstverlening u verleent op uw applicatie.</>
           ) : dienstType === 'andere-organisatie' ? (
             <>
-              U gaat een dienst registreren voor een andere organisatie.
-              In de volgende stappen vult u de basisgegevens in en selecteert u
-              relevante applicaties.
+              U gaat een dienst registreren voor een andere organisatie. In de
+              volgende stappen vult u de basisgegevens in en selecteert u relevante
+              applicaties.
             </>
           ) : (
             <>
@@ -99,16 +93,6 @@ const ConFormDienstInformatieStage = memo(
               relevante applicaties.
             </>
           )}
-          <br />
-          Deze informatie helpt organisaties om snel te begrijpen welk aanbod uw
-          dienst omvat en hoe die binnen hun landschap past.
-        </Paragraph>
-
-        <Paragraph style={{ marginBottom: '2rem' }}>
-          <strong>Basisinformatie van de dienst</strong>
-          <br />
-          Vul de naam, contactpersoon, aanbieder, website, type en beschrijvingen in.
-          Voeg indien gewenst een logo toe.
         </Paragraph>
 
         <div className='con-dynamic-form-container'>
@@ -175,7 +159,12 @@ const ConFormDienstInformatieStage = memo(
               isDisabled={loading}
               width='full'
               schemas={schemas}
-              customProps={{ inputType: 'file', format: 'base64' }}
+              customProps={{
+                inputType: 'file',
+                format: 'base64',
+                useFileObjects: true,
+                enableFileSizeCheck: false, // Disable file size checks for File objects mode
+              }}
             />
 
             <ConSchemaEnhancedField
@@ -225,6 +214,8 @@ const ConFormDienstInformatieStage = memo(
               schemas={schemas}
               customProps={{
                 additionalQueryParams: { _published: 'false' },
+                isMulti: true,
+                closeMenuOnSelect: false,
               }}
             />
           </div>

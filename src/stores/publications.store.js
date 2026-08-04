@@ -2,6 +2,7 @@
 import { observable, computed, makeObservable, action, toJS } from 'mobx';
 import { AcBuildURLSearchParams, getCookie } from '@utils';
 import { commongroundApiUrl } from '@config';
+import { schemaCache } from '@services/schemaCache.service';
 
 let app = {};
 
@@ -10,6 +11,9 @@ const LIMIT = 20;
 export const DEFAULT_SEARCH_QUERY = {
   extend: 'themes',
   _limit: LIMIT,
+  _order: {
+    '_relevance': 'desc', // Default to most relevant
+  },
 };
 
 const DEFAULT_QUERY = {
@@ -65,6 +69,22 @@ export class PublicationsStore {
     app.store = store;
   }
 
+  /**
+   * AbortController for cancelling in-flight publications fetch requests.
+   * When a new search is triggered before the previous one completes,
+   * the old request is cancelled to prevent race conditions and unnecessary API calls.
+   * @type {AbortController|null}
+   */
+  publicationsAbortController = null;
+
+  /**
+   * AbortController for cancelling in-flight facets fetch requests.
+   * When facets are re-fetched (e.g., user changes filters quickly),
+   * the old request is cancelled to prevent outdated facet data from being displayed.
+   * @type {AbortController|null}
+   */
+  facetsAbortController = null;
+
   @observable
   mobileFiltersOpen = false;
 
@@ -79,6 +99,9 @@ export class PublicationsStore {
 
   @observable
   relations = null;
+
+  @observable
+  usedData = null;
 
   @observable
   categories = [];
@@ -205,6 +228,11 @@ export class PublicationsStore {
   }
 
   @computed
+  get get_used_data() {
+    return toJS(this.usedData);
+  }
+
+  @computed
   get all_publications() {
     return this.items;
   }
@@ -303,7 +331,8 @@ export class PublicationsStore {
     console.info(key, value);
     console.info('VALUE', value);
     this.query._order = {};
-    this.query._order[key] = value;
+    // Metadata properties use _property format (e.g., _name, _published)
+    this.query._order[`_${key}`] = value;
     console.groupEnd();
   };
 
@@ -354,6 +383,11 @@ export class PublicationsStore {
   @action
   setRelations = (relations) => {
     this.relations = relations;
+  };
+
+  @action
+  setUsedData = (usedData) => {
+    this.usedData = usedData;
   };
 
   @action
@@ -419,21 +453,37 @@ export class PublicationsStore {
    */
   @action
   fetchFacets = async () => {
+    // Cancel any in-flight facets request
+    if (this.facetsAbortController) {
+      console.info('⚠️ Cancelling previous facets request');
+      this.facetsAbortController.abort();
+    }
+
+    // Create new AbortController for this request
+    this.facetsAbortController = new AbortController();
+    const signal = this.facetsAbortController.signal;
+
     this.setFacetsLoadingStatus(true);
 
     try {
-      // Build base query from current filters and add _facets=extend
+      // Build base query from current filters and add _facets=extend and _extend parameters
       const baseQuery = {
         ...this.search_query,
         _limit: 0, // We only want facets, not results
         _facets: 'extend', // Request extended facets
+        _extend: '_schema,_register',
       };
+
+      // If _search is present, add _fuzzy=true for fuzzy relevance scoring
+      if (baseQuery._search) {
+        baseQuery._fuzzy = true;
+      }
 
       // Remove pagination parameters since we're not fetching results
       delete baseQuery._page;
 
       const queryString = AcBuildURLSearchParams(baseQuery);
-      const fullUrl = `${commongroundApiUrl()}/opencatalogi/api/publications?_source=index&${queryString}`;
+      const fullUrl = `${commongroundApiUrl()}/opencatalogi/api/publications?${queryString}`;
 
       console.group('🚀 INDEPENDENT FACETS API CALL');
       console.info('FACETS QUERY:', toJS(baseQuery));
@@ -444,6 +494,7 @@ export class PublicationsStore {
         method: 'GET',
         headers: getAuthHeaders(),
         credentials: 'include',
+        signal, // Add abort signal
       }).then((res) => {
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);
@@ -528,25 +579,105 @@ export class PublicationsStore {
         this.setFacets({});
       }
     } catch (error) {
+      // Don't log error if request was aborted (expected behavior)
+      if (error.name === 'AbortError') {
+        console.info('✅ Facets request cancelled');
+        return;
+      }
       console.error('Error fetching facets:', error);
       this.setFacets({});
     } finally {
       this.setFacetsLoadingStatus(false);
+      // Clear the controller reference after request completes
+      this.facetsAbortController = null;
+    }
+  };
+
+  @action
+  enrichPublications = (publications, responseMetadata) => {
+    if (!publications || publications.length === 0 || !responseMetadata) {
+      return publications;
+    }
+
+    console.group('🔍 Enriching publications with schema and register data');
+    console.info('Publications to enrich:', publications.length);
+
+    try {
+      // Extract register and schema data from response metadata
+      const registers = responseMetadata.registers || {};
+      const schemas = responseMetadata.schemas || {};
+
+      console.info('Available registers:', Object.keys(registers));
+      console.info('Available schemas:', Object.keys(schemas));
+
+      // Enrich publications by replacing IDs with full objects
+      const enrichedPublications = publications.map((pub) => {
+        if (!pub['@self']) {
+          return pub;
+        }
+
+        const enriched = { ...pub };
+        const registerId = pub['@self'].register;
+        const schemaId = pub['@self'].schema;
+
+        // Replace register ID with full register object
+        if (registerId && registers[registerId]) {
+          enriched['@self'] = {
+            ...enriched['@self'],
+            register: registers[registerId],
+          };
+        }
+
+        // Replace schema ID with full schema object
+        if (schemaId && schemas[schemaId]) {
+          enriched['@self'] = {
+            ...enriched['@self'],
+            schema: schemas[schemaId],
+          };
+        }
+
+        return enriched;
+      });
+
+      console.info('✅ Publications enriched successfully');
+      console.groupEnd();
+
+      return enrichedPublications;
+    } catch (error) {
+      console.error('❌ Error enriching publications:', error);
+      console.groupEnd();
+      return publications; // Return original if enrichment fails
     }
   };
 
   @action
   fetchPublications = async () => {
+    // Cancel any in-flight publications request
+    if (this.publicationsAbortController) {
+      console.info('⚠️ Cancelling previous publications request');
+      this.publicationsAbortController.abort();
+    }
+
+    // Create new AbortController for this request
+    this.publicationsAbortController = new AbortController();
+    const signal = this.publicationsAbortController.signal;
+
     this.loading.status = true;
 
-    // Build query including current filters/facets and request names data (no facetable)
+    // Build query including current filters/facets and extend parameters
+    // Include _names to get UUID-to-name mappings in response
     const baseQuery = {
       ...this.search_query,
-      _related: true,
-      _relatedNames: true,
+      _extend: '_schema,_register,_names',
     };
+
+    // If _search is present, add _fuzzy=true for fuzzy relevance scoring
+    if (baseQuery._search) {
+      baseQuery._fuzzy = true;
+    }
+
     const queryString = AcBuildURLSearchParams(baseQuery);
-    const fullUrl = `${commongroundApiUrl()}/opencatalogi/api/publications?_source=index&${queryString}`;
+    const fullUrl = `${commongroundApiUrl()}/opencatalogi/api/publications?${queryString}`;
 
     console.group('🚀 INDEPENDENT PUBLICATIONS API CALL');
     console.info('SEARCH QUERY:', toJS(baseQuery));
@@ -558,6 +689,7 @@ export class PublicationsStore {
       method: 'GET',
       headers: getAuthHeaders(),
       credentials: 'include', // Include cookies like the browser
+      signal, // Add abort signal
     })
       .then((response) => {
         if (!response.ok) {
@@ -565,24 +697,33 @@ export class PublicationsStore {
         }
         return response.json();
       })
-      .then((response) => {
-        // Set search results immediately
-        this.setItems(response.results);
+      .then(async (response) => {
+        // Enrich publications with full schema and register data from response metadata
+        const enrichedResults = this.enrichPublications(
+          response.results,
+          response['@self']
+        );
+
+        // Set enriched search results
+        this.setItems(enrichedResults);
 
         // Process related names data to populate the names cache
-        if (response.relatedNames && app.store?.object) {
-          console.group('🏷️ PROCESSING RELATED NAMES FROM SEARCH');
+        // API may return names in response['@self'].names or response.relatedNames
+        const namesData = response['@self']?.names || response.relatedNames;
+        
+        if (namesData && app.store?.object) {
+          console.group('🏷️ PROCESSING NAMES FROM SEARCH (_extend=_names)');
           console.info(
-            'Related names received:',
-            Object.keys(response.relatedNames).length,
+            'Names received:',
+            Object.keys(namesData).length,
             'entries'
           );
-          console.info('Names data:', response.relatedNames);
-          app.store.object.processRelatedNamesFromResponse(response);
+          console.info('Names data sample:', Object.keys(namesData).slice(0, 5));
+          app.store.object.setNamesInCache(namesData);
           console.info(
             'Names cache after processing:',
             Object.keys(app.store.object.namesCache).length,
-            'entries'
+            'total entries'
           );
           console.groupEnd();
         } else if (app.store?.object && response.results?.length > 0) {
@@ -631,6 +772,7 @@ export class PublicationsStore {
           console.info('No names processing needed');
           console.info('Has object store:', !!app.store?.object);
           console.info('Results count:', response.results?.length || 0);
+          console.info('Has names in @self:', !!response['@self']?.names);
           console.info('Has relatedNames:', !!response.relatedNames);
           console.groupEnd();
         }
@@ -638,11 +780,23 @@ export class PublicationsStore {
         // Clean up response and set pagination
         delete response.results;
         delete response.relatedNames;
+        if (response['@self']) {
+          delete response['@self'].names;
+        }
         this.setPagination(response);
       })
-      .catch((e) => console.error(e))
+      .catch((e) => {
+        // Don't log error if request was aborted (expected behavior)
+        if (e.name === 'AbortError') {
+          console.info('✅ Publications request cancelled');
+          return;
+        }
+        console.error(e);
+      })
       .finally(() => {
         this.setLoadingStatus(false);
+        // Clear the controller reference after request completes
+        this.publicationsAbortController = null;
       });
   };
 
@@ -683,12 +837,87 @@ export class PublicationsStore {
             ...this.defaultQuery,
             _related: true,
             _relatedNames: true,
+            '_extend[]': ['_schema', 'compliancy'],
           })
         ).toString()
       )
       .then((response) => {
         console.group('📄 PROCESSING SINGLE PUBLICATION RESPONSE');
         console.info('Publication response:', response);
+        console.info('response[@self].schema:', response['@self']?.schema);
+        console.info('response[@self].schemas:', response['@self']?.schemas);
+
+        // Normalize schema location: move from @self.schemas[uuid] to @self.schema
+        // Check if schemas object exists and schema is just an ID (not the full object)
+        if (response['@self']?.schemas && response['@self']?.schema) {
+          const schemaId = response['@self'].schema;
+          const schemasObj = response['@self'].schemas;
+          
+          console.info('Schema normalization path 1: schema exists as ID');
+          console.info('schemaId:', schemaId, 'type:', typeof schemaId);
+          console.info('schemasObj:', schemasObj);
+          
+          // If schema is just an ID string/number and we have the full object in schemas
+          if (typeof schemaId !== 'object' && schemasObj[schemaId]) {
+            response['@self'].schema = schemasObj[schemaId];
+            console.info('✅ Normalized schema from ID to full object using @self.schemas');
+            
+            // Cache the schema slug for quick lookups
+            if (schemasObj[schemaId]?.slug) {
+              schemaCache.set(String(schemaId), schemasObj[schemaId].slug);
+              console.info(`✅ Cached schema slug: ${schemaId} -> ${schemasObj[schemaId].slug}`);
+            } else {
+              console.warn('⚠️ Schema object has no slug property:', schemasObj[schemaId]);
+            }
+          } else if (typeof schemaId === 'object') {
+            console.info('Schema is already an object, checking for slug');
+            if (schemaId?.id && schemaId?.slug) {
+              schemaCache.set(String(schemaId.id), schemaId.slug);
+              console.info(`✅ Cached schema slug from object: ${schemaId.id} -> ${schemaId.slug}`);
+            }
+          }
+        } else if (response['@self']?.schemas && !response['@self']?.schema) {
+          console.info('Schema normalization path 2: no schema, using first from schemas');
+          // Fallback: if schema doesn't exist but schemas does, use the first one
+          const schemasObj = response['@self'].schemas;
+          const schemaIds = Object.keys(schemasObj);
+          if (schemaIds.length > 0) {
+            response['@self'].schema = schemasObj[schemaIds[0]];
+            console.info('✅ Normalized schema location from @self.schemas to @self.schema');
+            
+            // Cache the schema slug for quick lookups
+            const schemaId = schemaIds[0];
+            if (schemasObj[schemaId]?.slug) {
+              schemaCache.set(String(schemaId), schemasObj[schemaId].slug);
+              console.info(`✅ Cached schema slug: ${schemaId} -> ${schemasObj[schemaId].slug}`);
+            }
+          }
+        } else {
+          console.warn('⚠️ No schema normalization needed or possible');
+          console.info('Has @self.schemas?', !!response['@self']?.schemas);
+          console.info('Has @self.schema?', !!response['@self']?.schema);
+        }
+
+        // Normalize register location: move from @self.registers[uuid] to @self.register
+        // Check if registers object exists and register is just an ID (not the full object)
+        if (response['@self']?.registers && response['@self']?.register) {
+          const registerId = response['@self'].register;
+          const registersObj = response['@self'].registers;
+          
+          // If register is just an ID string/number and we have the full object in registers
+          if (typeof registerId !== 'object' && registersObj[registerId]) {
+            response['@self'].register = registersObj[registerId];
+            console.info('✅ Normalized register from ID to full object using @self.registers');
+          }
+        } else if (response['@self']?.registers && !response['@self']?.register) {
+          // Fallback: if register doesn't exist but registers does, use the first one
+          const registersObj = response['@self'].registers;
+          const registerIds = Object.keys(registersObj);
+          if (registerIds.length > 0) {
+            response['@self'].register = registersObj[registerIds[0]];
+            console.info('✅ Normalized register location from @self.registers to @self.register');
+          }
+        }
 
         // Process related names data to populate the names cache
         if (response.relatedNames && app.store?.object) {
@@ -764,6 +993,21 @@ export class PublicationsStore {
   };
 
   @action
+  fetchUsed = async (id) => {
+    this.loading.status = true;
+
+    app.store.api.publications
+      .used(id)
+      .then((response) => {
+        this.setUsedData(response);
+      })
+      .catch((e) => console.error(e))
+      .finally(() => {
+        this.setLoadingStatus(false);
+      });
+  };
+
+  @action
   resetPublication = () => {
     this.single = null;
     this.setError(null);
@@ -777,6 +1021,11 @@ export class PublicationsStore {
   @action
   resetRelations = () => {
     this.relations = null;
+  };
+
+  @action
+  resetUsedData = () => {
+    this.usedData = null;
   };
 
   @action

@@ -10,7 +10,7 @@ import {
   AcTab,
   AcTabPanel,
 } from '@atoms';
-import { AcLoader } from '@components';
+import { AcLoader, ConExternalLink } from '@components';
 import {
   Heading,
   Paragraph,
@@ -491,7 +491,8 @@ const AcMyAccount = ({ store }) => {
                           Deelnames
                         </AcButton>
 
-                        {fullActiveOrganisation &&
+                        {/* Publish/Depublish actions - LEGACY: No longer needed */}
+                        {/* {fullActiveOrganisation &&
                           !fullActiveOrganisation['@self']?.published && (
                             <AcButton
                               style='button'
@@ -528,7 +529,7 @@ const AcMyAccount = ({ store }) => {
                             >
                               Depubliceren
                             </AcButton>
-                          )}
+                          )} */}
                       </div>
                     </div>
                   </div>
@@ -537,10 +538,10 @@ const AcMyAccount = ({ store }) => {
                       <div style={{ flex: 2 }}>
                         <Heading level={4}>
                           <div className='con-beheer-details--header-container'>
-                            {fullActiveOrganisation?.['@self']?.image && (
+                            {fullActiveOrganisation?.['@self']?.image || fullActiveOrganisation?.logo && (
                               <ConLogoPreview
                                 className='con-beheer-details--logo-container'
-                                logoUrl={fullActiveOrganisation?.['@self']?.image}
+                                logoUrl={fullActiveOrganisation?.['@self']?.image || fullActiveOrganisation?.logo}
                               />
                             )}
 
@@ -579,25 +580,11 @@ const AcMyAccount = ({ store }) => {
                         <br />
                         <br />
                         <div className='ac-account-review__header-info'>
-                          <div>
-                            Website:
-                            <div>
-                              {fullActiveOrganisation?.website ? (
-                                <Link
-                                  href={
-                                    fullActiveOrganisation.website.startsWith('http')
-                                      ? fullActiveOrganisation.website
-                                      : `https://${fullActiveOrganisation.website}`
-                                  }
-                                  target='_blank'
-                                  rel='noreferrer'
-                                >
-                                  {fullActiveOrganisation.website}
-                                </Link>
-                              ) : (
-                                '-'
-                              )}
-                            </div>
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <span>Website:</span>
+                            <ConExternalLink
+                              href={fullActiveOrganisation?.website}
+                            />
                           </div>
                           <div>
                             Telefoon:
@@ -898,10 +885,16 @@ const AcMyAccount = ({ store }) => {
               showModal={showOrgModal}
               onClose={() => setShowOrgModal(false)}
               onSuccess={handleOrgFormSuccess}
-              type='organisaties'
+              type='organisatie'
               isEdit={true}
               fieldConfigs={{
                 status: {
+                  visible: false,
+                },
+                beschrijvingKort: {
+                  visible: false,
+                },
+                beschrijvingLang: {
                   visible: false,
                 },
               }}
@@ -1018,7 +1011,7 @@ const AccountOrganisationTabs = observer(({ store }) => {
             ).length;
             return (
               <AcTab key={`uses-${schema.id}`} selected={tabIndex === idx}>
-                {(schema.slug === 'product'
+                {(schema.slug === 'suite'
                   ? 'Producten'
                   : schema.slug === 'dienst'
                   ? 'Diensten'
@@ -1039,7 +1032,7 @@ const AccountOrganisationTabs = observer(({ store }) => {
                 key={`used-${schema.id}`}
                 selected={tabIndex === idx + usesSchemas.length}
               >
-                {(schema.slug === 'product'
+                {(schema.slug === 'suite'
                   ? 'Producten'
                   : schema.slug === 'dienst'
                   ? 'Diensten'

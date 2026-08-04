@@ -74,7 +74,7 @@ const AcViews = ({ store: { gemma } }) => {
 
         try {
           const response = await fetch(
-            `${baseUrl}/openconnector/api/endpoint/elements?identifier=${node.elementRef}`
+            `${baseUrl}/openregister/api/objects/vng-gemma/element?identifier=${node.elementRef}`
           );
           const data = await response.json();
 
@@ -111,7 +111,7 @@ const AcViews = ({ store: { gemma } }) => {
 
           try {
             const response = await fetch(
-              `${baseUrl}/openconnector/api/endpoint/elements?identifier=${child.elementRef}`
+              `${baseUrl}/openregister/api/objects/vng-gemma/element?identifier=${child.elementRef}`
             );
             const data = await response.json();
 
@@ -168,7 +168,7 @@ const AcViews = ({ store: { gemma } }) => {
 
           try {
             const response = await fetch(
-              `${baseUrl}/openconnector/api/endpoint/relationships?identifier=${relationship.relationshipRef}`
+              `${baseUrl}/openregister/api/objects/vng-gemma/relationships?identifier=${relationship.relationshipRef}`
             );
             const data = await response.json();
 

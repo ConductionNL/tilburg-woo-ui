@@ -1,6 +1,10 @@
 import React, { memo, useEffect } from 'react';
 import ReactSelect from 'react-select';
-import { Paragraph, Link } from '@utrecht/component-library-react/dist/css-module';
+import {
+  Paragraph,
+  Link,
+  Heading,
+} from '@utrecht/component-library-react/dist/css-module';
 
 /**
  * Referentiecomponenten Stage Component for Gebruik Form
@@ -116,11 +120,9 @@ const ConGebruikStepReferentiecomponenten = memo(
         </h2>
 
         <Paragraph className='con-form-wizard-paragraph'>
-          <strong>Koppel uw gebruik aan de GEMMA</strong>
-          <br />
-          Koppel uw gebruik aan de GEMMA-referentiecomponenten die de gemeentelijke
-          functionaliteit weergeven. Dit helpt gemeenten te zien hoe uw gebruik past
-          in hun architectuur. Een{' '}
+          Door de applicatie te koppelen aan referentiecomponenten, maakt u
+          inzichtelijk waarvoor u de applicatie gebruikt. Dit bevordert kennisdeling
+          met andere gemeenten.{' '}
           <Link
             href={
               'https://www.gemmaonline.nl/wiki/Overzicht_alle_referentiecomponenten'
@@ -131,7 +133,7 @@ const ConGebruikStepReferentiecomponenten = memo(
               display: 'inline-block',
             }}
           >
-            overzicht van alle referentiecomponenten
+            Een overzicht van alle referentiecomponenten
           </Link>{' '}
           vindt u op GEMMA Online.
         </Paragraph>
@@ -200,86 +202,141 @@ const ConGebruikStepReferentiecomponenten = memo(
           if (applicatieKeuze === 'bestaand' && applicatieRefIds.length > 0) {
             // Existing flow: show two dropdowns
             return (
-              <div
-                style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
-              >
-                <div>
-                  <h3 style={{ marginBottom: '0.5rem' }}>
-                    Referentiecomponenten in de geselecteerde applicatie
-                  </h3>
-                  <ReactSelect
-                    value={inApplicatieOptions.filter((opt) =>
-                      currentRefs.includes(String(opt.value))
-                    )}
-                    onChange={(selectedOptions) => {
-                      const selectedInApp = selectedOptions
-                        ? selectedOptions.map((opt) => opt.value)
-                        : [];
-                      const selectedNotInApp = notInApplicatieOptions
-                        .filter((opt) => currentRefs.includes(String(opt.value)))
-                        .map((opt) => opt.value);
-                      const refsArray = [...selectedInApp, ...selectedNotInApp];
-                      setGebruikData('gebruiktVoorReferentiecomponenten', refsArray);
-                      updateReferentieComponentenWithStandards(refsArray);
-                    }}
-                    options={inApplicatieOptions.sort((a, b) =>
-                      a.label.localeCompare(b.label)
-                    )}
-                    placeholder={
-                      referentieComponentenLoading
-                        ? 'Laden...'
-                        : 'Selecteer referentiecomponenten uit de applicatie'
-                    }
-                    isMulti={true}
-                    isSearchable={true}
-                    isLoading={referentieComponentenLoading}
-                    isDisabled={loading}
-                    closeMenuOnSelect={false}
-                    styles={commonSelectStyles}
-                  />
+              <>
+                <Heading level={4} style={{ marginBottom: '1.5rem' }}>
+                  Selecteer de referentiecomponenten waarvoor u de applicatie
+                  gebruikt
+                  <span className='required-indicator' aria-hidden='true'>
+                    *
+                  </span>
+                  <span className='sr-only'>(verplicht)</span>
+                </Heading>
+                <div
+                  style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
+                >
+                  <div>
+                    <label className='utrecht-form-label'>
+                      <Heading level={4}>
+                        Referentiecomponenten aangegeven door leverancier
+                      </Heading>
+                    </label>
+                    <label
+                      id='refcomp-select-label-leverancier'
+                      className='sr-only'
+                      htmlFor='refcomp-select-leverancier'
+                    >
+                      Selecteer referentiecomponenten aangegeven door leverancier
+                    </label>
+                    <ReactSelect
+                      inputId='refcomp-select-leverancier'
+                      aria-labelledby='refcomp-select-label-leverancier'
+                      value={inApplicatieOptions.filter((opt) =>
+                        currentRefs.includes(String(opt.value))
+                      )}
+                      onChange={(selectedOptions) => {
+                        const selectedInApp = selectedOptions
+                          ? selectedOptions.map((opt) => opt.value)
+                          : [];
+                        const selectedNotInApp = notInApplicatieOptions
+                          .filter((opt) => currentRefs.includes(String(opt.value)))
+                          .map((opt) => opt.value);
+                        const refsArray = [...selectedInApp, ...selectedNotInApp];
+                        setGebruikData(
+                          'gebruiktVoorReferentiecomponenten',
+                          refsArray
+                        );
+                        updateReferentieComponentenWithStandards(refsArray);
+                      }}
+                      options={inApplicatieOptions.sort((a, b) =>
+                        a.label.localeCompare(b.label)
+                      )}
+                      placeholder={
+                        referentieComponentenLoading
+                          ? 'Laden...'
+                          : 'Selecteer referentiecomponenten aangegeven door leverancier'
+                      }
+                      isMulti={true}
+                      isSearchable={true}
+                      isLoading={referentieComponentenLoading}
+                      isDisabled={loading}
+                      closeMenuOnSelect={false}
+                      styles={commonSelectStyles}
+                    />
+                  </div>
+                  <div>
+                    <label className='utrecht-form-label'>
+                      <Heading level={4}>Referentiecomponenten toevoegen</Heading>
+                    </label>
+                    <label
+                      id='refcomp-select-label-toevoegen'
+                      className='sr-only'
+                      htmlFor='refcomp-select-toevoegen'
+                    >
+                      Selecteer referentiecomponenten toevoegen
+                    </label>
+                    <ReactSelect
+                      inputId='refcomp-select-toevoegen'
+                      aria-labelledby='refcomp-select-label-toevoegen'
+                      value={notInApplicatieOptions.filter((opt) =>
+                        currentRefs.includes(String(opt.value))
+                      )}
+                      onChange={(selectedOptions) => {
+                        const selectedNotInApp = selectedOptions
+                          ? selectedOptions.map((opt) => opt.value)
+                          : [];
+                        const selectedInApp = inApplicatieOptions
+                          .filter((opt) => currentRefs.includes(String(opt.value)))
+                          .map((opt) => opt.value);
+                        const refsArray = [...selectedInApp, ...selectedNotInApp];
+                        setGebruikData(
+                          'gebruiktVoorReferentiecomponenten',
+                          refsArray
+                        );
+                        updateReferentieComponentenWithStandards(refsArray);
+                      }}
+                      options={notInApplicatieOptions.sort((a, b) =>
+                        a.label.localeCompare(b.label)
+                      )}
+                      placeholder={
+                        referentieComponentenLoading
+                          ? 'Laden...'
+                          : 'Selecteer andere referentiecomponenten'
+                      }
+                      isMulti={true}
+                      isSearchable={true}
+                      isLoading={referentieComponentenLoading}
+                      isDisabled={loading}
+                      closeMenuOnSelect={false}
+                      styles={commonSelectStyles}
+                    />
+                  </div>
                 </div>
-                <div>
-                  <h3 style={{ marginBottom: '0.5rem' }}>
-                    Andere referentiecomponenten
-                  </h3>
-                  <ReactSelect
-                    value={notInApplicatieOptions.filter((opt) =>
-                      currentRefs.includes(String(opt.value))
-                    )}
-                    onChange={(selectedOptions) => {
-                      const selectedNotInApp = selectedOptions
-                        ? selectedOptions.map((opt) => opt.value)
-                        : [];
-                      const selectedInApp = inApplicatieOptions
-                        .filter((opt) => currentRefs.includes(String(opt.value)))
-                        .map((opt) => opt.value);
-                      const refsArray = [...selectedInApp, ...selectedNotInApp];
-                      setGebruikData('gebruiktVoorReferentiecomponenten', refsArray);
-                      updateReferentieComponentenWithStandards(refsArray);
-                    }}
-                    options={notInApplicatieOptions.sort((a, b) =>
-                      a.label.localeCompare(b.label)
-                    )}
-                    placeholder={
-                      referentieComponentenLoading
-                        ? 'Laden...'
-                        : 'Selecteer andere referentiecomponenten'
-                    }
-                    isMulti={true}
-                    isSearchable={true}
-                    isLoading={referentieComponentenLoading}
-                    isDisabled={loading}
-                    closeMenuOnSelect={false}
-                    styles={commonSelectStyles}
-                  />
-                </div>
-              </div>
+              </>
             );
           } else {
             // Non-existing flow or no applicatie refs: show single dropdown with all options
             return (
               <div>
+                <label className='utrecht-form-label'>
+                  <Heading level={4}>
+                    Selecteer de referentiecomponenten waarvoor u de applicatie
+                    gebruikt
+                    <span className='required-indicator' aria-hidden='true'>
+                      *
+                    </span>
+                    <span className='sr-only'>(verplicht)</span>
+                  </Heading>
+                </label>
+                <label
+                  id='refcomp-select-label-gebruik'
+                  className='sr-only'
+                  htmlFor='refcomp-select-gebruik'
+                >
+                  Selecteer de referentiecomponenten waarvoor u de applicatie gebruikt
+                </label>
                 <ReactSelect
+                  inputId='refcomp-select-gebruik'
+                  aria-labelledby='refcomp-select-label-gebruik'
                   value={referentieComponentenOptions.filter((opt) =>
                     currentRefs.includes(String(opt.value))
                   )}

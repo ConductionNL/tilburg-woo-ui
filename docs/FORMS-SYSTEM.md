@@ -10,7 +10,7 @@ The Tilburg WOO UI application features a comprehensive forms system that allows
 
 **Purpose**: Register new organizations in the system  
 **Component**: `AcRegister` (shared with legacy /register route)  
-**API Endpoint**: `/openconnector/api/endpoint/register`
+**API Endpoint**: `/openregister/api/objects/vng-gemma/register`
 
 **Form Fields**:
 - Organization name, website, links
@@ -23,7 +23,7 @@ The Tilburg WOO UI application features a comprehensive forms system that allows
 
 **Purpose**: Register usage of products/services  
 **Component**: `AcFormsGebruik`  
-**API Endpoint**: `/openconnector/api/endpoint/gebruik`
+**API Endpoint**: `/openregister/api/objects/vng-gemma/gebruik`
 
 **Specialized for**: Tracking how organizations use specific products or services in the catalog.
 
@@ -31,7 +31,7 @@ The Tilburg WOO UI application features a comprehensive forms system that allows
 
 **Purpose**: Register new products in the catalog  
 **Component**: `AcFormsProduct`  
-**API Endpoint**: `/openconnector/api/endpoint/product`
+**API Endpoint**: `/openregister/api/objects/vng-gemma/product`
 
 **Specialized for**: Adding new software products, services, or solutions to the catalog.
 
@@ -39,7 +39,7 @@ The Tilburg WOO UI application features a comprehensive forms system that allows
 
 **Purpose**: Register system integrations/connections  
 **Component**: `AcFormsKoppeling`  
-**API Endpoint**: `/openconnector/api/endpoint/koppeling`
+**API Endpoint**: `/openregister/api/objects/vng-gemma/koppeling`
 
 **Specialized for**: Documenting technical integrations between systems.
 
@@ -70,7 +70,7 @@ const FormComponent = () => {
   // Submission Handler
   const handleRegister = async () => {
     // POST to form-specific endpoint
-    const response = await fetch(`${BASE_URL}/openconnector/api/endpoint/{type}`);
+    const response = await fetch(`${BASE_URL}/openregister/api/objects/vng-gemma/{type}`);
   };
 
   // Multi-step UI with ProcessSteps component
@@ -557,7 +557,7 @@ To add a new form type:
 3. **Configure API**:
    ```javascript
    // Change endpoint in handleRegister
-   `${BASE_URL}/openconnector/api/endpoint/{type}`
+   `${BASE_URL}/openregister/api/objects/vng-gemma/{type}`
    ```
 
 4. **Export Component**:
@@ -590,10 +590,10 @@ Form testing checklist:
 
 | Form Type | URL | Endpoint | Purpose |
 |-----------|-----|----------|---------|
-| Register | /forms/register | /openconnector/api/endpoint/register | Organization registration |
-| Gebruik | /forms/gebruik | /openconnector/api/endpoint/gebruik | Usage registration |
-| Product | /forms/product | /openconnector/api/endpoint/product | Product registration |
-| Koppeling | /forms/koppeling | /openconnector/api/endpoint/koppeling | Integration registration |
+| Register | /forms/register | /openregister/api/objects/vng-gemma/register | Organization registration |
+| Gebruik | /forms/gebruik | /openregister/api/objects/vng-gemma/gebruik | Usage registration |
+| Product | /forms/product | /openregister/api/objects/vng-gemma/product | Product registration |
+| Koppeling | /forms/koppeling | /openregister/api/objects/vng-gemma/koppeling | Integration registration |
 
 ## Troubleshooting
 

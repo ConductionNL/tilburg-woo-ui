@@ -171,7 +171,7 @@ const AcPublication = observer(({ store: { publications } }) => {
         if (get_single?.['@self']?.schema?.slug === 'organisatie') {
           return <AcPublicationOrganisation />;
         }
-        if (get_single?.['@self']?.schema?.slug === 'product') {
+        if (get_single?.['@self']?.schema?.slug === 'suite') {
           return <AcPublicationProduct />;
         }
         if (get_single?.['@self']?.schema?.slug === 'module') {

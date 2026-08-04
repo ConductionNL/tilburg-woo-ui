@@ -1,7 +1,5 @@
 import React from 'react';
 import { AcColumn } from '@atoms';
-import { AcLink } from '@src/molecules';
-import { TOOLTIP_ID } from '@src/index.web';
 import { VISUALS } from '@constants';
 import { byNested } from '../utils/sorters';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
@@ -63,9 +61,25 @@ const BeheerPageConfigFactory = {
           modals: [...baseConfig.modals],
         };
 
+      case 'moduleversie':
+      case 'applicatieversie':
+      case 'applicatiesversie':
+        return {
+          ...baseConfig,
+          schemaSlug: 'moduleversie',
+          paginationKey: 'applicatiesversie',
+          title: 'Applicatie Versies',
+          routeType: 'applicatiesversie',
+          defaultHeaders: ['naam', 'versie', 'status', 'releaseDatum'],
+          customHeaders: {},
+          dynamicActionFilter: ({ slug }) => !['module'].includes(slug),
+          modals: [...baseConfig.modals],
+        };
+
       // removed plural alias 'extendviews'
       case 'module':
       case 'applicaties':
+      case 'applications':
       case 'modules':
         return {
           ...baseConfig,
@@ -75,6 +89,8 @@ const BeheerPageConfigFactory = {
           routeType: 'applicaties',
           disableRelatedCreateActions: true, // Enable koppeling toevoegen voor applicaties
           disableDeleteAction: false, // Enable delete action voor applicaties
+          disableImport: true, // Import not needed for applicaties
+          disableView: true, // View not needed for applicaties
           extend: ['moduleVersies'],
           defaultHeaders: [
             'naam',
@@ -134,7 +150,7 @@ const BeheerPageConfigFactory = {
               icon: <VISUALS.CLIPBOARD_CHECK />,
               condition: (row) => row?.['@self']?.id || row?.id,
               action: 'wizard',
-              wizardPath: '/forms/gebruik',
+              wizardPath: '/forms/gebruik/applicatie',
               // Dynamic label and params based on user role
               getLabel: (userGroups) =>
                 userGroups.includes('gebruik-beheerder')
@@ -182,12 +198,15 @@ const BeheerPageConfigFactory = {
         };
 
       case 'diensten':
+      case 'dienst':
         return {
           ...baseConfig,
-          schemaSlug: 'voorzieningaanbod',
+          schemaSlug: 'dienst',
           paginationKey: 'diensten',
-          title: 'Beheer Dienst',
+          title: 'Diensten',
           routeType: 'diensten',
+          disableImport: true, // Import not needed for diensten
+          disableView: true, // View not needed for diensten
           defaultHeaders: ['name', 'voorzieningName', 'email'],
           customHeaders: {
             voorziening: {
@@ -223,231 +242,54 @@ const BeheerPageConfigFactory = {
                 (r) => r?.leverancier?.contactgegevens?.email
               ),
             },
-          },
-          modals: [...baseConfig.modals],
-        };
+            type: {
+              id: 'type',
+              label: 'Type',
+              key: 'type',
+              customContent: (row) => {
+                const rawType = row?.type;
+                if (!rawType) return '-';
 
-      case 'voorzieningen-versie':
-        return {
-          ...baseConfig,
-          schemaSlug: 'voorzieningversie',
-          paginationKey: 'voorzieningen-versie',
-          title: 'Beheer Voorzieningen Versie',
-          routeType: 'voorzieningen-versie',
-          defaultHeaders: ['name', 'versienummer', 'releaseDatum', 'status'],
-          customHeaders: {
-            kwetsbaarheden: {
-              id: 'kwetsbaarheden',
-              label: 'Kwetsbaarheden',
-              key: '',
-              customContent: (row) => {
-                return (
-                  row?.kwetsbaarheden
-                    ?.map((kwetsbaarheid) => kwetsbaarheid.titel)
-                    .join(', ') || '-'
-                );
-              },
-              sortComparator: byNested((r) => r?.kwetsbaarheden?.[0]?.titel),
-            },
-            voorzieningName: {
-              id: 'voorzieningName',
-              label: 'Applicatie',
-              key: '',
-              customContent: (row) => {
-                return row?.voorziening?.naam || '-';
-              },
-              sortComparator: byNested((r) => r?.voorziening?.naam),
-            },
-          },
-          modals: [...baseConfig.modals],
-        };
-
-      case 'moduleversie':
-      case 'applicatieversie':
-      case 'applicatiesversie':
-        return {
-          ...baseConfig,
-          schemaSlug: 'moduleversie',
-          paginationKey: 'applicatiesversie',
-          title: 'Applicatie Versies',
-          routeType: 'applicatiesversie',
-          defaultHeaders: ['naam', 'versie', 'status', 'releaseDatum'],
-          customHeaders: {},
-          dynamicActionFilter: ({ slug }) => !['module'].includes(slug),
-          modals: [...baseConfig.modals],
-        };
-
-      case 'organisaties':
-        return {
-          ...baseConfig,
-          schemaSlug: 'organisatie',
-          paginationKey: 'organisaties',
-          title: 'Beheer Organisaties',
-          routeType: 'organisaties',
-          defaultHeaders: [
-            'organizationName',
-            'website',
-            'beoordeling',
-            'e-mailadres',
-            'type',
-          ],
-          customHeaders: {
-            naam: {
-              id: 'organizationName',
-              label: 'Naam',
-              key: 'naam',
-              customContent: (row) => {
-                return row.naam || row.naam || '-';
-              },
-              sortComparator: byNested((r) => r?.naam),
-            },
-            contactgegevens: {
-              id: 'contactDetails',
-              label: 'Contactgegevens',
-              key: 'contactgegevens',
-              customContent: (row) => {
-                if (!row?.contactgegevens) return '-';
-                return (
-                  <AcColumn key={row.id}>
-                    <span>
-                      {row.contactgegevens.voornaam}{' '}
-                      {row.contactgegevens.tussenvoegsel}{' '}
-                      {row.contactgegevens.achternaam} / {row.contactgegevens.email}{' '}
-                      / {row.contactgegevens.telefoon}
-                    </span>
-                  </AcColumn>
-                );
-              },
-              sortComparator: byNested((r) => r?.contactgegevens?.voornaam),
-            },
-            website: {
-              id: 'website',
-              label: 'Website',
-              key: 'website',
-              customContent: (row) => {
-                if (!row.website) {
-                  return '-';
-                }
-
-                try {
-                  const url = new URL(row.website);
-                  return (
-                    <AcLink href={url.href} target='_blank'>
-                      {url.href}
-                    </AcLink>
-                  );
-                } catch {
-                  return row.website;
-                }
-              },
-            },
-          },
-          statusIcon: {
-            customContent: (row) => (
-              <div className='ac-beheer-organisaties-name-container'>
-                <div
-                  className='ac-beheer-organisaties-name-container__icon'
-                  data-tooltip-id={TOOLTIP_ID}
-                  data-tooltip-content={
-                    row['@self'].published ? 'Gepubliceerd' : 'Niet gepubliceerd'
+                // Check if it's a string that looks like a JSON array
+                if (typeof rawType === 'string' && rawType.trim().startsWith('[')) {
+                  try {
+                    const parsed = JSON.parse(rawType);
+                    if (Array.isArray(parsed)) {
+                      return parsed
+                        .map((item) =>
+                          typeof item === 'string' ? item : String(item)
+                        )
+                        .join(', ');
+                    }
+                  } catch (e) {
+                    // If parsing fails, return as-is
+                    return rawType;
                   }
-                >
-                  {row['@self'].published ? (
-                    <VISUALS.CIRCLE_CHECK className='ac-beheer-publish-icon__check' />
-                  ) : (
-                    <VISUALS.CIRCLE_EXCLAMATION className='ac-beheer-publish-icon__exclamation' />
-                  )}
-                </div>
-              </div>
-            ),
-            customHeader: (
-              <div className='ac-beheer-organisaties-name-container__icon'></div>
-            ),
-          },
-          uniqueActions: [
-            {
-              key: 'activate',
-              label: 'Activeren',
-              icon: <VISUALS.CHECK />,
-              condition: (row) => row.beoordeling?.toLowerCase?.() !== 'actief',
-              action: 'activate',
-            },
-            {
-              key: 'deactivate',
-              label: 'Deactiveren',
-              icon: <VISUALS.CLOSE />,
-              condition: (row) => row.beoordeling?.toLowerCase?.() === 'actief',
-              action: 'deactivate',
-            },
-            {
-              key: 'depublish',
-              label: 'Depubliceren',
-              icon: <VISUALS.PUBLISH_OFF />,
-              condition: (row) =>
-                row['@self'].published &&
-                row?.beoordeling?.toLowerCase?.() !== 'concept',
-              action: 'depublish',
-            },
-            {
-              key: 'addDeelname',
-              label: 'Deelname toevoegen',
-              icon: <VISUALS.PLUS />,
-              condition: (row) => row?.beoordeling?.toLowerCase?.() !== 'concept',
-              action: 'addDeelname',
-            },
-            {
-              key: 'removeDeelname',
-              label: 'Deelname verlaten',
-              icon: <VISUALS.MINUS />,
-              condition: (row) =>
-                row?.beoordeling?.toLowerCase?.() !== 'concept' &&
-                row?.deelnames &&
-                row?.deelnames?.length > 0,
-              action: 'removeDeelname',
-            },
-          ],
-          modals: [
-            ...baseConfig.modals,
-            'activate',
-            'deactivate',
-            'publish',
-            'depublish',
-            'addDeelname',
-            'removeDeelname',
-          ],
-          customFilterDrawer: 'organisaties',
-        };
+                }
 
-      case 'kwetsbaarheden':
-        return {
-          ...baseConfig,
-          schemaSlug: 'kwetsbaarheid',
-          paginationKey: 'kwetsbaarheden',
-          title: 'Beheer Kwetsbaarheden',
-          routeType: 'kwetsbaarheden',
-          defaultHeaders: ['titel', 'ernst', 'detectedOn', 'status'],
-          customHeaders: {
-            ontdektOp: {
-              id: 'detectedOn',
-              label: 'Ontdekt op',
-              key: 'ontdektOp',
-              customContent: (row) =>
-                row.ontdektOp
-                  ? !isNaN(new Date(row.ontdektOp).getTime())
-                    ? new Date(row.ontdektOp).toLocaleDateString()
-                    : row.ontdektOp
-                  : '-',
-            },
-            gepubliceerdOp: {
-              id: 'publishedOn',
-              label: 'Gepubliceerd op',
-              key: 'gepubliceerdOp',
-              customContent: (row) =>
-                row.gepubliceerdOp
-                  ? !isNaN(new Date(row.gepubliceerdOp).getTime())
-                    ? new Date(row.gepubliceerdOp).toLocaleDateString()
-                    : row.gepubliceerdOp
-                  : '-',
+                // Handle actual arrays
+                if (Array.isArray(rawType) && rawType.length > 0) {
+                  return rawType
+                    .map((typeItem) =>
+                      typeof typeItem === 'object'
+                        ? typeItem.naam ||
+                          typeItem.name ||
+                          typeItem.label ||
+                          typeItem
+                        : String(typeItem)
+                    )
+                    .join(', ');
+                }
+
+                // Handle objects
+                if (typeof rawType === 'object') {
+                  return String(
+                    rawType.naam || rawType.name || rawType.label || rawType
+                  );
+                }
+
+                return String(rawType);
+              },
             },
           },
           modals: [...baseConfig.modals],
@@ -462,8 +304,123 @@ const BeheerPageConfigFactory = {
           title: 'Gebruik',
           routeType: 'gebruik',
           disableRelatedCreateActions: true,
-          defaultHeaders: ['voorzieningId', 'diensten', 'status', 'contact'],
+          disableImport: true, // Import not needed for gebruik
+          disableView: true, // View not needed for gebruik
+          defaultHeaders: ['type', 'voorzieningId', 'diensten', 'status', 'contact'],
+          /**
+           * Custom edit URL handler for gebruik
+           * If koppelingen array is filled, redirect to koppeling wizard
+           * If diensten array is filled, redirect to dienst wizard
+           * Otherwise, use default gebruik wizard behavior
+           * For Leverancier/Community organizations, use ontbrekend-organisatie type
+           * @param {Object} row - The row data containing the gebruik to edit
+           * @param {Object} fullActiveOrganisation - The full organization data containing type
+           * @returns {string|null} The URL to navigate to for editing, or null to use default behavior
+           */
+          getEditUrl: (row, fullActiveOrganisation) => {
+            const gebruikId = row?.['@self']?.id || row?.id;
+            if (!gebruikId) return null;
+
+            // Check if organization type is Leverancier or Community
+            // These organization types don't have their own gebruik objects,
+            // they only manage gebruik for gemeentes or other organizations
+            const orgType = fullActiveOrganisation?.type;
+            const isLeverancierOrCommunity =
+              orgType === 'Leverancier' || orgType === 'Community';
+
+            // Check if koppelingen array is filled - redirect to koppeling wizard
+            // Also check @self.relations.koppelingen as fallback
+            const koppelingen =
+              row?.koppelingen || row?.['@self']?.relations?.koppelingen;
+            if (Array.isArray(koppelingen) && koppelingen.length > 0) {
+              const koppelingType = isLeverancierOrCommunity
+                ? 'ontbrekend-organisatie'
+                : 'eigen-organisatie';
+              return `/forms/gebruik/koppeling?type=${koppelingType}&id=${gebruikId}`;
+            }
+
+            // Check if diensten array is filled - redirect to dienst wizard
+            // Also check @self.relations.diensten as fallback
+            const diensten = row?.diensten || row?.['@self']?.relations?.diensten;
+            if (Array.isArray(diensten) && diensten.length > 0) {
+              const dienstType = isLeverancierOrCommunity
+                ? 'ontbrekend-organisatie'
+                : 'dienst';
+              return `/forms/gebruik/dienst?type=${dienstType}&id=${gebruikId}`;
+            }
+
+            // For Leverancier/Community, use ontbrekend-organisatie type for default gebruik wizard
+            if (isLeverancierOrCommunity) {
+              return `/forms/gebruik/applicatie?type=ontbrekend-organisatie&id=${gebruikId}`;
+            }
+
+            // Return null to use default wizard behavior
+            return null;
+          },
           // extend: ['contactpersoon'],
+          // Virtual columns are columns that don't exist in the schema but are added to the table
+          virtualColumns: [
+            {
+              id: 'type',
+              order: 0,
+              label: 'Type',
+              key: 'type',
+              customContent: (row) => {
+                // Determine icon based on filled fields:
+                // - koppelingen filled → Koppeling icon
+                // - diensten filled → Dienst icon
+                // - neither filled → Applicatie icon
+                const hasKoppelingen =
+                  Array.isArray(row?.koppelingen) && row.koppelingen.length > 0;
+                const hasDiensten =
+                  Array.isArray(row?.diensten) && row.diensten.length > 0;
+
+                let IconComponent;
+                let title;
+
+                if (hasKoppelingen) {
+                  IconComponent = VISUALS.LINK;
+                  title = 'Koppeling';
+                } else if (hasDiensten) {
+                  IconComponent = VISUALS.HAND_SHAKE;
+                  title = 'Dienst';
+                } else {
+                  IconComponent = VISUALS.CUBE;
+                  title = 'Applicatie';
+                }
+
+                return (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                    title={title}
+                  >
+                    <IconComponent
+                      style={{
+                        width: '24px',
+                        height: '24px',
+                        color: 'var(--tilburg-interaction-active-color)',
+                      }}
+                    />
+                  </div>
+                );
+              },
+              sortComparator: byNested((row) => {
+                // Sort by type name: Applicatie, Dienst, Koppeling (alphabetical)
+                const hasKoppelingen =
+                  Array.isArray(row?.koppelingen) && row.koppelingen.length > 0;
+                const hasDiensten =
+                  Array.isArray(row?.diensten) && row.diensten.length > 0;
+
+                if (hasKoppelingen) return 'Koppeling';
+                if (hasDiensten) return 'Dienst';
+                return 'Applicatie';
+              }),
+            },
+          ],
           customHeaders: {
             contactpersoon: {
               id: 'contactpersoon',
@@ -486,13 +443,10 @@ const BeheerPageConfigFactory = {
               label: 'Applicatie',
               key: 'module',
               customContent: (row) => {
-                return (
-                  (
-                    <ConUuidResolver>
-                      {row['@self'].relations.module}
-                    </ConUuidResolver>
-                  ) || '-'
-                );
+                // Try direct property first, then fallback to relations
+                const moduleId = row.module || row['@self']?.relations?.module;
+                if (!moduleId) return '-';
+                return <ConUuidResolver>{String(moduleId)}</ConUuidResolver>;
               },
             },
             moduleVersie: {
@@ -500,70 +454,12 @@ const BeheerPageConfigFactory = {
               label: 'Applicatie versie',
               key: 'moduleVersie',
               customContent: (row) => {
-                return (
-                  (
-                    <ConUuidResolver>
-                      {row['@self'].relations.moduleVersie}
-                    </ConUuidResolver>
-                  ) || '-'
-                );
+                // Try direct property first, then fallback to relations
+                const moduleVersieId =
+                  row.moduleVersie || row['@self']?.relations?.moduleVersie;
+                if (!moduleVersieId) return '-';
+                return <ConUuidResolver>{String(moduleVersieId)}</ConUuidResolver>;
               },
-            },
-          },
-          modals: [...baseConfig.modals],
-        };
-
-      case 'overeenkomsten':
-        return {
-          ...baseConfig,
-          schemaSlug: 'contract',
-          paginationKey: 'overeenkomsten',
-          title: 'Beheer Overeenkomsten',
-          routeType: 'overeenkomsten',
-          defaultHeaders: [
-            'name',
-            'startDatum',
-            'eindDatum',
-            'contactPersonProvider',
-          ],
-          customHeaders: {
-            voorzieningAanbod: {
-              id: 'voorzieningAanbodNaam',
-              label: 'Voorziening aanbod naam',
-              key: 'voorzieningAanbod',
-              customContent: (row) => {
-                return row?.voorzieningAanbod?.naam || '-';
-              },
-              sortComparator: byNested((r) => r?.voorzieningAanbod?.naam),
-            },
-            voorzieningGebruik: {
-              id: 'voorzieningGebruikId',
-              label: 'Voorziening gebruik ID',
-              key: 'voorzieningGebruikId',
-              customContent: (row) => {
-                return row?.voorzieningGebruik?.id || '-';
-              },
-              sortComparator: byNested((r) => r?.voorzieningGebruik?.id),
-            },
-            contactpersoonAanbieder: {
-              id: 'contactPersonProvider',
-              label: 'contactpersoon Aanbieder',
-              key: 'contactpersoonAanbieder',
-              customContent: (row) => {
-                if (!row?.contactpersoonAanbieder) return 'N/A';
-                return row.contactpersoonAanbieder.naam;
-              },
-              sortComparator: byNested((r) => r?.contactpersoonAanbieder?.naam),
-            },
-            contactpersoonGebruiker: {
-              id: 'contactPersonUser',
-              label: 'contactpersoon Gebruiker',
-              key: 'contactpersoonGebruiker',
-              customContent: (row) => {
-                if (!row?.contactpersoonGebruiker) return 'N/A';
-                return row.contactpersoonGebruiker.naam;
-              },
-              sortComparator: byNested((r) => r?.contactpersoonGebruiker?.naam),
             },
           },
           modals: [...baseConfig.modals],
@@ -577,6 +473,8 @@ const BeheerPageConfigFactory = {
           paginationKey: 'koppeling',
           title: 'Koppelingen',
           routeType: 'koppeling',
+          disableImport: true, // Import not needed for koppelingen
+          disableView: true, // View not needed for koppelingen
           // Ensure relations are present to compensate for backend bug (moduleA/moduleB null)
           extend: ['@self.relations'],
           defaultHeaders: [
@@ -626,6 +524,8 @@ const BeheerPageConfigFactory = {
           title: 'Contactpersoon',
           routeType: 'contactpersoon',
           disableRelatedCreateActions: true, // Only show basic actions for contactpersonen
+          disableImport: true, // Import not needed for contactpersonen
+          disableView: true, // View not needed for contactpersonen
           defaultHeaders: [
             'username',
             'name',
@@ -683,6 +583,20 @@ const BeheerPageConfigFactory = {
                 return fullName || '-';
               },
             },
+            eMailadres: {
+              id: 'e-mailadres',
+              label: 'E-mailadres',
+              key: 'eMailadres',
+              customContent: (row) => {
+                // Display email address from API response
+                const email =
+                  row.eMailadres ||
+                  row['eMailadres'] ||
+                  row['e-mailadres'] ||
+                  'NO EMAIL FOUND';
+                return email;
+              },
+            },
           },
           uniqueActions: [],
           modals: [...baseConfig.modals, 'addAccount'],
@@ -701,6 +615,7 @@ const BeheerPageConfigFactory = {
           extend: [...baseConfig.extend],
           defaultHeaders: [],
           customHeaders: {},
+          isDynamicEntry: true,
         };
     }
   },

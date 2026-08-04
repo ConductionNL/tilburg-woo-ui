@@ -1,11 +1,12 @@
-import React, { memo } from 'react';
-import { ConUuidResolver } from '@components';
-import { AcLink } from '@src/molecules';
+import React, { memo, useState, useEffect, useMemo } from 'react';
+import { ConUuidResolver, ConExternalLink } from '@components';
+import { withStore } from '@stores';
 import {
   UnorderedList,
   UnorderedListItem,
   Separator,
   Paragraph,
+  Link,
 } from '@utrecht/component-library-react/dist/css-module';
 import ConLogoPreview from '@views/ac-register/con-logo-preview';
 // Import MDEditor for markdown rendering
@@ -27,7 +28,96 @@ const ConFormControlerenStage = memo(
     formType,
     aanbiederKeuze,
     aanbiederOrganisatie,
+    store,
+    // New application flow props
+    showNewApplicatieForm = false,
+    nieuweApplicatie = {},
+    leverancierKeuze = 'bestaand',
+    nieuweLeverancier = {},
+    leverancierOptions = [],
   }) => {
+    // State for fetched contactpersoon data
+    const [contactpersoonData, setContactpersoonData] = useState(null);
+
+    // Extract contactpersoon ID from dienst
+    const contactpersoonId = useMemo(() => {
+      if (!dienst?.contactpersoon) return null;
+      if (typeof dienst.contactpersoon === 'object') {
+        return dienst.contactpersoon.id || dienst.contactpersoon['@self']?.id;
+      }
+      return String(dienst.contactpersoon);
+    }, [dienst?.contactpersoon]);
+
+    // Fetch contactpersoon object if ID is available
+    useEffect(() => {
+      if (!contactpersoonId || !store?.object) return;
+
+      const fetchContactpersoon = async () => {
+        try {
+          // Check if already in store
+          const objectType = 'voorzieningen_contactpersoon';
+          const existingData = store.object.getObject(objectType, contactpersoonId);
+
+          if (existingData) {
+            setContactpersoonData(existingData);
+            return;
+          }
+
+          // Fetch from API
+          await store.object.fetchObject(
+            'voorzieningen',
+            'contactpersoon',
+            contactpersoonId,
+            {
+              '_extend[]': ['_schema'],
+            }
+          );
+
+          // Get from store after fetch
+          const fetchedData = store.object.getObject(objectType, contactpersoonId);
+          if (fetchedData) {
+            setContactpersoonData(fetchedData);
+          }
+        } catch (error) {
+          // Don't set state on error, will fall back to ConUuidResolver
+        }
+      };
+
+      fetchContactpersoon();
+    }, [contactpersoonId, store?.object]);
+
+    // Helper function to get contactpersoon display name
+    const getContactpersoonDisplayName = () => {
+      // First try to use fetched contactpersoon data
+      if (contactpersoonData) {
+        const fullName = [
+          contactpersoonData.voornaam,
+          contactpersoonData.tussenvoegsel,
+          contactpersoonData.achternaam,
+        ]
+          .filter(Boolean)
+          .join(' ');
+
+        if (fullName.trim()) {
+          return fullName;
+        }
+      }
+
+      // Try to use contactpersoon object if it's already an object with name fields
+      if (typeof dienst.contactpersoon === 'object' && dienst.contactpersoon) {
+        const c = dienst.contactpersoon;
+        const fullName = [c?.voornaam, c?.tussenvoegsel, c?.achternaam]
+          .filter(Boolean)
+          .join(' ');
+
+        if (fullName.trim()) {
+          return fullName;
+        }
+      }
+
+      return null;
+    };
+
     // Helper to get module information with additional details
     const getModulesWithDetails = () => {
       return (selectedModuleIds || []).map((id) => {
@@ -48,9 +138,13 @@ const ConFormControlerenStage = memo(
     return (
       <div>
         <Paragraph>
-          Bekijk hieronder de ingevulde gegevens. Controleer of alle informatie klopt
-          voordat u uw dienst aanmeldt. U kunt velden nog aanpassen via de
-          &apos;Vorige&apos; knop of op een later moment via uw eigen omgeving.
+          Controleer of het overzicht van de dienst volledig en juist is voordat u
+          verder gaat.
+          <br />
+          U kunt met Vorige terug naar de eerdere stappen.
+          <br />
+          Na het registreren van de dienst kunt u via uw “Dashboard” de dienst
+          opzoeken en indien gewenst aanpassen.
         </Paragraph>
         <br />
 
@@ -127,26 +221,29 @@ const ConFormControlerenStage = memo(
               </div>
             )}
 
-            <div className='ac-register-review__field'>
-              <strong>Website:</strong>{' '}
-              {dienst.website ? (
-                <AcLink
-                  href={dienst.website}
-                  target='_blank'
-                  rel='noopener noreferrer'
-                >
-                  <ConUuidResolver>{dienst.website}</ConUuidResolver>
-                </AcLink>
-              ) : (
-                '-'
-              )}
+            <div
+              className='ac-register-review__field'
+              style={{ display: 'flex', gap: '4px' }}
+            >
+              <strong>Website:</strong>
+              <ConExternalLink href={dienst.website} />
             </div>
 
             <div className='ac-register-review__field'>
               <strong>Type:</strong>{' '}
               <span>
-                {dienst.type ? (
-                  <ConUuidResolver>{dienst.type}</ConUuidResolver>
+                {Array.isArray(dienst.type) && dienst.type.length > 0 ? (
+                  <span>
+                    {dienst.type.map((typeId, index) => (
+                      <React.Fragment key={index}>
+                        <ConUuidResolver>{String(typeId)}</ConUuidResolver>
+                        {index < dienst.type.length - 1 ? ', ' : ''}
+                      </React.Fragment>
+                    ))}
+                  </span>
+                ) : dienst.type && !Array.isArray(dienst.type) ? (
+                  // Backward compatibility: handle string type
+                  <ConUuidResolver>{String(dienst.type)}</ConUuidResolver>
                 ) : (
                   '-'
                 )}
@@ -157,33 +254,7 @@ const ConFormControlerenStage = memo(
               <div className='ac-register-review__field'>
                 <strong>Contactpersoon:</strong>{' '}
                 <span>
-                  {typeof dienst.contactpersoon === 'object' ? (
-                    // Handle contactpersoon as object with name properties
-                    (() => {
-                      const c = dienst.contactpersoon;
-                      // Try different name combinations for contactpersoon
-                      const fullName = [c?.voornaam, c?.tussenvoegsel, c?.achternaam]
-                        .filter(Boolean)
-                        .join(' ');
-
-                      // Fallback to other name properties if voornaam/achternaam not available
-                      if (fullName.trim()) {
-                        return fullName;
-                      }
-
-                      // Try alternative name properties
-                      return (
-                        c?.['@self']?.name ||
-                        c?.naam ||
-                        c?.name ||
-                        c?.displayName ||
-                        c?.label ||
-                        c?.id ||
-                        'Onbekende contactpersoon'
-                      );
-                    })()
-                  ) : (
-                    // Handle contactpersoon as UUID string - resolve with ConUuidResolver
+                  {getContactpersoonDisplayName() || (
                     <ConUuidResolver>{dienst.contactpersoon}</ConUuidResolver>
                   )}
                 </span>
@@ -197,7 +268,7 @@ const ConFormControlerenStage = memo(
           <div className='ac-register-review'>
             <div className='ac-register-review__section'>
               {modulesWithDetails.length > 0 ? (
-                <div className='ac-register-review__field'>
+                <div>
                   <UnorderedList>
                     {modulesWithDetails.map((module, i) => (
                       <UnorderedListItem key={`mod-${module.id}-${i}`}>
@@ -235,12 +306,193 @@ const ConFormControlerenStage = memo(
                     ))}
                   </UnorderedList>
                 </div>
-              ) : (
+              ) : !showNewApplicatieForm ? (
                 <div className='ac-register-review__field'>
                   <Paragraph style={{ fontStyle: 'italic', color: '#666' }}>
                     Geen applicaties geselecteerd
                   </Paragraph>
                 </div>
+              ) : null}
+
+              {/* Show new application section when creating a new app */}
+              {showNewApplicatieForm && (
+                <>
+                  {modulesWithDetails.length > 0 && (
+                    <Separator className='ac-register-review__separator' />
+                  )}
+                  <div
+                    className='ac-register-review__subsection'
+                    role='group'
+                    aria-labelledby='nieuwe-applicatie-heading'
+                  >
+                    <h4
+                      id='nieuwe-applicatie-heading'
+                      className='utrecht-heading-5'
+                      style={{ marginBlockEnd: '1rem' }}
+                    >
+                      Nieuwe applicatie wordt aangemaakt
+                    </h4>
+
+                    <dl
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'minmax(120px, auto) 1fr',
+                        gap: '0.5rem 1rem',
+                        margin: 0,
+                      }}
+                    >
+                      <dt
+                        style={{
+                          fontWeight: 600,
+                          color: 'var(--tilburg-color-gray-700)',
+                        }}
+                      >
+                        Naam
+                      </dt>
+                      <dd style={{ margin: 0 }}>{nieuweApplicatie?.naam || '-'}</dd>
+
+                      {nieuweApplicatie?.website && (
+                        <>
+                          <dt
+                            style={{
+                              fontWeight: 600,
+                              color: 'var(--tilburg-color-gray-700)',
+                            }}
+                          >
+                            Website
+                          </dt>
+                          <dd style={{ margin: 0 }}>
+                            <Link
+                              href={
+                                nieuweApplicatie.website.startsWith('http://') ||
+                                nieuweApplicatie.website.startsWith('https://')
+                                  ? nieuweApplicatie.website
+                                  : `https://${nieuweApplicatie.website}`
+                              }
+                              target='_blank'
+                              rel='noopener noreferrer'
+                            >
+                              {nieuweApplicatie.website}
+                            </Link>
+                          </dd>
+                        </>
+                      )}
+
+                      {nieuweApplicatie?.beschrijvingKort && (
+                        <>
+                          <dt
+                            style={{
+                              fontWeight: 600,
+                              color: 'var(--tilburg-color-gray-700)',
+                            }}
+                          >
+                            Beschrijving
+                          </dt>
+                          <dd style={{ margin: 0 }}>
+                            {nieuweApplicatie.beschrijvingKort}
+                          </dd>
+                        </>
+                      )}
+                    </dl>
+
+                    {/* Leverancier subsection */}
+                    {(leverancierKeuze === 'nieuw' || nieuweApplicatie?.leverancier) && (
+                      <div
+                        style={{
+                          marginBlockStart: '1.5rem',
+                          paddingBlockStart: '1rem',
+                          borderBlockStart: '1px solid var(--tilburg-color-gray-200)',
+                        }}
+                        role='group'
+                        aria-labelledby='nieuwe-leverancier-heading'
+                      >
+                        <h5
+                          id='nieuwe-leverancier-heading'
+                          className='utrecht-heading-6'
+                          style={{ marginBlockEnd: '0.75rem' }}
+                        >
+                          {leverancierKeuze === 'nieuw'
+                            ? 'Nieuwe leverancier wordt aangemaakt'
+                            : 'Leverancier'}
+                        </h5>
+
+                        <dl
+                          style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'minmax(120px, auto) 1fr',
+                            gap: '0.5rem 1rem',
+                            margin: 0,
+                          }}
+                        >
+                          {leverancierKeuze === 'nieuw' ? (
+                            <>
+                              <dt
+                                style={{
+                                  fontWeight: 600,
+                                  color: 'var(--tilburg-color-gray-700)',
+                                }}
+                              >
+                                Naam
+                              </dt>
+                              <dd style={{ margin: 0 }}>
+                                {nieuweLeverancier?.naam || '-'}
+                              </dd>
+
+                              {nieuweLeverancier?.website && (
+                                <>
+                                  <dt
+                                    style={{
+                                      fontWeight: 600,
+                                      color: 'var(--tilburg-color-gray-700)',
+                                    }}
+                                  >
+                                    Website
+                                  </dt>
+                                  <dd style={{ margin: 0 }}>
+                                    <Link
+                                      href={
+                                        nieuweLeverancier.website.startsWith('http://') ||
+                                        nieuweLeverancier.website.startsWith('https://')
+                                          ? nieuweLeverancier.website
+                                          : `https://${nieuweLeverancier.website}`
+                                      }
+                                      target='_blank'
+                                      rel='noopener noreferrer'
+                                    >
+                                      {nieuweLeverancier.website}
+                                    </Link>
+                                  </dd>
+                                </>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              <dt
+                                style={{
+                                  fontWeight: 600,
+                                  color: 'var(--tilburg-color-gray-700)',
+                                }}
+                              >
+                                Naam
+                              </dt>
+                              <dd style={{ margin: 0 }}>
+                                {(() => {
+                                  const leverancierId = nieuweApplicatie.leverancier;
+                                  const leverancierOption = (leverancierOptions || []).find(
+                                    (opt) => String(opt.value) === String(leverancierId)
+                                  );
+                                  return leverancierOption
+                                    ? leverancierOption.label
+                                    : leverancierId;
+                                })()}
+                              </dd>
+                            </>
+                          )}
+                        </dl>
+                      </div>
+                    )}
+                  </div>
+                </>
               )}
             </div>
           </div>
@@ -276,19 +528,12 @@ const ConFormControlerenStage = memo(
                     </div>
                   )}
                   {aanbiederOrganisatie.website && (
-                    <div className='ac-register-review__field'>
-                      <strong>Website:</strong>{' '}
-                      {aanbiederOrganisatie.website ? (
-                        <AcLink
-                          href={aanbiederOrganisatie.website}
-                          target='_blank'
-                          rel='noopener noreferrer'
-                        >
-                          {aanbiederOrganisatie.website}
-                        </AcLink>
-                      ) : (
-                        '-'
-                      )}
+                    <div
+                      className='ac-register-review__field'
+                      style={{ display: 'flex', gap: '4px' }}
+                    >
+                      <strong>Website:</strong>
+                      <ConExternalLink href={aanbiederOrganisatie.website} />
                     </div>
                   )}
                   {aanbiederOrganisatie.beschrijvingKort && (
@@ -379,4 +624,4 @@ const ConFormControlerenStage = memo(
 
 ConFormControlerenStage.displayName = 'ConFormControlerenStage';
 
-export default ConFormControlerenStage;
+export default withStore(ConFormControlerenStage);

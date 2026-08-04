@@ -128,7 +128,12 @@ const ConFormApplicatieReferentiecomponentenStage = memo(
         </Paragraph>
 
         <div>
+          <label id='refcomp-select-label' className='sr-only' htmlFor='refcomp-select'>
+            Selecteer referentiecomponenten
+          </label>
           <ReactSelect
+            inputId='refcomp-select'
+            aria-labelledby='refcomp-select-label'
             value={(() => {
               const currentRefs = normalizeValues(
                 applicatie.referentieComponenten || []

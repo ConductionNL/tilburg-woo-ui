@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   Heading,
   Paragraph,
@@ -6,6 +7,7 @@ import {
 import { AcColumn } from '@src/atoms';
 import { VISUALS } from '@src/constants';
 import ConLogoPreview from '@src/views/ac-register/con-logo-preview';
+import { ConExternalLink } from '@src/components';
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import { commongroundApiUrl } from '@src/config';
 import ConEditableDescription from '../../shared/components/con-editable-description/con-editable-description';
@@ -152,7 +154,6 @@ const ConDienstDetailsPageContent = ({
           alignItems: 'center',
         }}
       >
-        <Heading level={4}>
           <div className='con-beheer-details--header-container'>
             {(data?.logo || data?.['@self']?.image) && (
               <ConLogoPreview
@@ -164,7 +165,6 @@ const ConDienstDetailsPageContent = ({
               {data?.naam || data?.['@self']?.name || data?.['@self']?.id}
             </Heading>
           </div>
-        </Heading>
 
         <div className='ac-register-review__header-controls'>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -235,7 +235,8 @@ const ConDienstDetailsPageContent = ({
                   Bewerk beschrijving
                 </ConActionMenu.Button>
 
-                {data && !data['@self']?.published && (
+                {/* Publish/Depublish actions - LEGACY: No longer needed */}
+                {/* {data && !data['@self']?.published && (
                   <ConActionMenu.Button
                     icon={<VISUALS.PUBLISH />}
                     onClick={() => actionMenuProps?.setOpenModal?.('publish')}
@@ -265,7 +266,7 @@ const ConDienstDetailsPageContent = ({
                   >
                     Depubliceren
                   </ConActionMenu.Button>
-                )}
+                )} */}
 
                 <ConActionMenu.Button
                   icon={<VISUALS.TRASHCAN />}
@@ -286,7 +287,8 @@ const ConDienstDetailsPageContent = ({
         </div>
       </div>
 
-      <UnpublishedWarning data={data} />
+      {/* Unpublished warning - LEGACY: No longer needed */}
+      {/* <UnpublishedWarning data={data} /> */}
 
       {/* Short description */}
       <div style={{ flex: 2 }}>
@@ -356,31 +358,24 @@ const ConDienstDetailsPageContent = ({
             <div style={{ marginTop: '12px' }}>
               {data?.website && (
                 <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
-                  <strong>Website: </strong>
-                  <Link
-                    href={
-                      data?.website.startsWith('http')
-                        ? data?.website
-                        : `https://${data?.website}`
-                    }
-                    target='_blank'
-                    rel='noopener noreferrer'
-                  >
-                    {data?.website}
-                  </Link>
+                  <strong>Website:</strong>
+                  <ConExternalLink href={data?.website} />
                 </div>
               )}
               {contact && typeof contact === 'object' ? (
                 <div style={{ marginBottom: '8px' }}>
                   <strong>Contactpersoon: </strong>
-                  <div>
+                  <div style={{ minHeight: '24px' }}>
                     {[contact.voornaam, contact.tussenvoegsel, contact.achternaam]
                       .filter(Boolean)
                       .join(' ')}
                   </div>
                   {contact['e-mailadres'] && (
                     <div>
-                      <Link href={`mailto:${contact['e-mailadres']}`}>
+                      <Link
+                        href={`mailto:${contact['e-mailadres']}`}
+                        style={{ minHeight: '24px' }}
+                      >
                         {contact['e-mailadres']}
                       </Link>
                     </div>
@@ -392,6 +387,7 @@ const ConDienstDetailsPageContent = ({
                           .split('')
                           .filter((character) => character !== ' ')
                           .join('')}`}
+                        style={{ minHeight: '24px' }}
                       >
                         {contact.telefoonnummer}
                       </Link>
@@ -416,12 +412,46 @@ const ConDienstDetailsPageContent = ({
           </Heading>
           <div className='ac-register-review__section'>
             <div style={{ marginTop: '12px' }}>
-              {data?.type && (
-                <div style={{ marginBottom: '8px' }}>
-                  <strong>Type: </strong>
-                  {data.type}
-                </div>
-              )}
+            {data?.type && (
+              <div style={{ marginBottom: '8px' }}>
+                <strong>Type: </strong>
+                {(() => {
+                  const rawType = data.type;
+                  
+                  // Check if it's a string that looks like a JSON array
+                  if (typeof rawType === 'string' && rawType.trim().startsWith('[')) {
+                    try {
+                      const parsed = JSON.parse(rawType);
+                      if (Array.isArray(parsed)) {
+                        return parsed
+                          .map((item, index) => (
+                            <React.Fragment key={index}>
+                              <ConUuidResolver>{String(item)}</ConUuidResolver>
+                              {index < parsed.length - 1 ? ', ' : ''}
+                            </React.Fragment>
+                          ));
+                      }
+                    } catch (e) {
+                      // If parsing fails, display as-is
+                      return <ConUuidResolver>{String(rawType)}</ConUuidResolver>;
+                    }
+                  }
+                  
+                  // Handle actual arrays
+                  if (Array.isArray(rawType)) {
+                    return rawType.map((typeId, index) => (
+                      <React.Fragment key={index}>
+                        <ConUuidResolver>{String(typeId)}</ConUuidResolver>
+                        {index < rawType.length - 1 ? ', ' : ''}
+                      </React.Fragment>
+                    ));
+                  }
+                  
+                  // Handle single value
+                  return <ConUuidResolver>{String(rawType)}</ConUuidResolver>;
+                })()}
+              </div>
+            )}
               {data?.dienstType && (
                 <div style={{ marginBottom: '8px' }}>
                   <strong>Diensttype: </strong>
@@ -493,23 +523,23 @@ const ConDienstDetailsPageContent = ({
   );
 };
 
-/* Warning card for unpublished objects */
-const UnpublishedWarning = ({ data }) => {
-  if (data?.['@self']?.published) return null;
-  const schemaName = data?.['@self']?.schema?.title;
-  const title = schemaName ? `${schemaName}` : '';
-  const objectName = data?.['@self']?.name;
-
-  return (
-    <div className='ac-alert ac-alert--warning' style={{ marginBottom: '1rem' }}>
-      <Heading level={4}>{title} is nog niet gepubliceerd</Heading>
-      <Paragraph>
-        {objectName} is momenteel niet zichtbaar in de zoekfunctie van{' '}
-        {schemaName || 'de catalogus'}. Gebruik de &quot;Publiceren&quot; actie om
-        deze gegevens beschikbaar te maken voor bezoekers.
-      </Paragraph>
-    </div>
-  );
-};
+/* Warning card for unpublished objects - LEGACY: No longer needed */
+// const UnpublishedWarning = ({ data }) => {
+//   if (data?.['@self']?.published) return null;
+//   const schemaName = data?.['@self']?.schema?.title;
+//   const title = schemaName ? `${schemaName}` : '';
+//   const objectName = data?.['@self']?.name;
+//
+//   return (
+//     <div className='ac-alert ac-alert--warning' style={{ marginBottom: '1rem' }}>
+//       <Heading level={4}>{title} is nog niet gepubliceerd</Heading>
+//       <Paragraph>
+//         {objectName} is momenteel niet zichtbaar in de zoekfunctie van{' '}
+//         {schemaName || 'de catalogus'}. Gebruik de &quot;Publiceren&quot; actie om
+//         deze gegevens beschikbaar te maken voor bezoekers.
+//       </Paragraph>
+//     </div>
+//   );
+// };
 
 export default ConDienstDetailsPageContent;

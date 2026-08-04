@@ -45,9 +45,8 @@ const ConFormApplicatieInformatieStage = memo(
         </h2>
         <Paragraph className='con-form-wizard-paragraph'>
           De opgevoerde gegevens zorgen ervoor dat gemeenten uw applicatie kunnen
-          vinden, herkennen en toevoegen aan haar applicatielandschap. Vul de velden
-          zo volledig mogelijk in, zodat uw applicatie goed zichtbaar is in de
-          softwarecatalogus.
+          vinden, herkennen en beoordelen. Vul de velden zo volledig mogelijk in,
+          zodat uw applicatie goed zichtbaar is in de softwarecatalogus.
           <br />
           Na het opslaan kunt u de gegevens later altijd weer aanpassen of aanvullen.
         </Paragraph>
@@ -82,6 +81,7 @@ const ConFormApplicatieInformatieStage = memo(
               touched={touched}
               schemas={schemas}
               customProps={{
+                required: true,
                 inputType: 'text',
                 validation: {
                   custom: (value) => {
@@ -93,6 +93,7 @@ const ConFormApplicatieInformatieStage = memo(
                     'Website heeft een ongeldig formaat (bijv. conduction.nl, www.conduction.nl of https://conduction.nl)',
                 },
                 description: 'Een URL naar uw applicatie of organisatie',
+                placeholder: 'www.example.com',
               }}
             />
 
@@ -104,10 +105,13 @@ const ConFormApplicatieInformatieStage = memo(
               onChange={(value) => setApplicatieData('beschrijvingKort', value)}
               isDisabled={loading}
               width='full'
+              touched={touched}
               schemas={schemas}
               customProps={{
+                required: true,
                 description:
                   'Een korte beschrijving van de applicatie voor o.a. in de zoekresultaten.',
+                placeholder: 'Korte beschrijving van de applicatie',
               }}
             />
 
@@ -119,6 +123,7 @@ const ConFormApplicatieInformatieStage = memo(
               onChange={(value) => setApplicatieData('beschrijvingLang', value)}
               isDisabled={loading}
               width='full'
+              touched={touched}
               schemas={schemas}
               customProps={{
                 description:
@@ -138,6 +143,8 @@ const ConFormApplicatieInformatieStage = memo(
               customProps={{
                 inputType: 'file',
                 format: 'base64',
+                useFileObjects: true,
+                enableFileSizeCheck: false,
                 description: 'Het logo van de applicatie of de organisatie.',
               }}
             />

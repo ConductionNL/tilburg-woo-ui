@@ -10,7 +10,7 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 import { AcCheckbox, AcFormField } from '@src/molecules';
 import { LogoUploadField } from '@views/ac-beheer/shared/components/con-logo-upload-field';
-import { ConStandardsResolver } from '@components';
+import { ConUuidResolver } from '@components';
 import { VISUALS } from '@constants';
 import { handleFileClick } from '@utils';
 import { commongroundApiUrl } from '@config';
@@ -19,17 +19,21 @@ import { validateWebsite } from '@src/views/ac-forms/validation/form-validations
 /**
  * Reusable Standards Table Component
  *
- * This component displays standards from referentieComponenten with their compliance status.
+ * This component displays standaardversies (standard versions) from referentieComponenten
+ * with their compliance status. The relationship is:
+ * referentieComponenten → standaarden (aanbevolen/verplicht) → standaardVersies
+ *
  * It can be used both in publication pages and beheer module details pages.
  *
  * @param {Object} props
  * @param {Array} props.referentieComponenten - Array of referentieComponent IDs
  * @param {Array} props.complianceStandards - Array of compliance standards with evidence
- * // @param {boolean} props.enableScrolling - Whether to enable scrolling for 5+ standards (default: true)
+ * @param {Array} props.compliantVersieIds - Array of compliant standaardversie IDs (standaardVersies array)
  * @param {string} props.noStandardsMessage - Custom message when no standards found
  * @param {Object} props.containerStyle - Additional styles for the container
  * @param {Function} props.onStandardsCountChange - Callback when standards count changes
  * @param {Array} props.standards - Optional: Pre-fetched standards data (if provided, won't fetch internally)
+ * @param {Array} props.standaardversies - Optional: Pre-fetched standaardversies data
  * @param {Array} props.referentieComponentenWithStandards - Optional: Pre-fetched referentieComponenten data
  * @param {boolean} props.loading - Optional: Loading state when using external data
  * @param {Function} props.onReferentieComponentenChange - Callback when referentieComponenten data changes
@@ -37,25 +41,33 @@ import { validateWebsite } from '@src/views/ac-forms/validation/form-validations
 const ConStandardsTable = ({
   referentieComponenten = [],
   complianceStandards = [],
-  // enableScrolling = true,
-  noStandardsMessage = 'Geen standaarden gevonden voor de gekoppelde referentiecomponenten.',
+  compliantVersieIds = [],
+  noStandardsMessage = 'Geen standaardversies gevonden voor de gekoppelde referentiecomponenten.',
   containerStyle = {},
   onStandardsCountChange,
   standards: externalStandards,
+  standaardversies: externalStandaardversies,
   referentieComponentenWithStandards: externalReferentieComponentenWithStandards,
   loading: externalLoading = false,
   onReferentieComponentenChange,
   isEditing = false,
   onComplianceChange,
-  disabled = false, // New prop for disabling interactions during save
+  disabled = false,
 }) => {
   // Standards state for resolving compliance standards
   const [standards, setStandards] = useState([]);
   const [standardsLoading, setStandardsLoading] = useState(false);
 
+  // Standaardversies state
+  const [standaardversies, setStandaardversies] = useState([]);
+  const [standaardversiesLoading, setStandaardversiesLoading] = useState(false);
+
   // State for referentieComponenten data with standards
   const [referentieComponentenWithStandards, setReferentieComponentenWithStandards] =
     useState([]);
+
+  // Track if user is authenticated (can access element endpoints)
+  const [isAuthenticated, setIsAuthenticated] = useState(true); // Assume authenticated initially
 
   // Memoize the referentieComponenten array to prevent unnecessary refetches
   // when the parent component re-renders with a new array reference but same content
@@ -71,8 +83,6 @@ const ConStandardsTable = ({
       return;
     }
 
-    console.info('📋 Fetching referentieComponenten with standards data...');
-
     try {
       const queryParams = new URLSearchParams({
         _limit: '500',
@@ -83,7 +93,7 @@ const ConStandardsTable = ({
 
       // Fetch referentieComponenten from openconnector endpoint
       const response = await fetch(
-        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
         {
           method: 'GET',
           headers: {
@@ -93,9 +103,13 @@ const ConStandardsTable = ({
       );
 
       if (!response.ok) {
-        console.error('Error fetching referentieComponenten:', response.statusText);
+        if (response.status === 401 || response.status === 403) {
+          setIsAuthenticated(false);
+        }
         return;
       }
+
+      setIsAuthenticated(true);
 
       const data = await response.json();
       const allReferentieComponenten = data.results || data;
@@ -134,14 +148,7 @@ const ConStandardsTable = ({
         .filter(Boolean);
 
       setReferentieComponentenWithStandards(objectReferentieComponenten);
-      console.info(
-        `✅ Loaded ${objectReferentieComponenten?.length} referentieComponenten with standards data`
-      );
     } catch (error) {
-      console.warn(
-        '⚠️ Failed to fetch referentieComponenten with standards:',
-        error
-      );
       setReferentieComponentenWithStandards([]);
     }
   }, [memoizedReferentieComponenten]);
@@ -156,11 +163,8 @@ const ConStandardsTable = ({
         gemmaType: 'Standaard',
       });
 
-      console.info('📋 Fetching standards from openconnector endpoint...');
-
-      // Fetch standards from openconnector endpoint using normal fetch
       const response = await fetch(
-        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
         {
           method: 'GET',
           headers: {
@@ -170,189 +174,344 @@ const ConStandardsTable = ({
       );
 
       if (!response.ok) {
-        console.error(
-          'Error fetching openconnector standards:',
-          response.statusText
-        );
+        if (response.status === 401 || response.status === 403) {
+          setIsAuthenticated(false);
+        }
         return;
       }
+
+      setIsAuthenticated(true);
 
       const data = await response.json();
       const fetchedStandards = data.results || data;
 
       setStandards(fetchedStandards);
-      console.info(
-        `✅ Loaded ${fetchedStandards?.length} standards for standards table`
-      );
     } catch (error) {
-      console.warn('⚠️ Failed to fetch standards:', error);
       setStandards([]);
     } finally {
       setStandardsLoading(false);
     }
   }, []);
 
-  // Use external data if provided, otherwise use internal state
-  const effectiveStandards = externalStandards || standards;
-  const effectiveReferentieComponentenWithStandards =
-    externalReferentieComponentenWithStandards || referentieComponentenWithStandards;
-  const effectiveLoading = externalLoading || standardsLoading;
+  // Fetch standaardversies from openconnector endpoint
+  const fetchStandaardversies = useCallback(async () => {
+    setStandaardversiesLoading(true);
+    try {
+      const queryParams = new URLSearchParams({
+        _limit: '500',
+        _page: '1',
+        gemmaType: 'Standaardversie',
+      });
 
-  // Only fetch data if external data is not provided
+      const response = await fetch(
+        `${commongroundApiUrl()}/openregister/api/objects/vng-gemma/element?${queryParams}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          setIsAuthenticated(false);
+        }
+        return;
+      }
+
+      setIsAuthenticated(true);
+
+      const data = await response.json();
+      const fetchedStandaardversies = data.results || data;
+
+      setStandaardversies(fetchedStandaardversies);
+    } catch (error) {
+      setStandaardversies([]);
+    } finally {
+      setStandaardversiesLoading(false);
+    }
+  }, []);
+
+  // Use external data if provided, otherwise use internal state
+  // Priority: Internal fetched data (when available) > External data > Empty
+  // This ensures that when we successfully fetch 321 items, we use those instead of the 5 from external
+  const effectiveStandards = 
+    standards.length > 0 
+      ? standards 
+      : (externalStandards || standards);
+      
+  const effectiveStandaardversies = 
+    standaardversies.length > 0 
+      ? standaardversies 
+      : (externalStandaardversies || standaardversies);
+      
+  const effectiveReferentieComponentenWithStandards =
+    referentieComponentenWithStandards.length > 0
+      ? referentieComponentenWithStandards
+      : (externalReferentieComponentenWithStandards || referentieComponentenWithStandards);
+      
+  const effectiveLoading =
+    externalLoading || standardsLoading || standaardversiesLoading;
+
+  // Always try to fetch full data when authenticated, unless we already have it
+  // Only skip fetching if:
+  // 1. We already have internal data (standaardversies.length > 0), OR
+  // 2. We've confirmed we're not authenticated (isAuthenticated === false)
   const shouldFetchData =
-    !externalStandards && !externalReferentieComponentenWithStandards;
+    standaardversies.length === 0 && 
+    referentieComponentenWithStandards.length === 0 &&
+    isAuthenticated;
 
   useEffect(() => {
     if (shouldFetchData) {
       fetchStandards();
+      fetchStandaardversies();
       fetchReferentieComponentenWithStandards();
     }
-  }, [shouldFetchData, fetchStandards, fetchReferentieComponentenWithStandards]);
+  }, [
+    shouldFetchData,
+    fetchStandards,
+    fetchStandaardversies,
+    fetchReferentieComponentenWithStandards,
+  ]);
 
-  // Helper function to get all standards from referentieComponenten data
-  const getAllStandardsFromReferentieComponenten = (
-    referentieComponentenWithStandards
-  ) => {
-    if (!referentieComponentenWithStandards?.length) return [];
-
-    const allStandards = [];
-
-    referentieComponentenWithStandards.forEach((refComp) => {
-      // Add verplichte standaarden
-      if (
-        refComp.verplichteStandaarden &&
-        Array.isArray(refComp.verplichteStandaarden)
-      ) {
-        refComp.verplichteStandaarden.forEach((standard) => {
-          const standardId =
-            typeof standard === 'string'
-              ? standard
-              : standard?.id ||
-                standard?.value ||
-                standard?.slug ||
-                standard?.naam ||
-                standard?.name;
-
-          if (standardId && !allStandards.find((s) => s.id === standardId)) {
-            allStandards.push({
-              id: standardId,
-              type: 'VERPLICHT',
-              referentieComponent: refComp.naam || `Component ${refComp.id}`,
-            });
-          }
-        });
-      }
-
-      // Add aanbevolen standaarden
-      if (
-        refComp.aanbevolenStandaarden &&
-        Array.isArray(refComp.aanbevolenStandaarden)
-      ) {
-        refComp.aanbevolenStandaarden.forEach((standard) => {
-          const standardId =
-            typeof standard === 'string'
-              ? standard
-              : standard?.id ||
-                standard?.value ||
-                standard?.slug ||
-                standard?.naam ||
-                standard?.name;
-
-          if (standardId) {
-            const existingStandard = allStandards.find((s) => s.id === standardId);
-            if (existingStandard) {
-              // If already exists as VERPLICHT, keep it as VERPLICHT
-              if (existingStandard.type !== 'VERPLICHT') {
-                existingStandard.type = 'AANBEVOLEN';
-              }
-            } else {
-              allStandards.push({
-                id: standardId,
-                type: 'AANBEVOLEN',
-                referentieComponent: refComp.naam || `Component ${refComp.id}`,
-              });
-            }
-          }
-        });
-      }
-    });
-
-    return allStandards;
+  // Helper function to get ID from an item
+  const getItemId = (item) => {
+    if (!item) return null;
+    if (typeof item === 'string') return item;
+    return (
+      item.id ||
+      item?.['@self']?.id ||
+      item.identifier ||
+      item.value ||
+      item.slug ||
+      item.naam ||
+      item.name ||
+      null
+    );
   };
 
-  // Get all standards from referentieComponenten using the helper function
-  const allReferentieStandards = getAllStandardsFromReferentieComponenten(
-    effectiveReferentieComponentenWithStandards
+  // Helper function to find matching standard data
+  const findMatchingStandardData = useCallback(
+    (standard) => {
+      const standardId = getItemId(standard);
+      if (!standardId || !effectiveStandards?.length) return null;
+
+      return effectiveStandards.find(
+        (standardData) =>
+          String(standardData.id) === String(standardId) ||
+          String(standardData.identifier) === String(standardId) ||
+          String(standardData.value) === String(standardId)
+      );
+    },
+    [effectiveStandards]
   );
 
-  // Get IDs of standards from referentieComponenten
-  const referentieStandardIds = useMemo(() => {
-    return new Set(allReferentieStandards.map((s) => String(s.id)));
-  }, [allReferentieStandards]);
+  // Helper function to find matching standaardversie data
+  const findMatchingStandaardversieData = useCallback(
+    (versie) => {
+      const versieId = getItemId(versie);
+      if (!versieId || !effectiveStandaardversies?.length) return null;
 
-  // Find "toegevoegd" (added) standards - standards in complianceStandards but not in referentieComponenten
-  const toegevoegdeStandards = useMemo(() => {
-    if (!complianceStandards || complianceStandards.length === 0) {
-      return [];
+      return effectiveStandaardversies.find(
+        (versieData) =>
+          String(versieData.id) === String(versieId) ||
+          String(versieData.identifier) === String(versieId) ||
+          String(versieData.value) === String(versieId)
+      );
+    },
+    [effectiveStandaardversies]
+  );
+
+  // Helper function to get all standaardversies from referentieComponenten data
+  // Traverses: referentieComponenten → standaarden → find matching standaardversies by their parent standard ID
+  const getAllStandaardVersiesFromReferentieComponenten = useCallback(
+    (referentieComponentenWithStandardsData) => {
+      if (!referentieComponentenWithStandardsData?.length) return [];
+      if (!effectiveStandaardversies?.length) return [];
+
+      const allVersies = [];
+
+      referentieComponentenWithStandardsData.forEach((refComp) => {
+        const refCompName = refComp.naam || `Component ${refComp.id}`;
+
+        // Helper to process standards and find their versions
+        // Instead of looking for standaardVersies array in the standard,
+        // we search through all standaardversies to find ones that reference this standard
+        const processStandards = (standardsList, isVerplicht) => {
+          if (!standardsList || !Array.isArray(standardsList)) return;
+
+          standardsList.forEach((standard) => {
+            const standardId = getItemId(standard);
+            if (!standardId) return;
+
+            // Find all standaardversies that have this standard as their parent
+            const matchingVersies = effectiveStandaardversies.filter((versie) => {
+              const versieStandaardId = getItemId(versie.standaard);
+              if (!versieStandaardId) return false;
+
+              // Match by ID
+              return String(versieStandaardId) === String(standardId);
+            });
+
+            // Process each matching standaardversie
+            matchingVersies.forEach((versie) => {
+              const versieId = getItemId(versie);
+              if (!versieId) return;
+
+              // Get versie name
+              const versieName =
+                versie?.xml?.name?._value ||
+                versie?.name ||
+                versie?.naam ||
+                versieId;
+
+              const existingVersie = allVersies.find(
+                (versieEntry) => String(versieEntry.id) === String(versieId)
+              );
+
+              if (existingVersie) {
+                // If already exists as VERPLICHT, keep it as VERPLICHT
+                if (isVerplicht && existingVersie.type !== 'VERPLICHT') {
+                  existingVersie.type = 'VERPLICHT';
+                }
+              } else {
+                allVersies.push({
+                  id: versieId,
+                  name: versieName,
+                  type: isVerplicht ? 'VERPLICHT' : 'AANBEVOLEN',
+                  referentieComponent: refCompName,
+                  parentStandardId: standardId,
+                  fetchedData: versie,
+                });
+              }
+            });
+          });
+        };
+
+        // Process verplichte standaarden (isVerplicht = true)
+        processStandards(refComp.verplichteStandaarden, true);
+
+        // Process aanbevolen standaarden (isVerplicht = false)
+        processStandards(refComp.aanbevolenStandaarden, false);
+      });
+
+      return allVersies;
+    },
+    [effectiveStandaardversies, findMatchingStandardData, findMatchingStandaardversieData]
+  );
+
+  // Get all standaardversies from referentieComponenten using the helper function
+  const allReferentieStandaardversies = useMemo(
+    () =>
+      getAllStandaardVersiesFromReferentieComponenten(
+        effectiveReferentieComponentenWithStandards
+      ),
+    [
+      effectiveReferentieComponentenWithStandards,
+      getAllStandaardVersiesFromReferentieComponenten,
+    ]
+  );
+
+  // Get IDs of standaardversies from referentieComponenten
+  const referentieStandaardversieIds = useMemo(() => {
+    return new Set(allReferentieStandaardversies.map((versie) => String(versie.id)));
+  }, [allReferentieStandaardversies]);
+
+  // Find "toegevoegd" (added) standaardversies - versions in compliantVersieIds or complianceStandards but not in referentieComponenten
+  const toegevoegdeStandaardversies = useMemo(() => {
+    const toegevoegdMap = new Map();
+
+    // Helper function to check if a versie ID is in referentieComponenten
+    const isInReferentieComponenten = (versieId) => {
+      const versieData = effectiveStandaardversies?.find(
+        (versie) =>
+          String(versie.id) === String(versieId) ||
+          String(versie.identifier) === String(versieId) ||
+          String(versie.value) === String(versieId)
+      );
+
+      if (versieData) {
+        const possibleIds = [
+          String(versieData.id),
+          String(versieData.identifier),
+          String(versieData.value),
+          String(versieData.uuid),
+        ].filter(Boolean);
+
+        return possibleIds.some((id) => referentieStandaardversieIds.has(id));
+      }
+
+      return referentieStandaardversieIds.has(String(versieId));
+    };
+
+    // Helper function to add a toegevoegd versie
+    const addToegeveogdVersie = (versieId, providedName = null) => {
+      if (toegevoegdMap.has(versieId)) return;
+
+      const versieData = effectiveStandaardversies?.find(
+        (versie) =>
+          String(versie.id) === String(versieId) ||
+          String(versie.identifier) === String(versieId) ||
+          String(versie.value) === String(versieId)
+      );
+
+      // Use the identifier property (like the form stage does)
+      const resolverIdentifier =
+        versieData?.identifier || versieData?.id || versieData?.value || versieId;
+
+      // Prefer fetched data with actual names, then fall back to provided name or identifier
+      // This ensures we use the real name from the API if available, not the UUID from compliancy.standaardnaam
+      const versieName =
+        versieData?.['@self']?.name ||
+        versieData?.xml?.name?._value ||
+        versieData?.name ||
+        versieData?.naam ||
+        providedName ||
+        resolverIdentifier;
+
+      toegevoegdMap.set(versieId, {
+        id: resolverIdentifier,
+        name: versieName,
+        type: 'TOEGEVOEGD',
+        referentieComponent: 'Extra toegevoegd',
+        fetchedData: versieData,
+      });
+    };
+
+    // Check compliantVersieIds array (standaardVersies)
+    if (compliantVersieIds && compliantVersieIds.length > 0) {
+      compliantVersieIds.forEach((versieId) => {
+        if (!isInReferentieComponenten(versieId)) {
+          addToegeveogdVersie(versieId);
+        }
+      });
     }
 
-    return complianceStandards
-      .filter((cs) => {
-        const standardId = String(cs.standaardversie);
-        // Also check if this standard might be using a different identifier format
-        // by looking it up in effectiveStandards and checking if any of its identifiers
-        // match a referentie standard
-        const standardData = effectiveStandards?.find(
-          (s) =>
-            String(s.id) === standardId ||
-            String(s.identifier) === standardId ||
-            String(s.value) === standardId
-        );
-
-        if (standardData) {
-          // Check all possible identifier formats
-          const possibleIds = [
-            String(standardData.id),
-            String(standardData.identifier),
-            String(standardData.value),
-            String(standardData.uuid),
-          ].filter(Boolean);
-
-          // If any of these IDs match a referentie standard, it's not toegevoegd
-          return !possibleIds.some((id) => referentieStandardIds.has(id));
+    // Also check complianceStandards for backwards compatibility
+    if (complianceStandards && complianceStandards.length > 0) {
+      complianceStandards.forEach((compliancy) => {
+        const versieId = compliancy.standaardversie;
+        if (versieId && !isInReferentieComponenten(versieId)) {
+          // Pass the standaardnaam from compliancy if available
+          addToegeveogdVersie(versieId, compliancy.standaardnaam);
         }
-
-        // If we can't find the standard data, just check the direct ID
-        return !referentieStandardIds.has(standardId);
-      })
-      .map((cs) => {
-        // Find the standard data to get the identifier that ConStandardsResolver will use
-        const standardData = effectiveStandards?.find(
-          (s) =>
-            String(s.id) === String(cs.standaardversie) ||
-            String(s.identifier) === String(cs.standaardversie) ||
-            String(s.value) === String(cs.standaardversie)
-        );
-
-        // Use the identifier that ConStandardsResolver will match on
-        const resolverIdentifier =
-          standardData?.identifier ||
-          standardData?.id ||
-          standardData?.value ||
-          cs.standaardversie;
-
-        return {
-          id: resolverIdentifier,
-          type: 'TOEGEVOEGD',
-          referentieComponent: 'Extra toegevoegd',
-        };
       });
-  }, [complianceStandards, referentieStandardIds, effectiveStandards]);
+    }
 
-  // Combine referentie standards with toegevoegde standards
+    return Array.from(toegevoegdMap.values());
+  }, [
+    complianceStandards,
+    compliantVersieIds,
+    referentieStandaardversieIds,
+    effectiveStandaardversies,
+  ]);
+
+  // Combine referentie standaardversies with toegevoegde standaardversies
   const allStandards = useMemo(() => {
-    return [...allReferentieStandards, ...toegevoegdeStandards];
-  }, [allReferentieStandards, toegevoegdeStandards]);
+    return [...allReferentieStandaardversies, ...toegevoegdeStandaardversies];
+  }, [allReferentieStandaardversies, toegevoegdeStandaardversies]);
 
   // Notify parent component when standards count changes
   useEffect(() => {
@@ -382,36 +541,52 @@ const ConStandardsTable = ({
 
   // Functions for editing mode
   const toggleCompliance = useCallback(
-    (standardId, isCompliant) => {
+    (versieId, isCompliant) => {
       if (!isEditing || !onComplianceChange) return;
 
       const currentCompliancy = complianceStandards || [];
       let newCompliancy;
 
+      // Find the versie data to get all possible IDs
+      const versieData = effectiveStandaardversies?.find(
+        (versie) =>
+          versie.id === versieId ||
+          versie.identifier === versieId ||
+          versie.value === versieId
+      );
+
+      // Collect all possible IDs for this versie
+      const allPossibleIds = new Set([versieId]);
+      if (versieData?.id) allPossibleIds.add(String(versieData.id));
+      if (versieData?.identifier) allPossibleIds.add(String(versieData.identifier));
+      if (versieData?.value) allPossibleIds.add(String(versieData.value));
+
       if (isCompliant) {
-        // Find the objectId from the effectiveStandards data
-        const standardData = effectiveStandards?.find(
-          (s) => s.id === standardId || s.identifier === standardId
-        );
-        const objectId = standardData?.id || standardData?.objectId || null;
+        // Use identifier for standaardGemma to maintain consistency with id- prefix format
+        const objectId =
+          versieData?.identifier || versieData?.id || versieData?.objectId || null;
 
-        // Add or update compliancy - check both standaardversie and standaardGemma
+        // Add or update compliancy - check all possible IDs
         const existingIndex = currentCompliancy.findIndex(
-          (c) => c.standaardversie === standardId || c.standaardGemma === standardId
+          (compliancy) =>
+            allPossibleIds.has(String(compliancy.standaardversie)) ||
+            allPossibleIds.has(String(compliancy.standaardGemma))
         );
 
-        // Find the standard name for display
-        const standard = allStandards.find((s) => s.id === standardId);
-        const standardName = standard
-          ? effectiveStandards?.find(
-              (s) => s.id === standardId || s.identifier === standardId
-            )?.name || standard.id
-          : standardId;
+        // Find the standaardversie name for display
+        const versieEntry = allStandards.find((entry) => entry.id === versieId);
+        const versieName =
+          versieEntry?.name ||
+          versieData?.['@self']?.name ||
+          versieData?.xml?.name?._value ||
+          versieData?.name ||
+          versieData?.naam ||
+          versieId;
 
         const compliancyObject = {
-          standaardversie: standardId,
+          standaardversie: versieId,
           standaardGemma: objectId,
-          standaardnaam: standardName,
+          standaardnaam: versieName,
           bewijs: null,
           bewijsFilename: null,
           url: null,
@@ -424,9 +599,11 @@ const ConStandardsTable = ({
           newCompliancy = [...currentCompliancy, compliancyObject];
         }
       } else {
-        // Remove compliancy - check both standaardversie and standaardGemma
+        // Remove compliancy - check all possible IDs
         newCompliancy = currentCompliancy.filter(
-          (c) => c.standaardversie !== standardId && c.standaardGemma !== standardId
+          (compliancy) =>
+            !allPossibleIds.has(String(compliancy.standaardversie)) &&
+            !allPossibleIds.has(String(compliancy.standaardGemma))
         );
       }
 
@@ -437,7 +614,7 @@ const ConStandardsTable = ({
       onComplianceChange,
       complianceStandards,
       allStandards,
-      effectiveStandards,
+      effectiveStandaardversies,
     ]
   );
 
@@ -506,7 +683,7 @@ const ConStandardsTable = ({
   );
 
   if (effectiveLoading) {
-    return <p>Standaarden laden...</p>;
+    return <p>Standaardversies laden...</p>;
   }
 
   if (!allStandards || allStandards.length === 0) {
@@ -538,7 +715,7 @@ const ConStandardsTable = ({
                 width: '50%',
               }}
             >
-              Standaard
+              Standaardversie
             </TableCell>
             <TableCell
               style={{
@@ -573,56 +750,115 @@ const ConStandardsTable = ({
               (s) => s.type === 'TOEGEVOEGD'
             );
 
-            const renderStandardRow = (refStandard, idx) => {
-              // Check if this standard is in the complianceStandards array
-              // For toegevoegd standards, we need to match by multiple possible identifiers
-              const complianceStandard = complianceStandards?.find((cs) => {
+            const renderStandardRow = (versieEntry, idx) => {
+              // Check if this standaardversie is in the complianceStandards array
+              // For toegevoegd versions, we need to match by multiple possible identifiers
+              const complianceStandard = complianceStandards?.find((compliancy) => {
                 // Direct match
-                if (cs.standaardversie === refStandard.id) return true;
+                if (compliancy.standaardversie === versieEntry.id) return true;
 
                 // Also check standaardGemma (the canonical ID)
-                if (cs.standaardGemma === refStandard.id) return true;
+                if (compliancy.standaardGemma === versieEntry.id) return true;
 
-                // For toegevoegd standards, check if any identifier matches
-                if (refStandard.type === 'TOEGEVOEGD') {
-                  const standardData = effectiveStandards?.find(
-                    (s) =>
-                      String(s.id) === String(refStandard.id) ||
-                      String(s.identifier) === String(refStandard.id) ||
-                      String(s.value) === String(refStandard.id)
+                // Check all possible ID formats
+                const versieData = effectiveStandaardversies?.find(
+                  (versie) =>
+                    String(versie.id) === String(versieEntry.id) ||
+                    String(versie.identifier) === String(versieEntry.id) ||
+                    String(versie.value) === String(versieEntry.id)
+                );
+
+                if (versieData) {
+                  return (
+                    String(compliancy.standaardversie) === String(versieData.id) ||
+                    String(compliancy.standaardversie) ===
+                      String(versieData.identifier) ||
+                    String(compliancy.standaardversie) ===
+                      String(versieData.value) ||
+                    String(compliancy.standaardGemma) === String(versieData.id) ||
+                    String(compliancy.standaardGemma) ===
+                      String(versieData.identifier)
                   );
-
-                  if (standardData) {
-                    return (
-                      String(cs.standaardversie) === String(standardData.id) ||
-                      String(cs.standaardversie) ===
-                        String(standardData.identifier) ||
-                      String(cs.standaardversie) === String(standardData.value) ||
-                      String(cs.standaardGemma) === String(standardData.id)
-                    );
-                  }
                 }
 
                 return false;
               });
-              const hasBewijs = !!complianceStandard?.bewijs;
-              const hasUrl = !!complianceStandard?.url;
-              const isCompliant = hasBewijs || hasUrl;
-              const isOndersteund = !!complianceStandard && !hasBewijs && !hasUrl;
 
-              // Find the actual standard object to get its real ID
-              const actualStandard = effectiveStandards?.find(
-                (standard) =>
-                  standard.identifier === refStandard.id ||
-                  standard.id === refStandard.id ||
-                  standard.objectId === refStandard.id
+              // Check if this versie is in the compliantVersieIds array
+              const isInCompliantVersieIds = compliantVersieIds?.some((id) => {
+                if (String(id) === String(versieEntry.id)) return true;
+
+                // Also check fetched data IDs
+                const versieData = effectiveStandaardversies?.find(
+                  (versie) =>
+                    String(versie.id) === String(versieEntry.id) ||
+                    String(versie.identifier) === String(versieEntry.id) ||
+                    String(versie.value) === String(versieEntry.id)
+                );
+
+                if (versieData) {
+                  return (
+                    String(id) === String(versieData.id) ||
+                    String(id) === String(versieData.identifier) ||
+                    String(id) === String(versieData.value)
+                  );
+                }
+
+                return false;
+              });
+
+              // Extract the actual URL from bewijs field
+              // bewijs can be:
+              // 1. A data URL string (data:application/pdf;base64,...)
+              // 2. An object with url property: { url: "https://..." } or { url: "data:..." }
+              // 3. null/undefined
+              const bewijsValue = complianceStandard?.bewijs;
+              const bewijsUrl = typeof bewijsValue === 'object' && bewijsValue?.url 
+                ? bewijsValue.url 
+                : typeof bewijsValue === 'string' 
+                ? bewijsValue 
+                : null;
+              
+              // Check if we have a data URL (base64 encoded file)
+              const hasBewijsDataUrl = bewijsUrl && bewijsUrl.startsWith('data:');
+              // Check if we have an HTTP(S) URL in bewijs
+              const hasBewijsHttpUrl = bewijsUrl && (bewijsUrl.startsWith('http://') || bewijsUrl.startsWith('https://'));
+              // Check if we have a separate url field
+              const hasUrl = !!complianceStandard?.url;
+              
+              // For display purposes: compliant means has evidence
+              const isCompliant = hasBewijsDataUrl || hasBewijsHttpUrl || hasUrl;
+              // Ondersteund means in compliancy or compliantVersieIds but no evidence yet
+              const isOndersteund =
+                (!!complianceStandard || isInCompliantVersieIds) &&
+                !hasBewijsDataUrl &&
+                !hasBewijsHttpUrl &&
+                !hasUrl;
+              // For checkbox: checked if in compliancy array or compliantVersieIds
+              const isChecked = !!complianceStandard || isInCompliantVersieIds;
+
+              // Find the actual standaardversie object to get its real ID
+              const actualVersie = effectiveStandaardversies?.find(
+                (versie) =>
+                  versie.identifier === versieEntry.id ||
+                  versie.id === versieEntry.id ||
+                  versie.objectId === versieEntry.id
               );
 
-              // Use the actual standard's ID, fallback to refStandard.id if not found
-              const standardObjectId = actualStandard?.id || refStandard.id;
+              // Use the actual versie's ID, fallback to versieEntry.id if not found
+              const versieObjectId = actualVersie?.id || versieEntry.id;
+
+              // Get the display name for the standaardversie
+              const versieName =
+                versieEntry.name ||
+                actualVersie?.['@self']?.name ||
+                actualVersie?.xml?.name?._value ||
+                actualVersie?.name ||
+                actualVersie?.naam ||
+                versieEntry.id;
 
               return (
-                <TableRow key={`${refStandard.type}-${idx}`}>
+                <TableRow key={`${versieEntry.type}-${idx}`}>
                   <TableCell
                     style={{
                       alignContent: 'center',
@@ -635,20 +871,17 @@ const ConStandardsTable = ({
                   >
                     <div>
                       <Link
-                        href={`https://www.gemmaonline.nl/wiki/GEMMA/id-${standardObjectId}`}
+                        href={`https://www.gemmaonline.nl/wiki/GEMMA/id-${versieObjectId}`}
                         target='_blank'
                       >
-                        <ConStandardsResolver
-                          standardId={refStandard.id}
-                          standards={effectiveStandards}
-                        />
+                        <ConUuidResolver>{versieName}</ConUuidResolver>
                       </Link>
                       <div style={{ marginTop: '4px' }}>
                         <span
-                          key={`${refStandard.type}-${idx}`}
-                          className={`con-standaard-badge con-standaard-badge--${refStandard.type.toLowerCase()}`}
+                          key={`${versieEntry.type}-${idx}`}
+                          className={`con-standaard-badge con-standaard-badge--${versieEntry.type.toLowerCase()}`}
                         >
-                          {refStandard.type}
+                          {versieEntry.type}
                         </span>
                       </div>
                       <div
@@ -659,7 +892,7 @@ const ConStandardsTable = ({
                           wordWrap: 'break-word',
                         }}
                       >
-                        {refStandard.referentieComponent}
+                        <ConUuidResolver>{versieEntry.referentieComponent}</ConUuidResolver>
                       </div>
                     </div>
                   </TableCell>
@@ -673,9 +906,9 @@ const ConStandardsTable = ({
                     {isEditing ? (
                       <div style={{ display: 'flex', justifyContent: 'center' }}>
                         <AcCheckbox
-                          checked={isCompliant}
+                          checked={isChecked}
                           onChange={(checked) =>
-                            toggleCompliance(refStandard.id, checked)
+                            toggleCompliance(versieEntry.id, checked)
                           }
                           disabled={disabled}
                           label=''
@@ -689,8 +922,8 @@ const ConStandardsTable = ({
                           backgroundColor: isCompliant
                             ? '#28a745'
                             : isOndersteund
-                            ? '#ffc107'
-                            : refStandard.type === 'VERPLICHT'
+                            ? '#A86200'
+                            : versieEntry.type === 'VERPLICHT'
                             ? '#dc3545'
                             : '#6c757d',
                           fontWeight: '600',
@@ -722,8 +955,8 @@ const ConStandardsTable = ({
                     }}
                   >
                     {isEditing ? (
-                      // Show file upload or URL input when editing and compliant/ondersteund
-                      isCompliant || isOndersteund ? (
+                      // Show file upload or URL input when editing and checked (in compliancy or compliantVersieIds)
+                      isChecked ? (
                         <div
                           style={{
                             display: 'flex',
@@ -740,12 +973,12 @@ const ConStandardsTable = ({
                             }}
                             _value={complianceStandard?.bewijs || ''}
                             onChange={(dataUrl) =>
-                              updateBewijs(refStandard.id, dataUrl)
+                              updateBewijs(versieEntry.id, dataUrl)
                             }
                             onChangeFileName={(filename) =>
-                              updateBewijsFilename(refStandard.id, filename)
+                              updateBewijsFilename(versieEntry.id, filename)
                             }
-                            onClear={() => clearBewijs(refStandard.id)}
+                            onClear={() => clearBewijs(versieEntry.id)}
                             accept={[
                               '.pdf',
                               '.jpg',
@@ -756,7 +989,7 @@ const ConStandardsTable = ({
                             ]}
                             showPreview={false}
                             validation={{ required: false }}
-                            propertyName={`bewijs-${refStandard.id}`}
+                            propertyName={`bewijs-${versieEntry.id}`}
                             size='small'
                             isDisabled={disabled || !!complianceStandard?.url}
                           />
@@ -766,7 +999,7 @@ const ConStandardsTable = ({
                               placeholder='https://...'
                               value={complianceStandard?.url || ''}
                               type='url'
-                              onChange={(e) => updateUrl(refStandard.id, e)}
+                              onChange={(e) => updateUrl(versieEntry.id, e)}
                               disabled={disabled || !!complianceStandard?.bewijs}
                               className='ac-register-form-field__no-width-limit'
                               hasError={validateWebsite(complianceStandard?.url)}
@@ -792,47 +1025,106 @@ const ConStandardsTable = ({
                           -
                         </span>
                       )
-                    ) : // Always show download button when not editing
-                    hasBewijs ? (
-                      <Link
-                        href='#'
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleFileClick(complianceStandard.bewijs);
-                        }}
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'left',
-                          cursor: 'pointer',
-                        }}
-                        title='Download bewijs bestand'
-                      >
-                        <VISUALS.DOWNLOAD />
-                      </Link>
-                    ) : hasUrl ? (
-                      <Link
-                        href={complianceStandard.url}
-                        target='_blank'
-                        rel='noopener noreferrer'
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'left',
-                          cursor: 'pointer',
-                        }}
-                        title={`Open bewijs URL: ${complianceStandard.url}`}
-                      >
-                        <VISUALS.EXTERNAL_LINK />
-                      </Link>
-                    ) : (
-                      <span
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'left',
-                        }}
-                      >
-                        -
-                      </span>
-                    )}
+                    ) : // Always show download/link button when not editing
+                    (() => {
+                      // Check for file metadata in @self.files
+                      const fileInfo = complianceStandard?.['@self']?.files?.[0];
+                      const fileTitle = fileInfo?.title;
+                      const fileDownloadUrl = fileInfo?.downloadUrl;
+
+                      if (fileTitle && fileDownloadUrl) {
+                        return (
+                          <Link
+                            href={fileDownloadUrl}
+                            target='_blank'
+                            rel='noopener noreferrer'
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              justifyContent: 'left',
+                              cursor: 'pointer',
+                            }}
+                            title={`Download: ${fileTitle}`}
+                          >
+                            <VISUALS.DOWNLOAD />
+                            <span style={{ fontSize: '0.85rem' }}>{fileTitle}</span>
+                          </Link>
+                        );
+                      } else if (hasBewijsDataUrl) {
+                        // Data URL (base64 encoded file) - handle with handleFileClick
+                        return (
+                          <Link
+                            href='#'
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleFileClick(bewijsUrl);
+                            }}
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'left',
+                              cursor: 'pointer',
+                            }}
+                            title='Download bewijs bestand'
+                          >
+                            <VISUALS.DOWNLOAD />
+                          </Link>
+                        );
+                      } else if (hasBewijsHttpUrl) {
+                        // HTTP(S) URL in bewijs field - display the URL
+                        return (
+                          <Link
+                            href={bewijsUrl}
+                            target='_blank'
+                            rel='noopener noreferrer'
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              justifyContent: 'left',
+                              cursor: 'pointer',
+                              wordBreak: 'break-all',
+                            }}
+                            title={`Open bewijs URL: ${bewijsUrl}`}
+                          >
+                            <VISUALS.EXTERNAL_LINK />
+                            <span style={{ fontSize: '0.85rem' }}>{bewijsUrl}</span>
+                          </Link>
+                        );
+                      } else if (hasUrl) {
+                        // Separate url field - display the URL
+                        return (
+                          <Link
+                            href={complianceStandard.url}
+                            target='_blank'
+                            rel='noopener noreferrer'
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              justifyContent: 'left',
+                              cursor: 'pointer',
+                              wordBreak: 'break-all',
+                            }}
+                            title={`Open bewijs URL: ${complianceStandard.url}`}
+                          >
+                            <VISUALS.EXTERNAL_LINK />
+                            <span style={{ fontSize: '0.85rem' }}>{complianceStandard.url}</span>
+                          </Link>
+                        );
+                      } else {
+                        return (
+                          <span
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'left',
+                            }}
+                          >
+                            -
+                          </span>
+                        );
+                      }
+                    })()}
                   </TableCell>
                 </TableRow>
               );

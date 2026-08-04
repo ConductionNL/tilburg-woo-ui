@@ -209,9 +209,11 @@ const getEnvConfig = () => {
   // Load values from values.yaml
   const yamlConfig = loadValuesYaml();
 
+  console.info({ yamlConfig });
+
   const baseConfig = {
     // Site Configuration
-    SITE_TITLE: getConfigValue(yamlConfig, 'SITE_TITLE', 'Development Catalogus'),
+    SITE_TITLE: getConfigValue(yamlConfig, 'SITE_TITLE', 'Test Catalogus'),
     SITE_DESCRIPTION: getConfigValue(
       yamlConfig,
       'SITE_DESCRIPTION',
@@ -308,6 +310,15 @@ const getEnvConfig = () => {
 
     // Search Configuration
     DEFAULT_SEARCH_SCHEMA: getConfigValue(yamlConfig, 'DEFAULT_SEARCH_SCHEMA', ''),
+
+    // Chat Configuration
+    CHAT_ENDPOINT: getConfigValue(yamlConfig, 'CHAT_ENDPOINT', ''),
+    CHAT_TITLE: getConfigValue(yamlConfig, 'CHAT_TITLE', 'Chat met Open Registers'),
+    CHAT_DESCRIPTION: getConfigValue(
+      yamlConfig,
+      'CHAT_DESCRIPTION',
+      'Stel vragen over data en bestanden in open registers en krijg direct antwoord.'
+    ),
   };
 
   // Add any extra variables from values.yaml that aren't in the base config
@@ -324,28 +335,45 @@ const getEnvConfig = () => {
 };
 // Generate the constants file content
 const generateConstantsFile = (config) => {
+  // Generate getRuntimeOrDefault calls for each config entry
   const configEntries = Object.entries(config)
     .map(([key, value]) => {
+      let defaultValue;
       if (typeof value === 'string') {
-        return `  ${key}: '${value}',`;
+        // Escape single quotes in strings
+        defaultValue = `'${value.replace(/'/g, "\\'")}'`;
       } else if (typeof value === 'number') {
-        return `  ${key}: ${value},`;
+        defaultValue = value;
       } else if (typeof value === 'boolean') {
-        return `  ${key}: ${value},`;
+        defaultValue = value;
+      } else if (value === null) {
+        defaultValue = 'null';
       } else {
-        return `  ${key}: '${String(value)}',`;
+        defaultValue = `'${String(value)}'`;
       }
+      return `  ${key}: getRuntimeOrDefault('${key}', ${defaultValue}),`;
     })
     .join('\n');
   return `// Auto-generated container constants
 // This file is generated from values.yaml and environment variables during container startup
-// Priority: 1. values.yaml (env/extraEnvVars) -> 2. Environment variables -> 3. Defaults
+// Priority: 1. window.RUNTIME_CONFIG (runtime) -> 2. Build-time defaults
 // DO NOT EDIT MANUALLY - changes will be overwritten
 import { AcLockObject } from '@utils/ac-lock-object';
-// Container configuration
+
+// Read configuration from window.RUNTIME_CONFIG (loaded before React bundle)
+// Falls back to build-time defaults if runtime config is not available
+const getRuntimeOrDefault = (key, defaultValue) => {
+  if (typeof window !== 'undefined' && window.RUNTIME_CONFIG && window.RUNTIME_CONFIG[key] !== undefined) {
+    return window.RUNTIME_CONFIG[key];
+  }
+  return defaultValue;
+};
+
+// Container configuration - reads from window.RUNTIME_CONFIG at runtime
 export const CONTAINER_CONFIG = AcLockObject({
 ${configEntries}
 });
+
 // Helper functions to replace hostname-based logic
 export const getTitle = () => CONTAINER_CONFIG.SITE_TITLE;
 export const getSiteDescription = () => CONTAINER_CONFIG.SITE_DESCRIPTION;
@@ -401,6 +429,13 @@ export const getFooterLogoSubtitle = () => CONTAINER_CONFIG.FOOTER_LOGO_SUBTITLE
 export const getSupportEmailAddress = () => CONTAINER_CONFIG.SUPPORT_EMAIL_ADDRESS;
 // Search helper functions
 export const getDefaultSearchSchema = () => CONTAINER_CONFIG.DEFAULT_SEARCH_SCHEMA;
+// Chat helper functions
+export const getChatEndpoint = () => CONTAINER_CONFIG.CHAT_ENDPOINT;
+export const getChatTitle = () => CONTAINER_CONFIG.CHAT_TITLE;
+export const getChatDescription = () => CONTAINER_CONFIG.CHAT_DESCRIPTION;
+export const isChatEnabled = () => {
+  return CONTAINER_CONFIG.CHAT_ENDPOINT && CONTAINER_CONFIG.CHAT_ENDPOINT.trim() !== '';
+};
 export const getDefaultConfig = () => CONTAINER_CONFIG;
 `;
 };

@@ -213,6 +213,9 @@ export const renderField = ({
   // Check for custom component first
   const CustomComponent = customFieldComponents[path];
   if (CustomComponent) {
+    // Extract filename field from path (assume fieldname + "Filename") for file upload components
+    const filenamePath = path + 'Filename';
+
     return (
       <CustomComponent
         // Password manager prevention attributes
@@ -227,6 +230,18 @@ export const renderField = ({
         fieldConfig={fieldConfig}
         value={value}
         onChange={handleChange}
+        onChangeFileName={(filename) => {
+          // Update filename field for file upload components
+          if (onFieldChange) {
+            onFieldChange(filenamePath, filename);
+          }
+        }}
+        onClear={() => {
+          handleChange('');
+          if (onFieldChange) {
+            onFieldChange(filenamePath, '');
+          }
+        }}
         validation={validation}
         isLoading={isLoading}
         isDisabled={isDisabled}
@@ -251,6 +266,7 @@ export const renderField = ({
     // Extract filename field from path (assume fieldname + "Filename")
     const filenamePath = path + 'Filename';
     const filenameValue = getNestedValue(filenamePath, formData);
+    const fieldId = `fileInput-${path}`;
 
     return (
       <LogoUploadField
@@ -261,9 +277,10 @@ export const renderField = ({
           filename: filenameValue,
           required: validation.required,
         }}
+        id={fieldId}
         _value={value}
-        onChange={(dataUrl) => {
-          handleChange(dataUrl);
+        onChange={(fileOrDataUrl) => {
+          handleChange(fileOrDataUrl);
         }}
         onChangeFileName={(filename) => {
           // Update filename field if it exists in formData structure
@@ -282,15 +299,18 @@ export const renderField = ({
         isDisabled={isDisabled}
         placeholder={fieldConfig.placeholder}
         style={inputStyle}
+        useFileObjects={fieldConfig?.useFileObjects || false}
+        enableFileSizeCheck={fieldConfig?.enableFileSizeCheck}
       />
     );
   }
 
   // Render based on component type
   if (fieldConfig.component === 'Boolean') {
+    const fieldId = `dynamic-form-field-${path}`;
     return (
       <div key={`${path}-${resetKey}`}>
-        <label className='utrecht-form-label'>
+        <label className='utrecht-form-label' htmlFor={fieldId}>
           <Heading
             level={4}
             className={clsx({
@@ -325,6 +345,7 @@ export const renderField = ({
         </label>
         <BooleanField
           key={path}
+          id={fieldId}
           label={`Huidige keuze: ${value ? 'Ja' : 'Nee'}`}
           value={!!value}
           onChange={handleChange}
@@ -355,9 +376,11 @@ export const renderField = ({
   }
 
   if (fieldConfig.component === 'Color') {
+    // copy id method from ColorField component
+    const fieldId = `dynamic-form-field-${path}`;
     return (
       <div key={`${path}-${resetKey}`}>
-        <label className='utrecht-form-label'>
+        <label className='utrecht-form-label' htmlFor={fieldId}>
           <Heading
             level={4}
             className={clsx({
@@ -411,6 +434,7 @@ export const renderField = ({
       <JsonObjectField
         key={path}
         path={path}
+        id={`dynamic-form-field-${path}`}
         label={fieldConfig.label}
         value={value}
         onChange={handleChange}
@@ -422,9 +446,11 @@ export const renderField = ({
   }
 
   if (fieldConfig.component === 'WysiwygMarkdown') {
+    const fieldId = `dynamic-form-field-${path}`;
+    const labelId = `${fieldId}-label`;
     return (
       <div key={`${path}-${resetKey}`} className='con-wysiwyg-markdown-field'>
-        <label className='utrecht-form-label'>
+        <label id={labelId} className='utrecht-form-label' htmlFor={fieldId}>
           <Heading
             level={4}
             className={clsx({
@@ -463,6 +489,8 @@ export const renderField = ({
           preview='edit'
           hideToolbar={isDisabled}
           textareaProps={{
+            id: fieldId,
+            'aria-labelledby': labelId,
             maxLength: propertySchema?.maxLength ?? undefined,
           }}
           // Stops the toolbar from being focused when tabbing through the form
@@ -509,7 +537,7 @@ export const renderField = ({
         touchedKey={path}
         minLength={propertySchema?.minLength ?? undefined}
         maxLength={propertySchema?.maxLength ?? undefined}
-        pattern={propertySchema?.pattern || undefined}
+        pattern={fieldConfig.pattern !== undefined ? fieldConfig.pattern : (propertySchema?.pattern || undefined)}
         {...validation}
         style={inputStyle}
       />
@@ -529,6 +557,7 @@ export const renderField = ({
         autocomplete='off'
         tooltip={fieldConfig.description}
         key={path}
+        inputType='textarea'
         inputClassName='textarea'
         id={`dynamic-form-field-${path}`}
         label={fieldConfig.label}
@@ -592,11 +621,12 @@ export const renderField = ({
     // Automatically enable search for $ref fields
     const isRefField = getFieldRefSchemaSlug(propertySchema) !== null;
     const shouldBeSearchable = isRefField || fieldConfig.isSearchable;
+    const fieldId = `dynamic-form-field-${path}`;
 
     return (
       <div key={`${path}-${resetKey}`}>
         {!fieldConfig.hideLabel && (
-          <label className='utrecht-form-label'>
+          <label className='utrecht-form-label' htmlFor={fieldId}>
             <Heading
               level={4}
               className={clsx({
@@ -634,6 +664,7 @@ export const renderField = ({
         <ReactSelectWithGlobalHack
           key={`${path}-${resetKey}-${forceRenderKey}`}
           fieldPath={path}
+          inputId={fieldId}
           placeholder={fieldConfig.placeholder}
           value={selectValue}
           className={clsx(
@@ -651,13 +682,10 @@ export const renderField = ({
             getOptionLabel: fieldConfig.getOptionLabel,
           })}
           onInputChange={
-            handleSearch && getFieldRefSchemaSlug(propertySchema)
+            handleSearch
               ? (inputValue, actionMeta) => {
                   // Only trigger search for user input
-                  if (
-                    actionMeta.action === 'input-change' &&
-                    !isLoading
-                  ) {
+                  if (actionMeta.action === 'input-change' && !isLoading) {
                     const refSchemaSlug = getFieldRefSchemaSlug(propertySchema);
                     handleSearch(path, refSchemaSlug, inputValue);
                   }

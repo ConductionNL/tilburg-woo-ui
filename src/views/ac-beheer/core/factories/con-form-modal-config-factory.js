@@ -189,6 +189,12 @@ const FormModalConfigFactory = {
           },
           fieldConfigs: {
             type: { visible: false }, // Hide the type field in applicaties modal
+            logoFilename: { visible: false }, // Hide UI-only field from form
+            logoAccessUrl: { visible: false }, // Hide UI-only field from form
+            logo: {
+              useFileObjects: true, // Enable File objects mode
+              enableFileSizeCheck: false, // Disable file size checks
+            },
             licentietype: {
               // Ensure no default value is set for licentietype
               defaultValue: '',
@@ -241,11 +247,10 @@ const FormModalConfigFactory = {
                   });
 
                   // Get voorzieningen with selected reference components using object store
-                  await objectStore.fetchCollection(
-                    'voorzieningen',
-                    'voorziening',
-                    { ...voorzieningParams, _published: 'false' }
-                  );
+                  await objectStore.fetchCollection('voorzieningen', 'voorziening', {
+                    ...voorzieningParams,
+                    _published: 'false',
+                  });
 
                   const voorzieningType = objectStore.getTypeFromParams(
                     'voorzieningen',
@@ -275,11 +280,10 @@ const FormModalConfigFactory = {
                   };
 
                   // Get the standaarden using object store
-                  await objectStore.fetchCollection(
-                    'voorzieningen',
-                    'standaard',
-                    { ...standaardenParams, _published: 'false' }
-                  );
+                  await objectStore.fetchCollection('voorzieningen', 'standaard', {
+                    ...standaardenParams,
+                    _published: 'false',
+                  });
 
                   const standaardenType = objectStore.getTypeFromParams(
                     'voorzieningen',
@@ -349,6 +353,16 @@ const FormModalConfigFactory = {
             },
             gebruiken: {
               visible: false,
+            },
+            pakketversie_beschrijving: {
+              visible: false,
+            },
+            geregistreerdDoor: {
+              visible: false,
+            },
+            // Remove schema pattern from versie field as it uses advanced regex not supported by HTML5
+            versie: {
+              pattern: undefined,
             },
             // Hide description fields - they are edited inline via action menu
             beschrijvingKort: {
@@ -469,6 +483,7 @@ const FormModalConfigFactory = {
         };
 
       case 'organisaties':
+      case 'organisatie':
         return {
           ...baseConfig,
           // Initial data is now automatically generated from schema properties
@@ -488,9 +503,17 @@ const FormModalConfigFactory = {
           fieldConfigs: {
             // Only hide the fields we don't want to show
             id: { visible: false },
+            logoFilename: { visible: false }, // Hide UI-only field from form
+            logoAccessUrl: { visible: false }, // Hide UI-only field from form,
+            logo: {
+              useFileObjects: true, // Enable File objects mode
+              enableFileSizeCheck: false, // Disable file size checks
+            },
             beschrijvingKort: { visible: false },
             beschrijvingLang: { visible: false },
             type: { visible: (formData, isEdit) => !isEdit }, // Only show type field when adding new organisation
+            organisatieType: { visible: false }, // Hide organisatieType - it's derived from type field
+            geregistreerdDoor: { visible: false },
             links: { visible: false },
             oin: { visible: false },
             rol: { visible: false },
@@ -526,9 +549,11 @@ const FormModalConfigFactory = {
            * - Prefill organisatie from active organisation when creating (not editing) and when not pre-selected
            */
           title: 'Gebruiker',
-          initialData: ({ user, isEdit, preSelected } = {}) => {
+          initialData: ({ user, isEdit, preSelected, data } = {}) => {
             const activeOrg = user?.activeOrganization || null;
             const orgId = String(activeOrg?.uuid);
+
+            console.log({data})
 
             return {
               voorkeuren: { taal: 'NL-nl', thema: 'licht' },

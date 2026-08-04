@@ -145,18 +145,16 @@ const ConContactpersoonDetailsPageContent = ({
           alignItems: 'center',
         }}
       >
-        <Heading level={4}>
-          <div className='con-beheer-details--header-container'>
-            {(data?.['@self']?.image || data?.image) && (
-              <ConLogoPreview
-                className='con-beheer-details--logo-container'
-                logoUrl={data?.['@self']?.image || data?.image}
-              />
-            )}
+        <div className='con-beheer-details--header-container'>
+          {(data?.['@self']?.image || data?.image) && (
+            <ConLogoPreview
+              className='con-beheer-details--logo-container'
+              logoUrl={data?.['@self']?.image || data?.image}
+            />
+          )}
 
-            <Heading className='con-beheer-details--title'>{fullName}</Heading>
-          </div>
-        </Heading>
+          <Heading className='con-beheer-details--title'>{fullName}</Heading>
+        </div>
 
         <div className='ac-register-review__header-controls'>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -202,7 +200,8 @@ const ConContactpersoonDetailsPageContent = ({
                   Bewerken
                 </ConActionMenu.Button>
 
-                {data && !data['@self']?.published && (
+                {/* Publish/Depublish actions - LEGACY: No longer needed */}
+                {/* {data && !data['@self']?.published && (
                   <ConActionMenu.Button
                     icon={<VISUALS.PUBLISH />}
                     onClick={() => actionMenuProps?.setOpenModal?.('publish')}
@@ -232,7 +231,7 @@ const ConContactpersoonDetailsPageContent = ({
                   >
                     Depubliceren
                   </ConActionMenu.Button>
-                )}
+                )} */}
 
                 <ConActionMenu.Button
                   icon={<VISUALS.TRASHCAN />}
@@ -253,8 +252,8 @@ const ConContactpersoonDetailsPageContent = ({
         </div>
       </div>
 
-      {/* Unpublished warning */}
-      <UnpublishedWarning data={data} />
+      {/* Unpublished warning - LEGACY: No longer needed */}
+      {/* <UnpublishedWarning data={data} /> */}
 
       {/* Contactgegevens */}
       <Heading level={3} style={{ marginBlockStart: '1rem' }}>
@@ -325,23 +324,23 @@ const ConContactpersoonDetailsPageContent = ({
   );
 };
 
-/* Warning card for unpublished objects */
-const UnpublishedWarning = ({ data }) => {
-  if (data?.['@self']?.published) return null;
-  const schemaName = data?.['@self']?.schema?.title;
-  const title = schemaName ? `${schemaName}` : '';
-  const objectName = data?.['@self']?.name;
-
-  return (
-    <Alert type='warning' style={{ marginBottom: '1rem' }}>
-      <Heading level={4}>{title} is nog niet gepubliceerd</Heading>
-      <Paragraph>
-        {objectName} is momenteel niet zichtbaar in de zoekfunctie van{' '}
-        {schemaName || 'de catalogus'}. Gebruik de &quot;Publiceren&quot; actie om
-        deze gegevens beschikbaar te maken voor bezoekers.
-      </Paragraph>
-    </Alert>
-  );
-};
+/* Warning card for unpublished objects - LEGACY: No longer needed */
+// const UnpublishedWarning = ({ data }) => {
+//   if (data?.['@self']?.published) return null;
+//   const schemaName = data?.['@self']?.schema?.title;
+//   const title = schemaName ? `${schemaName}` : '';
+//   const objectName = data?.['@self']?.name;
+//
+//   return (
+//     <Alert type='warning' style={{ marginBottom: '1rem' }}>
+//       <Heading level={4}>{title} is nog niet gepubliceerd</Heading>
+//       <Paragraph>
+//         {objectName} is momenteel niet zichtbaar in de zoekfunctie van{' '}
+//         {schemaName || 'de catalogus'}. Gebruik de &quot;Publiceren&quot; actie om
+//         deze gegevens beschikbaar te maken voor bezoekers.
+//       </Paragraph>
+//     </Alert>
+//   );
+// };
 
 export default ConContactpersoonDetailsPageContent;

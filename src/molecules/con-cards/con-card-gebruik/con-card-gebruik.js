@@ -1,13 +1,9 @@
 import { AcLink } from '@molecules';
+import { ConUuidResolver } from '@components';
 import { LABELS, VISUALS } from '@constants';
 import { AcCard, AcFlex } from '@atoms';
 import { Heading, Paragraph } from '@utrecht/component-library-react';
 import { NAVIGATE_TO } from '@constants/routes.constants';
-import { extractTitle } from '@src/utilities/con-extract-text';
-import {
-  useResolvedArray,
-  useResolvedText,
-} from '@src/utilities/con-resolve-uuids-in-text';
 
 const ConCardGebruik = ({
   skeleton,
@@ -16,24 +12,8 @@ const ConCardGebruik = ({
   organisation,
   referentieComponenten,
   status,
-  objectStore,
   navigateTo = 'publication',
 }) => {
-  // Use generic UUID resolver for organisation name
-  const resolvedOrganisation = useResolvedText(organisation, objectStore);
-
-  // Resolve the module (applicatie) name
-  const resolvedModule = useResolvedText(module, objectStore);
-
-  // Title is always "applicatie name - gebruik"
-  const resolvedTitle = resolvedModule
-    ? `${extractTitle(resolvedModule)} - gebruik`
-    : 'gebruik';
-
-  const resolvedReferentieComponenten = useResolvedArray(
-    referentieComponenten,
-    objectStore
-  );
 
   const onClick = () => {
     switch (navigateTo) {
@@ -60,17 +40,29 @@ const ConCardGebruik = ({
               color: 'inherit',
             }}
           />
-          <Heading level={3}>{resolvedTitle}</Heading>
+          <Heading level={3}>
+            <ConUuidResolver>{module}</ConUuidResolver> - gebruik
+          </Heading>
           {organisation && (
-            <Paragraph small>(Gebruikt door {resolvedOrganisation})</Paragraph>
+            <Paragraph small>
+              (Gebruikt door <ConUuidResolver>{organisation}</ConUuidResolver>)
+            </Paragraph>
           )}
         </AcFlex>
       </AcFlex>
       <Paragraph>
         Geschikt voor:{' '}
-        {resolvedReferentieComponenten
-          ?.sort((a, b) => a.localeCompare(b))
-          ?.join(', ') || '-'}
+        {referentieComponenten?.length > 0
+          ? referentieComponenten
+              .slice()
+              .sort((a, b) => String(a).localeCompare(String(b)))
+              .map((component, index) => (
+                <span key={component}>
+                  {index > 0 && ', '}
+                  <ConUuidResolver>{component}</ConUuidResolver>
+                </span>
+              ))
+          : '-'}
       </Paragraph>
       <AcFlex justifyContent='between' className='meta'>
         <AcFlex column>
@@ -80,7 +72,7 @@ const ConCardGebruik = ({
         </AcFlex>
         <AcLink to={onClick()}>
           <span className='sr-only'>
-            {LABELS.READ_MORE_ABOUT} {resolvedTitle}
+            {LABELS.READ_MORE_ABOUT} <ConUuidResolver>{module}</ConUuidResolver> - gebruik
           </span>
           <VISUALS.ARROW_RIGHT />
         </AcLink>

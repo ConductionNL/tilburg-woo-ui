@@ -1,11 +1,11 @@
 import { AcLink } from '@molecules';
+import { ConUuidResolver } from '@components';
 import { LABELS, VISUALS } from '@constants';
 import { AcCard, AcFlex } from '@atoms';
 import { Heading, Paragraph } from '@utrecht/component-library-react';
 import { NAVIGATE_TO } from '@constants/routes.constants';
 import acFormatDate from '@src/utilities/ac-format-date';
 import { extractTitle, extractSummary } from '@src/utilities/con-extract-text';
-import { useResolvedText } from '@src/utilities/con-resolve-uuids-in-text';
 
 /**
  * Renders a card for an Applicatie versie (moduleversie) with version, status, related module and key dates.
@@ -22,10 +22,8 @@ const ConCardModuleVersie = ({
   datumEindeOndersteuning,
   datumTeruggetrokken,
   moduleUuid,
-  objectStore,
   navigateTo = 'publication',
 }) => {
-  const resolvedModule = useResolvedText(moduleUuid, objectStore);
 
   const title = versie || '';
 
@@ -66,8 +64,10 @@ const ConCardModuleVersie = ({
             }}
           />
           <Heading level={3}>{extractTitle(title)}</Heading>
-          {resolvedModule && (
-            <Paragraph small>(Behoort tot {resolvedModule})</Paragraph>
+          {moduleUuid && (
+            <Paragraph small>
+              (Behoort tot <ConUuidResolver>{moduleUuid}</ConUuidResolver>)
+            </Paragraph>
           )}
         </AcFlex>
       </AcFlex>

@@ -1,4 +1,5 @@
 import { useLocation, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 
 import { LABELS, VISUALS } from '@constants';
 import { SkipLink } from '@utrecht/component-library-react/dist/css-module';
@@ -11,7 +12,7 @@ import { withStore } from '@stores';
 import { getTitle } from '@services/con-get-title';
 import { useWindowSize } from '@hooks';
 
-const AcHeader = ({ store: { menu, user } }) => {
+const AcHeader = ({ store: { menu, user, object } }) => {
   const location = useLocation();
   const isHomePage = location.pathname === '/';
   const isAdminRoute = location.pathname.startsWith('/beheer');
@@ -29,6 +30,61 @@ const AcHeader = ({ store: { menu, user } }) => {
     user.isAuthenticated,
     user.userGroups || []
   );
+
+  // State to store full organization data
+  const [fullActiveOrganisation, setFullActiveOrganisation] = useState(null);
+
+  // Fetch full organization data to get the correct organization name
+  useEffect(() => {
+    const fetchFullOrganisationData = async () => {
+      const activeOrg = user?.activeOrganization;
+      if (!activeOrg) return;
+
+      const orgId = activeOrg?.uuid || activeOrg?.id;
+      if (!orgId) return;
+
+      try {
+        await object.fetchObject('voorzieningen', 'organisatie', String(orgId), {
+          '_extend[]': ['_schema'],
+        });
+        const fullOrgData = object.getObject('voorzieningen_organisatie', orgId);
+        setFullActiveOrganisation(fullOrgData);
+      } catch (error) {
+        console.error('Failed to fetch full organization data:', error);
+      }
+    };
+
+    if (user.isAuthenticated) {
+      fetchFullOrganisationData();
+    }
+  }, [user?.activeOrganization?.uuid, user?.activeOrganization?.id, user.isAuthenticated, object]);
+
+  // Get user display name and organization
+  const getUserDisplayName = () => {
+    if (!user.user) return null;
+    const parts = [user.user.firstName, user.user.middleName, user.user.lastName].filter(Boolean);
+    if (parts.length > 0) {
+      return parts.join(' ');
+    }
+    // Fallback to email if no name parts are available
+    return user.user.email || null;
+  };
+
+  const getOrganizationName = () => {
+    // Prefer the name from the full organization data (correct name from the organization object)
+    // Fall back to the name from the user's active organization session data
+    const activeOrg = user.activeOrganization;
+    return (
+      fullActiveOrganisation?.['@self']?.name ||
+      fullActiveOrganisation?.naam ||
+      activeOrg?.name ||
+      activeOrg?.naam ||
+      null
+    );
+  };
+
+  const userDisplayName = getUserDisplayName();
+  const organizationName = getOrganizationName();
 
   // Icon mapping for admin menu items (reused from dynamic sidenav)
   const getIconForMenuItem = (menuItem) => {
@@ -111,18 +167,34 @@ const AcHeader = ({ store: { menu, user } }) => {
             <div>
               <ConLogo variant='header' />
               <span className='sr-only'>Logo</span>
-              <span className='logo-text'>{getTitle()}</span>
+              <h1 className='logo-text'>{getTitle()}</h1>
             </div>
           ) : (
             <>
               <Link to='/' title='Logo Tilburg - Ga naar de beginpagina'>
                 <ConLogo variant='header' />
-                <span className='logo-text'>{getTitle()}</span>
+                <h1 className='logo-text'>{getTitle()}</h1>
               </Link>
             </>
           )}
         </div>
-        <AcNavigation />
+        <div className='ac-header__right-section'>
+          {user.isAuthenticated && (userDisplayName || organizationName) && (
+            <Link to='/beheer' className='ac-header__user-info'>
+              <VISUALS.USER className='ac-header__user-icon' />
+              {userDisplayName && (
+                <span className='ac-header__username'>{userDisplayName}</span>
+              )}
+              {organizationName && !userDisplayName && (
+                <span className='ac-header__username'>{organizationName}</span>
+              )}
+              {organizationName && userDisplayName && (
+                <span className='ac-header__organization'>({organizationName})</span>
+              )}
+            </Link>
+          )}
+          <AcNavigation />
+        </div>
       </div>
       {secondaryNavItems.length > 0 && (
         <div className='ac-header__navigation-secondary'>

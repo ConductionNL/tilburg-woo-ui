@@ -19,8 +19,11 @@ import { validateWebsite } from '../../validation/form-validations';
 /**
  * Standaarden Form Stage for Applicatie Form
  *
+ * This component displays standaardversies (standard versions) instead of standards directly.
+ * The relationship is: referentieComponenten → standaarden (aanbevolen/verplicht) → standaardVersies
+ *
  * Table columns:
- * 1. Standaarden
+ * 1. Standaardversie
  * 2. Compliant (checkbox)
  * 3. Bewijs (file upload when compliant)
  */
@@ -30,61 +33,104 @@ const ConFormApplicatieStandaardenStage = ({
   referentieComponentenWithStandards,
   standaardenOptions,
   standaardenOptionsLoading,
+  standaardenversiesOptions,
+  standaardenversiesOptionsLoading,
   selectedExtraStandards,
   setSelectedExtraStandards,
 }) => {
-  // State to track compliance and bewijs for each standard
+  // State to track compliance and bewijs for each standaardversie
   const [tableState, setTableState] = useState({});
 
-  // Ref to track previous allStandards IDs to prevent unnecessary cleanup
+  // Ref to track previous allStandaardVersies IDs to prevent unnecessary cleanup
   const prevAllStandardsIdsRef = useRef(new Set());
+  
+  // Ref to prevent cleanup on initial mount (edit mode protection)
+  const isInitialMountRef = useRef(true);
 
-  // Enhanced function to get standard ID with better matching
-  const getStandardId = (standard) => {
-    if (!standard) return null;
-    if (typeof standard === 'string') return standard;
+  // Enhanced function to get ID with better matching
+  const getStandardId = (item) => {
+    if (!item) return null;
+    if (typeof item === 'string') return item;
     return (
-      standard.id ||
-      standard?.['@self']?.id ||
-      standard.identifier ||
-      standard.value ||
-      standard.slug ||
-      standard.naam ||
-      standard.name ||
+      item.id ||
+      item?.['@self']?.id ||
+      item.identifier ||
+      item.value ||
+      item.slug ||
+      item.naam ||
+      item.name ||
       null
     );
   };
 
-  // Enhanced lookup map with multiple matching strategies
+  // Lookup map for standaarden (used to find standaardVersies from standards)
   const standaardenMap = useMemo(() => {
     const map = {};
-    const nameMap = {}; // Additional map for name-based matching
-    const identifierMap = {}; // Additional map for identifier-based matching
+    const nameMap = {};
+    const identifierMap = {};
 
     (standaardenOptions || []).forEach((opt) => {
-      const d = opt?.data || opt || {};
+      const data = opt?.data || opt || {};
 
       // Primary ID mapping
-      const id = d?.id || d?.identifier || d?.value || d?.slug || opt?.value;
+      const id =
+        data?.id || data?.identifier || data?.value || data?.slug || opt?.value;
       if (id != null) {
-        map[String(id)] = d;
+        map[String(id)] = data;
       }
 
       // Name-based mapping for fallback matching
-      const name = d?.name || d?.naam || d?.title || d?.label;
+      const name = data?.name || data?.naam || data?.title || data?.label;
       if (name) {
-        nameMap[String(name).toLowerCase()] = d;
+        nameMap[String(name).toLowerCase()] = data;
       }
 
       // Identifier mapping
-      const identifier = d?.identifier || d?.value;
+      const identifier = data?.identifier || data?.value;
       if (identifier) {
-        identifierMap[String(identifier)] = d;
+        identifierMap[String(identifier)] = data;
       }
     });
 
     return { byId: map, byName: nameMap, byIdentifier: identifierMap };
   }, [standaardenOptions]);
+
+  // Lookup map for standaardversies with multiple matching strategies
+  const standaardenversiesMap = useMemo(() => {
+    const map = {};
+    const nameMap = {};
+    const identifierMap = {};
+
+    (standaardenversiesOptions || []).forEach((opt) => {
+      const data = opt?.data || opt || {};
+
+      // Primary ID mapping
+      const id =
+        data?.id || data?.identifier || data?.value || data?.slug || opt?.value;
+      if (id != null) {
+        map[String(id)] = data;
+      }
+
+      // Name-based mapping for fallback matching
+      const name =
+        data?.xml?.name?._value ||
+        data?.name ||
+        data?.naam ||
+        data?.title ||
+        data?.label;
+      if (name) {
+        nameMap[String(name).toLowerCase()] = data;
+      }
+
+      // Identifier mapping
+      const identifier = data?.identifier || data?.value;
+      if (identifier) {
+        identifierMap[String(identifier)] = data;
+      }
+    });
+
+    return { byId: map, byName: nameMap, byIdentifier: identifierMap };
+  }, [standaardenversiesOptions]);
 
   // Enhanced function to find matching standard data
   const findMatchingStandardData = (standard) => {
@@ -107,152 +153,192 @@ const ConFormApplicatieStandaardenStage = ({
       return standaardenMap.byName[String(standardName).toLowerCase()];
     }
 
-    // Return empty object if no match found
     return {};
   };
 
-  // Enhanced function to extract standard information
-  const extractStandardInfo = (standard, fetchedData = {}) => {
-    // Prioritize fetched data, fall back to original standard data
+  // Function to find matching standaardversie data
+  const findMatchingStandaardversieData = (versie) => {
+    const versieId = getStandardId(versie);
+
+    // Try direct ID match first
+    if (versieId && standaardenversiesMap.byId[String(versieId)]) {
+      return standaardenversiesMap.byId[String(versieId)];
+    }
+
+    // Try identifier match
+    if (versieId && standaardenversiesMap.byIdentifier[String(versieId)]) {
+      return standaardenversiesMap.byIdentifier[String(versieId)];
+    }
+
+    // Try name-based matching as fallback
+    const versieName =
+      versie?.xml?.name?._value ||
+      versie?.name ||
+      versie?.naam ||
+      versie?.title ||
+      versie?.label;
+    if (
+      versieName &&
+      standaardenversiesMap.byName[String(versieName).toLowerCase()]
+    ) {
+      return standaardenversiesMap.byName[String(versieName).toLowerCase()];
+    }
+
+    return {};
+  };
+
+  // Extract standaardversie information from data
+  const extractStandaardversieInfo = (versie, fetchedData = {}) => {
+    // Prioritize fetched data, fall back to original versie data
+    // IMPORTANT: Check @self.name first (from backend _extend)
     const name =
-      fetchedData.name ||
+      fetchedData?.['@self']?.name ||
+      versie?.['@self']?.name ||
       fetchedData.xml?.name?._value ||
-      fetchedData.afkorting ||
+      fetchedData.name ||
       fetchedData.naam ||
       fetchedData.title ||
       fetchedData.label ||
-      standard?.name ||
-      standard?.xml?.name?._value ||
-      standard?.naam ||
-      standard?.title ||
-      standard?.label ||
-      (typeof standard === 'string' ? standard : getStandardId(standard));
+      versie?.xml?.name?._value ||
+      versie?.name ||
+      versie?.naam ||
+      versie?.title ||
+      versie?.label ||
+      (typeof versie === 'string' ? versie : getStandardId(versie));
 
     const description =
-      fetchedData.summary ||
       fetchedData.xml?.documentation?._value ||
+      fetchedData.summary ||
       fetchedData.documentation ||
       fetchedData.beschrijving ||
       fetchedData.description ||
-      standard?.summary ||
-      standard?.xml?.documentation?._value ||
-      standard?.documentation ||
-      standard?.beschrijving ||
-      standard?.description ||
+      versie?.xml?.documentation?._value ||
+      versie?.summary ||
+      versie?.documentation ||
+      versie?.beschrijving ||
+      versie?.description ||
       '';
 
-    return { name, description };
+    // Get versieaanduiding (version indicator) if available
+    const versieaanduiding =
+      fetchedData.versieaanduiding || versie?.versieaanduiding || '';
+
+    // Get status if available
+    const status = fetchedData.status || versie?.status || '';
+
+    return { name, description, versieaanduiding, status };
   };
 
-  // Get all standards from referentieComponentenWithStandards with component tracking
-  const getAllStandards = () => {
-    const standardsMap = new Map();
+  // Get all standaardversies from referentieComponentenWithStandards
+  // This traverses: referentieComponenten → standaarden → standaardVersies
+  const getAllStandaardVersies = () => {
+    const versiesMap = new Map();
 
     referentieComponentenWithStandards.forEach((refComp) => {
       const refCompName = refComp.naam || `Component ${refComp.id}`;
 
-      // Process aanbevolen standaarden
-      if (
-        refComp.aanbevolenStandaarden &&
-        Array.isArray(refComp.aanbevolenStandaarden)
-      ) {
-        refComp.aanbevolenStandaarden.forEach((standard) => {
-          const standardId = getStandardId(standard);
-          if (standardId) {
-            // Find matching data from fetched standards
-            const fetchedData = findMatchingStandardData(standard);
-            const { name: standardName, description: standardDescription } =
-              extractStandardInfo(standard, fetchedData);
-            // Use standard ID as key (single applicatie, no need for module separation)
-            const compositeKey = String(standardId);
+      // Helper function to process standards and extract their versions
+      const processStandards = (standards, isVerplicht) => {
+        if (!standards || !Array.isArray(standards)) return;
 
-            if (standardsMap.has(compositeKey)) {
-              // Standard already exists, add this component to the aanbevolen list
-              const existing = standardsMap.get(compositeKey);
-              if (!existing.aanbevolenComponents.includes(refCompName)) {
-                existing.aanbevolenComponents.push(refCompName);
+        standards.forEach((standard) => {
+          const standardId = getStandardId(standard);
+          if (!standardId) return;
+
+          // Find the full standard data to get standaardVersies
+          const fetchedStandardData = findMatchingStandardData(standard);
+          const standardData = { ...standard, ...fetchedStandardData };
+
+          // Get standaardVersies array from the standard
+          const standaardVersies = standardData.standaardVersies || [];
+
+          // If no versions found, skip this standard
+          if (!Array.isArray(standaardVersies) || standaardVersies.length === 0) {
+            return;
+          }
+
+          // Process each standaardversie
+          standaardVersies.forEach((versie) => {
+            const versieId = getStandardId(versie);
+            if (!versieId) return;
+
+            // Find matching data from fetched standaardversies
+            const fetchedVersieData = findMatchingStandaardversieData(versie);
+            const {
+              name: versieName,
+              description: versieDescription,
+              versieaanduiding,
+              status,
+            } = extractStandaardversieInfo(versie, fetchedVersieData);
+
+            const compositeKey = String(versieId);
+
+            if (versiesMap.has(compositeKey)) {
+              // Versie already exists, add this component to the appropriate list
+              const existing = versiesMap.get(compositeKey);
+              if (isVerplicht) {
+                if (!existing.verplichteComponents.includes(refCompName)) {
+                  existing.verplichteComponents.push(refCompName);
+                }
+              } else {
+                if (!existing.aanbevolenComponents.includes(refCompName)) {
+                  existing.aanbevolenComponents.push(refCompName);
+                }
               }
               // Update with better data if available
-              if (fetchedData && Object.keys(fetchedData).length > 0) {
-                existing.naam = standardName;
-                existing.beschrijving = standardDescription;
-                existing.fetchedData = fetchedData;
+              if (fetchedVersieData && Object.keys(fetchedVersieData).length > 0) {
+                existing.naam = versieName;
+                existing.beschrijving = versieDescription;
+                existing.versieaanduiding = versieaanduiding;
+                existing.status = status;
+                existing.fetchedData = fetchedVersieData;
               }
             } else {
-              // New standard
-              standardsMap.set(compositeKey, {
-                id: standardId,
-                naam: standardName,
-                beschrijving: standardDescription,
-                aanbevolenComponents: [refCompName],
-                verplichteComponents: [],
-                fetchedData: fetchedData,
+              // New standaardversie
+              versiesMap.set(compositeKey, {
+                id: versieId,
+                naam: versieName,
+                beschrijving: versieDescription,
+                versieaanduiding,
+                status,
+                aanbevolenComponents: isVerplicht ? [] : [refCompName],
+                verplichteComponents: isVerplicht ? [refCompName] : [],
+                fetchedData: fetchedVersieData,
+                // Store parent standard info for reference
+                parentStandardId: standardId,
               });
             }
-          }
+          });
         });
-      }
+      };
 
-      // Process verplichte standaarden
-      if (
-        refComp.verplichteStandaarden &&
-        Array.isArray(refComp.verplichteStandaarden)
-      ) {
-        refComp.verplichteStandaarden.forEach((standard) => {
-          const standardId = getStandardId(standard);
-          if (standardId) {
-            // Find matching data from fetched standards
-            const fetchedData = findMatchingStandardData(standard);
-            const { name: standardName, description: standardDescription } =
-              extractStandardInfo(standard, fetchedData);
-            // Use standard ID as key (single applicatie, no need for module separation)
-            const compositeKey = String(standardId);
+      // Process aanbevolen standaarden (isVerplicht = false)
+      processStandards(refComp.aanbevolenStandaarden, false);
 
-            if (standardsMap.has(compositeKey)) {
-              // Standard already exists, add this component to the verplichte list
-              const existing = standardsMap.get(compositeKey);
-              if (!existing.verplichteComponents.includes(refCompName)) {
-                existing.verplichteComponents.push(refCompName);
-              }
-              // Update with better data if available
-              if (fetchedData && Object.keys(fetchedData).length > 0) {
-                existing.naam = standardName;
-                existing.beschrijving = standardDescription;
-                existing.fetchedData = fetchedData;
-              }
-            } else {
-              // New standard
-              standardsMap.set(compositeKey, {
-                id: standardId,
-                naam: standardName,
-                beschrijving: standardDescription,
-                aanbevolenComponents: [],
-                verplichteComponents: [refCompName],
-                fetchedData: fetchedData,
-              });
-            }
-          }
-        });
-      }
+      // Process verplichte standaarden (isVerplicht = true)
+      processStandards(refComp.verplichteStandaarden, true);
     });
-    return Array.from(standardsMap.values());
+
+    return Array.from(versiesMap.values());
   };
 
   const allStandards = useMemo(() => {
-    const result = getAllStandards();
+    const result = getAllStandaardVersies();
     return result;
-  }, [referentieComponentenWithStandards, standaardenMap]);
+  }, [referentieComponentenWithStandards, standaardenMap, standaardenversiesMap]);
 
-  // Get IDs of standards already in referentieComponenten (aanbevolen and verplicht)
+  // Get IDs of standaardversies already in referentieComponenten (aanbevolen and verplicht)
   const existingStandardIds = useMemo(() => {
     const ids = new Set();
 
-    allStandards.forEach((standard) => {
+    allStandards.forEach((standaardversie) => {
       // Add primary ID
-      ids.add(String(standard.id));
+      ids.add(String(standaardversie.id));
 
       // Add alternative IDs from fetched data
-      const fetchedData = findMatchingStandardData({ id: standard.id });
+      const fetchedData = findMatchingStandaardversieData({
+        id: standaardversie.id,
+      });
       if (fetchedData) {
         ['id', 'identifier', 'value', 'slug'].forEach((key) => {
           if (fetchedData[key]) ids.add(String(fetchedData[key]));
@@ -261,11 +347,11 @@ const ConFormApplicatieStandaardenStage = ({
     });
 
     return ids;
-  }, [allStandards, standaardenMap]);
+  }, [allStandards, standaardenversiesMap]);
 
-  // Filter standaardenOptions to exclude standards already in referentieComponenten
+  // Filter standaardenversiesOptions to exclude versions already in referentieComponenten
   const availableExtraStandardsOptions = useMemo(() => {
-    return (standaardenOptions || []).filter((option) => {
+    return (standaardenversiesOptions || []).filter((option) => {
       // Collect all possible IDs from the option
       const optionIds = [
         option.value,
@@ -277,16 +363,32 @@ const ConFormApplicatieStandaardenStage = ({
         .filter(Boolean)
         .map(String);
 
-      // Check if any ID matches existing standards
+      // Check if any ID matches existing standaardversies
       return !optionIds.some((optionId) => existingStandardIds.has(optionId));
     });
-  }, [standaardenOptions, existingStandardIds]);
+  }, [standaardenversiesOptions, existingStandardIds]);
 
   // Clean up selectedExtraStandards when standards move to referentieComponenten
+  // This should only remove items that are actually in referentieComponenten (allStandards)
+  // It should NOT be triggered by compliance checkbox toggles
   useEffect(() => {
-    const allStandardsIds = new Set(
-      allStandards.map((standard) => String(standard.id))
-    );
+    // Build a comprehensive set of all possible ID formats for standards in referentieComponenten
+    const allStandardsIds = new Set();
+
+    allStandards.forEach((standard) => {
+      const standardId = String(standard.id);
+      allStandardsIds.add(standardId);
+
+      // Also add alternative ID formats from fetched data
+      const fetchedData = findMatchingStandaardversieData({ id: standard.id });
+      if (fetchedData) {
+        ['id', 'identifier', 'value', 'slug'].forEach((key) => {
+          if (fetchedData[key]) {
+            allStandardsIds.add(String(fetchedData[key]));
+          }
+        });
+      }
+    });
 
     // Check if allStandardsIds actually changed
     const idsChanged =
@@ -307,65 +409,120 @@ const ConFormApplicatieStandaardenStage = ({
 
     setSelectedExtraStandards((prev) => {
       // Check if any selectedExtraStandards need to be removed
-      const needsCleanup = prev.some((option) =>
-        allStandardsIds.has(String(option.value))
-      );
+      // Only remove if they're actually in referentieComponenten (allStandards)
+      const needsCleanup = prev.some((option) => {
+        const optionValue = String(option.value);
+        // Check direct match
+        if (allStandardsIds.has(optionValue)) return true;
+
+        // Also check alternative ID formats from option data
+        if (option.data) {
+          for (const key of ['id', 'identifier', 'value', 'slug']) {
+            if (option.data[key] && allStandardsIds.has(String(option.data[key]))) {
+              return true;
+            }
+          }
+        }
+
+        return false;
+      });
 
       if (!needsCleanup) {
         return prev; // Return same reference if no changes
       }
 
-      const filtered = prev.filter(
-        (option) => !allStandardsIds.has(String(option.value))
-      );
+      const filtered = prev.filter((option) => {
+        const optionValue = String(option.value);
+        // Keep if NOT in allStandardsIds (i.e., it's truly an extra standard)
+        if (allStandardsIds.has(optionValue)) return false;
+
+        // Also check alternative ID formats from option data
+        if (option.data) {
+          for (const key of ['id', 'identifier', 'value', 'slug']) {
+            if (option.data[key] && allStandardsIds.has(String(option.data[key]))) {
+              return false; // Remove this option
+            }
+          }
+        }
+
+        return true; // Keep this option
+      });
       return filtered;
     });
-  }, [allStandards, setSelectedExtraStandards]);
+  }, [allStandards, setSelectedExtraStandards, standaardenversiesMap]);
 
   // Clean up orphaned compliancy entries when referentieComponenten or selectedExtraStandards change
   useEffect(() => {
-    // Get all valid standard IDs (from both referentieComponenten and selectedExtraStandards)
-    const validStandardIds = new Set();
+    // Skip cleanup on initial mount to preserve saved data in edit mode
+    if (isInitialMountRef.current) {
+      isInitialMountRef.current = false;
+      return;
+    }
+    
+    // Get all valid standaardversie IDs (from both referentieComponenten and selectedExtraStandards)
+    const validStandaardversieIds = new Set();
 
-    // Add standards from referentieComponenten (allStandards)
-    allStandards.forEach((standard) => {
+    // Add standaardversies from referentieComponenten (allStandards now contains versions)
+    allStandards.forEach((standaardversie) => {
       // Add primary ID
-      validStandardIds.add(String(standard.id));
+      validStandaardversieIds.add(String(standaardversie.id));
 
       // Add alternative IDs from fetched data to handle different identifier formats
-      const fetchedData = findMatchingStandardData({ id: standard.id });
+      const fetchedData = findMatchingStandaardversieData({
+        id: standaardversie.id,
+      });
       if (fetchedData) {
         ['id', 'identifier', 'value', 'slug', 'uuid'].forEach((key) => {
-          if (fetchedData[key]) validStandardIds.add(String(fetchedData[key]));
+          if (fetchedData[key])
+            validStandaardversieIds.add(String(fetchedData[key]));
         });
       }
     });
 
-    // Add standards from selectedExtraStandards
+    // Add standaardversies from selectedExtraStandards
     selectedExtraStandards.forEach((option) => {
-      const standardId = String(option.value);
-      validStandardIds.add(standardId);
+      const versieId = String(option.value);
+      validStandaardversieIds.add(versieId);
 
       // Also add alternative IDs
-      const fetchedData = findMatchingStandardData({ id: standardId });
+      const fetchedData = findMatchingStandaardversieData({ id: versieId });
       if (fetchedData) {
         ['id', 'identifier', 'value', 'slug', 'uuid'].forEach((key) => {
-          if (fetchedData[key]) validStandardIds.add(String(fetchedData[key]));
+          if (fetchedData[key])
+            validStandaardversieIds.add(String(fetchedData[key]));
         });
       }
+    });
+
+    // IMPORTANT: Also preserve existing standaardversies from applicatie data (edit mode)
+    // This prevents cleanup from removing saved IDs before they're properly initialized
+    const currentStandaardversiesForValidation = Array.isArray(
+      applicatie.standaardVersies
+    )
+      ? applicatie.standaardVersies
+      : [];
+    
+    currentStandaardversiesForValidation.forEach((versieId) => {
+      validStandaardversieIds.add(String(versieId));
+      // Also add with/without id- prefix variations
+      const idStr = String(versieId);
+      validStandaardversieIds.add(idStr.replace(/^id-/, ''));
+      validStandaardversieIds.add(
+        idStr.startsWith('id-') ? idStr : `id-${idStr}`
+      );
     });
 
     // Check if any compliancy entries need to be removed
-    // Only remove entries that have no data AND are not in valid standards
+    // Only remove entries that have no data AND are not in valid standaardversies
     const currentCompliancy = Array.isArray(applicatie.compliancy)
       ? applicatie.compliancy
       : [];
 
-    // Find orphaned entries (not in valid standards)
+    // Find orphaned entries (not in valid standaardversies)
     const orphanedCompliancy = currentCompliancy.filter(
       (compliancy) =>
-        !validStandardIds.has(String(compliancy.standaardversie)) &&
-        !validStandardIds.has(String(compliancy.standaardGemma))
+        !validStandaardversieIds.has(String(compliancy.standaardversie)) &&
+        !validStandaardversieIds.has(String(compliancy.standaardGemma))
     );
 
     // Only remove orphaned entries that have no data
@@ -379,11 +536,11 @@ const ConFormApplicatieStandaardenStage = ({
         `🧹 Cleaning up ${orphanedWithoutData.length} orphaned compliancy entries without data`
       );
 
-      // Keep entries that are in valid standards OR have data
+      // Keep entries that are in valid standaardversies OR have data
       const cleanedCompliancy = currentCompliancy.filter(
         (compliancy) =>
-          validStandardIds.has(String(compliancy.standaardversie)) ||
-          validStandardIds.has(String(compliancy.standaardGemma)) ||
+          validStandaardversieIds.has(String(compliancy.standaardversie)) ||
+          validStandaardversieIds.has(String(compliancy.standaardGemma)) ||
           compliancy.bewijs ||
           compliancy.url
       );
@@ -391,15 +548,15 @@ const ConFormApplicatieStandaardenStage = ({
       setApplicatieData('compliancy', cleanedCompliancy);
     }
 
-    // Always clean up standaarden array (compliance indicator)
-    const currentStandaarden = Array.isArray(applicatie.standaarden)
-      ? applicatie.standaarden
+    // Always clean up standaardversies array (compliance indicator)
+    const currentStandaardversies = Array.isArray(applicatie.standaardVersies)
+      ? applicatie.standaardVersies
       : [];
-    const cleanedStandaarden = currentStandaarden.filter((standardId) =>
-      validStandardIds.has(String(standardId))
+    const cleanedStandaardversies = currentStandaardversies.filter((versieId) =>
+      validStandaardversieIds.has(String(versieId))
     );
-    if (cleanedStandaarden.length !== currentStandaarden.length) {
-      setApplicatieData('standaarden', cleanedStandaarden);
+    if (cleanedStandaardversies.length !== currentStandaardversies.length) {
+      setApplicatieData('standaardVersies', cleanedStandaardversies);
     }
 
     // Always clean up standaardenGemma array (compliance indicator)
@@ -407,7 +564,7 @@ const ConFormApplicatieStandaardenStage = ({
       ? applicatie.standaardenGemma
       : [];
     const cleanedStandaardenGemma = currentStandaardenGemma.filter((gemmaId) =>
-      validStandardIds.has(String(gemmaId))
+      validStandaardversieIds.has(String(gemmaId))
     );
     if (cleanedStandaardenGemma.length !== currentStandaardenGemma.length) {
       setApplicatieData('standaardenGemma', cleanedStandaardenGemma);
@@ -416,85 +573,148 @@ const ConFormApplicatieStandaardenStage = ({
     allStandards,
     selectedExtraStandards,
     applicatie.compliancy,
-    applicatie.standaarden,
+    applicatie.standaardVersies,
     applicatie.standaardenGemma,
     setApplicatieData,
-    standaardenMap,
+    standaardenversiesMap,
   ]);
 
   // Initialize table state based on existing compliancy data
   useEffect(() => {
     const initialState = {};
 
-    // Get standaarden array to check compliance status
-    const standaardenArray = Array.isArray(applicatie.standaarden)
+    // Get standaardversies array to check compliance status
+    // Also check legacy standaarden array for backwards compatibility
+    const standaardversiesArray = Array.isArray(applicatie.standaardVersies)
+      ? applicatie.standaardVersies.map(String)
+      : [];
+    const legacyStandaardenArray = Array.isArray(applicatie.standaarden)
       ? applicatie.standaarden.map(String)
       : [];
+    // Combine both arrays for checking compliance
+    const allCompliantIds = new Set([
+      ...standaardversiesArray,
+      ...legacyStandaardenArray,
+    ]);
 
-    // Add standards from referentieComponenten
-    allStandards.forEach((standard) => {
-      const key = standard.id;
+    // Add standaardversies from referentieComponenten
+    allStandards.forEach((standaardversie) => {
+      const key = standaardversie.id;
 
       // Check if there's existing compliancy data (load even if not compliant)
       const existingCompliancy = (applicatie.compliancy || []).find(
-        (c) => c.standaardversie === standard.id
+        (compliancy) => compliancy.standaardversie === standaardversie.id
       );
 
-      // Check standaarden array to determine compliance status
-      const isCompliant = standaardenArray.includes(String(standard.id));
+      // Extract file info from compliancy @self.files if available
+      const fileInfo = existingCompliancy?.['@self']?.files?.[0] || null;
+      const fileTitle = fileInfo?.title || null;
+      const fileDownloadUrl = fileInfo?.downloadUrl || null;
+
+      // Check standaardversies and legacy standaarden arrays to determine compliance status
+      // Need to check with and without 'id-' prefix
+      const idWithoutPrefix = String(standaardversie.id).replace(/^id-/, '');
+      const idWithPrefix = String(standaardversie.id).startsWith('id-') 
+        ? String(standaardversie.id) 
+        : `id-${standaardversie.id}`;
+      
+      const isCompliant = 
+        allCompliantIds.has(String(standaardversie.id)) ||
+        allCompliantIds.has(idWithoutPrefix) ||
+        allCompliantIds.has(idWithPrefix);
 
       // Determine the primary type (verplicht takes precedence)
       const primaryType =
-        standard.verplichteComponents.length > 0 ? 'verplicht' : 'aanbevolen';
+        standaardversie.verplichteComponents.length > 0 ? 'verplicht' : 'aanbevolen';
 
       // Build component information display
       const componentInfo = [];
-      if (standard.verplichteComponents.length > 0) {
+      if (standaardversie.verplichteComponents.length > 0) {
         componentInfo.push(
-          `VERPLICHT (${standard.verplichteComponents.join(', ')})`
+          `VERPLICHT (${standaardversie.verplichteComponents.join(', ')})`
         );
       }
-      if (standard.aanbevolenComponents.length > 0) {
+      if (standaardversie.aanbevolenComponents.length > 0) {
         componentInfo.push(
-          `AANBEVOLEN (${standard.aanbevolenComponents.join(', ')})`
+          `AANBEVOLEN (${standaardversie.aanbevolenComponents.join(', ')})`
         );
       }
 
       initialState[key] = {
-        standardId: standard.id,
-        standardName: standard.naam,
-        standardDescription: standard.beschrijving,
+        standardId: standaardversie.id,
+        standardName: standaardversie.naam,
+        standardDescription: standaardversie.beschrijving,
+        versieaanduiding: standaardversie.versieaanduiding,
+        status: standaardversie.status,
         standardType: primaryType,
         componentInfo: componentInfo.join(', '),
-        verplichteComponents: standard.verplichteComponents,
-        aanbevolenComponents: standard.aanbevolenComponents,
+        verplichteComponents: standaardversie.verplichteComponents,
+        aanbevolenComponents: standaardversie.aanbevolenComponents,
         isCompliant,
         // Load compliancy data even if not compliant (preserved data)
         bewijs: existingCompliancy?.bewijs || null,
         bewijsFilename: existingCompliancy?.bewijsFilename || null,
         url: existingCompliancy?.url || null,
+        // Store file metadata from API
+        fileTitle,
+        fileDownloadUrl,
       };
     });
 
-    // Add extra standards from multi-select
+    // Add extra standaardversies from multi-select
     selectedExtraStandards.forEach((selectedOption) => {
-      const standardId = String(selectedOption.value);
-      if (!initialState[standardId]) {
-        const fetchedData = findMatchingStandardData({ id: standardId });
-        const { name: standardName, description: standardDescription } =
-          extractStandardInfo({ id: standardId }, fetchedData);
+      const optionValue = String(selectedOption.value);
+      const fetchedData = findMatchingStandaardversieData({ id: optionValue });
 
+      // Use the identifier property from fetched data (like pre-selected standards do)
+      // The identifier contains the proper id- prefixed format
+      const versieId = fetchedData?.identifier || fetchedData?.id || optionValue;
+
+      if (!initialState[versieId]) {
+        const {
+          name: versieName,
+          description: versieDescription,
+          versieaanduiding,
+          status,
+        } = extractStandaardversieInfo({ id: optionValue }, fetchedData);
+
+        // Check all possible ID formats for existing compliancy
+        // The compliancy might be stored with different ID formats
         const existingCompliancy = (applicatie.compliancy || []).find(
-          (c) => c.standaardversie === standardId
+          (compliancy) => {
+            const compVersieId = compliancy.standaardversie;
+            // Direct match
+            if (compVersieId === versieId) return true;
+            if (compVersieId === optionValue) return true;
+            // Also check if the compliancy's standaardversie matches any of the fetched data IDs
+            if (fetchedData?.identifier && compVersieId === fetchedData.identifier)
+              return true;
+            if (fetchedData?.id && compVersieId === fetchedData.id) return true;
+            if (fetchedData?.value && compVersieId === fetchedData.value)
+              return true;
+            // Check standaardGemma as well
+            if (compliancy.standaardGemma === versieId) return true;
+            if (compliancy.standaardGemma === optionValue) return true;
+            return false;
+          }
         );
 
-        // Check standaarden array to determine compliance status
-        const isCompliant = standaardenArray.includes(standardId);
+        // Extract file info from compliancy @self.files if available
+        const fileInfo = existingCompliancy?.['@self']?.files?.[0] || null;
+        const fileTitle = fileInfo?.title || null;
+        const fileDownloadUrl = fileInfo?.downloadUrl || null;
 
-        initialState[standardId] = {
-          standardId,
-          standardName,
-          standardDescription,
+        // Check standaardversies and legacy standaarden arrays to determine compliance status
+        // Check both possible ID formats
+        const isCompliant =
+          allCompliantIds.has(versieId) || allCompliantIds.has(optionValue);
+
+        initialState[versieId] = {
+          standardId: versieId,
+          standardName: versieName,
+          standardDescription: versieDescription,
+          versieaanduiding,
+          status,
           standardType: 'toegevoegd',
           componentInfo: 'TOEGEVOEGD',
           verplichteComponents: [],
@@ -504,6 +724,9 @@ const ConFormApplicatieStandaardenStage = ({
           bewijs: existingCompliancy?.bewijs || null,
           bewijsFilename: existingCompliancy?.bewijsFilename || null,
           url: existingCompliancy?.url || null,
+          // Store file metadata from API
+          fileTitle,
+          fileDownloadUrl,
         };
       }
     });
@@ -521,7 +744,8 @@ const ConFormApplicatieStandaardenStage = ({
           !current ||
           current.isCompliant !== next.isCompliant ||
           current.bewijs !== next.bewijs ||
-          current.url !== next.url
+          current.url !== next.url ||
+          current.bewijsFilename !== next.bewijsFilename
         );
       });
 
@@ -530,15 +754,127 @@ const ConFormApplicatieStandaardenStage = ({
     }
 
     setTableState(initialState);
+    
+    // ✅ CRITICAL FIX: Ensure compliancy entries exist for all compliant standards in edit mode
+    // When loading an existing application, checkboxes are marked as checked based on standaardVersies,
+    // but compliancy entries might not exist. We need to create them here.
+    const compliantStandards = Object.values(initialState).filter(entry => entry.isCompliant);
+    
+    if (compliantStandards.length > 0) {
+      const currentCompliancy = Array.isArray(applicatie.compliancy)
+        ? [...applicatie.compliancy]
+        : [];
+      
+      let compliancyNeedsUpdate = false;
+      
+      compliantStandards.forEach((entry) => {
+        // Check if compliancy entry already exists
+        const existingIndex = currentCompliancy.findIndex(
+          (c) => c.standaardversie === entry.standardId
+        );
+        
+        if (existingIndex < 0) {
+          // Create compliancy entry for this compliant standard
+          const versieData = findMatchingStandaardversieData({ id: entry.standardId });
+          const objectId = versieData?.identifier || versieData?.id || versieData?.objectId || null;
+          
+          currentCompliancy.push({
+            standaardversie: entry.standardId,
+            standaardGemma: objectId,
+            standaardnaam: entry.standardName,
+            bewijs: entry.bewijs || null,
+            bewijsFilename: entry.bewijsFilename || null,
+            url: entry.url || null,
+          });
+          
+          compliancyNeedsUpdate = true;
+        }
+      });
+      
+      if (compliancyNeedsUpdate) {
+        setApplicatieData('compliancy', currentCompliancy);
+      }
+    }
   }, [
     applicatie.compliancy,
-    applicatie.standaarden,
+    applicatie.standaardVersies,
     referentieComponentenWithStandards,
-    standaardenMap,
+    standaardenversiesMap,
     selectedExtraStandards,
+    setApplicatieData,
   ]);
 
-  // Handle extra standards selection change
+  // Force re-sync table state when selectedExtraStandards changes
+  // This ensures compliancy data is properly loaded for newly selected extra standards
+  const prevSelectedExtraStandardsRef = useRef([]);
+  useEffect(() => {
+    const prevIds = new Set(
+      prevSelectedExtraStandardsRef.current.map((s) => String(s.value))
+    );
+    const currentIds = new Set(selectedExtraStandards.map((s) => String(s.value)));
+
+    // Check if the selection actually changed (not just a reference change)
+    const selectionChanged =
+      prevIds.size !== currentIds.size ||
+      [...currentIds].some((id) => !prevIds.has(id));
+
+    if (selectionChanged && selectedExtraStandards.length > 0) {
+      // Update the table state for extra standards with their compliancy data
+      setTableState((prev) => {
+        const updated = { ...prev };
+
+        selectedExtraStandards.forEach((selectedOption) => {
+          const optionValue = String(selectedOption.value);
+          const fetchedData = findMatchingStandaardversieData({ id: optionValue });
+          const versieId = fetchedData?.identifier || fetchedData?.id || optionValue;
+
+          // Find existing compliancy for this extra standard
+          const existingCompliancy = (applicatie.compliancy || []).find(
+            (compliancy) => {
+              const compVersieId = compliancy.standaardversie;
+              if (compVersieId === versieId) return true;
+              if (compVersieId === optionValue) return true;
+              if (fetchedData?.identifier && compVersieId === fetchedData.identifier)
+                return true;
+              if (fetchedData?.id && compVersieId === fetchedData.id) return true;
+              if (fetchedData?.value && compVersieId === fetchedData.value)
+                return true;
+              if (compliancy.standaardGemma === versieId) return true;
+              if (compliancy.standaardGemma === optionValue) return true;
+              return false;
+            }
+          );
+
+          // Extract file info from compliancy @self.files if available
+          const fileInfo = existingCompliancy?.['@self']?.files?.[0] || null;
+          const fileTitle = fileInfo?.title || null;
+          const fileDownloadUrl = fileInfo?.downloadUrl || null;
+
+          // Update the entry if it exists and has compliancy data to load
+          if (updated[versieId] && existingCompliancy) {
+            updated[versieId] = {
+              ...updated[versieId],
+              isCompliant: true,
+              bewijs: existingCompliancy.bewijs || updated[versieId].bewijs || null,
+              bewijsFilename:
+                existingCompliancy.bewijsFilename ||
+                updated[versieId].bewijsFilename ||
+                null,
+              url: existingCompliancy.url || updated[versieId].url || null,
+              fileTitle: fileTitle || updated[versieId].fileTitle || null,
+              fileDownloadUrl: fileDownloadUrl || updated[versieId].fileDownloadUrl || null,
+            };
+          }
+        });
+
+        return updated;
+      });
+    }
+
+    prevSelectedExtraStandardsRef.current = selectedExtraStandards;
+  }, [selectedExtraStandards, applicatie.compliancy, standaardenversiesMap]);
+
+  // Handle extra standaardversies selection change
   const handleExtraStandardsChange = (selectedOptions) => {
     const newSelected = selectedOptions || [];
     const newSelectedIds = new Set(
@@ -548,59 +884,59 @@ const ConFormApplicatieStandaardenStage = ({
       selectedExtraStandards.map((option) => String(option.value))
     );
 
-    // Find standards that were removed
-    const removedStandards = selectedExtraStandards.filter(
+    // Find standaardversies that were removed
+    const removedVersies = selectedExtraStandards.filter(
       (option) => !newSelectedIds.has(String(option.value))
     );
 
-    // Find standards that were newly added
-    const addedStandards = newSelected.filter(
+    // Find standaardversies that were newly added
+    const addedVersies = newSelected.filter(
       (option) => !prevSelectedIds.has(String(option.value))
     );
 
-    // Handle removed standards - preserve compliancy entries if they have data
-    if (removedStandards.length > 0) {
+    // Handle removed standaardversies - preserve compliancy entries if they have data
+    if (removedVersies.length > 0) {
       const prevCompliancy = Array.isArray(applicatie.compliancy)
         ? [...applicatie.compliancy]
         : [];
 
       // Only remove compliancy entries that have no data (no bewijs, no url)
       const updatedCompliancy = prevCompliancy.filter((compliancy) => {
-        const isRemovedStandard = removedStandards.some(
+        const isRemovedVersie = removedVersies.some(
           (option) => String(option.value) === String(compliancy.standaardversie)
         );
 
-        if (!isRemovedStandard) {
-          // Keep entries for standards that weren't removed
+        if (!isRemovedVersie) {
+          // Keep entries for standaardversies that weren't removed
           return true;
         }
 
-        // For removed standards, only keep if they have data
+        // For removed standaardversies, only keep if they have data
         const hasData = compliancy.bewijs || compliancy.url;
         return hasData;
       });
 
       setApplicatieData('compliancy', updatedCompliancy);
 
-      // Always remove from standaarden array (compliance indicator)
-      const prevStandaarden = Array.isArray(applicatie.standaarden)
-        ? [...applicatie.standaarden]
+      // Always remove from standaardversies array (compliance indicator)
+      const prevStandaardversies = Array.isArray(applicatie.standaardVersies)
+        ? [...applicatie.standaardVersies]
         : [];
-      const updatedStandaarden = prevStandaarden.filter(
-        (standardId) =>
-          !removedStandards.some(
-            (option) => String(option.value) === String(standardId)
-          )
+      const updatedStandaardversies = prevStandaardversies.filter(
+        (versieId) =>
+          !removedVersies.some((option) => String(option.value) === String(versieId))
       );
-      setApplicatieData('standaarden', updatedStandaarden);
+      setApplicatieData('standaardVersies', updatedStandaardversies);
 
       // Always remove from standaardenGemma array (compliance indicator)
       const prevStandaardenGemma = Array.isArray(applicatie.standaardenGemma)
         ? [...applicatie.standaardenGemma]
         : [];
-      removedStandards.forEach((option) => {
-        const standardData = findMatchingStandardData({ id: option.value });
-        const objectId = standardData?.id || standardData?.objectId || null;
+      removedVersies.forEach((option) => {
+        const versieData = findMatchingStandaardversieData({ id: option.value });
+        // Use identifier for consistency with id- prefix format
+        const objectId =
+          versieData?.identifier || versieData?.id || versieData?.objectId || null;
         if (objectId) {
           const index = prevStandaardenGemma.indexOf(objectId);
           if (index > -1) {
@@ -611,52 +947,65 @@ const ConFormApplicatieStandaardenStage = ({
       setApplicatieData('standaardenGemma', prevStandaardenGemma);
     }
 
-    // Automatically mark newly added standards as compliant
-    if (addedStandards.length > 0) {
+    // Automatically mark newly added standaardversies as compliant
+    if (addedVersies.length > 0) {
       const prevCompliancy = Array.isArray(applicatie.compliancy)
         ? [...applicatie.compliancy]
         : [];
       const updatedCompliancy = [...prevCompliancy];
 
-      const prevStandaarden = Array.isArray(applicatie.standaarden)
-        ? [...applicatie.standaarden]
+      const prevStandaardversies = Array.isArray(applicatie.standaardVersies)
+        ? [...applicatie.standaardVersies]
         : [];
-      const updatedStandaarden = [...prevStandaarden];
+      const updatedStandaardversies = [...prevStandaardversies];
 
       const prevStandaardenGemma = Array.isArray(applicatie.standaardenGemma)
         ? [...applicatie.standaardenGemma]
         : [];
       const updatedStandaardenGemma = [...prevStandaardenGemma];
 
-      addedStandards.forEach((option) => {
-        const standardId = String(option.value);
-        const standardData = findMatchingStandardData({ id: standardId });
-        const { name: standardName } = extractStandardInfo(
-          { id: standardId },
-          standardData
-        );
-        const objectId = standardData?.id || standardData?.objectId || null;
+      addedVersies.forEach((option) => {
+        const optionValue = String(option.value);
+        const versieData = findMatchingStandaardversieData({ id: optionValue });
 
-        // Check if compliancy entry already exists
+        // Use the identifier property from fetched data (like pre-selected standards do)
+        // The identifier contains the proper id- prefixed format
+        const versieId = versieData?.identifier || versieData?.id || optionValue;
+
+        const { name: versieName } = extractStandaardversieInfo(
+          { id: optionValue },
+          versieData
+        );
+
+        // Use identifier for standaardGemma as well to maintain consistency
+        const objectId =
+          versieData?.identifier || versieData?.id || versieData?.objectId || null;
+
+        // Check if compliancy entry already exists (check both possible ID formats)
         const existingIndex = updatedCompliancy.findIndex(
-          (compliancy) => compliancy.standaardversie === standardId
+          (compliancy) =>
+            compliancy.standaardversie === versieId ||
+            compliancy.standaardversie === optionValue
         );
 
         if (existingIndex < 0) {
-          // Create new compliancy entry
+          // Create new compliancy entry with the identifier format
           updatedCompliancy.push({
-            standaardversie: standardId,
+            standaardversie: versieId,
             standaardGemma: objectId,
-            standaardnaam: standardName,
+            standaardnaam: versieName,
             bewijs: null,
             bewijsFilename: null,
             url: null,
           });
         }
 
-        // Add to standaarden array if not already present
-        if (!updatedStandaarden.includes(standardId)) {
-          updatedStandaarden.push(standardId);
+        // Add to standaardVersies array if not already present (check both formats)
+        if (
+          !updatedStandaardversies.includes(versieId) &&
+          !updatedStandaardversies.includes(optionValue)
+        ) {
+          updatedStandaardversies.push(versieId);
         }
 
         // Add to standaardenGemma array if not already present
@@ -666,14 +1015,14 @@ const ConFormApplicatieStandaardenStage = ({
       });
 
       setApplicatieData('compliancy', updatedCompliancy);
-      setApplicatieData('standaarden', updatedStandaarden);
+      setApplicatieData('standaardVersies', updatedStandaardversies);
       setApplicatieData('standaardenGemma', updatedStandaardenGemma);
     }
 
     setSelectedExtraStandards(newSelected);
   };
 
-  // Toggle compliance for a specific standard
+  // Toggle compliance for a specific standaardversie
   const toggleCompliance = (key, isCompliant) => {
     const currentEntry = tableState[key];
     if (!currentEntry) {
@@ -700,15 +1049,17 @@ const ConFormApplicatieStandaardenStage = ({
       ? [...applicatie.compliancy]
       : [];
 
-    // Find the standard data to get the objectId
-    const standardData = findMatchingStandardData({
+    // Find the standaardversie data to get the objectId
+    const versieData = findMatchingStandaardversieData({
       id: currentEntry.standardId,
     });
-    const objectId = standardData?.id || standardData?.objectId || null;
+    // Use identifier for standaardGemma to maintain consistency with id- prefix format
+    const objectId =
+      versieData?.identifier || versieData?.id || versieData?.objectId || null;
 
     // Find existing compliancy entry or create new one
     const existingIndex = prevCompliancy.findIndex(
-      (c) => c.standaardversie === currentEntry.standardId
+      (compliancy) => compliancy.standaardversie === currentEntry.standardId
     );
 
     const compliancyObject = {
@@ -730,26 +1081,26 @@ const ConFormApplicatieStandaardenStage = ({
 
     setApplicatieData('compliancy', prevCompliancy);
 
-    // Update standaarden and standaardenGemma arrays based on compliance status
-    const prevStandaarden = Array.isArray(applicatie.standaarden)
-      ? [...applicatie.standaarden]
+    // Update standaardversies and standaardenGemma arrays based on compliance status
+    const prevStandaardversies = Array.isArray(applicatie.standaardVersies)
+      ? [...applicatie.standaardVersies]
       : [];
-    let newStandaarden = prevStandaarden;
+    let newStandaardversies = prevStandaardversies;
 
     if (isCompliant) {
       // Add to array if not already present
-      if (!newStandaarden.includes(currentEntry.standardId)) {
-        newStandaarden.push(currentEntry.standardId);
+      if (!newStandaardversies.includes(currentEntry.standardId)) {
+        newStandaardversies.push(currentEntry.standardId);
       }
     } else {
       // Remove from array (but keep in compliancy)
-      const standardIndex = newStandaarden.indexOf(currentEntry.standardId);
-      if (standardIndex > -1) {
-        newStandaarden.splice(standardIndex, 1);
+      const versieIndex = newStandaardversies.indexOf(currentEntry.standardId);
+      if (versieIndex > -1) {
+        newStandaardversies.splice(versieIndex, 1);
       }
     }
 
-    setApplicatieData('standaarden', newStandaarden);
+    setApplicatieData('standaardVersies', newStandaardversies);
 
     const prevStandaardenGemma = Array.isArray(applicatie.standaardenGemma)
       ? [...applicatie.standaardenGemma]
@@ -1005,20 +1356,25 @@ const ConFormApplicatieStandaardenStage = ({
       : [];
     if (prevCompliancy.length === 0) return;
 
-    // Early return if standaardenMap is not ready (empty)
-    if (!standaardenMap || Object.keys(standaardenMap.byId || {}).length === 0)
+    // Early return if standaardenversiesMap is not ready (empty)
+    if (
+      !standaardenversiesMap ||
+      Object.keys(standaardenversiesMap.byId || {}).length === 0
+    )
       return;
 
     let compliancyHasChanges = false;
     let updatedCompliancy = [...prevCompliancy];
 
     prevCompliancy.forEach((comp, compIndex) => {
-      const standardId = comp.standaardversie;
-      if (!standardId) return;
+      const versieId = comp.standaardversie;
+      if (!versieId) return;
 
-      // Find the standard data to get the objectId
-      const standardData = findMatchingStandardData({ id: standardId });
-      const objectId = standardData?.id || standardData?.objectId || null;
+      // Find the standaardversie data to get the objectId
+      const versieData = findMatchingStandaardversieData({ id: versieId });
+      // Use identifier for consistency with id- prefix format
+      const objectId =
+        versieData?.identifier || versieData?.id || versieData?.objectId || null;
 
       // Check if standaardGemma is missing and needs to be filled
       if (!comp.standaardGemma && objectId) {
@@ -1034,39 +1390,39 @@ const ConFormApplicatieStandaardenStage = ({
       setApplicatieData('compliancy', updatedCompliancy);
     }
 
-    // Only sync standaarden arrays for entries that are actually compliant
-    // Check tableState to determine which standards are compliant
-    const compliantStandardIds = new Set();
+    // Only sync standaardversies arrays for entries that are actually compliant
+    // Check tableState to determine which standaardversies are compliant
+    const compliantVersieIds = new Set();
     Object.values(tableState).forEach((entry) => {
       if (entry.isCompliant && entry.standardId) {
-        compliantStandardIds.add(String(entry.standardId));
+        compliantVersieIds.add(String(entry.standardId));
       }
     });
 
     const compliancy = applicatie.compliancy || [];
-    const prevStandaarden = Array.isArray(applicatie.standaarden)
-      ? [...applicatie.standaarden]
+    const prevStandaardversies = Array.isArray(applicatie.standaardVersies)
+      ? [...applicatie.standaardVersies]
       : [];
-    let standaardenHasChanges = false;
-    let updatedStandaarden = [...prevStandaarden];
+    let standaardversiesHasChanges = false;
+    let updatedStandaardversies = [...prevStandaardversies];
 
-    // Only add standards to standaarden array if they're actually compliant
+    // Only add standaardversies to standaardversies array if they're actually compliant
     compliancy.forEach((comp) => {
-      const standardId = comp.standaardversie;
-      if (!standardId) return;
+      const versieId = comp.standaardversie;
+      if (!versieId) return;
 
       // Only add if compliant (in tableState with isCompliant=true) and not already in array
       if (
-        compliantStandardIds.has(String(standardId)) &&
-        !updatedStandaarden.includes(standardId)
+        compliantVersieIds.has(String(versieId)) &&
+        !updatedStandaardversies.includes(versieId)
       ) {
-        updatedStandaarden.push(standardId);
-        standaardenHasChanges = true;
+        updatedStandaardversies.push(versieId);
+        standaardversiesHasChanges = true;
       }
     });
 
-    if (standaardenHasChanges) {
-      setApplicatieData('standaarden', updatedStandaarden);
+    if (standaardversiesHasChanges) {
+      setApplicatieData('standaardVersies', updatedStandaardversies);
     }
 
     const prevStandaardenGemma = Array.isArray(applicatie.standaardenGemma)
@@ -1075,17 +1431,19 @@ const ConFormApplicatieStandaardenStage = ({
     let standaardenGemmaHasChanges = false;
     let updatedStandaardenGemma = [...prevStandaardenGemma];
 
-    // Only add standards to standaardenGemma array if they're actually compliant
+    // Only add standaardversies to standaardenGemma array if they're actually compliant
     compliancy.forEach((comp) => {
-      const standardId = comp.standaardversie;
-      if (!standardId) return;
+      const versieId = comp.standaardversie;
+      if (!versieId) return;
 
       // Only add if compliant (in tableState with isCompliant=true)
-      if (!compliantStandardIds.has(String(standardId))) return;
+      if (!compliantVersieIds.has(String(versieId))) return;
 
-      // Find the standard data to get the objectId
-      const standardData = findMatchingStandardData({ id: standardId });
-      const objectId = standardData?.id || standardData?.objectId || null;
+      // Find the standaardversie data to get the objectId
+      const versieData = findMatchingStandaardversieData({ id: versieId });
+      // Use identifier for consistency with id- prefix format
+      const objectId =
+        versieData?.identifier || versieData?.id || versieData?.objectId || null;
 
       // Check if objectId is missing from standaardenGemma array
       if (objectId && !updatedStandaardenGemma.includes(objectId)) {
@@ -1097,29 +1455,29 @@ const ConFormApplicatieStandaardenStage = ({
     if (standaardenGemmaHasChanges) {
       setApplicatieData('standaardenGemma', updatedStandaardenGemma);
     }
-  }, [tableState, applicatie.compliancy, standaardenMap, setApplicatieData]);
+  }, [tableState, applicatie.compliancy, standaardenversiesMap, setApplicatieData]);
 
-  // If no standards available, show message
-  if (standaardenOptionsLoading) {
+  // If no standaardversies available, show message
+  if (standaardenOptionsLoading || standaardenversiesOptionsLoading) {
     return (
       <div>
         <h2 id='standaarden-section-title' className='sr-only'>
-          Standaarden
+          Standaardversies
         </h2>
-        <Paragraph>Standaarden laden...</Paragraph>
+        <Paragraph>Standaardversies laden...</Paragraph>
       </div>
     );
   }
 
-  if (allStandards.length === 0) {
+  if (allStandards.length === 0 && selectedExtraStandards.length === 0) {
     return (
       <div>
         <h2 id='standaarden-section-title' className='sr-only'>
-          Standaarden
+          Standaardversies
         </h2>
 
         <Paragraph className='con-form-wizard-paragraph'>
-          <strong>Selecteer de standaarden voor uw applicatie</strong>
+          <strong>Selecteer de standaardversies voor uw applicatie</strong>
           <br />
           Geef voor uw applicatie aan welke standaarden worden ondersteund en of een
           testrapport beschikbaar is. Er worden de standaarden getoond die verplicht
@@ -1145,16 +1503,40 @@ const ConFormApplicatieStandaardenStage = ({
             padding: '2rem',
             background: '#f8f9fa',
             borderRadius: '8px',
+            marginBottom: '1.5rem',
           }}
         >
           <Paragraph>
-            <strong>Geen standaarden beschikbaar</strong>
+            <strong>Geen standaardversies beschikbaar</strong>
           </Paragraph>
           <Paragraph>
             Aan de geselecteerde referentiecomponenten zijn momenteel geen
-            standaarden gekoppeld. U kunt teruggaan om andere referentiecomponenten
-            te selecteren of doorgaan zonder standaarden.
+            standaardversies gekoppeld. U kunt hieronder handmatig standaardversies
+            toevoegen of teruggaan om andere referentiecomponenten te selecteren.
           </Paragraph>
+        </div>
+
+        {/* Extra standaardversies multi-select - always show */}
+        <div style={{ marginBlock: '1.5rem' }}>
+          <Paragraph style={{ marginBottom: '0.5rem', fontWeight: '500' }}>
+            Voeg standaardversies toe
+          </Paragraph>
+          <ReactSelect
+            isMulti
+            className='ac-beheer-select'
+            options={availableExtraStandardsOptions}
+            value={selectedExtraStandards}
+            onChange={handleExtraStandardsChange}
+            isLoading={standaardenversiesOptionsLoading}
+            closeMenuOnSelect={false}
+            placeholder={
+              availableExtraStandardsOptions.length === 0
+                ? 'Geen extra standaardversies beschikbaar'
+                : 'Zoek en selecteer standaardversies...'
+            }
+            isSearchable={true}
+            noOptionsMessage={() => 'Geen standaardversies gevonden'}
+          />
         </div>
       </div>
     );
@@ -1271,6 +1653,27 @@ const ConFormApplicatieStandaardenStage = ({
                 gap: '8px',
               }}
             >
+              {/* Display file info if available from API */}
+              {entry.fileTitle && entry.fileDownloadUrl && (
+                <div
+                  style={{
+                    padding: '8px',
+                    backgroundColor: '#e7f5ff',
+                    borderRadius: '4px',
+                    fontSize: '0.9rem',
+                  }}
+                >
+                  <strong>Geüpload bestand:</strong>{' '}
+                  <Link
+                    href={entry.fileDownloadUrl}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                  >
+                    {entry.fileTitle}
+                  </Link>
+                </div>
+              )}
+              
               <LogoUploadField
                 fieldConfig={{
                   label: '',
@@ -1298,13 +1701,11 @@ const ConFormApplicatieStandaardenStage = ({
                   onChange={(value) => updateUrl(entryKey, value)}
                   disabled={!!entry.bewijs}
                   className='ac-register-form-field__no-width-limit'
-                  hasError={validateWebsite(entry.url)}
+                  hasError={entry.url && !validateWebsite(entry.url)}
                 />
-                {entry.url && (!entry.url || !validateWebsite(entry.url)) && (
+                {entry.url && !validateWebsite(entry.url) && (
                   <span className='ac-register-form-field-error'>
-                    {entry.url &&
-                      !validateWebsite(entry.url) &&
-                      'URL heeft een ongeldig formaat'}
+                    URL heeft een ongeldig formaat
                   </span>
                 )}
               </div>
@@ -1384,13 +1785,13 @@ const ConFormApplicatieStandaardenStage = ({
   return (
     <div>
       <h2 id='standaarden-section-title' className='sr-only'>
-        Selecteer de standaarden voor uw applicatie
+        Selecteer de standaardversies voor uw applicatie
       </h2>
 
       <Paragraph className='con-form-wizard-paragraph'>
-        Geef voor uw applicatie aan welke standaarden worden ondersteund en of een
-        testrapport beschikbaar is. Er worden de standaarden getoond die verplicht of
-        aanbevolen zijn voor de in de vorige stap geselecteerde
+        Geef voor uw applicatie aan welke standaardversies worden ondersteund en of
+        een testrapport beschikbaar is. Er worden de standaardversies getoond die
+        verplicht of aanbevolen zijn voor de in de vorige stap geselecteerde
         referentiecomponenten. Dit helpt gemeenten te beoordelen hoe uw software past
         in hun architectuur en vergemakkelijkt integraties. Voor{' '}
         <Link
@@ -1410,14 +1811,14 @@ const ConFormApplicatieStandaardenStage = ({
         <div className='ac-forms-product-info-alert__content'>
           <VISUALS.INFO className='ac-forms-product-info-alert__icon' />
           <div>
-            <strong>Extra standaarden toevoegen</strong>
+            <strong>Extra standaardversies toevoegen</strong>
             <br />
             <span className='ac-forms-product-info-alert__text'>
-              Onderstaand overzicht toont de standaarden die verplicht of aanbevolen
-              zijn voor uw geselecteerde referentiecomponenten. Wilt u aanvullende
-              standaarden toevoegen die niet in dit overzicht staan? Scroll dan naar
-              onderaan deze pagina waar u extra standaarden kunt selecteren via het
-              zoekveld.
+              Onderstaand overzicht toont de standaardversies die verplicht of
+              aanbevolen zijn voor uw geselecteerde referentiecomponenten. Wilt u
+              aanvullende standaardversies toevoegen die niet in dit overzicht staan?
+              Scroll dan naar onderaan deze pagina waar u extra standaardversies kunt
+              selecteren via het zoekveld.
             </span>
           </div>
         </div>
@@ -1428,7 +1829,7 @@ const ConFormApplicatieStandaardenStage = ({
           <thead>
             <TableRow>
               <TableCell style={{ fontWeight: 'bold', backgroundColor: '#f8f9fa' }}>
-                Standaard
+                Standaardversie
               </TableCell>
               <TableCell
                 style={{
@@ -1484,14 +1885,14 @@ const ConFormApplicatieStandaardenStage = ({
               <strong>Overzicht:</strong>{' '}
               <span className='con-standaard-summary-verplicht'>
                 {verplichteCount} verplichte{' '}
-                {`standaard${verplichteCount > 1 ? 'en' : ''}`} (waarvan{' '}
+                {`standaardversie${verplichteCount > 1 ? 's' : ''}`} (waarvan{' '}
                 {verplichteCompliant} ondersteund)
               </span>
               {verplichteCount > 0 && aanbevolenCount > 0 && ', '}
               {aanbevolenCount > 0 && (
                 <span className='con-standaard-summary-aanbevolen'>
                   {aanbevolenCount} aanbevolen{' '}
-                  {`standaard${aanbevolenCount > 1 ? 'en' : ''}`} (waarvan{' '}
+                  {`standaardversie${aanbevolenCount > 1 ? 's' : ''}`} (waarvan{' '}
                   {aanbevolenCompliant} ondersteund)
                 </span>
               )}
@@ -1502,7 +1903,7 @@ const ConFormApplicatieStandaardenStage = ({
               {extraEntries.length > 0 && (
                 <span className='con-standaard-summary-toegevoegd'>
                   {extraEntries.length} toegevoegde{' '}
-                  {`standaard${extraEntries.length > 1 ? 'en' : ''}`} (waarvan{' '}
+                  {`standaardversie${extraEntries.length > 1 ? 's' : ''}`} (waarvan{' '}
                   {extraEntries.filter((entry) => entry.isCompliant).length}{' '}
                   ondersteund)
                 </span>
@@ -1512,25 +1913,28 @@ const ConFormApplicatieStandaardenStage = ({
         })()}
       </div>
 
-      {/* Extra standards multi-select */}
-      {availableExtraStandardsOptions.length > 0 && (
-        <div style={{ marginBlock: '1.5rem' }}>
-          <Paragraph style={{ marginBottom: '0.5rem', fontWeight: '500' }}>
-            Voeg extra standaarden toe (optioneel)
-          </Paragraph>
-          <ReactSelect
-            isMulti
-            className='ac-beheer-select'
-            options={availableExtraStandardsOptions}
-            value={selectedExtraStandards}
-            onChange={handleExtraStandardsChange}
-            isLoading={standaardenOptionsLoading}
-            closeMenuOnSelect={false}
-            placeholder='Zoek en selecteer extra standaarden...'
-            isSearchable={true}
-          />
-        </div>
-      )}
+      {/* Extra standaardversies multi-select - always shown */}
+      <div style={{ marginBlock: '1.5rem' }}>
+        <Paragraph style={{ marginBottom: '0.5rem', fontWeight: '500' }}>
+          Voeg extra standaardversies toe (optioneel)
+        </Paragraph>
+        <ReactSelect
+          isMulti
+          className='ac-beheer-select'
+          options={availableExtraStandardsOptions}
+          value={selectedExtraStandards}
+          onChange={handleExtraStandardsChange}
+          isLoading={standaardenversiesOptionsLoading}
+          closeMenuOnSelect={false}
+          placeholder={
+            availableExtraStandardsOptions.length === 0
+              ? 'Geen extra standaardversies beschikbaar'
+              : 'Zoek en selecteer extra standaardversies...'
+          }
+          isSearchable={true}
+          noOptionsMessage={() => 'Geen standaardversies gevonden'}
+        />
+      </div>
     </div>
   );
 };

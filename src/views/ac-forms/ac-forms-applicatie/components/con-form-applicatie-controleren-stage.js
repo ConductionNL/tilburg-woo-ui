@@ -85,7 +85,7 @@ const ConFormApplicatieControlerenStage = memo(
             'contactpersoon',
             contactpersoonId,
             {
-              '_extend[]': ['@self.schema'],
+              '_extend[]': ['_schema'],
               _published: 'false',
             }
           );
@@ -304,13 +304,12 @@ const ConFormApplicatieControlerenStage = memo(
     return (
       <div>
         <Paragraph>
-          Hieronder staat een overzicht van de opgevoerde gegevens van uw applicatie.
-          Controleer of dit klopt, voordat u de registratie van de applicatie afrond.
+          Controleer of het overzicht van de applicatie volledig en juist is voordat
+          u verder gaat.
           <br />
-          Via de &quot;Vorige&quot; knop kunt u terug bladeren naar de verschillende
-          stappen.
+          U kunt met Vorige terug naar de eerdere stappen.
           <br />
-          Na het registreren van de applicatie kunt u via uw &quot;Dashboard&quot; de
+          Na het registreren van de applicatie kunt u via uw “Dashboard” de
           applicatie opzoeken en indien gewenst aanpassen.
         </Paragraph>
         <br />
@@ -569,9 +568,7 @@ const ConFormApplicatieControlerenStage = memo(
                   <div>
                     <UnorderedList>
                       {applicatie.koppelingen.map((kp, kIdx) => {
-                        const richting = kp.richtingDataUitwisseling;
-                        const soortVal = kp.soortKoppeling;
-                        const soortLabel = soortVal || '';
+                        const richting = kp.gegevensuitwisselingRichting;
                         const arrow =
                           richting === 'AnaarB'
                             ? '→'
@@ -586,14 +583,20 @@ const ConFormApplicatieControlerenStage = memo(
                           kp.moduleBId;
                         const moduleBDisplayName = getModuleBDisplayName(moduleBId);
 
+                        // Get koppeling name (required field)
+                        const koppelingNaam = kp.naam;
+
                         return (
                           <UnorderedListItem
                             key={`${
                               kp.moduleA || applicatie.naam
                             }-${moduleBId}-${kIdx}`}
                           >
-                            {applicatie.naam} {arrow} {moduleBDisplayName}
-                            {soortLabel ? ` (${soortLabel})` : ''}
+                            <strong>{koppelingNaam}</strong>
+                            <br />
+                            <span style={{ fontSize: '0.875rem', color: '#666' }}>
+                              {applicatie.naam} {arrow} {moduleBDisplayName}
+                            </span>
                           </UnorderedListItem>
                         );
                       })}

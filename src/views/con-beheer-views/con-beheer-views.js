@@ -368,6 +368,25 @@ const ConBeheerViews = ({ store }) => {
       const svg = document.getElementById('svg-container');
       if (!svg) return;
 
+      // Validate SVG has content before initializing pan/zoom
+      const gElement = svg.querySelector('g');
+      if (!gElement) {
+        console.warn('SVG has no <g> element, skipping pan/zoom initialization');
+        return;
+      }
+
+      try {
+        const bbox = gElement.getBBox();
+        // Check if bounding box is valid (has width and height)
+        if (!bbox || bbox.width === 0 || bbox.height === 0 || !isFinite(bbox.width) || !isFinite(bbox.height)) {
+          console.warn('SVG has invalid bounding box, skipping pan/zoom initialization');
+          return;
+        }
+      } catch (e) {
+        console.warn('Could not get SVG bounding box, skipping pan/zoom initialization:', e);
+        return;
+      }
+
       try {
         if (panZoomInstance && typeof panZoomInstance.destroy === 'function') {
           panZoomInstance.destroy();
@@ -388,7 +407,8 @@ const ConBeheerViews = ({ store }) => {
       let initialScale = null;
       let lastPinchCenter = null;
 
-      const instance = svgPanZoom(svg, {
+      try {
+        const instance = svgPanZoom(svg, {
         zoomEnabled: true,
         controlIconsEnabled: true,
         fit: true,
@@ -522,6 +542,10 @@ const ConBeheerViews = ({ store }) => {
         },
       });
       setPanZoomInstance(instance);
+    } catch (error) {
+      console.error('Error initializing svgPanZoom:', error);
+      // Don't set panZoomInstance if initialization failed
+    }
     }, 100);
 
     return () => {
