@@ -694,8 +694,24 @@ module.exports = function (webpackEnv) {
               ecma: 8,
             },
             compress: {
+              // console.error and console.warn are kept: they carry real
+              // diagnostics and are what an operator sees when something breaks.
+              // Everything else is development tracing that was shipping to
+              // users — the production bundle contained 200 console.info and 42
+              // console.group calls.
               drop_console: false,
-              pure_funcs: ['console.log', 'console.debug'],
+              pure_funcs: [
+                'console.log',
+                'console.debug',
+                'console.info',
+                'console.group',
+                'console.groupEnd',
+                'console.groupCollapsed',
+                'console.trace',
+                'console.table',
+                'console.time',
+                'console.timeEnd',
+              ],
               drop_debugger: true,
               ecma: 5,
               warnings: false,
