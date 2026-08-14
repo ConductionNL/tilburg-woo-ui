@@ -46,6 +46,18 @@ COPY config/nginx.conf.template /etc/nginx/nginx.conf.template
 # Copy built application from builder stage
 COPY --from=builder /app/public_html /usr/share/nginx/html/
 
+# Drop source maps from the served directory.
+#
+# The build emits 211 .map files (~18.7 MB, more than half the image) and nginx
+# served them with a 200, so the full application source was publicly
+# downloadable. No sourcemap upload is configured (the Rollbar plugin in
+# config/webpack.config.prod.js is commented out), so nothing consumed them.
+#
+# They are still produced by the build, so CI can keep or upload them as an
+# artifact; they are only excluded from the runtime image.
+RUN find /usr/share/nginx/html -name '*.map' -delete && \
+    find /usr/share/nginx/html -name '*.LICENSE.txt' -delete
+
 # Copy scripts for runtime environment configuration
 COPY --from=builder /app/scripts /usr/local/scripts/
 COPY --from=builder /app/src /usr/local/src-template/
