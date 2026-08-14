@@ -1,0 +1,72 @@
+name: Quality
+
+# Quality gate for the SPA. Runs on every pull request and on pushes to the
+# long-lived branches. build-and-deploy.yml builds the image but never linted,
+# so nothing verified code quality before an image was published.
+
+on:
+  push:
+    branches:
+      - main
+      - development
+  pull_request:
+    branches:
+      - main
+      - development
+
+jobs:
+  lint-and-build:
+    name: Lint and build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Set Yarn version
+        run: yarn set version 4.1.1
+
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
+
+      - name: Cache yarn dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      # --immutable also asserts that yarn.lock is in sync with package.json.
+      # A lockfile that cannot resolve the workspace fails here rather than in
+      # the image build.
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Lint
+        run: yarn lint
+
+      - name: Build
+        run: yarn build:web
+
+      # `yarn lint` passing on zero files looks identical to it passing on all
+      # of them, so assert the source tree is actually present and non-trivial.
+      - name: Assert lint covered the source tree
+        run: |
+          count=$(find src -name '*.js' -o -name '*.jsx' | wc -l)
+          echo "linted source files: $count"
+          if [ "$count" -lt 100 ]; then
+            echo "::error::Expected >=100 source files, found $count - lint may have run on an empty tree"
+            exit 1
+          fi
