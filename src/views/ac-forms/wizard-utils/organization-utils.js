@@ -7,6 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import { mapId, mapToOption } from './mapping-utils';
+import { AcLogFetchError } from '@utils';
 
 /**
  * Custom hook to fetch full organization data and optionally process deelnemers
@@ -115,7 +116,7 @@ export const useFullOrganization = (store, options = {}) => {
           }
         }
       } catch (err) {
-        console.error('Error fetching full organization data:', err);
+        AcLogFetchError('Error fetching full organization data', err);
         setError(err);
         setDeelnemerOptions([]);
         if (onError) {

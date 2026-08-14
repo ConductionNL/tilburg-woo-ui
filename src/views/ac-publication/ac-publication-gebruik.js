@@ -24,6 +24,7 @@ import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-behe
 // import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { useResolveSchemaIds } from '@src/hooks/use-resolve-schema-ids.hook';
 import { AcFormatDate } from '@src/utilities/ac-format-date';
+import { AcLogFetchError } from '@utils';
 // import { checkOrganizationPermissions } from '@utils/organization-permissions';
 
 /**
@@ -87,7 +88,7 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
           setFullActiveOrganisation(fullOrgData);
         }
       } catch (error) {
-        console.error('Error fetching full organization data:', error);
+        AcLogFetchError('Error fetching full organization data', error);
       }
     };
 

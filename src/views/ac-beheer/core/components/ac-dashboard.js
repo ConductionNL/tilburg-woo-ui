@@ -70,7 +70,16 @@ const AcDashboard = ({ store }) => {
         setUserOrganization(result);
       }
     } catch (error) {
-      console.error('Error fetching organization data:', error);
+      // The active organisation no longer exists. Nothing is broken; the
+      // dashboard falls back to its no-organisation state.
+      if (error?.isNotFound) {
+        console.info(
+          'Active organisation no longer exists; showing dashboard without it.'
+        );
+        setUserOrganization(null);
+      } else {
+        console.error('Error fetching organization data:', error);
+      }
     } finally {
       setIsLoadingOrganization(false);
     }

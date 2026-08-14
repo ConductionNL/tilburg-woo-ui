@@ -29,6 +29,7 @@ export {
   AcFormatErrorCode,
   AcHasErrors,
 } from './ac-format-error';
+export { AcLogFetchError } from './ac-log-fetch-error';
 export { AcFormatIban } from './ac-format-iban';
 export { AcFormatInitials } from './ac-format-initials';
 export { AcFormatInternalURI } from './ac-format-internal-uri';

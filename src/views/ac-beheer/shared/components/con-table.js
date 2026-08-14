@@ -12,6 +12,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableHeaderCell,
   TableRow,
 } from '@utrecht/component-library-react';
 import { shouldResolveToName, getDisplayValue } from '@src/utilities';
@@ -658,7 +659,10 @@ const ConTable = (
       <thead>
         <TableRow>
           {renderSelectRowButtons && (
-            <TableCell>
+            // Header cells must be <th scope='col'>, not <td>: that is what
+            // lets a screen reader announce which column a data cell belongs
+            // to, and it is the only element on which aria-sort is meaningful.
+            <TableHeaderCell scope='col'>
               <div className='con-table-checkbox'>
                 <AcCheckbox
                   id='select-all'
@@ -669,7 +673,7 @@ const ConTable = (
                   srOnlyLabel
                 />
               </div>
-            </TableCell>
+            </TableHeaderCell>
           )}
           {tableHeaders.map((header, index) => {
             // Do not render headers without an id, a lot of functionality depends on it
@@ -686,9 +690,19 @@ const ConTable = (
                 typeof header.sortComparator === 'function');
 
             return (
-              <TableCell
+              <TableHeaderCell
                 key={header.id}
+                scope='col'
                 className={header.static ? 'con-table-actions-column' : undefined}
+                aria-sort={
+                  !isSortable || headerSort[0] !== header.id
+                    ? undefined
+                    : headerSort[1] === true
+                      ? 'ascending'
+                      : headerSort[1] === false
+                        ? 'descending'
+                        : undefined
+                }
               >
                 <div className={clsx('con-table-header-content')}>
                   <div className={clsx('con-table-header-content-label')}>
@@ -702,26 +716,29 @@ const ConTable = (
                       <b>{header.label}</b>
                     </span>
                   </div>
-                  <div
-                    className={clsx(
-                      'con-table-header-sort-button-container',
-                      isSortable &&
-                        showSortButtons &&
+                  {/* Sorting is a primary table action, so it has to be a real
+                      button: reachable by Tab, activated by Enter/Space, and
+                      named for screen readers. When the column cannot be
+                      sorted there is nothing to operate, so it stays an inert
+                      div. */}
+                  {isSortable && showSortButtons ? (
+                    <button
+                      type='button'
+                      className={clsx(
+                        'con-table-header-sort-button-container',
                         'con-table-header-sort-button-container-sortable'
-                    )}
-                    onClick={() => {
-                      if (!isSortable || !showSortButtons) return;
-
-                      if (headerSort[0] !== header.id || headerSort[1] === null) {
-                        setHeaderSort([header.id, true]);
-                      } else if (headerSort[1] === true) {
-                        setHeaderSort([header.id, false]);
-                      } else {
-                        setHeaderSort([header.id, null]);
-                      }
-                    }}
-                  >
-                    {showSortButtons && isSortable && (
+                      )}
+                      aria-label={`Sorteer op ${header.label}`}
+                      onClick={() => {
+                        if (headerSort[0] !== header.id || headerSort[1] === null) {
+                          setHeaderSort([header.id, true]);
+                        } else if (headerSort[1] === true) {
+                          setHeaderSort([header.id, false]);
+                        } else {
+                          setHeaderSort([header.id, null]);
+                        }
+                      }}
+                    >
                       <span className='con-table-header-content__sort-button-container'>
                         {(headerSort[0] !== header.id || headerSort[1] === null) && (
                           <VISUALS.SORT className='con-table-sort-icon-non' />
@@ -733,10 +750,12 @@ const ConTable = (
                           <VISUALS.SORT_DOWN className='con-table-sort-icon-desc' />
                         )}
                       </span>
-                    )}
-                  </div>
+                    </button>
+                  ) : (
+                    <div className='con-table-header-sort-button-container' />
+                  )}
                 </div>
-              </TableCell>
+              </TableHeaderCell>
             );
           })}
         </TableRow>

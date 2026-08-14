@@ -28,7 +28,7 @@ import {
   getDisabledActionTooltip,
 } from '@utils/organization-permissions';
 import { TOOLTIP_ID } from '@src/index.web';
-import { AcGetState, AcSaveState } from '@src/utilities';
+import { AcGetState, AcSaveState, AcLogFetchError } from '@src/utilities';
 import Fuse from 'fuse.js';
 
 /**
@@ -250,7 +250,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
           setFullActiveOrganisation(fullOrgData);
         }
       } catch (error) {
-        console.error('Error fetching full organization data:', error);
+        AcLogFetchError('Error fetching full organization data', error);
       }
     };
 

@@ -127,6 +127,14 @@ export function ConFileDropZone({
   };
 
   return (
+    // Drag-and-drop is inherently pointer-only, so the zone also has to offer a
+    // keyboard path. The file input itself is display:none and therefore not
+    // focusable, which previously left no way to pick a file without a mouse.
+    // The visible area is now a real button that opens the picker; the input
+    // stays a sibling, because a form control may not live inside a button.
+    // Only the drag handlers remain on this div, and dropping a file is a
+    // pointer gesture with no keyboard equivalent to add.
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div
       className={className}
       ref={dropRef}
@@ -135,9 +143,7 @@ export function ConFileDropZone({
       onDrop={handleDrop}
       style={{
         border: '1.5px dashed var(--utrecht-button-secondary-action-border-color)',
-        padding: '40px 0',
         textAlign: 'center',
-        cursor: disabled ? 'not-allowed' : 'pointer',
         borderRadius: 'var(--utrecht-select-border-radius)',
         opacity: disabled ? 0.5 : 1,
         display: 'flex',
@@ -145,25 +151,41 @@ export function ConFileDropZone({
         justifyContent: 'center',
         ...style,
       }}
-      onClick={() => !disabled && document.getElementById(`fileInput-${id}`).click()}
     >
-      <p>
-        {label || 'Drag & drop files here or click to select'}
-        {allowedFileTypes.length > 0 && (
-          <small
-            style={{
-              display: 'block',
-              marginTop: '0.75em',
-              color: 'var(--utrecht-paragraph-color)',
-              fontSize: '0.85em',
-              fontStyle: 'italic',
-              opacity: 0.85,
-            }}
-          >
-            {getAllowedFileTypesText()}
-          </small>
-        )}
-      </p>
+      <button
+        type='button'
+        disabled={disabled}
+        onClick={() => document.getElementById(`fileInput-${id}`).click()}
+        style={{
+          appearance: 'none',
+          background: 'none',
+          border: 'none',
+          font: 'inherit',
+          color: 'inherit',
+          width: '100%',
+          padding: '40px 0',
+          textAlign: 'center',
+          cursor: disabled ? 'not-allowed' : 'pointer',
+        }}
+      >
+        <span style={{ display: 'block' }}>
+          {label || 'Drag & drop files here or click to select'}
+          {allowedFileTypes.length > 0 && (
+            <small
+              style={{
+                display: 'block',
+                marginTop: '0.75em',
+                color: 'var(--utrecht-paragraph-color)',
+                fontSize: '0.85em',
+                fontStyle: 'italic',
+                opacity: 0.85,
+              }}
+            >
+              {getAllowedFileTypesText()}
+            </small>
+          )}
+        </span>
+      </button>
       <input
         id={`fileInput-${id}`}
         type='file'

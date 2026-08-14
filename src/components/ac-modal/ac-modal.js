@@ -45,6 +45,12 @@ const AcModal = React.forwardRef(
     );
 
     return (
+      // Click-outside-to-dismiss. The keyboard equivalent is not missing: every
+      // modal is opened with showModal(), and a modal <dialog> closes on
+      // Escape natively. The handler only fires when the click target is the
+      // dialog itself (i.e. the backdrop), never its contents, so there is no
+      // interactive region here for a keyboard user to reach.
+      // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions
       <dialog
         id={id}
         className={_CLASSES}

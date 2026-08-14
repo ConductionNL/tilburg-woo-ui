@@ -106,8 +106,10 @@ const AcTabList = ({ children, ...otherProps }) => {
       >
         <div className='ac-tabListContainer'>
           {canScrollLeft && (
-            <div
+            <button
+              type='button'
               onClick={handleScrollLeft}
+              aria-label='Tabbladen naar links schuiven'
               className={clsx(
                 canScrollLeft && 'ac-tab-scrollLeftButton',
                 'ac-tabButton'
@@ -116,7 +118,7 @@ const AcTabList = ({ children, ...otherProps }) => {
               <span className='ac-tab-scrollButton'>
                 <VISUALS.CHEVRON_LEFT />
               </span>
-            </div>
+            </button>
           )}
           <RTabList
             className={clsx(
@@ -127,8 +129,10 @@ const AcTabList = ({ children, ...otherProps }) => {
             {children}
           </RTabList>
           {canScrollRight && (
-            <div
+            <button
+              type='button'
               onClick={handleScrollRight}
+              aria-label='Tabbladen naar rechts schuiven'
               className={clsx(
                 canScrollRight && 'ac-tab-scrollRightButton',
                 'ac-tabButton'
@@ -137,7 +141,7 @@ const AcTabList = ({ children, ...otherProps }) => {
               <span className='ac-tab-scrollButton'>
                 <VISUALS.CHEVRON_RIGHT />
               </span>
-            </div>
+            </button>
           )}
         </div>
       </div>

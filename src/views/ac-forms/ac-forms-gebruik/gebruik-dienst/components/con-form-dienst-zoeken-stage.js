@@ -590,6 +590,11 @@ const ConFormDienstZoekenStage = ({
                           U bewerkt deze dienst
                         </div>
                       )}
+                      {/* Row-click is a pointer convenience over the AcCheckbox
+                          below, which is a real labelled checkbox (its sr-only
+                          <label htmlFor> names it for screen readers). The
+                          keyboard path is the checkbox itself. */}
+                      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
                       <div
                         style={{
                           display: 'flex',

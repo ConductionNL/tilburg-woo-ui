@@ -37,3 +37,13 @@
 .con-logo-container.clickable:hover {
   cursor: pointer;
 }
+
+/* When the logo is given an onClick it renders as a <button>, which brings its
+   own border, background and padding. Strip those so the clickable logo is
+   pixel-identical to the decorative one. */
+button.con-logo-container {
+  appearance: none;
+  padding: 0;
+  border: none;
+  background-color: transparent;
+}

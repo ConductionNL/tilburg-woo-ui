@@ -81,7 +81,16 @@ const AcHeader = ({ store: { menu, user, object } }) => {
         setFullActiveOrganisation(fullOrgData);
         setHasLoadedOrganisation(true);
       } catch (error) {
-        console.error('Failed to fetch organization data:', error);
+        // The active organisation no longer exists. Nothing is broken; the
+        // header simply renders without organisation details.
+        if (error?.isNotFound) {
+          console.info(
+            'Active organisation no longer exists; rendering without it.'
+          );
+        } else {
+          console.error('Failed to fetch organization data:', error);
+        }
+        setFullActiveOrganisation(null);
         setHasLoadedOrganisation(true);
       }
     };

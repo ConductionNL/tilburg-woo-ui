@@ -541,6 +541,11 @@ const Checkbox = ({
   };
 
   return (
+    // Row-click is a pointer convenience over the AcCheckbox below, which is a
+    // real labelled <input type='checkbox'> — focusable, and toggled with Space
+    // like any checkbox. The keyboard path is the checkbox itself, so nothing
+    // here is unreachable without a mouse.
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
     <div
       className={clsx(
         'con-action-menu__item',

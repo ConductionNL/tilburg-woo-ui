@@ -27,6 +27,7 @@ import {
 import { TOOLTIP_ID } from '@src/index.web';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
 import RelatedTabs from '@views/ac-publication/con-related-tabs';
+import { AcLogFetchError } from '@utils';
 
 /**
  * My Organisation Page
@@ -205,7 +206,7 @@ const ConMyOrganisationPage = ({ store }) => {
         fetchUses(organisationId);
         fetchUsed(organisationId);
       } catch (err) {
-        console.error('Error fetching full organization data:', err);
+        AcLogFetchError('Error fetching full organization data', err);
 
         // Check if it's a 404 error or similar, and create fallback data
         if (

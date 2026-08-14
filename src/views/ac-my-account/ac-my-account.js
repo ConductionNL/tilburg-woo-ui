@@ -34,6 +34,7 @@ import {
   getDisabledActionTooltip,
 } from '@utils/organization-permissions';
 import { TOOLTIP_ID } from '@src/index.web';
+import { AcLogFetchError } from '@utils';
 
 const AcMyAccount = ({ store }) => {
   const [userData, setUserData] = useState(null);
@@ -136,7 +137,7 @@ const AcMyAccount = ({ store }) => {
           createFallbackOrganisationData();
         }
       } catch (err) {
-        console.error('Error fetching full organization data:', err);
+        AcLogFetchError('Error fetching full organization data', err);
 
         // Check if it's a 404 error or similar, and create fallback data
         if (
@@ -604,6 +605,13 @@ const AcMyAccount = ({ store }) => {
                         <div className='ac-register-review__contact-details'>
                           <div className='ac-register-review__contact-image'>
                             {fullActiveOrganisation?.contactpersonen[0]?.image ? (
+                              // onLoad is a resource event, not a user
+                              // interaction — it fires when the browser
+                              // finishes decoding the image, and is used here
+                              // only to pick the right object-fit. The rule
+                              // counts it as a handler; there is nothing for a
+                              // keyboard user to operate.
+                              // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
                               <img
                                 src={fullActiveOrganisation.contactpersonen[0].image}
                                 alt='Contactpersoon'

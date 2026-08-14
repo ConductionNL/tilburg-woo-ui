@@ -1,17 +1,9 @@
 import * as React from 'react';
 import clsx from 'clsx';
 import { Link } from 'react-router-dom';
-import { useNavigate } from 'react-router';
 
 const AcCNavigation = ({ items = [], layoutClassName }) => {
   const [isOpen, setIsOpen] = React.useState(false);
-  const navigate = useNavigate();
-
-  const handleSubItemClick = (handleClick) => {
-    setIsOpen(false);
-
-    handleClick();
-  };
 
   const isCurrent = (slug) => {
     return slug === window.location.pathname;
@@ -76,9 +68,16 @@ const AcCNavigation = ({ items = [], layoutClassName }) => {
                           'ac-c-navigation__dropdown-li',
                           isCurrent(slug) && 'ac-c-navigation__dropdown-current'
                         )}
-                        onClick={() => handleSubItemClick(() => navigate(link))}
                       >
+                        {/* The destination belongs on the Link, not on an
+                            onClick on the <li>. As a real anchor it is
+                            reachable by keyboard, activates on Enter, and can
+                            be opened in a new tab. Closing the mobile menu is
+                            the only thing left for the click handler. */}
                         <Link
+                          to={link}
+                          onClick={() => setIsOpen(false)}
+                          aria-current={isCurrent(slug) ? 'page' : undefined}
                           className={clsx(
                             'ac-c-navigation__label',
                             isCurrent(slug) &&

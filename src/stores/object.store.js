@@ -762,12 +762,21 @@ export class ObjectStore {
    * Sets the error state for a specific type
    * @param {string} type - The type identifier for the error state
    * @param {string|null} error - The error message or null to clear errors
+   * @param {Object} [options] - Extra options
+   * @param {'error'|'info'} [options.severity='error'] - How loudly to report.
+   *   Use 'info' for outcomes that are expected rather than faulty — a 404 is
+   *   a legitimate answer, and logging it as an error makes a healthy app look
+   *   broken in the console.
    */
   @action
-  setError = (type, error) => {
+  setError = (type, error, { severity = 'error' } = {}) => {
     this.errors[type] = error;
     if (error) {
-      console.error('Error set for type:', type, error);
+      if (severity === 'info') {
+        console.info('Not found for type:', type, error);
+      } else {
+        console.error('Error set for type:', type, error);
+      }
     }
   };
 
@@ -1362,6 +1371,20 @@ export class ObjectStore {
       if (error.code === 'ERR_CANCELED' || error instanceof CanceledError) {
         console.info(`Request cancelled for ${requestType}`);
         return;
+      }
+
+      // A 404 is an answer, not a fault: the object genuinely is not there.
+      // This happens routinely when a reference outlives the thing it points
+      // at — a user whose active organisation has since been removed, for
+      // instance. The error state is still set so callers stop retrying, but
+      // it is reported as information and tagged so a caller can tell "gone"
+      // apart from "broken".
+      if (error.response?.status === 404) {
+        console.info(`${type} object ${id} not found (404)`);
+        this.setError(type, `${type} niet gevonden`, { severity: 'info' });
+        this.setSuccess(type, false);
+        error.isNotFound = true;
+        throw error;
       }
 
       console.error(`Error fetching ${type} object:`, error);

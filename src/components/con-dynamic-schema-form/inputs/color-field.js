@@ -450,7 +450,15 @@ const ColorField = ({
             boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
           }}
         >
-          {/* SV panel */}
+          {/* SV panel.
+
+              The three drag surfaces below (saturation/value, hue, alpha) are
+              pointer-only by nature. They are an enhancement, not the only way
+              in: the field's value is set by the text input above, which is
+              labelled, focusable and accepts the same colour value by keyboard.
+              So the control as a whole is keyboard-operable (WCAG 2.1.1) even
+              though these three surfaces are not. */}
+          {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
           <div
             onMouseDown={startPointer(handleSvPointer)}
             onTouchStart={startPointer(handleSvPointer)}
@@ -497,6 +505,7 @@ const ColorField = ({
 
           {/* Hue slider */}
           <div style={{ marginTop: 10 }}>
+            {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
             <div
               onMouseDown={startPointer(handleHuePointer)}
               onTouchStart={startPointer(handleHuePointer)}
@@ -528,6 +537,7 @@ const ColorField = ({
           {/* Alpha slider (integrated in picker) */}
           {supportsAlpha && (
             <div style={{ marginTop: 10 }}>
+              {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
               <div
                 onMouseDown={startPointer(handleAlphaPointer)}
                 onTouchStart={startPointer(handleAlphaPointer)}

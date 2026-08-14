@@ -74,15 +74,49 @@ http {
             }
         }
 
+        # NOTE ON add_header INHERITANCE
+        # A location block that sets any add_header of its own discards every
+        # add_header inherited from the server block — they do not merge. The
+        # security headers above therefore have to be repeated in each location
+        # below, otherwise they silently vanish from exactly the responses that
+        # carry executable content.
+
+        # index.html is the only file that names the content-hashed bundles, so
+        # it must be revalidated on every load. Left uncached it picks up the
+        # browser's heuristic freshness instead, which keeps returning visitors
+        # pointed at chunk filenames that no longer exist after a deploy.
+        location = /index.html {
+            add_header Cache-Control "no-cache, must-revalidate" always;
+            add_header X-Content-Type-Options nosniff always;
+            add_header X-Frame-Options DENY always;
+            add_header X-XSS-Protection "1; mode=block" always;
+        }
+
         # Static file serving with SPA routing
         location / {
             try_files $uri $uri/ /index.html;
         }
 
-        # Cache static assets
-        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
-            expires 1h;
-            add_header Cache-Control "public, immutable";
+        # Everything under /static/ carries a content hash in its filename, so a
+        # change always produces a new URL and the old one can be kept for a
+        # year. Cache-Control is set once, by hand: pairing `expires` with an
+        # `add_header Cache-Control` emits two contradictory headers, which is
+        # how this previously ended up advertising both max-age=3600 and
+        # immutable on the same response.
+        location /static/ {
+            add_header Cache-Control "public, max-age=31536000, immutable" always;
+            add_header X-Content-Type-Options nosniff always;
+            add_header X-Frame-Options DENY always;
+            add_header X-XSS-Protection "1; mode=block" always;
+        }
+
+        # Unhashed assets at the root (favicon, manifest, icons). Their URL does
+        # not change when the file does, so they have to be revalidated.
+        location ~* \.(png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|webmanifest)$ {
+            add_header Cache-Control "public, max-age=3600, must-revalidate" always;
+            add_header X-Content-Type-Options nosniff always;
+            add_header X-Frame-Options DENY always;
+            add_header X-XSS-Protection "1; mode=block" always;
         }
     }
 } 

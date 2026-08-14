@@ -146,12 +146,15 @@ module.exports = {
         controlComponents: ['ConSchemaEnhancedField', 'ReactSelect', 'Textbox'],
       },
     ],
-    // TODO(a11y backlog), counts measured 2026-08-14:
-    //   jsx-a11y/click-events-have-key-events          11
-    //   jsx-a11y/no-static-element-interactions        10
-    //   jsx-a11y/label-has-associated-control          10
-    //   jsx-a11y/no-noninteractive-element-interactions 3
-    //   jsx-a11y/no-noninteractive-element-to-interactive-role 1
+    // The interaction rules. The backlog behind these is now cleared, so the
+    // whole jsx-a11y/recommended set is enforced. Where a rule is suppressed
+    // in a source file, the comment above it states the keyboard path that
+    // exists instead — that reason is a claim about behaviour, so it is meant
+    // to be checked, not taken on trust.
+    'jsx-a11y/click-events-have-key-events': 'error',
+    'jsx-a11y/no-static-element-interactions': 'error',
+    'jsx-a11y/no-noninteractive-element-interactions': 'error',
+    'jsx-a11y/no-noninteractive-element-to-interactive-role': 'error',
   },
   overrides: [
     {

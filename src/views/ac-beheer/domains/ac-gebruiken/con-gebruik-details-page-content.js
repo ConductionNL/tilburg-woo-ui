@@ -13,6 +13,7 @@ import {
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
 import { useNavigate } from 'react-router-dom';
 import { AcFormatDate } from '@src/utilities/ac-format-date';
+import { AcLogFetchError } from '@utils';
 
 /**
  * Content for the gebruik details page
@@ -57,7 +58,7 @@ const ConGebruikDetailsPageContent = ({
           setFullActiveOrganisation(fullOrgData);
         }
       } catch (error) {
-        console.error('Error fetching full organization data:', error);
+        AcLogFetchError('Error fetching full organization data', error);
       }
     };
 

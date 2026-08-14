@@ -102,28 +102,40 @@ const ConChatSidebar = observer(({ store }) => {
                   className={`con-chat-conversation-item ${
                     activeConversationId === conversation.id ? 'active' : ''
                   }`}
-                  onClick={() => handleSelectConversation(conversation.id)}
-                  role='button'
-                  tabIndex={0}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      handleSelectConversation(conversation.id);
-                    }
-                  }}
                 >
-                  <AcFlex column spacing='xs' className='con-chat-conversation-content'>
-                    <div className='con-chat-conversation-title'>
-                      {conversation.title}
-                    </div>
-                    <AcFlex justifyContent='between' alignItems='center'>
-                      <span className='con-chat-conversation-date'>
-                        {formatDate(conversation.updatedAt)}
-                      </span>
-                      <span className='con-chat-conversation-count'>
-                        {conversation.messageCount} berichten
-                      </span>
+                  {/* The row used to be an <li role='button'> with a delete
+                      <button> nested inside it — a control inside a control,
+                      which is invalid and leaves the delete action unreachable
+                      for assistive tech. The two actions are now sibling
+                      buttons inside a plain list item. */}
+                  <button
+                    type='button'
+                    className='con-chat-conversation-select'
+                    onClick={() => handleSelectConversation(conversation.id)}
+                    aria-current={
+                      activeConversationId === conversation.id
+                        ? 'true'
+                        : undefined
+                    }
+                  >
+                    <AcFlex
+                      column
+                      spacing='xs'
+                      className='con-chat-conversation-content'
+                    >
+                      <div className='con-chat-conversation-title'>
+                        {conversation.title}
+                      </div>
+                      <AcFlex justifyContent='between' alignItems='center'>
+                        <span className='con-chat-conversation-date'>
+                          {formatDate(conversation.updatedAt)}
+                        </span>
+                        <span className='con-chat-conversation-count'>
+                          {conversation.messageCount} berichten
+                        </span>
+                      </AcFlex>
                     </AcFlex>
-                  </AcFlex>
+                  </button>
                   <button
                     className='con-chat-conversation-delete'
                     onClick={(e) => handleDeleteConversation(e, conversation.id)}
