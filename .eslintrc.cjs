@@ -134,6 +134,18 @@ module.exports = {
     'jsx-a11y/role-supports-aria-props': 'error',
     'jsx-a11y/scope': 'error',
     'jsx-a11y/tabindex-no-positive': 'error',
+    // `assert: 'either'` accepts both explicit htmlFor and the implicit pattern
+    // of nesting the control inside the label — both are valid, and the
+    // codebase uses nesting for checkbox lists. ConSchemaEnhancedField renders
+    // its own labelled control, so it counts as a control component.
+    'jsx-a11y/label-has-associated-control': [
+      'error',
+      {
+        assert: 'either',
+        depth: 3,
+        controlComponents: ['ConSchemaEnhancedField', 'ReactSelect', 'Textbox'],
+      },
+    ],
     // TODO(a11y backlog), counts measured 2026-08-14:
     //   jsx-a11y/click-events-have-key-events          11
     //   jsx-a11y/no-static-element-interactions        10

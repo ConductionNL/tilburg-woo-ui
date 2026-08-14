@@ -117,8 +117,9 @@ const AcGebruikKoppelenModal = ({
           </Alert>
         )}
         <div>
-          <label>Van gebruik</label>
+          <label htmlFor='gebruik-koppelen-van'>Van gebruik</label>
           <ReactSelect
+            inputId='gebruik-koppelen-van'
             value={
               selectedVan
                 ? {
@@ -135,8 +136,9 @@ const AcGebruikKoppelenModal = ({
           />
         </div>
         <div>
-          <label>Naar gebruik</label>
+          <label htmlFor='gebruik-koppelen-naar'>Naar gebruik</label>
           <ReactSelect
+            inputId='gebruik-koppelen-naar'
             value={selectedNaar}
             options={gebruikenOptions.filter((g) => g.value !== selectedVan?.id)}
             onChange={(option) => setSelectedNaar(option)}

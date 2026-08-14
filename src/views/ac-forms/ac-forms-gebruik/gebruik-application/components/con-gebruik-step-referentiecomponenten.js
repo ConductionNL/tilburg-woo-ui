@@ -215,11 +215,11 @@ const ConGebruikStepReferentiecomponenten = memo(
                   style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
                 >
                   <div>
-                    <label className='utrecht-form-label'>
-                      <Heading level={4}>
-                        Referentiecomponenten aangegeven door leverancier
-                      </Heading>
-                    </label>
+                    {/* Section heading, not a label: the select below is
+                        associated with its own sr-only label via aria-labelledby. */}
+                    <Heading level={4} className='utrecht-form-label'>
+                      Referentiecomponenten aangegeven door leverancier
+                    </Heading>
                     <label
                       id='refcomp-select-label-leverancier'
                       className='sr-only'
@@ -264,9 +264,11 @@ const ConGebruikStepReferentiecomponenten = memo(
                     />
                   </div>
                   <div>
-                    <label className='utrecht-form-label'>
-                      <Heading level={4}>Referentiecomponenten toevoegen</Heading>
-                    </label>
+                    {/* Section heading, not a label: the select below is
+                        associated with its own sr-only label via aria-labelledby. */}
+                    <Heading level={4} className='utrecht-form-label'>
+                      Referentiecomponenten toevoegen
+                    </Heading>
                     <label
                       id='refcomp-select-label-toevoegen'
                       className='sr-only'
@@ -317,16 +319,16 @@ const ConGebruikStepReferentiecomponenten = memo(
             // Non-existing flow or no applicatie refs: show single dropdown with all options
             return (
               <div>
-                <label className='utrecht-form-label'>
-                  <Heading level={4}>
-                    Selecteer de referentiecomponenten waarvoor u de applicatie
-                    gebruikt
-                    <span className='required-indicator' aria-hidden='true'>
-                      *
-                    </span>
-                    <span className='sr-only'>(verplicht)</span>
-                  </Heading>
-                </label>
+                {/* Section heading, not a label: the select below is
+                    associated with its own sr-only label via aria-labelledby. */}
+                <Heading level={4} className='utrecht-form-label'>
+                  Selecteer de referentiecomponenten waarvoor u de applicatie
+                  gebruikt
+                  <span className='required-indicator' aria-hidden='true'>
+                    *
+                  </span>
+                  <span className='sr-only'>(verplicht)</span>
+                </Heading>
                 <label
                   id='refcomp-select-label-gebruik'
                   className='sr-only'

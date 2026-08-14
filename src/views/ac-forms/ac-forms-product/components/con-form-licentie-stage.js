@@ -193,6 +193,14 @@ const ConFormLicentieStage = memo(
             {/* Direct implementation instead of renderSelectors for better reactivity */}
             <div className='ac-register-form-grid'>
               <div>
+                {/* This label cannot be associated yet: the field below is
+                    rendered with showLabel={false}, which makes
+                    con-dynamic-schema-form drop its label element entirely, and
+                    ConSchemaEnhancedField does not expose its internal field id
+                    to callers. Fixing it properly means having the component
+                    accept or return that id, rather than guessing its internal
+                    `dynamic-form-field-<path>` scheme from here. */}
+                {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
                 <label
                   style={{
                     display: 'block',

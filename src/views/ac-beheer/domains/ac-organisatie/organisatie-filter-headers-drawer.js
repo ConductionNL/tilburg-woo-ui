@@ -175,10 +175,14 @@ const OrganisatieFilterHeadersDrawer = forwardRef(
       <AcDrawer removeBackdrop id='concepts-drawer' title='Kolommen' ref={drawerRef}>
         <AcColumn gap='tiger'>
           <div>
-            <label className='utrecht-form-label'>
-              <h4 className='utrecht-heading-4'>Beoordeling</h4>
+            <label
+              className='utrecht-form-label utrecht-heading-4'
+              htmlFor='organisatie-filter-beoordeling'
+            >
+              Beoordeling
             </label>
             <ReactSelect
+              inputId='organisatie-filter-beoordeling'
               placeholder='Selecteer een beoordeling'
               className={clsx('ac-beheer-select')}
               value={selectedBeoordeling}

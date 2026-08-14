@@ -1,5 +1,5 @@
 // eslint-disable-next-line import/no-unresolved
-import { useState, useRef } from 'react';
+import { useState, useRef, Fragment } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { useNavigate } from 'react-router';
@@ -215,17 +215,27 @@ const ConPasswordReminder = () => {
 
       <div className='ac-password-reminder-form'>
         <div className='ac-code-input-container'>
-          <label className='ac-code-input-label'>Verificatiecode</label>
-          <div className='ac-code-input-group'>
+          {/* The code is split across separate inputs, so a single <label>
+              cannot be associated with a control. The group is named instead,
+              and each input carries its own position in the code. */}
+          <span id='ac-code-input-label' className='ac-code-input-label'>
+            Verificatiecode
+          </span>
+          <div
+            className='ac-code-input-group'
+            role='group'
+            aria-labelledby='ac-code-input-label'
+          >
             {code.map((digit, index) => (
-              <>
-                <div key={index} className='ac-code-input-wrapper'>
+              <Fragment key={index}>
+                <div className='ac-code-input-wrapper'>
                   <input
                     ref={(el) => (codeInputRefs.current[index] = el)}
                     type='text'
                     inputMode='numeric'
                     maxLength={1}
                     value={digit}
+                    aria-label={`Cijfer ${index + 1} van ${code.length}`}
                     onChange={(e) => handleCodeChange(index, e.target.value)}
                     onKeyDown={(e) => handleCodeKeyDown(index, e)}
                     className={`ac-code-input ${
@@ -235,7 +245,7 @@ const ConPasswordReminder = () => {
                   />
                 </div>
                 {index === 2 && <span className='ac-code-dash'>-</span>}
-              </>
+              </Fragment>
             ))}
           </div>
           {errors.code && (
