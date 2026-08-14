@@ -105,6 +105,16 @@ http {
             add_header X-XSS-Protection "1; mode=block" always;
         }
 
+        # Municipality themes. These filenames carry no content hash — the
+        # active one is chosen at runtime by variant name — so they have to be
+        # revalidated, or a rebrand would sit in caches until they expired.
+        location /themes/ {
+            add_header Cache-Control "public, max-age=3600, must-revalidate" always;
+            add_header X-Content-Type-Options nosniff always;
+            add_header X-Frame-Options DENY always;
+            add_header X-XSS-Protection "1; mode=block" always;
+        }
+
         # Static file serving with SPA routing
         location / {
             try_files $uri $uri/ /index.html;

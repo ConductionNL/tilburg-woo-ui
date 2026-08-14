@@ -1,13 +1,24 @@
 // General tokens.
 @use 'tokens';
 @use 'tokens-logo';
-@use 'tokens-custom';
-@use 'tokens-vng';
-@use 'tokens-opencatalogi';
-@use 'tokens-migrato';
-@use 'tokens-horst-aan-de-maas';
 @use 'tokens-dimpact';
-@use 'tokens-venray';
+
+// The municipality themes are NOT imported here.
+//
+// Every one of them was compiled into the single stylesheet that every visitor
+// downloads, even though a deployment activates exactly one — the variant comes
+// from RUNTIME_CONFIG.THEME_VARIANT and is applied as a class on <body>. That
+// put ~527 KiB of tokens for other municipalities into the critical path of
+// every page load, for every tenant.
+//
+// They now live as plain CSS in public/themes/<variant>.css, and index.html
+// loads only the active one. See the loader comment in public/index.html for
+// why it is inlined there rather than imported from the bundle.
+//
+// tokens-custom.scss was a single .horst-aan-de-maas-theme block and was
+// @use'd *before* tokens-horst-aan-de-maas, so the theme file won on conflicts;
+// public/themes/horst-aan-de-maas.css concatenates them in that same order to
+// keep that precedence. tokens-dimpact.scss stays because it is empty.
 
 // Extends.
 @use 'extends';

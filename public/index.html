@@ -74,6 +74,59 @@
     <!-- Runtime Configuration (loaded BEFORE React bundle) -->
     <!-- This file is generated at container startup with environment-specific values -->
     <script src="%PUBLIC_URL%/runtime-config.js"></script>
+
+    <!--
+      Municipality theme.
+
+      A deployment activates exactly one theme, chosen at runtime, so only that
+      one is loaded. Previously all of them were compiled into the bundle's
+      stylesheet and shipped to every visitor.
+
+      This is inlined here rather than imported from the bundle on purpose: the
+      variant is only known at runtime, and appending the <link> while the head
+      is still parsing lets the browser treat it as render-blocking. Loading it
+      later — from the bundle, or after render — would paint the page once with
+      default tokens and then again with the municipality's, which reads as a
+      flash of the wrong branding.
+    -->
+    <script>
+      (function () {
+        var config = window.RUNTIME_CONFIG || {};
+        var variant = config.THEME_VARIANT || config.themeVariant || 'vng';
+
+        // Variants with a stylesheet of their own.
+        var available = {
+          vng: 1,
+          migrato: 1,
+          venray: 1,
+          opencatalogi: 1,
+          'horst-aan-de-maas': 1,
+        };
+
+        // Variants whose tokens still come from packages inside the bundle.
+        // They must not fall back to vng, or they would be restyled.
+        var bundled = { tilburg: 1, rotterdam: 1, dimpact: 1 };
+
+        // This mirrors getTheme() in src/App.web.js, which maps 'development'
+        // and any unrecognised value to vng-theme. The two must agree: the app
+        // sets the class on <body> and this decides which tokens define it, so
+        // if they disagree the page gets a theme class with nothing behind it.
+        // That is exactly what happened when this only matched exact names —
+        // THEME_VARIANT is 'development' in a dev container, so <body> got
+        // vng-theme while no vng tokens were ever loaded.
+        if (!available[variant]) {
+          if (bundled[variant]) {
+            return;
+          }
+          variant = 'vng';
+        }
+
+        var link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = '%PUBLIC_URL%/themes/' + variant + '.css';
+        document.head.appendChild(link);
+      })();
+    </script>
   </head>
 
   <body id="body">
