@@ -74,19 +74,17 @@ const ConPasswordReminder = () => {
       return;
     }
 
-    setIsLoading(true);
-    setErrors({});
-
-    // TODO: Implement backend call when available
-    // For now, just simulate a successful request
-    setTimeout(() => {
-      setStep('code');
-      setIsLoading(false);
-      // Focus first code input
-      if (codeInputRefs.current[0]) {
-        codeInputRefs.current[0].focus();
-      }
-    }, 1000);
+    // There is no backend for this yet. Until there is, say so: the previous
+    // behaviour waited a second and advanced to the code-entry step, which is
+    // indistinguishable from having actually sent a code. Someone locked out
+    // of their account would have sat waiting for a mail that was never sent,
+    // and the more careful they were about checking spam, the longer they
+    // would have waited. Failing honestly costs them nothing; pretending costs
+    // them the account.
+    setErrors({
+      general:
+        'Wachtwoord opnieuw instellen is nog niet beschikbaar. Neem contact op met uw beheerder om uw wachtwoord te laten herstellen.',
+    });
   };
 
   const handleCodeChange = (index, value) => {
@@ -128,15 +126,13 @@ const ConPasswordReminder = () => {
       return;
     }
 
-    setIsLoading(true);
-    setErrors({});
-
-    // TODO: Implement backend call when available
-    // For now, just simulate processing
-    setTimeout(() => {
-      setIsLoading(false);
-      // Would typically redirect to login or dashboard after successful code verification
-    }, 1000);
+    // Unreachable while the email step refuses to advance, but kept honest for
+    // the same reason: verifying a code against nothing and reporting success
+    // would be worse than saying there is no backend yet.
+    setErrors({
+      general:
+        'Wachtwoord opnieuw instellen is nog niet beschikbaar. Neem contact op met uw beheerder om uw wachtwoord te laten herstellen.',
+    });
   };
 
   const handleBackToEmail = () => {

@@ -748,14 +748,28 @@ module.exports = function (webpackEnv) {
     // it no longer fires on the status quo but still fails the build if the
     // bundle grows materially. It is deliberately NOT `false`.
     //
-    // Ratcheted down as the bundle shrank (13.6 MiB -> 5.85 MiB entrypoint,
-    // 4.7 MiB -> 624 KiB largest asset). Kept just above current reality so the
-    // gains cannot silently regress; lower again as the entrypoint drops
-    // further. Remaining known weight: ~4.8 MiB of JS in the entrypoint.
+    // Ratcheted down as the bundle shrank (13.6 MiB -> 5.84 MiB entrypoint,
+    // 4.7 MiB -> 760 KiB largest asset). `hints: 'warning'` is not advisory
+    // here: react-scripts treats warnings as errors when process.env.CI is set,
+    // so an over-budget bundle fails CI. Confirmed by building with a 10 KiB
+    // budget, which exits 1 with "Treating warnings as errors".
+    //
+    // Measured 2026-08-14: entrypoint 5.84 MiB across 84 initial requests
+    // (1.76 MiB transferred), largest asset 760 KiB.
+    //
+    // The asset limit is deliberately looser than the entrypoint one. The
+    // largest asset is a single 760 KiB stylesheet, so a 768 KiB limit left 1%
+    // headroom and would have failed CI on a few added rules — a budget that
+    // fires on noise gets raised in a hurry rather than respected.
+    //
+    // Biggest remaining win: that stylesheet is ~458 KiB of municipality themes
+    // (vng, migrato, horst-aan, venray, tilburg) and a deployment activates
+    // exactly one of them at runtime via RUNTIME_CONFIG.themeVariant. Splitting
+    // them into separately loaded files would cut roughly 85 KiB transferred.
     performance: {
       hints: 'warning',
-      maxAssetSize: 768 * 1024, // 768 KiB — current largest asset ~624 KiB
-      maxEntrypointSize: 6.5 * 1024 * 1024, // 6.5 MiB — current entrypoint ~5.85 MiB
+      maxAssetSize: 800 * 1024, // 800 KiB — largest asset 760 KiB
+      maxEntrypointSize: 6 * 1024 * 1024, // 6 MiB — entrypoint 5.84 MiB
     },
   };
 };
