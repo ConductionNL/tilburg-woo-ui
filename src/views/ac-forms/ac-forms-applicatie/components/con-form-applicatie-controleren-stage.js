@@ -32,7 +32,7 @@ import rehypeSanitize from 'rehype-sanitize';
  * @param {Array} standaardenOptions - Available standards options for display
  * @param {Array} modulesOptions - Available modules/applicaties for connections display
  * @param {Array} buitengemeentelijkeOptions - Available external facilities for connections display
- * @param {Array} dienstOptions - Available service options for display
+ * @param {Array} schemas - Array of schema objects
  * @param {Object} store - MobX store for fetching objects
  * @param {Object} schemas - Schema definitions for field labels
  */
@@ -42,15 +42,37 @@ const ConFormApplicatieControlerenStage = memo(
     referentieComponentenWithStandards,
     modulesOptions,
     buitengemeentelijkeOptions,
-    dienstOptions,
+    schemas,
     formType,
     store,
     aanbiederOrganisatie,
     aanbiederKeuze,
-    schemas,
   }) => {
     // State to store fetched contactpersoon object
     const [contactpersoonData, setContactpersoonData] = useState(null);
+
+    // Diensten options from schema enum
+  const dienstOptions = useMemo(() => {
+    const dienstSchema = schemas?.dienst;
+    const typeProperty = dienstSchema?.properties?.type;
+
+    if (typeProperty?.enum && Array.isArray(typeProperty.enum)) {
+      return typeProperty.enum.map((value) => {
+        // Try to get description from schema first, then fall back to the enum value itself
+        const schemaDescription =
+          typeProperty.enumDescriptions?.[typeProperty.enum.indexOf(value)];
+
+        // Use schema description if available, otherwise use the enum value as the label
+        const label = schemaDescription || value;
+
+        return {
+          value,
+          label,
+        };
+      });
+    }
+    return [];
+  }, [schemas?.dienst]);
 
     // Get contactpersoon ID from applicatie
     const contactpersoonId = useMemo(() => {

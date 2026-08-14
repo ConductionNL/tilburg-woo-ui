@@ -1,0 +1,48 @@
+/**
+ * Wizard Utilities Index
+ *
+ * Central export point for all wizard form utilities.
+ */
+
+// Mapping utilities
+export {
+  mapToOption,
+  createModuleMapper,
+  createOrganisatieMapper,
+  createReferentieComponentMapper,
+  createBuitengemeentelijkeMapper,
+  createStandaardMapper,
+  createStandaardversieMapper,
+  filterValidOptions,
+  mapId,
+} from './mapping-utils';
+
+// Loading utilities
+export { useLoadingState, useMultipleLoadingStates } from './loading-utils';
+
+// Schema utilities
+export {
+  fetchSchemas,
+  useSchemaFetcher,
+  applySchemaDefaults,
+  createIsEmptyCheck,
+} from './schema-utils';
+
+// Search utilities
+export {
+  mergeSearchOptions,
+  buildTypeSuffix,
+  createModuleSearchConfig,
+  createOrganisatieSearchConfig,
+  createEntitySearchConfig,
+  useEntitySearch,
+  fetchMissingEntities,
+  fetchEntitiesByIds,
+  createRelatedEntitiesFetcher,
+} from './search-utils';
+
+// Organization utilities
+export { useFullOrganization } from './organization-utils';
+
+// Gebruik utilities
+export { fetchModuleIdsFromGebruikByAfnemer } from './gebruik-utils';

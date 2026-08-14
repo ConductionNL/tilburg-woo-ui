@@ -1105,7 +1105,7 @@ export class ObjectStore {
     try {
       const endpoint = `${this._constructApiUrl(registerId, schemaId)}/export`;
       const response = await nextcloudApi.get(endpoint, {
-        params: { 
+        params: {
           type,
           _multi: true, // Force multitenancy for exports
         },
@@ -1372,6 +1372,71 @@ export class ObjectStore {
       this.setLoading(requestType, false);
       // Clean up abort controller
       this.abortControllers.delete(requestType);
+    }
+  };
+
+  /**
+   * Dumb fetch method for efficiently fetching multiple objects by ID.
+   * This method is not type specific.
+   *
+   * Due to this no loading, error and success state manipulation exist,
+   * No fetch method exists either.
+   * And no requestType exists due to the dynamic nature,
+   * this also means that there is no abort controller and other functionality which traditionally required a request type.
+   *
+   * Possible addition in the future:
+   * - Have the function add/overwrite existing object state based on the received object `@self` data
+   *
+   * @param {string} ids - Array of object ID's
+   * @param {Object} [params={}] - Query parameters for the request
+   */
+  @action
+  fetchObjects = async (ids = [], params = {}) => {
+    if (!ids || ids.length === 0) {
+      throw new Error('[ObjectStore::fetchObjects] No ids passed');
+    }
+
+    const joinedIds = ids.join(',');
+
+    try {
+      const queryParams = {
+        _ids: [],
+        ...params,
+      };
+
+      // Support legacy _extend or extend params by converting to _extend[]
+      if (!params['_extend[]'] && (params._extend || params.extend)) {
+        const extendValue = params._extend || params.extend;
+        queryParams['_extend[]'] = Array.isArray(extendValue)
+          ? extendValue
+          : typeof extendValue === 'string'
+          ? extendValue.split(',').map((s) => s.trim())
+          : [extendValue];
+      }
+
+      queryParams._ids = joinedIds;
+
+      const response = await nextcloudApi.get('/openregister/api/objects', {
+        params: queryParams,
+      });
+      if (!response.ok) throw new Error(`Failed to fetch object:`, joinedIds);
+
+      const data = response.data;
+      const results = data.results;
+
+      // Cache the name for the fetched objects itself
+      results.forEach((o) => {
+        const objectId = o?.id || o?.['@self']?.id;
+        const objectName = o?.naam || o?.name || o?.title || o?.['@self']?.name;
+        if (objectId && objectName && typeof objectName === 'string') {
+          this.setNamesInCacheSingle(objectId, objectName);
+        }
+      });
+
+      return results
+    } catch (error) {
+      const truncatedIds = joinedIds.map((id) => `${id.slice(0, 8)}...`)
+      throw new Error(`Error fetching objects: ${truncatedIds.join(', ')}`, { cause: error });
     }
   };
 
@@ -3333,11 +3398,11 @@ export class ObjectStore {
 
   /**
    * Waits for names cache warmup to complete if it's in progress
-   * 
+   *
    * **Note:** This is no longer used by getNamesForSingleId/getNamesForMultipleIds
    * to avoid blocking UI rendering. Kept for potential future use cases where
    * explicit warmup waiting might be desired.
-   * 
+   *
    * @returns {Promise<void>}
    */
   async waitForNamesWarmup() {
@@ -3369,13 +3434,13 @@ export class ObjectStore {
 
   /**
    * Gets a single name from cache, falls back to backend if not found
-   * 
+   *
    * **Optimized behavior (no warmup blocking):**
    * - Checks cache first for instant response
    * - If not found, immediately fetches from backend (doesn't wait for warmup)
    * - Background warmup will populate cache for future requests
    * - This ensures components can load filters/UI immediately without delay
-   * 
+   *
    * @param {string} id - The UUID to resolve to a name
    * @returns {Promise<string>} The name for the given ID, or the ID if no name found
    */
@@ -3455,13 +3520,13 @@ export class ObjectStore {
 
   /**
    * Gets multiple names from cache, falls back to backend for missing ones
-   * 
+   *
    * **Optimized behavior (no warmup blocking):**
    * - Checks cache first for all IDs
    * - Immediately fetches missing IDs from backend (doesn't wait for warmup)
    * - Background warmup will populate cache for future requests
    * - Bulk fetches missing IDs in a single API call for efficiency
-   * 
+   *
    * @param {string[]} ids - Array of UUIDs to resolve to names
    * @returns {Promise<{[id: string]: string}>} Object with id -> name mappings
    */
@@ -3502,9 +3567,7 @@ export class ObjectStore {
     // Fetch missing names from backend
     if (missingIds.length > 0) {
       try {
-        console.info(
-          `🌐 Fetching names for ${missingIds.length} IDs from backend`
-        );
+        console.info(`🌐 Fetching names for ${missingIds.length} IDs from backend`);
         const response = await nextcloudApi.post('/openregister/api/names', {
           ids: missingIds,
         });
@@ -3954,10 +4017,12 @@ export class ObjectStore {
     }
 
     const requestType = `register_${registerSlug}`;
-    
+
     // Check if a request is already in progress for this register
     if (this.isLoading(requestType)) {
-      console.info(`ℹ️ Register ${registerSlug} fetch already in progress, waiting...`);
+      console.info(
+        `ℹ️ Register ${registerSlug} fetch already in progress, waiting...`
+      );
       // Wait for existing request to complete by checking loading state periodically
       return new Promise((resolve, reject) => {
         const checkInterval = setInterval(() => {
@@ -3971,7 +4036,7 @@ export class ObjectStore {
             }
           }
         }, 100);
-        
+
         // Timeout after 10 seconds
         setTimeout(() => {
           clearInterval(checkInterval);
@@ -3979,7 +4044,7 @@ export class ObjectStore {
         }, 10000);
       });
     }
-    
+
     this.setLoading(requestType, true);
     this.setError(requestType, null);
 

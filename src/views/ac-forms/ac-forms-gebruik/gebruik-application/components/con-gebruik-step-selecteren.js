@@ -1,4 +1,4 @@
-import React, { memo, useMemo } from 'react';
+import React, { memo } from 'react';
 import { ConSchemaEnhancedField } from '@src/components';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
 
@@ -20,31 +20,8 @@ const ConGebruikStepSelecteren = ({
   searchKlanten,
   selectedKlanten,
   setSelectedKlanten,
-  selectedKlantenOptions,
-  setSelectedKlantenOptions,
   loading,
 }) => {
-  // Merge selected options with search results to ensure selected items are always visible
-  const mergedKlantenOptions = useMemo(() => {
-    const optionsMap = new Map();
-
-    // First add selected options
-    (selectedKlantenOptions || []).forEach((option) => {
-      if (option?.value) {
-        optionsMap.set(String(option.value), option);
-      }
-    });
-
-    // Then add/override with current search results
-    (klantenOptions || []).forEach((option) => {
-      if (option?.value) {
-        optionsMap.set(String(option.value), option);
-      }
-    });
-
-    return Array.from(optionsMap.values());
-  }, [klantenOptions, selectedKlantenOptions]);
-
   return (
     <div
       className='ac-register-form-section'
@@ -107,15 +84,13 @@ const ConGebruikStepSelecteren = ({
                   })
                   .filter((id) => id && id !== ''); // Filter out empty values
 
-                // Store both IDs and full options
                 setSelectedKlanten(klantenIds);
-                setSelectedKlantenOptions(optionsArray);
               }}
               isDisabled={loading}
               isLoading={klantenLoading}
               width='full'
               schemas={schemas}
-              optionsProvider={mergedKlantenOptions}
+              optionsProvider={klantenOptions}
               onSearch={(_path, _refSlug, q) => searchKlanten && searchKlanten(q)}
               customProps={{
                 label: 'Klant(en)',

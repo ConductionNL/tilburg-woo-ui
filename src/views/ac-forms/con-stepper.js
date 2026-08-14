@@ -1,7 +1,9 @@
 import { useState, useRef, useCallback } from 'react';
+import { generateSteps } from './con-stepper-step-generator';
+import { addStepperClickHandlers } from './con-stepper-click-handlers';
 
 /**
- * ## useStepper hook
+ * ## useStepper hook   
  *
  * _This hook is used to track the current step and the number of steps taken._
  *
@@ -268,7 +270,15 @@ const useStepper = () => {
     getCurrentStep,
     resetCurrentStep,
     resetAll,
+    _countRef: countRef,
+    _labelIndexRef: labelIndexRef,
   };
+};
+
+
+export {
+    generateSteps,
+    addStepperClickHandlers
 };
 
 export default useStepper;

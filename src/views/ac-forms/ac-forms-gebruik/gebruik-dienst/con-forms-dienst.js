@@ -10,7 +10,6 @@ import { ProcessSteps } from '@gemeente-denhaag/components-react';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 import { commongroundApiUrl } from '@src/config';
 import { validateWebsite } from '@views/ac-forms/validation/form-validations';
-import { useDebouncedInput } from '@src/hooks';
 import {
   Heading1,
   Paragraph,
@@ -18,7 +17,22 @@ import {
   UnorderedList,
   UnorderedListItem,
 } from '@utrecht/component-library-react/dist/css-module';
-import useStepper from '../../con-stepper';
+import useStepper, {
+  addStepperClickHandlers,
+  generateSteps,
+} from '../../con-stepper';
+import {
+  useSchemaFetcher,
+  createModuleMapper,
+  createOrganisatieMapper,
+  createModuleSearchConfig,
+  createOrganisatieSearchConfig,
+  useEntitySearch,
+  fetchMissingEntities,
+  fetchModuleIdsFromGebruikByAfnemer,
+  mapId,
+  useFullOrganization,
+} from '../../wizard-utils';
 
 // Stage components
 import ConFormDienstInformatieStage from './components/con-form-dienst-informatie-stage';
@@ -31,18 +45,6 @@ import ConFormDeelnemersStage from './components/con-form-deelnemers-stage';
 import ConUnsavedChangesAlertModal from '@src/components/con-unsaved-changes-alert-modal/con-unsaved-changes-alert-modal';
 import { getActiveWizard } from '@src/constants/wizards.constants';
 import { ConDebugViewer } from '@src/components';
-
-const mapToOption = (item, index) => {
-  const label =
-    item?.['@self']?.name ||
-    item?.naam ||
-    item?.name ||
-    item?.title ||
-    item?.label ||
-    `Applicatie ${index + 1}`;
-  const value = item?.['@self']?.id || item?.id || item?.slug || label;
-  return { value: String(value), label: String(label), data: item };
-};
 
 /**
  * Gebruik-dienst form: only for Gemeente/Samenwerking. Applicatie dropdowns are limited
@@ -63,15 +65,14 @@ const ConFormsDienst = ({ store }) => {
   const stepper = useStepper();
   const processStepsRef = useRef(null);
 
-  // Schemas
-  const [schemas, setSchemas] = useState({
-    dienst: null,
-    product: null,
-    module: null,
-    koppeling: null,
-    organisatie: null,
-  });
-  const [schemasLoading, setSchemasLoading] = useState(true);
+  // Schemas - using wizard-utils
+  const { schemas, loading: schemasLoading } = useSchemaFetcher(store, [
+    'dienst',
+    'module',
+    'koppeling',
+    'organisatie',
+    'gebruik',
+  ]);
 
   // Edit-mode prefill state
   const [prefillLoading, setPrefillLoading] = useState(false);
@@ -93,24 +94,53 @@ const ConFormsDienst = ({ store }) => {
     koppelingen: [],
   });
 
-  const [touched, setTouched] = useState({});
-
   // Service type selection state - default to 'eigen-organisatie' since selection stage is disabled
   const [dienstType] = useState('eigen-organisatie'); // 'eigen-organisatie' or 'andere-organisatie'
 
   const setDienstData = (key, value) => {
     setDienst((prev) => ({ ...prev, [key]: value }));
-    setTouched((prev) => ({ ...prev, [key]: true }));
   };
 
   // productId -> module options derived from product details
   const [productToModulesLookup, setProductToModulesLookup] = useState({});
   const [selectedModuleIds, setSelectedModuleIds] = useState([]);
-  const [modulesLoading, setModulesLoading] = useState(false);
-  const [searchLoading, setSearchLoading] = useState(false);
   const [applicatiePreloadLoading, setApplicatiePreloadLoading] = useState(false);
-  const [moduleOptions, setModuleOptions] = useState([]);
   const moduleOptionsRef = useRef([]);
+
+  /**
+   * This form is only for Gemeente/Samenwerking. Applicatie dropdowns are limited to
+   * applications in the organisation's gebruik (afnemer). null = not loaded, [] = none, string[] = allowed ids.
+   */
+  const [allowedModuleIdsFromGebruik, setAllowedModuleIdsFromGebruik] =
+    useState(null);
+
+  // Module search - shared for both flows (aanbod-beheerders and gebruik-beheerders)
+  const moduleMapper = useMemo(() => createModuleMapper({ type: 'applicatie' }), []);
+  const moduleSearchConfig = useMemo(
+    () =>
+      createModuleSearchConfig(store, {
+        useCacheFirst: true,
+        mapToOption: moduleMapper,
+        cacheKey: 'dienst_form',
+        allowedIds: allowedModuleIdsFromGebruik ?? undefined,
+        queryParamsBuilder: (searchTerm) => ({
+          _limit: '50',
+          _page: '1',
+          _published: 'false',
+          ...(searchTerm && searchTerm.trim() ? { _search: searchTerm.trim() } : {}),
+        }),
+      }),
+    [store, moduleMapper, allowedModuleIdsFromGebruik]
+  );
+  const {
+    search: searchModules,
+    loading: modulesLoading,
+    options: moduleOptions,
+    setOptions: setModuleOptions,
+  } = useEntitySearch(moduleSearchConfig, {
+    debounceDelay: 250,
+    mergeStrategy: 'preserve-existing',
+  });
 
   const [koppelingOptions, setKoppelingOptions] = useState([]);
   const [selectedKoppelingIds] = useState([]);
@@ -127,15 +157,6 @@ const ConFormsDienst = ({ store }) => {
   const [dienstenResults, setDienstenResults] = useState([]); // Array of dienst objects
   const [dienstenResultsLoading, setDienstenResultsLoading] = useState(false);
   const [resolvedModulesFromDiensten, setResolvedModulesFromDiensten] = useState([]);
-  const [ownAppOptions, setOwnAppOptions] = useState([]); // Options for applicatie select in Dienst zoeken
-
-  /**
-   * This form is only for Gemeente/Samenwerking. Applicatie dropdowns are limited to
-   * applications in the organisation's gebruik (afnemer). null = not loaded, [] = none, string[] = allowed ids.
-   */
-  const [allowedModuleIdsFromGebruik, setAllowedModuleIdsFromGebruik] =
-    useState(null);
-  const [ownAppLoading, setOwnAppLoading] = useState(false);
 
   // New dienst creation state
   const [dienstKeuze, setDienstKeuze] = useState('bestaand'); // 'bestaand' or 'nieuw'
@@ -158,14 +179,36 @@ const ConFormsDienst = ({ store }) => {
   const setLeverancierOrganisatieData = (key, value) => {
     setLeverancierOrganisatie((prev) => ({ ...prev, [key]: value }));
   };
-  const [leverancierOptions, setLeverancierOptions] = useState([]);
-  const [leverancierLoading, setLeverancierLoading] = useState(false);
+  // Leverancier (organisatie) search using wizard-utils
+  const organisatieMapper = useMemo(() => createOrganisatieMapper(), []);
+  const organisatieSearchConfig = useMemo(
+    () =>
+      createOrganisatieSearchConfig(store, {
+        mapToOption: organisatieMapper,
+        source: 'index',
+        queryParamsBuilder: (searchTerm, additionalParams = {}) => ({
+          _limit: '50',
+          _page: '1',
+          _source: 'index',
+          '_extend[]': '_schema',
+          _published: 'false',
+          ...(searchTerm && searchTerm.trim() ? { _search: searchTerm.trim() } : {}),
+          ...additionalParams,
+        }),
+      }),
+    [store, organisatieMapper]
+  );
+  const {
+    search: searchOrganisaties,
+    loading: leverancierLoading,
+    options: leverancierOptions,
+  } = useEntitySearch(organisatieSearchConfig, {
+    debounceDelay: 500,
+    mergeStrategy: 'preserve-existing',
+  });
 
   // Dienst type options
   const [dienstTypeOptions, setDienstTypeOptions] = useState([]);
-
-  // State for full organization data (to check type for conditional Deelnemers step)
-  const [fullActiveOrganisation, setFullActiveOrganisation] = useState(null);
 
   // Deelnemers options and loading state
   const [deelnemerOptions, setDeelnemerOptions] = useState([]);
@@ -182,23 +225,6 @@ const ConFormsDienst = ({ store }) => {
   // Helper function to update gebruik state
   const setGebruikData = (key, value) => {
     setGebruik((prev) => ({ ...prev, [key]: value }));
-  };
-
-  // Helper to extract id string from various API reference shapes
-  const getIdString = (ref) => {
-    if (!ref) return '';
-    if (typeof ref === 'string' || typeof ref === 'number') return String(ref);
-    return (
-      String(
-        ref.uuid ||
-          ref.id ||
-          ref.value ||
-          ref?.['@self']?.id ||
-          ref?.['@self']?.value ||
-          ref.slug ||
-          ''
-      ) || ''
-    );
   };
 
   // Prefill gebruik data when editing (not dienst - we edit the gebruik object)
@@ -238,18 +264,17 @@ const ConFormsDienst = ({ store }) => {
             ? fetched.diensten
             : fetched['@self']?.relations?.diensten;
         const dienstenIds = Array.isArray(dienstenSource)
-          ? dienstenSource.map((d) => getIdString(d)).filter(Boolean)
+          ? dienstenSource.map((d) => mapId(d)).filter(Boolean)
           : [];
 
         // Extract module (applicatie) ID from the gebruik object
         // First try fetched.module, if null fallback to @self.relations.module
         const moduleId =
-          getIdString(fetched.module) ||
-          getIdString(fetched['@self']?.relations?.module);
+          mapId(fetched.module) || mapId(fetched['@self']?.relations?.module);
 
         // Extract deelnemers from the gebruik object
         const deelnemersIds = Array.isArray(fetched.deelnemers)
-          ? fetched.deelnemers.map((d) => getIdString(d)).filter(Boolean)
+          ? fetched.deelnemers.map((d) => mapId(d)).filter(Boolean)
           : [];
 
         // Update gebruik state with the fetched data (same fields as create flow)
@@ -284,11 +309,9 @@ const ConFormsDienst = ({ store }) => {
             if (fetchedDiensten.length > 0 && !cancelled) {
               // Add the fetched diensten to the results so they show up as selected
               setDienstenResults((prev) => {
-                const existingIds = new Set(
-                  prev.map((d) => d?.id || d?.['@self']?.id)
-                );
+                const existingIds = new Set(prev.map((d) => mapId(d)));
                 const newDiensten = fetchedDiensten.filter(
-                  (d) => !existingIds.has(d?.id || d?.['@self']?.id)
+                  (d) => !existingIds.has(mapId(d))
                 );
                 return [...prev, ...newDiensten];
               });
@@ -312,38 +335,11 @@ const ConFormsDienst = ({ store }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditMode, gebruikId, prefillRetry, store]);
 
-  // Clickable previous steps
-  useEffect(() => {
-    if (!processStepsRef.current) return;
-    if (prefillLoading || prefillError) return;
-    const addClickHandlers = () => {
-      const stepElements = processStepsRef.current.querySelectorAll(
-        '.denhaag-process-steps .denhaag-process-steps__step-header, .denhaag-process-steps .denhaag-process-steps__sub-step'
-      );
-      stepElements.forEach((el, index) => {
-        const stepNumber = index + 1;
-        el.style.cursor = '';
-        el.onclick = null;
-        el.classList.remove('ac-step-clickable');
-        if (stepNumber < stepper.getCurrentStep()) {
-          el.classList.add('ac-step-clickable');
-          el.onclick = (e) => {
-            e.preventDefault();
-            stepper.setCurrentStep(stepNumber);
-          };
-        }
-      });
-    };
-    const timeoutId = setTimeout(addClickHandlers, 100);
-    return () => clearTimeout(timeoutId);
-  }, [stepper.getCurrentStep(), prefillLoading, prefillError]);
-
   // Ensure /me is refreshed when the wizard mounts (so stages can read active organisation)
   useEffect(() => {
     if (typeof store?.user?.fetchUserProfile === 'function') {
       if (process.env.NODE_ENV === 'development') {
-        // eslint-disable-next-line no-console
-        console.log(
+        console.info(
           'ConFormsDienst - refreshing /me via store.user.fetchUserProfile'
         );
       }
@@ -351,86 +347,30 @@ const ConFormsDienst = ({ store }) => {
     }
   }, [store]);
 
-  // Load schemas through object store (auth-aware)
+  // Fetch allowed module IDs from organisation's gebruik (Gemeente/Samenwerking; limits applicatie dropdowns)
   useEffect(() => {
-    const load = async () => {
-      setSchemasLoading(true);
-      const types = [
-        'dienst',
-        'product',
-        'module',
-        'koppeling',
-        'organisatie',
-        'gebruik',
-      ];
-      const fetched = {};
-      try {
-        await Promise.all(
-          types.map(async (t) => {
-            try {
-              await store.object.fetchSchema(t);
-              fetched[t] = store.object.getSchema(`schema_${t}`);
-            } catch {
-              fetched[t] = null;
-            }
-          })
-        );
-        setSchemas(fetched);
-      } finally {
-        setSchemasLoading(false);
-      }
-    };
-    load();
-  }, [store]);
-
-  /**
-   * This form is only for Gemeente/Samenwerking. Fetch gebruik for the active organisation (afnemer)
-   * and derive allowed module IDs for applicatie dropdowns.
-   */
-  useEffect(() => {
-    const activeOrg = store?.user?.activeOrganization;
-    const activeOrgId = activeOrg?.uuid || activeOrg?.id;
+    const activeOrgId =
+      store?.user?.activeOrganization?.uuid ||
+      store?.user?.activeOrganization?.id;
     if (!activeOrgId) {
       setAllowedModuleIdsFromGebruik([]);
       return;
     }
-
     let isMounted = true;
     setAllowedModuleIdsFromGebruik(null);
-
-    const fetchGebruik = async () => {
-      try {
-        const url = `${commongroundApiUrl()}/softwarecatalog/api/gebruik?afnemer=${encodeURIComponent(
-          String(activeOrgId)
-        )}&_limit=1000&_extend[]=_schema`;
-        const res = await fetch(url, { headers: { Accept: 'application/json' } });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        const results = Array.isArray(data?.results) ? data.results : [];
-        const ids = new Set();
-        for (const item of results) {
-          const rel = item?.['@self']?.relations?.module ?? item?.module;
-          if (rel == null) continue;
-          const id =
-            typeof rel === 'string'
-              ? rel.trim()
-              : String(rel?.id ?? rel?.value ?? rel?.['@self']?.id ?? '').trim();
-          if (id) ids.add(id);
-        }
-        if (isMounted) setAllowedModuleIdsFromGebruik(Array.from(ids));
-      } catch (e) {
+    fetchModuleIdsFromGebruikByAfnemer(commongroundApiUrl(), activeOrgId)
+      .then((ids) => {
+        if (isMounted) setAllowedModuleIdsFromGebruik(ids);
+      })
+      .catch(() => {
         if (isMounted) setAllowedModuleIdsFromGebruik([]);
-      }
-    };
-
-    fetchGebruik();
+      });
     return () => {
       isMounted = false;
     };
   }, [
     store?.user?.activeOrganization?.uuid,
     store?.user?.activeOrganization?.id,
-    store,
   ]);
 
   // Keep ref in sync with moduleOptions state
@@ -438,110 +378,32 @@ const ConFormsDienst = ({ store }) => {
     moduleOptionsRef.current = moduleOptions;
   }, [moduleOptions]);
 
-  // Load modules on mount; only applications from organisation's gebruik (afnemer)
+  // Update productToModulesLookup when moduleOptions change
   useEffect(() => {
-    let isMounted = true;
-    if (allowedModuleIdsFromGebruik === null) return;
+    setProductToModulesLookup({ all: moduleOptions });
+  }, [moduleOptions]);
 
-    const run = async () => {
-      setModulesLoading(true);
-      if (allowedModuleIdsFromGebruik.length === 0) {
-        setModuleOptions([]);
-        setProductToModulesLookup({ all: [] });
-        setModulesLoading(false);
-        return;
-      }
-      const options = [];
-      for (const moduleId of allowedModuleIdsFromGebruik) {
-        try {
-          await store.object.fetchObject(
-            'voorzieningen',
-            'module',
-            String(moduleId),
-            { '_extend[]': ['_schema'], _published: 'false' }
-          );
-          const item = store.object.getObject(
-            'voorzieningen_module',
-            String(moduleId)
-          );
-          if (!item || !isMounted) continue;
-          options.push(mapToOption(item, 0));
-        } catch {
-          // Skip single module fetch failure
-        }
-      }
-      if (isMounted) {
-        setModuleOptions(options);
-        setProductToModulesLookup({ all: options });
-      }
-      setModulesLoading(false);
-    };
-
-    run();
-    return () => {
-      isMounted = false;
-    };
-  }, [allowedModuleIdsFromGebruik, store]);
-
-  // Load modules for Dienst zoeken step (same: only from organisation's gebruik)
+  // Load or clear module options when allowed IDs from gebruik are known (module fetch runs when allowedModuleIdsFromGebruik changes)
   useEffect(() => {
-    if (!isGebruikBeheerdersFlow) return;
     if (allowedModuleIdsFromGebruik === null) return;
-
-    let isMounted = true;
-    const run = async () => {
-      setOwnAppLoading(true);
-      if (allowedModuleIdsFromGebruik.length === 0) {
-        setOwnAppLoading(false);
-        return;
-      }
-      const options = [];
-      for (const moduleId of allowedModuleIdsFromGebruik) {
-        try {
-          await store.object.fetchObject(
-            'voorzieningen',
-            'module',
-            String(moduleId),
-            { '_extend[]': ['_schema'], _published: 'false' }
-          );
-          const item = store.object.getObject(
-            'voorzieningen_module',
-            String(moduleId)
-          );
-          if (!item || !isMounted) continue;
-          options.push(mapToOption(item, 0));
-        } catch {
-          // Skip single module fetch failure
-        }
-      }
-      if (isMounted) {
-        setOwnAppOptions((prev) => {
-          const existingMap = new Map(prev.map((opt) => [opt.value, opt]));
-          options.forEach((opt) => {
-            if (!existingMap.has(opt.value)) existingMap.set(opt.value, opt);
-          });
-          return Array.from(existingMap.values());
-        });
-      }
-      setOwnAppLoading(false);
-    };
-
-    run();
-    return () => {
-      isMounted = false;
-    };
-  }, [isGebruikBeheerdersFlow, allowedModuleIdsFromGebruik, store]);
+    if (allowedModuleIdsFromGebruik.length === 0) {
+      setModuleOptions([]);
+      setProductToModulesLookup({ all: [] });
+      return;
+    }
+    searchModules('');
+  }, [allowedModuleIdsFromGebruik, searchModules]);
 
   // Add module to options when it becomes available (for edit mode)
-  // This ensures the selected module from gebruik.module is always in ownAppOptions
+  // This ensures the selected module from gebruik.module is always in moduleOptions
   useEffect(() => {
     if (!isEditMode || !gebruik?.module) return;
 
-    const moduleId = getIdString(gebruik.module);
+    const moduleId = mapId(gebruik.module);
     if (!moduleId) return;
 
     // Already in options? Skip
-    const alreadyInOptions = ownAppOptions.some(
+    const alreadyInOptions = moduleOptions.some(
       (opt) => String(opt.value) === String(moduleId)
     );
     if (alreadyInOptions) return;
@@ -555,7 +417,7 @@ const ConFormsDienst = ({ store }) => {
       // Check if selectedApplicatie has the data
       if (
         selectedApplicatie?.data &&
-        String(getIdString(selectedApplicatie.data)) === String(moduleId)
+        String(mapId(selectedApplicatie.data)) === String(moduleId)
       ) {
         moduleData = selectedApplicatie.data;
       }
@@ -566,9 +428,7 @@ const ConFormsDienst = ({ store }) => {
           'voorzieningen_module_dienst_zoeken_initial'
         );
         const list = collection?.results || collection || [];
-        moduleData = list.find(
-          (item) => String(getIdString(item)) === String(moduleId)
-        );
+        moduleData = list.find((item) => String(mapId(item)) === String(moduleId));
       }
 
       // Check store (module might have been fetched by the prefill useEffect)
@@ -579,17 +439,16 @@ const ConFormsDienst = ({ store }) => {
         );
       }
 
-      // If still not found, fetch it
-      if (!moduleData) {
+      // If still not found, fetch it using fetchMissingEntities
+      if (!moduleData && !cancelled) {
         try {
-          await store.object.fetchObject(
-            'voorzieningen',
-            'module',
-            String(moduleId),
-            {
-              '_extend[]': ['_schema'],
-              _published: 'false',
-            }
+          await fetchMissingEntities(
+            store,
+            [moduleId],
+            moduleOptions,
+            moduleMapper,
+            setModuleOptions,
+            { extendParams: ['@self.schema'], source: 'index' }
           );
           if (cancelled) return;
           moduleData = store.object.getObject(
@@ -602,14 +461,10 @@ const ConFormsDienst = ({ store }) => {
         }
       }
 
-      // Add to options if found
+      // Add to options if found and ensure selectedApplicatie is set
       if (moduleData && !cancelled) {
-        const option = mapToOption(moduleData, 0);
-        setOwnAppOptions((prev) => {
-          const exists = prev.some((o) => String(o.value) === String(option.value));
-          return exists ? prev : [...prev, option];
-        });
-        // Also ensure selectedApplicatie is set
+        const option = moduleMapper(moduleData, 0);
+        // fetchMissingEntities already adds to moduleOptions, so we just need to set selectedApplicatie
         if (
           !selectedApplicatie ||
           String(selectedApplicatie.value) !== String(option.value)
@@ -627,10 +482,11 @@ const ConFormsDienst = ({ store }) => {
   }, [
     isEditMode,
     gebruik?.module,
-    ownAppOptions,
+    moduleOptions,
     selectedApplicatie,
     store,
-    getIdString,
+    moduleMapper,
+    setModuleOptions,
   ]);
 
   // Pre-select applicatie from URL parameter
@@ -654,30 +510,23 @@ const ConFormsDienst = ({ store }) => {
             return [...prev, applicatieOption.value];
           });
         } else {
-          // If applicatie not in initial list, fetch it directly
+          // If applicatie not in initial list, fetch it using fetchMissingEntities
           setApplicatiePreloadLoading(true);
           try {
-            await store.object.fetchObject(
-              'voorzieningen',
-              'module',
-              String(applicatieFromUrl),
-              {
-                '_extend[]': ['_schema'],
-                _published: 'false',
-                _source: 'index',
-              }
+            await fetchMissingEntities(
+              store,
+              [applicatieFromUrl],
+              moduleOptions,
+              moduleMapper,
+              setModuleOptions,
+              { extendParams: ['@self.schema'], source: 'index' }
             );
             const fetched = store.object.getObject(
               'voorzieningen_module',
               String(applicatieFromUrl)
             );
             if (fetched) {
-              const option = mapToOption(fetched, 0);
-              setModuleOptions((prev) => {
-                const exists = prev.some((o) => o.value === option.value);
-                if (exists) return prev;
-                return [...prev, option];
-              });
+              const option = moduleMapper(fetched, 0);
               setSelectedModuleIds((prev) => {
                 if (prev.includes(option.value)) return prev;
                 return [...prev, option.value];
@@ -697,135 +546,6 @@ const ConFormsDienst = ({ store }) => {
 
     preSelectApplicatie();
   }, [applicatieFromUrl, moduleOptions, isEditMode, store]);
-
-  // Generic server-side search for modules; filters by allowedModuleIdsFromGebruik (this form is Gemeente/Samenwerking only)
-  const createModuleSearch = useCallback(
-    (
-      collectionSuffix,
-      setOptions,
-      setLoading,
-      organisationId = null,
-      allowedIds = null
-    ) => {
-      return async (query) => {
-        try {
-          setLoading(true);
-          const q = String(query || '').trim();
-
-          const queryParams = {
-            _limit: '50',
-            _page: '1',
-            _published: 'false',
-          };
-
-          if (organisationId) {
-            queryParams.organisation = String(organisationId);
-          }
-
-          if (q) {
-            queryParams._search = q;
-          }
-
-          await store.object.fetchCollection(
-            'voorzieningen',
-            'module',
-            queryParams,
-            null,
-            collectionSuffix
-          );
-          const collection = store.object.getCollection(
-            `voorzieningen_module_${collectionSuffix}`
-          );
-          let list = collection?.results || collection || [];
-
-          if (allowedIds !== null) {
-            const allowedSet = new Set(
-              (allowedIds || []).map((id) => String(id))
-            );
-            list = list.filter((item) => {
-              const id = String(
-                item?.['@self']?.id ?? item?.id ?? item?.uuid ?? item?.value ?? ''
-              );
-              return id && allowedSet.has(id);
-            });
-          }
-
-          const options = list.map(mapToOption);
-
-          // Merge with existing options (don't replace, merge)
-          setOptions((prevOptions) => {
-            const existingOptionsMap = new Map(
-              prevOptions.map((opt) => [opt.value, opt])
-            );
-            const newOptionsMap = new Map(options.map((opt) => [opt.value, opt]));
-
-            // Start with existing options
-            const mergedOptions = [...prevOptions];
-
-            // Add new search results that don't already exist
-            newOptionsMap.forEach((newOpt, value) => {
-              if (!existingOptionsMap.has(value)) {
-                mergedOptions.push(newOpt);
-              } else {
-                // Update existing option with new data (in case it changed)
-                const index = mergedOptions.findIndex((opt) => opt.value === value);
-                if (index !== -1) {
-                  mergedOptions[index] = newOpt;
-                }
-              }
-            });
-
-            return mergedOptions;
-          });
-        } catch (e) {
-          // Don't clear options on error to preserve existing selections
-          console.error('Module search failed:', e);
-        } finally {
-          setLoading(false);
-        }
-      };
-    },
-    [store, allowedModuleIdsFromGebruik]
-  );
-
-  // Server-side search for modules (limited to organisation's gebruik)
-  const searchModules = useCallback(
-    createModuleSearch(
-      'dienst_form_search',
-      setModuleOptions,
-      setSearchLoading,
-      null,
-      allowedModuleIdsFromGebruik
-    ),
-    [createModuleSearch]
-  );
-
-  // Debounced search function
-  const debouncedSearchModules = useDebouncedInput(searchModules, 250, {
-    disableInstantValidation: true,
-  });
-
-  // Server-side search for modules (for Dienst zoeken step); same usage-based filter
-  const searchModulesForDienstZoeken = useMemo(
-    () =>
-      createModuleSearch(
-        'dienst_zoeken_search',
-        setOwnAppOptions,
-        setOwnAppLoading,
-        null,
-        allowedModuleIdsFromGebruik
-      ),
-    [createModuleSearch]
-  );
-
-  // Debounced search function for Dienst zoeken step
-  const debouncedSearchModulesForDienstZoeken = useDebouncedInput(
-    searchModulesForDienstZoeken,
-    250,
-    {
-      disableInstantValidation: true,
-    }
-  );
 
   // Fetch diensten for a selected applicatie (Gebruik-beheerders flow)
   const fetchDienstenForApplicatie = useCallback(
@@ -864,11 +584,9 @@ const ConFormsDienst = ({ store }) => {
           if (selectedIds.length === 0) return list;
 
           // Find selected diensten that are not in the new list
-          const listIds = new Set(
-            list.map((d) => String(d?.id || d?.['@self']?.id || ''))
-          );
+          const listIds = new Set(list.map((d) => String(mapId(d))));
           const missingDiensten = prev.filter((d) => {
-            const dienstId = String(d?.id || d?.['@self']?.id || '');
+            const dienstId = String(mapId(d));
             return selectedIds.includes(dienstId) && !listIds.has(dienstId);
           });
 
@@ -884,54 +602,34 @@ const ConFormsDienst = ({ store }) => {
         list.forEach((dienst) => {
           const modules = Array.isArray(dienst.modules) ? dienst.modules : [];
           modules.forEach((m) => {
-            const id =
-              typeof m === 'string'
-                ? m
-                : String(m?.id || m?.value || m?.['@self']?.id || '');
+            const id = mapId(m);
             if (id) moduleIds.add(id);
           });
         });
 
-        // Resolve module labels
-        const resolved = [];
-        for (const moduleId of Array.from(moduleIds)) {
-          // Check if already in ownAppOptions
-          const existing = ownAppOptions.find(
+        // Resolve module labels using fetchMissingEntities
+        const moduleIdsArray = Array.from(moduleIds);
+        if (moduleIdsArray.length > 0) {
+          await fetchMissingEntities(
+            store,
+            moduleIdsArray,
+            moduleOptions,
+            moduleMapper,
+            setModuleOptions,
+            { extendParams: ['@self.schema'], source: 'index' }
+          );
+        }
+
+        // Build resolved array from options
+        const resolved = moduleIdsArray.map((moduleId) => {
+          const option = moduleOptions.find(
             (opt) => String(opt.value) === String(moduleId)
           );
-          if (existing) {
-            resolved.push({ value: moduleId, label: existing.label });
-          } else {
-            // Try to fetch if not available
-            try {
-              await store.object.fetchObject(
-                'voorzieningen',
-                'module',
-                String(moduleId),
-                {
-                  '_extend[]': ['_schema'],
-                  _published: 'false',
-                  _source: 'index',
-                }
-              );
-              const moduleData = store.object.getObject(
-                'voorzieningen_module',
-                String(moduleId)
-              );
-              if (moduleData) {
-                const label =
-                  moduleData?.naam ||
-                  moduleData?.name ||
-                  moduleData?.['@self']?.name ||
-                  moduleId;
-                resolved.push({ value: moduleId, label });
-              }
-            } catch {
-              // If fetch fails, use ID as label
-              resolved.push({ value: moduleId, label: moduleId });
-            }
-          }
-        }
+          return {
+            value: moduleId,
+            label: option?.label || moduleId,
+          };
+        });
         setResolvedModulesFromDiensten(resolved);
       } catch (e) {
         console.error('Failed to fetch diensten:', e);
@@ -941,60 +639,7 @@ const ConFormsDienst = ({ store }) => {
         setDienstenResultsLoading(false);
       }
     },
-    [store, ownAppOptions]
-  );
-
-  // Server-side search for leveranciers (organisaties)
-  const searchOrganisaties = useCallback(
-    async (query, setOptions, setLoading) => {
-      try {
-        setLoading(true);
-        const q = String(query || '').trim();
-
-        const params = {
-          _limit: '50',
-          _page: '1',
-          _source: 'index',
-          '_extend[]': '_schema',
-          _published: 'false',
-        };
-
-        if (q) {
-          params['_search'] = q;
-        }
-
-        await store.object.fetchCollection(
-          'voorzieningen',
-          'organisatie',
-          params,
-          null,
-          'leverancier_search'
-        );
-        const collection = store.object.getCollection(
-          'voorzieningen_organisatie_leverancier_search'
-        );
-        const list = collection?.results || collection || [];
-        const options = list.map((org, i) => ({
-          value: org?.['@self']?.id || org?.id || String(i),
-          label: org?.naam || org?.name || `Organisatie ${i + 1}`,
-          data: org,
-        }));
-        setOptions(options);
-      } catch (e) {
-        setOptions([]);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [store]
-  );
-
-  // Debounced search for leveranciers
-  const debouncedSearchLeveranciers = useDebouncedInput(
-    (query) =>
-      searchOrganisaties(query, setLeverancierOptions, setLeverancierLoading),
-    500,
-    { disableInstantValidation: true }
+    [store, moduleOptions, moduleMapper, setModuleOptions, gebruik.diensten]
   );
 
   // Fetch dienst type options from schema
@@ -1019,48 +664,14 @@ const ConFormsDienst = ({ store }) => {
   // Load initial leveranciers when switching to 'nieuw' dienst flow
   useEffect(() => {
     if (dienstKeuze === 'nieuw') {
-      searchOrganisaties('', setLeverancierOptions, setLeverancierLoading);
+      searchOrganisaties('');
     }
   }, [dienstKeuze, searchOrganisaties]);
 
   // Fetch full organisation data to check type (for conditional Deelnemers step)
-  useEffect(() => {
-    const fetchFullOrganisationData = async () => {
-      const activeOrg = store?.user?.activeOrganization;
-      const organisationId = activeOrg?.uuid || activeOrg?.id;
-
-      if (!organisationId || !isGebruikBeheerdersFlow) return;
-
-      try {
-        await store.object.fetchObject(
-          'voorzieningen',
-          'organisatie',
-          organisationId,
-          {
-            '_extend[]': ['_schema'],
-          }
-        );
-
-        const fullOrgData = store.object.getObject(
-          'voorzieningen_organisatie',
-          organisationId
-        );
-
-        if (fullOrgData) {
-          setFullActiveOrganisation(fullOrgData);
-        }
-      } catch (error) {
-        console.error('Error fetching full organization data:', error);
-      }
-    };
-
-    fetchFullOrganisationData();
-  }, [
-    store?.user?.activeOrganization?.uuid,
-    store?.user?.activeOrganization?.id,
-    store,
-    isGebruikBeheerdersFlow,
-  ]);
+  const { fullActiveOrganisation } = useFullOrganization(store, {
+    enabled: isGebruikBeheerdersFlow,
+  });
 
   // Fetch deelnemers from current logged-in organization (for gebruik beheerder flow)
   useEffect(() => {
@@ -1181,43 +792,25 @@ const ConFormsDienst = ({ store }) => {
           const modules = Array.isArray(fetchedDienst.modules)
             ? fetchedDienst.modules
             : [];
-          const applicatieId =
-            modules.length > 0
-              ? String(
-                  typeof modules[0] === 'object'
-                    ? modules[0]?.id ||
-                        modules[0]?.value ||
-                        modules[0]?.['@self']?.id ||
-                        ''
-                    : modules[0] || ''
-                )
-              : null;
+          const applicatieId = modules.length > 0 ? String(mapId(modules[0])) : null;
 
           if (applicatieId) {
-            // Fetch applicatie and add to options
+            // Fetch applicatie and add to options using fetchMissingEntities
             try {
-              await store.object.fetchObject(
-                'voorzieningen',
-                'module',
-                applicatieId,
-                {
-                  '_extend[]': ['_schema'],
-                  _published: 'false',
-                  _source: 'index',
-                }
+              await fetchMissingEntities(
+                store,
+                [applicatieId],
+                moduleOptions,
+                moduleMapper,
+                setModuleOptions,
+                { extendParams: ['@self.schema'], source: 'index' }
               );
               const applicatieData = store.object.getObject(
                 'voorzieningen_module',
                 applicatieId
               );
               if (applicatieData) {
-                const applicatieOption = mapToOption(applicatieData, 0);
-                setOwnAppOptions((prev) => {
-                  const exists = prev.some(
-                    (o) => o.value === applicatieOption.value
-                  );
-                  return exists ? prev : [...prev, applicatieOption];
-                });
+                const applicatieOption = moduleMapper(applicatieData, 0);
                 setSelectedApplicatie(applicatieOption);
               }
             } catch (error) {
@@ -1331,12 +924,6 @@ const ConFormsDienst = ({ store }) => {
     }
   };
 
-  const getStatus = (active, step) => {
-    if (active === step) return 'current';
-    if (active < step) return 'not-checked';
-    return 'checked';
-  };
-
   const renderStep = () => {
     const stepLabel = stepper.getLabelFromStep(stepper.getCurrentStep());
 
@@ -1347,15 +934,15 @@ const ConFormsDienst = ({ store }) => {
           return (
             <ConFormDienstZoekenStage
               loading={prefillLoading || schemasLoading}
-              ownAppOptions={ownAppOptions}
+              ownAppOptions={moduleOptions}
               ownApp={selectedApplicatie}
               setOwnApp={setSelectedApplicatie}
-              ownAppLoading={ownAppLoading}
+              ownAppLoading={modulesLoading}
               searchResults={dienstenResults}
               resolvedModulesFromResults={resolvedModulesFromDiensten}
               resultsLoading={dienstenResultsLoading}
               isEditMode={isEditMode}
-              onSearchModules={debouncedSearchModulesForDienstZoeken}
+              onSearchModules={searchModules}
               schemas={schemas}
               selectedDienstIds={gebruik.diensten}
               setSelectedDienstIds={(ids) => setGebruikData('diensten', ids)}
@@ -1371,7 +958,7 @@ const ConFormsDienst = ({ store }) => {
               setLeverancierOrganisatieData={setLeverancierOrganisatieData}
               leverancierOptions={leverancierOptions}
               leverancierLoading={leverancierLoading}
-              searchLeveranciers={debouncedSearchLeveranciers}
+              searchLeveranciers={searchOrganisaties}
               // Type options
               dienstTypeOptions={dienstTypeOptions}
               // Gebruik state for module binding
@@ -1440,9 +1027,9 @@ const ConFormsDienst = ({ store }) => {
             selectedModuleIds={selectedModuleIds}
             setSelectedModuleIds={setSelectedModuleIds}
             loadingModules={modulesLoading || applicatiePreloadLoading}
-            searchLoading={searchLoading}
+            searchLoading={modulesLoading}
             moduleOptions={moduleOptions}
-            searchModules={debouncedSearchModules}
+            searchModules={searchModules}
             schemas={schemas}
             dienstType={dienstType}
           />
@@ -1453,7 +1040,6 @@ const ConFormsDienst = ({ store }) => {
             dienst={dienst}
             setDienstData={setDienstData}
             loading={schemasLoading}
-            touched={touched}
             schemas={schemas}
             userStore={store.user}
             dienstType={dienstType}
@@ -1504,94 +1090,44 @@ const ConFormsDienst = ({ store }) => {
   const needsDeelnemersStep =
     isGebruikBeheerdersFlow && organizationType === 'Samenwerking';
 
-  // ProcessSteps configuration
+  // ProcessSteps configuration - must be created early to define steps with stepper
   const processStepsConfig = useMemo(() => {
-    const steps = [];
-
-    stepper.resetStepDefinitions('process-steps');
-    stepper.resetStepDefinitions('process-steps-status');
-
     if (isGebruikBeheerdersFlow) {
-      // Gebruik-beheerders flow steps
-      steps.push({
-        id: 'dienst-zoeken-step',
-        marker: stepper.defineStep('process-steps', 'dienst-zoeken'),
-        status: getStatus(
-          stepper.getCurrentStep(),
-          stepper.defineStep('process-steps-status')
-        ),
-        title: 'Dienst zoeken',
-      });
-
-      steps.push({
-        id: 'gebruiksinformatie-step',
-        marker: stepper.defineStep('process-steps', 'gebruiksinformatie'),
-        status: getStatus(
-          stepper.getCurrentStep(),
-          stepper.defineStep('process-steps-status')
-        ),
-        title: 'Gebruiksinformatie',
-      });
-
-      // Conditionally add Deelnemers step
-      if (needsDeelnemersStep) {
-        steps.push({
-          id: 'deelnemers-step',
-          marker: stepper.defineStep('process-steps', 'deelnemers'),
-          status: getStatus(
-            stepper.getCurrentStep(),
-            stepper.defineStep('process-steps-status')
-          ),
+      return generateSteps(stepper, [
+        { title: 'Dienst zoeken', stepLabel: 'dienst-zoeken' },
+        { title: 'Gebruiksinformatie', stepLabel: 'gebruiksinformatie' },
+        {
           title: 'Deelnemers',
-        });
-      }
-
-      steps.push({
-        id: 'controleren-step',
-        marker: stepper.defineStep('process-steps', 'controleren'),
-        status: getStatus(
-          stepper.getCurrentStep(),
-          stepper.defineStep('process-steps-status')
-        ),
-        title: 'Controleren',
-      });
+          stepLabel: 'deelnemers',
+          condition: needsDeelnemersStep,
+        },
+        { title: 'Controleren', stepLabel: 'controleren' },
+      ]);
     } else {
-      // Aanbod-beheerders flow steps (existing flow)
-      const currentStepNum = stepper.getCurrentStep();
-
-      steps.push({
-        id: 'a9p0p1l2-i3c4-a5t6-i7e8-s9t0a1g2e3f4',
-        marker: stepper.defineStep('process-steps', 'applicaties'),
-        status: getStatus(
-          currentStepNum,
-          stepper.defineStep('process-steps-status')
-        ),
-        title: 'Applicaties',
-      });
-
-      steps.push({
-        id: 'd1e2n3s4-t5i6-n7f8-o9r0-m1a2t3i4e5f6',
-        marker: stepper.defineStep('process-steps', 'dienst-informatie'),
-        status: getStatus(
-          currentStepNum,
-          stepper.defineStep('process-steps-status')
-        ),
-        title: 'Dienst informatie',
-      });
-
-      steps.push({
-        id: 'c5o6n7t8-r9o0-l1e2-r3e4-n5s6t7a8g9e0',
-        marker: stepper.defineStep('process-steps', 'controleren'),
-        status: getStatus(
-          currentStepNum,
-          stepper.defineStep('process-steps-status')
-        ),
-        title: 'Controleren',
-      });
+      return generateSteps(stepper, [
+        { title: 'Applicaties', stepLabel: 'applicaties' },
+        { title: 'Dienst informatie', stepLabel: 'dienst-informatie' },
+        { title: 'Controleren', stepLabel: 'controleren' },
+      ]);
     }
+  }, [stepper.getCurrentStep(), isGebruikBeheerdersFlow, needsDeelnemersStep]);
 
-    return steps;
-  }, [stepper, isGebruikBeheerdersFlow, needsDeelnemersStep]);
+  // Add click handlers to steps
+  useEffect(() => {
+    return addStepperClickHandlers({
+      processStepsRef,
+      processStepsConfig,
+      stepper,
+      skipIfLoading: prefillLoading,
+      skipIfError: prefillError,
+    });
+  }, [
+    stepper.getCurrentStep(),
+    prefillLoading,
+    prefillError,
+    stepper,
+    processStepsConfig,
+  ]);
 
   // Check if a field is required according to loaded schema
   const isSchemaFieldRequired = (schemaType, fieldName) => {

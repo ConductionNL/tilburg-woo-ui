@@ -19,7 +19,6 @@ import { validateWebsite } from '@views/ac-forms/validation/form-validations';
  * @param {Object} applicatie - The applicatie object containing form data
  * @param {Function} setApplicatieData - Function to update applicatie data
  * @param {boolean} loading - Loading state indicator
- * @param {Object} touched - Touched field tracking for validation
  * @param {Object} schemas - Available schemas for field configuration
  * @param {Array} contactpersoonOptions - Options for contactpersoon dropdown
  * @param {boolean} contactpersoonLoading - Loading state for contactpersoon options
@@ -31,7 +30,6 @@ const ConFormApplicatieInformatieStage = memo(
     applicatie,
     setApplicatieData,
     loading,
-    touched,
     schemas,
     contactpersoonOptions = [],
     contactpersoonLoading = false,
@@ -59,7 +57,6 @@ const ConFormApplicatieInformatieStage = memo(
               schemaType='module'
               schemaProperty='naam'
               value={applicatie.naam || ''}
-              touched={touched}
               onChange={(value) => setApplicatieData('naam', value)}
               isDisabled={loading}
               width='half'
@@ -78,7 +75,6 @@ const ConFormApplicatieInformatieStage = memo(
               onChange={(value) => setApplicatieData('website', value)}
               isDisabled={loading}
               width='half'
-              touched={touched}
               schemas={schemas}
               customProps={{
                 required: true,
@@ -105,7 +101,6 @@ const ConFormApplicatieInformatieStage = memo(
               onChange={(value) => setApplicatieData('beschrijvingKort', value)}
               isDisabled={loading}
               width='full'
-              touched={touched}
               schemas={schemas}
               customProps={{
                 required: true,
@@ -123,7 +118,6 @@ const ConFormApplicatieInformatieStage = memo(
               onChange={(value) => setApplicatieData('beschrijvingLang', value)}
               isDisabled={loading}
               width='full'
-              touched={touched}
               schemas={schemas}
               customProps={{
                 description:

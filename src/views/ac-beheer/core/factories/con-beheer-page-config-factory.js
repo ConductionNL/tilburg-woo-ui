@@ -553,8 +553,8 @@ const BeheerPageConfigFactory = {
               label: 'Applicatie A',
               key: 'moduleA',
               customContent: (row) => {
-                // Use @self.relations.moduleA instead of direct moduleA property
-                const moduleAId = row?.['@self']?.relations?.moduleA || null;
+                // prefer direct property over relation (direct property can be a object with value being ID)
+                const moduleAId = row?.moduleA?.value || row?.moduleA || row?.['@self']?.relations?.moduleA || null;
                 if (!moduleAId) return '-';
                 // Use ConUuidResolver to display the application name
                 return <ConUuidResolver>{String(moduleAId)}</ConUuidResolver>;
@@ -566,8 +566,11 @@ const BeheerPageConfigFactory = {
               label: 'Applicatie B',
               key: 'moduleB',
               customContent: (row) => {
-                // Use @self.relations.moduleB, fallback to buitengemeentelijkVoorziening
+                // Prefer the direct property (it can be an object whose value is the ID),
+                // then the relation, then fall back to buitengemeentelijkVoorziening.
                 const moduleBId =
+                  row?.moduleB?.value ||
+                  row?.moduleB ||
                   row?.['@self']?.relations?.moduleB ||
                   row?.['@self']?.relations?.buitengemeentelijkVoorziening ||
                   null;

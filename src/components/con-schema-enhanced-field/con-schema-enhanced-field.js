@@ -82,7 +82,7 @@
  * ```
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
@@ -117,7 +117,8 @@ import { useRefOptions } from '../../hooks/use-ref-options';
  * @param {Object} props.context - Additional context for visibility functions
  * @param {string} props.width - Override field width: 'half' or 'full' - overrides automatic width detection
  * @param {boolean} props.showLabel - Whether to show the field label (default: true)
- * @param {Object} props.touched - Touched states by field path
+ * @param {Object} props.touched - Touched states by field path (optional, for backward compatibility)
+ * @param {function} props.setTouched - Optional callback: (fieldName: string, isTouched: boolean) => void - called when touched state changes
  * @param {boolean} props.showDescription - Whether to show the field description/info (default: true)
  * @param {Object} props.store - MobX store (injected by withStore)
  */
@@ -142,13 +143,30 @@ const ConSchemaEnhancedField = ({
   isCreateMode = false,
   honorImmutable = false,
   context = {},
-  touched = null,
+  touched = null, // Optional: for backward compatibility
+  setTouched = null, // Optional callback: (fieldName, isTouched) => void
   width = null, // Override field width ('half' or 'full')
   showLabel = true, // NEW: Whether to show field label
   showDescription = true, // NEW: Whether to show field description/info
   store = null, // MobX store injected by withStore
 }) => {
   const [resetKey] = useState(0);
+  const [hasBeenTouched, setHasBeenTouched] = useState(false);
+
+  // Helper to detect meaningful values (non-empty)
+  const hasMeaningfulValue = useCallback((val, schema) => {
+    if (val === null || val === undefined) return false;
+    if (typeof val === 'string') return val.trim() !== '';
+    if (Array.isArray(val)) return val.length > 0;
+    if (typeof val === 'object' && val.value !== undefined) {
+      // ReactSelect format: {value, label, data}
+      return hasMeaningfulValue(val.value, schema);
+    }
+    // Numbers, booleans, objects are considered meaningful
+    // Note: boolean false is meaningful (user may have explicitly set it)
+    // Number 0 is meaningful
+    return true;
+  }, []);
 
   // Handle two usage patterns:
   // 1. schemaProperty is a string - look up in schema
@@ -198,6 +216,16 @@ const ConSchemaEnhancedField = ({
     fieldName = schemaProperty;
   }
 
+  // Update touched state and notify parent if callback provided
+  // Must be defined after fieldName is determined
+  const updateTouchedState = useCallback(
+    (isTouched) => {
+      setHasBeenTouched(isTouched);
+      setTouched?.(fieldName, isTouched);
+    },
+    [setTouched, fieldName]
+  );
+
   const schemaNotFound = typeof schemaProperty === 'string' && !schemas[schemaType];
   const propertySchemaNotFound = !propertySchema;
 
@@ -206,6 +234,22 @@ const ConSchemaEnhancedField = ({
   if (fieldValue === undefined) {
     fieldValue = getDefaultValue(propertySchema);
   }
+
+  // Auto-touch on mount if value exists (for edit mode and fields that reappear with data)
+  useEffect(() => {
+    const currentValue =
+      value !== undefined ? value : getDefaultValue(propertySchema);
+    if (hasMeaningfulValue(currentValue, propertySchema)) {
+      updateTouchedState(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run on mount
+
+  // Determine effective touched state: use prop if provided (backward compat), otherwise use internal state
+  const isTouched =
+    touched && typeof touched === 'object' && touched[fieldName]
+      ? touched[fieldName]
+      : hasBeenTouched;
 
   // Create updated formData with current value for field renderer
   const updatedFormData = {
@@ -350,12 +394,18 @@ const ConSchemaEnhancedField = ({
     ...(showDescription === false && { hideDescription: true }),
   };
 
+  // Track blur events to mark field as touched
+  const handleBlur = useCallback(() => {
+    updateTouchedState(true);
+  }, [updateTouchedState]);
+
   // Use the reusable field renderer utility with custom onChange wrapper
   const fieldRenderer = utilRenderField({
     path: fieldName,
     propertySchema,
     required: propertySchema?.required || required || false,
-    touched: touched,
+    isTouched: isTouched,
+    onBlur: handleBlur,
     formData: updatedFormData,
     fieldConfigs: { [fieldName]: fieldConfig },
     customFieldComponents: {},
@@ -366,7 +416,11 @@ const ConSchemaEnhancedField = ({
     onFieldChange: (field, value) => {
       // Handle main field change
       if (field === fieldName) {
-        console.info('ConSchemaEnhancedField onChange:', { field, value, fieldName });
+        console.info('ConSchemaEnhancedField onChange:', {
+          field,
+          value,
+          fieldName,
+        });
         onChange(value);
       }
       // Handle related field changes (like filename for file uploads)
@@ -453,6 +507,8 @@ ConSchemaEnhancedField.propTypes = {
   width: PropTypes.oneOf(['half', 'full']), // Override field width
   showLabel: PropTypes.bool, // Whether to show field label (default: true)
   showDescription: PropTypes.bool, // Whether to show field description (default: true)
+  touched: PropTypes.object, // Optional: touched states by field path (for backward compatibility)
+  setTouched: PropTypes.func, // Optional callback: (fieldName: string, isTouched: boolean) => void
   store: PropTypes.object, // MobX store (injected by withStore)
 };
 

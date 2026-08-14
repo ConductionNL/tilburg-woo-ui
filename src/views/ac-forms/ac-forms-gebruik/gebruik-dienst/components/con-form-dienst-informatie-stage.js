@@ -11,7 +11,7 @@ import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
  * - naam, contactpersoon, aanbieder, website, type, beschrijvingKort, beschrijvingLang, logo
  */
 const ConFormDienstInformatieStage = memo(
-  ({ dienst, setDienstData, loading, touched, schemas, userStore, dienstType }) => {
+  ({ dienst, setDienstData, loading, schemas, userStore, dienstType }) => {
     // Ensure aanbieder is set from /me so users cannot change it later
     const hasInitializedRef = useRef(false);
     useEffect(() => {
@@ -111,7 +111,6 @@ const ConFormDienstInformatieStage = memo(
               onChange={(value) => setDienstData('naam', value)}
               isDisabled={loading}
               width='half'
-              touched={touched}
               schemas={schemas}
             />
 
@@ -122,7 +121,6 @@ const ConFormDienstInformatieStage = memo(
               onChange={(value) => setDienstData('website', value)}
               isDisabled={loading}
               width='half'
-              touched={touched}
               schemas={schemas}
               customProps={{
                 inputType: 'text',
