@@ -109,6 +109,34 @@ export const DASHBOARD_WIZARDS = {
     color: '#0078c8',
     schema: 'koppeling',
   },
+  SUITE: {
+    id: 'suite',
+    name: 'Suite publiceren',
+    description: 'Publiceer een nieuwe suite in de catalogus',
+    icon: VISUALS.CUBES,
+    path: PATHS.FORMS_SUITE,
+    requiresAuth: true,
+    requiresOrganization: true,
+    groupTypes: ['leverancier', 'gemeente', 'samenwerking'],
+    params: { type: 'suite' },
+    color: 'blue',
+    schema: 'suite',
+    visible: false, // does nothing right now since visible wizards are hardcoded
+  },
+  SUITE_TOEVOEGEN: {
+    id: 'suite-ontbrekend',
+    name: 'Suite toevoegen',
+    description: 'Meld een suite dat nog niet in de catalogus staat',
+    icon: VISUALS.CUBES,
+    path: PATHS.FORMS_SUITE,
+    requiresAuth: true,
+    requiresOrganization: false,
+    groupTypes: ['leverancier', 'gemeente', 'samenwerking', 'community'],
+    params: { type: 'ontbrekend-suite' },
+    color: 'blue',
+    schema: 'suite',
+    visible: false, // does nothing right now since visible wizards are hardcoded
+  },
 };
 
 /**
