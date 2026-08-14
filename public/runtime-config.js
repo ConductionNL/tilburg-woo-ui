@@ -13,6 +13,7 @@ window.RUNTIME_CONFIG = {
   "THEME_VARIANT": "vng",
   "ENVIRONMENT_NAME": "development",
   "BASE_URL": "/api/apps",
+  "ROUTER_BASENAME": "/",
   "GRANT_TYPE": "authorization_code",
   "CLIENT_ID": "",
   "CLIENT_SECRET": "",

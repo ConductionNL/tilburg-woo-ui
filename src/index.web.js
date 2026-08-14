@@ -44,6 +44,27 @@ const container = document.getElementById('root');
 // shell is never tree-shaken away.
 const IS_PORTAL = !!(window.RUNTIME_CONFIG && window.RUNTIME_CONFIG.portalMode === true);
 
+// Router basename.
+//
+// The SPA is mounted at different paths per deployment: the standalone
+// Open-Tilburg / Softwarecatalogus site is served from the web root (see
+// `location /` in config/nginx.conf.template and `homepage` in package.json),
+// while the Portaliq deployments are mounted under a Nextcloud app path. A
+// basename that does not prefix the current URL makes react-router match
+// nothing and render an empty page, so this must follow the deployment rather
+// than be hardcoded.
+//
+// Resolution order: RUNTIME_CONFIG.routerBasename (camelCase, written by
+// scripts/portal-postbuild.js) -> RUNTIME_CONFIG.ROUTER_BASENAME (UPPER_SNAKE,
+// written by scripts/generate-runtime-config.js from the ROUTER_BASENAME env
+// var) -> the per-mode default below.
+const DEFAULT_PORTAL_BASENAME = '/index.php/apps/portaliq/portal';
+const ROUTER_BASENAME =
+  (window.RUNTIME_CONFIG &&
+    (window.RUNTIME_CONFIG.routerBasename ||
+      window.RUNTIME_CONFIG.ROUTER_BASENAME)) ||
+  (IS_PORTAL ? DEFAULT_PORTAL_BASENAME : '/');
+
 if (IS_PORTAL) {
   const token = getToken();
   if (token) {
@@ -59,7 +80,7 @@ if (IS_PORTAL) {
 
   render(
     <StoreContext.Provider value={store}>
-      <Router history={history} basename='/index.php/apps/portaliq/portal'>
+      <Router history={history} basename={ROUTER_BASENAME}>
         <Tooltip delayShow={1000} className='ac-gemma-tooltip' id={TOOLTIP_ID} />
         <div className='portaliq-portal ac-app-container'>
           <PortalHome />
@@ -71,7 +92,7 @@ if (IS_PORTAL) {
 } else {
   render(
     <StoreContext.Provider value={store}>
-      <Router history={history} basename="/index.php/apps/portaliq/woo">
+      <Router history={history} basename={ROUTER_BASENAME}>
         <Tooltip delayShow={1000} className='ac-gemma-tooltip' id={TOOLTIP_ID} />
         <App />
       </Router>

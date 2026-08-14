@@ -53,7 +53,8 @@ const AcHome = ({ store: { pages, publications, themes } }) => {
         <AcContainer>
           <AcColumn gap='tiger'>
             <AcColumn>
-              <Heading>{LABELS.THEMES}</Heading>
+              {/* level 2: the site title in the header is the page's only h1 */}
+              <Heading level={2}>{LABELS.THEMES}</Heading>
               {AcCheckIfSpecificHostname() ? (
                 <Paragraph>
                   Bekijk het overzicht van onderwerpen die relevant zijn voor

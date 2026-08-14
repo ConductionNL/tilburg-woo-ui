@@ -33,6 +33,7 @@ fs.writeFileSync(indexPath, h);
 
 // 6. write the portal runtime-config (theme + portalMode flag).
 fs.writeFileSync(path.join(dir, 'runtime-config.js'),
-  'window.RUNTIME_CONFIG = { themeVariant: "vng", portalMode: true };\n');
+  'window.RUNTIME_CONFIG = { themeVariant: "vng", portalMode: true, ' +
+  'routerBasename: "/index.php/apps/portaliq/portal" };\n');
 
 console.log('portal post-build: index.html hostable, runtime-config written');

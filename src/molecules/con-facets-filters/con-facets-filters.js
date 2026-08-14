@@ -6,7 +6,7 @@ import { withStore } from '@stores';
 import { useFacetNameResolution } from '@hooks';
 import { schemaCache } from '@services/schemaCache.service';
 
-import { Heading, Textbox } from '@utrecht/component-library-react/dist/css-module';
+import { Textbox } from '@utrecht/component-library-react/dist/css-module';
 import { AcFlex, AcCard } from '@atoms';
 import _ from 'lodash';
 import { AcBuildURLSearchParams, ConFormatDutchNumber } from '@utils';
@@ -516,12 +516,14 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
     return <>{renderSkeletonFacets()}</>;
   }
 
-  // Show message if no facets are available
+  // Show message if no facets are available.
+  // The filters region already carries its own heading, so this branch only
+  // renders the empty-state message; a second "Filters" heading here duplicated
+  // it and skipped from level 2 straight to level 4.
   if (!facets || Object.keys(facets).length === 0) {
     return (
       <AcFlex column spacing='sm'>
-        <Heading level={4}>Filters</Heading>
-        <p>No filters available</p>
+        <p>Geen filters beschikbaar</p>
       </AcFlex>
     );
   }

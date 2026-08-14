@@ -229,6 +229,12 @@ const getRuntimeConfig = () => {
     // API Configuration (simplified to single BASE_URL)
     BASE_URL: getConfigValue(yamlConfig, 'BASE_URL', '/api/apps'),
 
+    // Router mount point. Defaults to the web root, which is where
+    // config/nginx.conf.template serves the SPA. Deployments that mount the
+    // app under a sub-path (e.g. a Nextcloud app path) must set this, or
+    // react-router will match nothing and render an empty page.
+    ROUTER_BASENAME: getConfigValue(yamlConfig, 'ROUTER_BASENAME', '/'),
+
     // Authentication Configuration
     GRANT_TYPE: getConfigValue(yamlConfig, 'GRANT_TYPE', 'authorization_code'),
     CLIENT_ID: getConfigValue(yamlConfig, 'CLIENT_ID', ''),
