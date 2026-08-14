@@ -344,7 +344,13 @@ module.exports = function (webpackEnv) {
               type: 'asset',
               parser: {
                 dataUrlCondition: {
-                  maxSize: 28000,
+                  // Inline only genuinely small images. Anything larger is
+                  // emitted as a file so it is fetched once, cached on its own
+                  // hash, and downloaded in parallel rather than being embedded
+                  // (base64 is ~33% larger) into render-blocking CSS once per
+                  // reference — the theme logos were being inlined three times
+                  // each at the previous 28 KB threshold.
+                  maxSize: 8192,
                 },
               },
               generator: {
@@ -499,18 +505,16 @@ module.exports = function (webpackEnv) {
         threshold: 10240,
         minRatio: 0.8,
       }),
-      new CompressionPlugin({
-        filename: '[path][base].br',
-        algorithm: 'brotliCompress',
-        test: /\.(js|css|html|svg)$/,
-        compressionOptions: {
-          params: {
-            [zlib.constants.BROTLI_PARAM_QUALITY]: 9,
-          },
-        },
-        threshold: 10240,
-        minRatio: 0.8,
-      }),
+      // NOTE: brotli output is intentionally not generated.
+      //
+      // The runtime image is nginx:alpine, which is not built with the brotli
+      // module (`nginx -V` has no --with-http_brotli*), so it cannot serve .br
+      // files. They were being produced on every build and shipped in the image
+      // where nothing could read them. The .gz files above are served directly
+      // via `gzip_static on` (see config/nginx.conf.template).
+      //
+      // To adopt brotli, switch the runtime stage to a brotli-enabled nginx and
+      // re-add a CompressionPlugin here with algorithm: 'brotliCompress'.
       // Makes some environment variables available in index.html.
       // The public URL is available as %PUBLIC_URL% in index.html, e.g.:
       // <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.ico">

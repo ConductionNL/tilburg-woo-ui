@@ -18,6 +18,16 @@ http {
     gzip on;
     gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
 
+    # Serve the .gz files produced at build time by compression-webpack-plugin
+    # instead of re-compressing every response. Without this the pre-compressed
+    # assets shipped in the image were never used, and nginx spent CPU gzipping
+    # the same bytes on every request at a lower compression level.
+    gzip_static on;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_min_length 1024;
+
     server {
         listen 81;
         root ${NGINX_ROOT_DIR};

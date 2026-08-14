@@ -17,9 +17,14 @@
 
 @import '@amsterdam/design-system-css/dist/pagination/pagination.css';
 @import '@amsterdam/design-system-css/dist/date-input/date-input.css';
-@import '@conduction/theme/municipalities/opencatalogi-design-tokens/dist/index.css';
+// NOTE: the opencatalogi and migrato token packages are deliberately NOT
+// imported here. Every token they define is already defined by the local
+// _tokens-opencatalogi.scss / _tokens-migrato.scss above (checked: 765 and 761
+// tokens respectively, 0 of them unique to the package), so importing them only
+// duplicated the theme — including a 251 KiB logo embedded three times as a
+// base64 data URI, ~793 KiB of render-blocking CSS for no additional tokens.
+// The packages below do contribute tokens the local files lack, so they stay.
 @import '@conduction/theme/municipalities/rotterdam-design-tokens/dist/index.css';
-@import '@conduction/theme/municipalities/migrato-design-tokens/dist/index.css';
 @import '@conduction/theme/municipalities/dimpact-design-tokens/dist/index.css';
 @import '@conduction/theme/municipalities/oude-ijsselstreek-design-tokens/dist/index.css';
 @import '@conduction/theme/conduction-design-tokens/dist/index.css';

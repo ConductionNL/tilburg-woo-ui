@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import loadable from '@loadable/component';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router';
@@ -24,7 +25,10 @@ import BeheerModalFactory from '@views/ac-beheer/core/factories/con-beheer-modal
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import ConLogoPreview from '@views/ac-register/con-logo-preview';
 import { AcButton } from '@src/molecules';
-import AcGemmaView from '@views/ac-gemma/ac-gemma-view';
+// Loaded lazily: ac-gemma-view pulls in jointjs (a very large diagram library).
+// Importing it eagerly here put jointjs in the initial bundle even though every
+// view that renders a diagram is itself lazily loaded.
+const AcGemmaView = loadable(() => import('@views/ac-gemma/ac-gemma-view'));
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 import { commongroundApiUrl } from '@src/config';
 import { useSearchParams } from 'react-router-dom';
