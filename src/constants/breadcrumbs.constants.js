@@ -15,7 +15,7 @@ export const BREADCRUMB_ITEMS = {
   NEXTCLOUD_LOGIN: { label: 'Nextcloud Login', href: '/login' },
   BEHEER: { label: 'Beheer', href: '/beheer' },
   BEHEER_MY_ACCOUNT: {
-    label: 'Mijn Account',
+    label: 'Mijn account',
     href: '/beheer/my-account',
   },
   BEHEER_MODULE: {
@@ -23,7 +23,7 @@ export const BREADCRUMB_ITEMS = {
     href: '/beheer/module',
   },
   BEHEER_MY_ORGANISATION: {
-    label: 'Mijn Organisatie',
+    label: 'Mijn organisatie',
     href: '/beheer/my-organisation',
   },
   BEHEER_LIST: (type) => ({
