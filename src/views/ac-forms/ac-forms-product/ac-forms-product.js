@@ -6,7 +6,7 @@ import { withStore } from '@stores';
 import { AcContainer, AcSection, AcColumn } from '@src/atoms';
 import { VISUALS } from '@src/constants';
 import { AcButton } from '@src/molecules';
-import { ProcessSteps } from '@gemeente-denhaag/components-react';
+import { ProcessSteps } from '@gemeente-denhaag/process-steps';
 import { useDebouncedInput } from '@src/hooks/index';
 import _ from 'lodash';
 

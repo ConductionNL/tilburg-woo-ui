@@ -6,7 +6,7 @@ import clsx from 'clsx';
 import { AcSection, AcContainer, AcColumn, AcFlex } from '@src/atoms';
 import { AcButton } from '@src/molecules';
 import { VISUALS } from '@src/constants';
-import { ProcessSteps } from '@gemeente-denhaag/components-react';
+import { ProcessSteps } from '@gemeente-denhaag/process-steps';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 import { validateWebsite } from '@views/ac-forms/validation/form-validations';
 import {

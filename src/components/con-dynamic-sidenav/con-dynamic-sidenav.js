@@ -8,7 +8,7 @@ import {
   SidenavList,
   SidenavItem,
   SidenavLink,
-} from '@gemeente-denhaag/components-react';
+} from '@gemeente-denhaag/sidenav';
 
 /**
  * Dynamic Sidenav Component

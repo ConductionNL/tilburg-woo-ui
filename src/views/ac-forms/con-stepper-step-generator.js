@@ -1,5 +1,5 @@
 /**
- * Generate steps from a declarative configuration array, to be used with the `ProcessSteps` component from `@gemeente-denhaag/components-react`.
+ * Generate steps from a declarative configuration array, to be used with the `ProcessSteps` component from `@gemeente-denhaag/process-steps`.
  *
  * This function provides a declarative way to define wizard steps, automatically handling
  * step markers, status calculation, multi-step groups, and label management. It solves

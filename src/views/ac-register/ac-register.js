@@ -6,7 +6,7 @@ import { AcContainer, AcSection, AcFlex, AcGrid, AcColumn } from '@src/atoms';
 import { VISUALS } from '@src/constants';
 import { AcFormField, AcButton, AcCheckbox, AcLink } from '@src/molecules';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
-import { ProcessSteps } from '@gemeente-denhaag/components-react';
+import { ProcessSteps } from '@gemeente-denhaag/process-steps';
 
 import {
   Heading1,

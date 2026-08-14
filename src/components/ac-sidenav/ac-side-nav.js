@@ -7,7 +7,7 @@ import {
   SidenavList,
   SidenavItem,
   SidenavLink,
-} from '@gemeente-denhaag/components-react';
+} from '@gemeente-denhaag/sidenav';
 
 const AcSideNav = () => {
   const navigate = useNavigate();

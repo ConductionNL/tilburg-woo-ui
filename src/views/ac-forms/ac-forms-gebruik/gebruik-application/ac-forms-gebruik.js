@@ -5,7 +5,7 @@ import { withStore } from '@stores';
 import clsx from 'clsx';
 import { AcSection, AcContainer, AcColumn, AcFlex } from '@src/atoms';
 import { AcButton } from '@src/molecules';
-import { ProcessSteps } from '@gemeente-denhaag/components-react';
+import { ProcessSteps } from '@gemeente-denhaag/process-steps';
 import {
   Heading1,
   Paragraph,
