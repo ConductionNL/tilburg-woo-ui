@@ -254,7 +254,7 @@ const ConContactpersoonDetailsPageContent = ({
       {/* <UnpublishedWarning data={data} /> */}
 
       {/* Contactgegevens */}
-      <Heading level={3} style={{ marginBlockStart: '1rem' }}>
+      <Heading level={2} className='utrecht-heading-3' style={{ marginBlockStart: '1rem' }}>
         Contactgegevens
       </Heading>
       <div className='ac-register-review__section'>

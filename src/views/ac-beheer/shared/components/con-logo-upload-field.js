@@ -3,7 +3,6 @@ import React, { useMemo, useRef, useState, useEffect } from 'react';
 import clsx from 'clsx';
 import { AcFlex } from '@src/atoms';
 import { AcButton } from '@src/molecules';
-import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@src/constants';
 import { TOOLTIP_ID } from '@src/index.web';
 
@@ -305,9 +304,8 @@ export const LogoUploadField = ({
   return (
     <AcFlex column>
       <label className='utrecht-form-label' htmlFor={fileInputId}>
-        <Heading
-          level={4}
-          className={clsx({
+        <span
+          className={clsx('utrecht-heading-4', {
             'ac-form-field-header-info': fieldConfig.description,
           })}
           style={fieldConfig.labelStyle}
@@ -339,7 +337,7 @@ export const LogoUploadField = ({
               </span>
             </>
           )}
-        </Heading>
+        </span>
       </label>
 
       {componentSize === 'small' ? (

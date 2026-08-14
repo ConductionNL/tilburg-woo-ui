@@ -203,7 +203,7 @@ const ConGebruikStepReferentiecomponenten = memo(
             // Existing flow: show two dropdowns
             return (
               <>
-                <Heading level={4} style={{ marginBottom: '1.5rem' }}>
+                <Heading level={3} className='utrecht-heading-4' style={{ marginBottom: '1.5rem' }}>
                   Selecteer de referentiecomponenten waarvoor u de applicatie
                   gebruikt
                   <span className='required-indicator' aria-hidden='true'>

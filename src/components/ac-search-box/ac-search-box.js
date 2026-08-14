@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useRef } from 'react';
+import { useMemo, useState, useEffect, useRef, useId } from 'react';
 import clsx from 'clsx';
 import {
   Heading,
@@ -26,6 +26,7 @@ export const AcSearchBox = ({
   const [searchQuery, setSearchQuery] = useState(defaultValue || '');
   const debounceTimer = useRef(null);
   const isFirstRender = useRef(true);
+  const searchInputId = useId();
 
   const { mobileFiltersOpen, toggleMobileFilters } = publications;
 
@@ -108,9 +109,10 @@ export const AcSearchBox = ({
         )}
 
         <AcFlex column spacing='sm'>
-          <FormLabel>{label}</FormLabel>
+          <FormLabel htmlFor={searchInputId}>{label}</FormLabel>
           <div className='ac-search-box__search'>
             <Textbox
+              id={searchInputId}
               placeholder={LABELS.ENTER_QUERY}
               onChange={changeCallback}
               defaultValue={defaultValue}

@@ -1534,10 +1534,14 @@ const ConFormApplicatieStandaardenStage = ({
 
         {/* Extra standaardversies multi-select - always show */}
         <div style={{ marginBlock: '1.5rem' }}>
-          <Paragraph style={{ marginBottom: '0.5rem', fontWeight: '500' }}>
+          <label
+            htmlFor='extra-standards-select'
+            style={{ marginBottom: '0.5rem', fontWeight: '500', display: 'block' }}
+          >
             Voeg standaardversies toe
-          </Paragraph>
+          </label>
           <ReactSelect
+            inputId='extra-standards-select'
             isMulti
             className='ac-beheer-select'
             options={availableExtraStandardsOptions}

@@ -2,7 +2,7 @@ import { AcLink } from '@molecules';
 import { ConUuidResolver } from '@components';
 import { LABELS, VISUALS } from '@constants';
 import { AcCard, AcFlex } from '@atoms';
-import { Heading, Paragraph } from '@utrecht/component-library-react';
+import { Paragraph } from '@utrecht/component-library-react';
 import { NAVIGATE_TO } from '@constants/routes.constants';
 import acFormatDate from '@src/utilities/ac-format-date';
 
@@ -42,9 +42,9 @@ const ConCardGebruik = ({
               color: 'inherit',
             }}
           />
-          <Heading level={3}>
+          <p className="utrecht-heading-3">
             <ConUuidResolver>{module}</ConUuidResolver> - gebruik
-          </Heading>
+          </p>
           {organisation && (
             <Paragraph small>
               (Gebruikt door <ConUuidResolver>{organisation}</ConUuidResolver>)

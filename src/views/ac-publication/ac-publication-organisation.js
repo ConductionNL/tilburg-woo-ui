@@ -5,7 +5,12 @@ import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-behe
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AcContainer, AcFlex } from '@atoms';
-import { AcLoader, ConDetailsActionsMenu, ConExternalLink, ConPublicationTypeBadge } from '@components';
+import {
+  AcLoader,
+  ConDetailsActionsMenu,
+  ConExternalLink,
+  ConPublicationTypeBadge,
+} from '@components';
 import { withStore } from '@stores';
 import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
@@ -123,24 +128,22 @@ const AcPublication = ({ store: { publications, object, user } }) => {
       <AcContainer margin='xl'>
         <AcFlex column spacing='sm'>
           <AcFlex spacing='sm' justifyContent='between' alignItems='center'>
-            <Heading level={4} className='con-product-publication--header-container'>
-              <div className='con-beheer-details--header-container'>
-                {(get_single?.['@self']?.image || get_single?.logo) && (
-                    <ConLogoPreview
-                      className='con-beheer-details--logo-container'
-                      logoUrl={get_single?.['@self']?.image || get_single?.logo}
-                      objectSelf={get_single?.['@self']}
-                    />
-                  )}
+            <div className='con-beheer-details--header-container'>
+              {(get_single?.['@self']?.image || get_single?.logo) && (
+                <ConLogoPreview
+                  className='con-beheer-details--logo-container'
+                  logoUrl={get_single?.['@self']?.image || get_single?.logo}
+                  objectSelf={get_single?.['@self']}
+                />
+              )}
 
-                <Heading className='con-beheer-details--title'>
-                  {get_single?.['@self']?.name ||
-                    get_single?.id ||
-                    get_single?.name ||
-                    'Organisatie'}
-                </Heading>
-              </div>
-            </Heading>
+              <Heading className='con-beheer-details--title'>
+                {get_single?.['@self']?.name ||
+                  get_single?.id ||
+                  get_single?.name ||
+                  'Organisatie'}
+              </Heading>
+            </div>
 
             <AcFlex
               justifyContent='end'
@@ -191,9 +194,7 @@ const AcPublication = ({ store: { publications, object, user } }) => {
           <AcFlex spacing='sm' justifyContent='between'>
             <AcFlex column spacing='md' style={{ flex: 3 }}>
               {!!get_single?.['@self']?.summary && (
-                <div>
-                  {get_single?.['@self']?.summary}
-                </div>
+                <div>{get_single?.['@self']?.summary}</div>
               )}
 
               {!!get_single?.beschrijvingLang && (

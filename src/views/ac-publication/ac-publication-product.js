@@ -8,7 +8,6 @@ import { AcContainer, AcFlex } from '@atoms';
 import {
   AcLoader,
   ConDetailsActionsMenu,
-  ConUuidResolver,
   ConExternalLink,
   ConPublicationTypeBadge,
 } from '@components';
@@ -162,27 +161,16 @@ const AcPublicationProduct = ({
     <AcContainer margin='xl'>
       <AcFlex column spacing='sm'>
         <AcFlex spacing='sm' justifyContent='between' alignItems='center'>
-          <Heading level={4} className='con-product-publication--header-container'>
-            <div className='con-beheer-details--header-container'>
-              {(get_single?.['@self']?.image || get_single?.logo) && (
-                <ConLogoPreview
-                  className='con-beheer-details--logo-container'
-                  logoUrl={get_single?.['@self']?.image || get_single?.logo}
-                  objectSelf={get_single?.['@self']}
-                />
-              )}
+          <div className='con-beheer-details--header-container'>
+            {(get_single?.['@self']?.image || get_single?.logo) && (
+              <ConLogoPreview
+                className='con-beheer-details--logo-container'
+                logoUrl={get_single?.['@self']?.image || get_single?.logo}
+                objectSelf={get_single?.['@self']}
+              />
+            )}
+          </div>
 
-              <Heading className='con-beheer-details--title'>
-                {get_single?.['@self']?.name ||
-                  get_single?.id ||
-                  get_single?.name ||
-                  'Product'}{' '}
-                {'('}
-                <ConUuidResolver>{get_single.aanbieder}</ConUuidResolver>
-                {')'}
-              </Heading>
-            </div>
-          </Heading>
           <AcFlex
             justifyContent='end'
             alignItems='center'
@@ -232,9 +220,7 @@ const AcPublicationProduct = ({
         <AcFlex spacing='sm' justifyContent='between'>
           <AcFlex column spacing='md' style={{ flex: 3 }}>
             {!!get_single?.['@self']?.summary && (
-              <div>
-                {get_single?.['@self']?.summary}
-              </div>
+              <div>{get_single?.['@self']?.summary}</div>
             )}
 
             {!!get_single?.beschrijvingLang && (

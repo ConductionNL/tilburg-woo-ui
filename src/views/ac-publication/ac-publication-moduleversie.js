@@ -5,7 +5,12 @@ import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-behe
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AcContainer, AcFlex } from '@atoms';
-import { AcLoader, ConDetailsActionsMenu, ConUuidResolver, ConPublicationTypeBadge } from '@components';
+import {
+  AcLoader,
+  ConDetailsActionsMenu,
+  ConUuidResolver,
+  ConPublicationTypeBadge,
+} from '@components';
 import { withStore } from '@stores';
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
@@ -60,7 +65,7 @@ const AcPublicationModuleVersie = ({ store: { publications, user, object } }) =>
   const [usesLoading, setUsesLoading] = useState(false);
   const [usedLoading, setUsedLoading] = useState(false);
   const [relatedTabIndex, setRelatedTabIndex] = useState(0);
-  
+
   // Aggregated schemas from all related items via hook
   const allRelatedItems = useMemo(() => [...uses, ...used], [uses, used]);
   const { aggregatedSchemas } = useResolveSchemaIds(allRelatedItems);
@@ -119,7 +124,7 @@ const AcPublicationModuleVersie = ({ store: { publications, user, object } }) =>
 
   useEffect(() => {
     if (!id) return;
-    
+
     fetchUses();
     fetchUsed();
   }, [id, fetchUses, fetchUsed]);
@@ -152,25 +157,24 @@ const AcPublicationModuleVersie = ({ store: { publications, user, object } }) =>
     <AcContainer margin='xl'>
       <AcFlex column spacing='sm'>
         <AcFlex spacing='sm' justifyContent='between' alignItems='center'>
-          <Heading level={4} className='con-product-publication--header-container'>
-            <div className='con-beheer-details--header-container'>
-              {(get_single?.['@self']?.image || get_single?.logo) && (
-                <ConLogoPreview
-                  className='con-beheer-details--logo-container'
-                  logoUrl={get_single?.['@self']?.image || get_single?.logo}
-                  objectSelf={get_single?.['@self']}
-                />
-              )}
+          <div className='con-beheer-details--header-container'>
+            {(get_single?.['@self']?.image || get_single?.logo) && (
+              <ConLogoPreview
+                className='con-beheer-details--logo-container'
+                logoUrl={get_single?.['@self']?.image || get_single?.logo}
+                objectSelf={get_single?.['@self']}
+              />
+            )}
 
-              <Heading className='con-beheer-details--title'>
-                {get_single?.['@self']?.name ||
-                  get_single?.naam ||
-                  get_single?.versie ||
-                  get_single?.id ||
-                  'Applicatieversie'}
-              </Heading>
-            </div>
-          </Heading>
+            <Heading className='con-beheer-details--title'>
+              {get_single?.['@self']?.name ||
+                get_single?.naam ||
+                get_single?.versie ||
+                get_single?.id ||
+                'Applicatieversie'}
+            </Heading>
+          </div>
+
           <AcFlex
             justifyContent='between'
             alignItems='center'
@@ -192,7 +196,8 @@ const AcPublicationModuleVersie = ({ store: { publications, user, object } }) =>
               onDelete={handleDelete}
               onEdit={() => {
                 if (schemaSlug) {
-                  const wizardSchemaName = normalizeSchemaName(schemaSlug).toLowerCase();
+                  const wizardSchemaName =
+                    normalizeSchemaName(schemaSlug).toLowerCase();
                   const wizards = Object.values(DASHBOARD_WIZARDS);
                   const wizard = wizards.find((w) => w.schema === wizardSchemaName);
 
@@ -215,9 +220,7 @@ const AcPublicationModuleVersie = ({ store: { publications, user, object } }) =>
         <AcFlex spacing='sm' justifyContent='between'>
           <AcFlex column spacing='md' style={{ flex: 3 }}>
             {!!get_single?.beschrijvingKort && (
-              <div>
-                {get_single?.beschrijvingKort}
-              </div>
+              <div>{get_single?.beschrijvingKort}</div>
             )}
 
             {!!get_single?.beschrijvingLang && (

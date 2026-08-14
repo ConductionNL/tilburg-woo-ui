@@ -3,13 +3,15 @@ import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AcColumn, AcContainer, AcFlex } from '@atoms';
-import { AcLoader, ConDetailsActionsMenu, ConExternalLink, ConPublicationTypeBadge } from '@components';
+import {
+  AcLoader,
+  ConDetailsActionsMenu,
+  ConExternalLink,
+  ConPublicationTypeBadge,
+} from '@components';
 import { VISUALS } from '@constants';
 import { AcButton } from '@molecules';
-import {
-  Heading,
-  Link,
-} from '@utrecht/component-library-react/dist/css-module';
+import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
 import { schemaCache } from '@services/schemaCache.service';
 import RelatedTabs from '@views/ac-publication/con-related-tabs-new';
@@ -61,7 +63,7 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
   const [usesLoading, setUsesLoading] = useState(false);
   const [usedLoading, setUsedLoading] = useState(false);
   const [relatedTabIndex, setRelatedTabIndex] = useState(0);
-  
+
   // Filter out organisatie items from related tabs (aanbieder is redundant on dienst pages)
   const filteredUses = useMemo(
     () => uses.filter((item) => {
@@ -87,7 +89,10 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
   );
 
   // Aggregated schemas from all related items via hook
-  const allRelatedItems = useMemo(() => [...filteredUses, ...filteredUsed], [filteredUses, filteredUsed]);
+  const allRelatedItems = useMemo(
+    () => [...filteredUses, ...filteredUsed],
+    [filteredUses, filteredUsed]
+  );
   const { aggregatedSchemas } = useResolveSchemaIds(allRelatedItems);
 
   // Related create actions (wizard-aware) like module/product pages
@@ -125,6 +130,8 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
     excludeSchemas,
   });
 
+  // @TODO decide whether to wire up the action menu or remove it; the computed
+  // items are currently never rendered.
   const [, setActionMenuItems] = useState([]);
 
   useEffect(() => {
@@ -341,9 +348,7 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
 
         <div style={{ flex: 2 }}>
           {!!get_single?.beschrijvingKort && (
-            <div>
-              {get_single?.beschrijvingKort}
-            </div>
+            <div>{get_single?.beschrijvingKort}</div>
           )}
           {!!get_single?.beschrijvingLang && (
             <div style={{ marginTop: 'var(--tilburg-space-block-md, 1rem)' }}>
@@ -390,7 +395,10 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
                     </div>
                     {contact['e-mailadres'] && (
                       <div>
-                        <Link href={`mailto:${contact['e-mailadres']}`} style={{ minHeight: '24px' }}>
+                        <Link
+                          href={`mailto:${contact['e-mailadres']}`}
+                          style={{ minHeight: '24px' }}
+                        >
                           {contact['e-mailadres']}
                         </Link>
                       </div>

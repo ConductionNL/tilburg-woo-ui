@@ -5,7 +5,6 @@ import { observer } from 'mobx-react-lite';
 import { VISUALS } from '@constants';
 import { AcButton, AcFormField } from '@molecules';
 import { TOOLTIP_ID } from '@src/index.web';
-import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { AcFlex } from '@src/atoms';
 
 // Markdown Editor
@@ -190,9 +189,8 @@ const ConEditableDescription = ({
             {isMarkdown ? (
               <div className='con-wysiwyg-markdown-field'>
                 <label className='utrecht-form-label' htmlFor={textareaId}>
-                  <Heading
-                    level={4}
-                    className={clsx({
+                  <span
+                    className={clsx('utrecht-heading-4', {
                       'ac-form-field-header-info': tooltip,
                     })}
                   >
@@ -208,7 +206,7 @@ const ConEditableDescription = ({
                         <VISUALS.INFO />
                       </span>
                     )}
-                  </Heading>
+                  </span>
                 </label>
                 <MDEditor
                   value={tempValue || ''}

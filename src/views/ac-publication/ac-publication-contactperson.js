@@ -5,7 +5,11 @@ import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-behe
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AcContainer, AcFlex } from '@atoms';
-import { AcLoader, ConDetailsActionsMenu, ConPublicationTypeBadge } from '@components';
+import {
+  AcLoader,
+  ConDetailsActionsMenu,
+  ConPublicationTypeBadge,
+} from '@components';
 import { withStore } from '@stores';
 import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
@@ -73,6 +77,8 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
   });
 
   // Generate action menu items
+  // @TODO decide if the action menu should be wired up or removed; the computed
+  // items are currently never rendered.
   const [, setActionMenuItems] = useState([]);
 
   // Delete modal state
@@ -109,7 +115,7 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
   const [usesLoading, setUsesLoading] = useState(false);
   const [usedLoading, setUsedLoading] = useState(false);
   const [tabIndex, setTabIndex] = useState(0);
-  
+
   // Aggregated schemas from all related items via hook
   const allRelatedItems = useMemo(() => [...uses, ...used], [uses, used]);
   const { aggregatedSchemas } = useResolveSchemaIds(allRelatedItems);
@@ -168,7 +174,7 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
 
   useEffect(() => {
     if (!id) return;
-    
+
     fetchUses();
     fetchUsed();
   }, [id, fetchUses, fetchUsed]);
@@ -183,21 +189,25 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
       <AcContainer margin='xl'>
         <AcFlex column spacing='sm'>
           <AcFlex spacing='sm' justifyContent='between' alignItems='center'>
-            <Heading level={4} className='con-product-publication--header-container'>
-              <div className='con-beheer-details--header-container'>
-                {(get_single?.['@self']?.image || get_single?.image) && (
-                  <ConLogoPreview
-                    className='con-beheer-details--logo-container'
-                    logoUrl={get_single?.['@self']?.image || get_single?.image}
-                    objectSelf={get_single?.['@self']}
-                  />
-                )}
+            <div className='con-beheer-details--header-container'>
+              {(get_single?.['@self']?.image || get_single?.image) && (
+                <ConLogoPreview
+                  className='con-beheer-details--logo-container'
+                  logoUrl={get_single?.['@self']?.image || get_single?.image}
+                  objectSelf={get_single?.['@self']}
+                />
+              )}
 
-                <Heading className='con-beheer-details--title'>
-                  {[get_single?.voornaam, get_single?.tussenvoegsel, get_single?.achternaam].filter(Boolean).join(' ') || 'Contactpersoon'}
-                </Heading>
-              </div>
-            </Heading>
+              <Heading className='con-beheer-details--title'>
+                {[
+                  get_single?.voornaam,
+                  get_single?.tussenvoegsel,
+                  get_single?.achternaam,
+                ]
+                  .filter(Boolean)
+                  .join(' ') || 'Contactpersoon'}
+              </Heading>
+            </div>
 
             <AcFlex
               justifyContent='between'
@@ -214,7 +224,6 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
                   id={id}
                   schemaSlug={schemaSlug}
                   title={get_single?.['@self']?.name || get_single?.id}
-                  published={get_single?.['@self']?.published}
                   object={get_single}
                   showViewAction={false}
                   showEditAction={true}
@@ -225,28 +234,26 @@ const AcPublicationContactperson = ({ store: { publications, object, user } }) =
                       const wizards = Object.values(DASHBOARD_WIZARDS);
                       const wizard = wizards.find((w) => w.schema === wizardSchemaName);
 
-                      if (wizard) {
-                        const baseUrl = getWizardUrl(wizard);
-                        const url = new URL(baseUrl, window.location.origin);
-                        url.searchParams.set('id', id);
-                        navigate(url.pathname + url.search);
-                        return;
-                      }
+                    if (wizard) {
+                      const baseUrl = getWizardUrl(wizard);
+                      const url = new URL(baseUrl, window.location.origin);
+                      url.searchParams.set('id', id);
+                      navigate(url.pathname + url.search);
+                      return;
                     }
-                    // Fallback to beheer detail page in same tab with edit modal
-                    const beheerUrl = `/beheer/${schemaSlug}/${id}?showEditModal=true`;
-                    navigate(beheerUrl);
-                  }}
-                  triggerStyle='button'
-                />
+                  }
+                  // Fallback to beheer detail page in same tab with edit modal
+                  const beheerUrl = `/beheer/${schemaSlug}/${id}?showEditModal=true`;
+                  navigate(beheerUrl);
+                }}
+                triggerStyle='button'
+              />
             </AcFlex>
           </AcFlex>
           <AcFlex spacing='sm' justifyContent='between'>
             <AcFlex column spacing='md' style={{ flex: 3 }}>
               {!!get_single?.['@self']?.summary && (
-                <div>
-                  {get_single?.['@self']?.summary}
-                </div>
+                <div>{get_single?.['@self']?.summary}</div>
               )}
 
               {!!get_single?.beschrijvingLang && (

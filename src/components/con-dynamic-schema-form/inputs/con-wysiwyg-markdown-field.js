@@ -59,7 +59,7 @@ const ConWysiwygMarkdownField = ({
     <div className='con-wysiwyg-markdown-field'>
       {/* Field Header */}
       <label className='utrecht-form-label'>
-        <h4
+        <span
           className={clsx('utrecht-heading-4', {
             'ac-form-field-header-info': description,
           })}
@@ -88,7 +88,7 @@ const ConWysiwygMarkdownField = ({
               <VISUALS.INFO />
             </span>
           )}
-        </h4>
+        </span>
       </label>
 
       {/* Editor Container */}

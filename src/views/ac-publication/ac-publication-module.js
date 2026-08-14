@@ -196,77 +196,80 @@ const AcPublicationProduct = ({
   }, [schemaSlug, id, user, navigate]);
 
   // Process vng-gemma/element data from uses response
-  const processVngGemmaData = useCallback((usesData) => {
-    if (!usesData || !Array.isArray(usesData)) {
-      return;
-    }
+  const processVngGemmaData = useCallback(
+    (usesData) => {
+      if (!usesData || !Array.isArray(usesData)) {
+        return;
+      }
 
-    // Find vng-gemma/element items by looking for items with a gemmaType property
-    const elementItems = usesData.filter((item) => item?.gemmaType);
+      // Find vng-gemma/element items by looking for items with a gemmaType property
+      const elementItems = usesData.filter((item) => item?.gemmaType);
 
-    if (!elementItems.length) {
-      return;
-    }
+      if (!elementItems.length) {
+        return;
+      }
 
-    // Separate by gemmaType
-    const standardsData = elementItems.filter(
-      (item) => item.gemmaType === 'Standaard'
-    );
-    const standaardversiesData = elementItems.filter(
-      (item) => item.gemmaType === 'Standaardversie'
-    );
-    const referentieComponentenData = elementItems.filter(
-      (item) => item.gemmaType === 'Referentiecomponent'
-    );
+      // Separate by gemmaType
+      const standardsData = elementItems.filter(
+        (item) => item.gemmaType === 'Standaard'
+      );
+      const standaardversiesData = elementItems.filter(
+        (item) => item.gemmaType === 'Standaardversie'
+      );
+      const referentieComponentenData = elementItems.filter(
+        (item) => item.gemmaType === 'Referentiecomponent'
+      );
 
-    // Transform standards to add name property from @self.name
-    const transformedStandards = standardsData.map((item) => ({
-      ...item,
-      name: item?.['@self']?.name || item.name || item.id,
-    }));
+      // Transform standards to add name property from @self.name
+      const transformedStandards = standardsData.map((item) => ({
+        ...item,
+        name: item?.['@self']?.name || item.name || item.id,
+      }));
 
-    // Transform standaardversies to add name property from @self.name
-    const transformedStandaardversies = standaardversiesData.map((item) => ({
-      ...item,
-      name: item?.['@self']?.name || item.name || item.id,
-    }));
+      // Transform standaardversies to add name property from @self.name
+      const transformedStandaardversies = standaardversiesData.map((item) => ({
+        ...item,
+        name: item?.['@self']?.name || item.name || item.id,
+      }));
 
-    setStandards(transformedStandards);
-    setStandaardversies(transformedStandaardversies);
+      setStandards(transformedStandards);
+      setStandaardversies(transformedStandaardversies);
 
-    // Process referentieComponenten with standards for the product
-    if (get_single?.referentieComponenten?.length) {
-      const productReferentieComponenten = get_single.referentieComponenten
-        .map((refId) => {
-          const refData = referentieComponentenData.find(
-            (ref) =>
-              String(ref.id) === String(refId) ||
-              String(ref.value) === String(refId) ||
-              String(ref.slug) === String(refId)
-          );
+      // Process referentieComponenten with standards for the product
+      if (get_single?.referentieComponenten?.length) {
+        const productReferentieComponenten = get_single.referentieComponenten
+          .map((refId) => {
+            const refData = referentieComponentenData.find(
+              (ref) =>
+                String(ref.id) === String(refId) ||
+                String(ref.value) === String(refId) ||
+                String(ref.slug) === String(refId)
+            );
 
-          if (refData) {
-            return {
-              id: refId,
-              naam: refData?.['@self']?.name || refId,
-              moduleId: 0, // For publication view, we don't have specific modules
-              applicatieId: 0,
-              // Extract standards from the API data
-              aanbevolenStandaarden: refData.aanbevolenStandaarden || [],
-              verplichteStandaarden: refData.verplichteStandaarden || [],
-              // Store the full API data for future use
-              fullData: refData,
-            };
-          }
-          return null;
-        })
-        .filter(Boolean);
+            if (refData) {
+              return {
+                id: refId,
+                naam: refData?.['@self']?.name || refId,
+                moduleId: 0, // For publication view, we don't have specific modules
+                applicatieId: 0,
+                // Extract standards from the API data
+                aanbevolenStandaarden: refData.aanbevolenStandaarden || [],
+                verplichteStandaarden: refData.verplichteStandaarden || [],
+                // Store the full API data for future use
+                fullData: refData,
+              };
+            }
+            return null;
+          })
+          .filter(Boolean);
 
-      setReferentieComponentenWithStandards(productReferentieComponenten);
-    } else {
-      setReferentieComponentenWithStandards([]);
-    }
-  }, [get_single?.referentieComponenten]);
+        setReferentieComponentenWithStandards(productReferentieComponenten);
+      } else {
+        setReferentieComponentenWithStandards([]);
+      }
+    },
+    [get_single?.referentieComponenten]
+  );
 
   const [uses, setUses] = useState([]);
   const [used, setUsed] = useState([]);
@@ -422,16 +425,16 @@ const AcPublicationProduct = ({
     if (get_single?.compliancy && Array.isArray(get_single.compliancy)) {
       return get_single.compliancy;
     }
-    
+
     // Fallback: Extract from used data (schema ID 18 is compliancy schema)
     if (!used || !Array.isArray(used)) return [];
-    
+
     const compliancySchemaId = aggregatedSchemas?.['18']?.id || '18';
-    const compliancyObjects = used.filter(item => {
+    const compliancyObjects = used.filter((item) => {
       const itemSchemaId = item?.['@self']?.schema?.id || item?.['@self']?.schema;
       return String(itemSchemaId) === String(compliancySchemaId);
     });
-    
+
     return compliancyObjects;
   }, [get_single?.compliancy, used, aggregatedSchemas]);
 
@@ -444,27 +447,25 @@ const AcPublicationProduct = ({
     <AcContainer margin='xl'>
       <AcFlex column spacing='sm'>
         <AcFlex spacing='sm' justifyContent='between' alignItems='center'>
-          <Heading level={4} className='con-module-publication--header-container'>
-            <div className='con-beheer-details--header-container'>
-              {(get_single?.['@self']?.image || get_single?.logo) && (
-                <ConLogoPreview
-                  className='con-beheer-details--logo-container'
-                  logoUrl={get_single?.['@self']?.image || get_single?.logo}
-                  objectSelf={get_single?.['@self']}
-                />
-              )}
+          <div className='con-beheer-details--header-container'>
+            {(get_single?.['@self']?.image || get_single?.logo) && (
+              <ConLogoPreview
+                className='con-beheer-details--logo-container'
+                logoUrl={get_single?.['@self']?.image || get_single?.logo}
+                objectSelf={get_single?.['@self']}
+              />
+            )}
 
-              <Heading className='con-beheer-details--title'>
-                {get_single?.['@self']?.name ||
-                  get_single?.id ||
-                  get_single?.name ||
-                  'Applicatie'}{' '}
-                {'('}
-                <ConUuidResolver>{get_single?.aanbieder}</ConUuidResolver>
-                {')'}
-              </Heading>
-            </div>
-          </Heading>
+            <Heading className='con-beheer-details--title'>
+              {get_single?.['@self']?.name ||
+                get_single?.id ||
+                get_single?.name ||
+                'Applicatie'}{' '}
+              {'('}
+              <ConUuidResolver>{get_single?.aanbieder}</ConUuidResolver>
+              {')'}
+            </Heading>
+          </div>
           <AcFlex
             justifyContent='end'
             alignItems='center'
@@ -505,6 +506,7 @@ const AcPublicationProduct = ({
                         });
                         navigate(`/forms/gebruik/applicatie?${params.toString()}`);
                       }}
+                      sr='Applicatie aanbieden'
                     />
                   );
                 }
@@ -552,9 +554,7 @@ const AcPublicationProduct = ({
         <AcFlex spacing='sm' justifyContent='between'>
           <AcFlex column spacing='md' style={{ flex: 2 }}>
             {!!get_single?.['@self']?.summary && (
-              <div>
-                {get_single?.['@self']?.summary}
-              </div>
+              <div>{get_single?.['@self']?.summary}</div>
             )}
 
             {!!get_single?.beschrijvingLang && (
@@ -709,10 +709,12 @@ const AcPublicationProduct = ({
                 }
                 enableScrolling={true}
                 standards={standards.length > 0 ? standards : undefined}
-                standaardversies={standaardversies.length > 0 ? standaardversies : undefined}
+                standaardversies={
+                  standaardversies.length > 0 ? standaardversies : undefined
+                }
                 referentieComponentenWithStandards={
-                  referentieComponentenWithStandards.length > 0 
-                    ? referentieComponentenWithStandards 
+                  referentieComponentenWithStandards.length > 0
+                    ? referentieComponentenWithStandards
                     : undefined
                 }
                 loading={usesLoading}

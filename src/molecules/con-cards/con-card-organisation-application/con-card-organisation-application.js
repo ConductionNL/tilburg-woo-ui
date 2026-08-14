@@ -3,7 +3,7 @@ import { AcLink } from '@molecules';
 import { ConUuidResolver } from '@components';
 import { LABELS, VISUALS } from '@constants';
 import { AcCard, AcFlex } from '@atoms';
-import { Heading, Paragraph } from '@utrecht/component-library-react';
+import { Paragraph } from '@utrecht/component-library-react';
 import { NAVIGATE_TO } from '@constants/routes.constants';
 import { extractTitle, extractSummary } from '@src/utilities/con-extract-text';
 import ConLogoPreview from '@src/views/ac-register/con-logo-preview';
@@ -102,7 +102,7 @@ const ConCardOrganisationApplication = ({
       <AcFlex alignItems='center' justifyContent='space-between'>
         <AcFlex alignItems='center' spacing='xs'>
           {icon}
-          <Heading level={3}>{extractTitle(title)}</Heading>
+          <p className="utrecht-heading-3">{extractTitle(title)}</p>
           {organisation && (cardType === 'product' || cardType === 'module') && (
             <Paragraph small>
               (Aangeboden door <ConUuidResolver>{organisation}</ConUuidResolver>)

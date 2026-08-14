@@ -101,7 +101,7 @@ const ConMyAccountPage = ({ store }) => {
               {userData && (
                 <div className='ac-register-review__section'>
                   <div className='ac-register-review__header'>
-                    <Heading level={4}>Gebruikersgegevens</Heading>
+                    <Heading level={2} className='utrecht-heading-4'>Gebruikersgegevens</Heading>
                     <AcButton
                       style='button'
                       icon={<VISUALS.PENCIL />}

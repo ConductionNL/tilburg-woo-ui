@@ -359,7 +359,7 @@ const RelatedTabs = observer(
                   ? tabNameOverride.newTabName
                   : getTabHeaderName(entry.schemaSlug);
               return (
-                <AcTab key={entry.id}>
+                <AcTab key={entry.id} id={entry.id}>
                   <span
                     style={{
                       display: 'flex',
@@ -380,7 +380,7 @@ const RelatedTabs = observer(
             const count = resolveCount(tab);
 
             return (
-              <AcTab key={tab.id || `custom-${idx}`}>
+              <AcTab key={tab.id || `custom-${idx}`} id={tab.id || `custom-${idx}`}>
                 {headerNode ? (
                   headerNode
                 ) : (
@@ -404,7 +404,7 @@ const RelatedTabs = observer(
         {allTabs.map((entry, idx) => {
           if (entry.kind === 'schema') {
             return (
-              <AcTabPanel key={entry.id}>
+              <AcTabPanel key={entry.id} id={entry.id}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   {entry.items.map((item) => renderCard(item, object, navigateTo, user, schemas))}
                 </div>
@@ -415,7 +415,7 @@ const RelatedTabs = observer(
           // Custom tab panel
           const { tab } = entry;
           return (
-            <AcTabPanel key={tab.id || `custom-${idx}`}>
+            <AcTabPanel key={tab.id || `custom-${idx}`} id={tab.id || `custom-${idx}`}>
               {typeof tab.render === 'function'
                 ? tab.render({ object, navigateTo })
                 : null}

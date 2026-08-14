@@ -4,7 +4,6 @@ import { TOOLTIP_ID } from '@src/index.web';
 import {
   FormField,
   FormLabel,
-  Heading,
   Textbox,
   Textarea,
 } from '@utrecht/component-library-react/dist/css-module';
@@ -109,9 +108,8 @@ const AcFormField = ({
             'ac-form-field-label-with-custom-part': customLabelPart,
           })}
         >
-          <Heading
-            level={headingLevel}
-            className={clsx({
+          <span
+            className={clsx(`utrecht-heading-${headingLevel || '4'}`, {
               'ac-form-field-header-info': tooltip,
               'ac-form-field-header-info-with-custom-part': customLabelPart,
             })}
@@ -144,7 +142,7 @@ const AcFormField = ({
                 </span>
               </>
             )}
-          </Heading>
+          </span>
           {customLabelPart && customLabelPart}
         </FormLabel>
         {getInput(inputType, {

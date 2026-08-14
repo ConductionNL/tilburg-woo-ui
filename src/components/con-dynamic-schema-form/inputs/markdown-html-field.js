@@ -28,7 +28,7 @@ const MarkdownHtmlField = ({
   return (
     <div className='con-dynamic-schema-form-field con-dynamic-schema-form-field--span-2'>
       <label className='utrecht-form-label'>
-        <h4
+        <span
           className={clsx('utrecht-heading-4', {
             'ac-form-field-header-info': description,
           })}
@@ -80,7 +80,7 @@ const MarkdownHtmlField = ({
               </span>
             </>
           )}
-        </h4>
+        </span>
       </label>
 
       <div className='con-dynamic-schema-form-flex'>

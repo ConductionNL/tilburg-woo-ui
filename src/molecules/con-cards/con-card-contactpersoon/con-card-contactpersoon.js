@@ -2,7 +2,7 @@ import { AcLink } from '@molecules';
 import { ConUuidResolver } from '@components';
 import { LABELS, VISUALS } from '@constants';
 import { AcCard, AcFlex } from '@atoms';
-import { Heading, Paragraph } from '@utrecht/component-library-react';
+import { Paragraph } from '@utrecht/component-library-react';
 import { NAVIGATE_TO } from '@constants/routes.constants';
 import { extractTitle } from '@src/utilities/con-extract-text';
 import ConLogoPreview from '@src/views/ac-register/con-logo-preview';
@@ -52,7 +52,7 @@ const ConCardContactpersoon = ({
               color: 'inherit',
             }}
           />
-          <Heading level={3}>{extractTitle(name)}</Heading>
+          <p className="utrecht-heading-3">{extractTitle(name)}</p>
           {organisationValue && (
             <Paragraph small>
               (Werkzaam bij <ConUuidResolver>{organisationValue}</ConUuidResolver>)

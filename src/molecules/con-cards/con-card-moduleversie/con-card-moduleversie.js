@@ -2,7 +2,7 @@ import { AcLink } from '@molecules';
 import { ConUuidResolver } from '@components';
 import { LABELS, VISUALS } from '@constants';
 import { AcCard, AcFlex } from '@atoms';
-import { Heading, Paragraph } from '@utrecht/component-library-react';
+import { Paragraph } from '@utrecht/component-library-react';
 import { NAVIGATE_TO } from '@constants/routes.constants';
 import acFormatDate from '@src/utilities/ac-format-date';
 import { extractTitle, extractSummary } from '@src/utilities/con-extract-text';
@@ -64,7 +64,7 @@ const ConCardModuleVersie = ({
               color: 'inherit',
             }}
           />
-          <Heading level={3}>{extractTitle(title)}</Heading>
+          <p className="utrecht-heading-3">{extractTitle(title)}</p>
           {moduleUuid && (
             <Paragraph small>
               (Behoort tot <ConUuidResolver>{moduleUuid}</ConUuidResolver>)

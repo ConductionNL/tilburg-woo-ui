@@ -358,7 +358,7 @@ const renderRelatedTabs = (
                 ? tabNameOverride.newTabName
                 : getTabHeaderName(entry.schemaSlug);
             return (
-              <AcTab key={entry.id} selected={tabIndex === idx}>
+              <AcTab key={entry.id} id={entry.id} selected={tabIndex === idx}>
                 <span
                   style={{
                     display: 'flex',
@@ -381,6 +381,7 @@ const renderRelatedTabs = (
           return (
             <AcTab
               key={tab.id}
+              id={tab.id || `custom-${idx}`}
               selected={tabIndex === idx}
               disabled={!!tab.disabled}
             >
@@ -410,7 +411,7 @@ const renderRelatedTabs = (
           );
 
           return (
-            <AcTabPanel key={idx} selected={tabIndex === idx}>
+            <AcTabPanel key={idx} id={entry.id} selected={tabIndex === idx}>
               <div
                 style={{
                   display: 'grid',
@@ -433,7 +434,7 @@ const renderRelatedTabs = (
         const hasItems = Array.isArray(maybeItems) && maybeItems.length > 0;
 
         return (
-          <AcTabPanel key={idx} selected={tabIndex === idx}>
+          <AcTabPanel key={idx} id={tab.id || `custom-${idx}`} selected={tabIndex === idx}>
             {typeof tab.render === 'function' ? (
               tab.render({ object, navigateTo })
             ) : hasItems ? (
