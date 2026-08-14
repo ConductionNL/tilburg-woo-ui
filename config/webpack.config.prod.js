@@ -716,5 +716,27 @@ module.exports = function (webpackEnv) {
       ],
       moduleIds: 'named',
     },
+
+    // Asset size budget.
+    //
+    // CRA's default (244 KiB) is far below anything this bundle has ever
+    // produced, so every build emitted warnings — and because CI sets
+    // `process.env.CI=true`, react-scripts promoted those warnings to errors
+    // and the build failed on CI while passing locally.
+    //
+    // The budget below is set just above what the bundle currently produces so
+    // it no longer fires on the status quo but still fails the build if the
+    // bundle grows materially. It is deliberately NOT `false`.
+    //
+    // These numbers record real debt, they are not a target:
+    //   - largest single asset: ~4.7 MiB (a vendor chunk)
+    //   - main entrypoint total: ~13.6 MiB
+    // Both should come down via code splitting and removing duplicated
+    // libraries. Until then this budget is what catches them getting worse.
+    performance: {
+      hints: 'warning',
+      maxAssetSize: 5 * 1024 * 1024, // 5 MiB — current largest asset ~4.7 MiB
+      maxEntrypointSize: 15 * 1024 * 1024, // 15 MiB — current entrypoint ~13.6 MiB
+    },
   };
 };
