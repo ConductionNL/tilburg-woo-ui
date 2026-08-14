@@ -14,6 +14,10 @@ import createStore, { StoreContext } from '@stores';
 import App from '@src/App';
 import PortalHome from '@src/portal/PortalHome';
 import { getToken } from '@src/portal/portalApi';
+import {
+  resolveRouterBasename,
+  basenameMatchesPath,
+} from '@src/config/router-basename';
 
 import '@src/portal/portal.scss';
 
@@ -44,26 +48,18 @@ const container = document.getElementById('root');
 // shell is never tree-shaken away.
 const IS_PORTAL = !!(window.RUNTIME_CONFIG && window.RUNTIME_CONFIG.portalMode === true);
 
-// Router basename.
-//
-// The SPA is mounted at different paths per deployment: the standalone
-// Open-Tilburg / Softwarecatalogus site is served from the web root (see
-// `location /` in config/nginx.conf.template and `homepage` in package.json),
-// while the Portaliq deployments are mounted under a Nextcloud app path. A
-// basename that does not prefix the current URL makes react-router match
-// nothing and render an empty page, so this must follow the deployment rather
-// than be hardcoded.
-//
-// Resolution order: RUNTIME_CONFIG.routerBasename (camelCase, written by
-// scripts/portal-postbuild.js) -> RUNTIME_CONFIG.ROUTER_BASENAME (UPPER_SNAKE,
-// written by scripts/generate-runtime-config.js from the ROUTER_BASENAME env
-// var) -> the per-mode default below.
-const DEFAULT_PORTAL_BASENAME = '/index.php/apps/portaliq/portal';
-const ROUTER_BASENAME =
-  (window.RUNTIME_CONFIG &&
-    (window.RUNTIME_CONFIG.routerBasename ||
-      window.RUNTIME_CONFIG.ROUTER_BASENAME)) ||
-  (IS_PORTAL ? DEFAULT_PORTAL_BASENAME : '/');
+// Router basename — see src/config/router-basename.js for the resolution rules.
+// A mismatch between the basename and the served path renders an empty page, so
+// the resolution lives in a tested module and a mismatch is reported loudly here
+// rather than only as react-router's own warning.
+const ROUTER_BASENAME = resolveRouterBasename(window.RUNTIME_CONFIG, IS_PORTAL);
+
+if (!basenameMatchesPath(ROUTER_BASENAME, window.location.pathname)) {
+  console.error(
+    `[router] basename "${ROUTER_BASENAME}" does not match path "${window.location.pathname}" — ` +
+      'the app will render nothing. Set ROUTER_BASENAME for this deployment.'
+  );
+}
 
 if (IS_PORTAL) {
   const token = getToken();

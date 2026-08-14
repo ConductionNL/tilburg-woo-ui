@@ -112,6 +112,11 @@ module.exports = {
       files: ['**/*.config.*', 'scripts/**/*.js'],
       env: { node: true },
     },
+    {
+      // Jest supplies describe/it/expect as globals.
+      files: ['**/*.test.js', '**/*.test.jsx', '**/*.spec.js', '**/*.spec.jsx'],
+      env: { jest: true },
+    },
   ],
   ignorePatterns: [
     'node_modules/',

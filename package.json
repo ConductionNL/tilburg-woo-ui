@@ -46,6 +46,8 @@
     "dev:web": "FAST_REFRESH=false node scripts/start.js",
     "build:web": "node scripts/build.js",
     "analyze:bundle": "source-map-explorer 'public_html/static/js/*.js'",
+    "test": "react-scripts test --watchAll=false",
+    "test:watch": "react-scripts test",
     "lint": "eslint src --ext .js,.jsx --max-warnings 0",
     "lint:fix": "eslint src --ext .js,.jsx --fix",
     "lint:check": "eslint src --ext .js,.jsx --max-warnings 0 --format compact",

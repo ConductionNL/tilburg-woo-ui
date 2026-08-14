@@ -40,7 +40,7 @@
 			"@services": ["src/services/index"],
 			"@stores": ["src/stores/index"],
 			"@utils": ["src/utilities/index"],
-			"@nlds": ["~/node_modules"] // add path to NLDS package here
+			"@nlds": ["~/node_modules"]
 		}
 	}
 }
