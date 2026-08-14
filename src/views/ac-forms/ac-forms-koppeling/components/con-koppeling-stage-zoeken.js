@@ -107,6 +107,7 @@ const ConKoppelingStageZoeken = ({
       {!isEditMode && showInfoAlert && (
         <Alert severity='info' className='ac-forms-product-info-alert'>
           <button
+            type='button'
             onClick={handleCloseAlert}
             className='ac-forms-product-info-alert__close-button'
             title='Sluiten'

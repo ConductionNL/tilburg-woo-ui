@@ -532,6 +532,7 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
                               }
                             ),
                             <button
+                              type='button'
                               key={item.id}
                               className='utrecht-button slim'
                               // variant='secondary'
@@ -623,6 +624,7 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
                               }
                             ),
                             <button
+                              type='button'
                               key={item.id}
                               className='utrecht-button slim'
                               // variant='secondary'

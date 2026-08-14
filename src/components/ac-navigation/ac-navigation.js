@@ -67,6 +67,7 @@ const AcNavigation = ({ store: { menu, user } }) => {
   return (
     <div className='ac-navigation'>
       <button
+        type='button'
         onClick={() => setIsMenuOpen((prevState) => !prevState)}
         aria-expanded={isMenuOpen}
         aria-haspopup='true'

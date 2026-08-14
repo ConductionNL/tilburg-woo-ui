@@ -298,6 +298,7 @@ const App = ({ store }) => {
       {!isBeheerPage && glossary.is_warmed_up && glossary.all_terms.length > 0 && (
         <div className='con-glossary-button-container'>
           <button
+            type='button'
             className='con-glossary-button'
             onClick={() => glossary.openDrawer()}
             aria-label={LABELS.CONCEPTS_LIST}

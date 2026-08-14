@@ -467,6 +467,7 @@ const Button = ({ children, onClick, doNotClose, icon, className, ...props }) =>
 
   return (
     <button
+      type='button'
       className={clsx(
         'con-action-menu__item',
         'con-action-menu__item--button',

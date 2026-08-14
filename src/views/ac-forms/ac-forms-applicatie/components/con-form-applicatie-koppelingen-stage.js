@@ -390,6 +390,7 @@ const ConFormApplicatieKoppelingenStage = memo(
         {showInfoAlert && (
           <Alert severity='info' className='ac-forms-info-alert'>
             <button
+              type='button'
               onClick={handleCloseAlert}
               className='ac-forms-product-info-alert__close-button'
               title='Sluiten'

@@ -418,6 +418,7 @@ const ConKoppelingStageControleren = ({
             style={{ marginBottom: '2rem' }}
           >
             <button
+              type='button'
               onClick={handleCloseAlert}
               className='ac-forms-product-info-alert__close-button'
               title='Sluiten'

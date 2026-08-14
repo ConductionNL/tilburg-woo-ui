@@ -60,7 +60,9 @@ const AcSearchFilter = ({
           Gezocht op: <strong>{currentSearchTerm}</strong> ({resultCount}{' '}
           {LABELS_DYNAMIC.RESULTS(resultCount).toLowerCase()})
           <br />
-          <button onClick={clearSearch}>Wis zoekopdracht</button>
+          <button type='button' onClick={clearSearch}>
+            Wis zoekopdracht
+          </button>
         </div>
       )}
     </div>

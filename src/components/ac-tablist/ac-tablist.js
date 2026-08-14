@@ -30,6 +30,7 @@ const AcTabList = ({ tabs }) => {
       <div className="ac-tablist__tabs" role="tablist">
         {tabs.map((tab, index) => (
           <button
+            type='button'
             key={`tab-${index}`}
             ref={(el) => (tabRefs.current[index] = el)}
             className={clsx('ac-tablist__tab', {

@@ -137,6 +137,7 @@ const ConChatSidebar = observer(({ store }) => {
                     </AcFlex>
                   </button>
                   <button
+                    type='button'
                     className='con-chat-conversation-delete'
                     onClick={(e) => handleDeleteConversation(e, conversation.id)}
                     aria-label={`Verwijder conversatie ${conversation.title}`}

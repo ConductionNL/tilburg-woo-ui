@@ -195,6 +195,7 @@ const ConChatArea = observer(({ store }) => {
                 className='con-chat-textarea'
               />
               <button
+                type='button'
                 onClick={handleSendMessage}
                 disabled={!inputMessage.trim() || isSendingMessage}
                 aria-label='Verstuur bericht'

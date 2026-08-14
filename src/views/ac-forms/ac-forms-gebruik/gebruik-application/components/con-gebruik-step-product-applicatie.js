@@ -87,6 +87,7 @@ const ConGebruikStepProductApplicatie = ({
         {showInfoAlertBestaand && (
           <Alert severity='info' className='ac-forms-product-info-alert'>
             <button
+              type='button'
               onClick={handleCloseAlertBestaand}
               className='ac-forms-product-info-alert__close-button'
               title='Sluiten'
@@ -165,6 +166,7 @@ const ConGebruikStepProductApplicatie = ({
       {showInfoAlertNieuw && (
         <Alert severity='info' className='ac-forms-product-info-alert'>
           <button
+            type='button'
             onClick={handleCloseAlertNieuw}
             className='ac-forms-product-info-alert__close-button'
             title='Sluiten'

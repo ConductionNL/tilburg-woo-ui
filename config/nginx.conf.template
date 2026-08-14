@@ -92,6 +92,19 @@ http {
             add_header X-XSS-Protection "1; mode=block" always;
         }
 
+        # The service worker precaches the app shell and serves it offline
+        # first, so it — not the HTTP cache — decides how long an old build
+        # keeps rendering. If this script itself is cached, the worker can
+        # never learn there is a newer one. Browsers bypass the HTTP cache when
+        # checking for worker updates, but say it explicitly rather than depend
+        # on that.
+        location = /service-worker.js {
+            add_header Cache-Control "no-cache, must-revalidate" always;
+            add_header X-Content-Type-Options nosniff always;
+            add_header X-Frame-Options DENY always;
+            add_header X-XSS-Protection "1; mode=block" always;
+        }
+
         # Static file serving with SPA routing
         location / {
             try_files $uri $uri/ /index.html;

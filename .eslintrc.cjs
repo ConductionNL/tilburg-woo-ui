@@ -100,6 +100,12 @@ module.exports = {
     'react/prop-types': 'off',
     'react/react-in-jsx-scope': 'off',
 
+    // A <button> with no type attribute is a submit button. Inside a form that
+    // means it submits on click, and Enter in any field activates the first
+    // one. Every real submit in this app is explicit, so the implicit default
+    // was never wanted — it was just easy to forget.
+    'react/button-has-type': 'error',
+
     // Hooks
     'react-hooks/rules-of-hooks': 'error',
     'react-hooks/exhaustive-deps': 'off', // project rule: minimal deps only
