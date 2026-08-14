@@ -3161,13 +3161,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@joint/core@npm:^4.1.2":
-  version: 4.3.1
-  resolution: "@joint/core@npm:4.3.1"
-  checksum: 10c0/e517e56d13cb7c0786593e4eaa51e84e818c092d830544ba3050785e80247cf320cc289326f10b074bbcc844257842a381b8ecdef62b25db41f458a8ed269de0
-  languageName: node
-  linkType: hard
-
 "@jridgewell/gen-mapping@npm:^0.3.12, @jridgewell/gen-mapping@npm:^0.3.2, @jridgewell/gen-mapping@npm:^0.3.5":
   version: 0.3.13
   resolution: "@jridgewell/gen-mapping@npm:0.3.13"
@@ -15159,7 +15152,6 @@ __metadata:
     "@eslint/js": "npm:^9.0.0"
     "@gemeente-denhaag/process-steps": "npm:^2.0.7"
     "@gemeente-denhaag/sidenav": "npm:^2.0.0"
-    "@joint/core": "npm:^4.1.2"
     "@loadable/component": "npm:^5.15.3"
     "@lottiefiles/react-lottie-player": "npm:^3.5.3"
     "@nl-design-system-unstable/rotterdam-design-tokens": "npm:^1.0.0-alpha.100"
