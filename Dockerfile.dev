@@ -1,5 +1,5 @@
 # Development Dockerfile for React application with watch builds
-FROM node:18.17.0-alpine as base
+FROM node:22-alpine as base
 
 # Set working directory
 WORKDIR /app

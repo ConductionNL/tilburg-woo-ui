@@ -1,5 +1,5 @@
 # Multi-stage build for React application
-FROM node:18.17.0-alpine as builder
+FROM node:22-alpine as builder
 
 # Set working directory
 WORKDIR /app
@@ -58,6 +58,25 @@ RUN echo '#!/bin/sh' > /usr/local/bin/start-with-env.sh && \
     echo '' >> /usr/local/bin/start-with-env.sh && \
     echo '# Create nginx directories' >> /usr/local/bin/start-with-env.sh && \
     echo 'mkdir -p /var/log/nginx /var/lib/nginx/tmp' >> /usr/local/bin/start-with-env.sh && \
+    echo '' >> /usr/local/bin/start-with-env.sh && \
+    echo '# envsubst replaces an unset variable with the empty string, which turns' >> /usr/local/bin/start-with-env.sh && \
+    echo '# "root ${NGINX_ROOT_DIR};" into "root ;" and "proxy_pass ${UPSTREAM}/x"' >> /usr/local/bin/start-with-env.sh && \
+    echo '# into "proxy_pass /x" - nginx then aborts with a message that does not' >> /usr/local/bin/start-with-env.sh && \
+    echo '# name the missing variable. Default what has a safe default, and fail' >> /usr/local/bin/start-with-env.sh && \
+    echo '# fast with an actionable message for what does not.' >> /usr/local/bin/start-with-env.sh && \
+    echo ': "${NGINX_ROOT_DIR:=/usr/share/nginx/html}"' >> /usr/local/bin/start-with-env.sh && \
+    echo 'export NGINX_ROOT_DIR' >> /usr/local/bin/start-with-env.sh && \
+    echo '' >> /usr/local/bin/start-with-env.sh && \
+    echo 'missing=""' >> /usr/local/bin/start-with-env.sh && \
+    echo 'for v in NGINX_NEXTCLOUD_UPSTREAM NGINX_OPENCONNECTOR_UPSTREAM NGINX_TARGET_HOST; do' >> /usr/local/bin/start-with-env.sh && \
+    echo '  eval "val=\$$v"' >> /usr/local/bin/start-with-env.sh && \
+    echo '  [ -z "$val" ] && missing="$missing $v"' >> /usr/local/bin/start-with-env.sh && \
+    echo 'done' >> /usr/local/bin/start-with-env.sh && \
+    echo 'if [ -n "$missing" ]; then' >> /usr/local/bin/start-with-env.sh && \
+    echo '  echo "❌ Missing required environment variable(s):$missing" >&2' >> /usr/local/bin/start-with-env.sh && \
+    echo '  echo "   nginx cannot build a valid proxy_pass without them." >&2' >> /usr/local/bin/start-with-env.sh && \
+    echo '  exit 1' >> /usr/local/bin/start-with-env.sh && \
+    echo 'fi' >> /usr/local/bin/start-with-env.sh && \
     echo '' >> /usr/local/bin/start-with-env.sh && \
     echo '# Substitute environment variables in nginx config' >> /usr/local/bin/start-with-env.sh && \
     echo 'envsubst '"'"'$NGINX_OPENCONNECTOR_UPSTREAM $NGINX_NEXTCLOUD_UPSTREAM $NGINX_NEXTCLOUD_DOMAIN $NGINX_TARGET_HOST $NGINX_ROOT_DIR'"'"' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf' >> /usr/local/bin/start-with-env.sh && \
