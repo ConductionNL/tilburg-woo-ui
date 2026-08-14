@@ -11,7 +11,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { AcCard, AcFlex } from '@atoms';
-import { Button, Heading, Textarea } from '@utrecht/component-library-react/dist/css-module';
+import { Heading, Textarea } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@constants';
 
 /**

@@ -36,7 +36,7 @@ import RelatedTabs from '@views/ac-publication/con-related-tabs';
  */
 const ConMyOrganisationPage = ({ store }) => {
   const [userData, setUserData] = useState(null);
-  const [organisations, setOrganisations] = useState(null);
+  const [, setOrganisations] = useState(null);
   const [activeOrganisation, setActiveOrganisation] = useState(null);
   const [fullActiveOrganisation, setFullActiveOrganisation] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -284,18 +284,6 @@ const ConMyOrganisationPage = ({ store }) => {
     if (!activeOrganisation) return;
     if (!fullActiveOrganisation) return;
     setShowOrgModal(true);
-  };
-
-  // Function to open publish modal
-  const handlePublishOrganization = () => {
-    if (!fullActiveOrganisation || !canEdit) return;
-    setShowPublishModal(true);
-  };
-
-  // Function to open depublish modal
-  const handleDepublishOrganization = () => {
-    if (!fullActiveOrganisation || !canEdit) return;
-    setShowDepublishModal(true);
   };
 
   // Function to open deelnames modal

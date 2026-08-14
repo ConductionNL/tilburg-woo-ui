@@ -17,16 +17,12 @@ import { useNavigate } from 'react-router';
  * @param {string} props.id - Object ID
  * @param {string} props.schemaSlug - Schema slug for edit URL
  * @param {string} props.title - Object title
- * @param {boolean} props.published - Whether object is published
  * @param {Object} props.object - Full object data with @self property for organization checks
  * @param {string} props.triggerStyle - Style for trigger button ('button', 'buttonSlim')
  * @param {boolean} props.showViewAction - Whether to show "Bekijken" action
  * @param {boolean} props.showEditAction - Whether to show "Bewerken" action
- * @param {boolean} props.showPublishActions - Whether to show publish/depublish actions
  * @param {Array} props.uniqueActions - Array of unique actions specific to this object type (currently commented out)
  * @param {Array} props.relatedActions - Array of related schema "toevoegen" actions (currently commented out)
- * @param {function} props.onPublish - Callback for publish action
- * @param {function} props.onDepublish - Callback for depublish action
  * @param {function} props.onEdit - Callback for edit action
  * @param {function} props.onDelete - Callback for delete action
  */
@@ -35,16 +31,12 @@ const ConDetailsActionsMenu = ({
   id,
   schemaSlug,
   // title,
-  published,
   object,
   triggerStyle = 'button',
   showViewAction = true,
   showEditAction = true,
-  showPublishActions = true,
   uniqueActions = [],
   relatedActions = [],
-  onPublish,
-  onDepublish,
   onEdit,
   onDelete,
 }) => {
@@ -97,18 +89,6 @@ const ConDetailsActionsMenu = ({
     // Default view action - open publication page
     const publicationUrl = `/publicatie/${id}`;
     window.open(publicationUrl, '_blank');
-  };
-
-  const handlePublish = () => {
-    if (onPublish) {
-      onPublish(id);
-    }
-  };
-
-  const handleDepublish = () => {
-    if (onDepublish) {
-      onDepublish(id);
-    }
   };
 
   /**
@@ -174,37 +154,6 @@ const ConDetailsActionsMenu = ({
                 Bewerken
               </ConActionMenu.Button>
             )}
-
-            {/* Publish/Depublish actions - LEGACY: No longer needed */}
-            {/* {showPublishActions && !published && (
-              <ConActionMenu.Button
-                icon={<VISUALS.PUBLISH />}
-                onClick={canEdit ? handlePublish : undefined}
-                disabled={!canEdit}
-                data-tooltip-id={!canEdit ? TOOLTIP_ID : undefined}
-                data-tooltip-content={
-                  !canEdit ? getDisabledActionTooltip('publish', reason) : undefined
-                }
-              >
-                Publiceren
-              </ConActionMenu.Button>
-            )}
-
-            {showPublishActions && published && (
-              <ConActionMenu.Button
-                icon={<VISUALS.PUBLISH_OFF />}
-                onClick={canEdit ? handleDepublish : undefined}
-                disabled={!canEdit}
-                data-tooltip-id={!canEdit ? TOOLTIP_ID : undefined}
-                data-tooltip-content={
-                  !canEdit
-                    ? getDisabledActionTooltip('depublish', reason)
-                    : undefined
-                }
-              >
-                Depubliceren
-              </ConActionMenu.Button>
-            )} */}
 
             {/* Delete action */}
             {onDelete && (

@@ -52,7 +52,7 @@ const AcPublication = ({ store: { publications, object, user } }) => {
 
   // Resolve schema IDs from uses/used items to full schema objects
   const allRelatedItems = useMemo(() => [...uses, ...used], [uses, used]);
-  const { aggregatedSchemas, setAggregatedSchemas } = useResolveSchemaIds(allRelatedItems);
+  const { aggregatedSchemas } = useResolveSchemaIds(allRelatedItems);
 
   const fetchUses = useCallback(async () => {
     if (!id) return;
@@ -161,7 +161,6 @@ const AcPublication = ({ store: { publications, object, user } }) => {
                   object={get_single}
                   showViewAction={false}
                   showEditAction={true}
-                  showPublishActions={true}
                   onDelete={handleDelete}
                   onEdit={() => {
                     if (schemaSlug) {

@@ -36,7 +36,6 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications, user, object } 
     get_used_data,
     resetRelations,
     resetPublication,
-    resetUsedData,
     fetchRelations,
     fetchPublication,
     fetchUsed,
@@ -117,7 +116,6 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications, user, object } 
                 object={get_single}
                 showViewAction={false}
                 showEditAction={true}
-                showPublishActions={true}
                 onDelete={handleDelete}
                 onEdit={() => {
                   const schemaSlug = get_single?.['@self']?.schema?.slug;

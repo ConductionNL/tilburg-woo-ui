@@ -230,7 +230,6 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
 
   // Handle toggling a non-aggregated facet: adds/removes both the facet value and _schema parameter.
   const toggleNonAggregatedFacet = (facetKey, value, schemaId) => {
-    const { query } = publications;
     const isCurrentlyChecked = isFacetChecked(facetKey, value);
 
     // Toggle the facet value using existing logic.
@@ -401,41 +400,28 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
 
       // Fallback: Check if this is a schema slug/ID and try to get the title from schemas in store
       if (cleanSubKey === 'schema' && object?.schemas) {
-        console.log('🔍 Looking for schema label for value:', value);
-        console.log('📚 Available schemas:', Object.keys(object.schemas));
-
         // First, try to convert ID to slug using schemaCache if value looks like an ID
         let searchValue = value;
         if (/^\d+$/.test(value)) {
           // Value is numeric - probably an ID, try to get slug
           const slug = schemaCache.get(value);
-          console.log(`🔄 Converted ID ${value} to slug:`, slug);
           if (slug) {
             searchValue = slug;
           }
         }
 
         // Look through all schemas to find one that matches
-        const schemaEntry = Object.values(object.schemas).find((schema) => {
-          const matches =
+        const schemaEntry = Object.values(object.schemas).find(
+          (schema) =>
             schema?.slug === searchValue ||
             schema?.name === searchValue ||
             String(schema?.id) === String(value) ||
-            String(schema?.['@self']?.id) === String(value);
-
-          if (matches) {
-            console.log('✅ Found matching schema:', schema);
-          }
-
-          return matches;
-        });
+            String(schema?.['@self']?.id) === String(value)
+        );
 
         if (schemaEntry?.title) {
-          console.log('✅ Returning schema title:', schemaEntry.title);
           return schemaEntry.title;
         }
-
-        console.log('❌ No schema title found, using value:', value);
       }
 
       return value;
@@ -519,24 +505,6 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
   };
 
   const facets = resolvedFacets;
-
-  // Debug: Log facet data to see what labels are present
-  if (facets && Object.keys(facets).length > 0) {
-    console.group('🔍 DEBUG: Facet Labels');
-    Object.entries(facets).forEach(([key, value]) => {
-      if (key !== '@self' && value.buckets) {
-        console.log(
-          `Facet "${key}":`,
-          value.buckets.map((b) => ({
-            label: b.label,
-            value: b.value,
-            key: b.key,
-          }))
-        );
-      }
-    });
-    console.groupEnd();
-  }
 
   // Only show skeleton loading when:
   // We're loading facets AND don't have existing facets to show

@@ -927,40 +927,6 @@ const AcFormsProductInner = ({
     return baseParams;
   }, [schemas]);
 
-  const getStandaardenQueryParams = useCallback(() => {
-    const moduleSchema = schemas?.module;
-    const refCompProperty = moduleSchema?.properties?.referentieComponenten;
-    const queryParamsString =
-      refCompProperty?.items?.objectConfiguration?.queryParams;
-
-    const baseParams = {
-      _limit: '500', // Load 500 standaarden upfront
-      _page: '1',
-      _source: 'index',
-    };
-
-    if (queryParamsString) {
-      // Parse whatever schema has, then override gemmaType below
-      const urlParams = new URLSearchParams(queryParamsString);
-      urlParams.forEach((value, key) => {
-        baseParams[key] = value;
-      });
-    }
-
-    // Force the correct type for standaarden, regardless of schema-provided params
-    baseParams.gemmaType = 'Standaard';
-
-    // Ensure we do not send schema-provided _extend for standards requests
-    if (baseParams._extend) {
-      delete baseParams._extend;
-    }
-    if (baseParams['_extend[]']) {
-      delete baseParams['_extend[]'];
-    }
-
-    return baseParams;
-  }, [schemas]);
-
   // TODO remove this once we have the referentiecomponenten options loaded from the object store cache
   const loadReferentieComponenten = useCallback(async () => {
     if (!schemas?.module) return; // Wait for schemas to load
@@ -1139,11 +1105,6 @@ const AcFormsProductInner = ({
       setStandaardenOptionsLoading(false);
     }
   }, [schemas?.module, referentieComponentenOptions]);
-
-  // Legacy function kept for backward compatibility (now unused)
-  const loadStandaarden = useCallback(async () => {
-    console.warn('⚠️ loadStandaarden() called but should use loadStandaardenFromReferentieComponenten()');
-  }, []);
 
   // ✅ Load referentiecomponenten when schemas are available
   useEffect(() => {

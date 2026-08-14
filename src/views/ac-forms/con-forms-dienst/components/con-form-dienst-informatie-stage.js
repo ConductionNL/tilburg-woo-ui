@@ -11,7 +11,7 @@ import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
  * - naam, contactpersoon, aanbieder, website, type, beschrijvingKort, beschrijvingLang, logo
  */
 const ConFormDienstInformatieStage = memo(
-  ({ dienst, setDienstData, loading, touched, schemas, userStore, dienstType }) => {
+  ({ dienst, setDienstData, loading, touched, schemas, userStore }) => {
     // Ensure aanbieder is set from /me so users cannot change it later
     const hasInitializedRef = useRef(false);
     useEffect(() => {

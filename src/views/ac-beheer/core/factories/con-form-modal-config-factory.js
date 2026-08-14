@@ -549,11 +549,9 @@ const FormModalConfigFactory = {
            * - Prefill organisatie from active organisation when creating (not editing) and when not pre-selected
            */
           title: 'Gebruiker',
-          initialData: ({ user, isEdit, preSelected, data } = {}) => {
+          initialData: ({ user, isEdit, preSelected } = {}) => {
             const activeOrg = user?.activeOrganization || null;
             const orgId = String(activeOrg?.uuid);
-
-            console.log({data})
 
             return {
               voorkeuren: { taal: 'NL-nl', thema: 'licht' },

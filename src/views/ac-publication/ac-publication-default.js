@@ -143,7 +143,7 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
   });
 
   // Generate action menu items
-  const [actionMenuItems, setActionMenuItems] = useState([]);
+  const [, setActionMenuItems] = useState([]);
 
   // Delete modal state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -295,7 +295,6 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
               object={get_single}
               showViewAction={false}
               showEditAction={true}
-              showPublishActions={true}
               onDelete={handleDelete}
               onEdit={() => {
                 const schemaSlug = get_single?.['@self']?.schema?.slug;

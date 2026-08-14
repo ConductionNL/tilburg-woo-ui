@@ -343,18 +343,6 @@ const AcMyAccount = ({ store }) => {
     setShowContactModal(true);
   };
 
-  // Function to open publish modal
-  const handlePublishOrganization = () => {
-    if (!fullActiveOrganisation || !canEdit) return;
-    setShowPublishModal(true);
-  };
-
-  // Function to open depublish modal
-  const handleDepublishOrganization = () => {
-    if (!fullActiveOrganisation || !canEdit) return;
-    setShowDepublishModal(true);
-  };
-
   // Function to open deelnames modal
   const handleEditDeelnames = () => {
     if (!fullActiveOrganisation || !canEdit) return;

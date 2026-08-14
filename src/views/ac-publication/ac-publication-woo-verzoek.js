@@ -58,7 +58,6 @@ const AcPublicationWooVerzoek = ({ store: { publications, user } }) => {
                 object={get_single}
                 showViewAction={false}
                 showEditAction={true}
-                showPublishActions={true}
                 onDelete={handleDelete}
                 onEdit={() => {
                   const schemaSlug = get_single?.['@self']?.schema?.slug;

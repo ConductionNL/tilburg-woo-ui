@@ -10,7 +10,6 @@ import { ProcessSteps } from '@gemeente-denhaag/components-react';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 import { validateWebsite } from '@views/ac-forms/validation/form-validations';
 import { useDebouncedInput } from '@src/hooks';
-import _ from 'lodash';
 import {
   Heading1,
   Paragraph,
@@ -1531,20 +1530,10 @@ const ConFormsDienst = ({ store, userStore }) => {
     return steps;
   }, [stepper, formType]);
 
-  const {
-    icon: Icon,
-    name: wizardName,
-    schema: wizardSchema,
-  } = useMemo(() => getActiveWizard() || {}, [dienstType]);
-  const capitalizedSchema = _.capitalize(wizardSchema);
-  const editModeTitle = `${capitalizedSchema} updaten`;
-
-  const newWizardName = (() => {
-    var a = wizardName.split(' ');
-    a[0] += '(en)';
-    return a.join(' ');
-  })();
-
+  const { icon: Icon } = useMemo(
+    () => getActiveWizard() || {},
+    [dienstType]
+  );
   const wizardType = isEditMode
     ? 'update'
     : dienstType === 'ontbrekend-dienst'

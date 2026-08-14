@@ -10,11 +10,7 @@ import {
 } from '@components';
 import { VISUALS } from '@constants';
 import { AcButton } from '@molecules';
-import {
-  Heading,
-  Paragraph,
-  Alert,
-} from '@utrecht/component-library-react/dist/css-module';
+import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
 import { schemaCache } from '@services/schemaCache.service';
 import RelatedTabs from '@views/ac-publication/con-related-tabs-new';
@@ -33,7 +29,6 @@ import rehypeSanitize from 'rehype-sanitize';
 // import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { useResolveSchemaIds } from '@src/hooks/use-resolve-schema-ids.hook';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
-import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
 import { normalizeSchemaName } from '@src/utilities/con-normalize-schema-name';
 import { AcFormatDate } from '@src/utilities/ac-format-date';
 // import { checkOrganizationPermissions } from '@utils/organization-permissions';
@@ -107,8 +102,7 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
 
   // Aggregated schemas from all related items via hook
   const allRelatedItems = useMemo(() => [...uses, ...used], [uses, used]);
-  const { aggregatedSchemas, setAggregatedSchemas } =
-    useResolveSchemaIds(allRelatedItems);
+  const { aggregatedSchemas } = useResolveSchemaIds(allRelatedItems);
 
   const fetchUses = useCallback(async () => {
     if (!id) return;
@@ -253,7 +247,6 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
                   object={get_single}
                   showViewAction={false}
                   showEditAction={true}
-                  showPublishActions={false} // LEGACY: Changed from true - Publish actions no longer needed
                   onDelete={handleDelete}
                   onEdit={() => {
                     if (schemaSlug) {

@@ -1,6 +1,5 @@
 import {
   Heading,
-  Paragraph,
   Link,
 } from '@utrecht/component-library-react/dist/css-module';
 import { AcColumn } from '@src/atoms';

@@ -845,25 +845,6 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     setOpenModal('delete');
   };
 
-  // Bulk publish/depublish handlers
-  const handleMultiplePublish = () => {
-    const publishableRows = filteredSelectedRows.filter(
-      (r) => !r['@self']?.published
-    );
-    if (publishableRows.length === 0) return;
-    setModalSelectedRows(publishableRows);
-    setOpenModal('publish');
-  };
-
-  const handleMultipleDepublish = () => {
-    const depublishableRows = filteredSelectedRows.filter(
-      (r) => !!r['@self']?.published
-    );
-    if (depublishableRows.length === 0) return;
-    setModalSelectedRows(depublishableRows);
-    setOpenModal('depublish');
-  };
-
   // Generate action buttons for table rows
   const generateActionButtons = useCallback(
     (row) => {

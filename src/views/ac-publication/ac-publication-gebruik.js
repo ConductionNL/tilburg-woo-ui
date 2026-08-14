@@ -23,7 +23,6 @@ import rehypeSanitize from 'rehype-sanitize';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
 // import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { useResolveSchemaIds } from '@src/hooks/use-resolve-schema-ids.hook';
-import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
 import { AcFormatDate } from '@src/utilities/ac-format-date';
 // import { checkOrganizationPermissions } from '@utils/organization-permissions';
 
@@ -58,7 +57,7 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
   
   // Aggregated schemas from all related items via hook
   const allRelatedItems = useMemo(() => [...uses, ...used], [uses, used]);
-  const { aggregatedSchemas, setAggregatedSchemas } = useResolveSchemaIds(allRelatedItems);
+  const { aggregatedSchemas } = useResolveSchemaIds(allRelatedItems);
 
   // Resolved names state for referentiecomponenten (needed for sorting and GEMMA links)
   const [sortedReferentiecomponenten, setSortedReferentiecomponenten] = useState([]);
@@ -237,7 +236,6 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
             object={get_single}
             showViewAction={false}
             showEditAction={true}
-            showPublishActions={true}
             onDelete={handleDelete}
             onEdit={() => {
               // Check if organization type is Leverancier or Community

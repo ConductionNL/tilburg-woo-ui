@@ -12,10 +12,9 @@ import '@styles/index.scss';
 // Imports => Config
 
 // Imports => Constants
-import { DEFAULT_ROUTE, ROUTES, AUTHENTICATION_REQUIRED_ROUTES, LABELS, VISUALS } from '@constants';
+import { ROUTES, AUTHENTICATION_REQUIRED_ROUTES, LABELS, VISUALS } from '@constants';
 
 // Imports => Utilities
-import { AcHome, AcFallbackErrorPage } from '@views';
 import AcContent from '@views/ac-content/ac-content';
 
 // Imports => Components
@@ -104,14 +103,6 @@ const App = ({ store }) => {
   }, []);
 
   useDocumentTitleFromPath();
-
-  const getView = (page) => {
-    return page.slug === 'home' ? (
-      <AcHome store={store} />
-    ) : (
-      <AcContent store={store} />
-    );
-  };
 
   const hostname = window.location.hostname;
 

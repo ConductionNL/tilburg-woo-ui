@@ -17,12 +17,6 @@ module.exports = function(app) {
       pathRewrite: {
         '^/api/openconnector': '/index.php/apps/openconnector/api',
       },
-      onProxyReq: (proxyReq, req, res) => {
-        console.log('🔄 Webpack proxy - OpenConnector:', req.method, req.url, '→', proxyReq.path);
-      },
-      onProxyRes: (proxyRes, req, res) => {
-        console.log('✅ Webpack proxy response:', proxyRes.statusCode, req.url);
-      },
       logLevel: 'debug',
     })
   );
@@ -39,12 +33,6 @@ module.exports = function(app) {
       pathRewrite: {
         '^/api/apps': '/index.php/apps',  // Add index.php for Nextcloud apps
       },
-      onProxyReq: (proxyReq, req, res) => {
-        console.log('🔄 Webpack proxy - Apps:', req.method, req.url, '→', proxyReq.path);
-      },
-      onProxyRes: (proxyRes, req, res) => {
-        console.log('✅ Webpack proxy response:', proxyRes.statusCode, req.url);
-      },
       logLevel: 'debug',
     })
   );
@@ -60,12 +48,6 @@ module.exports = function(app) {
       },
       pathRewrite: {
         '^/api': '',  // Remove /api prefix, forward directly to root
-      },
-      onProxyReq: (proxyReq, req, res) => {
-        console.log('🔄 Webpack proxy - API:', req.method, req.url, '→', proxyReq.path);
-      },
-      onProxyRes: (proxyRes, req, res) => {
-        console.log('✅ Webpack proxy response:', proxyRes.statusCode, req.url);
       },
       logLevel: 'debug',
     })

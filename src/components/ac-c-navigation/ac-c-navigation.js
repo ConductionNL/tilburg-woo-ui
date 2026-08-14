@@ -3,7 +3,7 @@ import clsx from 'clsx';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router';
 
-const AcCNavigation = ({ items = [], mobileLogo, layoutClassName }) => {
+const AcCNavigation = ({ items = [], layoutClassName }) => {
   const [isOpen, setIsOpen] = React.useState(false);
   const navigate = useNavigate();
 

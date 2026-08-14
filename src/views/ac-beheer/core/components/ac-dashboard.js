@@ -23,7 +23,7 @@ const AcDashboard = ({ store }) => {
   const navigate = useNavigate();
   const { user, object } = store;
 
-  const [userOrganization, setUserOrganization] = useState(null);
+  const [, setUserOrganization] = useState(null);
   const [hasSuggestions, setHasSuggestions] = useState(null); // null = checking, true = has suggestions, false = no suggestions
   const [refreshKey, setRefreshKey] = useState(0); // Key to force component refresh
   const [isLoadingOrganization, setIsLoadingOrganization] = useState(true);

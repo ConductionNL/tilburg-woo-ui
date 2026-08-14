@@ -50,30 +50,22 @@ const attemptWizard = (action) => () => {
  * @param {string} props.id - Publication ID
  * @param {string} props.schemaSlug - Schema slug for beheer navigation
  * @param {string} props.title - Publication title (for accessibility)
- * @param {boolean} props.published - Publication status
  * @param {Object} props.object - Full object data with @self property for organization checks
  * @param {string} props.triggerStyle - Style for trigger button ('buttonSlim', 'button', etc.)
  * @param {string} props.triggerSize - Size for trigger button
  * @param {boolean} props.showViewAction - Whether to show "Bekijken" action (default: true)
  * @param {boolean} props.showEditAction - Whether to show "Bewerken" action (default: true)
- * @param {boolean} props.showPublishActions - Whether to show publish/depublish actions (default: false)
- * @param {function} props.onPublish - Callback for publish action
- * @param {function} props.onDepublish - Callback for depublish action
  */
 const ConPublicationActions = ({
   user,
   id,
   schemaSlug,
   // title,
-  published,
   object,
   triggerStyle = 'buttonSlim',
   triggerSize,
   showViewAction = true,
   showEditAction = true,
-  showPublishActions = false,
-  onPublish,
-  onDepublish,
   additionalActions = [], // Array of { label, onClick, icon } objects
 }) => {
   // Don't render if user is not authenticated or no schema slug
