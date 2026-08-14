@@ -157,9 +157,11 @@ const AcPublication = observer(({ store: { publications } }) => {
     return <AcLoader />;
   }
 
-  if (get_single?.catalog?.title === 'Softwarecatalogus') {
-    return <AcPublicationSoftwarecatalogus />;
-  } else {
+  const renderPublicationView = () => {
+    if (get_single?.catalog?.title === 'Softwarecatalogus') {
+      return <AcPublicationSoftwarecatalogus />;
+    }
+
     const publicationType = get_single?.['@self']?.schema?.slug.toLowerCase();
     switch (get_single?.publicationType?.title) {
       case 'Softwarecatalogus':

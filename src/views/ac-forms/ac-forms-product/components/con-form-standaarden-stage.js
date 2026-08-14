@@ -1477,12 +1477,6 @@ const ConFormStandaardenStage = ({
                   onFileChange={(file) =>
                     updateBewijsFile(representativeEntry.key, file)
                   }
-                  onFileChange={(file) =>
-                    updateBewijsFile(representativeEntry.key, file)
-                  }
-                  onChangeFileName={(filename) =>
-                    updateBewijsFilename(representativeEntry.key, filename)
-                  }
                   onClear={() => clearBewijs(representativeEntry.key)}
                   accept={['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx']}
                   showPreview={false}
