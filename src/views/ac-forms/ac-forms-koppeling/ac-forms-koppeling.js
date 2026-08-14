@@ -1030,22 +1030,20 @@ const AcFormsKoppeling = ({ store }) => {
       let missingA = false;
       let missingB = false;
       let missingR = false;
-      let missingN = false;
+      // Require Applicatie A, Applicatie B (or new app data), and Richting for all rows.
+      // Note: naam is auto-generated from "[App A] → [App B]" per #312 (not user-editable).
       for (let i = 0; i < rows.length; i++) {
         const rowId = rows[i];
         const appAId = selectedAppAByRow[rowId] || ownApp?.value;
         const appBId = selectedAppBByRow[rowId];
         const richting = directionByRow[rowId];
-        const naam = nameByRow[rowId];
         if (!appAId) missingA = true;
         if (!appBId) missingB = true;
         if (!richting) missingR = true;
-        if (!naam || !naam.trim()) missingN = true;
       }
       if (missingA) missing.push('Applicatie A');
       if (missingB) missing.push('Applicatie B');
       if (missingR) missing.push('Richting');
-      if (missingN) missing.push('Naam');
       if (missing.length > 0) {
         messages.push(`Verplichte velden nog niet ingevuld: ${missing.join(', ')}`);
       }
