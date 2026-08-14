@@ -14,6 +14,7 @@ import AcColumn from '@atoms/ac-column/ac-column';
 import { useNavigate } from 'react-router';
 import { useSearchParams } from 'react-router-dom';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
+import { AcSafeRedirect } from '@utils';
 
 /**
  * Sets a cookie with the specified name, value and options
@@ -72,8 +73,16 @@ const AcNextcloudAuthorization = () => {
   // const state = searchParams.get('state');
   const code = searchParams.get('code');
 
-  const redirect_url = sessionStorage.getItem('redirect_url');
+  // Narrowed to an in-app path before it is ever navigated to. Nothing in this
+  // codebase writes this key today, but it is read straight after an
+  // authorisation callback — the worst possible moment to follow a link
+  // somewhere else — and every producer of a redirect_url elsewhere writes a
+  // path, so the contract is the same one AcSafeRedirect enforces.
+  const storedRedirect = sessionStorage.getItem('redirect_url');
   sessionStorage.removeItem('redirect_url');
+  const redirect_url = storedRedirect
+    ? AcSafeRedirect(storedRedirect, null)
+    : null;
 
   useEffect(() => {
     if (!clientId || !secretKey) {

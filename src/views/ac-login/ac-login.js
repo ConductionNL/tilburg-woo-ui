@@ -12,6 +12,7 @@ import {
 import { VISUALS } from '@constants';
 import AcButton from '@molecules/ac-button/ac-button';
 import { useDebouncedInput } from '@src/hooks/index';
+import { AcSafeRedirect } from '@utils';
 
 const AcLogin = ({ store }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -34,8 +35,14 @@ const AcLogin = ({ store }) => {
     password: '',
   });
 
-  // Get redirect URL from query params
-  const redirectUrl = searchParams.get('redirect_url');
+  // Get redirect URL from query params. This value is whatever put the user on
+  // this page, so it is attacker-controllable: without narrowing it to an
+  // in-app path, /login?redirect_url=https://evil.example would send the user
+  // off-site at the moment they are most likely to trust the destination.
+  const requestedRedirect = searchParams.get('redirect_url');
+  const redirectUrl = requestedRedirect
+    ? AcSafeRedirect(requestedRedirect, null)
+    : null;
   const wasRedirected = !!redirectUrl;
 
   // Check if already authenticated on component mount
@@ -112,18 +119,34 @@ const AcLogin = ({ store }) => {
     setIsLoading(true);
     setErrors({});
 
-    const result = await user.sessionLogin(latestData.username, latestData.password);
+    // sessionLogin rejects rather than resolving when the request itself fails
+    // — the backend being briefly unreachable is enough. Without this catch the
+    // loading flag was never cleared, and since the submit button is disabled
+    // while loading, a single transient error left the user staring at a login
+    // form they could no longer use until they reloaded the page.
+    try {
+      const result = await user.sessionLogin(
+        latestData.username,
+        latestData.password
+      );
 
-    if (result.success) {
-      const targetUrl = redirectUrl || user.getOrganizationDashboardUrl();
-      navigate(targetUrl);
-    } else {
+      if (result.success) {
+        const targetUrl = redirectUrl || user.getOrganizationDashboardUrl();
+        navigate(targetUrl);
+      } else {
+        setErrors({
+          general: result.error || 'Inloggen mislukt. Controleer uw gegevens.',
+        });
+      }
+    } catch (error) {
+      console.error('Login request failed:', error);
       setErrors({
-        general: result.error || 'Inloggen mislukt. Controleer uw gegevens.',
+        general:
+          'Inloggen is op dit moment niet mogelijk. Probeer het later opnieuw.',
       });
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   const { debouncedCallback: debouncedSetUsername, flush: flushUsername } =

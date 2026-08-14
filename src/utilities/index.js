@@ -30,6 +30,7 @@ export {
   AcHasErrors,
 } from './ac-format-error';
 export { AcLogFetchError } from './ac-log-fetch-error';
+export { AcSafeRedirect } from './ac-safe-redirect';
 export { AcFormatIban } from './ac-format-iban';
 export { AcFormatInitials } from './ac-format-initials';
 export { AcFormatInternalURI } from './ac-format-internal-uri';
