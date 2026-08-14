@@ -112,55 +112,6 @@ const ConPublicationActions = ({
           </ConActionMenu.Button>
         )}
 
-        {/* Publish/Depublish actions - LEGACY: No longer needed */}
-        {/* {showPublishActions && !published && (
-          <ConActionMenu.Button
-            icon={<VISUALS.PUBLISH />}
-            onClick={
-              canEdit
-                ? () => {
-                    if (onPublish) {
-                      onPublish(id);
-                    } else {
-                      // Default publish action - could open a modal or make an API call
-                    }
-                  }
-                : undefined
-            }
-            disabled={!canEdit}
-            data-tooltip-id={!canEdit ? TOOLTIP_ID : undefined}
-            data-tooltip-content={
-              !canEdit ? getDisabledActionTooltip('publish', reason) : undefined
-            }
-          >
-            Publiceren
-          </ConActionMenu.Button>
-        )}
-
-        {showPublishActions && published && (
-          <ConActionMenu.Button
-            icon={<VISUALS.PUBLISH_OFF />}
-            onClick={
-              canEdit
-                ? () => {
-                    if (onDepublish) {
-                      onDepublish(id);
-                    } else {
-                      // Default depublish action - could open a modal or make an API call
-                    }
-                  }
-                : undefined
-            }
-            disabled={!canEdit}
-            data-tooltip-id={!canEdit ? TOOLTIP_ID : undefined}
-            data-tooltip-content={
-              !canEdit ? getDisabledActionTooltip('depublish', reason) : undefined
-            }
-          >
-            Depubliceren
-          </ConActionMenu.Button>
-        )} */}
-
         {/* Additional actions (e.g., related schema create actions) */}
         {additionalActions.map((action, index) => {
           const handleClick = () => {
