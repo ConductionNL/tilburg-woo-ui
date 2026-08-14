@@ -12,6 +12,7 @@ import {
   Heading1,
 } from '@utrecht/component-library-react/dist/css-module';
 import { AcFormatDate } from '@src/utilities/ac-format-date';
+import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 
 const ConKoppelingStageControleren = ({
   rows,
@@ -97,7 +98,7 @@ const ConKoppelingStageControleren = ({
     const fetchKoppelingData = async () => {
       try {
         setKoppelingLoading(true);
-        const url = `/api/openregister/api/objects/voorzieningen/koppeling/${encodeURIComponent(
+        const url = `${BASE_URL}/openregister/api/objects/voorzieningen/koppeling/${encodeURIComponent(
           selectedKoppelingId
         )}?_extend[]=@self.schema&_extend[]=@self.relations&_published=false`;
         const res = await fetch(url, { headers: { Accept: 'application/json' } });

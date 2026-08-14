@@ -327,7 +327,7 @@ const ConKoppelingStageToevoegen = ({
       const fetchModuleB = async () => {
         try {
           const res = await fetch(
-            `/api/openregister/api/objects/voorzieningen/module/${encodeURIComponent(
+            `${BASE_URL}/openregister/api/objects/voorzieningen/module/${encodeURIComponent(
               String(selectedModuleBId)
             )}`,
             { headers: { Accept: 'application/json' } }

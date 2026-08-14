@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { createDefaultFormObject } from '@src/utilities/schema-object-factory';
+import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 import clsx from 'clsx';
 import { AcSection, AcContainer, AcColumn, AcFlex } from '@src/atoms';
 import { AcButton } from '@src/molecules';
@@ -676,7 +677,7 @@ const AcFormsGebruik = ({ store }) => {
       try {
         // Fetch gebruik schema
         const gebruikResponse = await fetch(
-          '/api/openregister/api/schemas/gebruik'
+          `${BASE_URL}/openregister/api/schemas/gebruik`
         );
         let gebruikSchema = null;
         if (gebruikResponse.ok) {
