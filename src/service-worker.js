@@ -9,9 +9,9 @@
 
 import { skipWaiting, clientsClaim } from 'workbox-core';
 import { ExpirationPlugin } from 'workbox-expiration';
-import { precacheAndRoute, createHandlerBoundToURL } from 'workbox-precaching';
+import { precacheAndRoute } from 'workbox-precaching';
 import { registerRoute } from 'workbox-routing';
-import { StaleWhileRevalidate } from 'workbox-strategies';
+import { NetworkFirst, StaleWhileRevalidate } from 'workbox-strategies';
 
 skipWaiting();
 clientsClaim();
@@ -22,9 +22,20 @@ clientsClaim();
 // even if you decide not to use precaching. See https://cra.link/PWA
 precacheAndRoute(self.__WB_MANIFEST);
 
-// Set up App Shell-style routing, so that all navigation requests
-// are fulfilled with your index.html shell. Learn more at
-// https://developers.google.com/web/fundamentals/architecture/app-shell
+// Navigation requests go to the network first, falling back to the cached
+// shell when offline.
+//
+// This deliberately replaces the stock App Shell setup, which answered every
+// navigation from the *precached* index.html without ever consulting the
+// network. index.html is the only file naming the content-hashed bundles, so
+// serving it from cache pinned returning visitors to the previous build: a
+// deploy did not take effect until the worker happened to update, and the
+// nginx `Cache-Control: no-cache` on index.html was bypassed entirely, because
+// no request was ever made. Observed directly — an `type="button"` fix was
+// absent from the rendered page until the worker was unregistered by hand.
+//
+// NetworkFirst keeps the offline fallback while making a deploy visible on the
+// next navigation, which is what the caching headers already promise.
 const fileExtensionRegexp = new RegExp('/[^/?]+\\.[^/]+$');
 registerRoute(
 	// Return false to exempt requests from being fulfilled by index.html.
@@ -44,7 +55,10 @@ registerRoute(
 
 		return true;
 	},
-	createHandlerBoundToURL(process.env.PUBLIC_URL + '/index.html')
+	new NetworkFirst({
+		cacheName: 'html',
+		networkTimeoutSeconds: 5,
+	})
 );
 
 // An example runtime caching route for requests that aren't handled by the

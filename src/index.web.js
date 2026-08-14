@@ -3,8 +3,6 @@ import { render } from 'preact';
 
 import { register, unregister } from './registerServiceWorker';
 
-import { createBrowserHistory } from 'history';
-import { RouterStore, syncHistoryWithStore } from 'mobx-react-router';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { Tooltip } from 'react-tooltip';
 
@@ -23,14 +21,10 @@ import '@src/portal/portal.scss';
 
 export const TOOLTIP_ID = 'cb8f47c3-7151-4a46-954d-784a531b01e6';
 
-const browserHistory = createBrowserHistory();
-const routing = new RouterStore();
 const store = createStore(config);
 
 // Make store available globally for basic auth fallback
 window.app = { store };
-
-const history = syncHistoryWithStore(browserHistory, routing);
 
 const container = document.getElementById('root');
 
@@ -76,7 +70,7 @@ if (IS_PORTAL) {
 
   render(
     <StoreContext.Provider value={store}>
-      <Router history={history} basename={ROUTER_BASENAME}>
+      <Router basename={ROUTER_BASENAME}>
         <Tooltip delayShow={1000} className='ac-gemma-tooltip' id={TOOLTIP_ID} />
         <div className='portaliq-portal ac-app-container'>
           <PortalHome />
@@ -88,7 +82,7 @@ if (IS_PORTAL) {
 } else {
   render(
     <StoreContext.Provider value={store}>
-      <Router history={history} basename={ROUTER_BASENAME}>
+      <Router basename={ROUTER_BASENAME}>
         <Tooltip delayShow={1000} className='ac-gemma-tooltip' id={TOOLTIP_ID} />
         <App />
       </Router>
