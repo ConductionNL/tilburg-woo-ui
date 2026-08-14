@@ -732,15 +732,14 @@ module.exports = function (webpackEnv) {
     // it no longer fires on the status quo but still fails the build if the
     // bundle grows materially. It is deliberately NOT `false`.
     //
-    // These numbers record real debt, they are not a target:
-    //   - largest single asset: ~4.7 MiB (a vendor chunk)
-    //   - main entrypoint total: ~13.6 MiB
-    // Both should come down via code splitting and removing duplicated
-    // libraries. Until then this budget is what catches them getting worse.
+    // Ratcheted down as the bundle shrank (13.6 MiB -> 5.85 MiB entrypoint,
+    // 4.7 MiB -> 624 KiB largest asset). Kept just above current reality so the
+    // gains cannot silently regress; lower again as the entrypoint drops
+    // further. Remaining known weight: ~4.8 MiB of JS in the entrypoint.
     performance: {
       hints: 'warning',
-      maxAssetSize: 5 * 1024 * 1024, // 5 MiB — current largest asset ~4.7 MiB
-      maxEntrypointSize: 15 * 1024 * 1024, // 15 MiB — current entrypoint ~13.6 MiB
+      maxAssetSize: 768 * 1024, // 768 KiB — current largest asset ~624 KiB
+      maxEntrypointSize: 6.5 * 1024 * 1024, // 6.5 MiB — current entrypoint ~5.85 MiB
     },
   };
 };
