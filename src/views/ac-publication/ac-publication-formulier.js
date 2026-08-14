@@ -114,6 +114,7 @@ const AcPublicationFormulier = ({ store: { publications, user } }) => {
               {
                 <img
                   src={get_single?.image}
+                  alt=''
                   className='ac-publication-header-image'
                 ></img>
               }

@@ -37,7 +37,7 @@ module.exports = {
     },
     sourceType: 'module',
   },
-  plugins: ['react', 'react-hooks', 'import'],
+  plugins: ['react', 'react-hooks', 'import', 'jsx-a11y'],
   settings: {
     react: {
       version: 'detect',
@@ -106,6 +106,40 @@ module.exports = {
 
     // Import rules
     'import/no-unresolved': 'error',
+
+    // Accessibility. This is a public-sector site, so WCAG regressions are
+    // treated as build failures rather than warnings (`yarn lint` runs with
+    // --max-warnings 0, so a warning would fail the build anyway).
+    //
+    // Only rules the codebase currently satisfies are enabled, so the gate is
+    // meaningful from day one. The remaining jsx-a11y/recommended rules are
+    // listed below with their current violation counts; enable each as its
+    // backlog is cleared rather than switching the whole preset on and
+    // immediately having to suppress it.
+    'jsx-a11y/alt-text': 'error',
+    'jsx-a11y/no-autofocus': 'error',
+    'jsx-a11y/anchor-has-content': 'error',
+    'jsx-a11y/aria-props': 'error',
+    'jsx-a11y/aria-proptypes': 'error',
+    'jsx-a11y/aria-role': 'error',
+    'jsx-a11y/aria-unsupported-elements': 'error',
+    'jsx-a11y/heading-has-content': 'error',
+    'jsx-a11y/html-has-lang': 'error',
+    'jsx-a11y/iframe-has-title': 'error',
+    'jsx-a11y/img-redundant-alt': 'error',
+    'jsx-a11y/no-access-key': 'error',
+    'jsx-a11y/no-distracting-elements': 'error',
+    'jsx-a11y/no-redundant-roles': 'error',
+    'jsx-a11y/role-has-required-aria-props': 'error',
+    'jsx-a11y/role-supports-aria-props': 'error',
+    'jsx-a11y/scope': 'error',
+    'jsx-a11y/tabindex-no-positive': 'error',
+    // TODO(a11y backlog), counts measured 2026-08-14:
+    //   jsx-a11y/click-events-have-key-events          11
+    //   jsx-a11y/no-static-element-interactions        10
+    //   jsx-a11y/label-has-associated-control          10
+    //   jsx-a11y/no-noninteractive-element-interactions 3
+    //   jsx-a11y/no-noninteractive-element-to-interactive-role 1
   },
   overrides: [
     {

@@ -1124,7 +1124,6 @@ const ContactInformationForm = memo(
                 }
                 id='firstname-field'
                 disabled={loading}
-                autoFocus
               />
               <span className='ac-register-form-field-error'>
                 {touched.contactPersons.firstName &&

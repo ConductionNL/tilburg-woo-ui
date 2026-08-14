@@ -102,6 +102,7 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications, user, object } 
               {
                 <img
                   src={get_single?.image}
+                  alt=''
                   className='ac-publication-header-image'
                 ></img>
               }
@@ -295,6 +296,7 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications, user, object } 
                           <div className='ac-publication-organization-card-logo-container'>
                             <img
                               src={get_single?.organization?.image}
+                              alt={`Logo van ${get_single?.organization?.title || 'de organisatie'}`}
                               className='ac-publication-organization-card-logo'
                             ></img>
                           </div>
