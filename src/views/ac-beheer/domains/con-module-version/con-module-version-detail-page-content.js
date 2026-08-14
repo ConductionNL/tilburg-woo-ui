@@ -16,7 +16,7 @@ import {
 import { TOOLTIP_ID } from '@src/index.web';
 
 /**
- * Content for the module version (applicatie versie) details page
+ * Content for the module version (applicatieversie) details page
  *
  * note:
  * Structured to match con-product-details layout with vertical content flow
@@ -346,7 +346,7 @@ const ConModuleVersionDetailsPageContent = ({
 /* Warning card for unpublished objects - LEGACY: No longer needed */
 // const UnpublishedWarning = ({ data }) => {
 //   if (data?.['@self']?.published) return null;
-//   const schemaName = data?.['@self']?.schema?.title || 'Applicatie versie';
+//   const schemaName = data?.['@self']?.schema?.title || 'Applicatieversie';
 //   const objectName = data?.['@self']?.name;
 //
 //   return (

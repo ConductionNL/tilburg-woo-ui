@@ -328,7 +328,7 @@ const ConGebruikStepInformatie = ({
           </div>
         )}
 
-        {/* Row 3: Applicatie versie field - select for existing applicatie */}
+        {/* Row 3: Applicatieversie field - select for existing applicatie */}
         {applicatieKeuze === 'bestaand' && (
           <div>
             <ConSchemaEnhancedField

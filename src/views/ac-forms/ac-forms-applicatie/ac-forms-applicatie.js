@@ -982,6 +982,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
 
     // Get all standaardversie IDs from referentieComponentenWithStandards
     // Traverse: referentieComponenten → standaarden → standaardVersies
+    // IMPORTANT: Only include ACTIVE versions (in gebruik or in ontwikkeling)
     const getAllStandaardVersiesFromRefs = () => {
       const versiesSet = new Set();
 
@@ -998,6 +999,14 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
           item.name ||
           null
         );
+      };
+
+      // Helper to check if a versie has active status
+      const hasActiveStatus = (versie, fetchedData = {}) => {
+        const status = (fetchedData.status || versie?.status || '').toLowerCase().trim();
+        // Default to true if no status (backwards compatibility)
+        if (!status) return true;
+        return status === 'in gebruik' || status === 'in ontwikkeling';
       };
 
       // Helper to process standards and extract their versions
@@ -1022,7 +1031,18 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
           if (Array.isArray(standaardVersiesList)) {
             standaardVersiesList.forEach((versie) => {
               const versieId = getItemId(versie);
-              if (versieId) {
+              if (!versieId) return;
+
+              // Find fetched data for this versie to check status
+              const fetchedVersieData = standaardenversiesOptions.find(
+                (opt) =>
+                  String(opt.value || opt.data?.id || opt.data?.identifier) ===
+                  String(versieId)
+              );
+
+              // ONLY add ACTIVE versions to the set
+              // Inactive versions will be treated as "extra" if they're in compliancy
+              if (hasActiveStatus(versie, fetchedVersieData?.data || {})) {
                 versiesSet.add(String(versieId));
               }
             });
@@ -1040,8 +1060,12 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
 
     const refVersieIds = getAllStandaardVersiesFromRefs();
 
-    // Find extra standaardversies: those in compliancy/standaardVersies but NOT in referentieComponenten
+    // Find extra standaardversies: those in compliancy/standaardVersies but NOT in referentieComponenten (active versions)
+    // This now includes:
+    // 1. Versions not in any referentieComponent
+    // 2. Inactive versions from referentieComponenten that are in compliancy
     const extraVersies = [];
+    const addedOptionValues = new Set(); // Track which options we've already added to prevent duplicates
 
     allVersieIds.forEach((versieId) => {
       // Check if this versie is NOT in referentieComponenten (i.e., it's an extra versie)
@@ -1073,8 +1097,10 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
           return false;
         });
 
-        if (option) {
+        // Only add the option if we found it AND haven't added it already
+        if (option && !addedOptionValues.has(String(option.value))) {
           extraVersies.push(option);
+          addedOptionValues.add(String(option.value));
         }
       }
     });

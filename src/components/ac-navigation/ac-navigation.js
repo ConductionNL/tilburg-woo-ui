@@ -23,11 +23,9 @@ const AcNavigation = ({ store: { menu, user } }) => {
 
   const isLoginItem = (item) => {
     const linkMatch =
-      item.link &&
-      LOGIN_PATHS.some((path) => item.link.toLowerCase() === path);
+      item.link && LOGIN_PATHS.some((path) => item.link.toLowerCase() === path);
     const nameMatch =
-      item.name &&
-      LOGIN_NAMES.some((name) => item.name.toLowerCase() === name);
+      item.name && LOGIN_NAMES.some((name) => item.name.toLowerCase() === name);
     return linkMatch || nameMatch;
   };
 

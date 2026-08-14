@@ -97,6 +97,15 @@ const AcHeader = ({ store: { menu, user, object } }) => {
     setRetryCount(0);
   }, [user?.activeOrganization?.uuid, user?.activeOrganization?.id]);
 
+  // Reset organization state when user logs out
+  useEffect(() => {
+    if (!user.isAuthenticated) {
+      setFullActiveOrganisation(null);
+      setHasLoadedOrganisation(false);
+      setRetryCount(0);
+    }
+  }, [user.isAuthenticated]);
+
   // Get user display name and organization
   const getUserDisplayName = () => {
     if (!user.user) return null;

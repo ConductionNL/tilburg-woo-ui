@@ -28,7 +28,7 @@ const AcDashboard = ({ store }) => {
   const [refreshKey, setRefreshKey] = useState(0); // Key to force component refresh
   const [isLoadingOrganization, setIsLoadingOrganization] = useState(true);
 
-  const userGroups = user?.userGroups || [];
+  const userGroups = user?.user?.groups || [];
 
   const fetchOrganisatieData = useCallback(async () => {
     const activeOrganizationId = user?.activeOrganization?.uuid;

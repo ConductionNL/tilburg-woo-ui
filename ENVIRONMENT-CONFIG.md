@@ -888,7 +888,6 @@ const validateConfig = (config) => {
 | Register           | /register                    | concrete  | ❌            | User registration                           | AcRegister                 | ✅ Active |
 | Aanmelden          | /aanmelden                   | concrete  | ❌            | User registration (alias)                   | AcRegister                 | ✅ Active |
 | Views              | /views/:id                   | dynamic   | ❌            | Dynamic views                               | AcViews                    | ✅ Active |
-| **My Account**     | **/account**                 | **concrete** | **🔒 YES**    | **User account management**                 | **AcMyAccount**            | **✅ Active** |
 | Directory          | /directory                   | concrete  | ❌            | Directory listing                           | ConDirectory               | ✅ Active |
 | Fallback           | *                            | wildcard  | ❌            | Any other route redirects to Home           | AcHome                     | ✅ Active |
 
@@ -899,7 +898,6 @@ The following routes require user authentication and should redirect to login if
 - **🔒 /beheer** - Admin dashboard
 - **🔒 /beheer/:type** - Admin type management  
 - **🔒 /beheer/:type/:id** - Admin detail pages
-- **🔒 /account** - User account management
 
 ### CMS-Driven Routes (Removed from Frontend)
 
@@ -1046,7 +1044,6 @@ export const AUTHENTICATION_REQUIRED_ROUTES = [
   PATHS.BEHEER,              // /beheer
   PATHS.BEHEER_TYPE,         // /beheer/:type  
   PATHS.BEHEER_TYPE_DETAILS, // /beheer/:type/:id
-  PATHS.MY_ACCOUNT,          // /account
 ];
 ```
 

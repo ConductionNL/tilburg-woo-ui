@@ -71,13 +71,12 @@ const App = ({ store }) => {
   // on search and collection endpoints, eliminating the need for bulk fetching
 
   // Warm up schema cache only when user is authenticated AND on public pages
-  // Skip on authenticated-only routes (/beheer, /forms, /account) since those pages already fetch schemas
+  // Skip on authenticated-only routes (/beheer, /forms) since those pages already fetch schemas
   useEffect(() => {
     const pathname = window.location.pathname;
     const isAuthenticatedRoute =
       pathname.startsWith('/beheer') ||
-      pathname.startsWith('/forms') ||
-      pathname.startsWith('/account');
+      pathname.startsWith('/forms');
 
     if (user.isAuthenticated && !isAuthenticatedRoute) {
       store.object.warmupSchemaCache().catch((error) => {
