@@ -3493,7 +3493,19 @@ export class ObjectStore {
     const fetchPromise = (async () => {
       try {
         console.info(`🌐 Fetching name for ${id} from backend`);
-        const response = await nextcloudApi.get(`/openregister/api/names/${id}`);
+        // Was `GET /openregister/api/names/${id}`. That route was removed from
+        // OpenRegister (SEC-CTRL-2): it was #[PublicPage] over a resolver that
+        // ran with _rbac and _multitenancy disabled, so any anonymous caller
+        // holding a UUID could read that object's name across every register,
+        // schema and tenant.
+        //
+        // The bulk route is the supported replacement and requires a session.
+        // It returns `{ names: { <id>: <name> } }` — which is already the first
+        // shape the response handling below looks for, so nothing downstream
+        // changes for a single id.
+        const response = await nextcloudApi.post('/openregister/api/names', {
+          ids: [id],
+        });
 
         if (response.ok && response.data?.names?.[id]) {
           const name = response.data.names[id];
@@ -3706,67 +3718,17 @@ export class ObjectStore {
     this.setNamesInCache(apiResponse.relatedNames);
   };
 
-  /**
-   * Triggers manual warmup via POST endpoint
-   * @returns {Promise<Object>} Warmup response with statistics
-   */
-  @action
-  triggerNamesWarmup = async () => {
-    const requestType = 'names_trigger_warmup';
-    this.setLoading(requestType, true);
-    this.setError(requestType, null);
-
-    try {
-      console.info('🔥 Triggering manual names cache warmup');
-      const response = await nextcloudApi.post('/openregister/api/names/warmup');
-
-      if (!response.ok) {
-        throw new Error(
-          `Failed to trigger names warmup: ${response.status} ${response.statusText}`
-        );
-      }
-
-      console.info('✅ Names cache warmup triggered:', response.data);
-      return response.data;
-    } catch (error) {
-      console.error('❌ Names cache warmup trigger failed:', error);
-      this.setError(requestType, error.message);
-      throw error;
-    } finally {
-      this.setLoading(requestType, false);
-    }
-  };
-
-  /**
-   * Gets names cache statistics from backend
-   * @returns {Promise<Object>} Cache statistics
-   */
-  @action
-  getNamesStatsFromBackend = async () => {
-    const requestType = 'names_backend_stats';
-    this.setLoading(requestType, true);
-    this.setError(requestType, null);
-
-    try {
-      console.info('📊 Fetching names cache stats from backend');
-      const response = await nextcloudApi.get('/openregister/api/names/stats');
-
-      if (!response.ok) {
-        throw new Error(
-          `Failed to fetch names stats: ${response.status} ${response.statusText}`
-        );
-      }
-
-      console.info('✅ Names cache stats fetched:', response.data);
-      return response.data;
-    } catch (error) {
-      console.error('❌ Failed to fetch names cache stats:', error);
-      this.setError(requestType, error.message);
-      throw error;
-    } finally {
-      this.setLoading(requestType, false);
-    }
-  };
+  // `triggerNamesWarmup` and `getNamesStatsFromBackend` used to live here. They
+  // called `POST /openregister/api/names/warmup` and `GET /openregister/api/names/stats`,
+  // both of which OpenRegister removed under SEC-CTRL-2 — they were #[PublicPage],
+  // so any anonymous caller could read cache internals or make the server rebuild
+  // the whole name cache.
+  //
+  // Neither action had a single caller anywhere in this app, so nothing is lost by
+  // dropping them rather than repointing. Manual warmup still exists in
+  // OpenRegister as an admin-only operation
+  // (`POST /openregister/api/settings/cache/warmup-names`), which is the right
+  // home for it — a portal has no business triggering server cache rebuilds.
 
   /**
    * DEPRECATED: Names are now efficiently loaded via _extend=_names on collection endpoints.
