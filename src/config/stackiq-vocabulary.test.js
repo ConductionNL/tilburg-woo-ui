@@ -132,6 +132,7 @@ describe('stackiq vocabulary: responses', () => {
     };
     fromStackiqResponse(schema);
     expect(schema.slug).toBe('organisatie');
+    expect(schema.title).toBe('Organisatie');
     expect(schema.stackiqSlug).toBe('organization');
     expect(Object.keys(schema.properties)).toEqual(['naam', 'oin']);
     expect(schema.required).toEqual(['naam']);
@@ -174,6 +175,22 @@ describe('stackiq vocabulary: responses', () => {
     fromStackiqResponse(list);
     expect(list.results[0].slug).toBe('gebruik');
     expect(Object.keys(list.results[0].properties)).toEqual(['afnemer']);
+  });
+
+  it('reads the schema of an /api/aanbod row from _aanbod_type', () => {
+    const data = {
+      results: [
+        {
+          consumer: 'org',
+          status: 'Planned',
+          _aanbod_type: 'usage',
+          '@self': { schema: '952' },
+        },
+      ],
+    };
+    fromStackiqResponse(data);
+    expect(data.results[0].afnemer).toBe('org');
+    expect(data.results[0].status).toBe('Gepland');
   });
 
   it('presents the stackiq register under its legacy slug', () => {

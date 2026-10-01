@@ -83,6 +83,21 @@ export const SCHEMA_FROM_STACKIQ = {
   bioMeasure: 'bioMaatregel',
 };
 
+// stackiq schema slug -> the Dutch title the UI shows (page headings, the
+// "Type" column). stackiq's own titles are English.
+export const SCHEMA_TITLE_FROM_STACKIQ = {
+  organization: 'Organisatie',
+  module: 'Applicatie',
+  moduleVersion: 'Applicatieversie',
+  usage: 'Gebruik',
+  connection: 'Koppeling',
+  catalogService: 'Dienst',
+  contactPerson: 'Contactpersoon',
+  catalogContract: 'Contract',
+  vulnerability: 'Kwetsbaarheid',
+  'software-review': 'Beoordeling',
+};
+
 // Per stackiq schema: stackiq property -> the Dutch name(s) the UI uses.
 // A property not listed keeps its name (stackiq kept several Dutch names,
 // e.g. `diensten`, `koppelingen`, `deelnames`, `contactpersonen`).
@@ -478,6 +493,10 @@ function translateSchema(schema) {
     schema.stackiqSlug = stackiqSlug;
     schema.slug = SCHEMA_FROM_STACKIQ[stackiqSlug];
   }
+  if (SCHEMA_TITLE_FROM_STACKIQ[stackiqSlug]) {
+    schema.stackiqTitle = schema.title;
+    schema.title = SCHEMA_TITLE_FROM_STACKIQ[stackiqSlug];
+  }
   return schema;
 }
 
@@ -528,7 +547,8 @@ export function fromStackiqResponse(
 
   const self = data['@self'];
   if (isPlainObject(self)) {
-    const slug = schemaSlugOf(self) || requestSchemaSlug;
+    // stackiq's /api/aanbod tags each row with the schema it came from.
+    const slug = schemaSlugOf(self) || data._aanbod_type || requestSchemaSlug;
     if (isPlainObject(self.schema)) fromStackiqResponse(self.schema, null, seen);
     if (isPlainObject(self.register)) fromStackiqResponse(self.register, null, seen);
     if (slug) renameObject(data, slug);
