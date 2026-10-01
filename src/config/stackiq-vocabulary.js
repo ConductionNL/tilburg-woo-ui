@@ -50,6 +50,19 @@ export const SCHEMA_TO_STACKIQ = {
   sector: 'sector',
   bioMaatregel: 'bioMeasure',
   biomaatregel: 'bioMeasure',
+  // Beheer route types end up in schema URLs too (/schemas/organisaties/related).
+  organisaties: 'organization',
+  applicaties: 'module',
+  applicatieversie: 'moduleVersion',
+  applicatiesversie: 'moduleVersion',
+  gebruiken: 'usage',
+  koppelingen: 'connection',
+  diensten: 'catalogService',
+  contactpersonen: 'contactPerson',
+  contracten: 'catalogContract',
+  overeenkomst: 'catalogContract',
+  overeenkomsten: 'catalogContract',
+  kwetsbaarheden: 'vulnerability',
 };
 
 // stackiq schema slug -> the Dutch slug the UI compares against.
@@ -569,4 +582,50 @@ export function installStackiqVocabulary(instance) {
     return response;
   });
   return instance;
+}
+
+/**
+ * Apply the same translation to `window.fetch`. About twenty views call
+ * OpenRegister and stackiq with fetch() directly instead of through an axios
+ * client, so the interceptors never see them (`/objects/voorzieningen/
+ * organisatie/{id}/uses` from "Mijn organisatie", for one). They also send no
+ * credentials, so the wrapper adds the same Authorization header the axios
+ * clients add. Only same-origin OpenRegister/stackiq URLs are touched.
+ */
+export function installStackiqFetch(win, getAuthHeader = () => null) {
+  if (!win || typeof win.fetch !== 'function' || win.fetch.__stackiqVocabulary)
+    return;
+  const original = win.fetch.bind(win);
+  const wrapped = async (input, init = {}) => {
+    const url = typeof input === 'string' ? input : input && input.url;
+    if (!url || !isStackiqUrl(url) || /^https?:\/\//.test(url)) {
+      return original(input, init);
+    }
+    const newUrl = toStackiqUrl(url);
+    const opts = { ...init };
+    const schema = stackiqSchemaOfUrl(newUrl);
+    if (schema && typeof opts.body === 'string') {
+      try {
+        opts.body = JSON.stringify(toStackiqBody(JSON.parse(opts.body), schema));
+      } catch (e) {
+        // not JSON: send as is
+      }
+    }
+    const headers = new win.Headers(
+      opts.headers || (typeof input === 'object' ? input.headers : undefined)
+    );
+    const auth = getAuthHeader();
+    if (auth && !headers.has('Authorization')) headers.set('Authorization', auth);
+    opts.headers = headers;
+    const response = await original(
+      typeof input === 'string' ? newUrl : new win.Request(newUrl, input),
+      opts
+    );
+    const json = response.json.bind(response);
+    response.json = async () => fromStackiqResponse(await json(), schema);
+    return response;
+  };
+  wrapped.__stackiqVocabulary = true;
+  // eslint-disable-next-line no-param-reassign
+  win.fetch = wrapped;
 }

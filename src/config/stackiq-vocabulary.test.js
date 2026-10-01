@@ -5,6 +5,7 @@ import {
   fromStackiqResponse,
   isStackiqUrl,
   installStackiqVocabulary,
+  installStackiqFetch,
 } from './stackiq-vocabulary';
 
 describe('stackiq vocabulary: requests', () => {
@@ -23,6 +24,25 @@ describe('stackiq vocabulary: requests', () => {
     );
     expect(toStackiqUrl('/openregister/api/schemas/dienst')).toBe(
       '/openregister/api/schemas/catalogService'
+    );
+  });
+
+  it('maps the plural beheer route types used as schema slugs', () => {
+    expect(toStackiqUrl('/openregister/api/schemas/organisaties/related')).toBe(
+      '/openregister/api/schemas/organization/related'
+    );
+    expect(toStackiqUrl('/openregister/api/objects/voorzieningen/applicaties')).toBe(
+      '/openregister/api/objects/stackiq/module'
+    );
+  });
+
+  it('translates the uses/used paths', () => {
+    expect(
+      toStackiqUrl(
+        '/api/apps/openregister/api/objects/voorzieningen/organisatie/abc/used?_limit=100'
+      )
+    ).toBe(
+      '/api/apps/openregister/api/objects/stackiq/organization/abc/used?_limit=100'
     );
   });
 
@@ -172,5 +192,64 @@ describe('stackiq vocabulary: responses', () => {
     });
     expect(config.url).toBe('/openregister/api/objects/stackiq/organization');
     expect(config.data).toEqual({ name: 'X' });
+  });
+});
+
+describe('stackiq vocabulary: fetch', () => {
+  const makeWin = (payload) => {
+    const calls = [];
+    class FakeHeaders {
+      constructor(init) {
+        this.map = { ...(init || {}) };
+      }
+      has(k) {
+        return k in this.map;
+      }
+      set(k, v) {
+        this.map[k] = v;
+      }
+    }
+    const win = {
+      Headers: FakeHeaders,
+      Request: function Request(url) {
+        this.url = url;
+      },
+      fetch: async (url, opts) => {
+        calls.push({ url, opts });
+        return { ok: true, json: async () => JSON.parse(JSON.stringify(payload)) };
+      },
+    };
+    return { win, calls };
+  };
+
+  it('translates the URL, body, credentials and response of a raw fetch', async () => {
+    const { win, calls } = makeWin({
+      results: [{ name: 'Centric', type: 'Supplier', '@self': { schema: '951' } }],
+    });
+    installStackiqFetch(win, () => 'Basic abc');
+    installStackiqFetch(win, () => 'Basic abc');
+    const res = await win.fetch(
+      '/api/apps/openregister/api/objects/voorzieningen/organisatie?_limit=1',
+      {
+        method: 'POST',
+        body: JSON.stringify({ naam: 'X' }),
+      }
+    );
+    expect(calls[0].url).toBe(
+      '/api/apps/openregister/api/objects/stackiq/organization?_limit=1'
+    );
+    expect(JSON.parse(calls[0].opts.body)).toEqual({ name: 'X' });
+    expect(calls[0].opts.headers.map.Authorization).toBe('Basic abc');
+    const data = await res.json();
+    expect(data.results[0].naam).toBe('Centric');
+    expect(data.results[0].type).toBe('Leverancier');
+  });
+
+  it('leaves other URLs alone', async () => {
+    const { win, calls } = makeWin({});
+    installStackiqFetch(win, () => 'Basic abc');
+    await win.fetch('/api/apps/opencatalogi/api/publications', {});
+    expect(calls[0].url).toBe('/api/apps/opencatalogi/api/publications');
+    expect(calls[0].opts.headers).toBeUndefined();
   });
 });
