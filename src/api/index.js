@@ -15,6 +15,7 @@ import AuthenticationAPI from '@api/authentication.api';
 import MijnOmgevingAPI from '@api/mijnOmgeving.api';
 import GemmaAPI from '@api/gemma.api';
 import AangebodenGebruikAPI from '@api/aangebodenGebruik.api';
+import { installStackiqVocabulary } from '@src/config/stackiq-vocabulary';
 
 const onUploadProgress = (event) => {
   console.group('[Axios] => fn.onUploadProgress');
@@ -89,6 +90,7 @@ export class API {
       ...config.api,
     });
     addInterceptors(Client);
+    installStackiqVocabulary(Client);
 
     // All APIs now use the single Client
 
@@ -97,12 +99,14 @@ export class API {
       onDownloadProgress,
     });
     addInterceptors(DownloadClient);
+    installStackiqVocabulary(DownloadClient);
 
     const UploadClient = axios.create({
       ...config.upload,
       onUploadProgress,
     });
     addInterceptors(UploadClient);
+    installStackiqVocabulary(UploadClient);
 
     window.addEventListener('cancelRequests', cancelRequests, false);
 

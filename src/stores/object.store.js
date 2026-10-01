@@ -3,6 +3,7 @@ import { observable, makeObservable, action, runInAction } from 'mobx';
 
 // Imports => Utilities
 import axios, { CanceledError } from 'axios';
+import { installStackiqVocabulary } from '@src/config/stackiq-vocabulary';
 import {
   getCookie,
   sortPropertiesByOrder,
@@ -32,6 +33,10 @@ const nextcloudApi = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+// The softwarecatalogus data lives in stackiq's English vocabulary; translate
+// at the boundary (see src/config/stackiq-vocabulary.js).
+installStackiqVocabulary(nextcloudApi);
 
 // --- Portaliq portal mode ------------------------------------------------
 // When the SPA runs as the Portaliq per-subject portal (window.RUNTIME_CONFIG
