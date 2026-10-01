@@ -504,7 +504,9 @@ function isSchemaEntity(node) {
   return (
     isPlainObject(node.properties) &&
     typeof node.slug === 'string' &&
-    !node['@self'] &&
+    // A schema carries its own @self (extendedBy, roles, ...), an object's
+    // @self names the schema it belongs to.
+    !(isPlainObject(node['@self']) && 'schema' in node['@self']) &&
     'title' in node
   );
 }

@@ -193,6 +193,19 @@ describe('stackiq vocabulary: responses', () => {
     expect(data.results[0].status).toBe('Gepland');
   });
 
+  it('recognises a schema that carries its own @self block', () => {
+    const schema = {
+      title: 'Application',
+      slug: 'module',
+      properties: { name: {} },
+      '@self': { extendedBy: [], roles: [] },
+    };
+    fromStackiqResponse(schema);
+    expect(schema.slug).toBe('module');
+    expect(schema.title).toBe('Applicatie');
+    expect(Object.keys(schema.properties)).toEqual(['naam']);
+  });
+
   it('presents the stackiq register under its legacy slug', () => {
     const register = {
       id: 26,
