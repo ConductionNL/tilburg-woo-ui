@@ -819,7 +819,10 @@ export class ObjectStore {
 
     if (object?.id) {
       const fetchPromises = [];
-      const dataTypes = ['logs', 'uses', 'used', 'files'];
+      // OpenRegister serves audit trails to admins only (403 for everyone
+      // else), so only ask for them when the signed-in user is an admin.
+      const isAdmin = !!(typeof window !== 'undefined' && window.app?.store?.user?.isAdmin);
+      const dataTypes = isAdmin ? ['logs', 'uses', 'used', 'files'] : ['uses', 'used', 'files'];
       for (const dataType of dataTypes) {
         if (!this.relatedData[type][dataType]) {
           const defaultLimit = dataType === 'files' ? 500 : 20;
