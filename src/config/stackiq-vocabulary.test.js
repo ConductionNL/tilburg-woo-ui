@@ -164,6 +164,18 @@ describe('stackiq vocabulary: responses', () => {
     ).toBe('/openregister/api/objects/stackiq/usage?status=In production');
   });
 
+  it('translates the schema list the schema cache is filled from', () => {
+    expect(isStackiqUrl('/api/apps/openregister/api/schemas?_limit=100')).toBe(true);
+    const list = {
+      results: [
+        { id: 952, title: 'Usage', slug: 'usage', properties: { consumer: {} } },
+      ],
+    };
+    fromStackiqResponse(list);
+    expect(list.results[0].slug).toBe('gebruik');
+    expect(Object.keys(list.results[0].properties)).toEqual(['afnemer']);
+  });
+
   it('presents the stackiq register under its legacy slug', () => {
     const register = {
       id: 26,

@@ -294,7 +294,7 @@ export function isStackiqUrl(url) {
     /\/openregister\/api\/(objects|registers)\/(voorzieningen|stackiq)(\/|\?|$)/.test(
       url
     ) ||
-    /\/openregister\/api\/schemas\/[^/?]+/.test(url) ||
+    /\/openregister\/api\/schemas(\/[^/?]+|\?|$)/.test(url) ||
     /\/(softwarecatalog|stackiq)\/api\//.test(url)
   );
 }
