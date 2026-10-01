@@ -145,7 +145,7 @@ const ConKoppelingStageToevoegen = ({
         _limit: '50',
         _page: '1',
         gemmaType: 'Buitengemeentelijke voorziening',
-        '_extend[]': '_schema',
+        '_extend[]': '@self.schema',
         _published: 'false',
       });
       if (q) queryParams.set('_search', q);

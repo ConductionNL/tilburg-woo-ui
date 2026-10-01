@@ -1016,7 +1016,7 @@ const ConBeheerViews = ({ store }) => {
                       onClick={async () => {
                         try {
                           const response = await fetch(
-                            '/api/apps/softwarecatalog/api/archimate/export',
+                            '/api/apps/stackiq/api/archimate/export',
                             {
                               method: 'POST',
                               headers: {

@@ -15,9 +15,9 @@
 export async function fetchModuleIdsFromGebruikByAfnemer(apiBaseUrl, afnemerId) {
   if (!afnemerId) return [];
 
-  const url = `${apiBaseUrl}/softwarecatalog/api/gebruik?afnemer=${encodeURIComponent(
+  const url = `${apiBaseUrl}/stackiq/api/gebruik?afnemer=${encodeURIComponent(
     String(afnemerId)
-  )}&_limit=1000&_extend[]=_schema`;
+  )}&_limit=1000&_extend[]=@self.schema`;
 
   const res = await fetch(url, { headers: { Accept: 'application/json' } });
 

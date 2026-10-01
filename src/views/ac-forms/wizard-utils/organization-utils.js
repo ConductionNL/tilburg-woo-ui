@@ -13,7 +13,7 @@ import { AcLogFetchError } from '@utils';
  * Custom hook to fetch full organization data and optionally process deelnemers
  * @param {Object} store - MobX store instance
  * @param {Object} options - Configuration options
- * @param {Array<string>} options.extend - Array of extend fields for API request (default: ['_schema'])
+ * @param {Array<string>} options.extend - Array of extend fields for API request (default: ['@self.schema'])
  * @param {boolean} options.processDeelnemers - Whether to process deelnemers into options (default: false)
  * @param {Array<string>} options.deelnemerOrgTypes - Organization types to process deelnemers for (default: ['Samenwerking'])
  * @param {boolean} options.enabled - Whether to enable fetching (default: true)
@@ -23,7 +23,7 @@ import { AcLogFetchError } from '@utils';
  */
 export const useFullOrganization = (store, options = {}) => {
   const {
-    extend = ['_schema'],
+    extend = ['@self.schema'],
     processDeelnemers = false,
     deelnemerOrgTypes = ['Samenwerking'],
     enabled = true,

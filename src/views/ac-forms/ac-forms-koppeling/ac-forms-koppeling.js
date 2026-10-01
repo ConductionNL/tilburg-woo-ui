@@ -208,7 +208,7 @@ const AcFormsKoppeling = ({ store }) => {
   const organisatieSearchConfig = createOrganisatieSearchConfig(store, {
     mapToOption: organisatieMapper,
     source: 'index',
-    extendParams: ['_schema'],
+    extendParams: ['@self.schema'],
   });
   const {
     search: searchOrganisaties,
@@ -424,7 +424,7 @@ const AcFormsKoppeling = ({ store }) => {
       try {
         const url = `${BASE_URL}/openregister/api/objects/voorzieningen/koppeling/${encodeURIComponent(
           koppelingId
-        )}?_extend[]=_schema&_extend[]=_relations`;
+        )}?_extend[]=@self.schema&_extend[]=_relations`;
         const res = await fetch(url, { headers: { Accept: 'application/json' } });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
@@ -1400,7 +1400,7 @@ const AcFormsKoppeling = ({ store }) => {
         _limit: '500',
         _page: '1',
         gemmaType: 'Referentiecomponent',
-        '_extend[]': '_schema',
+        '_extend[]': '@self.schema',
       });
 
       const refCompResponse = await fetch(

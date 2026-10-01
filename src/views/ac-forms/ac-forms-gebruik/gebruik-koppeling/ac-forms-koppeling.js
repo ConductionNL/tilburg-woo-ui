@@ -267,7 +267,7 @@ const AcFormsKoppeling = ({ store }) => {
           _limit: '50',
           _page: '1',
           _source: 'index',
-          '_extend[]': '_schema',
+          '_extend[]': '@self.schema',
           _published: 'false',
           ...(searchTerm && searchTerm.trim() ? { _search: searchTerm.trim() } : {}),
           ...additionalParams,
@@ -499,7 +499,7 @@ const AcFormsKoppeling = ({ store }) => {
           'gebruik',
           String(gebruikId),
           {
-            '_extend[]': ['_schema'],
+            '_extend[]': ['@self.schema'],
             _published: 'false',
           }
         );
@@ -861,7 +861,7 @@ const AcFormsKoppeling = ({ store }) => {
     deelnemerOptions,
     loading: deelnemersLoading,
   } = useFullOrganization(store, {
-    extend: ['_schema', 'deelnemers'],
+    extend: ['@self.schema', 'deelnemers'],
     processDeelnemers: true,
     deelnemerOrgTypes: ['Samenwerking'],
   });
@@ -1105,7 +1105,7 @@ const AcFormsKoppeling = ({ store }) => {
         _limit: '500',
         _page: '1',
         gemmaType: 'Standaard',
-        '_extend[]': '_schema',
+        '_extend[]': '@self.schema',
         _published: 'false',
       });
 

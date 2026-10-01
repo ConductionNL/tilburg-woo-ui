@@ -267,7 +267,7 @@ const AcFormsGebruik = ({ store }) => {
     deelnemerOptions,
     loading: deelnemersLoading,
   } = useFullOrganization(store, {
-    extend: ['_schema', 'deelnemers'],
+    extend: ['@self.schema', 'deelnemers'],
     processDeelnemers: true,
     deelnemerOrgTypes: ['Samenwerking', 'Community'],
   });
@@ -602,7 +602,7 @@ const AcFormsGebruik = ({ store }) => {
           'gebruik',
           String(gebruikId),
           {
-            '_extend[]': ['_schema'],
+            '_extend[]': ['@self.schema'],
             _published: 'false',
           }
         );
@@ -817,7 +817,7 @@ const AcFormsGebruik = ({ store }) => {
       if (!modData || !Array.isArray(versiesArray) || versiesArray.length === 0) {
         try {
           await store.object.fetchObject('voorzieningen', 'module', String(mod), {
-            '_extend[]': ['_schema', '@self.relations', 'moduleVersies'],
+            '_extend[]': ['@self.schema', '@self.relations', 'moduleVersies'],
           });
           if (cancelled) return;
           modData = store.object.getObject('voorzieningen_module', String(mod));
