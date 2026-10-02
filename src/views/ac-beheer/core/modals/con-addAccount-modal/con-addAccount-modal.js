@@ -53,7 +53,7 @@ const ConAddAccountModal = ({
     setErrorMessage(null);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/softwarecatalog/api/contactpersonen/${
+        `${commongroundApiUrl()}/stackiq/api/contactpersonen/${
           contactpersoon.id
         }/convert-to-user`,
         {

@@ -361,7 +361,7 @@ const AcPublicationProduct = ({
     setUsesLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend[]=_schema&_limit=100`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend[]=@self.schema&_limit=100`,
         {
           method: 'GET',
           headers: {
@@ -391,7 +391,7 @@ const AcPublicationProduct = ({
     setUsedLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=_schema&_extend[]=compliancy&_limit=100`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=@self.schema&_extend[]=compliancy&_limit=100`,
         {
           method: 'GET',
           headers: {

@@ -251,7 +251,7 @@ const ConFormsDienst = ({ store, userStore }) => {
       setPrefillError(null);
       try {
         await store.object.fetchObject('voorzieningen', 'dienst', String(dienstId), {
-          '_extend[]': ['_schema'],
+          '_extend[]': ['@self.schema'],
         });
         if (cancelled) return;
 

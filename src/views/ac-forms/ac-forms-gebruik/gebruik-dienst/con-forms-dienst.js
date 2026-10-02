@@ -190,7 +190,7 @@ const ConFormsDienst = ({ store }) => {
           _limit: '50',
           _page: '1',
           _source: 'index',
-          '_extend[]': '_schema',
+          '_extend[]': '@self.schema',
           _published: 'false',
           ...(searchTerm && searchTerm.trim() ? { _search: searchTerm.trim() } : {}),
           ...additionalParams,
@@ -245,7 +245,7 @@ const ConFormsDienst = ({ store }) => {
           'gebruik',
           String(gebruikId),
           {
-            '_extend[]': ['_schema'],
+            '_extend[]': ['@self.schema'],
             _published: 'false',
           }
         );
@@ -295,7 +295,7 @@ const ConFormsDienst = ({ store }) => {
             const dienstFetches = dienstenIds.map((id) =>
               store.object
                 .fetchObject('voorzieningen', 'dienst', id, {
-                  '_extend[]': ['_schema'],
+                  '_extend[]': ['@self.schema'],
                   _published: 'false',
                 })
                 .then(() => store.object.getObject('voorzieningen_dienst', id))
@@ -688,7 +688,7 @@ const ConFormsDienst = ({ store }) => {
           'organisatie',
           organisationId,
           {
-            '_extend[]': ['_schema', 'deelnemers'],
+            '_extend[]': ['@self.schema', 'deelnemers'],
           }
         );
 
@@ -778,7 +778,7 @@ const ConFormsDienst = ({ store }) => {
           'dienst',
           String(dienstFromUrl),
           {
-            '_extend[]': ['_schema'],
+            '_extend[]': ['@self.schema'],
             _published: 'false',
           }
         );

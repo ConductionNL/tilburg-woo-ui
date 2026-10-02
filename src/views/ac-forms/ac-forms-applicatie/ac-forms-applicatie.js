@@ -505,7 +505,7 @@ const AcFormsApplicatieInner = ({ store, formType, applicatieId, redirect }) => 
           String(applicatieId),
           {
             '_extend[]': [
-              '_schema',
+              '@self.schema',
               'koppelingen',
               'diensten',
               'moduleVersies',

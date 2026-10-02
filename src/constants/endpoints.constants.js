@@ -18,11 +18,11 @@ export const ENDPOINTS = AcLockObject({
   },
   PUBLICATIONS: {
     SEARCH: `/opencatalogi/api/publications`, // GET
-    SINGLE: (_id) => `/opencatalogi/api/publications/${_id}?_extend=_schema,_register,themes,contactpersoon,compliancy`, // GET
+    SINGLE: (_id) => `/opencatalogi/api/publications/${_id}?_extend=@self.schema,@self.register,themes,contactpersoon,compliancy`, // GET
     RELATIONS: (_uri) =>
       `/opencatalogi/api/publications?_extend[]=publicationType&_extend[]=catalog&_relations=${_uri}`, // GET
     ATTACHMENTS: (_id) => `/opencatalogi/api/publications/${_id}/attachments`, // GET
-    USED: (_id) => `/opencatalogi/api/publications/${_id}/used?_extend[]=_schema&_limit=100`, // GET
+    USED: (_id) => `/opencatalogi/api/publications/${_id}/used?_extend[]=@self.schema&_limit=100`, // GET
   },
   MIJN_OMGEVING: {
     SEARCH: `/mijn-omgeving`, // GET
@@ -58,15 +58,15 @@ export const ENDPOINTS = AcLockObject({
     SINGLE: (_id) => `/opencatalogi/api/menus/${_id}`, // GET
   },
   AANGEBODEN_GEBRUIK: {
-    AANBOD: `/softwarecatalog/api/aanbod`, // GET
-    ACCEPT: (_id) => `/softwarecatalog/api/aanbod/${_id}/accept`, // PUT
-    DENY: (_id) => `/softwarecatalog/api/aanbod/${_id}/deny`, // DELETE
-    AFNEMER: `/softwarecatalog/api/aangeboden-gebruik/afnemer`, // GET
-    DEELNEMERS: `/softwarecatalog/api/aangeboden-gebruik/deelnemers`, // GET
-    SET_SELF: (_id) => `/softwarecatalog/api/aangeboden-gebruik/${_id}/set-self`, // PUT
-    DENY_OLD: (_id) => `/softwarecatalog/api/aangeboden-gebruik/${_id}/deny`, // DELETE
-    KOPPELING: (_id) => `/softwarecatalog/api/koppelingen-gebruik/${_id}`, // GET
-    DOCS: `/softwarecatalog/api/aangeboden-gebruik/docs`, // GET
+    AANBOD: `/stackiq/api/aanbod`, // GET
+    ACCEPT: (_id) => `/stackiq/api/aanbod/${_id}/accept`, // PUT
+    DENY: (_id) => `/stackiq/api/aanbod/${_id}/deny`, // DELETE
+    AFNEMER: `/stackiq/api/aangeboden-gebruik/afnemer`, // GET
+    DEELNEMERS: `/stackiq/api/aangeboden-gebruik/deelnemers`, // GET
+    SET_SELF: (_id) => `/stackiq/api/aangeboden-gebruik/${_id}/set-self`, // PUT
+    DENY_OLD: (_id) => `/stackiq/api/aangeboden-gebruik/${_id}/deny`, // DELETE
+    KOPPELING: (_id) => `/stackiq/api/koppelingen-gebruik/${_id}`, // GET
+    DOCS: `/stackiq/api/aangeboden-gebruik/docs`, // GET
   },
 });
 

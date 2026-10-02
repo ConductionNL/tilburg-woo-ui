@@ -537,7 +537,7 @@ const RelatedTabs = observer(
           if (!isMounted) return;
 
           const response = await fetch(
-            `${commongroundApiUrl()}/softwarecatalog/api/gebruik?_limit=1000&_extend[]=_schema${gebruikParam}`,
+            `${commongroundApiUrl()}/stackiq/api/gebruik?_limit=1000&_extend[]=@self.schema${gebruikParam}`,
             {
               method: 'GET',
               signal: abortController.signal,

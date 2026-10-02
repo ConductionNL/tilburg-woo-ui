@@ -162,7 +162,7 @@ const AcPublication = observer(({ store: { publications } }) => {
       return <AcPublicationSoftwarecatalogus />;
     }
 
-    const publicationType = get_single?.['@self']?.schema?.slug.toLowerCase();
+    const publicationType = get_single?.['@self']?.schema?.slug?.toLowerCase();
     switch (get_single?.publicationType?.title) {
       case 'Softwarecatalogus':
         return <AcPublicationSoftwarecatalogus />;

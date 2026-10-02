@@ -3,6 +3,7 @@ import { observable, makeObservable, action, runInAction } from 'mobx';
 
 // Imports => Utilities
 import axios, { CanceledError } from 'axios';
+import { installStackiqVocabulary } from '@src/config/stackiq-vocabulary';
 import {
   getCookie,
   sortPropertiesByOrder,
@@ -32,6 +33,10 @@ const nextcloudApi = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+// The softwarecatalogus data lives in stackiq's English vocabulary; translate
+// at the boundary (see src/config/stackiq-vocabulary.js).
+installStackiqVocabulary(nextcloudApi);
 
 // --- Portaliq portal mode ------------------------------------------------
 // When the SPA runs as the Portaliq per-subject portal (window.RUNTIME_CONFIG
@@ -814,7 +819,10 @@ export class ObjectStore {
 
     if (object?.id) {
       const fetchPromises = [];
-      const dataTypes = ['logs', 'uses', 'used', 'files'];
+      // OpenRegister serves audit trails to admins only (403 for everyone
+      // else), so only ask for them when the signed-in user is an admin.
+      const isAdmin = !!(typeof window !== 'undefined' && window.app?.store?.user?.isAdmin);
+      const dataTypes = isAdmin ? ['logs', 'uses', 'used', 'files'] : ['uses', 'used', 'files'];
       for (const dataType of dataTypes) {
         if (!this.relatedData[type][dataType]) {
           const defaultLimit = dataType === 'files' ? 500 : 20;

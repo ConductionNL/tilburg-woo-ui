@@ -481,7 +481,7 @@ export class PublicationsStore {
         ...this.search_query,
         _limit: 0, // We only want facets, not results
         _facets: 'extend', // Request extended facets
-        _extend: '_schema,_register',
+        _extend: '@self.schema,@self.register',
       };
 
       // If _search is present, add _fuzzy=true for fuzzy relevance scoring
@@ -678,7 +678,7 @@ export class PublicationsStore {
     // Include _names to get UUID-to-name mappings in response
     const baseQuery = {
       ...this.search_query,
-      _extend: '_schema,_register,_names',
+      _extend: '@self.schema,@self.register,_names',
     };
 
     // If _search is present, add _fuzzy=true for fuzzy relevance scoring
@@ -803,7 +803,7 @@ export class PublicationsStore {
             ...this.defaultQuery,
             _related: true,
             _relatedNames: true,
-            '_extend[]': ['_schema', 'compliancy'],
+            '_extend[]': ['@self.schema', 'compliancy'],
           })
         ).toString()
       )

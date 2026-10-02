@@ -942,7 +942,7 @@ const AcFormsProductInner = ({
       });
       
       // Add multiple extend parameters to include standards
-      queryParams.append('_extend[]', '_schema');
+      queryParams.append('_extend[]', '@self.schema');
       queryParams.append('_extend[]', 'aanbevolenStandaarden');
       queryParams.append('_extend[]', 'verplichteStandaarden');
 
@@ -1350,7 +1350,7 @@ const AcFormsProductInner = ({
           String(productId),
           {
             '_extend[]': [
-              '_schema',
+              '@self.schema',
               'modules',
               'modules.koppelingen',
               'modules.diensten',

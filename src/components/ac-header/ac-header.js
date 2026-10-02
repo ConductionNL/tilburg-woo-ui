@@ -62,7 +62,7 @@ const AcHeader = ({ store: { menu, user, object } }) => {
         
         // Fetch the organization data
         await object.fetchObject('voorzieningen', 'organisatie', String(orgId), {
-          '_extend[]': ['_schema'],
+          '_extend[]': ['@self.schema'],
           _fresh: true, // Force bypass cache to get latest data
         });
         

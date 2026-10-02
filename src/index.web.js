@@ -10,6 +10,7 @@ import config from '@config';
 import createStore, { StoreContext } from '@stores';
 
 import App from '@src/App';
+import { installStackiqFetch } from '@src/config/stackiq-vocabulary';
 import {
   resolveRouterBasename,
   basenameMatchesPath,
@@ -18,6 +19,15 @@ import {
 export const TOOLTIP_ID = 'cb8f47c3-7151-4a46-954d-784a531b01e6';
 
 const store = createStore(config);
+
+// Views that call OpenRegister/stackiq with fetch() get the same stackiq
+// translation and credentials as the axios clients.
+installStackiqFetch(window, () => {
+  const creds = store?.user?.basicAuthCredentials;
+  return creds && creds.username && creds.password
+    ? `Basic ${btoa(`${creds.username}:${creds.password}`)}`
+    : null;
+});
 
 // Make store available globally for basic auth fallback
 window.app = { store };
