@@ -12,9 +12,7 @@
  * from them and from lib/Settings/softwarecatalogus_register.json.
  *
  * The UI reads and writes Dutch names in roughly 2,000 places, so instead of
- * renaming every one of them this module translates at the HTTP boundary,
- * the same way object.store.js already reshapes requests for Portaliq portal
- * mode:
+ * renaming every one of them this module translates at the HTTP boundary:
  *
  *  - requests: register `voorzieningen` -> `stackiq`, Dutch schema slugs ->
  *    stackiq slugs, Dutch property names in query keys and JSON bodies ->
