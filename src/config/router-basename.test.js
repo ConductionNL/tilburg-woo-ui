@@ -1,7 +1,6 @@
 import {
   resolveRouterBasename,
   basenameMatchesPath,
-  DEFAULT_PORTAL_BASENAME,
   DEFAULT_STANDALONE_BASENAME,
 } from './router-basename';
 
@@ -9,24 +8,26 @@ describe('resolveRouterBasename', () => {
   it('defaults the standalone site to the web root', () => {
     // Regression guard: this was hardcoded to the Portaliq WOO mount, so the
     // standalone deployment served at `/` rendered an empty page.
-    expect(resolveRouterBasename(undefined, false)).toBe(
+    expect(resolveRouterBasename(undefined)).toBe(
       DEFAULT_STANDALONE_BASENAME
     );
-    expect(resolveRouterBasename({}, false)).toBe('/');
+    expect(resolveRouterBasename({})).toBe('/');
   });
 
-  it('defaults portal mode to the portal mount', () => {
-    expect(resolveRouterBasename({}, true)).toBe(DEFAULT_PORTAL_BASENAME);
+  it('has no portal-mode default any more', () => {
+    // The Portaliq portal mount (/index.php/apps/portaliq/portal) is retired:
+    // a leftover second argument must not bring that basename back.
+    expect(resolveRouterBasename({}, true)).toBe(DEFAULT_STANDALONE_BASENAME);
   });
 
-  it('prefers the camelCase key written by portal-postbuild', () => {
+  it('prefers the camelCase routerBasename key', () => {
     expect(
-      resolveRouterBasename({ routerBasename: '/index.php/apps/portaliq/woo' }, false)
+      resolveRouterBasename({ routerBasename: '/index.php/apps/portaliq/woo' })
     ).toBe('/index.php/apps/portaliq/woo');
   });
 
   it('accepts the UPPER_SNAKE key written by generate-runtime-config', () => {
-    expect(resolveRouterBasename({ ROUTER_BASENAME: '/sub/path' }, false)).toBe(
+    expect(resolveRouterBasename({ ROUTER_BASENAME: '/sub/path' })).toBe(
       '/sub/path'
     );
   });
@@ -34,17 +35,16 @@ describe('resolveRouterBasename', () => {
   it('prefers camelCase over UPPER_SNAKE when both are present', () => {
     expect(
       resolveRouterBasename(
-        { routerBasename: '/from-camel', ROUTER_BASENAME: '/from-snake' },
-        false
+        { routerBasename: '/from-camel', ROUTER_BASENAME: '/from-snake' }
       )
     ).toBe('/from-camel');
   });
 
   it('falls back to the default for empty or blank values', () => {
     // An empty string looks configured but silently breaks routing.
-    expect(resolveRouterBasename({ ROUTER_BASENAME: '' }, false)).toBe('/');
-    expect(resolveRouterBasename({ routerBasename: '   ' }, true)).toBe(
-      DEFAULT_PORTAL_BASENAME
+    expect(resolveRouterBasename({ ROUTER_BASENAME: '' })).toBe('/');
+    expect(resolveRouterBasename({ routerBasename: '   ' })).toBe(
+      DEFAULT_STANDALONE_BASENAME
     );
   });
 });
